@@ -2437,6 +2437,38 @@ for who, rows in SCHEDULES.items():
         if r > 26:
             around = (A[a].obj[y - 1][x], A[a].obj[y + 1][x], A[a].obj[y][x - 1], A[a].obj[y][x + 1])
             assert "C" in around or "I" in around, ("radius 36 but no counter beside them", who, a, x, y)
+
+
+# Meals: leave early enough to be seated in time. A written time allows for a walk of up to 75 tiles
+# (25 minutes at 3 tiles a minute); for a longer walk the resident sets off that much earlier.
+def walk_length(src, dst):
+    seen_, q_ = {src: 0}, deque([src])
+    while q_:
+        cur = q_.popleft()
+        if cur == dst:
+            return seen_[cur]
+        a, x, y = cur
+        nxt = [(a, x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+        for (wx, wy, dest, tx, ty) in A[a].warps:
+            if (wx, wy) == (x, y):
+                nxt = [(dest, tx, ty)]
+        for nb in nxt:
+            if nb not in seen_ and walkable(*nb):
+                seen_[nb] = seen_[cur] + 1
+                q_.append(nb)
+    raise AssertionError(("no way between", src, dst))
+
+
+LONGEST_WALK = ["", 0]
+for who, rows in SCHEDULES.items():
+    for i, e in enumerate(rows):
+        prev = rows[i - 1]
+        steps = walk_length((prev[1], prev[2], prev[3]), (e[1], e[2], e[3]))
+        if steps > LONGEST_WALK[1]:
+            LONGEST_WALK = [who, steps]
+        if e[6] == "eat" and i > 0:
+            e[0] = max(prev[0] + 5, e[0] - max(0, (steps - 75 + 2) // 3))
+print("longest walk between two stops: %s, %d tiles (%d minutes)" % (LONGEST_WALK[0], LONGEST_WALK[1], LONGEST_WALK[1] // 3))
 NEAR = ((1, 0), (-1, 0), (0, 1), (0, -1), (0, 2), (0, -2))
 for (name, a, x, y, r) in PEOPLE:
     assert any((a, x + dx, y + dy) in seen for dx, dy in NEAR), "cannot reach " + name + " in " + a
