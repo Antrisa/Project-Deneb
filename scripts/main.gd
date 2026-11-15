@@ -859,6 +859,8 @@ func _talk(who: String) -> void:
 		_say(who, st["first"])
 	elif _board_delivery(who):
 		pass
+	elif who == "Maren":
+		_maren_shop()
 	elif who == "Bram" and _bars_value() > 0:
 		_bram_sell()
 	elif who == "Bram" and not job_done_today:
@@ -880,6 +882,29 @@ func _next_repeat(who: String) -> String:
 	st["next"] = n + 1
 	var line: String = repeat[n % repeat.size()]
 	return line
+
+
+# ---------------------------------------------------------------- Maren's medbay
+
+const MEDPACK_PRICE := 40
+
+
+func _maren_shop() -> void:
+	_say("Maren", [
+		_next_repeat("Maren"),
+		"Medpacks are %d credits. One will put you right back on your feet. Want one?" % MEDPACK_PRICE,
+	], Callable(self, "_buy_medpack"), "Buy (%d cr)" % MEDPACK_PRICE)
+
+
+func _buy_medpack() -> void:
+	if credits < MEDPACK_PRICE:
+		sfx("deny")
+		_say("Maren", ["[sad] You're short. Come back when you have %d credits. If it's urgent, collapse outside and someone will carry you in." % MEDPACK_PRICE])
+		return
+	credits -= MEDPACK_PRICE
+	_give("medpack", 1)
+	sfx("coin")
+	_toast("Bought a medpack  -%d credits" % MEDPACK_PRICE)
 
 
 # ---------------------------------------------------------------- Bram's job
@@ -1443,12 +1468,17 @@ func _collapse() -> void:
 	credits -= lost
 	minutes = minf(minutes + 120.0, DAY_END - 1.0)
 	player.set_carrying(false)
-	_go_home()
+	# You wake up in the medbay.
+	var bed: Array = MapData.MEDBAY
+	var bed_area: String = bed[0]
+	_go_to(bed_area, Vector2i(int(bed[1]), int(bed[2])), false)
 	_snap_residents()
 	_reset_enemies()
-	_say("Sara", [
-		"[sad] Vzz'ket carried you back from the tunnels. You have been out for two hours.",
-		"[angry] You dropped %d credits on the way. Do try not to make a habit of this." % lost,
+	if persons.has("Maren"):
+		persons["Maren"]["met"] = true
+	_say("Maren", [
+		"[sad] Easy. Vzz'ket carried you in from the tunnels. You have been out for two hours.",
+		"[angry] I have taken %d credits for the stitches. Buy a medpack next time. It is cheaper than I am." % lost,
 	])
 
 
@@ -1457,9 +1487,13 @@ func _eat(item: String) -> void:
 		_toast("You're not hurt")
 		return
 	_give(item, -1)
-	hp = mini(MAX_HP, hp + 5)
+	var info: Dictionary = ItemData.ITEMS[item]
+	hp = mini(MAX_HP, hp + int(info.get("heal", 5)))
 	sfx("eat")
-	_toast("Ration pack six. It restores you, and that is all that can be said for it.")
+	if item == "medpack":
+		_toast("The medpack hisses. Everything stops hurting at once.")
+	else:
+		_toast("Ration pack six. It restores you, and that is all that can be said for it.")
 
 
 # ---------------------------------------------------------------- little effects

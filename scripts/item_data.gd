@@ -28,6 +28,8 @@ const ITEMS = {
 			"desc": "Tough, scaly hide from a rock lizard. Bram buys these."},
 	"ration": {"name": "Ration pack six", "icon": 11, "use": "eat",
 			"desc": "Jasper's special. Select it and press Space to eat it and mend 5 hearts."},
+	"medpack": {"name": "Medpack", "icon": 12, "use": "eat", "heal": 10,
+			"desc": "From Maren in the medbay. Select it and press Space to mend every heart."},
 }
 
 # What the Crafting page offers. "needs" is item -> how many.

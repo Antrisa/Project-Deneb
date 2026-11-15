@@ -398,7 +398,7 @@ func _draw_friends() -> void:
 		if not world.persons.has(who):
 			continue
 		var st: Dictionary = world.persons[who]
-		var x: float = 18.0 + (i / 5) * 148.0
+		var x: float = 12.0 + (i / 5) * 100.0
 		var y: float = 32.0 + (i % 5) * 26.0
 		var portrait: Texture2D = st["portrait"]
 		var side: float = portrait.get_height()      # each picture is square; the first is neutral
@@ -410,7 +410,7 @@ func _draw_friends() -> void:
 		var points: int = st["friendship"]
 		var hearts: int = mini(10, points / HEART_POINTS)
 		for h in 10:
-			draw_texture_rect_region(_hearts_tex, Rect2(x + 30 + h * 8, y + 14, 7, 6), Rect2(0.0 if h < hearts else _hearts_tex.get_width() / 2.0, 0, _hearts_tex.get_width() / 2.0, _hearts_tex.get_height()))
+			draw_texture_rect_region(_hearts_tex, Rect2(x + 30 + h * 6.5, y + 14, 6, 5), Rect2(0.0 if h < hearts else _hearts_tex.get_width() / 2.0, 0, _hearts_tex.get_width() / 2.0, _hearts_tex.get_height()))
 		if st["talked_today"]:
-			_txt(Vector2(x + 114, y + 9), "talked", Color("b8f0b0"), 6)
+			draw_rect(Rect2(x + 19, y + 1, 4, 4), Color("7ee07a"))      # green dot: talked to today
 		i += 1

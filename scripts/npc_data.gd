@@ -153,6 +153,77 @@ const PEOPLE = {
 			"Sleep well. That is what I am for.",
 		],
 	},
+	"Maren": {
+		"id": "maren",
+		"pitch": 1.0,
+		"first": [
+			"So you're the one Sara had in quarantine. Sit. No? Fine, stand, but hold still. I'm Maren. I'm the doctor, which here means all of them.",
+			"If the tunnels get the better of you, this is where you'll wake up. I'd rather you bought a medpack and didn't.",
+			"[happy] My husband Owen keeps the library, and our boy Pip keeps everyone else busy. You'll meet them. You won't have a choice.",
+		],
+		"repeat": [
+			"Thirty years a ship's surgeon. I came here to retire. [angry] I have never been so busy.",
+			"Quill is the best assistant I've had. He alphabetised the bandages. I didn't know bandages had an alphabet.",
+			"[sad] Half this equipment is older than I am, and I am not telling you how old that is.",
+			"[happy] Pip wants to be a miner this week. Last week it was pirate hunter. I prefer the miner.",
+		],
+	},
+	"Quill": {
+		"id": "quill",
+		"pitch": 1.4,
+		"first": [
+			"[surprised] Oh. A patient? No. A visitor. Please stand on the mat. The mat is clean. I am Quill. I assist Doctor Maren.",
+			"I am Vulltam. Yes, the glasses are necessary. No, I will not take them off so you can see.",
+		],
+		"repeat": [
+			"I have catalogued every ache on this station. Job has eleven. He admits to none.",
+			"[happy] Doctor Maren let me do the stitches yesterday. They were very even stitches.",
+			"In the evenings I read in the library. Owen saves the medical journals for me. Some are only two hundred years out of date.",
+			"[angry] Somebody has been taking the tongue depressors. I suspect a child. I suspect a specific child.",
+		],
+	},
+	"Owen": {
+		"id": "owen",
+		"pitch": 0.85,
+		"first": [
+			"Mind the stack. And that one. Welcome to the library, such as it is. I'm Owen. I married the doctor and inherited the books.",
+			"I teach Pip his letters in the mornings, and anyone else who wanders in. You look like you can read. That puts you ahead of the garrison who left these.",
+		],
+		"repeat": [
+			"The Terrans left four hundred technical manuals and one novel. I have read the novel nine times. It is not good.",
+			"[happy] Maren says I should charge for the books. I say nobody would pay, and then where would we be? Exactly here.",
+			"If you find anything with pages out there, bring it to me. I'm not particular. I once shelved a menu.",
+			"[love] Thirty years following a ship's surgeon from port to port. This is the first place the shelves have stayed put.",
+		],
+	},
+	"Pip": {
+		"id": "pip",
+		"pitch": 1.9,
+		"first": [
+			"[surprised] You're the one who crashed! Did it hurt? Was there fire? Mum says I can't ask if there was fire.",
+			"I'm Pip. I'm nine. I know where everything is. Ask me where something is.",
+		],
+		"repeat": [
+			"[happy] Zaas says there's a sea under the station. Dad says there isn't. I'm going with Zaas.",
+			"I'm not allowed in the mine. I'm not allowed in the tunnels. I'm not allowed on the lift by myself. [angry] It's a very small station if you're me.",
+			"Quill counts the tongue depressors. [happy] He's missing six. I don't know anything about that.",
+			"When I grow up I'm going to have a ship like yours. Except mine will work.",
+		],
+	},
+	"Sesska": {
+		"id": "sesska",
+		"pitch": 1.35,
+		"first": [
+			"Come in, come in, mind the warp threads. I am Sesska. I weave. Tikka is my wife, so if your ship is late, I already know why.",
+			"That jacket of yours has been through a crash. I can see every seam giving up. One day soon I will have cloth to spare, and we will talk.",
+		],
+		"repeat": [
+			"[happy] Eight hands and Tikka uses hers on engines. I use mine on a loom. Between us the station is held together twice over.",
+			"I spin what Evarra grows and what the mine bugs leave behind. Bug silk is ugly. It is also the warmest thing on this moon.",
+			"[love] Forty years married. She still brings me coil wire like other people bring flowers. I have made it into a very strange scarf.",
+			"[sad] I had a shop on Arach Minor with a window onto the street. Here I have a window onto a corridor. I am told it is the nicer corridor.",
+		],
+	},
 }
 
 # Things you can look at. Name must match the name in tools/build.py THINGS.
@@ -171,6 +242,8 @@ const LOOKS = {
 	"Locked apartment": ["Private quarters, shuttered. Guests could stay here one day, if anyone could find the keys."],
 	"Hotel desk": ["The duty officer's desk. Dust it off, add a bell, and it is a front desk."],
 	"Abandoned shop": ["A shop front, shuttered. The sign has been painted over twice in two different alphabets."],
+	"Medbay beds": ["Three beds, clean sheets, and a chart on each. Two of the charts say JOB."],
+	"Loom": ["Sesska's loom. It has more moving parts than your ship, and all of them work."],
 	"Broken agri dome": ["Cracked panels, dry soil, dead machines. It was built to feed a garrison.", "With glass and water this could feed the whole Landing."],
 	"Old bunks": ["Rows of bunks for soldiers who never came. Clear out the rubble and these would be guest rooms."],
 	"Library shelves": ["Field manuals, mostly. Someone has added cookbooks, a few novels and a children's atlas of Earth."],

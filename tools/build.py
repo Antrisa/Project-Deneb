@@ -874,6 +874,51 @@ Q.rect(2, 3, 13, 4, (116, 80, 52)); Q.rect(4, 0, 11, 2, (116, 80, 52)); Q.rect(4
 outline_img(Q)
 SPR["zaas"] = sheet_from(Q)
 
+# ---- Placeholders for the newer residents (old low-detail style, until their art arrives)
+# Maren (the doctor): older human woman, grey hair, white coat
+MSK = (232, 190, 160)
+
+
+def ov_maren(R, d):
+    if d == "down":
+        R(7, 18, 8, 26, (200, 60, 60)); R(5, 20, 5, 20, (120, 200, 210))
+
+
+SPR["maren"] = sheet({"skin": MSK, "hair": (176, 176, 186), "top": (236, 240, 244), "legs": (70, 90, 110), "arm": (236, 240, 244)}, ov_maren, style="long")
+# Owen (her husband, keeps the library): cardigan
+SPR["owen"] = sheet({"skin": (214, 170, 130), "hair": (96, 78, 64), "top": (150, 110, 70), "legs": (80, 80, 92), "arm": (150, 110, 70)})
+# Pip (their son)
+SPR["pip"] = sheet({"skin": (226, 182, 148), "hair": (124, 86, 52), "top": (220, 96, 72), "legs": (70, 92, 146), "arm": (226, 182, 148)}, short=True)
+# Quill (Vulltam, the doctor's assistant): green-blue, glasses
+VT, VTD = (70, 170, 160), (40, 110, 122)
+
+
+def ov_quill(R, d):
+    R(6, 2, 9, 3, VTD)                                   # crest
+    if d == "down":
+        R(4, 7, 6, 8, (236, 244, 250)); R(9, 7, 11, 8, (236, 244, 250)); R(7, 7, 8, 7, (60, 60, 70))
+        R(5, 8, 5, 8, (30, 40, 50)); R(10, 8, 10, 8, (30, 40, 50))
+    elif d in ("left", "right"):
+        R(3, 7, 5, 8, (236, 244, 250)); R(6, 7, 9, 7, (60, 60, 70))
+
+
+SPR["quill"] = sheet({"skin": VT, "hair": VT, "top": VTD, "legs": (40, 70, 92), "arm": VTD}, ov_quill, style="bald")
+# Sesska (Arachnay, the weaver, married to Tikka): older, silver-grey, a woven shawl
+K2 = Img(16, 24)
+SBODY, SDARK, SLEG, SHAWL = (150, 146, 172), (98, 94, 124), (78, 74, 100), (196, 92, 120)
+K2.ell(7.5, 22, 6, 1.6, (0, 0, 0, 70))
+K2.rect(4, 12, 11, 19, SBODY); K2.rect(5, 11, 10, 20, SBODY); K2.rect(5, 18, 10, 20, SDARK); K2.rect(10, 12, 11, 19, SDARK)
+K2.rect(4, 3, 11, 10, SBODY); K2.rect(5, 2, 10, 11, SBODY); K2.rect(11, 4, 11, 10, SDARK); K2.rect(5, 3, 7, 3, lt(SBODY))
+for (x, y) in [(5, 5), (7, 4), (8, 4), (10, 5), (6, 7), (9, 7)]:
+    K2.px(x, y, (190, 232, 255))
+K2.rect(6, 9, 6, 10, SDARK); K2.rect(9, 9, 9, 10, SDARK)
+for y in [12, 14, 16, 18]:
+    K2.rect(1, y + 1, 3, y + 1, SLEG); K2.px(1, y + 2, SLEG); K2.px(3, y, SLEG)
+    K2.rect(12, y + 1, 14, y + 1, SLEG); K2.px(14, y + 2, SLEG); K2.px(12, y, SLEG)
+K2.rect(3, 11, 12, 14, SHAWL); K2.rect(4, 15, 11, 15, dk(SHAWL)); K2.px(5, 12, lt(SHAWL)); K2.px(8, 13, lt(SHAWL)); K2.px(10, 12, lt(SHAWL))
+outline_img(K2)
+SPR["sesska"] = sheet_from(K2, mirror_left=True)
+
 for k, im in SPR.items():
     im.save(art("npc_%s.png" % k))
 
@@ -1220,6 +1265,50 @@ for e in EMOTES:
     frames.append(im)
 strip(frames, "tikka")
 
+# ---- Placeholder portraits for the newer residents
+def maren_extra(im, e):
+    im.rect(20, 50, 22, 62, (236, 240, 244)); im.rect(41, 50, 43, 62, (236, 240, 244)); im.rect(30, 52, 33, 58, (200, 60, 60))
+    for (x, y) in [(20, 31), (21, 32), (43, 31), (42, 32)]:
+        im.px(x, y, (196, 150, 124))
+
+
+def quill_extra(im, e):
+    for cx in (25, 39):
+        im.rect(cx - 5, 24, cx + 5, 24, (60, 60, 70)); im.rect(cx - 5, 32, cx + 5, 32, (60, 60, 70))
+        im.rect(cx - 5, 24, cx - 5, 32, (60, 60, 70)); im.rect(cx + 5, 24, cx + 5, 32, (60, 60, 70))
+    im.rect(31, 27, 33, 27, (60, 60, 70))
+    im.rect(29, 6, 35, 11, (40, 110, 122))
+
+
+def pip_extra(im, e):
+    for (x, y) in [(23, 33), (25, 34), (39, 34), (41, 33)]:
+        im.px(x, y, (186, 132, 104))
+
+
+strip(human((96, 116, 124), (232, 190, 160), (176, 176, 186), (236, 240, 244), (90, 110, 140), "long", maren_extra), "maren")
+strip(human((104, 92, 76), (214, 170, 130), (96, 78, 64), (150, 110, 70), (80, 60, 40)), "owen")
+strip(human((110, 124, 96), (226, 182, 148), (124, 86, 52), (220, 96, 72), (70, 120, 70), "short", pip_extra), "pip")
+strip(human((60, 84, 96), (70, 170, 160), (70, 170, 160), (40, 110, 122), (230, 200, 90), "bald", quill_extra), "quill")
+frames = []
+for e in EMOTES:
+    im = backdrop((92, 76, 92))
+    shoulders(im, SHAWL, 51)
+    im.ell(32, 29, 20.5, 20, SDARK); im.ell(31, 28.5, 19, 19.5, SBODY)
+    for (x, y) in [(15, 20), (26, 15), (38, 15), (49, 20)]:
+        if e in ("happy", "love"):
+            im.rect(x - 1, y, x + 1, y, LASH)
+        else:
+            im.ell(x, y, 2.2, 2.2, (190, 232, 255)); im.px(x, y, (30, 40, 60))
+    eye(im, 23, 28, e, (60, 90, 150), 4, (190, 232, 255)); eye(im, 41, 28, e, (60, 90, 150), 4, (190, 232, 255))
+    blush(im, e, [(16, 35), (48, 35)], SBODY)
+    gap = 3 if e == "surprised" else (1 if e == "angry" else 0)
+    for i in range(7):
+        im.rect(27 - gap - i // 3, 40 + i, 29 - gap - i // 3, 40 + i, SDARK); im.rect(35 + gap + i // 3, 40 + i, 37 + gap + i // 3, 40 + i, SDARK)
+    mouth(im, 32, 41, e, dk(SBODY, 0.4), 3)
+    marks(im, e)
+    frames.append(im)
+strip(frames, "sesska")
+
 for k, im in PORT.items():
     im.save(art("portrait_%s.png" % k))
 
@@ -1349,7 +1438,7 @@ save_wav("deny", tone(170, 130, 0.14, 0.45, "square", 2.0))
 
 # ================================================================ item icons, hearts, weapon swing (for the menus and hotbar)
 # Order here must match "icon" in scripts/item_data.gd.
-IT = Img(16 * 12, 16)
+IT = Img(16 * 13, 16)
 
 
 def icon(i):
@@ -1397,7 +1486,38 @@ i = icon(10)    # lizard hide
 i.r(3, 4, 12, 12, (104, 134, 92)).r(2, 6, 2, 10, (104, 134, 92)).r(13, 6, 13, 10, (70, 96, 66)).r(3, 4, 12, 4, (150, 176, 126)).ps([(5, 6), (8, 7), (10, 6), (6, 9), (9, 10), (5, 11)], (70, 96, 66)).done()
 i = icon(11)    # ration pack
 i.r(3, 5, 12, 12, (196, 186, 150)).r(3, 5, 12, 5, (230, 222, 190)).r(11, 6, 12, 12, (160, 150, 118)).r(5, 7, 10, 10, (220, 90, 80)).r(6, 8, 9, 9, (250, 240, 226)).done()
+i = icon(12)    # medpack
+i.r(3, 4, 12, 12, (236, 240, 244)).r(3, 4, 12, 4, (255, 255, 255)).r(11, 5, 12, 12, (190, 198, 208)).r(7, 6, 8, 11, (214, 60, 60)).r(5, 8, 10, 9, (214, 60, 60)).r(6, 3, 9, 3, (150, 158, 172)).done()
 IT.save(art("items.png"))
+
+
+def patch_hand_items():
+    """A hand-made items.png keeps its icons; any newer icons it lacks are added on the end as placeholders."""
+    if "items.png" not in HAND_EDITED:
+        return
+    try:
+        from PIL import Image
+    except ImportError:
+        print("note: Pillow is not installed, so new item icons were not added to the hand-made items.png")
+        return
+    hand = Image.open(art("items.png")).convert("RGBA")
+    cell = hand.height
+    have, want = hand.width // cell, IT.w // 16
+    if have >= want:
+        return
+    out = Image.new("RGBA", (want * cell, cell), (0, 0, 0, 0))
+    out.paste(hand, (0, 0))
+    for n in range(have, want):
+        small = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+        for y in range(16):
+            for x in range(16):
+                small.putpixel((x, y), tuple(IT.p[y][n * 16 + x]))
+        out.paste(small.resize((cell, cell), Image.NEAREST), (n * cell, 0))
+    out.save(art("items.png"))
+    print("added %d placeholder icon(s) to the hand-made items.png" % (want - have))
+
+
+patch_hand_items()
 
 HE = Img(14, 6)
 for f, c in enumerate([(232, 70, 90), (70, 74, 96)]):
@@ -1598,15 +1718,15 @@ m.room("Empty shop", 52, 66, 64, 78, ".")
 m.room("Command lift", 86, 18, 94, 29, ".")
 m.room("Engineering lift", 86, 91, 94, 102, ".")
 m.room("Library", 116, 40, 132, 54, ",")
-m.room("", 134, 48, 144, 57, "f")           # abandoned shops
-m.room("", 144, 48, 154, 57, "f")
+m.room("Medbay", 134, 48, 144, 57, ".")
+m.room("Weaver's shop", 144, 48, 154, 57, ",")
 m.room("Apartments", 155, 48, 165, 57, ",")
 m.room("Mess hall", 116, 63, 146, 82, ".")
 m.zones += [["West wing", 14, 57, 60, 63], ["East wing", 120, 57, 166, 63], ["Town square", 59, 29, 121, 91]]
 m.setf(".", [(18, 57), (27, 57), (52, 57), (53, 57), (64, 50), (64, 51), (23, 63), (24, 63), (34, 63), (45, 63),
              (64, 69), (64, 70), (89, 29), (90, 29), (91, 29), (89, 91), (90, 91), (91, 91),
-             (116, 48), (116, 49), (160, 57), (130, 63), (131, 63), (116, 68), (116, 69)])
-m.setf("Z", [(35, 57), (36, 57), (37, 57), (138, 57), (139, 57), (140, 57), (148, 57), (149, 57), (150, 57)])
+             (116, 48), (116, 49), (160, 57), (130, 63), (131, 63), (116, 68), (116, 69), (139, 57), (149, 57)])
+m.setf("Z", [(35, 57), (36, 57), (37, 57), (136, 57), (137, 57), (141, 57), (142, 57), (146, 57), (147, 57), (151, 57), (152, 57)])
 m.setf("w", [(17, 48), (18, 48), (26, 48), (27, 48), (48, 40), (49, 40), (56, 40), (57, 40), (122, 40), (123, 40), (126, 40), (127, 40),
              (159, 48), (160, 48)])
 # town square fixtures
@@ -1617,15 +1737,26 @@ m.put("q", [(98, 76), (99, 76), (102, 76), (103, 76), (77, 76), (78, 76), (81, 7
 m.put("c", [(100, 77), (79, 77), (104, 77)])
 m.put("n", [(95, 52)])
 # apartments
-m.put("b", [(15, 49), (22, 49), (24, 49), (31, 49), (41, 71), (156, 49), (164, 49)])
+m.put("b", [(15, 49), (22, 49), (24, 49), (31, 49), (41, 71), (156, 49), (160, 49), (164, 49)])
 m.put("o", [(21, 54), (157, 55)])
 m.put("t", [(29, 55), (162, 51)])
 m.put("p", [(15, 56), (31, 56), (49, 64), (164, 56)])
-# shuttered workshop and abandoned shops (you can see in, but not get in)
-m.put("P", [(34, 51), (35, 51), (38, 54), (136, 51), (146, 53)])
-m.put("c", [(38, 50), (142, 50), (152, 55)])
-m.put("e", [(36, 54), (140, 53), (148, 50)])
-m.put("x", [(137, 55), (145, 50)])
+# shuttered workshop (you can see in, but not get in)
+m.put("P", [(34, 51), (35, 51), (38, 54)])
+m.put("c", [(38, 50)])
+m.put("e", [(36, 54)])
+# medbay: three beds along the back wall, the doctor's desk and screens on the right
+m.put("b", [(135, 49), (137, 49), (139, 49)])
+m.put("k", [(142, 49), (143, 49)])
+m.put("S", [(143, 52), (143, 53)])
+m.put("t", [(141, 54)])
+m.put("p", [(135, 56), (143, 56)])
+# weaver's shop: a counter across the room, cloth on the shelves behind it
+m.put("C", row(53, range(146, 153)))
+m.put("S", [(145, 49), (146, 49), (147, 49), (151, 49), (152, 49), (153, 49)])
+m.put("t", [(149, 49)])
+m.put("c", [(153, 51)])
+m.put("p", [(145, 56), (153, 56)])
 # common area
 m.put("o", [(45, 44), (46, 44), (55, 44), (56, 44), (45, 52), (46, 52)])
 m.put("t", [(50, 46), (51, 46), (55, 52), (56, 52)])
@@ -1879,6 +2010,7 @@ u.warp("R", [(30, 38), (31, 38)], "mine", 22, 4)
 
 # ---------------------------------------------------------------- who and what is where
 START = ["west", 23, 67]
+MEDBAY = ["main", 137, 51]       # where you wake up after collapsing
 # name, area, tile x, tile y, talk radius (bigger when they stand behind a counter)
 PEOPLE = [
     # Sara appears as a hologram in several places
@@ -1892,6 +2024,16 @@ PEOPLE = [
 # Times are when they set off, so people far away leave earlier to reach dinner by 18:00.
 # Lunch is only Job, Freya and Zaas. Dinner at 18:00 is everyone.
 SCHEDULES_RAW = {
+    "Maren": [("06:30", "main", 141, 52, 26, "d", "work"), ("17:35", "main", 135, 75, 26, "d", "eat"), ("19:15", "main", 141, 52, 26, "d", "work"),
+              ("21:30", "main", 157, 51, 26, "d", "idle")],
+    "Quill": [("06:00", "main", 136, 53, 26, "d", "work"), ("17:35", "main", 141, 75, 26, "d", "eat"), ("19:15", "main", 124, 50, 26, "u", "idle"),
+              ("22:00", "main", 136, 53, 26, "d", "idle")],
+    "Owen": [("07:00", "main", 124, 48, 26, "u", "work"), ("17:35", "main", 136, 75, 26, "d", "eat"), ("19:15", "main", 84, 56, 26, "d", "idle"),
+             ("21:30", "main", 163, 53, 26, "d", "idle")],
+    "Pip": [("07:30", "main", 125, 49, 26, "u", "work"), ("12:30", "main", 97, 57, 26, "d", "idle"), ("15:00", "main", 138, 54, 26, "u", "idle"),
+            ("17:35", "main", 140, 75, 26, "d", "eat"), ("19:15", "main", 93, 67, 26, "d", "idle"), ("20:30", "main", 160, 51, 26, "d", "idle")],
+    "Sesska": [("06:00", "main", 149, 52, 36, "d", "work"), ("17:30", "main", 136, 70, 26, "d", "eat"), ("19:15", "main", 36, 68, 26, "l", "idle"),
+               ("21:30", "eng", 41, 4, 26, "d", "idle")],
     "Jasper": [("06:00", "main", 137, 67, 36, "d", "work"), ("14:30", "main", 47, 48, 26, "d", "idle"), ("16:30", "main", 137, 67, 36, "d", "work"),
                ("21:30", "main", 26, 52, 26, "d", "idle")],
     "Evarra": [("06:00", "main", 142, 67, 36, "d", "work"), ("10:00", "east", 38, 33, 26, "u", "work"), ("13:00", "main", 142, 67, 36, "d", "work"),
@@ -1955,8 +2097,8 @@ THINGS = [
     ["look", "Market stall", "Look", "main", [99 * 16, 76 * 16 + 8], 28],
     ["look", "Market stall", "Look", "main", [78 * 16, 76 * 16 + 8], 28],
     ["look", "Shuttered workshop", "Look", "main", tc(36, 57), 24],
-    ["look", "Abandoned shop", "Look", "main", tc(139, 57), 24],
-    ["look", "Abandoned shop", "Look", "main", tc(149, 57), 24],
+    ["look", "Medbay beds", "Look", "main", tc(137, 50), 24],
+    ["look", "Loom", "Look", "main", tc(149, 50), 24],
     ["look", "Library shelves", "Look", "main", tc(121, 45), 26],
     ["look", "Villa door", "Look", "east", tc(14, 32), 24],
     ["look", "Herb beds", "Look", "east", [39 * 16, 31 * 16 + 8], 30],
@@ -2034,7 +2176,7 @@ MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 33], ["Town Sq
 MAP_MARKS = [
     [1, "west", 27, 71, "Your quarters"], [2, "west", 15, 35, "Spaceport"], [3, "west", 48, 40, "Reception"],
     [4, "main", 23, 67, "Bram's Sundries"], [5, "main", 34, 67, "Fabrication shop"], [6, "main", 52, 48, "Common area"],
-    [7, "main", 124, 47, "Library"], [8, "main", 131, 72, "Mess hall"], [9, "east", 38, 35, "Herb beds"],
+    [7, "main", 124, 47, "Library"], [8, "main", 131, 72, "Mess hall"], [18, "main", 139, 52, "Medbay"], [19, "main", 149, 52, "Weaver's shop"], [9, "east", 38, 35, "Herb beds"],
     [10, "top", 19, 4, "Sara's suite"], [11, "top", 32, 4, "Observatory"], [12, "eng", 8, 5, "Ore processing"],
     [13, "eng", 41, 5, "Engineering bay"], [14, "eng", 40, 19, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
@@ -2074,6 +2216,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("# Each area has two layers of the same size: floor and objects (space = no object).\n\n")
     f.write("const TILE_FLOOR = " + json.dumps(TILE_FLOOR) + "\n")
     f.write("const TILE_OBJ = " + json.dumps(TILE_OBJ) + "\n")
+    f.write("const MEDBAY = " + json.dumps(MEDBAY) + "\n")
     f.write("const SOLID_FLOOR = " + json.dumps(SOLID_FLOOR) + "\n")
     f.write("const WALL_FACES = " + json.dumps(WALL_FACES) + "\n")
     f.write("const TILE_VARIANTS = " + json.dumps(TILE_VARIANTS) + "\n")
@@ -2118,7 +2261,8 @@ if PREV:
         return f_.resize((cell * wide, cell * wide * fh // fw), Image.NEAREST)
 
     ids = {"Sara": "sara", "Tar'Besh": "tarbesh", "Bram": "bram", "Jasper": "jasper", "Evarra": "evarra",
-           "Tikka": "tikka", "Freya": "freya", "Job": "job", "Zaas": "zaas", "Vzz'ket": "vzzket"}
+           "Tikka": "tikka", "Freya": "freya", "Job": "job", "Zaas": "zaas", "Vzz'ket": "vzzket",
+           "Maren": "maren", "Owen": "owen", "Pip": "pip", "Quill": "quill", "Sesska": "sesska"}
     fx_obj = {"k": ("fx_console.png", True), "K": ("fx_display.png", True), "F": ("fx_furnace.png", False), "G": ("fx_core.png", False)}
     for k, ar in A.items():
         im = Image.new("RGBA", (ar.w * cell, ar.h * cell), (11, 16, 38, 255))
