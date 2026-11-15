@@ -33,6 +33,9 @@ var _font: Font
 var _items_tex: Texture2D
 var _hearts_tex: Texture2D
 var _map_tex: Texture2D
+var _panel_tex: Texture2D     # art/ui_panel.png: a 3x3 grid, stretched to fit
+var _slot_tex: Texture2D      # art/ui_slot.png: empty, selected, being moved
+var _tab_tex: Texture2D       # art/ui_tab.png: not chosen, chosen
 var _blink := 0.0
 var _last_mouse := Vector2(-1, -1)
 
@@ -40,6 +43,9 @@ var _last_mouse := Vector2(-1, -1)
 func _ready() -> void:
 	_font = ThemeDB.fallback_font
 	_items_tex = load("res://art/items.png")
+	_panel_tex = load("res://art/ui_panel.png")
+	_slot_tex = load("res://art/ui_slot.png")
+	_tab_tex = load("res://art/ui_tab.png")
 	_hearts_tex = load("res://art/hearts.png")
 	_map_tex = load("res://art/station_map.png")
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -222,9 +228,37 @@ func _txt(pos: Vector2, s: String, color: Color = Color.WHITE, font_size: int = 
 	draw_string(_font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
-func _draw_slot(pos: Vector2, item: String, edge: Color) -> void:
-	draw_rect(Rect2(pos, Vector2(SLOT, SLOT)), Color(0.08, 0.1, 0.2, 0.9))
-	draw_rect(Rect2(pos + Vector2(0.5, 0.5), Vector2(SLOT - 1, SLOT - 1)), edge, false, 1.0)
+# Draws a picture laid out as a 3x3 grid so its corners stay sharp and the rest stretches.
+func _nine(tex: Texture2D, r: Rect2, corner: float) -> void:
+	var cw: float = tex.get_width() / 3.0
+	var ch: float = tex.get_height() / 3.0
+	var xs: Array = [r.position.x, r.position.x + corner, r.end.x - corner, r.end.x]
+	var ys: Array = [r.position.y, r.position.y + corner, r.end.y - corner, r.end.y]
+	for j in 3:
+		for i in 3:
+			var x0: float = xs[i]
+			var x1: float = xs[i + 1]
+			var y0: float = ys[j]
+			var y1: float = ys[j + 1]
+			draw_texture_rect_region(tex, Rect2(x0, y0, x1 - x0, y1 - y0), Rect2(i * cw, j * ch, cw, ch))
+
+
+# Draws one picture of ui_tab.png (0 not chosen, 1 chosen); its middle third stretches sideways.
+func _tab(r: Rect2, chosen: int) -> void:
+	var fw: float = _tab_tex.get_width() / 2.0
+	var third: float = fw / 3.0
+	var h: float = _tab_tex.get_height()
+	var xs: Array = [r.position.x, r.position.x + 4.0, r.end.x - 4.0, r.end.x]
+	for i in 3:
+		var x0: float = xs[i]
+		var x1: float = xs[i + 1]
+		draw_texture_rect_region(_tab_tex, Rect2(x0, r.position.y, x1 - x0, r.size.y), Rect2(chosen * fw + i * third, 0, third, h))
+
+
+# state: 0 empty slot look, 1 selected, 2 being moved
+func _draw_slot(pos: Vector2, item: String, state: int) -> void:
+	var fw: float = _slot_tex.get_width() / 3.0
+	draw_texture_rect_region(_slot_tex, Rect2(pos, Vector2(SLOT, SLOT)), Rect2(state * fw, 0, fw, _slot_tex.get_height()))
 	if item == "":
 		return
 	var info: Dictionary = ItemData.ITEMS[item]
@@ -242,15 +276,13 @@ func _draw_hotbar() -> void:
 	var origin: Vector2 = _hotbar_origin()
 	for i in COLS:
 		var item: String = world.slots[i]
-		var edge: Color = GOLD if i == world.selected else EDGE
-		_draw_slot(origin + Vector2(i * SLOT, 0), item, edge)
+		_draw_slot(origin + Vector2(i * SLOT, 0), item, 1 if i == world.selected else 0)
 	# Health: ten hearts above the hotbar.
 	for h in 10:
 		draw_texture_rect_region(_hearts_tex, Rect2(316 - 80 + h * 8, origin.y - 9, 7, 6), Rect2(0 if h < world.hp else 7, 0, 7, 6))
 	# A small button to open the menu with the mouse.
 	var button: Rect2 = _menu_button_rect()
-	draw_rect(button, Color(0.08, 0.1, 0.2, 0.9))
-	draw_rect(Rect2(button.position + Vector2(0.5, 0.5), button.size - Vector2(1, 1)), EDGE, false, 1.0)
+	_tab(button, 0)
 	_txt(button.position + Vector2(3, 12), "Menu", DIM, 6)
 	var chosen: String = world.slots[world.selected]
 	if chosen != "":
@@ -260,12 +292,10 @@ func _draw_hotbar() -> void:
 
 
 func _draw_menu() -> void:
-	draw_rect(PANEL, Color(0.05, 0.07, 0.15, 0.97))
-	draw_rect(PANEL, Color("7fd4ff"), false, 1.0)
+	_nine(_panel_tex, PANEL, 8.0)
 	for i in TABS.size():
 		var x: float = 16.0 + i * 72.0
-		if i == tab:
-			draw_rect(Rect2(x - 3, 13, 68, 12), Color(0.16, 0.3, 0.45))
+		_tab(Rect2(x - 3, 13, 68, 13), 1 if i == tab else 0)
 		var tab_name: String = TABS[i]
 		_txt(Vector2(x, 22), "%d %s" % [i + 1, tab_name], Color.WHITE if i == tab else DIM)
 	draw_line(Vector2(10, 27), Vector2(310, 27), Color("7fd4ff"), 1.0)
@@ -286,13 +316,13 @@ func _draw_inventory() -> void:
 	_txt(Vector2(16, 76), "Pack", DIM, 6)
 	_txt(Vector2(246, 50), "%d credits" % world.credits, GOLD)
 	for i in world.slots.size():
-		var edge: Color = EDGE
+		var state := 0
 		if i == held:
-			edge = Color("ff9f6b")
+			state = 2
 		if i == cursor:
-			edge = GOLD
+			state = 1
 		var item: String = world.slots[i]
-		_draw_slot(_inventory_slot_pos(i), item, edge)
+		_draw_slot(_inventory_slot_pos(i), item, state)
 	var under: String = world.slots[cursor]
 	if under != "":
 		var info: Dictionary = ItemData.ITEMS[under]
@@ -309,7 +339,7 @@ func _draw_crafting() -> void:
 		var makes: String = recipe["makes"]
 		var needs: Dictionary = recipe["needs"]
 		var y: float = 36.0 + i * 26.0
-		_draw_slot(Vector2(18, y), makes, GOLD if i == craft_cursor else EDGE)
+		_draw_slot(Vector2(18, y), makes, 1 if i == craft_cursor else 0)
 		var info: Dictionary = ItemData.ITEMS[makes]
 		var item_name: String = info["name"]
 		_txt(Vector2(42, y + 8), item_name, Color.WHITE if i == craft_cursor else DIM)

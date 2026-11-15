@@ -3,12 +3,13 @@ extends RefCounted
 # Each area has two layers of the same size: floor and objects (space = no object).
 
 const TILE_FLOOR = {".": 0, ",": 4, "f": 6, "h": 10, "u": 13, "s": 14, "m": 17, "i": 20, "U": 23, "D": 24, "A": 25, "R": 26, "#": 27, "W": 29, "w": 33, "r": 34, "d": 38, "g": 39, "M": 40, "N": 42, "Z": 44, "V": 45, "O": 46, "B": 48, "J": 49}
-const TILE_OBJ = {"c": 50, "t": 51, "p": 52, "k": 53, "b": 54, "o": 55, "S": 56, "C": 57, "T": 58, "a": 59, "G": 60, "O": 61, "F": 62, "H": 63, "P": 64, "x": 65, "L": 66, "y": 67, "e": 68, "K": 69, "l": 70, "q": 71, "n": 72, "f": 73, "v": 74}
+const TILE_OBJ = {"c": 50, "t": 51, "p": 52, "k": 53, "b": 54, "o": 55, "S": 56, "C": 57, "T": 58, "a": 59, "G": 60, "O": 61, "F": 62, "H": 63, "P": 64, "x": 65, "L": 66, "y": 67, "e": 68, "K": 69, "l": 70, "q": 71, "n": 72, "f": 73, "v": 74, "E": 75, "d": 76, "h": 77, "V": 78, "W": 79, "R": 80, "m": 81, "I": 82}
 const SOLID_FLOOR = "~#WwrdgMNZVOBJ"
 const WALL_FACES = "WwgNZ"
 const TILE_VARIANTS = {".": 4, ",": 2, "f": 4, "h": 3, "u": 1, "s": 3, "m": 3, "i": 3, "U": 1, "D": 1, "A": 1, "R": 1, "#": 2, "W": 4, "w": 1, "r": 4, "d": 1, "g": 1, "M": 2, "N": 2, "Z": 1, "V": 1, "O": 2, "B": 1, "J": 1}
-const TALL = "JpkSTaFHPLKlqnv"
+const TALL = "JpkSTaFHPLKlqnvR"
 const TILE_COLUMNS = 110
+const OPEN_OBJ = "Eh"
 const START = ["west", 23, 67]
 const WRECK = ["eng", 672, 320]
 const PEOPLE = [["Sara", "top", 19, 3, 26], ["Sara", "west", 26, 70, 26], ["Sara", "west", 48, 35, 36], ["Sara", "main", 90, 65, 26]]
@@ -18,15 +19,15 @@ const MAP_LAYOUT = {"west": [0, 36, 0.5], "main": [55, 26, 0.5], "east": [150, 4
 const MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 33], ["Town Square", 57, 37], ["Agri Dome", 152, 37], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
 const MAP_MARKS = [[1, "west", 27, 71, "Your quarters"], [2, "west", 15, 35, "Spaceport"], [3, "west", 48, 40, "Reception"], [4, "main", 23, 67, "Bram's Sundries"], [5, "main", 34, 67, "Fabrication shop"], [6, "main", 52, 48, "Common area"], [7, "main", 124, 47, "Library"], [8, "main", 131, 72, "Mess hall"], [9, "east", 38, 35, "Herb beds"], [10, "top", 19, 4, "Sara's suite"], [11, "top", 32, 4, "Observatory"], [12, "eng", 8, 5, "Ore processing"], [13, "eng", 41, 5, "Engineering bay"], [14, "eng", 40, 19, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"]]
 const SCHEDULES = {
-	"Jasper": [[360, "main", 124, 79, 36], [870, "main", 47, 48, 26], [990, "main", 124, 79, 36], [1290, "main", 26, 52, 26]],
-	"Evarra": [[360, "main", 134, 79, 36], [600, "east", 38, 33, 26], [780, "main", 134, 79, 36], [1230, "main", 29, 52, 26]],
-	"Bram": [[420, "main", 23, 68, 36], [1045, "main", 123, 69, 26], [1155, "main", 52, 50, 26], [1320, "main", 17, 52, 26]],
-	"Tikka": [[360, "eng", 39, 4, 26], [1050, "main", 130, 70, 26], [1155, "main", 34, 68, 26], [1290, "eng", 39, 4, 26]],
-	"Freya": [[360, "eng", 44, 5, 26], [660, "eng", 38, 19, 26], [750, "main", 133, 69, 26], [810, "eng", 38, 19, 26], [990, "eng", 44, 5, 26], [1050, "main", 133, 69, 26], [1155, "main", 58, 47, 26], [1290, "main", 20, 52, 26]],
-	"Job": [[390, "mine", 21, 8, 26], [720, "main", 120, 69, 26], [810, "mine", 21, 8, 26], [1035, "main", 120, 69, 26], [1155, "main", 158, 53, 26]],
-	"Zaas": [[420, "mine", 5, 5, 26], [735, "main", 137, 69, 26], [825, "mine", 5, 5, 26], [1025, "main", 137, 69, 26], [1155, "top", 35, 3, 26], [1380, "main", 162, 53, 26]],
-	"Tar'Besh": [[360, "top", 6, 5, 26], [1055, "main", 140, 69, 26], [1155, "top", 31, 6, 26], [1380, "top", 3, 15, 26]],
-	"Vzz'ket": [[360, "mine", 24, 19, 26], [1035, "main", 127, 69, 26], [1140, "mine", 24, 19, 26], [1320, "main", 86, 70, 26], [1410, "mine", 24, 19, 26]],
+	"Jasper": [[360, "main", 137, 67, 36, "d", "work"], [870, "main", 47, 48, 26, "d", "idle"], [990, "main", 137, 67, 36, "d", "work"], [1290, "main", 26, 52, 26, "d", "idle"]],
+	"Evarra": [[360, "main", 142, 67, 36, "d", "work"], [600, "east", 38, 33, 26, "u", "work"], [780, "main", 142, 67, 36, "d", "work"], [1230, "main", 29, 52, 26, "d", "idle"]],
+	"Bram": [[420, "main", 26, 68, 36, "l", "work"], [1055, "main", 125, 70, 26, "d", "eat"], [1155, "main", 52, 50, 26, "d", "idle"], [1320, "main", 17, 52, 26, "d", "idle"]],
+	"Tikka": [[360, "eng", 39, 4, 26, "d", "work"], [1050, "main", 135, 70, 26, "d", "eat"], [1155, "main", 34, 68, 26, "d", "work"], [1290, "eng", 39, 4, 26, "d", "idle"]],
+	"Freya": [[360, "eng", 44, 5, 26, "r", "work"], [660, "eng", 38, 19, 26, "r", "work"], [750, "main", 140, 70, 26, "d", "eat"], [810, "eng", 38, 19, 26, "r", "work"], [990, "eng", 44, 5, 26, "r", "work"], [1050, "main", 140, 70, 26, "d", "eat"], [1155, "main", 58, 47, 26, "d", "idle"], [1290, "main", 20, 52, 26, "d", "idle"]],
+	"Job": [[390, "mine", 21, 8, 26, "d", "work"], [720, "main", 120, 70, 26, "d", "eat"], [810, "mine", 21, 8, 26, "d", "work"], [1035, "main", 120, 70, 26, "d", "eat"], [1155, "main", 158, 53, 26, "d", "idle"]],
+	"Zaas": [[420, "mine", 5, 5, 26, "l", "work"], [735, "main", 126, 75, 26, "d", "eat"], [825, "mine", 5, 5, 26, "l", "work"], [1025, "main", 126, 75, 26, "d", "eat"], [1155, "top", 35, 3, 26, "r", "idle"], [1380, "main", 162, 53, 26, "d", "idle"]],
+	"Tar'Besh": [[360, "top", 6, 5, 26, "d", "work"], [1055, "main", 131, 75, 26, "d", "eat"], [1155, "top", 31, 6, 26, "d", "idle"], [1380, "top", 3, 15, 26, "d", "idle"]],
+	"Vzz'ket": [[360, "mine", 24, 19, 26, "d", "idle"], [1035, "main", 130, 70, 26, "d", "eat"], [1140, "mine", 24, 19, 26, "d", "idle"], [1320, "main", 86, 70, 26, "d", "idle"], [1410, "mine", 24, 19, 26, "d", "idle"]],
 }
 const THINGS = [["bed", "Your bunk", "Sleep", "west", [360, 1080], 26], ["look", "Landing pad", "Look", "west", [224, 560], 70], ["look", "Star dome", "Look", "west", [776, 104], 28], ["look", "Old bunks", "Look", "west", [728, 1080], 24], ["look", "Locked apartment", "Look", "west", [1144, 600], 24], ["look", "Locked apartment", "Look", "west", [1304, 600], 24], ["look", "Hotel desk", "Look", "west", [520, 984], 26], ["pickup", "Crates", "Pick up a crate", "main", [504, 1128], 26], ["look", "Fountain", "Look", "main", [1448, 968], 92], ["board", "Bulletin board", "Read the board", "main", [1528, 840], 24], ["look", "Market stall", "Look", "main", [1584, 1224], 28], ["look", "Market stall", "Look", "main", [1248, 1224], 28], ["look", "Shuttered workshop", "Look", "main", [584, 920], 24], ["look", "Abandoned shop", "Look", "main", [2232, 920], 24], ["look", "Abandoned shop", "Look", "main", [2392, 920], 24], ["look", "Library shelves", "Look", "main", [1944, 728], 26], ["look", "Villa door", "Look", "east", [232, 520], 24], ["look", "Herb beds", "Look", "east", [624, 504], 30], ["look", "Broken agri dome", "Look", "east", [928, 568], 60], ["look", "Telescope", "Look", "top", [584, 40], 26], ["look", "Sealed lab", "Look", "top", [216, 200], 24], ["wreck", "Your ship", "Your ship", "eng", [672, 304], 46], ["drop", "Loading pad", "Set down the crate", "eng", [432, 288], 22], ["look", "Power core", "Look", "eng", [384, 72], 52], ["smelt_iron", "Iron furnace", "Smelt iron", "eng", [48, 24], 30], ["smelt_copper", "Copper furnace", "Smelt copper", "eng", [96, 24], 30], ["look", "Barricade", "Look", "mine", [328, 344], 26]]
 const AREAS = {
@@ -222,24 +223,24 @@ const AREAS = {
 		"                                                                                                                                                                                    ",
 		"                                                                                                                                                                                    ",
 		"                                                                                                                                                                                    ",
-		"                   c        p                    p                                                                   p                           p                                  ",
-		"                                                                                      p       p              oo                                                                     ",
-		"                                                                                   oo           oo                                                                                  ",
-		"                    CCCCCCCC         t               SS                                                                                                                             ",
-		"                                                                                                                        tt   tt   tt   tt   tt                                      ",
-		"                                                                                                                                                                                    ",
-		"                              cc                                                l                   l                                                                               ",
-		"                   SSSSSSSSSS cc   PP kk b                                                                                                                                          ",
-		"                                                       CCCCCC                                                           tt   tt   tt   tt   tt                                      ",
+		"                   p                             p                                                                   p                  VV W R SS                                   ",
+		"                         I  S                                                         p   E   p              oo                                  H                                  ",
+		"                         I                                                         oo           oo                                          m    H                                  ",
+		"                         I  S        t               SS                                                                                                                             ",
+		"                         I                                                                                                            CCCCCCCCCCCC                                  ",
+		"                         I  S                                                                                                                                                       ",
+		"                         I    cc                                                l                   l                   hh   hh   hh   hh   hh                                      ",
+		"                   cc      SS cc   PP kk b                                                                              dd   dd   dd   dd   dd                                      ",
+		"                                                       CCCCCC                                                           hh   hh   hh   hh   hh                                      ",
 		"                                                                                                                                                                                    ",
 		"                                                             x              p                           p                                                                           ",
-		"                                                         x                                                                                                                          ",
-		"                                                       e                     qq  qq               qq  qq                                                                            ",
-		"                                                                               c                    c   c                                                                           ",
-		"                                                                        l                                   l        CCCCCCCCCCCCCCCCCCCCCCCCCCCC                                   ",
+		"                                                         x                                                              hh   hh   hh   hh   hh                                      ",
+		"                                                       e                     qq  qq               qq  qq                dd   dd   dd   dd   dd                                      ",
+		"                                                                               c                    c   c               hh   hh   hh   hh   hh                                      ",
+		"                                                                        l                                   l                                                                       ",
 		"                                                                                                                                                                                    ",
 		"                                                                                                                                                                                    ",
-		"                                                                                                                     SS                       HH                                    ",
+		"                                                                                                                     p                           p                                  ",
 		"                                                                                                                                                                                    ",
 		"                                                                                                                                                                                    ",
 		"                                                                                    p           p                                                                                   ",
@@ -403,7 +404,7 @@ const AREAS = {
 		"                                                                                                    ",
 		"                                                                         o    o                     ",
 		"                                                                                                    ",
-		"                                          p           p                                             ",
+		"                                          p     E     p                                             ",
 		"                          kk                 CCCCCCC                                                ",
 		"                                                                                                    ",
 		"                                                                                                    ",
@@ -438,7 +439,7 @@ const AREAS = {
 		"                      b            b       b b       b b       b b             b                    ",
 		"                                                                    e                               ",
 		"                                        e                e                                          ",
-		"                                   b       b b         b         b             b                    ",
+		"                          E        b       b b         b         b             b                    ",
 		"                                                                                                    ",
 		"                                                x                     x                             ",
 		"                     S        tt   b                 b           b                                  ",
@@ -633,7 +634,7 @@ const AREAS = {
 		"                                        ",
 		"  kk       SS  kk KKKK kk  p            ",
 		"                                    T   ",
-		"   a  a  a                  oo          ",
+		"   a  a  a         E        oo          ",
 		"                                t       ",
 		"                                        ",
 		"          t                 oo          ",

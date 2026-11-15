@@ -9,6 +9,8 @@ extends CanvasLayer
 # for example "[happy] Good morning!". The order matches the pictures in each portrait file.
 const EMOTES := ["neutral", "happy", "sad", "surprised", "love", "angry"]
 
+const NineFrame = preload("res://scripts/nine_frame.gd")
+
 var active := false
 var voice_pitch := 1.0        # set by main.gd before start(): each resident talks at their own pitch
 
@@ -19,23 +21,22 @@ var _on_yes: Callable = Callable()
 var _on_no: Callable = Callable()
 var _blip: AudioStreamPlayer
 var _blipped := 0
-var _panel: Panel
+var _panel: Control
 var _speaker: Label
 var _text: Label
 var _choice: Label
 var _portrait: Sprite2D        # the speaker's face; the art file holds six expressions side by side
 var _portrait_back: ColorRect
+var _portrait_frame: Control
 var _current := ""            # the line being shown, without its expression tag
 
 
 func _ready() -> void:
 	layer = 10
-	_panel = Panel.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.05, 0.07, 0.15, 0.92)
-	sb.border_color = Color("7fd4ff")
-	sb.set_border_width_all(1)
-	_panel.add_theme_stylebox_override("panel", sb)
+	# The box is drawn from art/ui_dialogue.png (see scripts/nine_frame.gd).
+	var box = NineFrame.new()
+	box.tex = load("res://art/ui_dialogue.png")
+	_panel = box
 	_panel.position = Vector2(8, 104)
 	_panel.size = Vector2(304, 72)
 	add_child(_panel)
@@ -53,6 +54,14 @@ func _ready() -> void:
 	_portrait.position = Vector2(4, 4)
 	_portrait.visible = false
 	_panel.add_child(_portrait)
+	var border = NineFrame.new()
+	border.tex = load("res://art/ui_portrait_frame.png")
+	border.corner = 4.0
+	_portrait_frame = border
+	_portrait_frame.position = Vector2(2, 2)
+	_portrait_frame.size = Vector2(68, 68)
+	_portrait_frame.visible = false
+	_panel.add_child(_portrait_frame)
 
 	_speaker = _make_label(Vector2(6, 2), Vector2(292, 11), Color("7fd4ff"))
 	_text = _make_label(Vector2(6, 14), Vector2(292, 44), Color.WHITE)
@@ -88,6 +97,7 @@ func start(speaker: String, lines: Array, on_yes: Callable = Callable(), yes_tex
 		_portrait.scale = Vector2(fit, fit)
 	_portrait.visible = portrait != null
 	_portrait_back.visible = portrait != null
+	_portrait_frame.visible = portrait != null
 	_speaker.position.x = left
 	_text.position.x = left
 	_text.size = Vector2(298.0 - left, 44)

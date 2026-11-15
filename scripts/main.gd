@@ -1,5 +1,6 @@
 extends Node2D
-# Echo Landing - milestone 16: environment pack v1 (hand-made tiles, effects, ore and ship at double detail).
+# Echo Landing - milestone 17: Sara's hologram pads, a kitchen and dining room, residents that look busy,
+# menus drawn from art files, and music.
 #   Cave creatures:            scripts/enemy.gd
 #   Hotbar and menu:           scripts/ui.gd      Items and recipes: scripts/item_data.gd
 # Six connected areas, ten residents, portraits, daily schedules.
@@ -45,6 +46,9 @@ const ORE_PER_BAR := 2
 const JOB_IRON := 5                # what Job asks for in his first request
 const JOB_COPPER := 3
 
+# Which music plays where. Files are audio/music_<name>.ogg, or .wav if there is no .ogg.
+const MUSIC := {"main": "town", "west": "town", "east": "town", "top": "town", "eng": "under", "mine": "under", "tunnels": "under"}
+
 # Bulletin board requests, one per day in rotation.
 const BOARD := [
 	{"who": "Tikka", "item": "copper_bar", "n": 2, "pay": 50, "text": "WANTED: 2 copper bars for rewiring. 50 cr. - Tikka",
@@ -81,6 +85,10 @@ var tint: CanvasModulate           # colours the whole scene by time of day
 var ground_fx: Node2D              # animated overlays under the characters (fire, water, power core)
 var top_fx: Node2D                 # animated overlays over the characters (screens)
 var anim: Array = []               # [sprite, area name, frames per second, starting frame]
+var holos: Array = []              # Sara's hologram sprites (they flicker)
+var music: AudioStreamPlayer
+var music_name := ""
+var music_on := true
 var pops: Array = []               # short effects: [sprite, seconds left, rise speed]
 var items_tex: Texture2D
 var glow_tex: Texture2D
@@ -198,6 +206,7 @@ func _setup_input() -> void:
 	_add_keys("menu", [KEY_TAB, KEY_I])
 	_add_keys("cancel", [KEY_Q, KEY_ESCAPE])
 	_add_keys("new_game", [KEY_F9])
+	_add_keys("music", [KEY_M])
 
 
 func _add_keys(action: String, keys: Array) -> void:
@@ -221,6 +230,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if click != null:
 		if click.pressed:
 			_mouse_button(click.button_index)
+		return
+	if event.is_action_pressed("music"):
+		_toggle_music()
 		return
 	if ui.open:
 		ui.handle_input(event)
@@ -312,7 +324,7 @@ func solid_at(p: Vector2) -> bool:
 	var obj_rows: Array = data["obj"]
 	var orow: String = obj_rows[ty]
 	var och: String = orow[tx]
-	if och != " ":
+	if och != " " and not MapData.OPEN_OBJ.contains(och):
 		return true
 	var here: Dictionary = blocked[current_area]
 	return here.has(Vector2i(tx, ty))
@@ -348,6 +360,8 @@ func _go_to(area_name: String, tile: Vector2i, announce: bool = true) -> void:
 		en.visible = en.alive and en.area == area_name
 	player.position = _feet(tile)
 	player.set_limits(map_pixel_size())
+	var track: String = MUSIC.get(area_name, "town")
+	_play_music(track)
 	if announce:
 		var data: Dictionary = MapData.AREAS[area_name]
 		var title: String = data["title"]
@@ -411,6 +425,13 @@ func _animate() -> void:
 		if a[1] == current_area:
 			var s: Sprite2D = a[0]
 			s.frame = (int(now * float(a[2])) + int(a[3])) % 4
+	# Sara's holograms: see-through, flickering, bobbing a little above the projector pad.
+	for h in holos:
+		var hs: Sprite2D = h
+		var glitch: float = 0.12 if int(now * 11.0) % 23 == 0 else 0.0
+		hs.modulate = Color(0.85, 1.0, 1.0, 0.74 + 0.08 * sin(now * 6.0) - glitch)
+		var lift: float = (3.0 + sin(now * 1.6)) / hs.scale.y
+		hs.offset.y = -(hs.texture.get_height() / 3.0) - lift
 
 
 # Soft glows on lamps, screens, furnaces and relics. They show up most in the evening.
@@ -421,6 +442,7 @@ const GLOWS := {
 	"k": [Color(0.35, 0.8, 1.0), 0.6, -2.0],
 	"a": [Color(0.7, 0.4, 1.0), 0.8, -2.0],
 	"f": [Color(0.3, 1.0, 0.8), 0.7, 2.0],
+	"E": [Color(0.35, 0.8, 1.0), 0.9, -10.0],
 }
 
 
@@ -570,7 +592,12 @@ func _add_resident(who: String, entries: Array) -> void:
 	}
 	things.append(t)
 	var r = ResidentScript.new()
-	r.setup(self, who, load("res://art/npc_%s.png" % id), entries, t)
+	# Hand-made activity frames are optional: art/npc_<id>_act.png
+	var act_tex: Texture2D = null
+	var act_path: String = "res://art/npc_%s_act.png" % id
+	if ResourceLoader.exists(act_path):
+		act_tex = load(act_path)
+	r.setup(self, who, load("res://art/npc_%s.png" % id), entries, t, act_tex)
 	r.visible = false
 	actors.add_child(r)
 	residents.append(r)
@@ -604,6 +631,8 @@ func _add_person(who: String, area_name: String, tile: Vector2i, radius: float) 
 	var frame_h: float = s.texture.get_height() / 3.0
 	s.scale = Vector2(16.0 / frame_w, 16.0 / frame_w)
 	s.offset = Vector2(-frame_w / 2.0, -frame_h)
+	if who == "Sara":
+		holos.append(s)       # a hologram: she hovers over her pad and flickers
 	s.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 16)
 	s.visible = false
 	actors.add_child(s)
@@ -632,7 +661,7 @@ func _npc_walkable(area_name: String, t: Vector2i, goal_set: Dictionary) -> bool
 	var obj_rows: Array = data["obj"]
 	var orow: String = obj_rows[t.y]
 	var och: String = orow[t.x]
-	if och != " ":
+	if och != " " and not MapData.OPEN_OBJ.contains(och):
 		return false
 	var fixed_here: Dictionary = fixed[area_name]
 	if fixed_here.has(t):
@@ -920,6 +949,35 @@ func _setup_sounds() -> void:
 		p.stream = load("res://audio/%s.wav" % sound_name)
 		add_child(p)
 		sounds[sound_name] = p
+	music = AudioStreamPlayer.new()
+	music.volume_db = -16.0
+	add_child(music)
+	music.finished.connect(music.play)      # loop
+
+
+func _play_music(track: String) -> void:
+	if track == music_name:
+		return
+	music_name = track
+	var path: String = "res://audio/music_%s.ogg" % track
+	if not ResourceLoader.exists(path):
+		path = "res://audio/music_%s.wav" % track
+	if not ResourceLoader.exists(path):
+		music.stop()
+		return
+	music.stream = load(path)
+	if music_on:
+		music.play()
+
+
+func _toggle_music() -> void:
+	music_on = not music_on
+	if music_on:
+		music.play()
+		_toast("Music on")
+	else:
+		music.stop()
+		_toast("Music off  (M turns it back on)")
 
 
 func sfx(sound_name: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:

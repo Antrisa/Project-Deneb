@@ -19,6 +19,7 @@ The first time you open it, Godot imports the art and sounds. That takes a few s
 | Pick a hotbar slot | 1 to 8 | Wheel, or click the slot |
 | Menu (inventory, crafting, map, friends) | Tab or I | The "Menu" button |
 | Decline / close | Q or Esc | Right click in conversations; click outside the menu |
+| Music on or off | M | |
 | Wipe the save and start again | F9 | |
 
 The game saves each morning, after you sleep or at midnight.
@@ -34,13 +35,14 @@ The game saves each morning, after you sleep or at midnight.
 | `scripts/enemy.gd` | Cave creatures |
 | `scripts/dialogue_box.gd` | Conversations and portraits |
 | `scripts/ui.gd` | Hotbar and menu |
+| `scripts/nine_frame.gd` | Draws stretchy frames (dialogue box, portrait border) from a 3x3 picture |
 | `scripts/area.gd` | Draws a map |
 | `scripts/npc_data.gd` | Who the residents are and what they say. **Edit dialogue here.** |
 | `scripts/item_data.gd` | Items and crafting recipes |
 | `scripts/map_data.gd` | Maps, positions, schedules. **Generated: do not edit by hand.** |
 | `tools/build.py` | Generates `map_data.gd`, the placeholder art and the sounds |
 | `art/` | All pictures |
-| `audio/` | Sound effects (generated) |
+| `audio/` | Sound effects and music loops (generated placeholders). `music_<name>.ogg` is used in preference to `.wav`. |
 
 ## Changing maps, schedules or generated art
 
@@ -67,6 +69,11 @@ One exception, for `tiles.png` only: when the game gains a new tile, the generat
 | `weapon_*.png` | Pointing right, grip at the left end. |
 | `enemy_*.png`, `*_ore.png` | Two square frames (creatures 16x16, facing left; ore 32x32). |
 | `fx_*.png` | Four square animation frames (currently 32x32), laid over the still tile. |
+| `npc_<name>_act.png` | Optional. What a resident does at their spot: 4 frames across, 3 rows (work, eat, idle), same frame size as their walk sheet. Without it the game fakes it. |
+| `ui_panel.png`, `ui_dialogue.png`, `ui_portrait_frame.png` | 3x3 grids: corners stay sharp, edges and middle stretch. |
+| `ui_slot.png` | Three slots side by side: empty, selected, being moved. |
+| `ui_tab.png` | Two tabs side by side: not chosen, chosen. |
+| `hearts.png` | Two hearts side by side: full, empty. |
 | `wreck.png` | Four frames twice as wide as tall (currently 128x64), wrecked to repaired. |
 
 Keep feet at the bottom centre of each walking frame, and keep backgrounds transparent.

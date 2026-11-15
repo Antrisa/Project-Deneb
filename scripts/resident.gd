@@ -21,11 +21,22 @@ var _settled := false        # standing at their spot (and blocking that tile)
 var _walk_time := 0.0
 var _dir := 0                # column in the sprite sheet: 0 down, 1 up, 2 left, 3 right
 var _foot_offset := Vector2(-8, -32)
+var _base_scale := 1.0
+var _walk_tex: Texture2D
+var _act_tex: Texture2D = null   # optional art/npc_<id>_act.png: 4 frames across; rows are work, eat, idle
+var _facing := 0             # which way they face once they have arrived
+var _act := "idle"           # what they do there: work, eat or idle
+var _idle_time := 0.0
+
+const FACING := {"d": 0, "u": 1, "l": 2, "r": 3}
+const ACT_ROW := {"work": 0, "eat": 1, "idle": 2}
 
 
-func setup(main, person_name: String, tex: Texture2D, entries: Array, entry_thing: Dictionary) -> void:
+func setup(main, person_name: String, tex: Texture2D, entries: Array, entry_thing: Dictionary, activity_tex: Texture2D = null) -> void:
 	world = main
 	who = person_name
+	_walk_tex = tex
+	_act_tex = activity_tex
 	texture = tex
 	hframes = 4              # sheets are 4 directions x 3 walking frames
 	vframes = 3
@@ -34,7 +45,8 @@ func setup(main, person_name: String, tex: Texture2D, entries: Array, entry_thin
 	# the sprite is scaled so a frame is always 16 wide in the world, with the feet at the bottom centre.
 	var frame_w: float = tex.get_width() / 4.0
 	var frame_h: float = tex.get_height() / 3.0
-	scale = Vector2(16.0 / frame_w, 16.0 / frame_w)
+	_base_scale = 16.0 / frame_w
+	scale = Vector2(_base_scale, _base_scale)
 	_foot_offset = Vector2(-frame_w / 2.0, -frame_h)
 	offset = _foot_offset
 	schedule = entries
@@ -68,6 +80,8 @@ func tick(delta: float, minutes: float) -> void:
 		_unsettle()
 		_plan()
 	_move(delta)
+	if _settled:
+		_idle(delta)
 	visible = area == world.current_area
 
 
@@ -152,12 +166,40 @@ func _move(delta: float) -> void:
 func _settle() -> void:
 	_settled = true
 	offset = _foot_offset
-	_dir = 0
-	frame_coords = Vector2i(0, 0)
 	var here: Dictionary = world.blocked[area]
 	here[tile] = true
 	var e: Array = schedule[_entry]
 	thing["radius"] = float(e[4])
+	_facing = int(FACING.get(e[5], 0))
+	_act = e[6]
+	_dir = _facing
+	_idle_time = randf() * 6.0
+	frame_coords = Vector2i(_facing, 0)
+
+
+# What a resident does while standing at their spot.
+# With hand-made activity frames (art/npc_<id>_act.png) those are played.
+# Without them, the resident breathes, leans into their work, nods over their food, or glances about.
+func _idle(delta: float) -> void:
+	_idle_time += delta
+	if _act_tex != null:
+		texture = _act_tex
+		frame_coords = Vector2i(int(_idle_time * 4.0) % 4, int(ACT_ROW.get(_act, 2)))
+		return
+	var look: int = _facing
+	rotation = 0.0
+	offset = _foot_offset
+	scale = Vector2(_base_scale, _base_scale * (1.0 + 0.015 * sin(_idle_time * 2.2)))
+	if _act == "work":
+		rotation = 0.05 * sin(_idle_time * 5.0)
+	elif _act == "eat":
+		if fmod(_idle_time, 1.7) < 0.3:
+			offset = _foot_offset + Vector2(0, 1.0 / _base_scale)
+	elif _facing == 0:
+		var beat: float = fmod(_idle_time, 8.0)
+		if beat > 6.0 and beat < 7.0:
+			look = 2 if int(_idle_time / 8.0) % 2 == 0 else 3
+	frame_coords = Vector2i(look, 0)
 
 
 func _unsettle() -> void:
@@ -165,6 +207,11 @@ func _unsettle() -> void:
 		var here: Dictionary = world.blocked[area]
 		here.erase(tile)
 	_settled = false
+	# Back to the walking sheet, standing straight.
+	texture = _walk_tex
+	rotation = 0.0
+	offset = _foot_offset
+	scale = Vector2(_base_scale, _base_scale)
 	thing["radius"] = 26.0
 
 

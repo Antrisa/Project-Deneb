@@ -400,12 +400,30 @@ for k in range(12):
     w = max(0, 4 - k // 3)
     t.r(7 - w, 13 - k, 8 + w, 13 - k, (112, 96, 90) if k % 3 else (132, 114, 104)).p(8 + w, 13 - k, (78, 66, 64))
 t.r(4, 14, 11, 14, (78, 66, 64)).outline()
+# ---- added after the environment pack. In the hand-made tiles.png these are placeholders in new slots.
+OPEN_OBJ = "Eh"          # objects you can walk over: the hologram pad and stools
+t = Tile("o", "E").ell(7.5, 11, 6.5, 3.6, (40, 56, 86)).ell(7.5, 11, 5.2, 2.6, (70, 190, 240)).ell(7.5, 11, 3.2, 1.4, (214, 248, 255))
+t.r(5, 13, 10, 14, (60, 70, 92)).ps([(2, 11), (13, 11)], (120, 230, 255)).outline()
+t = Tile("o", "d").r(0, 3, 15, 10, (176, 128, 84)).r(0, 3, 15, 3, (212, 166, 118)).r(0, 11, 15, 12, (126, 88, 58)).r(1, 13, 2, 14, (96, 66, 44)).r(13, 13, 14, 14, (96, 66, 44))
+t.ell(4.5, 6.5, 2.5, 1.6, (244, 244, 246)).ell(4.5, 6.5, 1.3, 0.8, (214, 120, 70)).ell(11, 7, 2.5, 1.6, (244, 244, 246)).ps([(10, 7), (11, 6)], (110, 180, 100)).r(7, 5, 8, 6, (120, 190, 230))
+t.r(0, 2, 15, 2, OUTLINE).r(0, 13, 0, 13, OUTLINE)
+t = Tile("o", "h").ell(7.5, 9, 4.2, 2.3, (204, 112, 72)).ell(7, 8.4, 3, 1.3, (232, 146, 100)).r(5, 11, 5, 14, (110, 70, 50)).r(10, 11, 10, 14, (110, 70, 50)).outline()
+t = Tile("o", "V").r(1, 3, 14, 14, (150, 156, 168)).r(1, 3, 14, 6, (92, 98, 112)).ell(5, 4.6, 2.2, 1.1, (244, 128, 54)).ell(10.5, 4.6, 2.2, 1.1, (56, 60, 72))
+t.r(3, 8, 12, 12, (58, 64, 78)).r(5, 9, 10, 11, (255, 176, 80)).ps([(3, 7), (6, 7), (9, 7), (12, 7)], (230, 232, 238)).r(1, 13, 14, 14, (110, 116, 130)).r(3, 0, 7, 2, (196, 202, 212)).r(3, 0, 7, 0, (230, 234, 240)).outline()
+t = Tile("o", "W").r(0, 3, 15, 9, (176, 182, 194)).r(0, 3, 15, 3, (214, 220, 230)).r(3, 5, 12, 8, (86, 150, 204)).r(3, 5, 12, 5, (60, 110, 160)).r(7, 0, 8, 4, (214, 220, 230)).r(8, 0, 10, 1, (214, 220, 230))
+t.r(0, 10, 15, 14, (128, 134, 150)).r(7, 11, 7, 14, (100, 106, 122)).r(0, 2, 15, 2, OUTLINE).r(0, 15, 15, 15, OUTLINE)
+t = Tile("o", "R", tall=True).grad(2, -10, 13, 14, (226, 232, 238), (190, 198, 208)).r(2, -10, 13, -10, (246, 250, 252)).r(12, -9, 13, 14, (164, 172, 184)).r(2, -1, 13, -1, (150, 158, 172))
+t.r(10, -6, 10, -3, (120, 128, 142)).r(10, 2, 10, 6, (120, 128, 142)).ps([(5, -6)], (230, 90, 80)).ps([(7, -4)], (240, 200, 90)).r(2, 14, 13, 14, (140, 148, 162)).outline()
+t = Tile("o", "m").r(1, 4, 14, 10, (196, 202, 212)).r(1, 4, 14, 4, (228, 232, 238)).r(1, 11, 14, 11, (140, 146, 160)).r(2, 12, 3, 14, (120, 126, 140)).r(12, 12, 13, 14, (120, 126, 140))
+t.ell(5, 6.5, 3, 1.7, (214, 160, 90)).ps([(4, 6), (6, 6)], (240, 200, 140)).ps([(10, 6), (11, 7), (12, 6)], (110, 180, 100)).r(9, 9, 12, 9, (220, 224, 232)).outline()
+t = Tile("o", "I").r(3, 0, 12, 15, (226, 206, 170)).r(3, 0, 4, 15, (248, 236, 208)).r(11, 0, 12, 15, (176, 142, 108)).r(2, 0, 2, 15, OUTLINE).r(13, 0, 13, 15, OUTLINE).ps([(6, 3), (7, 3)], (240, 180, 72)).ps([(8, 10)], (110, 160, 240))
 T.save(art("tiles.png"))
 
 # When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
 #  - slots the artist left empty (tiles added to the game since the art was made), and
 #  - the objects named here, whose hand-made versions did not fit how the game uses them.
 KEEP_GENERATED = ["o", "C"]      # couch; counter (must join up side by side)
+CLEAN_STRAYS = ["l"]             # hand-made objects with stray specks beside them: keep only the main shape
 
 
 def patch_hand_tiles():
@@ -430,6 +448,35 @@ def patch_hand_tiles():
             if sheet_img.crop(box).tobytes() != piece.tobytes():
                 sheet_img.paste(piece, box[:2])
                 changed.append(idx)
+    # Stray specks beside an object (pixels that bled in from the neighbouring picture) are removed.
+    for ch in CLEAN_STRAYS:
+        idx = TILE_OBJ[ch]
+        box = (idx * cell, 0, idx * cell + cell, 2 * cell)
+        part = sheet_img.crop(box)
+        px = part.load()
+        seen_px, comps = set(), []
+        for y in range(part.height):
+            for x in range(part.width):
+                if px[x, y][3] > 0 and (x, y) not in seen_px:
+                    stack, comp = [(x, y)], []
+                    seen_px.add((x, y))
+                    while stack:
+                        cx, cy = stack.pop()
+                        comp.append((cx, cy))
+                        for dx in (-1, 0, 1):
+                            for dy in (-1, 0, 1):
+                                nb = (cx + dx, cy + dy)
+                                if 0 <= nb[0] < part.width and 0 <= nb[1] < part.height and nb not in seen_px and px[nb][3] > 0:
+                                    seen_px.add(nb)
+                                    stack.append(nb)
+                    comps.append(comp)
+        comps.sort(key=len, reverse=True)
+        if len(comps) > 1:
+            for comp in comps[1:]:
+                for (x, y) in comp:
+                    px[x, y] = (0, 0, 0, 0)
+            sheet_img.paste(part, box[:2])
+            changed.append(idx)
     # Floors must cover their whole square. Where a hand-made floor has see-through pixels
     # (the fountain's planted centrepiece, for one), the generated floor goes underneath.
     for ch, base in TILE_FLOOR.items():
@@ -1359,6 +1406,39 @@ for f, c in enumerate([(232, 70, 90), (70, 74, 96)]):
 HE.px(1, 1, (255, 170, 180))
 HE.save(art("hearts.png"))
 
+# ---- menu and dialogue skin. Each of these can be repainted at any size; the game stretches them to fit.
+# ui_panel.png / ui_dialogue.png / ui_portrait_frame.png: a 3x3 grid. Corners stay sharp, edges and middle stretch.
+def nine(name, fill, edge, inner, cell_px=16):
+    im = Img(cell_px * 3, cell_px * 3)
+    n = cell_px * 3
+    if fill:
+        im.rect(0, 0, n - 1, n - 1, fill)
+    for k, c in ((0, edge), (1, inner)):
+        im.rect(k, k, n - 1 - k, k, c); im.rect(k, n - 1 - k, n - 1 - k, n - 1 - k, c)
+        im.rect(k, k, k, n - 1 - k, c); im.rect(n - 1 - k, k, n - 1 - k, n - 1 - k, c)
+    for (x, y) in [(3, 3), (n - 4, 3), (3, n - 4), (n - 4, n - 4)]:
+        im.px(x, y, edge)
+    im.save(art(name))
+
+
+nine("ui_panel.png", (16, 22, 46, 248), (127, 212, 255), (44, 70, 112))
+nine("ui_dialogue.png", (16, 22, 46, 238), (127, 212, 255), (44, 70, 112))
+nine("ui_portrait_frame.png", None, (127, 212, 255), (30, 44, 80), 8)
+# ui_slot.png: three 18x18 pictures side by side: empty slot, selected slot, slot being moved
+US = Img(54, 18)
+for f, c in enumerate([(104, 128, 178), (255, 210, 127), (255, 159, 107)]):
+    o = f * 18
+    US.rect(o, 0, o + 17, 17, (22, 28, 54, 232)); US.rect(o + 1, 1, o + 16, 16, (30, 38, 70, 232))
+    US.rect(o, 0, o + 17, 0, c); US.rect(o, 17, o + 17, 17, c); US.rect(o, 0, o, 17, c); US.rect(o + 17, 0, o + 17, 17, c)
+    if f:
+        US.rect(o + 1, 1, o + 16, 1, dk(c, 0.7)); US.rect(o + 1, 1, o + 1, 16, dk(c, 0.7))
+US.save(art("ui_slot.png"))
+# ui_tab.png: two 24x12 pictures side by side (page tab: not chosen, chosen). The middle third stretches.
+UT = Img(48, 12)
+UT.rect(1, 2, 22, 11, (24, 32, 62, 200)); UT.rect(1, 2, 22, 2, (70, 96, 140)); UT.rect(1, 2, 1, 11, (70, 96, 140)); UT.rect(22, 2, 22, 11, (70, 96, 140))
+UT.rect(24, 0, 47, 11, (42, 78, 116)); UT.rect(24, 0, 47, 0, (127, 212, 255)); UT.rect(24, 0, 24, 11, (127, 212, 255)); UT.rect(47, 0, 47, 11, (127, 212, 255)); UT.rect(25, 1, 46, 1, (90, 150, 200))
+UT.save(art("ui_tab.png"))
+
 SL = Img(32, 16)    # frame 0: sword arc, frame 1: spear thrust. Both drawn pointing right.
 for a in range(-60, 61, 4):
     x = 3 + 9 * math.cos(math.radians(a)); y = 7.5 + 7 * math.sin(math.radians(a))
@@ -1371,6 +1451,53 @@ save_wav("hit", mix(tone(320, 120, 0.09, 0.45, "square", 3.0), noise(0.09, 0.5, 
 save_wav("hurt", tone(240, 100, 0.2, 0.5, "saw", 2.0))
 save_wav("die", mix(noise(0.22, 0.7, 0.3, 5.0, 17), tone(200, 60, 0.22, 0.35, "square", 2.0)))
 save_wav("eat", noise(0.05, 0.6, 0.5, 6.0, 19) + [0.0] * 1200 + noise(0.05, 0.6, 0.5, 6.0, 23) + [0.0] * 1200 + noise(0.06, 0.6, 0.4, 6.0, 29))
+
+# ---- music: simple generated loops, made once. Replace them with real tracks any time
+# (an .ogg file with the same name is used in preference to the .wav).
+def midi(note):
+    names = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+    return 440.0 * 2 ** ((names[note[0]] + 12 * (int(note[1]) + 1) - 69) / 12.0)
+
+
+def render_loop(name, length_s, voices):
+    n = int(RATE * length_s)
+    buf = [0.0] * n
+    for (start, freq, dur, vol, shape, attack, decay) in voices:
+        i0, cnt, ph, step = int(start * RATE), int(dur * RATE), 0.0, 2 * math.pi * freq / RATE
+        for i in range(cnt):
+            ph += step
+            v = math.sin(ph) if shape == "sine" else (2 / math.pi) * math.asin(math.sin(ph))
+            env = min(1.0, i / (attack * RATE + 1)) * math.exp(-decay * i / cnt) * min(1.0, (cnt - i) / (0.03 * RATE))
+            buf[(i0 + i) % n] += v * vol * env
+    peak = max(abs(v) for v in buf) or 1.0
+    save_wav(name, [v / peak * 0.8 for v in buf])
+
+
+if not os.path.exists(os.path.join(AUDIO, "music_town.wav")):
+    beat = 60.0 / 84.0
+    chords = [("C3", "E3", "G3"), ("A2", "C3", "E3"), ("F2", "A2", "C3"), ("G2", "B2", "D3")] * 2
+    tune = ["E4 G4 A4 G4 E4 - D4 -", "C4 E4 A4 - G4 E4 - -", "F4 A4 C5 A4 F4 - A4 -", "G4 B4 D5 B4 G4 - - -",
+            "E4 G4 C5 G4 E5 - D5 -", "C5 A4 E4 - A4 C5 - -", "A4 C5 F5 C5 A4 - G4 -", "G4 D5 B4 G4 D4 - - -"]
+    voices = []
+    for bar, chord in enumerate(chords):
+        t0 = bar * 4 * beat
+        for note in chord:
+            voices.append((t0, midi(note) * 2, 4 * beat, 0.10, "sine", 0.5, 1.0))
+        voices.append((t0, midi(chord[0]), 1.8 * beat, 0.26, "tri", 0.01, 2.2))
+        voices.append((t0 + 2 * beat, midi(chord[0]), 1.8 * beat, 0.2, "tri", 0.01, 2.2))
+        for i, note in enumerate(tune[bar].split()):
+            if note != "-":
+                voices.append((t0 + i * beat / 2, midi(note), 0.9 * beat, 0.17, "tri", 0.005, 3.2))
+    render_loop("music_town", 8 * 4 * beat, voices)
+if not os.path.exists(os.path.join(AUDIO, "music_under.wav")):
+    voices = []
+    for k in range(4):
+        voices.append((k * 6.0, midi("D2"), 6.0, 0.30, "sine", 2.0, 0.3))
+        voices.append((k * 6.0 + 1.5, midi("A2"), 4.5, 0.18, "sine", 1.5, 0.6))
+    for (t0, note) in [(1.0, "D5"), (4.2, "F5"), (8.5, "A5"), (11.0, "E5"), (14.3, "D5"), (17.6, "A4"), (20.4, "F5"), (22.5, "C5")]:
+        voices.append((t0, midi(note), 2.6, 0.09, "sine", 0.01, 4.0))
+        voices.append((t0 + 0.35, midi(note) * 1.5, 2.2, 0.04, "sine", 0.01, 4.0))
+    render_loop("music_under", 24.0, voices)
 
 # ================================================================ maps
 WALK = set(".,fhusmiUDAR")
@@ -1504,11 +1631,11 @@ m.put("o", [(45, 44), (46, 44), (55, 44), (56, 44), (45, 52), (46, 52)])
 m.put("t", [(50, 46), (51, 46), (55, 52), (56, 52)])
 m.put("p", [(41, 41), (63, 44), (41, 56)])
 m.put("S", [(42, 41), (43, 41), (59, 56), (60, 56)])
-# Bram's shop: counter across the middle, Bram behind it
-m.put("C", row(67, range(20, 28)))
-m.put("S", row(71, range(19, 29)))
-m.put("c", [(19, 64)])
-m.put("p", [(28, 64)])
+# Bram's shop: a counter down the middle. Bram stands behind it on the right, facing his customers.
+m.put("I", [(25, y) for y in range(65, 71)])
+m.put("S", [(28, 65), (28, 67), (28, 69), (27, 71), (28, 71)])
+m.put("c", [(19, 71), (20, 71)])
+m.put("p", [(19, 64)])
 # fabrication shop
 m.put("c", [(30, 70), (31, 70), (30, 71), (31, 71)])
 m.put("P", [(35, 71), (36, 71)])
@@ -1524,13 +1651,21 @@ m.put("S", row(41, range(117, 132)) + row(45, [120, 121, 122, 126, 127, 128]) + 
 m.put("t", [(124, 47)])
 m.put("o", [(129, 52), (130, 52)])
 m.put("p", [(131, 53)])
-# mess hall: tables, then the counter with the kitchen behind it
-for y in (68, 72):
-    m.put("t", row(y, [120, 121, 125, 126, 130, 131, 135, 136, 140, 141]))
-m.put("C", row(78, range(117, 145)))
-m.put("H", [(142, 81), (143, 81)])
-m.put("S", [(117, 81), (118, 81)])
-m.put("p", [(117, 64), (145, 64)])
+# mess hall: a kitchen in the top-right corner behind a serving counter (the cooks face the room),
+# and dining tables with stools
+m.put("C", row(68, range(134, 146)))
+m.put("V", [(136, 64), (137, 64)])
+m.put("W", [(139, 64)])
+m.put("R", [(141, 64)])
+m.put("S", [(143, 64), (144, 64)])
+m.put("m", [(140, 66)])
+m.put("H", [(145, 65), (145, 66)])
+SEATS = [120, 121, 125, 126, 130, 131, 135, 136, 140, 141]
+for ty in (71, 76):
+    m.put("d", row(ty, SEATS))
+    m.put("h", row(ty - 1, SEATS) + row(ty + 1, SEATS))
+m.put("p", [(117, 64), (117, 81), (145, 81)])
+m.put("E", [(90, 65)])                      # Sara's hologram pad by the fountain
 # lifts: north goes up to the Survey Level, south goes down to Engineering
 m.warp("U", [(90, 20)], "top", 20, 14)
 m.warp("D", [(90, 100)], "eng", 34, 8)
@@ -1603,6 +1738,7 @@ w.put("L", [(43, 77), (53, 77), (63, 77), (79, 77)])
 w.put("x", [(38, 75), (39, 75), (48, 72), (58, 74), (59, 74), (70, 72), (74, 76), (75, 76)])
 w.put("e", [(40, 69), (50, 76), (57, 69), (68, 68), (72, 74)])
 w.put("c", [(77, 66), (78, 66)])
+w.put("E", [(26, 70), (48, 35)])
 w.warp("A", [(97, y) for y in range(38, 43)], "main", 18, 60)
 
 # ---------------------------------------------------------------- agri dome (east map)
@@ -1669,6 +1805,7 @@ t.put("c", [(11, 15), (32, 14), (33, 14), (32, 15), (38, 18)])
 t.put("e", [(14, 16), (29, 17)])
 t.put("P", [(25, 15)])
 t.put("L", [(37, 13), (38, 13)])
+t.put("E", [(19, 3)])
 t.warp("D", [(20, 16)], "main", 90, 25)
 
 # ---------------------------------------------------------------- engineering level
@@ -1750,26 +1887,37 @@ PEOPLE = [
 
 # Daily schedules: "HH:MM", area, tile x, tile y, talk radius (36 = behind a counter).
 # Before their first time of the day, a resident is at their last entry (where they spent the night).
+# Each entry: time they set off, area, tile x, tile y, talk radius (36 = behind a counter),
+# the way they face once there (d, u, l, r) and what they do there (work, eat, idle).
+# Times are when they set off, so people far away leave earlier to reach dinner by 18:00.
+# Lunch is only Job, Freya and Zaas. Dinner at 18:00 is everyone.
 SCHEDULES_RAW = {
-    # Times are when they set off, so people far away leave earlier to reach dinner by 18:00.
-    # Lunch is only Job, Freya and Zaas. Dinner at 18:00 is everyone.
-    "Jasper": [("06:00", "main", 124, 79, 36), ("14:30", "main", 47, 48, 26), ("16:30", "main", 124, 79, 36), ("21:30", "main", 26, 52, 26)],
-    "Evarra": [("06:00", "main", 134, 79, 36), ("10:00", "east", 38, 33, 26), ("13:00", "main", 134, 79, 36), ("20:30", "main", 29, 52, 26)],
-    "Bram": [("07:00", "main", 23, 68, 36), ("17:25", "main", 123, 69, 26), ("19:15", "main", 52, 50, 26), ("22:00", "main", 17, 52, 26)],
-    "Tikka": [("06:00", "eng", 39, 4, 26), ("17:30", "main", 130, 70, 26), ("19:15", "main", 34, 68, 26), ("21:30", "eng", 39, 4, 26)],
-    "Freya": [("06:00", "eng", 44, 5, 26), ("11:00", "eng", 38, 19, 26), ("12:30", "main", 133, 69, 26), ("13:30", "eng", 38, 19, 26),
-              ("16:30", "eng", 44, 5, 26), ("17:30", "main", 133, 69, 26), ("19:15", "main", 58, 47, 26), ("21:30", "main", 20, 52, 26)],
-    "Job": [("06:30", "mine", 21, 8, 26), ("12:00", "main", 120, 69, 26), ("13:30", "mine", 21, 8, 26), ("17:15", "main", 120, 69, 26), ("19:15", "main", 158, 53, 26)],
-    "Zaas": [("07:00", "mine", 5, 5, 26), ("12:15", "main", 137, 69, 26), ("13:45", "mine", 5, 5, 26), ("17:05", "main", 137, 69, 26),
-             ("19:15", "top", 35, 3, 26), ("23:00", "main", 162, 53, 26)],
-    "Tar'Besh": [("06:00", "top", 6, 5, 26), ("17:35", "main", 140, 69, 26), ("19:15", "top", 31, 6, 26), ("23:00", "top", 3, 15, 26)],
-    "Vzz'ket": [("06:00", "mine", 24, 19, 26), ("17:15", "main", 127, 69, 26), ("19:00", "mine", 24, 19, 26), ("22:00", "main", 86, 70, 26), ("23:30", "mine", 24, 19, 26)],
+    "Jasper": [("06:00", "main", 137, 67, 36, "d", "work"), ("14:30", "main", 47, 48, 26, "d", "idle"), ("16:30", "main", 137, 67, 36, "d", "work"),
+               ("21:30", "main", 26, 52, 26, "d", "idle")],
+    "Evarra": [("06:00", "main", 142, 67, 36, "d", "work"), ("10:00", "east", 38, 33, 26, "u", "work"), ("13:00", "main", 142, 67, 36, "d", "work"),
+               ("20:30", "main", 29, 52, 26, "d", "idle")],
+    "Bram": [("07:00", "main", 26, 68, 36, "l", "work"), ("17:35", "main", 125, 70, 26, "d", "eat"), ("19:15", "main", 52, 50, 26, "d", "idle"),
+             ("22:00", "main", 17, 52, 26, "d", "idle")],
+    "Tikka": [("06:00", "eng", 39, 4, 26, "d", "work"), ("17:30", "main", 135, 70, 26, "d", "eat"), ("19:15", "main", 34, 68, 26, "d", "work"),
+              ("21:30", "eng", 39, 4, 26, "d", "idle")],
+    "Freya": [("06:00", "eng", 44, 5, 26, "r", "work"), ("11:00", "eng", 38, 19, 26, "r", "work"), ("12:30", "main", 140, 70, 26, "d", "eat"),
+              ("13:30", "eng", 38, 19, 26, "r", "work"), ("16:30", "eng", 44, 5, 26, "r", "work"), ("17:30", "main", 140, 70, 26, "d", "eat"),
+              ("19:15", "main", 58, 47, 26, "d", "idle"), ("21:30", "main", 20, 52, 26, "d", "idle")],
+    "Job": [("06:30", "mine", 21, 8, 26, "d", "work"), ("12:00", "main", 120, 70, 26, "d", "eat"), ("13:30", "mine", 21, 8, 26, "d", "work"),
+            ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 158, 53, 26, "d", "idle")],
+    "Zaas": [("07:00", "mine", 5, 5, 26, "l", "work"), ("12:15", "main", 126, 75, 26, "d", "eat"), ("13:45", "mine", 5, 5, 26, "l", "work"),
+             ("17:05", "main", 126, 75, 26, "d", "eat"), ("19:15", "top", 35, 3, 26, "r", "idle"), ("23:00", "main", 162, 53, 26, "d", "idle")],
+    "Tar'Besh": [("06:00", "top", 6, 5, 26, "d", "work"), ("17:35", "main", 131, 75, 26, "d", "eat"), ("19:15", "top", 31, 6, 26, "d", "idle"),
+                 ("23:00", "top", 3, 15, 26, "d", "idle")],
+    "Vzz'ket": [("06:00", "mine", 24, 19, 26, "d", "idle"), ("17:15", "main", 130, 70, 26, "d", "eat"), ("19:00", "mine", 24, 19, 26, "d", "idle"),
+                ("22:00", "main", 86, 70, 26, "d", "idle"), ("23:30", "mine", 24, 19, 26, "d", "idle")],
 }
 SCHEDULES = {}
 for who, rows in SCHEDULES_RAW.items():
     out = []
-    for (hm, a, x, y, r) in rows:
-        out.append([int(hm[:2]) * 60 + int(hm[3:]), a, x, y, r])
+    for (hm, a, x, y, r, face_, act) in rows:
+        assert face_ in "dulr" and act in ("work", "eat", "idle"), (who, face_, act)
+        out.append([int(hm[:2]) * 60 + int(hm[3:]), a, x, y, r, face_, act])
     assert out == sorted(out, key=lambda e: e[0]), who
     SCHEDULES[who] = out
 
@@ -1826,12 +1974,12 @@ WRECK = ["eng", 42 * 16, 20 * 16]      # bottom-centre of the wreck sprite
 # ---------------------------------------------------------------- checks
 occupied = {(p[1], p[2], p[3]) for p in PEOPLE} | {(n[1], n[2], n[3]) for n in NODES}
 for (a, x, y) in occupied:
-    assert A[a].floor[y][x] in WALK and A[a].obj[y][x] == " ", ("person on bad tile", a, x, y)
+    assert A[a].floor[y][x] in WALK and (A[a].obj[y][x] == " " or A[a].obj[y][x] in OPEN_OBJ), ("person on bad tile", a, x, y)
 
 
 def walkable(a, x, y):
     ar = A[a]
-    return 0 <= x < ar.w and 0 <= y < ar.h and ar.floor[y][x] in WALK and ar.obj[y][x] == " " and (a, x, y) not in occupied
+    return 0 <= x < ar.w and 0 <= y < ar.h and ar.floor[y][x] in WALK and (ar.obj[y][x] == " " or ar.obj[y][x] in OPEN_OBJ) and (a, x, y) not in occupied
 
 
 for ar in A.values():
@@ -1856,12 +2004,13 @@ for (kind, a, x, y) in ENEMIES:
     assert (a, x, y) in seen, ("creature on a bad tile", kind, a, x, y)
 spots = {}
 for who, rows in SCHEDULES.items():
-    for (t_, a, x, y, r) in rows:
+    for (t_, a, x, y, r, face_, act) in rows:
         assert (a, x, y) in seen, ("schedule spot not reachable", who, a, x, y)
         assert not any(w[0] == x and w[1] == y for w in A[a].warps), ("schedule spot on a pad", who)
         assert spots.setdefault((a, x, y), who) == who, ("two residents share a spot", who, spots[(a, x, y)], a, x, y)
         if r > 26:
-            assert "C" in (A[a].obj[y - 1][x], A[a].obj[y + 1][x]), ("radius 36 but no counter beside them", who, a, x, y)
+            around = (A[a].obj[y - 1][x], A[a].obj[y + 1][x], A[a].obj[y][x - 1], A[a].obj[y][x + 1])
+            assert "C" in around or "I" in around, ("radius 36 but no counter beside them", who, a, x, y)
 NEAR = ((1, 0), (-1, 0), (0, 1), (0, -1), (0, 2), (0, -2))
 for (name, a, x, y, r) in PEOPLE:
     assert any((a, x + dx, y + dy) in seen for dx, dy in NEAR), "cannot reach " + name + " in " + a
@@ -1929,6 +2078,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const TILE_VARIANTS = " + json.dumps(TILE_VARIANTS) + "\n")
     f.write("const TALL = " + json.dumps(TALL) + "\n")
     f.write("const TILE_COLUMNS = " + json.dumps(TILE_COLUMNS) + "\n")
+    f.write("const OPEN_OBJ = " + json.dumps(OPEN_OBJ) + "\n")
     f.write("const START = " + json.dumps(START) + "\n")
     f.write("const WRECK = " + json.dumps(WRECK) + "\n")
     f.write("const PEOPLE = " + json.dumps(PEOPLE) + "\n")
