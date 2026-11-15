@@ -140,12 +140,29 @@ func _blend(dst: Image, src: Image, sx: int, sy: int, w: int, h: int, dx: int, d
 		dst.blend_rect(src, Rect2i(sx, sy, w, h), Vector2i(dx, dy))
 
 
-# Composite the same baked frames used by the offline editor. No independent body shifts:
-# the shared waist overlap, shoulder pivots and hip pivots are already in the layers.
+# How far the head (face and hair) is lowered so it sits on the shoulders, and the last row of
+# the head in each pose (below it is neck, which goes behind the collar).
+const HEAD_DROP := 3
+const CHIN_ROW := [25, 24, 24]
+
+
+# The full walk sheet: 4 directions across, 3 rows (standing, step A, step B), 32x64 frames.
+# The arm and leg movement is already drawn into the layers; this stacks them.
 func sheet(look_in: Dictionary) -> ImageTexture:
 	var look: Dictionary = tidy(look_in)
+	var bottoms: Image = _tinted("bottoms", look)
+	var tops: Image = _tinted("tops", look)
+	var faces: Image = _tinted("faces", look)
+	var hair: Image = _tinted("hair", look)
 	var out: Image = Image.create_empty(128, 192, false, Image.FORMAT_RGBA8)
-	for k in LAYERS:
-		var layer: Image = _tinted(k, look)
-		out.blend_rect(layer, Rect2i(0, 0, 128, 192), Vector2i.ZERO)
+	out.blend_rect(bottoms, Rect2i(0, 0, 128, 192), Vector2i.ZERO)
+	for pose in 3:
+		var y: int = pose * 64
+		var chin: int = CHIN_ROW[pose]
+		# Face and neck first, then the top so the collar covers the neck,
+		# then the head again so the chin sits over the collar, then the hair.
+		out.blend_rect(faces, Rect2i(0, y, 128, 64 - HEAD_DROP), Vector2i(0, y + HEAD_DROP))
+		out.blend_rect(tops, Rect2i(0, y, 128, 64), Vector2i(0, y))
+		out.blend_rect(faces, Rect2i(0, y, 128, chin + 1), Vector2i(0, y + HEAD_DROP))
+		out.blend_rect(hair, Rect2i(0, y, 128, 64 - HEAD_DROP), Vector2i(0, y + HEAD_DROP))
 	return ImageTexture.create_from_image(out)
