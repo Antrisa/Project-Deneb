@@ -8,12 +8,14 @@ const MapData = preload("res://scripts/map_data.gd")
 var data: Dictionary
 var tiles_tex: Texture2D
 var overhead := false      # true for the layer drawn in front of characters (tops of tall objects)
+var cell := 16             # size of one tile in tiles.png (16, or 32 for double-detail art)
 
 
 func setup(area_data: Dictionary, tex: Texture2D, is_overhead: bool = false) -> void:
 	data = area_data
 	tiles_tex = tex
 	overhead = is_overhead
+	cell = tex.get_width() / int(MapData.TILE_COLUMNS)
 
 
 func _draw() -> void:
@@ -42,7 +44,7 @@ func _draw() -> void:
 				var index: int = MapData.TILE_FLOOR[fch]
 				var n: int = MapData.TILE_VARIANTS.get(fch, 1)
 				if n > 1:
-					var pick: int = absi((x * 73856093) ^ (y * 19349663)) % (n * 3)
+					var pick: int = absi((x * 73856093) ^ (y * 19349663)) % (n * 6)
 					if pick < n:
 						index += pick
 				_tile(index, x, y)
@@ -62,10 +64,11 @@ func _draw() -> void:
 		draw_rect(r.grow(-1.0), Color("e6be3c"), false, 1.0)
 
 
-# tiles.png columns are 16 wide and 32 tall: the tile is the lower half, the top of a tall object the upper half.
+# Each column of tiles.png is one cell wide and two cells tall: the tile is the lower half,
+# the top of a tall object the upper half. Whatever size the art is, a tile is drawn 16x16 in the world.
 func _tile(index: int, x: int, y: int) -> void:
-	draw_texture_rect_region(tiles_tex, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2(index * TILE, TILE, TILE, TILE))
+	draw_texture_rect_region(tiles_tex, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2(index * cell, cell, cell, cell))
 
 
 func _top(index: int, x: int, y: int) -> void:
-	draw_texture_rect_region(tiles_tex, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2(index * TILE, 0, TILE, TILE))
+	draw_texture_rect_region(tiles_tex, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2(index * cell, 0, cell, cell))

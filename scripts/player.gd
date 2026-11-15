@@ -1,6 +1,8 @@
 extends Node2D
 # The player. Position is the point between the feet.
 
+const MapData = preload("res://scripts/map_data.gd")
+
 const SPEED := 70.0
 const CARRY_SPEED := 50.0
 
@@ -44,8 +46,11 @@ func _ready() -> void:
 	# The crate shown over the head while carrying (crate tile from tiles.png).
 	_crate = Sprite2D.new()
 	_crate.texture = load("res://art/tiles.png")
+	var cell: int = _crate.texture.get_width() / int(MapData.TILE_COLUMNS)
+	var crate_index: int = MapData.TILE_OBJ["c"]
 	_crate.region_enabled = true
-	_crate.region_rect = Rect2(6 * 16, 0, 16, 16)
+	_crate.region_rect = Rect2(crate_index * cell, cell, cell, cell)
+	_crate.scale = Vector2(16.0 / cell, 16.0 / cell)
 	_crate.centered = false
 	_crate.position = Vector2(-8, -44)
 	_crate.visible = false

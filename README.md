@@ -56,16 +56,18 @@ It checks that every room, resident spot and exit can be reached, then rewrites 
 
 **Files listed in `art/hand_edited.txt` are never overwritten by the generator.** When you paint over a generated file, add its name to that list.
 
+One exception, for `tiles.png` only: when the game gains a new tile, the generator fills that empty slot with placeholder art, and it keeps its own couch and shop counter (see `KEEP_GENERATED` in `tools/build.py`). It also puts a floor under any floor tile with see-through pixels. This needs Pillow (`pip install pillow`).
+
 | Files | Layout |
 |---|---|
 | `npc_*.png`, `player.png` | Walk sheet: 4 columns (down, up, left, right) by 3 rows (standing, step A, step B). Any frame size with a 1:2 shape works; the game scales a frame to 16 wide. The NPC sheets are 32x64 per frame; the player is still 16x32. |
 | `portrait_*.png` | 6 square pictures in a row: neutral, happy, sad, surprised, love, angry. Any size; shown in a 64x64 box. Currently 128x128 each. |
-| `tiles.png` | Columns 16 wide and 32 tall. The lower half is the tile; the upper half is the top of tall objects. |
+| `tiles.png` | 110 columns, each one cell wide and two cells tall (currently 32x64). The lower half is the tile; the upper half is the top of tall objects. A tile is always drawn 16x16 in the world. Slot names are in `tools/build.py`. |
 | `items.png` | 16x16 icons in a row; the order must match `icon` in `scripts/item_data.gd`. |
 | `weapon_*.png` | Pointing right, grip at the left end. |
-| `enemy_*.png`, `*_ore.png` | Two 16x16 frames; creatures face left. |
-| `fx_*.png` | Four 16x16 animation frames. |
-| `wreck.png` | Four 64x32 frames, wrecked to repaired. |
+| `enemy_*.png`, `*_ore.png` | Two square frames (creatures 16x16, facing left; ore 32x32). |
+| `fx_*.png` | Four square animation frames (currently 32x32), laid over the still tile. |
+| `wreck.png` | Four frames twice as wide as tall (currently 128x64), wrecked to repaired. |
 
 Keep feet at the bottom centre of each walking frame, and keep backgrounds transparent.
 
@@ -75,6 +77,7 @@ To give a line of dialogue an expression, start it with `[happy]`, `[sad]`, `[su
 
 - Game code, maps, sounds and placeholder art: generated with Claude.
 - NPC walk sheets and portraits: Character Pack v1, supplied by Zachary.
+- Tiles, furniture, animated effects, ore and the ship: Environment Pack v1, supplied by Zachary.
 - Design, lore and direction: Zachary.
 
 Design notes, decisions and the roadmap live in the "Project Deneb" project on claude.ai.

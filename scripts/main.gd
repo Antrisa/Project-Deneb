@@ -1,5 +1,5 @@
 extends Node2D
-# Echo Landing - milestone 15: character pack v1 (hand-made NPC walk sheets and portraits at double detail).
+# Echo Landing - milestone 16: environment pack v1 (hand-made tiles, effects, ore and ship at double detail).
 #   Cave creatures:            scripts/enemy.gd
 #   Hotbar and menu:           scripts/ui.gd      Items and recipes: scripts/item_data.gd
 # Six connected areas, ten residents, portraits, daily schedules.
@@ -391,6 +391,8 @@ func _add_fx_sprite(info: Array, area_name: String, x: int, y: int) -> void:
 	s.texture = load(info[0])
 	s.hframes = 4
 	s.centered = false
+	var fit: float = 16.0 / (s.texture.get_width() / 4.0)
+	s.scale = Vector2(fit, fit)
 	s.position = Vector2(x * TILE, (y - 1 if on_top else y) * TILE)
 	s.visible = false
 	if on_top:
@@ -518,7 +520,7 @@ func _spawn_things() -> void:
 		vein.texture = load("res://art/%s.png" % item)
 		vein.hframes = 2
 		vein.centered = false
-		vein.offset = Vector2(-8, -16)
+		_fit_sprite(vein, 2, 1, 16.0)
 		vein.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 16)
 		vein.visible = false
 		actors.add_child(vein)
@@ -539,7 +541,7 @@ func _spawn_things() -> void:
 	wreck_sprite.texture = load("res://art/wreck.png")
 	wreck_sprite.hframes = 4
 	wreck_sprite.centered = false
-	wreck_sprite.offset = Vector2(-32, -32)
+	_fit_sprite(wreck_sprite, 4, 1, 64.0)
 	wreck_sprite.position = Vector2(float(wreck[1]), float(wreck[2]))
 	wreck_sprite.visible = false
 	actors.add_child(wreck_sprite)
@@ -581,6 +583,15 @@ func _snap_residents() -> void:
 
 # Someone who stays in one place. One person can appear in several places
 # (Sara's holograms) and shares one state.
+# Art can be drawn at any size. This scales a sprite so one frame is `world_width` wide in the world,
+# and puts its origin at the bottom centre of the frame.
+func _fit_sprite(s: Sprite2D, columns: int, rows: int, world_width: float) -> void:
+	var frame_w: float = s.texture.get_width() / float(columns)
+	var frame_h: float = s.texture.get_height() / float(rows)
+	s.scale = Vector2(world_width / frame_w, world_width / frame_w)
+	s.offset = Vector2(-frame_w / 2.0, -frame_h)
+
+
 func _add_person(who: String, area_name: String, tile: Vector2i, radius: float) -> void:
 	var id: String = _ensure_person(who)
 	var s := Sprite2D.new()

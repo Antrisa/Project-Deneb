@@ -20,3 +20,12 @@ portrait_tarbesh.png
 portrait_tikka.png
 portrait_vzzket.png
 portrait_zaas.png
+tiles.png
+wreck.png
+iron_ore.png
+copper_ore.png
+fx_water.png
+fx_console.png
+fx_core.png
+fx_display.png
+fx_furnace.png

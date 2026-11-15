@@ -73,7 +73,8 @@ def art(name):
 # Floors can have several variations; the game picks one per tile so big areas don't look like a grid.
 import random
 
-T = Img(16 * 110, 32)
+TILE_COLUMNS = 110
+T = Img(16 * TILE_COLUMNS, 32)
 TILE_FLOOR, TILE_OBJ, TILE_VARIANTS = {}, {}, {}
 SOLID_FLOOR = "~"          # '~' is empty space: solid, never drawn
 WALL_FACES = ""            # floor tiles that are front faces (the floor below them gets a shadow)
@@ -117,11 +118,12 @@ class Tile:
         s.o = _next[0] * 16
         d = TILE_FLOOR if layer == "f" else TILE_OBJ
         if ch in d:
-            assert d[ch] + TILE_VARIANTS[ch] == _next[0], "variations of a tile must be defined one after another: " + ch
+            assert layer == "f" and d[ch] + TILE_VARIANTS[ch] == _next[0], "variations of a floor must be defined one after another: " + ch
             TILE_VARIANTS[ch] += 1
         else:
             d[ch] = _next[0]
-            TILE_VARIANTS[ch] = 1
+            if layer == "f":
+                TILE_VARIANTS[ch] = 1
             if layer == "f" and solid:
                 SOLID_FLOOR += ch
             if face:
@@ -399,6 +401,54 @@ for k in range(12):
     t.r(7 - w, 13 - k, 8 + w, 13 - k, (112, 96, 90) if k % 3 else (132, 114, 104)).p(8 + w, 13 - k, (78, 66, 64))
 t.r(4, 14, 11, 14, (78, 66, 64)).outline()
 T.save(art("tiles.png"))
+
+# When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
+#  - slots the artist left empty (tiles added to the game since the art was made), and
+#  - the objects named here, whose hand-made versions did not fit how the game uses them.
+KEEP_GENERATED = ["o", "C"]      # couch; counter (must join up side by side)
+
+
+def patch_hand_tiles():
+    if "tiles.png" not in HAND_EDITED:
+        return
+    try:
+        from PIL import Image
+    except ImportError:
+        print("note: Pillow is not installed, so new tiles were not added to the hand-made tiles.png")
+        return
+    sheet_img = Image.open(art("tiles.png")).convert("RGBA")
+    cell = sheet_img.width // TILE_COLUMNS
+    gen = Image.new("RGBA", (T.w, T.h))
+    gen.putdata([px for row_ in T.p for px in row_])
+    slots = [(ch, base + v, False) for ch, base in TILE_FLOOR.items() for v in range(TILE_VARIANTS[ch])]
+    slots += [(ch, base, ch in KEEP_GENERATED) for ch, base in TILE_OBJ.items()]
+    changed = []
+    for ch, idx, force in slots:
+        box = (idx * cell, 0, idx * cell + cell, 2 * cell)
+        if force or sheet_img.crop(box).getbbox() is None:
+            piece = gen.crop((idx * 16, 0, idx * 16 + 16, 32)).resize((cell, 2 * cell), Image.NEAREST)
+            if sheet_img.crop(box).tobytes() != piece.tobytes():
+                sheet_img.paste(piece, box[:2])
+                changed.append(idx)
+    # Floors must cover their whole square. Where a hand-made floor has see-through pixels
+    # (the fountain's planted centrepiece, for one), the generated floor goes underneath.
+    for ch, base in TILE_FLOOR.items():
+        for v in range(TILE_VARIANTS[ch]):
+            idx = base + v
+            box = (idx * cell, cell, idx * cell + cell, 2 * cell)
+            part = sheet_img.crop(box)
+            if part.getextrema()[3][0] < 255:
+                under = gen.crop((idx * 16, 16, idx * 16 + 16, 32)).resize((cell, cell), Image.NEAREST)
+                under.alpha_composite(part)
+                if under.tobytes() != part.tobytes():
+                    sheet_img.paste(under, box[:2])
+                    changed.append(idx)
+    if changed:
+        sheet_img.save(art("tiles.png"))
+        print("filled slots in the hand-made tiles.png:", changed)
+
+
+patch_hand_tiles()
 
 import math
 # ================================================================ animated overlays (4 frames of 16x16 each)
@@ -1878,6 +1928,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const WALL_FACES = " + json.dumps(WALL_FACES) + "\n")
     f.write("const TILE_VARIANTS = " + json.dumps(TILE_VARIANTS) + "\n")
     f.write("const TALL = " + json.dumps(TALL) + "\n")
+    f.write("const TILE_COLUMNS = " + json.dumps(TILE_COLUMNS) + "\n")
     f.write("const START = " + json.dumps(START) + "\n")
     f.write("const WRECK = " + json.dumps(WRECK) + "\n")
     f.write("const PEOPLE = " + json.dumps(PEOPLE) + "\n")
@@ -1899,43 +1950,58 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("}\n")
 
 # ---------------------------------------------------------------- previews (for checking only)
+# Pictures of every area, composed from the real files in art/ the way the game draws them.
 if PREV:
     os.makedirs(PREV, exist_ok=True)
+    from PIL import Image
+    tiles_img = Image.open(art("tiles.png")).convert("RGBA")
+    cell = tiles_img.width // TILE_COLUMNS
+
+    def piece(index, upper):
+        return tiles_img.crop((index * cell, 0 if upper else cell, index * cell + cell, cell if upper else 2 * cell))
+
+    def frame(name, cols, rows_, col=0, r=0, wide=1):
+        im = Image.open(art(name)).convert("RGBA")
+        fw, fh = im.width // cols, im.height // rows_
+        f_ = im.crop((col * fw, r * fh, col * fw + fw, r * fh + fh))
+        return f_.resize((cell * wide, cell * wide * fh // fw), Image.NEAREST)
+
     ids = {"Sara": "sara", "Tar'Besh": "tarbesh", "Bram": "bram", "Jasper": "jasper", "Evarra": "evarra",
            "Tikka": "tikka", "Freya": "freya", "Job": "job", "Zaas": "zaas", "Vzz'ket": "vzzket"}
+    fx_obj = {"k": ("fx_console.png", True), "K": ("fx_display.png", True), "F": ("fx_furnace.png", False), "G": ("fx_core.png", False)}
     for k, ar in A.items():
-        im = Img(ar.w * 16, ar.h * 16, (11, 16, 38, 255))
+        im = Image.new("RGBA", (ar.w * cell, ar.h * cell), (11, 16, 38, 255))
         for y in range(ar.h):
             for x in range(ar.w):
                 fch, och = ar.floor[y][x], ar.obj[y][x]
                 if fch in TILE_FLOOR:
                     nv = TILE_VARIANTS[fch]
-                    var = abs((x * 73856093) ^ (y * 19349663)) % (nv * 3)
-                    var = var if var < nv else 0
-                    im.blit(T, x * 16, y * 16, (TILE_FLOOR[fch] + var) * 16, 16, 16, 16)
-                if y > 0 and fch in WALK and ar.floor[y - 1][x] in WALL_FACES:
-                    for sy in range(4):
-                        for sx in range(16):
-                            c = im.p[y * 16 + sy][x * 16 + sx]
-                            im.px(x * 16 + sx, y * 16 + sy, (int(c[0] * 0.82), int(c[1] * 0.82), int(c[2] * 0.82)))
+                    var = abs((x * 73856093) ^ (y * 19349663)) % (nv * 6)
+                    im.alpha_composite(piece(TILE_FLOOR[fch] + (var if var < nv else 0), False), (x * cell, y * cell))
+                    if fch == "O":
+                        im.alpha_composite(frame("fx_water.png", 4, 1), (x * cell, y * cell))
                 if och in TILE_OBJ:
-                    im.blit(T, x * 16, y * 16, TILE_OBJ[och] * 16, 16, 16, 16)
+                    im.alpha_composite(piece(TILE_OBJ[och], False), (x * cell, y * cell))
+                    if och in fx_obj and not fx_obj[och][1]:
+                        im.alpha_composite(frame(fx_obj[och][0], 4, 1), (x * cell, y * cell))
+        for (item, a, x, y) in NODES:
+            if a == k:
+                im.alpha_composite(frame(item + ".png", 2, 1), (x * cell, y * cell))
         first = [[who, rows[0][1], rows[0][2], rows[0][3], 0] for who, rows in SCHEDULES.items()]
         for (name, a, x, y, r) in PEOPLE + first:
             if a == k:
-                im.blit(SPR[ids[name]], x * 16, y * 16 - 16, 0, 0, 16, 32)
+                im.alpha_composite(frame("npc_%s.png" % ids[name], 4, 3), (x * cell, (y - 1) * cell))
         if WRECK[0] == k:
-            im.blit(W, WRECK[1] - 32, WRECK[2] - 32, 0, 0, 64, 32)
+            w_ = frame("wreck.png", 4, 1, wide=4)
+            im.alpha_composite(w_, (WRECK[1] * cell // 16 - w_.width // 2, WRECK[2] * cell // 16 - w_.height))
         if START[0] == k:
-            im.blit(P, START[1] * 16, START[2] * 16 - 16, 0, 0, 16, 32)
+            im.alpha_composite(frame("player.png", 4, 3), (START[1] * cell, (START[2] - 1) * cell))
         for y in range(1, ar.h):
             for x in range(ar.w):
                 for ch, table in ((ar.floor[y][x], TILE_FLOOR), (ar.obj[y][x], TILE_OBJ)):
                     if ch in TALL and ch in table:
-                        im.blit(T, x * 16, (y - 1) * 16, table[ch] * 16, 0, 16, 16)
+                        im.alpha_composite(piece(table[ch], True), (x * cell, (y - 1) * cell))
+                och = ar.obj[y][x]
+                if och in fx_obj and fx_obj[och][1]:
+                    im.alpha_composite(frame(fx_obj[och][0], 4, 1), (x * cell, (y - 1) * cell))
         im.save(os.path.join(PREV, k + ".png"))
-    sheet = Img(64 * 6 + 8 + 64, 64 * len(PORT), (40, 40, 50, 255))
-    for i, (k, im) in enumerate(PORT.items()):
-        sheet.blit(im, 0, i * 64)
-        sheet.blit(SPR[k], 64 * 6 + 8, i * 64, 0, 0, 64, 32)
-    sheet.save(os.path.join(PREV, "cast.png"))
