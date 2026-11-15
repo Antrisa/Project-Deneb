@@ -129,6 +129,7 @@ var items := {}                    # item id -> how many the player carries
 var slots: Array = []              # which item sits in each inventory slot ("" = empty); first 8 = hotbar
 var selected := 0                  # selected hotbar slot
 var weapon := ""                   # "", "spear" or "sword"
+var ledger := {}                   # where today's credits came from and went: source -> amount
 var job_quest := 0                 # 0 not started, 1 mining, 2 smelt a bar, 3 see Vzz'ket, 4 clear the tunnels, 5 done
 var board_taken_day := 0           # the day the player last took a board request
 var board_done_day := 0            # the day the player last finished one
@@ -215,6 +216,7 @@ func _setup_input() -> void:
 	_add_keys("interact", [KEY_E, KEY_ENTER])
 	_add_keys("use", [KEY_SPACE, KEY_F])
 	_add_keys("menu", [KEY_TAB, KEY_I])
+	_add_keys("journal", [KEY_J])
 	_add_keys("cancel", [KEY_Q, KEY_ESCAPE])
 	_add_keys("new_game", [KEY_F9])
 	_add_keys("music", [KEY_M])
@@ -248,6 +250,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if creator != null and creator.open:
 		creator.handle_input(event)
 		return
+	if ui.recap_open:
+		if event.is_action_pressed("interact") or event.is_action_pressed("cancel") or event.is_action_pressed("use"):
+			ui.recap_open = false
+			sfx("click")
+		return
 	if ui.open:
 		ui.handle_input(event)
 		return
@@ -259,6 +266,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("menu"):
 		ui.show_menu()
+		sfx("click")
+	elif event.is_action_pressed("journal"):
+		ui.show_menu(4)
 		sfx("click")
 	elif event.is_action_pressed("interact"):
 		_interact_nearest()
@@ -285,6 +295,11 @@ func _interact_nearest() -> void:
 func _mouse_button(button: int) -> void:
 	if creator != null and creator.open:
 		creator.handle_click(button)
+		return
+	if ui.recap_open:
+		if button == MOUSE_BUTTON_LEFT:
+			ui.recap_open = false
+			sfx("click")
 		return
 	if ui.open:
 		ui.handle_click(button)
@@ -805,12 +820,21 @@ func _interact(t: Dictionary) -> void:
 		_talk(t["who"])
 	elif kind == "ore":
 		_mine(t)
-	elif kind == "smelt_iron":
+	elif kind == "furnace":
+		# Any furnace smelts whatever ore you are holding (the selected hotbar slot).
 		smelt_pos = t["pos"]
-		_smelt("iron_ore", "iron_bar")
-	elif kind == "smelt_copper":
-		smelt_pos = t["pos"]
-		_smelt("copper_ore", "copper_bar")
+		var in_hand: String = slots[selected]
+		if ItemData.SMELTS.has(in_hand):
+			_smelt(in_hand, ItemData.SMELTS[in_hand])
+		elif job_quest < 2:
+			sfx("deny")
+			_say("Furnace", ["The furnaces are cold. Job runs ore processing. Ask him about it."])
+		else:
+			sfx("deny")
+			_say("Furnace", ["Hold the ore you want to smelt: pick it on your hotbar, then use the furnace."])
+	elif kind == "sign":
+		var sign_name: String = t["name"]
+		_say("Sign", [sign_name])
 	elif kind == "board":
 		_read_board()
 	elif kind == "wreck":
@@ -821,7 +845,7 @@ func _interact(t: Dictionary) -> void:
 	elif kind == "drop":
 		_deliver_crate()
 	elif kind == "bed":
-		_say("Your bunk", ["Sleep until morning?"], Callable(self, "_next_day"), "Sleep")
+		_say("Your bunk", ["Sleep until morning?"], Callable(self, "_end_day"), "Sleep")
 	elif kind == "wardrobe":
 		if creator == null:
 			_say("Locker", ["A spare uniform, neatly folded. Not your size."])
@@ -906,7 +930,7 @@ func _buy_medpack() -> void:
 		sfx("deny")
 		_say("Maren", ["[sad] You're short. Come back when you have %d credits. If it's urgent, collapse outside and someone will carry you in." % MEDPACK_PRICE])
 		return
-	credits -= MEDPACK_PRICE
+	_money(-(MEDPACK_PRICE), "Medbay")
 	_give("medpack", 1)
 	sfx("coin")
 	_toast("Bought a medpack  -%d credits" % MEDPACK_PRICE)
@@ -935,10 +959,10 @@ func _accept_job() -> void:
 func _deliver_crate() -> void:
 	player.set_carrying(false)
 	job_delivered += 1
-	credits += JOB_PAY_EACH
+	_money(JOB_PAY_EACH, "Bram's crates")
 	sfx("coin")
 	if job_delivered >= JOB_CRATES:
-		credits += JOB_BONUS
+		_money(JOB_BONUS, "Bram's crates")
 		job_active = false
 		job_done_today = true
 		_toast("Job done  +%d cr  (Bram has more tomorrow)" % (JOB_PAY_EACH + JOB_BONUS))
@@ -967,7 +991,7 @@ func _pay_repair() -> void:
 	var r: Dictionary = REPAIRS[repair_stage]
 	var cost: int = r["cost"]
 	var needs: Dictionary = r["needs"]
-	credits -= cost
+	_money(-(cost), "Ship repairs")
 	for item in needs:
 		_give(item, -int(needs[item]))
 	repair_stage += 1
@@ -1249,7 +1273,7 @@ func _job_quest_talk() -> void:
 	elif job_quest == 1:
 		if _count("iron_ore") >= JOB_IRON and _count("copper_ore") >= JOB_COPPER:
 			job_quest = 2
-			credits += 40
+			_money(40, "Job")
 			sfx("quest")
 			_toast("Job's request done  +40 cr")
 			_say("Job", [
@@ -1263,7 +1287,7 @@ func _job_quest_talk() -> void:
 	elif job_quest == 4:
 		if tunnel_kills >= TUNNEL_GOAL:
 			job_quest = 5
-			credits += 80
+			_money(80, "Job")
 			sfx("quest")
 			_toast("The north tunnels are open  +80 cr")
 			_say("Job", [
@@ -1326,7 +1350,7 @@ func _do_sell() -> void:
 	for item in SELL:
 		items[item] = 0
 	_sync_slots()
-	credits += value
+	_money(value, "Sold to Bram")
 	sfx("coin")
 	_toast("Sold  +%d cr" % value)
 
@@ -1374,7 +1398,7 @@ func _board_delivery(who: String) -> bool:
 	if asker != who or _count(item) < n:
 		return false
 	_give(item, -n)
-	credits += pay
+	_money(pay, "Requests")
 	board_done_day = day
 	var st: Dictionary = persons[who]
 	st["friendship"] = int(st["friendship"]) + 2
@@ -1470,7 +1494,7 @@ func hurt_player(amount: int, from: Vector2) -> void:
 func _collapse() -> void:
 	hp = MAX_HP / 2
 	var lost: int = credits / 10
-	credits -= lost
+	_money(-(lost), "Dropped when you collapsed")
 	minutes = minf(minutes + 120.0, DAY_END - 1.0)
 	player.set_carrying(false)
 	# You wake up in the medbay.
@@ -1647,7 +1671,7 @@ func _toast(msg: String) -> void:
 
 
 func _process(delta: float) -> void:
-	var paused: bool = dialogue.active or ui.open or (creator != null and creator.open)
+	var paused: bool = dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open)
 	player.frozen = paused
 	tint.color = _light_color()
 	_animate()
@@ -1681,7 +1705,7 @@ func _process(delta: float) -> void:
 	var m := int(minutes)
 	hud_clock.text = "Day %d   %s   %d cr" % [day, clock_text(m), credits]
 	hud_zone.text = _zone_name()
-	hud_quest.text = _objective()
+	hud_quest.text = ""          # quests are in the journal now (J)
 
 	var goal: String = "Ship %d/%d" % [repair_stage, REPAIRS.size()]
 	if job_active:
@@ -1715,8 +1739,8 @@ func clock_text(total_minutes: int) -> String:
 # Still up at 1:00 am: you pass out where you stand and wake in your own bed.
 func _pass_out() -> void:
 	var lost: int = mini(credits / 10, 100)
-	credits -= lost
-	_next_day()
+	_money(-(lost), "Dropped when you passed out")
+	_end_day()
 	hp = MAX_HP / 2
 	var lines: Array = ["[sad] You were found asleep on your feet at one in the morning. Someone carried you to bed."]
 	if lost > 0:
@@ -1724,6 +1748,80 @@ func _pass_out() -> void:
 	else:
 		lines.append("You start today tired. Be in bed before one.")
 	_say("Sara", lines)
+
+
+# Every change to your credits goes through here, so the end-of-day recap can say where it came from.
+func _money(amount: int, source: String) -> void:
+	credits += amount
+	ledger[source] = int(ledger.get(source, 0)) + amount
+
+
+# The day is over (you slept, or passed out): show the recap, then start tomorrow.
+func _end_day() -> void:
+	var lines: Array = []
+	var net := 0
+	for source in ledger:
+		var amount: int = ledger[source]
+		if amount != 0:
+			lines.append([source, amount])
+			net += amount
+	var talked := 0
+	for who in persons:
+		if persons[who]["talked_today"]:
+			talked += 1
+	var finished: int = day
+	ledger = {}
+	_next_day()
+	ui.show_recap(finished, lines, net, credits, talked)
+
+
+# What the Journal page shows: [title, [lines], finished?]
+func journal() -> Array:
+	var out: Array = []
+	# getting off the moon
+	if repair_stage < REPAIRS.size():
+		var r: Dictionary = REPAIRS[repair_stage]
+		var needs: Dictionary = r["needs"]
+		out.append(["Get off this moon", [
+			"Your ship is in the shuttle bay on the Engineering Level. Tikka can repair it.",
+			"Repairs done: %d of %d.   Next: the %s." % [repair_stage, REPAIRS.size(), r["name"]],
+			"She needs %d credits and %s." % [int(r["cost"]), _needs_text(needs)],
+		], false])
+	else:
+		out.append(["Get off this moon", ["Tikka has finished your ship. It is ready when you are."], true])
+	# Job's chain
+	if job_quest == 0:
+		out.append(["A hand in the mine", ["Job, the miner, could use some help. He is in the main dig, down the south lift and past Engineering."], false])
+	elif job_quest == 1:
+		out.append(["A hand in the mine", ["Mine ore for Job with the laser: select it and use it on a vein.",
+			"Iron ore %d of %d.   Copper ore %d of %d." % [_count("iron_ore"), JOB_IRON, _count("copper_ore"), JOB_COPPER]], false])
+	elif job_quest == 2:
+		out.append(["A hand in the mine", ["Smelt a bar: hold ore and use a furnace in ore processing, on the Engineering Level."], false])
+	elif job_quest == 3:
+		out.append(["A hand in the mine", ["Job says to see Vzz'ket at the cavern gate, at the bottom of the mine, about a weapon."], false])
+	elif job_quest == 4 and tunnel_kills < TUNNEL_GOAL:
+		out.append(["Clear the north tunnels", ["Creatures are coming down from the tunnels above the main dig.",
+			"Cleared: %d of %d." % [tunnel_kills, TUNNEL_GOAL]], false])
+	elif job_quest == 4:
+		out.append(["Clear the north tunnels", ["The tunnels are quiet. Tell Job."], false])
+	else:
+		out.append(["A hand in the mine", ["You mined, smelted and cleared the tunnels for Job."], true])
+	# today
+	if board_taken_day == day and board_done_day != day:
+		var req: Dictionary = _board_request()
+		var item: String = req["item"]
+		out.append(["Today's request", ["%s wants %d %s. Bring it to them today." % [req["who"], int(req["n"]), _item_name(item).to_lower()]], false])
+	elif board_done_day == day:
+		out.append(["Today's request", ["Done for today."], true])
+	else:
+		out.append(["Today's request", ["There is a new request on the bulletin board in the town square each day."], false])
+	if job_active:
+		out.append(["Bram's crates", ["Carry crates from the fabrication shop to the yellow pad in the cargo bay. %d of %d delivered." % [job_delivered, JOB_CRATES]], false])
+	elif job_done_today:
+		out.append(["Bram's crates", ["Done for today."], true])
+	else:
+		out.append(["Bram's crates", ["Bram pays for hauling, once a day. Ask him at Bram's Sundries."], false])
+	return out
 
 
 func _next_day() -> void:

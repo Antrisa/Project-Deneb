@@ -444,6 +444,8 @@ t = Tile("f", "6", True).r(0, 0, 15, 15, (84, 90, 104)).r(2, 0, 13, 15, (112, 11
 t.ps([(4, 3), (6, 3), (10, 3), (12, 3), (4, 11), (6, 11), (10, 11), (12, 11)], (40, 40, 48)).r(4, 7, 5, 8, (230, 60, 50))
 t = Tile("f", "9", True, True).r(0, 0, 15, 15, (214, 220, 228)).r(1, 2, 14, 12, (60, 66, 84)).r(2, 3, 13, 11, (16, 18, 34)).r(2, 9, 13, 11, (120, 122, 130)).r(4, 10, 8, 10, (238, 202, 64))
 t.ps([(4, 4), (9, 5), (12, 4), (6, 7)], (240, 240, 250)).r(0, 13, 15, 15, (150, 156, 168))
+# "j" a sign post beside a shop or apartment door (you can read it)
+t = Tile("o", "j").r(7, 8, 8, 14, (110, 80, 56)).r(2, 2, 13, 8, (236, 222, 190)).r(2, 2, 13, 2, (255, 244, 214)).r(2, 8, 13, 8, (176, 150, 116)).r(4, 4, 11, 4, (90, 80, 76)).r(4, 6, 9, 6, (90, 80, 76)).outline()
 T.save(art("tiles.png"))
 
 # When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
@@ -1887,6 +1889,7 @@ m.put("E", sq([(90, 65)]))                      # Sara's hologram pad by the fou
 # ---- buildings: a block of wall with a door in one side and a little forecourt in front of it.
 # side: "s" = front door facing the camera, "n" = back entrance (an archway seen from behind),
 #       "e" / "w" = side doors. The door leads to the building's own map (see interior() below).
+SIGNS = []          # [title, x, y]
 DOORS = {}          # key -> (door x, door y, door tile, outside x, outside y)
 BUILDINGS = []      # [key, title, x, y, w, h]
 
@@ -1919,6 +1922,10 @@ def building(key, title, x, y, w, h, side):
         px, py, n = px + out[0], py + out[1], n + 1
         assert n < 30, ("no walkway near the door", key)
     DOORS[key] = (dx, dy, ch, dx + out[0], dy + out[1])
+    # a sign to read, beside the door
+    sx, sy = (dx + 1, dy + out[1]) if out[0] == 0 else (dx + out[0], dy + 1)
+    m.put("j", [(sx, sy)])
+    SIGNS.append([title, sx, sy])
     BUILDINGS.append([key, title, x, y, w, h])
     cs = [c[0] for c in court], [c[1] for c in court]
     m.zones.append([title, min(cs[0]), min(cs[1]), max(cs[0]), max(cs[1])])
@@ -2438,14 +2445,16 @@ THINGS = [
     ["wreck", "Your ship", "Your ship", "eng", [42 * 16, 19 * 16], 46],
     ["drop", "Loading pad", "Set down the crate", "eng", [27 * 16, 18 * 16], 22],
     ["look", "Power core", "Look", "eng", [24 * 16, 4 * 16 + 8], 52],
-    ["smelt_iron", "Iron furnace", "Smelt iron", "eng", [3 * 16, 1 * 16 + 8], 30],
-    ["smelt_copper", "Copper furnace", "Smelt copper", "eng", [6 * 16, 1 * 16 + 8], 30],
+    ["furnace", "Furnace", "Smelt what you are holding", "eng", [3 * 16, 1 * 16 + 8], 30],
+    ["furnace", "Furnace", "Smelt what you are holding", "eng", [6 * 16, 1 * 16 + 8], 30],
     ["look", "Barricade", "Look", "mine", tc(20, 21), 26],
 ]
+SIGN_THINGS = [["sign", s_[0], "Read the sign", "main", tc(s_[1], s_[2]), 22] for s_ in SIGNS]
 for t_ in THINGS:
     if t_[3] == "main":
         a_, x_, y_ = moved("main", t_[4][0] // 16, t_[4][1] // 16)
         t_[3], t_[4] = a_, [x_ * 16 + t_[4][0] % 16, y_ * 16 + t_[4][1] % 16]
+THINGS += SIGN_THINGS
 WRECK = ["eng", 42 * 16, 20 * 16]      # bottom-centre of the wreck sprite
 
 # ---------------------------------------------------------------- checks
@@ -2549,7 +2558,7 @@ MAP_MARKS = [
     [10, "top", 19, 4, "Sara's suite"], [11, "top", 32, 4, "Observatory"], [12, "eng", 8, 5, "Ore processing"],
     [13, "eng", 41, 5, "Engineering bay"], [14, "eng", 40, 19, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
-MAP_MARKS = MAP_MARKS[:6] + [[20 + n, "main", DOORS[b[0]][3], DOORS[b[0]][4], b[1]] for n, b in enumerate(BUILDINGS[:N_SHOPS])] + MAP_MARKS[6:]
+MAP_MARKS = MAP_MARKS[:6] + [[20 + n, "main", DOORS[b[0]][3], DOORS[b[0]][4], b[1]] for n, b in enumerate(BUILDINGS)] + MAP_MARKS[6:]
 MAP_COLORS = {"z": (64, 76, 100), "7": (64, 76, 100), "8": (64, 76, 100), "X": (90, 96, 112), "Y": (150, 144, 134), "1": (238, 202, 64), "2": (238, 202, 64), "3": (238, 202, 64),".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),
               "m": (124, 106, 94), "i": (196, 172, 138), "U": (238, 202, 64), "D": (238, 202, 64), "A": (238, 202, 64), "R": (238, 202, 64),
               "#": (64, 76, 100), "w": (64, 76, 100), "Z": (64, 76, 100), "d": (110, 190, 210), "O": (70, 150, 210), "J": (70, 150, 210), "B": (170, 170, 182)}

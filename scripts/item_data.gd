@@ -32,6 +32,9 @@ const ITEMS = {
 			"desc": "From Maren in the medbay. Select it and press Space to mend every heart."},
 }
 
+# What a furnace makes from each ore you can hold.
+const SMELTS = {"iron_ore": "iron_bar", "copper_ore": "copper_bar"}
+
 # What the Crafting page offers. "needs" is item -> how many.
 const RECIPES = [
 	{"makes": "hull_plate", "n": 1, "needs": {"iron_bar": 3}},

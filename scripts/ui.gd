@@ -8,12 +8,14 @@ const NpcData = preload("res://scripts/npc_data.gd")
 
 const SLOT := 18
 const COLS := 8
-const TABS := ["Inventory", "Crafting", "Map", "Friends"]
+const TABS := ["Pack", "Crafting", "Map", "Friends", "Journal"]
+const TAB_W := 59.0
 const HELP := [
-	"Click or E: pick up, then again to put down or swap.    Click a page name or press 1-4.    Esc: close",
-	"Click a recipe or press E to craft it.    Click a page name or press 1-4.    Esc: close",
-	"Click a page name or press 1-4.    Esc or click outside: close",
+	"Click or E: pick up, then again to put down or swap.    Click a page name or press 1-5.    Esc: close",
+	"Click a recipe or press E to craft it.    Click a page name or press 1-5.    Esc: close",
+	"Point at a dot to see what is there.    You: red.  Residents: blue.    Esc: close",
 	"One heart is 5 friendship. Talk each day and do requests.    Esc or click outside: close",
+	"J opens this page.    Esc or click outside: close",
 ]
 const PANEL := Rect2(10, 10, 300, 162)
 const MAP_ORIGIN := Vector2(16, 32)
@@ -38,6 +40,8 @@ var _slot_tex: Texture2D      # art/ui_slot.png: empty, selected, being moved
 var _tab_tex: Texture2D       # art/ui_tab.png: not chosen, chosen
 var _blink := 0.0
 var _last_mouse := Vector2(-1, -1)
+var recap_open := false      # the end-of-day summary is showing
+var _recap := {}
 
 
 func _ready() -> void:
@@ -130,8 +134,8 @@ func handle_click(button: int) -> void:
 		return
 	if at.y >= 13.0 and at.y <= 26.0:
 		for i in TABS.size():
-			var x: float = 16.0 + i * 72.0
-			if at.x >= x - 3.0 and at.x < x + 65.0:
+			var x: float = 16.0 + i * TAB_W
+			if at.x >= x - 3.0 and at.x < x + TAB_W - 5.0:
 				tab = i
 				held = -1
 				world.sfx("click", 1.2, -6.0)
@@ -160,23 +164,36 @@ func _pick_or_put() -> void:
 		world.sfx("click", 0.9)
 
 
-func show_menu() -> void:
+func show_menu(page: int = -1) -> void:
 	open = true
 	held = -1
+	if page >= 0:
+		tab = page
+
+
+# The end-of-day summary. lines is [[where the credits came from, amount], ...].
+func show_recap(day_done: int, lines: Array, net: int, total: int, talked: int) -> void:
+	_recap = {"day": day_done, "lines": lines, "net": net, "total": total, "talked": talked}
+	recap_open = true
+	open = false
 
 
 # ---------------------------------------------------------------- input (menu open)
 
 func handle_input(event: InputEvent) -> void:
-	if event.is_action_pressed("menu") or event.is_action_pressed("cancel"):
+	if event.is_action_pressed("menu") or event.is_action_pressed("cancel") or (event.is_action_pressed("journal") and tab == 4):
 		open = false
 		held = -1
 		world.sfx("click", 0.8)
 		return
+	if event.is_action_pressed("journal"):
+		tab = 4
+		held = -1
+		return
 	var key_event := event as InputEventKey
 	if key_event != null and key_event.pressed and not key_event.echo:
 		var key: int = key_event.physical_keycode
-		if key >= KEY_1 and key <= KEY_4:
+		if key >= KEY_1 and key <= KEY_5:
 			tab = key - KEY_1
 			held = -1
 			world.sfx("click", 1.2, -6.0)
@@ -218,7 +235,9 @@ func _crafting_input(event: InputEvent) -> void:
 func _draw() -> void:
 	if world == null:
 		return
-	if open:
+	if recap_open:
+		_draw_recap()
+	elif open:
 		_draw_menu()
 	elif not world.dialogue.active:
 		_draw_hotbar()
@@ -294,8 +313,8 @@ func _draw_hotbar() -> void:
 func _draw_menu() -> void:
 	_nine(_panel_tex, PANEL, 8.0)
 	for i in TABS.size():
-		var x: float = 16.0 + i * 72.0
-		_tab(Rect2(x - 3, 13, 68, 13), 1 if i == tab else 0)
+		var x: float = 16.0 + i * TAB_W
+		_tab(Rect2(x - 3, 13, TAB_W - 4.0, 13), 1 if i == tab else 0)
 		var tab_name: String = TABS[i]
 		_txt(Vector2(x, 22), "%d %s" % [i + 1, tab_name], Color.WHITE if i == tab else DIM)
 	draw_line(Vector2(10, 27), Vector2(310, 27), Color("7fd4ff"), 1.0)
@@ -307,8 +326,55 @@ func _draw_menu() -> void:
 		_draw_crafting()
 	elif tab == 2:
 		_draw_map()
-	else:
+	elif tab == 3:
 		_draw_friends()
+	else:
+		_draw_journal()
+
+
+func _draw_journal() -> void:
+	var y := 40.0
+	for entry in world.journal():
+		var title: String = entry[0]
+		var lines: Array = entry[1]
+		var done: bool = entry[2]
+		draw_rect(Rect2(18, y - 6, 5, 5), Color("7ee07a") if done else GOLD)
+		_txt(Vector2(28, y), title, DIM if done else Color.WHITE)
+		y += 9.0
+		for line in lines:
+			var text: String = line
+			_txt(Vector2(28, y), text, DIM, 6)
+			y += 8.0
+		y += 5.0
+
+
+func _draw_recap() -> void:
+	draw_rect(Rect2(0, 0, 320, 180), Color(0.02, 0.03, 0.08, 0.8))
+	var box := Rect2(70, 22, 180, 136)
+	_nine(_panel_tex, box, 8.0)
+	_txt(Vector2(82, 40), "Day %d is over" % int(_recap["day"]), GOLD, 10)
+	var y := 56.0
+	var lines: Array = _recap["lines"]
+	if lines.is_empty():
+		_txt(Vector2(82, y), "No credits came or went today.", DIM, 7)
+		y += 10.0
+	for entry in lines:
+		var source: String = entry[0]
+		var amount: int = entry[1]
+		_txt(Vector2(82, y), source, Color.WHITE, 7)
+		_txt(Vector2(206, y), "%+d" % amount, Color("b8f0b0") if amount > 0 else Color("f08a80"), 7)
+		y += 9.0
+		if y > 112.0:
+			break
+	draw_line(Vector2(82, 118), Vector2(238, 118), Color("7fd4ff"), 1.0)
+	var net: int = _recap["net"]
+	_txt(Vector2(82, 128), "Today", Color.WHITE)
+	_txt(Vector2(206, 128), "%+d" % net, Color("b8f0b0") if net >= 0 else Color("f08a80"))
+	_txt(Vector2(82, 138), "Credits", Color.WHITE)
+	_txt(Vector2(206, 138), str(int(_recap["total"])), GOLD)
+	_txt(Vector2(82, 147), "You talked to %d residents." % int(_recap["talked"]), DIM, 6)
+	if int(_blink * 2.0) % 2 == 0:
+		_txt(Vector2(190, 154), "E or click", DIM, 6)
 
 
 func _draw_inventory() -> void:
@@ -374,17 +440,16 @@ func _draw_map() -> void:
 	for t in MapData.MAP_TITLES:
 		var title: String = t[0]
 		_txt(MAP_ORIGIN + Vector2(float(t[1]), float(t[2])), title, Color("9fdcff"), 6)
-	var line := 0
+	var at: Vector2 = mouse()
+	var near := ""
+	var near_at := Vector2.ZERO
 	for mark in MapData.MAP_MARKS:
 		var mark_area: String = mark[1]
 		var p: Vector2 = _map_point(mark_area, float(mark[2]), float(mark[3]))
-		var label: String = str(int(mark[0]))
-		var place: String = mark[4]
-		draw_rect(Rect2(p + Vector2(-1, -6), Vector2(4.0 * label.length() + 1.0, 7)), Color(0, 0, 0, 0.7))
-		_txt(p, label, GOLD, 6)
-		_txt(Vector2(218, 38 + line * 7), label, GOLD, 6)
-		_txt(Vector2(230, 38 + line * 7), place, Color.WHITE, 6)
-		line += 1
+		draw_rect(Rect2(p - Vector2(1.5, 1.5), Vector2(3, 3)), GOLD)
+		if p.distance_to(at) <= 5.0:
+			near = mark[4]
+			near_at = p
 	for r in world.residents:
 		var r_area: String = r.area
 		var r_tile: Vector2i = r.tile
@@ -396,7 +461,12 @@ func _draw_map() -> void:
 	if int(_blink * 3.0) % 2 == 0:
 		draw_rect(Rect2(pp - Vector2(2, 2), Vector2(4, 4)), Color.WHITE)
 	draw_rect(Rect2(pp - Vector2(1, 1), Vector2(2, 2)), Color("ff6b6b"))
-	_txt(Vector2(218, 158), "You: red     Residents: blue", DIM, 6)
+	if near != "":
+		var w: float = _font.get_string_size(near, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x + 6.0
+		var tip := Vector2(clampf(near_at.x - w / 2.0, 12.0, 308.0 - w), near_at.y - 13.0)
+		draw_rect(Rect2(tip, Vector2(w, 10)), Color(0.04, 0.06, 0.12, 0.95))
+		draw_rect(Rect2(tip, Vector2(w, 10)), GOLD, false, 1.0)
+		_txt(tip + Vector2(3, 8), near, Color.WHITE, 7)
 
 
 func _draw_friends() -> void:
