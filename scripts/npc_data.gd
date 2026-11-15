@@ -173,7 +173,7 @@ const PEOPLE = {
 		"pitch": 1.4,
 		"first": [
 			"[surprised] Oh. A patient? No. A visitor. Please stand on the mat. The mat is clean. I am Quill. I assist Doctor Maren.",
-			"I am Vulltam. Yes, the glasses are necessary. No, I will not take them off so you can see.",
+			"I am Vuultam. Yes, the glasses are necessary. No, I will not take them off so you can see.",
 		],
 		"repeat": [
 			"I have catalogued every ache on this station. Job has eleven. He admits to none.",
@@ -192,7 +192,7 @@ const PEOPLE = {
 		"repeat": [
 			"The Terrans left four hundred technical manuals and one novel. I have read the novel nine times. It is not good.",
 			"[happy] Maren says I should charge for the books. I say nobody would pay, and then where would we be? Exactly here.",
-			"If you find anything with pages out there, bring it to me. I'm not particular. I once shelved a menu.",
+			"If you find anything with pages out there, bring it to me. Old codexes especially. Every one fills in a little more of how we all got here.",
 			"[love] Thirty years following a ship's surgeon from port to port. This is the first place the shelves have stayed put.",
 		],
 	},
@@ -242,7 +242,7 @@ const PEOPLE = {
 		"id": "ooma",
 		"pitch": 0.9,
 		"first": [
-			"Ahh. A new face on the little moon. I am Ooma. I sell what cannot be found, to people who did not know they were looking.",
+			"Ahh. A new face on the little moon. I am Ooma. I sell what cannot be found, and a few things that should not be, to people who did not know they were looking.",
 			"I am here when I am here. Twice in a week, perhaps. The tides decide. [happy] There are always tides, if you know where to feel for them.",
 		],
 		"repeat": [

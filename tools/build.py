@@ -894,15 +894,15 @@ VT, VTD = (70, 170, 160), (40, 110, 122)
 
 
 def ov_quill(R, d):
-    R(6, 2, 9, 3, VTD)                                   # crest
     if d == "down":
+        R(4, 10, 5, 11, (70, 120, 200)); R(10, 10, 11, 11, (70, 120, 200))      # cheek blotches
         R(4, 7, 6, 8, (236, 244, 250)); R(9, 7, 11, 8, (236, 244, 250)); R(7, 7, 8, 7, (60, 60, 70))
         R(5, 8, 5, 8, (30, 40, 50)); R(10, 8, 10, 8, (30, 40, 50))
     elif d in ("left", "right"):
         R(3, 7, 5, 8, (236, 244, 250)); R(6, 7, 9, 7, (60, 60, 70))
 
 
-SPR["quill"] = sheet({"skin": VT, "hair": VT, "top": VTD, "legs": (40, 70, 92), "arm": VTD}, ov_quill, style="bald")
+SPR["quill"] = sheet({"skin": VT, "hair": (28, 28, 36), "top": VTD, "legs": (40, 70, 92), "arm": VTD}, ov_quill)
 # Sesska (Arachnay, the weaver, married to Tikka): older, silver-grey, a woven shawl
 K2 = Img(16, 24)
 SBODY, SDARK, SLEG, SHAWL = (150, 146, 172), (98, 94, 124), (78, 74, 100), (196, 92, 120)
@@ -962,18 +962,22 @@ def ov_ixali(R, d):
 SPR["ixali"] = sheet({"skin": IXG, "hair": IXG, "top": (176, 96, 62), "legs": (60, 62, 76), "arm": IXG}, ov_ixali, style="bald")
 
 
-# Moogli (a guess until the art arrives: small, round, pale fur, big round ears)
+# Moogli: short frog-like amphibians with smooth skin and big eyes (Bram is the finished example)
 def moogli_overlay(fur):
     def ov(R, d):
-        R(1, 5, 3, 9, fur); R(12, 5, 14, 9, fur); R(2, 6, 2, 8, (236, 170, 170)); R(13, 6, 13, 8, (236, 170, 170))
         if d == "down":
-            R(7, 11, 8, 12, (236, 170, 170))
+            R(3, 4, 6, 7, (250, 250, 240)); R(9, 4, 12, 7, (250, 250, 240)); R(4, 5, 5, 6, (30, 30, 30)); R(10, 5, 11, 6, (30, 30, 30))
+            R(5, 11, 10, 11, dk(fur, 0.6))
+        elif d == "up":
+            R(3, 4, 6, 6, fur); R(9, 4, 12, 6, fur)
+        else:
+            R(3, 4, 6, 7, (250, 250, 240)); R(3, 5, 4, 6, (30, 30, 30)); R(2, 11, 6, 11, dk(fur, 0.6))
     return ov
 
 
-MOOG = (232, 216, 184)
+MOOG = (120, 176, 96)
 SPR["tobbin"] = sheet({"skin": MOOG, "hair": MOOG, "top": (196, 120, 60), "legs": (90, 84, 96), "arm": MOOG}, moogli_overlay(MOOG), style="bald", short=True)
-SPR["merrow"] = sheet({"skin": (240, 226, 200), "hair": (240, 226, 200), "top": (70, 150, 170), "legs": (60, 96, 110), "arm": (240, 226, 200)}, moogli_overlay((240, 226, 200)), style="bald", short=True)
+SPR["merrow"] = sheet({"skin": (96, 170, 150), "hair": (96, 170, 150), "top": (70, 150, 170), "legs": (60, 96, 110), "arm": (96, 170, 150)}, moogli_overlay((96, 170, 150)), style="bald", short=True)
 SPR["nub"] = sheet({"skin": MOOG, "hair": MOOG, "top": (150, 200, 110), "legs": (110, 90, 70), "arm": MOOG}, moogli_overlay(MOOG), style="bald", short=True)
 # Ooma (the travelling squid trader): long robe, tentacles down the sides of her head
 OOM, OROBE = (196, 116, 176), (62, 52, 96)
@@ -1348,7 +1352,7 @@ def quill_extra(im, e):
         im.rect(cx - 5, 24, cx + 5, 24, (60, 60, 70)); im.rect(cx - 5, 32, cx + 5, 32, (60, 60, 70))
         im.rect(cx - 5, 24, cx - 5, 32, (60, 60, 70)); im.rect(cx + 5, 24, cx + 5, 32, (60, 60, 70))
     im.rect(31, 27, 33, 27, (60, 60, 70))
-    im.rect(29, 6, 35, 11, (40, 110, 122))
+    im.ell(21, 35, 3, 2.5, (70, 120, 200)); im.ell(43, 35, 3, 2.5, (70, 120, 200)); im.ell(24, 18, 2.5, 2, (70, 120, 200))
 
 
 def pip_extra(im, e):
@@ -1359,7 +1363,7 @@ def pip_extra(im, e):
 strip(human((96, 116, 124), (232, 190, 160), (176, 176, 186), (236, 240, 244), (90, 110, 140), "long", maren_extra), "maren")
 strip(human((104, 92, 76), (214, 170, 130), (96, 78, 64), (150, 110, 70), (80, 60, 40)), "owen")
 strip(human((110, 124, 96), (226, 182, 148), (124, 86, 52), (220, 96, 72), (70, 120, 70), "short", pip_extra), "pip")
-strip(human((60, 84, 96), (70, 170, 160), (70, 170, 160), (40, 110, 122), (230, 200, 90), "bald", quill_extra), "quill")
+strip(human((60, 84, 96), (70, 170, 160), (28, 28, 36), (40, 110, 122), (230, 200, 90), "short", quill_extra), "quill")
 frames = []
 for e in EMOTES:
     im = backdrop((92, 76, 92))
@@ -1393,8 +1397,8 @@ def fox_extra(fur):
 
 def moogli_extra(fur):
     def extra(im, e):
-        im.ell(11, 26, 7, 9, fur); im.ell(52, 26, 7, 9, fur); im.ell(11, 26, 4, 6, (236, 170, 170)); im.ell(52, 26, 4, 6, (236, 170, 170))
-        im.rect(31, 33, 33, 34, (236, 170, 170))
+        im.ell(22, 14, 7, 6, fur); im.ell(42, 14, 7, 6, fur)             # eye bumps on top of the head
+        im.rect(22, 40, 42, 40, dk(fur, 0.6))                            # wide mouth
     return extra
 
 
@@ -1414,7 +1418,7 @@ strip(human((124, 116, 90), SAFF, SAFF, (224, 190, 80), (90, 140, 90), "bald", f
 strip(human((70, 80, 100), (190, 140, 110), (62, 52, 50), (62, 82, 116), (70, 60, 50), "short", garrick_extra), "garrick")
 strip(zaash_portrait((84, 70, 60), IXG, (176, 96, 62), (200, 204, 212), True), "ixali")
 strip(human((110, 96, 80), MOOG, MOOG, (196, 120, 60), (60, 50, 40), "bald", moogli_extra(MOOG)), "tobbin")
-strip(human((80, 110, 120), (240, 226, 200), (240, 226, 200), (70, 150, 170), (60, 90, 110), "bald", moogli_extra((240, 226, 200))), "merrow")
+strip(human((80, 110, 120), (96, 170, 150), (96, 170, 150), (70, 150, 170), (60, 90, 110), "bald", moogli_extra((96, 170, 150))), "merrow")
 strip(human((104, 120, 90), MOOG, MOOG, (150, 200, 110), (60, 50, 40), "bald", moogli_extra(MOOG)), "nub")
 strip(human((40, 36, 70), OOM, OOM, OROBE, (250, 220, 120), "bald", ooma_extra), "ooma")
 
