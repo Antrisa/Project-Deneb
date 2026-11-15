@@ -6,6 +6,7 @@ Thanks for trying this. It is an early build: one town, 24 residents, a mine and
 
 The main level has been rebuilt: the town square in the middle, four walkways out to a ring, shops between the square and the ring, apartments outside it. Shops and apartments are now doors; walk into one to go inside, and onto the green mat to come back out. Please check:
 
+- The **Spaceport District** (where you start) is rebuilt too: a round hub, Reception with a customs gate to the west, a sealed airlock beyond it, the old barracks to the south with a big empty drill hall, and to the north a second hub with the agri dome, a broken garden and your workshop. The old Agri Dome map on the east side is gone. Walk all of it and say if anything is cut off or cannot be reached.
 - Every door leads to the right room, and the mat puts you back outside the same door.
 - Residents get in and out of buildings and still reach dinner at 18:00 (the walks are longer now).
 - Small rooms sit in the middle of the screen, not in a corner.
