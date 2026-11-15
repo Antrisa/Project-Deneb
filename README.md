@@ -72,7 +72,7 @@ One exception, for `tiles.png` only: when the game gains a new tile, the generat
 | `enemy_*.png`, `*_ore.png` | Two square frames (creatures 16x16, facing left; ore 32x32). |
 | `fx_*.png` | Four square animation frames (currently 32x32), laid over the still tile. |
 | `player/body2/` | The second body type (Female; `player/` is Male): the same eight layer files, same layout. The names are in `OPTIONS` in `scripts/player_maker.gd`. |
-| `npc_<name>_act.png` | Optional. What a resident does at their spot: 4 frames across, 3 rows (work, eat, idle), same frame size as their walk sheet. Without it the game fakes it. |
+| `npc_<name>_act.png` | Optional action sheet: what a resident does at each stop of their day. 4 frames across (a loop), 48x64 each, one row per action. The rows for each resident are listed in `ACTION_ROWS` in `scripts/map_data.gd` (set by `ACTIONS` in `tools/build.py`). Without a sheet the game fakes it. |
 | `ui_panel.png`, `ui_dialogue.png`, `ui_portrait_frame.png` | 3x3 grids: corners stay sharp, edges and middle stretch. |
 | `ui_slot.png` | Three slots side by side: empty, selected, being moved. |
 | `ui_tab.png` | Two tabs side by side: not chosen, chosen. |

@@ -23,7 +23,9 @@ var _dir := 0                # column in the sprite sheet: 0 down, 1 up, 2 left,
 var _foot_offset := Vector2(-8, -32)
 var _base_scale := 1.0
 var _walk_tex: Texture2D
-var _act_tex: Texture2D = null   # optional art/npc_<id>_act.png: 4 frames across; rows are work, eat, idle
+var _act_tex: Texture2D = null   # optional art/npc_<id>_act.png: 4 frames across (48x64 each), one row per action
+var _act_row := -1           # which row of the action sheet to play at this stop (-1 = none)
+var _act_rows := 1           # how many rows the action sheet has
 var _facing := 0             # which way they face once they have arrived
 var _act := "idle"           # what they do there: work, eat or idle
 var _idle_time := 0.0
@@ -50,6 +52,9 @@ func setup(main, person_name: String, tex: Texture2D, entries: Array, entry_thin
 	scale = Vector2(_base_scale, _base_scale)
 	_foot_offset = Vector2(-frame_w / 2.0, -frame_h)
 	offset = _foot_offset
+	if _act_tex != null:
+		# Action frames are 1.5 times as wide as walking frames and the same height.
+		_act_rows = maxi(1, roundi(_act_tex.get_height() / frame_h))
 	schedule = entries
 	thing = entry_thing
 
@@ -183,19 +188,28 @@ func _settle() -> void:
 	thing["radius"] = float(e[4])
 	_facing = int(FACING.get(e[5], 0))
 	_act = e[6]
+	_act_row = int(e[7]) if e.size() > 7 else -1
 	_dir = _facing
 	_idle_time = randf() * 6.0
 	frame_coords = Vector2i(_facing, 0)
 
 
 # What a resident does while standing at their spot.
-# With hand-made activity frames (art/npc_<id>_act.png) those are played.
+# With an action sheet (art/npc_<id>_act.png) the row for this stop is played: see ACTION_ROWS in map_data.gd.
 # Without them, the resident breathes, leans into their work, nods over their food, or glances about.
 func _idle(delta: float) -> void:
 	_idle_time += delta
-	if _act_tex != null:
-		texture = _act_tex
-		frame_coords = Vector2i(int(_idle_time * 4.0) % 4, int(ACT_ROW.get(_act, 2)))
+	if _act_tex != null and _act_row >= 0 and _act_row < _act_rows:
+		if texture != _act_tex:
+			frame = 0
+			texture = _act_tex
+			hframes = 4
+			vframes = _act_rows
+			rotation = 0.0
+			scale = Vector2(_base_scale, _base_scale)
+			# feet at the bottom centre of the wider frame
+			offset = Vector2(-_act_tex.get_width() / 8.0, -float(_act_tex.get_height()) / _act_rows)
+		frame_coords = Vector2i(int(_idle_time * 3.0) % 4, _act_row)
 		return
 	var look: int = _facing
 	rotation = 0.0
@@ -219,7 +233,11 @@ func _unsettle() -> void:
 		here.erase(tile)
 	_settled = false
 	# Back to the walking sheet, standing straight.
-	texture = _walk_tex
+	if texture != _walk_tex:
+		frame_coords = Vector2i.ZERO
+		texture = _walk_tex
+		hframes = 4
+		vframes = 3
 	rotation = 0.0
 	offset = _foot_offset
 	scale = Vector2(_base_scale, _base_scale)

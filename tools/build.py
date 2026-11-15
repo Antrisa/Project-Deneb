@@ -2198,12 +2198,51 @@ SCHEDULES_RAW = {
     "Vzz'ket": [("06:00", "mine", 24, 19, 26, "d", "idle"), ("17:15", "main", 130, 70, 26, "d", "eat"), ("19:00", "mine", 24, 19, 26, "d", "idle"),
                 ("22:00", "main", 86, 70, 26, "d", "idle"), ("23:30", "mine", 24, 19, 26, "d", "idle")],
 }
+# What each resident is doing at each stop of their schedule, in the same order as SCHEDULES_RAW.
+# Each different (action, facing) pair is one row of their action sheet art/npc_<id>_act.png, in order of first use.
+ACTIONS = {
+    'Maren': ['treat', 'eat', 'treat', 'rest'],
+    'Quill': ['sort', 'eat', 'read', 'rest'],
+    'Owen': ['shelve', 'eat', 'bench', 'rest'],
+    'Pip': ['study', 'play', 'wave', 'eat', 'play', 'rest'],
+    'Sesska': ['weave', 'eat', 'chat', 'rest'],
+    'Rusk': ['wipe', 'eat', 'pour'],
+    'Ooma': ['beckon'],
+    'Tobbin': ['build', 'eat', 'sketch', 'rest'],
+    'Merrow': ['valve_d', 'tend', 'valve_l', 'eat', 'rest'],
+    'Nub': ['draw', 'play', 'eat', 'rest'],
+    'Garrick': ['ledger', 'patrol', 'ledger', 'eat', 'drink', 'rest'],
+    'Saffi': ['sweep', 'browse', 'watch', 'sweep', 'eat', 'rest'],
+    'Kit': ['study', 'play', 'toy', 'eat', 'rest'],
+    "Ix'ali": ['polish', 'eat', 'spar', 'rest'],
+    'Jasper': ['cook', 'relax', 'cook', 'rest'],
+    'Evarra': ['mix', 'herbs', 'mix', 'rest'],
+    'Bram': ['counter', 'eat', 'drink', 'rest'],
+    'Tikka': ['console', 'eat', 'tinker', 'rest'],
+    'Freya': ['weld', 'hammer', 'eat', 'hammer', 'weld', 'eat', 'drink', 'rest'],
+    'Job': ['mine', 'eat', 'mine', 'eat', 'drink', 'rest'],
+    'Zaas': ['survey', 'eat', 'survey', 'eat', 'stargaze', 'rest'],
+    "Tar'Besh": ['study', 'eat', 'ponder', 'rest'],
+    "Vzz'ket": ['guard', 'eat', 'guard', 'walk_stop', 'guard'],
+}
 SCHEDULES = {}
+ACTION_ROWS = {}                 # who -> ["action facing", ...]: the rows of their action sheet, top to bottom
 for who, rows in SCHEDULES_RAW.items():
     out = []
-    for (hm, a, x, y, r, face_, act) in rows:
+    keys = ACTIONS.get(who, [])
+    assert not keys or len(keys) == len(rows), ("ACTIONS must have one entry per schedule stop", who)
+    sheet_rows = []
+    for n, (hm, a, x, y, r, face_, act) in enumerate(rows):
         assert face_ in "dulr" and act in ("work", "eat", "idle"), (who, face_, act)
-        out.append([int(hm[:2]) * 60 + int(hm[3:]), a, x, y, r, face_, act])
+        row = -1
+        if keys:
+            label = keys[n] + " " + face_
+            if label not in sheet_rows:
+                sheet_rows.append(label)
+            row = sheet_rows.index(label)
+        # the last number is the row of the action sheet to play at this stop (-1 = none)
+        out.append([int(hm[:2]) * 60 + int(hm[3:]), a, x, y, r, face_, act, row])
+    ACTION_ROWS[who] = sheet_rows
     assert out == sorted(out, key=lambda e: e[0]), who
     SCHEDULES[who] = out
 
@@ -2293,7 +2332,7 @@ for (kind, a, x, y) in ENEMIES:
     assert (a, x, y) in seen, ("creature on a bad tile", kind, a, x, y)
 spots = {}
 for who, rows in SCHEDULES.items():
-    for (t_, a, x, y, r, face_, act) in rows:
+    for (t_, a, x, y, r, face_, act, row_) in rows:
         assert (a, x, y) in seen, ("schedule spot not reachable", who, a, x, y)
         assert not any(w[0] == x and w[1] == y for w in A[a].warps), ("schedule spot on a pad", who)
         assert spots.setdefault((a, x, y), who) == who, ("two residents share a spot", who, spots[(a, x, y)], a, x, y)
@@ -2363,6 +2402,8 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("# Each area has two layers of the same size: floor and objects (space = no object).\n\n")
     f.write("const TILE_FLOOR = " + json.dumps(TILE_FLOOR) + "\n")
     f.write("const TILE_OBJ = " + json.dumps(TILE_OBJ) + "\n")
+    f.write("# The rows of each resident's action sheet (art/npc_<id>_act.png), top to bottom: action and facing.\n")
+    f.write("const ACTION_ROWS = " + json.dumps(ACTION_ROWS) + "\n")
     f.write("const VISITOR_DAYS = " + json.dumps(VISITOR_DAYS) + "\n")
     f.write("const MEDBAY = " + json.dumps(MEDBAY) + "\n")
     f.write("const SOLID_FLOOR = " + json.dumps(SOLID_FLOOR) + "\n")

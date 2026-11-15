@@ -159,7 +159,7 @@ const PEOPLE = {
 		"first": [
 			"So you're the one Sara had in quarantine. Sit. No? Fine, stand, but hold still. I'm Maren. I'm the doctor, which here means all of them.",
 			"If the tunnels get the better of you, this is where you'll wake up. I'd rather you bought a medpack and didn't.",
-			"[happy] My husband Owen keeps the library, and our boy Pip keeps everyone else busy. You'll meet them. You won't have a choice.",
+			"[happy] My husband Owen keeps the library, and our grandson Pip keeps everyone else busy. You'll meet them. You won't have a choice.",
 		],
 		"repeat": [
 			"Thirty years a ship's surgeon. I came here to retire. [angry] I have never been so busy.",
@@ -187,7 +187,7 @@ const PEOPLE = {
 		"pitch": 0.85,
 		"first": [
 			"Mind the stack. And that one. Welcome to the library, such as it is. I'm Owen. I married the doctor and inherited the books.",
-			"I teach Pip his letters in the mornings, and anyone else who wanders in. You look like you can read. That puts you ahead of the garrison who left these.",
+			"I teach our grandson Pip his letters in the mornings, and anyone else who wanders in. You look like you can read. That puts you ahead of the garrison who left these.",
 		],
 		"repeat": [
 			"The Terrans left four hundred technical manuals and one novel. I have read the novel nine times. It is not good.",
@@ -200,11 +200,11 @@ const PEOPLE = {
 		"id": "pip",
 		"pitch": 1.9,
 		"first": [
-			"[surprised] You're the one who crashed! Did it hurt? Was there fire? Mum says I can't ask if there was fire.",
+			"[surprised] You're the one who crashed! Did it hurt? Was there fire? Gran says I can't ask if there was fire.",
 			"I'm Pip. I'm nine. I know where everything is. Ask me where something is.",
 		],
 		"repeat": [
-			"[happy] Zaas says there's a sea under the station. Dad says there isn't. I'm going with Zaas.",
+			"[happy] Zaas says there's a sea under the station. Grandad says there isn't. I'm going with Zaas.",
 			"I'm not allowed in the mine. I'm not allowed in the tunnels. I'm not allowed on the lift by myself. [angry] It's a very small station if you're me.",
 			"Quill counts the tongue depressors. [happy] He's missing six. I don't know anything about that.",
 			"When I grow up I'm going to have a ship like yours. Except mine will work.",
