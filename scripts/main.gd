@@ -22,8 +22,8 @@ const MakerScript = preload("res://scripts/player_maker.gd")
 const CreatorScript = preload("res://scripts/creator.gd")
 
 const DAY_START := 6 * 60          # 06:00
-const DAY_END := 24 * 60           # midnight
-const SECONDS_PER_GAME_MINUTE := 1.0   # real seconds per game minute; raise to slow the day
+const DAY_END := 25 * 60           # 1:00 am: if you are still up, you pass out
+const SECONDS_PER_GAME_MINUTE := 1.5   # real seconds per game minute; raise to slow the day (tools/build.py has the same number)
 const SAVE_PATH := "user://save.cfg"
 
 # Bram's hauling job
@@ -1348,7 +1348,7 @@ func _board_request() -> Dictionary:
 
 func _read_board() -> void:
 	var req: Dictionary = _board_request()
-	var today: String = "Day %d, %s. Dinner in the mess hall at 18:00, every day." % [day, WEEKDAYS[(day - 1) % 7]]
+	var today: String = "Day %d, %s. Dinner in the mess hall at 6:00 pm, every day." % [day, WEEKDAYS[(day - 1) % 7]]
 	if board_done_day == day:
 		_say("Bulletin board", [today, "Nothing else is posted today."])
 	elif board_taken_day == day:
@@ -1656,7 +1656,7 @@ func _process(delta: float) -> void:
 	if not paused:
 		minutes += delta / SECONDS_PER_GAME_MINUTE
 		if minutes >= DAY_END:
-			_next_day()
+			_pass_out()
 		for r in residents:
 			r.tick(delta, minutes)
 		for en in enemies:
@@ -1679,7 +1679,7 @@ func _process(delta: float) -> void:
 				_go_to(dest_area, Vector2i(int(dest[1]), int(dest[2])))
 
 	var m := int(minutes)
-	hud_clock.text = "Day %d   %02d:%02d   %d cr" % [day, m / 60, m % 60, credits]
+	hud_clock.text = "Day %d   %s   %d cr" % [day, clock_text(m), credits]
 	hud_zone.text = _zone_name()
 	hud_quest.text = _objective()
 
@@ -1700,6 +1700,30 @@ func _process(delta: float) -> void:
 		hud_hint.text = "[E]  %s" % t["hint"]
 	else:
 		hud_hint.text = ""
+
+
+# The time as people say it: 12-hour clock, counted in ten-minute steps ("6:10 am").
+func clock_text(total_minutes: int) -> String:
+	var t: int = (total_minutes / 10) * 10
+	var hour24: int = (t / 60) % 24
+	var hour12: int = hour24 % 12
+	if hour12 == 0:
+		hour12 = 12
+	return "%d:%02d %s" % [hour12, t % 60, "am" if hour24 < 12 else "pm"]
+
+
+# Still up at 1:00 am: you pass out where you stand and wake in your own bed.
+func _pass_out() -> void:
+	var lost: int = mini(credits / 10, 100)
+	credits -= lost
+	_next_day()
+	hp = MAX_HP / 2
+	var lines: Array = ["[sad] You were found asleep on your feet at one in the morning. Someone carried you to bed."]
+	if lost > 0:
+		lines.append("[angry] You dropped %d credits on the way. You start today tired. Be in bed before one." % lost)
+	else:
+		lines.append("You start today tired. Be in bed before one.")
+	_say("Sara", lines)
 
 
 func _next_day() -> void:

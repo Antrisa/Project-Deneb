@@ -424,6 +424,26 @@ t = Tile("f", "1").r(0, 0, 15, 15, (214, 220, 228)).r(2, 1, 13, 15, (240, 200, 8
 t = Tile("f", "2").r(0, 0, 15, 15, (64, 76, 100)).r(4, 0, 11, 15, (240, 200, 80)).r(5, 0, 10, 15, (30, 34, 48)).r(6, 6, 9, 9, (70, 90, 120))
 t = Tile("f", "3").r(0, 0, 15, 15, (200, 206, 214)).r(2, 4, 13, 12, (156, 66, 62)).r(3, 5, 12, 11, (196, 96, 84)).r(0, 13, 15, 15, (40, 46, 60)).r(7, 6, 8, 10, (250, 230, 190)).r(6, 9, 9, 9, (250, 230, 190))
 t = Tile("f", "0").r(0, 0, 15, 15, (200, 206, 214)).r(2, 3, 13, 11, (84, 128, 92)).r(3, 4, 12, 10, (120, 170, 124)).r(0, 13, 15, 15, (40, 46, 60)).r(7, 5, 8, 9, (250, 250, 230)).r(6, 6, 9, 6, (250, 250, 230))
+# ---- building fronts and the outside (added with the map rebuild). Placeholders in new slots.
+# "7" shop front wall, "8" shop window, "z" flat roof of a building seen from above,
+# "Q" bare moon surface, "X" landing pad plating, "Y" a dry pond basin,
+# "6" the airlock's outer door, "9" a window that looks out at the landing pad.
+t = Tile("f", "7", True, True).r(0, 0, 15, 15, (222, 214, 200)).r(0, 0, 15, 3, (196, 96, 84)).r(0, 4, 15, 4, (150, 66, 60)).r(0, 13, 15, 15, (150, 142, 132)).r(0, 15, 15, 15, (96, 90, 86))
+t.ps([(3, 1), (7, 1), (11, 1), (15, 1)], (236, 150, 130))
+t = Tile("f", "8", True, True).r(0, 0, 15, 15, (222, 214, 200)).r(0, 0, 15, 3, (196, 96, 84)).r(0, 4, 15, 4, (150, 66, 60)).r(0, 13, 15, 15, (150, 142, 132)).r(0, 15, 15, 15, (96, 90, 86))
+t.r(2, 6, 13, 12, (60, 66, 84)).r(3, 7, 12, 11, (250, 214, 130)).r(7, 7, 8, 11, (60, 66, 84)).r(3, 9, 12, 9, (60, 66, 84)).r(4, 8, 5, 8, (255, 244, 200))
+t = Tile("f", "z", True).r(0, 0, 15, 15, (104, 122, 134)).r(0, 0, 15, 0, (132, 150, 160)).r(0, 0, 0, 15, (132, 150, 160)).r(15, 0, 15, 15, (78, 94, 106)).r(0, 15, 15, 15, (78, 94, 106))
+t.ps([(4, 4), (11, 4), (4, 11), (11, 11)], (70, 84, 96))
+t = Tile("f", "Q", True).r(0, 0, 15, 15, (120, 122, 130)).noise([(104, 106, 116), (136, 138, 146)], 26, 41)
+t.ell(5, 5, 2.6, 1.6, (96, 98, 108)).ell(5, 4.6, 2.0, 1.0, (108, 110, 120)).ell(11.5, 11, 1.8, 1.2, (96, 98, 108))
+t = Tile("f", "X").r(0, 0, 15, 15, (70, 76, 92)).r(0, 0, 15, 0, (92, 98, 116)).r(0, 0, 0, 15, (92, 98, 116)).r(15, 0, 15, 15, (52, 58, 72)).r(0, 15, 15, 15, (52, 58, 72))
+t.r(3, 7, 6, 8, (238, 202, 64)).r(9, 7, 12, 8, (238, 202, 64)).ps([(2, 2), (13, 2), (2, 13), (13, 13)], (40, 44, 56))
+t = Tile("f", "Y", True).r(0, 0, 15, 15, (176, 170, 158)).r(1, 1, 14, 14, (150, 144, 134)).r(2, 2, 13, 13, (132, 126, 118))
+t.ps([(4, 4), (5, 5), (6, 5), (7, 6), (7, 7), (8, 8), (9, 8), (10, 9), (11, 11), (5, 10), (6, 11), (4, 9)], (92, 86, 82)).ps([(10, 4), (11, 5), (3, 12)], (110, 150, 120))
+t = Tile("f", "6", True).r(0, 0, 15, 15, (84, 90, 104)).r(2, 0, 13, 15, (112, 118, 134)).r(7, 0, 8, 15, (60, 64, 78)).r(2, 3, 13, 4, (238, 202, 64)).r(2, 11, 13, 12, (238, 202, 64))
+t.ps([(4, 3), (6, 3), (10, 3), (12, 3), (4, 11), (6, 11), (10, 11), (12, 11)], (40, 40, 48)).r(4, 7, 5, 8, (230, 60, 50))
+t = Tile("f", "9", True, True).r(0, 0, 15, 15, (214, 220, 228)).r(1, 2, 14, 12, (60, 66, 84)).r(2, 3, 13, 11, (16, 18, 34)).r(2, 9, 13, 11, (120, 122, 130)).r(4, 10, 8, 10, (238, 202, 64))
+t.ps([(4, 4), (9, 5), (12, 4), (6, 7)], (240, 240, 250)).r(0, 13, 15, 15, (150, 156, 168))
 T.save(art("tiles.png"))
 
 # When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
@@ -1740,7 +1760,7 @@ if not os.path.exists(os.path.join(AUDIO, "music_under.wav")):
     render_loop("music_under", 24.0, voices)
 
 # ================================================================ maps
-WALK = set(".,fhusmiUDAR1230")
+WALK = set(".,fhusmiUDAR1230X")
 
 
 class Area:
@@ -1869,9 +1889,11 @@ def building(key, title, x, y, w, h, side):
     for yy in range(y, y + h):
         for xx in range(x, x + w):
             assert m.floor[yy][xx] == "r", ("building overlaps something", key, xx, yy, m.floor[yy][xx])
-            m.floor[yy][xx] = "#"
+            m.floor[yy][xx] = "z"                  # roof
     if side == "s":
         dx, dy, ch, out, court = x + w // 2, y + h - 1, "1", (0, 1), block(x, y + h, x + w - 1, y + h + 1)
+        for xx in range(x, x + w):                 # the front: wall with a window every few tiles
+            m.floor[dy][xx] = "8" if (xx - x) % 4 == 2 and abs(xx - dx) > 1 else "7"
     elif side == "n":
         dx, dy, ch, out, court = x + w // 2, y, "3", (0, -1), block(x, y - 2, x + w - 1, y - 1)
     elif side == "e":
@@ -2036,7 +2058,9 @@ w.room("", 84, 47, 90, 53, ".")              # agri dome - north hub
 w.room("", 96, 34, 104, 42, ".")             # garden - north hub
 w.room("", 110, 47, 122, 53, ".")            # north hub - workshop
 w.room("Workshop", 122, 36, 162, 64, "f")
-w.circle(22, 110, 17.3, "h", "r")            # the landing pad, outside
+for (x, y) in block(1, 86, 43, 134):
+    w.floor[y][x] = "Q"                      # outside: bare moon surface
+w.circle(22, 110, 17.3, "X", "Q")            # the landing pad
 w.circle(64, 50, 20.3, "s", "d")             # agri dome
 w.circle(NX, 22, 16.3, "s", "d")             # broken garden
 w.circle(NX, NY, 11.3, ".")                  # north hub
@@ -2061,7 +2085,9 @@ ring = [(x, y) for y in range(20, 80) for x in range(40, 90) if w.floor[y][x] ==
 w.setf("r", [c for i, c in enumerate(ring) if (i * 7) % 5 == 0 and c[0] < 72])      # agri dome: broken panels, away from the way in
 ring = [(x, y) for y in range(0, 40) for x in range(80, 120) if w.floor[y][x] == "d"]
 w.setf("r", [c for i, c in enumerate(ring) if (i * 5) % 3 == 0 and c[1] < 30])      # garden: most of the glass is gone
-w.setf("O", block(92, 14, 96, 17) + block(104, 20, 109, 23) + block(95, 26, 98, 28))    # what is left of the fish ponds
+w.setf("Y", block(92, 14, 96, 17) + block(104, 20, 109, 23) + block(95, 26, 98, 28))    # what is left of the fish ponds
+w.setf("6", [(44, 109), (44, 110), (44, 111)])                                            # the airlock's outer door
+w.setf("9", [(47, 106), (48, 106), (50, 106), (51, 106)])                                 # windows onto the pad
 # landing pad (outside): painted lines and a few crates nobody can reach
 w.outlines.append([12, 102, 20, 16])
 
@@ -2084,7 +2110,7 @@ w.put("l", [(72, 105), (72, 115)])
 w.put("k", [(58, 99), (59, 99)])
 w.put("E", [(65, 104)])                      # Sara, at the customs desk
 # airlock
-w.put("L", [(46, 107), (47, 107)])
+w.put("L", [(46, 113), (47, 113)])
 w.put("c", [(52, 113)])
 # district hub
 w.put("o", [(92, 100), (93, 100), (107, 100), (108, 100), (92, 120), (93, 120), (107, 120), (108, 120)])
@@ -2380,8 +2406,8 @@ def tc(x, y):
 THINGS = [
     ["bed", "Your bunk", "Sleep", "west", tc(74, 149), 26],
     ["wardrobe", "Locker", "Change look", "west", tc(85, 148), 26],
-    ["look", "Landing pad", "Look", "west", tc(45, 108), 22],
-    ["look", "Airlock", "Look", "west", tc(45, 111), 22],
+    ["look", "Landing pad", "Look", "west", tc(49, 107), 24],
+    ["look", "Airlock", "Look", "west", tc(45, 110), 22],
     ["look", "Customs gate", "Look", "west", tc(66, 107), 20],
     ["look", "Old bunks", "Look", "west", tc(97, 149), 24],
     ["look", "Hotel desk", "Look", "west", tc(84, 143), 26],
@@ -2458,8 +2484,10 @@ for who, rows in SCHEDULES.items():
             assert "C" in around or "I" in around, ("radius 36 but no counter beside them", who, a, x, y)
 
 
-# Meals: leave early enough to be seated in time. A written time allows for a walk of up to 75 tiles
-# (25 minutes at 3 tiles a minute); for a longer walk the resident sets off that much earlier.
+# Meals: leave early enough to be seated in time. A written time allows for a 25-minute walk;
+# for a longer walk the resident sets off that much earlier.
+# Residents walk 3 tiles a second and a game minute lasts 1.5 seconds (SECONDS_PER_GAME_MINUTE in main.gd).
+TILES_PER_MINUTE = 3 * 1.5
 def walk_length(src, dst):
     seen_, q_ = {src: 0}, deque([src])
     while q_:
@@ -2486,8 +2514,10 @@ for who, rows in SCHEDULES.items():
         if steps > LONGEST_WALK[1]:
             LONGEST_WALK = [who, steps]
         if e[6] == "eat" and i > 0:
-            e[0] = max(prev[0] + 5, e[0] - max(0, (steps - 75 + 2) // 3))
-print("longest walk between two stops: %s, %d tiles (%d minutes)" % (LONGEST_WALK[0], LONGEST_WALK[1], LONGEST_WALK[1] // 3))
+            e[0] = max(prev[0] + 5, e[0] - max(0, int(steps / TILES_PER_MINUTE - 25 + 0.99)))
+        if os.environ.get("SHOW_WALKS"):
+            print("  %-9s to stop %d (%s): %4d tiles, %3d minutes, sets off %02d:%02d" % (who, i, e[6], steps, steps / TILES_PER_MINUTE, e[0] // 60, e[0] % 60))
+print("longest walk between two stops: %s, %d tiles (%d minutes)" % (LONGEST_WALK[0], LONGEST_WALK[1], LONGEST_WALK[1] / TILES_PER_MINUTE))
 NEAR = ((1, 0), (-1, 0), (0, 1), (0, -1), (0, 2), (0, -2))
 for (name, a, x, y, r) in PEOPLE:
     assert any((a, x + dx, y + dy) in seen for dx, dy in NEAR), "cannot reach " + name + " in " + a
@@ -2514,7 +2544,7 @@ MAP_MARKS = [
     [13, "eng", 41, 5, "Engineering bay"], [14, "eng", 40, 19, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
 MAP_MARKS = MAP_MARKS[:6] + [[20 + n, "main", DOORS[b[0]][3], DOORS[b[0]][4], b[1]] for n, b in enumerate(BUILDINGS[:N_SHOPS])] + MAP_MARKS[6:]
-MAP_COLORS = {"1": (238, 202, 64), "2": (238, 202, 64), "3": (238, 202, 64),".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),
+MAP_COLORS = {"z": (64, 76, 100), "7": (64, 76, 100), "8": (64, 76, 100), "X": (90, 96, 112), "Y": (150, 144, 134), "1": (238, 202, 64), "2": (238, 202, 64), "3": (238, 202, 64),".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),
               "m": (124, 106, 94), "i": (196, 172, 138), "U": (238, 202, 64), "D": (238, 202, 64), "A": (238, 202, 64), "R": (238, 202, 64),
               "#": (64, 76, 100), "w": (64, 76, 100), "Z": (64, 76, 100), "d": (110, 190, 210), "O": (70, 150, 210), "J": (70, 150, 210), "B": (170, 170, 182)}
 SM = Img(196, 116)

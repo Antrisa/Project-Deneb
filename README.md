@@ -25,7 +25,7 @@ Testing this build? See `TESTING.md` for what to look at and how to report probl
 | Wipe the save and start again | F9 | |
 | Character screen (new game, or the locker in your quarters) | Up/Down choose a line, Left/Right change it, R shuffle, Enter start | Click the left or right half of a value; on a colour line, drag the hue, saturation and brightness bars |
 
-The game saves each morning, after you sleep or at midnight.
+The game saves each morning. Sleep in your bunk to end the day; if you are still up at 1:00 am you pass out, lose a few credits and start the next day on half your hearts.
 
 ## What is where
 

@@ -8,7 +8,7 @@ The main level has been rebuilt: the town square in the middle, four walkways ou
 
 - The **Spaceport District** (where you start) is rebuilt too: a round hub, Reception with a customs gate to the west, a sealed airlock beyond it, the old barracks to the south with a big empty drill hall, and to the north a second hub with the agri dome, a broken garden and your workshop. The old Agri Dome map on the east side is gone. Walk all of it and say if anything is cut off or cannot be reached.
 - Every door leads to the right room, and the mat puts you back outside the same door.
-- Residents get in and out of buildings and still reach dinner at 18:00 (the walks are longer now).
+- Residents get in and out of buildings and still reach dinner at 6:00 pm (the walks are longer now).
 - Small rooms sit in the middle of the screen, not in a corner.
 - The Map page of the menu shows the new level and puts you at the right door when you are indoors.
 
@@ -36,12 +36,15 @@ Please look at these in particular.
   - Rusk's bar (south-west). Furniture workshop (north-west): Tobbin. Merrow works at the fountain.
   - Ooma's market stall is only there on **Wednesdays and Saturdays** (days 3 and 6).
 - **Residents doing things.** When the new residents stop walking they should play an action: checking a chart, wiping a glass, sweeping. Do they stand in the right spot, with feet on the floor? Does anyone jump sideways or float?
-- **Dinner at 18:00** in the mess hall: 23 people should be seated. Does anyone get stuck on the way or sit on someone else?
-- **The bar in the evening** (from about 19:15): Bram, Freya, Job and Garrick should be there.
+- **Dinner at 6:00 pm** in the mess hall: 23 people should be seated. Does anyone get stuck on the way or sit on someone else?
+- **The bar in the evening** (from about 7:15 pm): Bram, Freya, Job and Garrick should be there.
 - **Medpacks:** buy one from Maren (40 credits) and use it from the hotbar.
 - **Collapsing:** run out of hearts in the tunnels. You should wake up in the medbay.
 - **Friends page** (Tab, fourth page): 24 residents in three columns. Is anything cut off?
 - **"He" and "she":** Evarra and Job each have a line that talks about you. It should match the gender you picked.
+
+- **The clock:** it now reads like "6:10 am", moves in ten-minute steps, and the day runs slower than before. Does a day feel too long or too short? Do residents get a decent stretch of work in before lunch and dinner?
+- **Passing out:** stay up until 1:00 am. You should wake in your bed the next morning with half your hearts and a few credits gone.
 
 ## Known gaps (no need to report)
 
