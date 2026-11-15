@@ -74,6 +74,7 @@ const PEOPLE = {
 			"You must be the new arrival. I'm Evarra. I bake, when there is something to bake with.",
 			"The herbs on the counter are mine. They make the rations taste like food. A little.",
 			"[happy] Jasper is my brother. Don't let him talk you into the number six.",
+			"Bram asked me who the new one was. I said {they're} quiet, and {they} eat{s} what {they're} given. High praise, from me.",
 		],
 		"repeat": [
 			"[sad] Someone brought in fresh greens last month. I still think about it.",
@@ -120,6 +121,7 @@ const PEOPLE = {
 		"repeat": [
 			"[sad] My people come from Louisiana. Never seen it. Mama kept the talk goin' so we wouldn't lose that too.",
 			"Zaas keeps askin' me to dig him a tunnel to the sea. Ain't no sea. I dug him a little one anyhow.",
+			"Told Freya about you. Said {they} work{s} hard and {they} don't complain. She said give {them} a week.",
 			"[sad] You eatin' enough? You look like you ain't eatin' enough.",
 		],
 	},

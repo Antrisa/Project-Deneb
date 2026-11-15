@@ -71,6 +71,7 @@ One exception, for `tiles.png` only: when the game gains a new tile, the generat
 | `weapon_*.png` | Pointing right, grip at the left end. |
 | `enemy_*.png`, `*_ore.png` | Two square frames (creatures 16x16, facing left; ore 32x32). |
 | `fx_*.png` | Four square animation frames (currently 32x32), laid over the still tile. |
+| `player/body2/` | Optional second body type: the same eight layer files, same layout. When present, a Body line appears on the character screen. |
 | `npc_<name>_act.png` | Optional. What a resident does at their spot: 4 frames across, 3 rows (work, eat, idle), same frame size as their walk sheet. Without it the game fakes it. |
 | `ui_panel.png`, `ui_dialogue.png`, `ui_portrait_frame.png` | 3x3 grids: corners stay sharp, edges and middle stretch. |
 | `ui_slot.png` | Three slots side by side: empty, selected, being moved. |
@@ -96,3 +97,7 @@ Design notes, decisions and the roadmap live in the "Project Deneb" project on c
     godot --headless --path . --script res://tests/player_art_test.gd
 
 Checks every top/bottom and face/top pairing for gaps at the waist and neck, that arms and legs move between steps, and the colour controls.
+
+## Pronouns in dialogue
+
+The character screen has a Pronouns line (they, she, he). In any resident's line in `scripts/npc_data.gd`, write the "they" form in curly brackets and the game swaps in the player's: `{they} {them} {their} {theirs} {they're} {they've} {are} {were} {have}`, and `{s}` for a verb ending, as in `{they} look{s} tired`. A capital is kept: `{They}`.

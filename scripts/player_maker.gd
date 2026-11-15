@@ -27,13 +27,34 @@ const PALETTES := {
 	"bottomColor": ["#657081", "#30343c", "#6b4a2e", "#3f5a8a", "#4a6a4a", "#8a8f99", "#7a2e2e", "#c9b38a"],
 }
 
+# Choices that are not pictures. "body" only appears on the character screen when a second
+# set of layers exists in art/player/body2/ (same eight file names and layout).
+const OPTIONS := {
+	"body": ["Body 1", "Body 2"],
+	"pronouns": ["They / them", "She / her", "He / him"],
+}
+
+# The words residents use for the player. In any line of dialogue write the "they" form in
+# curly brackets and the game swaps in the right one:
+#   {they} {them} {their} {theirs} {they're} {they've} {are} {were} {have} {s}
+# A capital letter is kept: {They} -> She. {s} is the verb ending: "{they} look{s} tired".
+const WORDS := {
+	"they": ["they", "she", "he"], "them": ["them", "her", "him"], "their": ["their", "her", "his"],
+	"theirs": ["theirs", "hers", "his"], "they're": ["they're", "she's", "he's"],
+	"they've": ["they've", "she's", "he's"], "are": ["are", "is", "is"], "were": ["were", "was", "was"],
+	"have": ["have", "has", "has"], "s": ["", "s", "s"],
+}
+
 const DEFAULTS := {
+	"body": 0, "pronouns": 0,
 	"tops": 2, "bottoms": 1, "faces": 0, "hair": 0,
 	"hairColor": "#68452f", "eyeColor": "#54b7c4", "topColor": "#578d99", "bottomColor": "#657081", "skinColor": "#efb583",
 }
 
 var _art := {}       # layer name -> Image
 var _mask := {}
+var _art2 := {}      # the second body's layers, if art/player/body2/ exists
+var _mask2 := {}
 const ATLAS_SIZE := Vector2i(128, 1920)
 const CHOICE_HEIGHT := 192
 
@@ -57,7 +78,56 @@ func load_layers() -> bool:
 		masks[k] = mask
 	_art = art
 	_mask = masks
+	_load_second_body()
 	return true
+
+
+# The optional second body: all eight files in art/player/body2/, same layout.
+func _load_second_body() -> void:
+	var art := {}
+	var masks := {}
+	for k in LAYERS:
+		var art_path: String = "res://art/player/body2/%s.png" % k
+		var mask_path: String = "res://art/player/body2/%s_mask.png" % k
+		if not ResourceLoader.exists(art_path) or not ResourceLoader.exists(mask_path):
+			return
+		var img: Image = _image(art_path)
+		var mask: Image = _image(mask_path)
+		if img.get_size() != ATLAS_SIZE or mask.get_size() != ATLAS_SIZE:
+			push_warning("art/player/body2 layers must be 128x1920: " + str(k))
+			return
+		art[k] = img
+		masks[k] = mask
+	_art2 = art
+	_mask2 = masks
+
+
+func body_count() -> int:
+	return 2 if not _art2.is_empty() else 1
+
+
+# How many choices an OPTIONS line has right now.
+func option_count(key: String) -> int:
+	if key == "body":
+		return body_count()
+	var names: Array = OPTIONS[key]
+	return names.size()
+
+
+# Swaps {they}, {them}, {their}... in a line of dialogue for the player's pronouns.
+func with_pronouns(line: String, look: Dictionary) -> String:
+	if line.find("{") == -1:
+		return line
+	var which: int = clampi(int(look.get("pronouns", 0)), 0, 2)
+	var out: String = line
+	for word in WORDS:
+		var forms: Array = WORDS[word]
+		var form: String = forms[which]
+		var key: String = word
+		out = out.replace("{" + key + "}", form)
+		if key != "s":
+			out = out.replace("{" + key.substr(0, 1).to_upper() + key.substr(1) + "}", form.substr(0, 1).to_upper() + form.substr(1))
+	return out
 
 
 func _image(path: String) -> Image:
@@ -83,6 +153,9 @@ func tidy(look: Dictionary) -> Dictionary:
 	for k in PALETTES:
 		if look.has(k) and Color.html_is_valid(str(look[k])):
 			out[k] = str(look[k])
+	for k in OPTIONS:
+		if look.has(k):
+			out[k] = clampi(int(look[k]), 0, option_count(k) - 1)
 	return out
 
 
@@ -99,8 +172,9 @@ func random_look() -> Dictionary:
 # One choice's three baked poses (four directions, 128x192), recoloured.
 func _tinted(k: String, look: Dictionary) -> Image:
 	var choice: int = look[k]
-	var art_all: Image = _art[k]
-	var mask_all: Image = _mask[k]
+	var second: bool = int(look.get("body", 0)) == 1 and not _art2.is_empty()
+	var art_all: Image = _art2[k] if second else _art[k]
+	var mask_all: Image = _mask2[k] if second else _mask[k]
 	var art: Image = art_all.get_region(Rect2i(0, choice * CHOICE_HEIGHT, 128, CHOICE_HEIGHT))
 	var mask: Image = mask_all.get_region(Rect2i(0, choice * CHOICE_HEIGHT, 128, CHOICE_HEIGHT))
 	var primary_key: String = PRIMARY[k]

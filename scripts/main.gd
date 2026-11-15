@@ -837,7 +837,11 @@ func _say(who: String, lines: Array, on_yes: Callable = Callable(), yes_text: St
 	if persons.has(who):
 		portrait = persons[who]["portrait"]
 		dialogue.voice_pitch = float(persons[who]["pitch"])
-	dialogue.start(who, lines, on_yes, yes_text, portrait, on_no, no_text)
+	# Swap {they}, {them}, {their}... for the player's pronouns (see scripts/player_maker.gd).
+	var said: Array = []
+	for line in lines:
+		said.append(maker.with_pronouns(str(line), appearance) if maker != null else str(line))
+	dialogue.start(who, said, on_yes, yes_text, portrait, on_no, no_text)
 
 
 func _talk(who: String) -> void:

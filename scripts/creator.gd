@@ -13,7 +13,7 @@ const ROWS := [
 const PANEL := Rect2(4, 4, 312, 172)
 const ROW_X := 156.0
 const ROW_Y := 34.0
-const ROW_H := 13.0
+const ROW_H := 12.0
 const SHUFFLE := Rect2(16, 112, 64, 15)
 const START := Rect2(84, 112, 64, 15)
 const DIM := Color(0.6, 0.7, 0.85)
@@ -25,6 +25,7 @@ var open := false
 var look := {}
 var row := 0
 var first_time := false
+var _rows: Array = ROWS + [["pronouns", "Pronouns"]]     # the lines shown; "Body" is added when its art exists
 
 var _font: Font
 var _panel_tex: Texture2D
@@ -49,6 +50,10 @@ func _ready() -> void:
 
 func show_for(start_look: Dictionary, is_first_time: bool) -> void:
 	look = maker.tidy(start_look)
+	_rows = ROWS.duplicate()
+	if maker.body_count() > 1:
+		_rows.append(["body", "Body"])
+	_rows.append(["pronouns", "Pronouns"])
 	first_time = is_first_time
 	row = 0
 	_color_drag = -1
@@ -80,10 +85,13 @@ func _process(delta: float) -> void:
 # ---------------------------------------------------------------- changing things
 
 func _change(index: int, by: int) -> void:
-	var entry: Array = ROWS[index]
+	var entry: Array = _rows[index]
 	var key: String = entry[0]
 	if MakerScript.NAMES.has(key):
 		look[key] = (int(look[key]) + by + 10) % 10
+	elif MakerScript.OPTIONS.has(key):
+		var n: int = maker.option_count(key)
+		look[key] = (int(look[key]) + by + n) % n
 	else:
 		var colours: Array = MakerScript.PALETTES[key]
 		var at: int = colours.find(look[key])
@@ -93,7 +101,12 @@ func _change(index: int, by: int) -> void:
 
 
 func _shuffle() -> void:
+	# Shuffle changes the look only; body and pronouns stay as chosen.
+	var keep_body: int = int(look.get("body", 0))
+	var keep_pronouns: int = int(look.get("pronouns", 0))
 	look = maker.random_look()
+	look["body"] = keep_body
+	look["pronouns"] = keep_pronouns
 	world.sfx("click", 0.9)
 	_refresh()
 
@@ -107,9 +120,9 @@ func _finish() -> void:
 
 func handle_input(event: InputEvent) -> void:
 	if event.is_action_pressed("move_up", true):
-		row = (row + ROWS.size() - 1) % ROWS.size()
+		row = (row + _rows.size() - 1) % _rows.size()
 	elif event.is_action_pressed("move_down", true):
-		row = (row + 1) % ROWS.size()
+		row = (row + 1) % _rows.size()
 	elif event.is_action_pressed("move_left", true):
 		_change(row, -1)
 	elif event.is_action_pressed("move_right", true):
@@ -125,7 +138,7 @@ func handle_input(event: InputEvent) -> void:
 
 
 func _row_at(at: Vector2) -> int:
-	for i in ROWS.size():
+	for i in _rows.size():
 		if Rect2(ROW_X - 2, ROW_Y + i * ROW_H - 9, 158, ROW_H).has_point(at):
 			return i
 	return -1
@@ -202,8 +215,8 @@ func _draw() -> void:
 	_button(SHUFFLE, "Shuffle  R", 0)
 	_button(START, "Start" if first_time else "Done", 1)
 
-	for i in ROWS.size():
-		var entry: Array = ROWS[i]
+	for i in _rows.size():
+		var entry: Array = _rows[i]
 		var key: String = entry[0]
 		var label: String = entry[1]
 		var y: float = ROW_Y + i * ROW_H
@@ -217,6 +230,10 @@ func _draw() -> void:
 			var names: Array = MakerScript.NAMES[key]
 			var chosen_name: String = names[int(look[key])]
 			_txt(Vector2(ROW_X + 70, y), chosen_name, Color.WHITE, 7)
+		elif MakerScript.OPTIONS.has(key):
+			var option_names: Array = MakerScript.OPTIONS[key]
+			var option_name: String = option_names[int(look[key])]
+			_txt(Vector2(ROW_X + 70, y), option_name, Color.WHITE, 7)
 		else:
 			var colours: Array = MakerScript.PALETTES[key]
 			var at: int = maxi(0, colours.find(look[key]))
@@ -233,7 +250,7 @@ func _draw() -> void:
 
 
 func _color_key() -> String:
-	var key: String = ROWS[row][0]
+	var key: String = _rows[row][0]
 	return key if MakerScript.PALETTES.has(key) else ""
 
 
