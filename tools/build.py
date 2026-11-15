@@ -41,7 +41,7 @@ class Img:
                     s.px(dx + x, dy + y, c)
 
     def save(s, path):
-        if os.path.basename(path) in HAND_EDITED:
+        if os.path.relpath(path, ART).replace(os.sep, "/") in HAND_EDITED or os.path.basename(path) in HAND_EDITED:
             return      # this file is hand-made art: leave it alone
         raw = b"".join(b"\x00" + bytes(v for px in row for v in px) for row in s.p)
 

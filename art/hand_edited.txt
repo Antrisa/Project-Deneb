@@ -36,3 +36,13 @@ ui_panel.png
 ui_portrait_frame.png
 ui_slot.png
 ui_tab.png
+
+player.png
+player/bottoms.png
+player/bottoms_mask.png
+player/tops.png
+player/tops_mask.png
+player/faces.png
+player/faces_mask.png
+player/hair.png
+player/hair_mask.png

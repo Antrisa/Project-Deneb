@@ -2,7 +2,8 @@ extends RefCounted
 # Builds the player's walk sheet from layers: bottoms, tops, faces and hair, each recoloured.
 #
 # The layer files are in art/player/. Each is 4 directions across (down, up, left, right) and
-# 10 choices down, in 32x64 cells. Each has a "_mask" file saying which pixels take a colour:
+# 10 choices down, each with 3 pose rows (idle, step A, step B) in 32x64 cells.
+# Atlas size: 128x1920. Arm/leg articulation and waist overlap are baked into each layer. Each has a "_mask" file saying which pixels take a colour:
 # red = the layer's main colour (hair, top, bottom or skin), green = skin, blue = eyes.
 # This follows the same rules as the customizer tool that came with the art, so the two match.
 
@@ -33,17 +34,29 @@ const DEFAULTS := {
 
 var _art := {}       # layer name -> Image
 var _mask := {}
+const ATLAS_SIZE := Vector2i(128, 1920)
+const CHOICE_HEIGHT := 192
 
 
 # Loads the layer pictures. Returns false if any are missing (the game then keeps art/player.png).
 func load_layers() -> bool:
+	var art := {}
+	var masks := {}
 	for k in LAYERS:
 		var art_path: String = "res://art/player/%s.png" % k
 		var mask_path: String = "res://art/player/%s_mask.png" % k
 		if not ResourceLoader.exists(art_path) or not ResourceLoader.exists(mask_path):
+			push_warning("Missing player layer: " + str(k))
 			return false
-		_art[k] = _image(art_path)
-		_mask[k] = _image(mask_path)
+		var img: Image = _image(art_path)
+		var mask: Image = _image(mask_path)
+		if img.get_size() != ATLAS_SIZE or mask.get_size() != ATLAS_SIZE:
+			push_warning("Player layers must be v2 animated 128x1920 atlases: " + str(k))
+			return false
+		art[k] = img
+		masks[k] = mask
+	_art = art
+	_mask = masks
 	return true
 
 
@@ -83,13 +96,13 @@ func random_look() -> Dictionary:
 	return out
 
 
-# One layer's chosen row (4 directions, 128x64), recoloured.
+# One choice's three baked poses (four directions, 128x192), recoloured.
 func _tinted(k: String, look: Dictionary) -> Image:
 	var choice: int = look[k]
 	var art_all: Image = _art[k]
 	var mask_all: Image = _mask[k]
-	var art: Image = art_all.get_region(Rect2i(0, choice * 64, 128, 64))
-	var mask: Image = mask_all.get_region(Rect2i(0, choice * 64, 128, 64))
+	var art: Image = art_all.get_region(Rect2i(0, choice * CHOICE_HEIGHT, 128, CHOICE_HEIGHT))
+	var mask: Image = mask_all.get_region(Rect2i(0, choice * CHOICE_HEIGHT, 128, CHOICE_HEIGHT))
 	var primary_key: String = PRIMARY[k]
 	var targets: Array = [Color.html(look[primary_key]), Color.html(look["skinColor"]), Color.html(look["eyeColor"])]
 	var px: PackedByteArray = art.get_data()
@@ -108,7 +121,7 @@ func _tinted(k: String, look: Dictionary) -> Image:
 			px[i + 1] = clampi(roundi(t.g8 * factor), 0, 255)
 			px[i + 2] = clampi(roundi(t.b8 * factor), 0, 255)
 		i += 4
-	return Image.create_from_data(128, 64, false, Image.FORMAT_RGBA8, px)
+	return Image.create_from_data(128, CHOICE_HEIGHT, false, Image.FORMAT_RGBA8, px)
 
 
 # Draws part of src onto dst, trimming anything that would fall outside dst.
@@ -127,33 +140,12 @@ func _blend(dst: Image, src: Image, sx: int, sy: int, w: int, h: int, dx: int, d
 		dst.blend_rect(src, Rect2i(sx, sy, w, h), Vector2i(dx, dy))
 
 
-# The full walk sheet: 4 directions across, 3 rows (standing, step A, step B), 32x64 frames.
+# Composite the same baked frames used by the offline editor. No independent body shifts:
+# the shared waist overlap, shoulder pivots and hip pivots are already in the layers.
 func sheet(look_in: Dictionary) -> ImageTexture:
 	var look: Dictionary = tidy(look_in)
-	var strips := {}
-	for k in LAYERS:
-		strips[k] = _tinted(k, look)
 	var out: Image = Image.create_empty(128, 192, false, Image.FORMAT_RGBA8)
-	for phase in 3:
-		for dir in 4:
-			var f: Image = Image.create_empty(32, 64, false, Image.FORMAT_RGBA8)
-			var sx: int = dir * 32
-			var bottoms: Image = strips["bottoms"]
-			if phase == 0:
-				_blend(f, bottoms, sx, 0, 32, 64, 0, 0)
-			else:
-				# Walking: the body above the shins stays put and the feet move.
-				_blend(f, bottoms, sx, 0, 32, 54, 0, 0)
-				if dir < 2:
-					_blend(f, bottoms, sx, 54, 16, 10, 0, 54 - (2 if phase == 1 else 0))
-					_blend(f, bottoms, sx + 16, 54, 16, 10, 16, 54 - (2 if phase == 2 else 0))
-				else:
-					var step: int = -2 if phase == 1 else 2
-					_blend(f, bottoms, sx, 54, 32, 10, step, 53)
-					_blend(f, bottoms, sx, 54, 32, 10, -step, 54)
-			var bob: int = -1 if phase > 0 else 0
-			for k in ["tops", "faces", "hair"]:
-				var layer: Image = strips[k]
-				_blend(f, layer, sx, 0, 32, 64, 0, bob)
-			out.blit_rect(f, Rect2i(0, 0, 32, 64), Vector2i(dir * 32, phase * 64))
+	for k in LAYERS:
+		var layer: Image = _tinted(k, look)
+		out.blend_rect(layer, Rect2i(0, 0, 128, 192), Vector2i.ZERO)
 	return ImageTexture.create_from_image(out)

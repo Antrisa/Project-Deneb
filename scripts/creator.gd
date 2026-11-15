@@ -32,6 +32,11 @@ var _tab_tex: Texture2D
 var _sheet: Texture2D
 var _time := 0.0
 var _last_mouse := Vector2(-1, -1)
+var _color_drag := -1
+const COLOR_X := 38.0
+const COLOR_W := 108.0
+const COLOR_Y := 137.0
+const COLOR_H := 10.0
 
 
 func _ready() -> void:
@@ -46,6 +51,7 @@ func show_for(start_look: Dictionary, is_first_time: bool) -> void:
 	look = maker.tidy(start_look)
 	first_time = is_first_time
 	row = 0
+	_color_drag = -1
 	open = true
 	_refresh()
 
@@ -58,7 +64,12 @@ func _process(delta: float) -> void:
 	_time += delta
 	if open:
 		var at: Vector2 = get_local_mouse_position()
-		if at != _last_mouse:
+		if _color_drag >= 0:
+			if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+				_set_color_axis(_color_drag, clampf((at.x - COLOR_X) / COLOR_W, 0.0, 1.0))
+			else:
+				_color_drag = -1
+		if at != _last_mouse and _color_drag < 0:
 			_last_mouse = at
 			var hit: int = _row_at(at)
 			if hit != -1:
@@ -89,6 +100,7 @@ func _shuffle() -> void:
 
 func _finish() -> void:
 	open = false
+	_color_drag = -1
 	world.sfx("quest", 1.2)
 	world.set_appearance(look)
 
@@ -123,6 +135,12 @@ func handle_click(button: int) -> void:
 	if button != MOUSE_BUTTON_LEFT:
 		return
 	var at: Vector2 = get_local_mouse_position()
+	if _color_key() != "":
+		for axis in 3:
+			if Rect2(COLOR_X - 2, COLOR_Y + axis * COLOR_H - 2, COLOR_W + 4, 9).has_point(at):
+				_color_drag = axis
+				_set_color_axis(axis, clampf((at.x - COLOR_X) / COLOR_W, 0.0, 1.0))
+				return
 	if SHUFFLE.has_point(at):
 		_shuffle()
 	elif START.has_point(at):
@@ -204,11 +222,51 @@ func _draw() -> void:
 			var at: int = maxi(0, colours.find(look[key]))
 			draw_rect(Rect2(ROW_X + 70, y - 7, 30, 8), Color.html(look[key]))
 			draw_rect(Rect2(ROW_X + 69.5, y - 7.5, 31, 9), Color(0, 0, 0, 0.6), false, 1.0)
-			_txt(Vector2(ROW_X + 106, y), "%d of %d" % [at + 1, colours.size()], DIM, 6)
+			_txt(Vector2(ROW_X + 106, y), str(look[key]), DIM, 6)
 
-	_txt(Vector2(16, 144), "Up / Down: choose a line     Left / Right: change it", DIM, 6)
-	_txt(Vector2(16, 153), "Or click the left or right half of a value.", DIM, 6)
-	if first_time:
-		_txt(Vector2(16, 166), "You can change this later at the locker in your quarters.", DIM, 6)
+	if _color_key() != "":
+		_draw_color_sliders()
 	else:
-		_txt(Vector2(16, 166), "Enter or Esc when you're done.", DIM, 6)
+		_txt(Vector2(16, 144), "Up / Down: choose   Left / Right: change", DIM, 6)
+		_txt(Vector2(16, 153), "Choose a colour row to reveal its sliders.", DIM, 6)
+		_txt(Vector2(16, 166), "Change your look later at your quarters locker.", DIM, 6)
+
+
+func _color_key() -> String:
+	var key: String = ROWS[row][0]
+	return key if MakerScript.PALETTES.has(key) else ""
+
+
+func _set_color_axis(axis: int, value: float) -> void:
+	var key: String = _color_key()
+	if key.is_empty():
+		return
+	var color: Color = Color.html(look[key])
+	var hsv := Vector3(color.h, color.s, color.v)
+	hsv[axis] = clampf(value, 0.0, 1.0)
+	var result: String = "#" + Color.from_hsv(hsv.x, hsv.y, hsv.z).to_html(false)
+	if result != look[key]:
+		look[key] = result
+		_refresh()
+
+
+func _draw_color_sliders() -> void:
+	var color: Color = Color.html(look[_color_key()])
+	var values := [color.h, color.s, color.v]
+	var labels := ["Hue", "Sat", "Light"]
+	for axis in 3:
+		var y: float = COLOR_Y + axis * COLOR_H
+		_txt(Vector2(16, y + 5), labels[axis], DIM, 6)
+		for x in int(COLOR_W):
+			var t: float = float(x) / (COLOR_W - 1.0)
+			var shade: Color
+			if axis == 0:
+				shade = Color.from_hsv(t, 0.8, 0.9)
+			elif axis == 1:
+				shade = Color.from_hsv(color.h, t, maxf(color.v, 0.3))
+			else:
+				shade = Color.from_hsv(color.h, color.s, t)
+			draw_rect(Rect2(COLOR_X + x, y, 1, 5), shade)
+		var knob: float = COLOR_X + values[axis] * (COLOR_W - 1)
+		draw_rect(Rect2(knob - 1, y - 1, 2, 7), Color.WHITE)
+	_txt(Vector2(16, 169), "Drag sliders. Arrows still cycle colour presets.", DIM, 6)
