@@ -9,6 +9,8 @@ A cozy space-town sim: run a settlement built in an abandoned Terran listening p
 
 The first time you open it, Godot imports the art and sounds. That takes a few seconds.
 
+Testing this build? See `TESTING.md` for what to look at and how to report problems.
+
 ## Controls
 
 | Action | Keyboard | Mouse |
