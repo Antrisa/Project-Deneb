@@ -98,6 +98,6 @@ Design notes, decisions and the roadmap live in the "Project Deneb" project on c
 
 Checks every top/bottom and face/top pairing for gaps at the waist and neck, that arms and legs move between steps, and the colour controls.
 
-## Pronouns in dialogue
+## He and she in dialogue
 
-The character screen has a Pronouns line (they, she, he). In any resident's line in `scripts/npc_data.gd`, write the "they" form in curly brackets and the game swaps in the player's: `{they} {them} {their} {theirs} {they're} {they've} {are} {were} {have}`, and `{s}` for a verb ending, as in `{they} look{s} tired`. A capital is kept: `{They}`.
+The Gender line on the character screen (Male or Female) picks the body and how residents refer to the player. In any resident's line in `scripts/npc_data.gd`, write the "they" form in curly brackets and the game swaps in he or she: `{they} {them} {their} {theirs} {they're} {they've} {are} {were} {have}`, and `{s}` for a verb ending, as in `{they} look{s} tired`. A capital is kept: `{They}`.

@@ -25,7 +25,7 @@ var open := false
 var look := {}
 var row := 0
 var first_time := false
-var _rows: Array = ROWS + [["pronouns", "Pronouns"]]     # the lines shown; "Body" is added when its art exists
+var _rows: Array = ROWS + [["body", "Gender"]]     # the lines shown
 
 var _font: Font
 var _panel_tex: Texture2D
@@ -50,10 +50,7 @@ func _ready() -> void:
 
 func show_for(start_look: Dictionary, is_first_time: bool) -> void:
 	look = maker.tidy(start_look)
-	_rows = []
-	if maker.body_count() > 1:
-		_rows.append(["body", "Body"])
-	_rows.append(["pronouns", "Pronouns"])
+	_rows = [["body", "Gender"]]
 	_rows.append_array(ROWS)
 	first_time = is_first_time
 	row = 0
@@ -102,12 +99,10 @@ func _change(index: int, by: int) -> void:
 
 
 func _shuffle() -> void:
-	# Shuffle changes the look only; body and pronouns stay as chosen.
+	# Shuffle changes the look only; gender stays as chosen.
 	var keep_body: int = int(look.get("body", 0))
-	var keep_pronouns: int = int(look.get("pronouns", 0))
 	look = maker.random_look()
 	look["body"] = keep_body
-	look["pronouns"] = keep_pronouns
 	world.sfx("click", 0.9)
 	_refresh()
 

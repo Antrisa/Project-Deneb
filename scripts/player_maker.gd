@@ -27,11 +27,10 @@ const PALETTES := {
 	"bottomColor": ["#657081", "#30343c", "#6b4a2e", "#3f5a8a", "#4a6a4a", "#8a8f99", "#7a2e2e", "#c9b38a"],
 }
 
-# Choices that are not pictures. "body" only appears on the character screen when a second
-# set of layers exists in art/player/body2/ (same eight file names and layout).
+# Choices that are not pictures. "body" is the Gender line: Male uses the layers in art/player/,
+# Female uses art/player/body2/ (same eight file names and layout). It also sets the pronouns.
 const OPTIONS := {
 	"body": ["Male", "Female"],
-	"pronouns": ["They / them", "She / her", "He / him"],
 }
 
 # The words residents use for the player. In any line of dialogue write the "they" form in
@@ -46,7 +45,7 @@ const WORDS := {
 }
 
 const DEFAULTS := {
-	"body": 0, "pronouns": 0,
+	"body": 0,
 	"tops": 2, "bottoms": 1, "faces": 0, "hair": 0,
 	"hairColor": "#68452f", "eyeColor": "#54b7c4", "topColor": "#578d99", "bottomColor": "#657081", "skinColor": "#efb583",
 }
@@ -108,17 +107,15 @@ func body_count() -> int:
 
 # How many choices an OPTIONS line has right now.
 func option_count(key: String) -> int:
-	if key == "body":
-		return body_count()
 	var names: Array = OPTIONS[key]
 	return names.size()
 
 
-# Swaps {they}, {them}, {their}... in a line of dialogue for the player's pronouns.
+# Swaps {they}, {them}, {their}... in a line of dialogue for he or she, from the player's gender.
 func with_pronouns(line: String, look: Dictionary) -> String:
 	if line.find("{") == -1:
 		return line
-	var which: int = clampi(int(look.get("pronouns", 0)), 0, 2)
+	var which: int = 1 if int(look.get("body", 0)) == 1 else 2      # she for Female, he for Male
 	var out: String = line
 	for word in WORDS:
 		var forms: Array = WORDS[word]
