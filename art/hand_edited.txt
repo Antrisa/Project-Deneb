@@ -46,3 +46,11 @@ player/faces.png
 player/faces_mask.png
 player/hair.png
 player/hair_mask.png
+player/body2/tops.png
+player/body2/tops_mask.png
+player/body2/bottoms.png
+player/body2/bottoms_mask.png
+player/body2/faces.png
+player/body2/faces_mask.png
+player/body2/hair.png
+player/body2/hair_mask.png

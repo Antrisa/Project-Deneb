@@ -50,10 +50,11 @@ func _ready() -> void:
 
 func show_for(start_look: Dictionary, is_first_time: bool) -> void:
 	look = maker.tidy(start_look)
-	_rows = ROWS.duplicate()
+	_rows = []
 	if maker.body_count() > 1:
 		_rows.append(["body", "Body"])
 	_rows.append(["pronouns", "Pronouns"])
+	_rows.append_array(ROWS)
 	first_time = is_first_time
 	row = 0
 	_color_drag = -1
