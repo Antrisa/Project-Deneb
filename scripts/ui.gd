@@ -398,19 +398,19 @@ func _draw_friends() -> void:
 		if not world.persons.has(who):
 			continue
 		var st: Dictionary = world.persons[who]
-		var x: float = 12.0 + (i / 5) * 100.0
-		var y: float = 32.0 + (i % 5) * 26.0
+		var x: float = 12.0 + (i / 8) * 100.0
+		var y: float = 30.0 + (i % 8) * 17.0
 		var portrait: Texture2D = st["portrait"]
 		var side: float = portrait.get_height()      # each picture is square; the first is neutral
-		draw_texture_rect_region(portrait, Rect2(x, y, 24, 24), Rect2(0, 0, side, side))
-		draw_rect(Rect2(x - 0.5, y - 0.5, 25, 25), EDGE, false, 1.0)
+		draw_texture_rect_region(portrait, Rect2(x, y, 15, 15), Rect2(0, 0, side, side))
+		draw_rect(Rect2(x - 0.5, y - 0.5, 16, 16), EDGE, false, 1.0)
 		var met: bool = st["met"]
 		var shown_name: String = who if met else "???"
-		_txt(Vector2(x + 30, y + 9), shown_name, Color.WHITE if met else DIM)
+		_txt(Vector2(x + 19, y + 6), shown_name, Color.WHITE if met else DIM, 7)
 		var points: int = st["friendship"]
 		var hearts: int = mini(10, points / HEART_POINTS)
 		for h in 10:
-			draw_texture_rect_region(_hearts_tex, Rect2(x + 30 + h * 6.5, y + 14, 6, 5), Rect2(0.0 if h < hearts else _hearts_tex.get_width() / 2.0, 0, _hearts_tex.get_width() / 2.0, _hearts_tex.get_height()))
+			draw_texture_rect_region(_hearts_tex, Rect2(x + 19 + h * 6.5, y + 9, 6, 5), Rect2(0.0 if h < hearts else _hearts_tex.get_width() / 2.0, 0, _hearts_tex.get_width() / 2.0, _hearts_tex.get_height()))
 		if st["talked_today"]:
-			draw_rect(Rect2(x + 19, y + 1, 4, 4), Color("7ee07a"))      # green dot: talked to today
+			draw_rect(Rect2(x + 11, y + 1, 3, 3), Color("7ee07a"))      # green dot: talked to today
 		i += 1

@@ -919,6 +919,77 @@ K2.rect(3, 11, 12, 14, SHAWL); K2.rect(4, 15, 11, 15, dk(SHAWL)); K2.px(5, 12, l
 outline_img(K2)
 SPR["sesska"] = sheet_from(K2, mirror_left=True)
 
+
+# Fox folk: pointed ears, pale muzzle, a tail
+def fox_overlay(fur, drop=0):
+    tip = (244, 236, 222)
+
+    def ov(R, d):
+        R(3, 1 + drop, 5, 3 + drop, fur); R(10, 1 + drop, 12, 3 + drop, fur); R(4, 2 + drop, 4, 3 + drop, dk(fur, 0.6)); R(11, 2 + drop, 11, 3 + drop, dk(fur, 0.6))
+        if d == "down":
+            R(6, 9 + drop, 9, 11 + drop, tip); R(7, 9 + drop, 8, 9 + drop, (40, 30, 30))
+        elif d == "up":
+            R(6, 22, 9, 27, fur); R(7, 26, 8, 27, tip)
+        else:
+            R(2, 9 + drop, 4, 11 + drop, tip); R(2, 9 + drop, 2, 9 + drop, (40, 30, 30))
+            R(11, 21, 14, 24, fur); R(13, 22, 14, 24, tip)
+    return ov
+
+
+RUSKF, SAFF = (196, 112, 62), (230, 142, 72)
+SPR["rusk"] = sheet({"skin": RUSKF, "hair": (214, 206, 196), "top": (92, 74, 66), "legs": (66, 60, 64), "arm": RUSKF}, fox_overlay(RUSKF), style="bald")
+SPR["saffi"] = sheet({"skin": SAFF, "hair": SAFF, "top": (120, 164, 150), "legs": (120, 164, 150), "arm": SAFF}, fox_overlay(SAFF), style="bald")
+SPR["kit"] = sheet({"skin": SAFF, "hair": SAFF, "top": (224, 190, 80), "legs": (80, 96, 130), "arm": SAFF}, fox_overlay(SAFF, 3), style="bald", short=True)
+
+
+# Garrick (human, security chief and quartermaster): navy uniform, badge
+def ov_garrick(R, d):
+    if d == "down":
+        R(5, 18, 5, 19, (236, 196, 70)); R(4, 16, 11, 16, (40, 52, 80))
+
+
+SPR["garrick"] = sheet({"skin": (190, 140, 110), "hair": (62, 52, 50), "top": (62, 82, 116), "legs": (48, 54, 70), "arm": (62, 82, 116)}, ov_garrick, wide=True)
+# Ix'ali (young Zaa'sh, the armourer)
+IXG = (120, 176, 120)
+
+
+def ov_ixali(R, d):
+    if d == "down":
+        R(5, 18, 10, 24, (150, 110, 70)); R(7, 19, 8, 20, (200, 204, 212))
+    zaash(R, d, IXG, (170, 210, 150))
+
+
+SPR["ixali"] = sheet({"skin": IXG, "hair": IXG, "top": (176, 96, 62), "legs": (60, 62, 76), "arm": IXG}, ov_ixali, style="bald")
+
+
+# Moogli (a guess until the art arrives: small, round, pale fur, big round ears)
+def moogli_overlay(fur):
+    def ov(R, d):
+        R(1, 5, 3, 9, fur); R(12, 5, 14, 9, fur); R(2, 6, 2, 8, (236, 170, 170)); R(13, 6, 13, 8, (236, 170, 170))
+        if d == "down":
+            R(7, 11, 8, 12, (236, 170, 170))
+    return ov
+
+
+MOOG = (232, 216, 184)
+SPR["tobbin"] = sheet({"skin": MOOG, "hair": MOOG, "top": (196, 120, 60), "legs": (90, 84, 96), "arm": MOOG}, moogli_overlay(MOOG), style="bald", short=True)
+SPR["merrow"] = sheet({"skin": (240, 226, 200), "hair": (240, 226, 200), "top": (70, 150, 170), "legs": (60, 96, 110), "arm": (240, 226, 200)}, moogli_overlay((240, 226, 200)), style="bald", short=True)
+SPR["nub"] = sheet({"skin": MOOG, "hair": MOOG, "top": (150, 200, 110), "legs": (110, 90, 70), "arm": MOOG}, moogli_overlay(MOOG), style="bald", short=True)
+# Ooma (the travelling squid trader): long robe, tentacles down the sides of her head
+OOM, OROBE = (196, 116, 176), (62, 52, 96)
+
+
+def ov_ooma(R, d):
+    x0, x1 = (3, 12) if d in ("down", "up") else (4, 11)
+    R(x0, 16, x1, 29, OROBE); R(x1, 16, x1, 29, dk(OROBE)); R(x0, 29, x1, 29, (224, 184, 64))
+    R(3, 5, 4, 14, OOM); R(11, 5, 12, 14, OOM); R(3, 14, 3, 15, dk(OOM)); R(12, 14, 12, 15, dk(OOM))
+    R(5, 2, 10, 3, dk(OOM, 0.8))
+    if d == "down":
+        R(6, 12, 6, 15, OOM); R(9, 12, 9, 15, OOM)
+
+
+SPR["ooma"] = sheet({"skin": OOM, "hair": OOM, "top": OROBE, "legs": OROBE, "arm": OROBE}, ov_ooma, style="bald")
+
 for k, im in SPR.items():
     im.save(art("npc_%s.png" % k))
 
@@ -1308,6 +1379,44 @@ for e in EMOTES:
     marks(im, e)
     frames.append(im)
 strip(frames, "sesska")
+
+
+def fox_extra(fur):
+    def extra(im, e):
+        for (cx, s) in ((17, 1), (46, -1)):
+            for i in range(10):
+                im.rect(cx - (10 - i) // 2, 3 + i, cx + (10 - i) // 2, 3 + i, fur if i > 1 else dk(fur, 0.6))
+        im.ell(32, 37, 8, 6, (244, 236, 222)); im.rect(30, 33, 34, 34, (40, 30, 30))
+        mouth(im, 32, 39, e, (90, 50, 40))
+    return extra
+
+
+def moogli_extra(fur):
+    def extra(im, e):
+        im.ell(11, 26, 7, 9, fur); im.ell(52, 26, 7, 9, fur); im.ell(11, 26, 4, 6, (236, 170, 170)); im.ell(52, 26, 4, 6, (236, 170, 170))
+        im.rect(31, 33, 33, 34, (236, 170, 170))
+    return extra
+
+
+def ooma_extra(im, e):
+    for x in (12, 16, 46, 50):
+        im.rect(x, 20, x + 2, 56, OOM); im.rect(x + 2, 22, x + 2, 56, dk(OOM))
+    im.rect(20, 6, 44, 9, dk(OOM, 0.8)); im.rect(28, 50, 36, 51, (224, 184, 64))
+
+
+def garrick_extra(im, e):
+    im.rect(20, 52, 23, 55, (236, 196, 70)); im.rect(26, 40, 38, 41, dk((190, 140, 110), 0.8))
+
+
+strip(human((84, 70, 60), RUSKF, (214, 206, 196), (92, 74, 66), (190, 150, 60), "bald", fox_extra(RUSKF)), "rusk")
+strip(human((110, 124, 120), SAFF, SAFF, (120, 164, 150), (90, 140, 90), "bald", fox_extra(SAFF)), "saffi")
+strip(human((124, 116, 90), SAFF, SAFF, (224, 190, 80), (90, 140, 90), "bald", fox_extra(SAFF)), "kit")
+strip(human((70, 80, 100), (190, 140, 110), (62, 52, 50), (62, 82, 116), (70, 60, 50), "short", garrick_extra), "garrick")
+strip(zaash_portrait((84, 70, 60), IXG, (176, 96, 62), (200, 204, 212), True), "ixali")
+strip(human((110, 96, 80), MOOG, MOOG, (196, 120, 60), (60, 50, 40), "bald", moogli_extra(MOOG)), "tobbin")
+strip(human((80, 110, 120), (240, 226, 200), (240, 226, 200), (70, 150, 170), (60, 90, 110), "bald", moogli_extra((240, 226, 200))), "merrow")
+strip(human((104, 120, 90), MOOG, MOOG, (150, 200, 110), (60, 50, 40), "bald", moogli_extra(MOOG)), "nub")
+strip(human((40, 36, 70), OOM, OOM, OROBE, (250, 220, 120), "bald", ooma_extra), "ooma")
 
 for k, im in PORT.items():
     im.save(art("portrait_%s.png" % k))
@@ -1709,12 +1818,14 @@ for dy in range(-4, 5):
         m.floor[CY + dy][CX + dx] = "B" if k == 4 else ("J" if k == 0 else "O")
 m.room("Apartments", 14, 48, 23, 57, ",")
 m.room("Apartments", 23, 48, 32, 57, ",")
-m.room("", 32, 48, 40, 57, "f")             # shuttered workshop
+m.room("Furniture workshop", 32, 48, 40, 57, "f")
 m.room("Common area", 40, 40, 64, 57, ",")
 m.room("Bram's Sundries", 18, 63, 29, 72, ".")
 m.room("Fabrication shop", 29, 63, 40, 72, "f")
-m.room("Empty apartment", 40, 63, 50, 72, ",")
-m.room("Empty shop", 52, 66, 64, 78, ".")
+m.room("Apartment", 40, 63, 50, 72, ",")
+m.room("Rusk's bar", 52, 66, 64, 78, ".")
+m.room("Armoury", 146, 63, 156, 72, "f")
+m.room("Apartment", 156, 63, 166, 72, ",")
 m.room("Command lift", 86, 18, 94, 29, ".")
 m.room("Engineering lift", 86, 91, 94, 102, ".")
 m.room("Library", 116, 40, 132, 54, ",")
@@ -1725,8 +1836,8 @@ m.room("Mess hall", 116, 63, 146, 82, ".")
 m.zones += [["West wing", 14, 57, 60, 63], ["East wing", 120, 57, 166, 63], ["Town square", 59, 29, 121, 91]]
 m.setf(".", [(18, 57), (27, 57), (52, 57), (53, 57), (64, 50), (64, 51), (23, 63), (24, 63), (34, 63), (45, 63),
              (64, 69), (64, 70), (89, 29), (90, 29), (91, 29), (89, 91), (90, 91), (91, 91),
-             (116, 48), (116, 49), (160, 57), (130, 63), (131, 63), (116, 68), (116, 69), (139, 57), (149, 57)])
-m.setf("Z", [(35, 57), (36, 57), (37, 57), (136, 57), (137, 57), (141, 57), (142, 57), (146, 57), (147, 57), (151, 57), (152, 57)])
+             (116, 48), (116, 49), (160, 57), (130, 63), (131, 63), (116, 68), (116, 69), (139, 57), (149, 57), (36, 57), (151, 63), (161, 63)])
+m.setf("Z", [(34, 57), (38, 57), (136, 57), (137, 57), (141, 57), (142, 57), (146, 57), (147, 57), (151, 57), (152, 57)])
 m.setf("w", [(17, 48), (18, 48), (26, 48), (27, 48), (48, 40), (49, 40), (56, 40), (57, 40), (122, 40), (123, 40), (126, 40), (127, 40),
              (159, 48), (160, 48)])
 # town square fixtures
@@ -1737,14 +1848,23 @@ m.put("q", [(98, 76), (99, 76), (102, 76), (103, 76), (77, 76), (78, 76), (81, 7
 m.put("c", [(100, 77), (79, 77), (104, 77)])
 m.put("n", [(95, 52)])
 # apartments
-m.put("b", [(15, 49), (22, 49), (24, 49), (31, 49), (41, 71), (156, 49), (160, 49), (164, 49)])
+m.put("b", [(15, 49), (22, 49), (24, 49), (31, 49), (41, 64), (43, 64), (47, 64), (156, 49), (160, 49), (164, 49),
+            (158, 64), (160, 64), (164, 64)])
+m.put("o", [(48, 70), (163, 70)])
+m.put("t", [(44, 68), (159, 68)])
+m.put("p", [(41, 71), (157, 71)])
 m.put("o", [(21, 54), (157, 55)])
 m.put("t", [(29, 55), (162, 51)])
 m.put("p", [(15, 56), (31, 56), (49, 64), (164, 56)])
-# shuttered workshop (you can see in, but not get in)
+# furniture workshop: benches and half-built pieces
 m.put("P", [(34, 51), (35, 51), (38, 54)])
 m.put("c", [(38, 50)])
-m.put("e", [(36, 54)])
+m.put("t", [(33, 55)])
+m.put("o", [(38, 56)])
+# armoury: a counter across the room (customers come in from the wing above), racks along the back wall
+m.put("C", row(67, range(148, 155)))
+m.put("S", [(148, 71), (149, 71), (150, 71), (152, 71), (153, 71), (154, 71)])
+m.put("c", [(147, 70), (155, 70)])
 # medbay: three beds along the back wall, the doctor's desk and screens on the right
 m.put("b", [(135, 49), (137, 49), (139, 49)])
 m.put("k", [(142, 49), (143, 49)])
@@ -1772,8 +1892,9 @@ m.put("c", [(30, 70), (31, 70), (30, 71), (31, 71)])
 m.put("P", [(35, 71), (36, 71)])
 m.put("k", [(38, 71), (39, 71)])
 m.put("t", [(37, 67)])
-# empty shop
+# Rusk's bar: run down for now. Rusk behind the counter, three stools in front of it.
 m.put("C", row(72, range(55, 61)))
+m.put("h", [(56, 73), (58, 73), (60, 73)])
 m.put("S", [(53, 67), (54, 67)])
 m.put("x", [(57, 75), (61, 74)])
 m.put("e", [(55, 76)])
@@ -2023,7 +2144,26 @@ PEOPLE = [
 # the way they face once there (d, u, l, r) and what they do there (work, eat, idle).
 # Times are when they set off, so people far away leave earlier to reach dinner by 18:00.
 # Lunch is only Job, Freya and Zaas. Dinner at 18:00 is everyone.
+# Residents who are only on the station some days: name -> weekdays (0 = Monday).
+VISITOR_DAYS = {"Ooma": [2, 5]}
+
 SCHEDULES_RAW = {
+    "Rusk": [("07:00", "main", 57, 71, 36, "d", "work"), ("17:35", "main", 121, 70, 26, "d", "eat"), ("18:50", "main", 57, 71, 36, "d", "work")],
+    "Ooma": [("06:00", "main", 100, 76, 26, "u", "work")],
+    "Tobbin": [("07:00", "main", 36, 53, 26, "d", "work"), ("17:35", "main", 120, 72, 26, "u", "eat"), ("19:15", "main", 48, 49, 26, "d", "idle"),
+               ("21:30", "main", 43, 67, 26, "d", "idle")],
+    "Merrow": [("06:30", "main", 90, 54, 26, "d", "work"), ("10:30", "east", 41, 34, 26, "u", "work"), ("14:00", "main", 96, 60, 26, "l", "work"),
+               ("17:35", "main", 121, 72, 26, "u", "eat"), ("19:15", "main", 46, 68, 26, "d", "idle")],
+    "Nub": [("08:00", "main", 123, 49, 26, "u", "work"), ("12:30", "main", 96, 57, 26, "d", "idle"), ("17:35", "main", 125, 72, 26, "u", "eat"),
+            ("19:15", "main", 47, 67, 26, "d", "idle")],
+    "Garrick": [("07:00", "main", 151, 68, 36, "u", "work"), ("12:00", "main", 90, 40, 26, "d", "work"), ("14:00", "main", 151, 68, 36, "u", "work"),
+                ("17:35", "main", 130, 72, 26, "u", "eat"), ("19:15", "main", 62, 74, 26, "l", "idle"), ("21:30", "main", 158, 66, 26, "d", "idle")],
+    "Saffi": [("07:00", "main", 161, 68, 26, "d", "work"), ("10:00", "main", 80, 75, 26, "d", "idle"), ("12:30", "main", 99, 58, 26, "l", "idle"),
+              ("15:00", "main", 161, 68, 26, "d", "work"), ("17:35", "main", 131, 72, 26, "u", "eat"), ("19:15", "main", 160, 66, 26, "d", "idle")],
+    "Kit": [("08:00", "main", 127, 50, 26, "u", "work"), ("12:30", "main", 98, 57, 26, "d", "idle"), ("15:00", "main", 162, 69, 26, "d", "idle"),
+            ("17:35", "main", 135, 72, 26, "u", "eat"), ("19:15", "main", 164, 66, 26, "d", "idle")],
+    "Ix'ali": [("06:30", "main", 153, 70, 26, "d", "work"), ("17:35", "main", 126, 70, 26, "d", "eat"), ("19:15", "mine", 22, 19, 26, "r", "work"),
+               ("22:00", "main", 153, 70, 26, "d", "idle")],
     "Maren": [("06:30", "main", 141, 52, 26, "d", "work"), ("17:35", "main", 135, 75, 26, "d", "eat"), ("19:15", "main", 141, 52, 26, "d", "work"),
               ("21:30", "main", 157, 51, 26, "d", "idle")],
     "Quill": [("06:00", "main", 136, 53, 26, "d", "work"), ("17:35", "main", 141, 75, 26, "d", "eat"), ("19:15", "main", 124, 50, 26, "u", "idle"),
@@ -2038,15 +2178,15 @@ SCHEDULES_RAW = {
                ("21:30", "main", 26, 52, 26, "d", "idle")],
     "Evarra": [("06:00", "main", 142, 67, 36, "d", "work"), ("10:00", "east", 38, 33, 26, "u", "work"), ("13:00", "main", 142, 67, 36, "d", "work"),
                ("20:30", "main", 29, 52, 26, "d", "idle")],
-    "Bram": [("07:00", "main", 26, 68, 36, "l", "work"), ("17:35", "main", 125, 70, 26, "d", "eat"), ("19:15", "main", 52, 50, 26, "d", "idle"),
+    "Bram": [("07:00", "main", 26, 68, 36, "l", "work"), ("17:35", "main", 125, 70, 26, "d", "eat"), ("19:15", "main", 56, 73, 26, "u", "idle"),
              ("22:00", "main", 17, 52, 26, "d", "idle")],
     "Tikka": [("06:00", "eng", 39, 4, 26, "d", "work"), ("17:30", "main", 135, 70, 26, "d", "eat"), ("19:15", "main", 34, 68, 26, "d", "work"),
               ("21:30", "eng", 39, 4, 26, "d", "idle")],
     "Freya": [("06:00", "eng", 44, 5, 26, "r", "work"), ("11:00", "eng", 38, 19, 26, "r", "work"), ("12:30", "main", 140, 70, 26, "d", "eat"),
               ("13:30", "eng", 38, 19, 26, "r", "work"), ("16:30", "eng", 44, 5, 26, "r", "work"), ("17:30", "main", 140, 70, 26, "d", "eat"),
-              ("19:15", "main", 58, 47, 26, "d", "idle"), ("21:30", "main", 20, 52, 26, "d", "idle")],
+              ("19:15", "main", 58, 73, 26, "u", "idle"), ("21:30", "main", 20, 52, 26, "d", "idle")],
     "Job": [("06:30", "mine", 21, 8, 26, "d", "work"), ("12:00", "main", 120, 70, 26, "d", "eat"), ("13:30", "mine", 21, 8, 26, "d", "work"),
-            ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 158, 53, 26, "d", "idle")],
+            ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 60, 73, 26, "u", "idle"), ("22:00", "main", 158, 53, 26, "d", "idle")],
     "Zaas": [("07:00", "mine", 5, 5, 26, "l", "work"), ("12:15", "main", 126, 75, 26, "d", "eat"), ("13:45", "mine", 5, 5, 26, "l", "work"),
              ("17:05", "main", 126, 75, 26, "d", "eat"), ("19:15", "top", 35, 3, 26, "r", "idle"), ("23:00", "main", 162, 53, 26, "d", "idle")],
     "Tar'Besh": [("06:00", "top", 6, 5, 26, "d", "work"), ("17:35", "main", 131, 75, 26, "d", "eat"), ("19:15", "top", 31, 6, 26, "d", "idle"),
@@ -2096,7 +2236,9 @@ THINGS = [
     ["board", "Bulletin board", "Read the board", "main", tc(95, 52), 24],
     ["look", "Market stall", "Look", "main", [99 * 16, 76 * 16 + 8], 28],
     ["look", "Market stall", "Look", "main", [78 * 16, 76 * 16 + 8], 28],
-    ["look", "Shuttered workshop", "Look", "main", tc(36, 57), 24],
+    ["look", "Half-built chair", "Look", "main", tc(38, 55), 22],
+    ["look", "Weapon racks", "Look", "main", tc(149, 70), 24],
+    ["look", "Bar shelves", "Look", "main", tc(53, 68), 24],
     ["look", "Medbay beds", "Look", "main", tc(137, 50), 24],
     ["look", "Loom", "Look", "main", tc(149, 50), 24],
     ["look", "Library shelves", "Look", "main", tc(121, 45), 26],
@@ -2176,7 +2318,8 @@ MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 33], ["Town Sq
 MAP_MARKS = [
     [1, "west", 27, 71, "Your quarters"], [2, "west", 15, 35, "Spaceport"], [3, "west", 48, 40, "Reception"],
     [4, "main", 23, 67, "Bram's Sundries"], [5, "main", 34, 67, "Fabrication shop"], [6, "main", 52, 48, "Common area"],
-    [7, "main", 124, 47, "Library"], [8, "main", 131, 72, "Mess hall"], [18, "main", 139, 52, "Medbay"], [19, "main", 149, 52, "Weaver's shop"], [9, "east", 38, 35, "Herb beds"],
+    [7, "main", 124, 47, "Library"], [8, "main", 131, 72, "Mess hall"], [18, "main", 139, 52, "Medbay"], [19, "main", 149, 52, "Weaver's shop"],
+    [20, "main", 58, 72, "Rusk's bar"], [21, "main", 36, 52, "Furniture workshop"], [22, "main", 151, 67, "Armoury"], [9, "east", 38, 35, "Herb beds"],
     [10, "top", 19, 4, "Sara's suite"], [11, "top", 32, 4, "Observatory"], [12, "eng", 8, 5, "Ore processing"],
     [13, "eng", 41, 5, "Engineering bay"], [14, "eng", 40, 19, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
@@ -2216,6 +2359,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("# Each area has two layers of the same size: floor and objects (space = no object).\n\n")
     f.write("const TILE_FLOOR = " + json.dumps(TILE_FLOOR) + "\n")
     f.write("const TILE_OBJ = " + json.dumps(TILE_OBJ) + "\n")
+    f.write("const VISITOR_DAYS = " + json.dumps(VISITOR_DAYS) + "\n")
     f.write("const MEDBAY = " + json.dumps(MEDBAY) + "\n")
     f.write("const SOLID_FLOOR = " + json.dumps(SOLID_FLOOR) + "\n")
     f.write("const WALL_FACES = " + json.dumps(WALL_FACES) + "\n")
@@ -2262,7 +2406,9 @@ if PREV:
 
     ids = {"Sara": "sara", "Tar'Besh": "tarbesh", "Bram": "bram", "Jasper": "jasper", "Evarra": "evarra",
            "Tikka": "tikka", "Freya": "freya", "Job": "job", "Zaas": "zaas", "Vzz'ket": "vzzket",
-           "Maren": "maren", "Owen": "owen", "Pip": "pip", "Quill": "quill", "Sesska": "sesska"}
+           "Maren": "maren", "Owen": "owen", "Pip": "pip", "Quill": "quill", "Sesska": "sesska",
+           "Rusk": "rusk", "Ooma": "ooma", "Tobbin": "tobbin", "Merrow": "merrow", "Nub": "nub", "Garrick": "garrick",
+           "Saffi": "saffi", "Kit": "kit", "Ix'ali": "ixali"}
     fx_obj = {"k": ("fx_console.png", True), "K": ("fx_display.png", True), "F": ("fx_furnace.png", False), "G": ("fx_core.png", False)}
     for k, ar in A.items():
         im = Image.new("RGBA", (ar.w * cell, ar.h * cell), (11, 16, 38, 255))

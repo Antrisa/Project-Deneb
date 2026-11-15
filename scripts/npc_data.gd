@@ -224,6 +224,130 @@ const PEOPLE = {
 			"[sad] I had a shop on Arach Minor with a window onto the street. Here I have a window onto a corridor. I am told it is the nicer corridor.",
 		],
 	},
+	"Rusk": {
+		"id": "rusk",
+		"pitch": 0.65,
+		"first": [
+			"Mind the third stool, it bites. I'm Rusk. This is my bar. Yes, all of it. No, the ceiling is meant to do that.",
+			"I pour what the station can spare and a few things it can't. Come by of an evening. Half the Landing does.",
+		],
+		"repeat": [
+			"Forty years behind bars. The good kind. [happy] Mostly the good kind.",
+			"[sad] One day I'll have a proper counter, lights that stay on, and a sign. Sara says there are other priorities. Sara doesn't drink.",
+			"People tell a barman things. I couldn't possibly repeat them. [happy] Not for free.",
+			"Bram, Freya and Job are in most nights. Job has never once paid for the stool he broke.",
+		],
+	},
+	"Ooma": {
+		"id": "ooma",
+		"pitch": 0.9,
+		"first": [
+			"Ahh. A new face on the little moon. I am Ooma. I sell what cannot be found, to people who did not know they were looking.",
+			"I am here when I am here. Twice in a week, perhaps. The tides decide. [happy] There are always tides, if you know where to feel for them.",
+		],
+		"repeat": [
+			"This? From a market on a world with three suns and no word for 'refund'.",
+			"[surprised] You have the look of someone who has been somewhere they should not. Good. Those are my best customers.",
+			"I do not haggle. I simply wait until you agree.",
+			"[love] One day I will bring a chair so fine that Tobbin will weep. I am saving it. Timing is everything.",
+		],
+	},
+	"Tobbin": {
+		"id": "tobbin",
+		"pitch": 1.45,
+		"first": [
+			"Don't sit on that! It's not finished. Nothing's finished. I'm Tobbin. I make furniture, out of whatever this station will give me.",
+			"Plastic and steel, plastic and steel. [sad] Do you know what I would give for one plank of real wood? I'd give the plastic. And the steel.",
+		],
+		"repeat": [
+			"[happy] A chair is a promise that someone is staying. This station needs more chairs.",
+			"My Merrow keeps the water running and the green things green. Zaas has the title. She has the wrench.",
+			"Nub has started drawing on my blueprints. [happy] The additions are not structural, but I've kept them.",
+			"[love] If that dome ever grows a tree, I will ask it very politely for a branch.",
+		],
+	},
+	"Merrow": {
+		"id": "merrow",
+		"pitch": 1.5,
+		"first": [
+			"Careful, that valve's live. I'm Merrow. Hydroponics officer. If it's wet or green on this station, it's mine to worry about.",
+			"Zaas is my chief. He's a fine chief. [angry] He's also been looking for an ocean for three weeks, so the fountain is me.",
+		],
+		"repeat": [
+			"Every drop on the Landing has been through that fountain a hundred times. Don't think about it too hard.",
+			"[happy] Evarra's herbs are coming in. One corner of one dome. Give me glass and pumps and I'll give you a garden.",
+			"Tobbin wants a tree. I want a tree. [sad] The dome wants forty new panels first.",
+			"Nub fell in the fountain again. [happy] At least one of us got an ocean.",
+		],
+	},
+	"Nub": {
+		"id": "nub",
+		"pitch": 2.0,
+		"first": [
+			"[surprised] You're tall. Are you the crashed one? Pip said you were on fire. Were you on fire?",
+			"I'm Nub. My dad makes chairs and my mum makes water. I make drawings.",
+		],
+		"repeat": [
+			"[happy] Kit can jump off the fountain edge. I can nearly jump off the fountain edge.",
+			"I drew you. You're the tall one with the sad ship.",
+			"Dad says don't touch the saw. [angry] I only looked at the saw.",
+		],
+	},
+	"Garrick": {
+		"id": "garrick",
+		"pitch": 0.75,
+		"first": [
+			"So you're Sara's guest. Garrick. Security chief, quartermaster, and the man who signs for anything sharp on this station.",
+			"I've read what's left of your ship's log. Pirate hunter. [angry] Keep it outside the airlock and we'll get along.",
+		],
+		"repeat": [
+			"Sara wants fewer weapons on the Landing. The tunnels want more. I split the difference and write it all down.",
+			"[happy] My wife Saffi runs our home and our boy Kit runs everywhere else. I just run security.",
+			"Ix'ali is the best armourer I've had. She's also the only one. [surprised] Don't tell her either of those.",
+			"Rusk's is the only place I take the badge off. Don't make me put it back on in there.",
+		],
+	},
+	"Saffi": {
+		"id": "saffi",
+		"pitch": 1.3,
+		"first": [
+			"Oh, you're the one! Garrick's been grumbling about you for days, which means he likes you. I'm Saffi.",
+			"If you see a small fox going somewhere fast, that's Kit, and wherever he's going, he's not allowed.",
+		],
+		"repeat": [
+			"[happy] Rusk is my uncle. Don't believe a word he says about me as a kit.",
+			"I keep the house, the boy and the chief of security in order. [angry] Only one of them listens.",
+			"The market is quiet most days. But when Ooma's stall is up, I always find something I didn't need.",
+			"[love] Garrick came here to guard a station. He stayed because it turned into a town.",
+		],
+	},
+	"Kit": {
+		"id": "kit",
+		"pitch": 1.95,
+		"first": [
+			"[surprised] You've got a real ship! Dad says it's a wreck. A real wreck!",
+			"I'm Kit. I'm the fastest on the station. Pip says he is. Pip is wrong.",
+		],
+		"repeat": [
+			"[happy] I'm going to be security chief. Or a pirate. Dad says I can't be both.",
+			"Ix'ali let me hold a helmet. [happy] It went all the way down to my shoulders.",
+			"Nub can't jump the fountain edge yet. I'm teaching. I'm a good teacher.",
+		],
+	},
+	"Ix'ali": {
+		"id": "ixali",
+		"pitch": 1.6,
+		"first": [
+			"[surprised] A Terran! With Terran weapons? No? None? Not even a small one? ...I am Ix'ali. I am the armourer.",
+			"Technically I assist the quartermaster. Practically, he signs the forms and I get to touch everything. It is the best job on the moon.",
+		],
+		"repeat": [
+			"[love] Your people put a tiny explosion inside a tube and called it a sidearm. I think about this every day.",
+			"Sara says there are enough weapons on the Landing. Sara has not seen what comes up out of the tunnels. Or she has, and she is being polite.",
+			"In the evenings I spar with Vzz'ket by the cavern gate. [happy] He has only knocked me down nine times this week.",
+			"[angry] Do not call it 'just a spear'. It has a balance point. It has a history. It has a name, which I will not tell you.",
+		],
+	},
 }
 
 # Things you can look at. Name must match the name in tools/build.py THINGS.
@@ -242,6 +366,9 @@ const LOOKS = {
 	"Locked apartment": ["Private quarters, shuttered. Guests could stay here one day, if anyone could find the keys."],
 	"Hotel desk": ["The duty officer's desk. Dust it off, add a bell, and it is a front desk."],
 	"Abandoned shop": ["A shop front, shuttered. The sign has been painted over twice in two different alphabets."],
+	"Half-built chair": ["Steel legs, a plastic seat, and a pencil note: 'IMAGINE THIS IN OAK.'"],
+	"Weapon racks": ["Spears, blades, two dented helmets and a clipboard. Everything has a tag. Everything is signed for."],
+	"Bar shelves": ["Bottles in six alphabets. Half are empty and kept for the look of the thing."],
 	"Medbay beds": ["Three beds, clean sheets, and a chart on each. Two of the charts say JOB."],
 	"Loom": ["Sesska's loom. It has more moving parts than your ship, and all of them work."],
 	"Broken agri dome": ["Cracked panels, dry soil, dead machines. It was built to feed a garrison.", "With glass and water this could feed the whole Landing."],

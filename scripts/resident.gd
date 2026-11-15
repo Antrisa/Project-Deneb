@@ -27,6 +27,7 @@ var _act_tex: Texture2D = null   # optional art/npc_<id>_act.png: 4 frames acros
 var _facing := 0             # which way they face once they have arrived
 var _act := "idle"           # what they do there: work, eat or idle
 var _idle_time := 0.0
+var away := false            # a visitor who is not on the station today: not shown, cannot be talked to
 
 const FACING := {"d": 0, "u": 1, "l": 2, "r": 3}
 const ACT_ROW := {"work": 0, "eat": 1, "idle": 2}
@@ -56,6 +57,13 @@ func setup(main, person_name: String, tex: Texture2D, entries: Array, entry_thin
 # Put the resident where their schedule says they should be right now (used each morning).
 func snap(minutes: float) -> void:
 	_unsettle()
+	if away:
+		area = ""
+		_path = []
+		_entry = -1
+		visible = false
+		thing["area"] = ""
+		return
 	_entry = _entry_for(minutes)
 	var e: Array = schedule[_entry]
 	_target_area = e[1]
@@ -71,6 +79,9 @@ func snap(minutes: float) -> void:
 
 
 func tick(delta: float, minutes: float) -> void:
+	if away:
+		visible = false
+		return
 	var want: int = _entry_for(minutes)
 	if want != _entry:
 		_entry = want

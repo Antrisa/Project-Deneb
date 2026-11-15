@@ -621,7 +621,12 @@ func _add_resident(who: String, entries: Array) -> void:
 
 
 func _snap_residents() -> void:
+	# Visitors (MapData.VISITOR_DAYS) are only here on their days of the week.
+	var weekday: int = (day - 1) % 7
 	for r in residents:
+		if MapData.VISITOR_DAYS.has(r.who):
+			var days: Array = MapData.VISITOR_DAYS[r.who]
+			r.away = not (days.has(weekday) or days.has(float(weekday)))
 		r.snap(minutes)
 
 
