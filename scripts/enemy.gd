@@ -32,7 +32,10 @@ func setup(main, enemy_kind: String, area_name: String, start: Vector2) -> void:
 	texture = load(_info["art"])
 	hframes = 2
 	centered = false
-	offset = Vector2(-8, -14)
+	# The sheet can be drawn at any size: a frame is always 16 wide in the world.
+	var k: float = 16.0 / (texture.get_width() / 2.0)
+	scale = Vector2(k, k)
+	offset = Vector2(-8, -14) / k
 	reset()
 
 

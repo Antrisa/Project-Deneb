@@ -449,7 +449,9 @@ T.save(art("tiles.png"))
 # When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
 #  - slots the artist left empty (tiles added to the game since the art was made), and
 #  - the objects named here, whose hand-made versions did not fit how the game uses them.
-KEEP_GENERATED = ["o", "C"]      # couch; counter (must join up side by side)
+KEEP_GENERATED = []              # hand-made tiles whose slot should use the generated art instead (none now)
+# What shows through the see-through parts of these hand-made floor tiles: wall top "#", wall face "W" or floor ".".
+UNDER_TILE = {"1": "W", "2": "#", "3": ".", "0": ".", "6": "#", "9": "W", "7": "W", "8": "W"}
 CLEAN_STRAYS = ["l"]             # hand-made objects with stray specks beside them: keep only the main shape
 
 
@@ -512,7 +514,11 @@ def patch_hand_tiles():
             box = (idx * cell, cell, idx * cell + cell, 2 * cell)
             part = sheet_img.crop(box)
             if part.getextrema()[3][0] < 255:
-                under = gen.crop((idx * 16, 16, idx * 16 + 16, 32)).resize((cell, cell), Image.NEAREST)
+                if ch in UNDER_TILE:        # doors and windows sit in a wall or on the floor: that goes underneath
+                    ub = TILE_FLOOR[UNDER_TILE[ch]]
+                    under = sheet_img.crop((ub * cell, cell, ub * cell + cell, 2 * cell)).copy()
+                else:
+                    under = gen.crop((idx * 16, 16, idx * 16 + 16, 32)).resize((cell, cell), Image.NEAREST)
                 under.alpha_composite(part)
                 if under.tobytes() != part.tobytes():
                     sheet_img.paste(under, box[:2])

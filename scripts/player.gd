@@ -61,6 +61,7 @@ func _ready() -> void:
 	_slash = Sprite2D.new()
 	_slash.texture = load("res://art/slash.png")
 	_slash.hframes = 2
+	_slash.scale = Vector2.ONE * (16.0 / _slash.texture.get_height())     # any size; shown 16 high
 	_slash.visible = false
 	add_child(_slash)
 
@@ -191,7 +192,10 @@ func swing(kind: String) -> void:
 	_attack_dir = facing()
 	_attack_time = ATTACK_LEN
 	_weapon.texture = _spear_tex if kind == "spear" else _sword_tex
-	_weapon.offset = Vector2(-3, -3.5) if kind == "spear" else Vector2(-2, -4.5)
+	# Weapon art can be any size: the spear is shown 7 high in the world, the sword 9.
+	var weapon_scale: float = (7.0 if kind == "spear" else 9.0) / _weapon.texture.get_height()
+	_weapon.scale = Vector2(weapon_scale, weapon_scale)
+	_weapon.offset = (Vector2(-3, -3.5) if kind == "spear" else Vector2(-2, -4.5)) / weapon_scale
 	_weapon.flip_v = _attack_dir.x < 0.0
 	_weapon.visible = true
 	_behind(_weapon, _dir == 1)

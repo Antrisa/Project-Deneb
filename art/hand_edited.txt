@@ -96,3 +96,17 @@ portrait_rusk.png
 portrait_saffi.png
 portrait_sesska.png
 portrait_tobbin.png
+enemy_bug.png
+enemy_lizard.png
+npc_bram_act.png
+npc_evarra_act.png
+npc_freya_act.png
+npc_jasper_act.png
+npc_job_act.png
+npc_tarbesh_act.png
+npc_tikka_act.png
+npc_vzzket_act.png
+npc_zaas_act.png
+slash.png
+weapon_spear.png
+weapon_sword.png
