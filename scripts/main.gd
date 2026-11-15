@@ -18,6 +18,8 @@ const ItemData = preload("res://scripts/item_data.gd")
 const UiScript = preload("res://scripts/ui.gd")
 const EnemyScript = preload("res://scripts/enemy.gd")
 const DialogueScript = preload("res://scripts/dialogue_box.gd")
+const MakerScript = preload("res://scripts/player_maker.gd")
+const CreatorScript = preload("res://scripts/creator.gd")
 
 const DAY_START := 6 * 60          # 06:00
 const DAY_END := 24 * 60           # midnight
@@ -91,6 +93,9 @@ var music_name := ""
 var music_on := true
 var pops: Array = []               # short effects: [sprite, seconds left, rise speed]
 var items_tex: Texture2D
+var maker                        # builds the player's picture from layers (scripts/player_maker.gd)
+var creator                      # the character screen (scripts/creator.gd); null if the layer art is missing
+var appearance := {}             # the player's chosen look; empty until chosen
 var glow_tex: Texture2D
 var glow_mat: CanvasItemMaterial
 var enemies: Array = []            # cave creatures (scripts/enemy.gd)
@@ -192,6 +197,12 @@ func _ready() -> void:
 	_go_home()
 	_snap_residents()
 	_toast("Day %d" % day)
+	# A new game starts on the character screen.
+	if creator != null:
+		if appearance.is_empty():
+			creator.show_for(maker.defaults(), true)
+		else:
+			player.set_sheet(maker.sheet(appearance))
 
 
 # ---------------------------------------------------------------- input
@@ -234,6 +245,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("music"):
 		_toggle_music()
 		return
+	if creator != null and creator.open:
+		creator.handle_input(event)
+		return
 	if ui.open:
 		ui.handle_input(event)
 		return
@@ -269,6 +283,9 @@ func _interact_nearest() -> void:
 # Mouse: left click uses the selected item (or interacts if it has no use), right click interacts,
 # the wheel changes the hotbar slot. In the menu, clicks go to scripts/ui.gd.
 func _mouse_button(button: int) -> void:
+	if creator != null and creator.open:
+		creator.handle_click(button)
+		return
 	if ui.open:
 		ui.handle_click(button)
 		return
@@ -800,6 +817,11 @@ func _interact(t: Dictionary) -> void:
 		_deliver_crate()
 	elif kind == "bed":
 		_say("Your bunk", ["Sleep until morning?"], Callable(self, "_next_day"), "Sleep")
+	elif kind == "wardrobe":
+		if creator == null:
+			_say("Locker", ["A spare uniform, neatly folded. Not your size."])
+		else:
+			_say("Locker", ["Spare clothes, a comb and a cracked mirror.", "Change how you look?"], Callable(self, "_open_wardrobe"), "Change")
 	elif kind == "look":
 		var thing_name: String = t["name"]
 		var lines: Array = NpcData.LOOKS.get(thing_name, ["Nothing much to see."])
@@ -1445,7 +1467,9 @@ func _pop_item(item: String, at: Vector2) -> void:
 	var s := Sprite2D.new()
 	s.texture = items_tex
 	s.region_enabled = true
-	s.region_rect = Rect2(icon * 16, 0, 16, 16)
+	var icon_size: float = items_tex.get_height()     # icons can be any size; shown 16 wide
+	s.region_rect = Rect2(icon * icon_size, 0, icon_size, icon_size)
+	s.scale = Vector2.ONE * (16.0 / icon_size)
 	s.position = at
 	top_fx.add_child(s)
 	pops.append([s, 0.9, 18.0])
@@ -1540,6 +1564,28 @@ func _build_ui() -> void:
 	ui.world = self
 	ui_layer.add_child(ui)
 
+	# The character screen, if the layered player art is installed (art/player/).
+	maker = MakerScript.new()
+	if maker.load_layers():
+		var top_layer := CanvasLayer.new()
+		top_layer.layer = 12
+		add_child(top_layer)
+		creator = CreatorScript.new()
+		creator.world = self
+		creator.maker = maker
+		top_layer.add_child(creator)
+
+
+func _open_wardrobe() -> void:
+	creator.show_for(appearance if not appearance.is_empty() else maker.defaults(), false)
+
+
+# Called by the character screen when the player is happy with their look.
+func set_appearance(look: Dictionary) -> void:
+	appearance = maker.tidy(look)
+	player.set_sheet(maker.sheet(appearance))
+	_save_game()
+
 
 func _hud_label(parent: Node, pos: Vector2, size: Vector2) -> Label:
 	var l := Label.new()
@@ -1558,7 +1604,7 @@ func _toast(msg: String) -> void:
 
 
 func _process(delta: float) -> void:
-	var paused: bool = dialogue.active or ui.open
+	var paused: bool = dialogue.active or ui.open or (creator != null and creator.open)
 	player.frozen = paused
 	tint.color = _light_color()
 	_animate()
@@ -1647,6 +1693,8 @@ func _save_game() -> void:
 	cfg.set_value("game", "tunnel_kills", tunnel_kills)
 	cfg.set_value("game", "board_taken_day", board_taken_day)
 	cfg.set_value("game", "board_done_day", board_done_day)
+	if not appearance.is_empty():
+		cfg.set_value("game", "appearance", appearance)
 	for who in persons:
 		var st: Dictionary = persons[who]
 		var section: String = "npc_%s" % st["id"]
@@ -1681,6 +1729,9 @@ func _load_game() -> void:
 	tunnel_kills = int(cfg.get_value("game", "tunnel_kills", 0))
 	board_taken_day = int(cfg.get_value("game", "board_taken_day", 0))
 	board_done_day = int(cfg.get_value("game", "board_done_day", 0))
+	var saved_look = cfg.get_value("game", "appearance", {})
+	if saved_look is Dictionary and not saved_look.is_empty() and maker != null:
+		appearance = maker.tidy(saved_look)
 	for who in persons:
 		var st: Dictionary = persons[who]
 		var section: String = "npc_%s" % st["id"]

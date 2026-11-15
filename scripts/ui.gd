@@ -263,7 +263,7 @@ func _draw_slot(pos: Vector2, item: String, state: int) -> void:
 		return
 	var info: Dictionary = ItemData.ITEMS[item]
 	var icon: int = info["icon"]
-	draw_texture_rect_region(_items_tex, Rect2(pos + Vector2(1, 1), Vector2(16, 16)), Rect2(icon * 16, 0, 16, 16))
+	draw_texture_rect_region(_items_tex, Rect2(pos + Vector2(1, 1), Vector2(16, 16)), Rect2(icon * _items_tex.get_height(), 0, _items_tex.get_height(), _items_tex.get_height()))
 	var n: int = world.count_of(item)
 	if n > 1:
 		var label: String = str(n)
@@ -279,7 +279,7 @@ func _draw_hotbar() -> void:
 		_draw_slot(origin + Vector2(i * SLOT, 0), item, 1 if i == world.selected else 0)
 	# Health: ten hearts above the hotbar.
 	for h in 10:
-		draw_texture_rect_region(_hearts_tex, Rect2(316 - 80 + h * 8, origin.y - 9, 7, 6), Rect2(0 if h < world.hp else 7, 0, 7, 6))
+		draw_texture_rect_region(_hearts_tex, Rect2(316 - 80 + h * 8, origin.y - 9, 7, 6), Rect2(0.0 if h < world.hp else _hearts_tex.get_width() / 2.0, 0, _hearts_tex.get_width() / 2.0, _hearts_tex.get_height()))
 	# A small button to open the menu with the mouse.
 	var button: Rect2 = _menu_button_rect()
 	_tab(button, 0)
@@ -410,7 +410,7 @@ func _draw_friends() -> void:
 		var points: int = st["friendship"]
 		var hearts: int = mini(10, points / HEART_POINTS)
 		for h in 10:
-			draw_texture_rect_region(_hearts_tex, Rect2(x + 30 + h * 8, y + 14, 7, 6), Rect2(0 if h < hearts else 7, 0, 7, 6))
+			draw_texture_rect_region(_hearts_tex, Rect2(x + 30 + h * 8, y + 14, 7, 6), Rect2(0.0 if h < hearts else _hearts_tex.get_width() / 2.0, 0, _hearts_tex.get_width() / 2.0, _hearts_tex.get_height()))
 		if st["talked_today"]:
 			_txt(Vector2(x + 114, y + 9), "talked", Color("b8f0b0"), 6)
 		i += 1

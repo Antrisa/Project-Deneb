@@ -41,6 +41,7 @@ func _ready() -> void:
 	_sprite.vframes = 3      # rows: standing, step A, step B
 	_sprite.centered = false
 	_sprite.position = Vector2(-8, -30)     # sprite frames are 16x32
+	set_sheet(_sprite.texture)
 	add_child(_sprite)
 
 	# The crate shown over the head while carrying (crate tile from tiles.png).
@@ -74,6 +75,7 @@ func _ready() -> void:
 	_tool = Sprite2D.new()
 	_tool.texture = load("res://art/items.png")
 	_tool.region_enabled = true
+	_tool.scale = Vector2.ONE * (16.0 / _tool.texture.get_height())     # icons can be any size
 	_tool.visible = false
 	add_child(_tool)
 
@@ -106,10 +108,22 @@ func facing() -> Vector2:
 	return d
 
 
+func _icon_rect(icon: int) -> Rect2:
+	var cell: float = _tool.texture.get_height()
+	return Rect2(icon * cell, 0, cell, cell)
+
+
+# Swaps the walk sheet (4 columns x 3 rows, any size) - used by the character screen.
+func set_sheet(tex: Texture2D) -> void:
+	_sprite.texture = tex
+	var frame_w: float = tex.get_width() / 4.0
+	_sprite.scale = Vector2.ONE * (16.0 / frame_w)
+
+
 # Holds an item out for a moment. icon is its position in art/items.png.
 func show_tool(icon: int) -> void:
 	var spots: Array = [Vector2(6, -9), Vector2(6, -13), Vector2(-9, -12), Vector2(9, -12)]
-	_tool.region_rect = Rect2(icon * 16, 0, 16, 16)
+	_tool.region_rect = _icon_rect(icon)
 	_tool.position = spots[_dir]
 	_tool.rotation = 0.0
 	_tool.flip_v = false
@@ -148,7 +162,7 @@ func fire_laser(target: Vector2, icon: int) -> void:
 	# Hold the laser in the hand, pointed at the vein, with the beam coming out of its tip.
 	var hand: Vector2 = HAND + facing() * 5.0
 	var aim: Vector2 = (target - position) - hand
-	_tool.region_rect = Rect2(icon * 16, 0, 16, 16)
+	_tool.region_rect = _icon_rect(icon)
 	_tool.position = hand
 	_tool.rotation = aim.angle()
 	_tool.flip_h = false

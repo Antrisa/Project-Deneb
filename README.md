@@ -21,6 +21,7 @@ The first time you open it, Godot imports the art and sounds. That takes a few s
 | Decline / close | Q or Esc | Right click in conversations; click outside the menu |
 | Music on or off | M | |
 | Wipe the save and start again | F9 | |
+| Character screen (new game, or the locker in your quarters) | Up/Down choose a line, Left/Right change it, R shuffle, Enter start | Click the left or right half of a value |
 
 The game saves each morning, after you sleep or at midnight.
 
@@ -62,7 +63,8 @@ One exception, for `tiles.png` only: when the game gains a new tile, the generat
 
 | Files | Layout |
 |---|---|
-| `npc_*.png`, `player.png` | Walk sheet: 4 columns (down, up, left, right) by 3 rows (standing, step A, step B). Any frame size with a 1:2 shape works; the game scales a frame to 16 wide. The NPC sheets are 32x64 per frame; the player is still 16x32. |
+| `npc_*.png`, `player.png` | Walk sheet: 4 columns (down, up, left, right) by 3 rows (standing, step A, step B). Any frame size with a 1:2 shape works; the game scales a frame to 16 wide. The NPC sheets are 32x64 per frame. `player.png` is only used if the layered player art below is missing. |
+| `player/tops.png`, `bottoms.png`, `faces.png`, `hair.png` and their `_mask.png` | The layered player for the character screen: 4 directions across (down, up, left, right), 10 choices down, 32x64 cells. In the mask, red = takes the layer's main colour, green = skin, blue = eyes. `scripts/player_maker.gd` builds the walk sheet from these; the names and colour lists are at the top of that file. |
 | `portrait_*.png` | 6 square pictures in a row: neutral, happy, sad, surprised, love, angry. Any size; shown in a 64x64 box. Currently 128x128 each. |
 | `tiles.png` | 110 columns, each one cell wide and two cells tall (currently 32x64). The lower half is the tile; the upper half is the top of tall objects. A tile is always drawn 16x16 in the world. Slot names are in `tools/build.py`. |
 | `items.png` | 16x16 icons in a row; the order must match `icon` in `scripts/item_data.gd`. |

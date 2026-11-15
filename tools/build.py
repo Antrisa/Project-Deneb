@@ -1942,6 +1942,7 @@ def tc(x, y):
 # kind, name, hint, area, [px, py], radius
 THINGS = [
     ["bed", "Your bunk", "Sleep", "west", tc(22, 67), 26],
+    ["wardrobe", "Locker", "Change look", "west", tc(33, 66), 26],
     ["look", "Landing pad", "Look", "west", [14 * 16, 35 * 16], 70],
     ["look", "Star dome", "Look", "west", tc(48, 6), 28],
     ["look", "Old bunks", "Look", "west", tc(45, 67), 24],

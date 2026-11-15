@@ -29,3 +29,10 @@ fx_console.png
 fx_core.png
 fx_display.png
 fx_furnace.png
+hearts.png
+items.png
+ui_dialogue.png
+ui_panel.png
+ui_portrait_frame.png
+ui_slot.png
+ui_tab.png
