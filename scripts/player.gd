@@ -1,0 +1,271 @@
+extends Node2D
+# The player. Position is the point between the feet.
+
+const SPEED := 70.0
+const CARRY_SPEED := 50.0
+
+var world            # set by main.gd before entering the tree
+var frozen := false
+var carrying := false
+
+var _sprite: Sprite2D
+var _crate: Sprite2D
+var _cam: Camera2D
+var _walk_time := 0.0
+var _dir := 0            # column in the sprite sheet
+var _last_phase := -1
+var _slash: Sprite2D
+var _slash_time := 0.0
+var _beam: Line2D
+var _beam_time := 0.0
+var _tool: Sprite2D
+var _tool_time := 0.0
+var _flash_time := 0.0
+var _weapon: Sprite2D        # the spear or sword while it is being swung
+var _spear_tex: Texture2D
+var _sword_tex: Texture2D
+var _attack_time := 0.0
+var _attack_kind := ""
+var _attack_dir := Vector2.DOWN
+
+const ATTACK_LEN := 0.26
+const HAND := Vector2(0, -11)
+
+
+func _ready() -> void:
+	_sprite = Sprite2D.new()
+	_sprite.texture = load("res://art/player.png")
+	_sprite.hframes = 4      # columns: down, up, left, right
+	_sprite.vframes = 3      # rows: standing, step A, step B
+	_sprite.centered = false
+	_sprite.position = Vector2(-8, -30)     # sprite frames are 16x32
+	add_child(_sprite)
+
+	# The crate shown over the head while carrying (crate tile from tiles.png).
+	_crate = Sprite2D.new()
+	_crate.texture = load("res://art/tiles.png")
+	_crate.region_enabled = true
+	_crate.region_rect = Rect2(6 * 16, 0, 16, 16)
+	_crate.centered = false
+	_crate.position = Vector2(-8, -44)
+	_crate.visible = false
+	add_child(_crate)
+
+	# The swing effect for weapons. art/slash.png: frame 0 sword arc, frame 1 spear thrust.
+	_slash = Sprite2D.new()
+	_slash.texture = load("res://art/slash.png")
+	_slash.hframes = 2
+	_slash.visible = false
+	add_child(_slash)
+
+	# The mining laser's beam.
+	_beam = Line2D.new()
+	_beam.width = 1.5
+	_beam.default_color = Color(1.0, 0.35, 0.3)
+	_beam.visible = false
+	add_child(_beam)
+
+	# The tool or weapon shown in the hand while it is being used (a picture from art/items.png).
+	_tool = Sprite2D.new()
+	_tool.texture = load("res://art/items.png")
+	_tool.region_enabled = true
+	_tool.visible = false
+	add_child(_tool)
+
+	# Weapon art is drawn pointing right with the grip at the left end, so it can be turned about the hand.
+	_spear_tex = load("res://art/weapon_spear.png")
+	_sword_tex = load("res://art/weapon_sword.png")
+	_weapon = Sprite2D.new()
+	_weapon.centered = false
+	_weapon.visible = false
+	add_child(_weapon)
+
+	_cam = Camera2D.new()
+	_cam.position = Vector2(0, -8)
+	add_child(_cam)
+	_cam.make_current()
+
+
+func set_limits(size: Vector2i) -> void:
+	_cam.limit_left = 0
+	_cam.limit_top = 0
+	_cam.limit_right = size.x
+	_cam.limit_bottom = size.y
+	_cam.reset_smoothing()
+
+
+# The direction the player is facing, as a vector.
+func facing() -> Vector2:
+	var dirs: Array = [Vector2(0, 1), Vector2(0, -1), Vector2(-1, 0), Vector2(1, 0)]
+	var d: Vector2 = dirs[_dir]
+	return d
+
+
+# Holds an item out for a moment. icon is its position in art/items.png.
+func show_tool(icon: int) -> void:
+	var spots: Array = [Vector2(6, -9), Vector2(6, -13), Vector2(-9, -12), Vector2(9, -12)]
+	_tool.region_rect = Rect2(icon * 16, 0, 16, 16)
+	_tool.position = spots[_dir]
+	_tool.rotation = 0.0
+	_tool.flip_v = false
+	_tool.flip_h = _dir == 2
+	_behind(_tool, _dir == 1)
+	_tool.visible = true
+	_tool_time = 0.3
+
+
+# Pushed back by a hit (stops at walls).
+func knock(push: Vector2) -> void:
+	for i in 3:
+		var next: Vector2 = position + push / 3.0
+		if not _blocked(next):
+			position = next
+
+
+# Blinks red for a moment after being hurt.
+func flash() -> void:
+	_flash_time = 0.6
+
+
+# Turns to face a point in the world.
+func face(target: Vector2) -> void:
+	var d: Vector2 = target - position
+	if absf(d.x) > absf(d.y):
+		_dir = 2 if d.x < 0.0 else 3
+	else:
+		_dir = 1 if d.y < 0.0 else 0
+	_sprite.frame_coords = Vector2i(_dir, 0)
+
+
+# Draws the mining laser's beam from the player to a point in the world for a moment.
+func fire_laser(target: Vector2, icon: int) -> void:
+	face(target + Vector2(0, 8))
+	# Hold the laser in the hand, pointed at the vein, with the beam coming out of its tip.
+	var hand: Vector2 = HAND + facing() * 5.0
+	var aim: Vector2 = (target - position) - hand
+	_tool.region_rect = Rect2(icon * 16, 0, 16, 16)
+	_tool.position = hand
+	_tool.rotation = aim.angle()
+	_tool.flip_h = false
+	_tool.flip_v = absf(aim.angle()) > PI / 2.0
+	_tool.visible = true
+	_tool_time = 0.3
+	_behind(_tool, _dir == 1)
+	_beam.clear_points()
+	_beam.add_point(hand + aim.normalized() * 7.0)
+	_beam.add_point(target - position)
+	_beam.visible = true
+	_beam_time = 0.18
+
+
+# Draws a held item behind the body (when facing away) or in front of it.
+func _behind(item: Node, yes: bool) -> void:
+	move_child(item, 0 if yes else get_child_count() - 1)
+
+
+# Shows the weapon swing in the direction the player is facing.
+func swing(kind: String) -> void:
+	_attack_kind = kind
+	_attack_dir = facing()
+	_attack_time = ATTACK_LEN
+	_weapon.texture = _spear_tex if kind == "spear" else _sword_tex
+	_weapon.offset = Vector2(-3, -3.5) if kind == "spear" else Vector2(-2, -4.5)
+	_weapon.flip_v = _attack_dir.x < 0.0
+	_weapon.visible = true
+	_behind(_weapon, _dir == 1)
+	# The streak of the blow.
+	_slash.frame = 1 if kind == "spear" else 0
+	_slash.position = HAND + _attack_dir * (24.0 if kind == "spear" else 15.0)
+	_slash.rotation = _attack_dir.angle()
+	_slash.visible = true
+	_slash_time = 0.16
+	_animate_attack()
+
+
+# The spear is thrust out and drawn back; the sword sweeps through an arc. The body leans into it.
+func _animate_attack() -> void:
+	var k: float = 1.0 - clampf(_attack_time / ATTACK_LEN, 0.0, 1.0)
+	var lean: float = sin(k * PI)
+	var hand: Vector2 = HAND + _attack_dir * 3.0
+	if _attack_kind == "spear":
+		_weapon.position = hand + _attack_dir * (lean * 13.0 - 7.0)
+		_weapon.rotation = _attack_dir.angle()
+	else:
+		var sweep: float = lerpf(-1.4, 1.4, k)
+		if _attack_dir.x < 0.0:
+			sweep = -sweep
+		_weapon.position = hand
+		_weapon.rotation = _attack_dir.angle() + sweep
+	_sprite.position = Vector2(-8, -30) + _attack_dir * lean * 2.0
+
+
+func set_carrying(value: bool) -> void:
+	carrying = value
+	_crate.visible = value
+
+
+func _process(delta: float) -> void:
+	if _slash_time > 0.0:
+		_slash_time -= delta
+		if _slash_time <= 0.0:
+			_slash.visible = false
+	if _attack_time > 0.0:
+		_attack_time -= delta
+		_animate_attack()
+		if _attack_time <= 0.0:
+			_weapon.visible = false
+			_sprite.position = Vector2(-8, -30)
+	if _tool_time > 0.0:
+		_tool_time -= delta
+		if _tool_time <= 0.0:
+			_tool.visible = false
+	if _flash_time > 0.0:
+		_flash_time -= delta
+		_sprite.modulate = Color(1.0, 0.45, 0.45) if int(_flash_time * 16.0) % 2 == 0 and _flash_time > 0.0 else Color.WHITE
+	if _beam_time > 0.0:
+		_beam_time -= delta
+		_beam.default_color = Color(1.0, 0.35, 0.3) if int(_beam_time * 40.0) % 2 == 0 else Color(1.0, 0.85, 0.8)
+		if _beam_time <= 0.0:
+			_beam.visible = false
+	if frozen:
+		_sprite.frame_coords = Vector2i(_dir, 0)
+		return
+
+	var dir: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if dir == Vector2.ZERO:
+		_walk_time = 0.0
+		_sprite.frame_coords = Vector2i(_dir, 0)
+		return
+
+	if absf(dir.x) > absf(dir.y):
+		_dir = 2 if dir.x < 0.0 else 3
+	else:
+		_dir = 1 if dir.y < 0.0 else 0
+
+	var speed: float = CARRY_SPEED if carrying else SPEED
+	var step: Vector2 = dir * speed * delta
+	var next_x: Vector2 = position + Vector2(step.x, 0)
+	if not _blocked(next_x):
+		position = next_x
+	var next_y: Vector2 = position + Vector2(0, step.y)
+	if not _blocked(next_y):
+		position = next_y
+
+	# Walk cycle: step A, standing, step B, standing.
+	_walk_time += delta
+	var cycle: Array = [1, 0, 2, 0]
+	var phase: int = int(_walk_time * 8.0) % 4
+	var row: int = cycle[phase]
+	_sprite.frame_coords = Vector2i(_dir, row)
+	# A footstep each time a foot comes down.
+	if phase != _last_phase and row != 0:
+		world.sfx("step", randf_range(0.85, 1.15), -9.0)
+	_last_phase = phase
+
+
+func _blocked(p: Vector2) -> bool:
+	for off in [Vector2(-5, -6), Vector2(5, -6), Vector2(-5, 0), Vector2(5, 0)]:
+		var corner: Vector2 = p + off
+		if world.solid_at(corner):
+			return true
+	return false
