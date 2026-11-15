@@ -2,6 +2,15 @@
 
 Thanks for trying this. It is an early build: one town, 24 residents, a mine and some caves. A lot of it has never been run before today, so expect rough edges and please report them.
 
+## This is the map-rework branch
+
+The main level has been rebuilt: the town square in the middle, four walkways out to a ring, shops between the square and the ring, apartments outside it. Shops and apartments are now doors; walk into one to go inside, and onto the green mat to come back out. Please check:
+
+- Every door leads to the right room, and the mat puts you back outside the same door.
+- Residents get in and out of buildings and still reach dinner at 18:00 (the walks are longer now).
+- Small rooms sit in the middle of the screen, not in a corner.
+- The Map page of the menu shows the new level and puts you at the right door when you are indoors.
+
 ## Getting it running
 
 1. Install **Godot 4.6** (standard version, not .NET) from godotengine.org.
@@ -21,9 +30,9 @@ Please look at these in particular.
 - **Character screen** at the start of a new game: gender, hair, face, clothes, colours. Do all the lines fit? Do the colour bars drag properly? You can reopen it at the locker in your quarters.
 - **Your character walking** in all four directions, both genders, especially hair from the side.
 - **The 14 new residents.** Find each one and talk to them. Do their walking pictures and portraits look right, and do they face the right way?
-  - Medbay (east wing): Maren and Quill. Library: Owen. Pip, Nub and Kit play by the fountain after noon.
-  - Weaver's shop (east wing): Sesska. Armoury (east wing, south side): Garrick and Ix'ali.
-  - Rusk's bar (south-west of the square). Furniture workshop (west wing): Tobbin. Merrow works at the fountain.
+  - Medbay (east of the square, north of the walkway): Maren and Quill. Library (north-east): Owen. Pip, Nub and Kit play by the fountain after noon.
+  - Weaver's shop (south, left of the walkway): Sesska. Armoury (east, south of the walkway): Garrick and Ix'ali.
+  - Rusk's bar (south-west). Furniture workshop (north-west): Tobbin. Merrow works at the fountain.
   - Ooma's market stall is only there on **Wednesdays and Saturdays** (days 3 and 6).
 - **Residents doing things.** When the new residents stop walking they should play an action: checking a chart, wiping a glass, sweeping. Do they stand in the right spot, with feet on the floor? Does anyone jump sideways or float?
 - **Dinner at 18:00** in the mess hall: 23 people should be seated. Does anyone get stuck on the way or sit on someone else?

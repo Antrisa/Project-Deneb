@@ -357,6 +357,13 @@ func _draw_crafting() -> void:
 
 
 func _map_point(area_name: String, tx: float, ty: float) -> Vector2:
+	# Rooms that are their own small map are shown at their door on the level they belong to.
+	if MapData.MAP_PARENT.has(area_name):
+		var parent: Array = MapData.MAP_PARENT[area_name]
+		var parent_area: String = parent[0]
+		return _map_point(parent_area, float(parent[1]), float(parent[2]))
+	if not MapData.MAP_LAYOUT.has(area_name):
+		return MAP_ORIGIN
 	var layout: Array = MapData.MAP_LAYOUT[area_name]
 	var scale_px: float = layout[2]
 	return MAP_ORIGIN + Vector2(float(layout[0]) + tx * scale_px, float(layout[1]) + ty * scale_px)

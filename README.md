@@ -94,6 +94,12 @@ To give a line of dialogue an expression, start it with `[happy]`, `[sad]`, `[su
 
 Design notes, decisions and the roadmap live in the "Project Deneb" project on claude.ai.
 
+## How the main level is built
+
+The town square is the middle circle. Four walkways lead out to a ring walkway; shops sit between the square and the ring, apartments outside the ring. Every shop and apartment is a block of wall with a door, and its inside is its own small map (`interior()` in `tools/build.py`). To add one, add a `building(...)` line and an `interior(...)` block.
+
+Doors are floor tiles in `tiles.png`: slot 83 front door (in a wall facing the camera), 84 side door (in a left or right wall), 85 back entrance (the way in to a building below a walkway), 86 the mat by the way out of a room. All four are placeholders.
+
 ## Checking the player art
 
     godot --headless --path . --script res://tests/player_art_test.gd

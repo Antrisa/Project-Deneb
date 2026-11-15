@@ -417,6 +417,13 @@ t.r(10, -6, 10, -3, (120, 128, 142)).r(10, 2, 10, 6, (120, 128, 142)).ps([(5, -6
 t = Tile("o", "m").r(1, 4, 14, 10, (196, 202, 212)).r(1, 4, 14, 4, (228, 232, 238)).r(1, 11, 14, 11, (140, 146, 160)).r(2, 12, 3, 14, (120, 126, 140)).r(12, 12, 13, 14, (120, 126, 140))
 t.ell(5, 6.5, 3, 1.7, (214, 160, 90)).ps([(4, 6), (6, 6)], (240, 200, 140)).ps([(10, 6), (11, 7), (12, 6)], (110, 180, 100)).r(9, 9, 12, 9, (220, 224, 232)).outline()
 t = Tile("o", "I").r(3, 0, 12, 15, (226, 206, 170)).r(3, 0, 4, 15, (248, 236, 208)).r(11, 0, 12, 15, (176, 142, 108)).r(2, 0, 2, 15, OUTLINE).r(13, 0, 13, 15, OUTLINE).ps([(6, 3), (7, 3)], (240, 180, 72)).ps([(8, 10)], (110, 160, 240))
+# ---- doors (added with the main level rebuild). Placeholders in new slots of a hand-made tiles.png.
+# "1" front door in a wall that faces the camera, "2" side door in a left or right wall,
+# "3" back entrance (the way in to a building below a walkway), "0" the mat by the way out of a room.
+t = Tile("f", "1").r(0, 0, 15, 15, (214, 220, 228)).r(2, 1, 13, 15, (240, 200, 80)).r(3, 2, 12, 15, (30, 34, 48)).r(4, 12, 11, 15, (70, 90, 120)).r(5, 5, 6, 6, (120, 200, 230))
+t = Tile("f", "2").r(0, 0, 15, 15, (64, 76, 100)).r(4, 0, 11, 15, (240, 200, 80)).r(5, 0, 10, 15, (30, 34, 48)).r(6, 6, 9, 9, (70, 90, 120))
+t = Tile("f", "3").r(0, 0, 15, 15, (200, 206, 214)).r(2, 4, 13, 12, (156, 66, 62)).r(3, 5, 12, 11, (196, 96, 84)).r(0, 13, 15, 15, (40, 46, 60)).r(7, 6, 8, 10, (250, 230, 190)).r(6, 9, 9, 9, (250, 230, 190))
+t = Tile("f", "0").r(0, 0, 15, 15, (200, 206, 214)).r(2, 3, 13, 11, (84, 128, 92)).r(3, 4, 12, 10, (120, 170, 124)).r(0, 13, 15, 15, (40, 46, 60)).r(7, 5, 8, 9, (250, 250, 230)).r(6, 6, 9, 6, (250, 250, 230))
 T.save(art("tiles.png"))
 
 # When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
@@ -1733,7 +1740,7 @@ if not os.path.exists(os.path.join(AUDIO, "music_under.wav")):
     render_loop("music_under", 24.0, voices)
 
 # ================================================================ maps
-WALK = set(".,fhusmiUDAR")
+WALK = set(".,fhusmiUDAR1230")
 
 
 class Area:
@@ -1801,18 +1808,32 @@ def block(x0, y0, x1, y1):
 
 A = {}
 
-# ---------------------------------------------------------------- main level: the town square
-# A very large circular town square with a fountain, rooms touching its rim, and two wings.
-# The west wing leads to the Spaceport District map, the east wing to the Agri Dome map.
-m = A["main"] = Area("main", "Main Level", 180, 120, "r")
-CX, CY, CR = 90, 60, 30.3
-m.room("", 14, 57, 60, 63, ".")             # west wing
-m.room("", 120, 57, 166, 63, ".")           # east wing
-m.circle(CX, CY, CR, "i")                   # the square itself, paved
+# ---------------------------------------------------------------- main level
+# The town square in the middle, four walkways out to a ring walkway, shops between the square and
+# the ring, apartments outside the ring. Every shop and apartment is a door: its inside is its own small map.
+# West walkway leads to the Spaceport District, east to the Agri Dome, north lift up, south lift down.
+m = A["main"] = Area("main", "Main Level", 230, 190, "r")
+CX, CY, CR = 115, 95, 30.3
+RING_IN, RING_OUT = 60.0, 67.0
+
+
+def sq(cells):
+    """Town square fixtures are written for the old square (centre 90, 60) and moved to the new centre."""
+    return [(x + CX - 90, y + CY - 60) for (x, y) in cells]
+
+
 for y in range(m.h):
     for x in range(m.w):
         d = ((x - CX) ** 2 + (y - CY) ** 2) ** 0.5
-        if d <= CR and (58 <= y <= 62 or 88 <= x <= 92 or 5.5 < d <= 8.5 or 18.5 < d <= 20.5):
+        if RING_IN <= d <= RING_OUT:
+            m.floor[y][x] = "."                 # the ring walkway
+m.carve("", CX - 3, CY - 80, CX + 3, CY + 80, ".")      # north-south walkway
+m.carve("", CX - 80, CY - 3, CX + 78, CY + 3, ".")      # west-east walkway
+m.circle(CX, CY, CR, "i")                               # the square itself, paved
+for y in range(m.h):
+    for x in range(m.w):
+        d = ((x - CX) ** 2 + (y - CY) ** 2) ** 0.5
+        if d <= CR and (abs(y - CY) <= 2 or abs(x - CX) <= 2 or 5.5 < d <= 8.5 or 18.5 < d <= 20.5):
             m.floor[y][x] = "."             # paths: a cross, a ring round the fountain, and an outer ring
 for dy in range(-4, 5):
     for dx in range(-4, 5):
@@ -1820,114 +1841,183 @@ for dy in range(-4, 5):
         if k == 4 and abs(dx) == 4 and abs(dy) == 4:
             continue
         m.floor[CY + dy][CX + dx] = "B" if k == 4 else ("J" if k == 0 else "O")
-m.room("Apartments", 14, 48, 23, 57, ",")
-m.room("Apartments", 23, 48, 32, 57, ",")
-m.room("Furniture workshop", 32, 48, 40, 57, "f")
-m.room("Common area", 40, 40, 64, 57, ",")
-m.room("Bram's Sundries", 18, 63, 29, 72, ".")
-m.room("Fabrication shop", 29, 63, 40, 72, "f")
-m.room("Apartment", 40, 63, 50, 72, ",")
-m.room("Rusk's bar", 52, 66, 64, 78, ".")
-m.room("Armoury", 146, 63, 156, 72, "f")
-m.room("Apartment", 156, 63, 166, 72, ",")
-m.room("Command lift", 86, 18, 94, 29, ".")
-m.room("Engineering lift", 86, 91, 94, 102, ".")
-m.room("Library", 116, 40, 132, 54, ",")
-m.room("Medbay", 134, 48, 144, 57, ".")
-m.room("Weaver's shop", 144, 48, 154, 57, ",")
-m.room("Apartments", 155, 48, 165, 57, ",")
-m.room("Mess hall", 116, 63, 146, 82, ".")
-m.zones += [["West wing", 14, 57, 60, 63], ["East wing", 120, 57, 166, 63], ["Town square", 59, 29, 121, 91]]
-m.setf(".", [(18, 57), (27, 57), (52, 57), (53, 57), (64, 50), (64, 51), (23, 63), (24, 63), (34, 63), (45, 63),
-             (64, 69), (64, 70), (89, 29), (90, 29), (91, 29), (89, 91), (90, 91), (91, 91),
-             (116, 48), (116, 49), (160, 57), (130, 63), (131, 63), (116, 68), (116, 69), (139, 57), (149, 57), (36, 57), (151, 63), (161, 63)])
-m.setf("Z", [(34, 57), (38, 57), (136, 57), (137, 57), (141, 57), (142, 57), (146, 57), (147, 57), (151, 57), (152, 57)])
-m.setf("w", [(17, 48), (18, 48), (26, 48), (27, 48), (48, 40), (49, 40), (56, 40), (57, 40), (122, 40), (123, 40), (126, 40), (127, 40),
-             (159, 48), (160, 48)])
+m.zones += [["Town square", CX - 31, CY - 31, CX + 31, CY + 31]]
+# lift rooms at the ends of the north-south walkway
+m.room("Command lift", CX - 5, CY - 92, CX + 5, CY - 80, ".")
+m.room("Engineering lift", CX - 5, CY + 80, CX + 5, CY + 92, ".")
+m.setf(".", [(x, CY - 80) for x in range(CX - 3, CX + 4)] + [(x, CY + 80) for x in range(CX - 3, CX + 4)])
+m.warp("U", [(CX, CY - 89)], "top", 20, 14)
+m.warp("D", [(CX, CY + 89)], "eng", 34, 8)
+m.warp("A", [(CX - 80, y) for y in range(CY - 3, CY + 4)], "west", 94, 40)
+m.warp("A", [(CX + 78, y) for y in range(CY - 3, CY + 4)], "east", 5, 35)
 # town square fixtures
-m.put("l", [(80, 50), (100, 50), (80, 70), (100, 70), (72, 42), (108, 42), (72, 78), (108, 78)])
-m.put("o", [(83, 54), (84, 54), (96, 54), (97, 54), (83, 66), (84, 66), (96, 66), (97, 66), (70, 55), (71, 55), (109, 65), (110, 65)])
-m.put("p", [(86, 55), (94, 55), (86, 65), (94, 65), (76, 46), (104, 46), (76, 74), (104, 74), (84, 36), (96, 36), (84, 84), (96, 84)])
-m.put("q", [(98, 76), (99, 76), (102, 76), (103, 76), (77, 76), (78, 76), (81, 76), (82, 76)])
-m.put("c", [(100, 77), (79, 77), (104, 77)])
-m.put("n", [(95, 52)])
-# apartments
-m.put("b", [(15, 49), (22, 49), (24, 49), (31, 49), (41, 64), (43, 64), (47, 64), (156, 49), (160, 49), (164, 49),
-            (158, 64), (160, 64), (164, 64)])
-m.put("o", [(48, 70), (163, 70)])
-m.put("t", [(44, 68), (159, 68)])
-m.put("p", [(41, 71), (157, 71)])
-m.put("o", [(21, 54), (157, 55)])
-m.put("t", [(29, 55), (162, 51)])
-m.put("p", [(15, 56), (31, 56), (49, 64), (164, 56)])
+m.put("l", sq([(80, 50), (100, 50), (80, 70), (100, 70), (72, 42), (108, 42), (72, 78), (108, 78)]))
+m.put("o", sq([(83, 54), (84, 54), (96, 54), (97, 54), (83, 66), (84, 66), (96, 66), (97, 66), (70, 55), (71, 55), (109, 65), (110, 65)]))
+m.put("p", sq([(86, 55), (94, 55), (86, 65), (94, 65), (76, 46), (104, 46), (76, 74), (104, 74), (84, 36), (96, 36), (84, 84), (96, 84)]))
+m.put("q", sq([(98, 76), (99, 76), (102, 76), (103, 76), (77, 76), (78, 76), (81, 76), (82, 76)]))
+m.put("c", sq([(100, 77), (79, 77), (104, 77)]))
+m.put("n", sq([(95, 52)]))
+m.put("E", sq([(90, 65)]))                      # Sara's hologram pad by the fountain
+
+# ---- buildings: a block of wall with a door in one side and a little forecourt in front of it.
+# side: "s" = front door facing the camera, "n" = back entrance (an archway seen from behind),
+#       "e" / "w" = side doors. The door leads to the building's own map (see interior() below).
+DOORS = {}          # key -> (door x, door y, door tile, outside x, outside y)
+BUILDINGS = []      # [key, title, x, y, w, h]
+
+
+def building(key, title, x, y, w, h, side):
+    for yy in range(y, y + h):
+        for xx in range(x, x + w):
+            assert m.floor[yy][xx] == "r", ("building overlaps something", key, xx, yy, m.floor[yy][xx])
+            m.floor[yy][xx] = "#"
+    if side == "s":
+        dx, dy, ch, out, court = x + w // 2, y + h - 1, "1", (0, 1), block(x, y + h, x + w - 1, y + h + 1)
+    elif side == "n":
+        dx, dy, ch, out, court = x + w // 2, y, "3", (0, -1), block(x, y - 2, x + w - 1, y - 1)
+    elif side == "e":
+        dx, dy, ch, out, court = x + w - 1, y + h // 2, "2", (1, 0), block(x + w, y, x + w + 1, y + h - 1)
+    else:
+        dx, dy, ch, out, court = x, y + h // 2, "2", (-1, 0), block(x - 2, y, x - 1, y + h - 1)
+    for (xx, yy) in court:
+        if m.floor[yy][xx] == "r":
+            m.floor[yy][xx] = "."
+    # a path from the door to the nearest walkway
+    px, py, n = dx + out[0] * 3, dy + out[1] * 3, 0
+    while m.floor[py][px] not in WALK:
+        for k in (-1, 0, 1):
+            cx_, cy_ = px + k * abs(out[1]), py + k * abs(out[0])
+            if m.floor[cy_][cx_] == "r":
+                m.floor[cy_][cx_] = "."
+        px, py, n = px + out[0], py + out[1], n + 1
+        assert n < 30, ("no walkway near the door", key)
+    DOORS[key] = (dx, dy, ch, dx + out[0], dy + out[1])
+    BUILDINGS.append([key, title, x, y, w, h])
+    cs = [c[0] for c in court], [c[1] for c in court]
+    m.zones.append([title, min(cs[0]), min(cs[1]), max(cs[0]), max(cs[1])])
+
+
+# shops and public rooms, between the square and the ring
+building("bram", "Bram's Sundries", CX - 52, CY - 22, 20, 12, "s")
+building("medbay", "Medbay", CX + 33, CY - 22, 20, 12, "s")
+building("fab", "Fabrication shop", CX - 54, CY + 10, 18, 11, "n")
+building("armoury", "Armoury", CX + 36, CY + 10, 18, 11, "n")
+building("furn", "Furniture workshop", CX - 28, CY - 50, 18, 12, "e")
+building("library", "Library", CX + 11, CY - 50, 18, 12, "w")
+building("bar", "Rusk's bar", CX - 44, CY + 28, 20, 12, "s")
+building("weaver", "Weaver's shop", CX - 22, CY + 40, 16, 10, "s")
+building("mess", "Mess hall", CX + 8, CY + 33, 32, 12, "s")
+building("common", "Common room", CX - 26, CY - 84, 18, 10, "s")
+N_SHOPS = len(BUILDINGS)
+# apartments, outside the ring
+building("aptA", "Apartments A", CX - 64, CY - 62, 20, 12, "s")
+building("aptDoc", "Doctor's family", CX + 45, CY - 62, 20, 12, "s")
+building("aptB", "Apartments B", CX - 90, CY - 28, 22, 12, "s")
+building("aptSec", "Security family", CX + 70, CY - 26, 22, 12, "w")
+building("aptMoog", "Moogli family", CX - 78, CY + 38, 22, 12, "e")
+building("aptEmpty", "Empty flats", CX + 57, CY + 38, 22, 12, "w")
+# walls: any rock that touches somewhere you can walk
+for y in range(m.h):
+    for x in range(m.w):
+        if m.floor[y][x] == "r" and any(0 <= x + ax < m.w and 0 <= y + ay < m.h and m.floor[y + ay][x + ax] in WALK
+                                         for ax in (-1, 0, 1) for ay in (-1, 0, 1)):
+            m.floor[y][x] = "#"
+
+
+# ---- insides. Each is its own small map. The furniture lists below still use the room's old
+# position on the main level (x0, y0 is where its top-left corner used to be); inside() moves them.
+def interior(key, title, x0, y0, x1, y1, floor, door_x):
+    w_, h_ = x1 - x0 + 1, y1 - y0 + 1
+    ar = A[key] = Area(key, title, w_, h_, "~")
+    ar.room(title, 0, 0, w_ - 1, h_ - 1, floor)
+    ar.off = (x0, y0)
+    bx, by, ch, ox, oy = DOORS[key]
+    ar.warp("0", [(door_x - x0, h_ - 1)], "main", ox, oy)        # the mat by the way out
+    m.warp(ch, [(bx, by)], key, door_x - x0, h_ - 2)
+    return ar
+
+
+def inside(ar, ch, cells):
+    ar.put(ch, [(x - ar.off[0], y - ar.off[1]) for (x, y) in cells])
+
+
+def windows(ar, xs):
+    ar.setf("w", [(x - ar.off[0], 0) for x in xs])
+
+
+ar = interior("aptB", "Apartments B", 14, 48, 23, 57, ",", 18)
+inside(ar, "b", [(15, 49), (22, 49)]); inside(ar, "o", [(21, 54)]); inside(ar, "p", [(15, 56)]); windows(ar, [17, 18])
+ar = interior("aptA", "Apartments A", 23, 48, 32, 57, ",", 27)
+inside(ar, "b", [(24, 49), (31, 49)]); inside(ar, "t", [(29, 55)]); inside(ar, "p", [(31, 56)]); windows(ar, [26, 27])
+ar = interior("aptDoc", "Doctor's family", 155, 48, 165, 57, ",", 160)
+inside(ar, "b", [(156, 49), (160, 49), (164, 49)]); inside(ar, "o", [(157, 55)]); inside(ar, "t", [(162, 51)]); inside(ar, "p", [(164, 56)]); windows(ar, [158, 162])
+ar = interior("aptMoog", "Moogli family", 40, 63, 50, 72, ",", 45)
+inside(ar, "b", [(41, 64), (43, 64), (47, 64)]); inside(ar, "o", [(48, 70)]); inside(ar, "t", [(44, 68)]); inside(ar, "p", [(41, 71), (49, 64)])
+ar = interior("aptSec", "Security family", 156, 63, 166, 72, ",", 161)
+inside(ar, "b", [(158, 64), (160, 64), (164, 64)]); inside(ar, "o", [(163, 70)]); inside(ar, "t", [(159, 68)]); inside(ar, "p", [(157, 71)])
+ar = interior("aptEmpty", "Empty flats", 0, 0, 12, 9, ",", 6)
+inside(ar, "x", [(3, 3), (9, 6)]); inside(ar, "e", [(8, 2), (2, 7)]); inside(ar, "b", [(1, 1)])
 # furniture workshop: benches and half-built pieces
-m.put("P", [(34, 51), (35, 51), (38, 54)])
-m.put("c", [(38, 50)])
-m.put("t", [(33, 55)])
-m.put("o", [(38, 56)])
-# armoury: a counter across the room (customers come in from the wing above), racks along the back wall
-m.put("C", row(67, range(148, 155)))
-m.put("S", [(148, 71), (149, 71), (150, 71), (152, 71), (153, 71), (154, 71)])
-m.put("c", [(147, 70), (155, 70)])
-# medbay: three beds along the back wall, the doctor's desk and screens on the right
-m.put("b", [(135, 49), (137, 49), (139, 49)])
-m.put("k", [(142, 49), (143, 49)])
-m.put("S", [(143, 52), (143, 53)])
-m.put("t", [(141, 54)])
-m.put("p", [(135, 56), (143, 56)])
-# weaver's shop: a counter across the room, cloth on the shelves behind it
-m.put("C", row(53, range(146, 153)))
-m.put("S", [(145, 49), (146, 49), (147, 49), (151, 49), (152, 49), (153, 49)])
-m.put("t", [(149, 49)])
-m.put("c", [(153, 51)])
-m.put("p", [(145, 56), (153, 56)])
-# common area
-m.put("o", [(45, 44), (46, 44), (55, 44), (56, 44), (45, 52), (46, 52)])
-m.put("t", [(50, 46), (51, 46), (55, 52), (56, 52)])
-m.put("p", [(41, 41), (63, 44), (41, 56)])
-m.put("S", [(42, 41), (43, 41), (59, 56), (60, 56)])
+ar = interior("furn", "Furniture workshop", 32, 48, 40, 57, "f", 36)
+inside(ar, "P", [(34, 51), (35, 51), (38, 54)]); inside(ar, "c", [(38, 50)]); inside(ar, "t", [(33, 55)]); inside(ar, "o", [(38, 56)])
+# common room
+ar = interior("common", "Common room", 40, 40, 64, 57, ",", 52)
+inside(ar, "o", [(45, 44), (46, 44), (55, 44), (56, 44), (45, 52), (46, 52)]); inside(ar, "t", [(50, 46), (51, 46), (55, 52), (56, 52)])
+inside(ar, "p", [(41, 41), (63, 44), (41, 56)]); inside(ar, "S", [(42, 41), (43, 41), (59, 56), (60, 56)]); windows(ar, [48, 49, 56, 57])
 # Bram's shop: a counter down the middle. Bram stands behind it on the right, facing his customers.
-m.put("I", [(25, y) for y in range(65, 71)])
-m.put("S", [(28, 65), (28, 67), (28, 69), (27, 71), (28, 71)])
-m.put("c", [(19, 71), (20, 71)])
-m.put("p", [(19, 64)])
+ar = interior("bram", "Bram's Sundries", 18, 63, 29, 72, ".", 22)
+inside(ar, "I", [(25, y) for y in range(65, 71)]); inside(ar, "S", [(28, 65), (28, 67), (28, 69), (27, 71), (28, 71)])
+inside(ar, "c", [(19, 71), (20, 71)]); inside(ar, "p", [(19, 64)])
 # fabrication shop
-m.put("c", [(30, 70), (31, 70), (30, 71), (31, 71)])
-m.put("P", [(35, 71), (36, 71)])
-m.put("k", [(38, 71), (39, 71)])
-m.put("t", [(37, 67)])
+ar = interior("fab", "Fabrication shop", 29, 63, 40, 72, "f", 33)
+inside(ar, "c", [(30, 70), (31, 70), (30, 71), (31, 71)]); inside(ar, "P", [(35, 71), (36, 71)]); inside(ar, "k", [(38, 71), (39, 71)]); inside(ar, "t", [(37, 67)])
 # Rusk's bar: run down for now. Rusk behind the counter, three stools in front of it.
-m.put("C", row(72, range(55, 61)))
-m.put("h", [(56, 73), (58, 73), (60, 73)])
-m.put("S", [(53, 67), (54, 67)])
-m.put("x", [(57, 75), (61, 74)])
-m.put("e", [(55, 76)])
+ar = interior("bar", "Rusk's bar", 52, 66, 64, 78, ".", 58)
+inside(ar, "C", row(72, range(55, 61))); inside(ar, "h", [(56, 73), (58, 73), (60, 73)]); inside(ar, "S", [(53, 67), (54, 67)])
+inside(ar, "x", [(57, 75), (61, 74)]); inside(ar, "e", [(55, 76)])
 # library
-m.put("S", row(41, range(117, 132)) + row(45, [120, 121, 122, 126, 127, 128]) + row(49, [120, 121, 122, 126, 127, 128]))
-m.put("t", [(124, 47)])
-m.put("o", [(129, 52), (130, 52)])
-m.put("p", [(131, 53)])
+ar = interior("library", "Library", 116, 40, 132, 54, ",", 124)
+inside(ar, "S", row(41, range(117, 132)) + row(45, [120, 121, 122, 126, 127, 128]) + row(49, [120, 121, 122, 126, 127, 128]))
+inside(ar, "t", [(124, 47)]); inside(ar, "o", [(129, 52), (130, 52)]); inside(ar, "p", [(131, 53)])
+# medbay: three beds along the back wall, the doctor's desk and screens on the right
+ar = interior("medbay", "Medbay", 134, 48, 144, 57, ".", 139)
+inside(ar, "b", [(135, 49), (137, 49), (139, 49)]); inside(ar, "k", [(142, 49), (143, 49)]); inside(ar, "S", [(143, 52), (143, 53)])
+inside(ar, "t", [(141, 54)]); inside(ar, "p", [(135, 56), (143, 56)])
+# weaver's shop: a counter across the room, cloth on the shelves behind it
+ar = interior("weaver", "Weaver's shop", 144, 48, 154, 57, ",", 149)
+inside(ar, "C", row(53, range(146, 153))); inside(ar, "S", [(145, 49), (146, 49), (147, 49), (151, 49), (152, 49), (153, 49)])
+inside(ar, "t", [(149, 49)]); inside(ar, "c", [(153, 51)]); inside(ar, "p", [(145, 56), (153, 56)])
+# armoury: a counter across the room, racks along the back wall
+ar = interior("armoury", "Armoury", 146, 63, 156, 72, "f", 151)
+inside(ar, "C", row(67, range(148, 155))); inside(ar, "S", [(148, 71), (149, 71), (150, 71), (152, 71), (153, 71), (154, 71)]); inside(ar, "c", [(147, 70), (155, 70)])
 # mess hall: a kitchen in the top-right corner behind a serving counter (the cooks face the room),
 # and dining tables with stools
-m.put("C", row(68, range(134, 146)))
-m.put("V", [(136, 64), (137, 64)])
-m.put("W", [(139, 64)])
-m.put("R", [(141, 64)])
-m.put("S", [(143, 64), (144, 64)])
-m.put("m", [(140, 66)])
-m.put("H", [(145, 65), (145, 66)])
+ar = interior("mess", "Mess hall", 116, 63, 146, 82, ".", 130)
+inside(ar, "C", row(68, range(134, 146))); inside(ar, "V", [(136, 64), (137, 64)]); inside(ar, "W", [(139, 64)]); inside(ar, "R", [(141, 64)])
+inside(ar, "S", [(143, 64), (144, 64)]); inside(ar, "m", [(140, 66)]); inside(ar, "H", [(145, 65), (145, 66)])
 SEATS = [120, 121, 125, 126, 130, 131, 135, 136, 140, 141]
 for ty in (71, 76):
-    m.put("d", row(ty, SEATS))
-    m.put("h", row(ty - 1, SEATS) + row(ty + 1, SEATS))
-m.put("p", [(117, 64), (117, 81), (145, 81)])
-m.put("E", [(90, 65)])                      # Sara's hologram pad by the fountain
-# lifts: north goes up to the Survey Level, south goes down to Engineering
-m.warp("U", [(90, 20)], "top", 20, 14)
-m.warp("D", [(90, 100)], "eng", 34, 8)
-# ends of the wings lead to the other two maps
-m.warp("A", [(15, y) for y in range(58, 63)], "west", 94, 40)
-m.warp("A", [(165, y) for y in range(58, 63)], "east", 5, 35)
+    inside(ar, "d", row(ty, SEATS))
+    inside(ar, "h", row(ty - 1, SEATS) + row(ty + 1, SEATS))
+inside(ar, "p", [(117, 64), (117, 81), (145, 81)])
+
+# Where the old rooms were on the old main level, for anyone moving old coordinates across:
+OLD_ROOMS = {k: A[k].off for k in ("aptA", "aptB", "aptDoc", "aptMoog", "aptSec", "furn", "common", "bram", "fab", "bar", "library", "medbay", "weaver", "armoury", "mess")}
+
+
+def moved(a, x, y):
+    """Where a spot written for the old main level is now: inside one of the rooms, or on the square."""
+    if a != "main":
+        return a, x, y
+    for k, (x0, y0) in OLD_ROOMS.items():
+        if x0 < x < x0 + A[k].w - 1 and y0 < y < y0 + A[k].h - 1:
+            return k, x - x0, y - y0
+    assert ((x - 90) ** 2 + (y - 60) ** 2) ** 0.5 <= 30.3, ("old main-level spot is not in a room or on the square", x, y)
+    return "main", x + CX - 90, y + CY - 60
+
+
+# Interiors are shown on the station map at their door.
+MAP_PARENT = {k: ["main", DOORS[k][3], DOORS[k][4]] for k in DOORS}
 
 # ---------------------------------------------------------------- spaceport district (west map)
 # Its own smaller circle with Reception. Spaceport to the left, the Star dome above,
@@ -1995,7 +2085,7 @@ w.put("x", [(38, 75), (39, 75), (48, 72), (58, 74), (59, 74), (70, 72), (74, 76)
 w.put("e", [(40, 69), (50, 76), (57, 69), (68, 68), (72, 74)])
 w.put("c", [(77, 66), (78, 66)])
 w.put("E", [(26, 70), (48, 35)])
-w.warp("A", [(97, y) for y in range(38, 43)], "main", 18, 60)
+w.warp("A", [(97, y) for y in range(38, 43)], "main", CX - 77, CY)
 
 # ---------------------------------------------------------------- agri dome (east map)
 # The broken agri dome, with one corner that still grows. A private villa and a tool shed by the hall.
@@ -2032,7 +2122,7 @@ g.put("S", [(20, 30)])
 g.put("c", [(9, 44), (10, 44), (9, 45)])
 g.put("L", [(16, 39), (17, 39)])
 g.put("S", [(9, 39)])
-g.warp("A", [(2, y) for y in range(33, 38)], "main", 162, 60)
+g.warp("A", [(2, y) for y in range(33, 38)], "main", CX + 75, CY)
 
 # ---------------------------------------------------------------- top level
 t = A["top"] = Area("top", "Survey Level", 40, 22, "~")
@@ -2062,7 +2152,7 @@ t.put("e", [(14, 16), (29, 17)])
 t.put("P", [(25, 15)])
 t.put("L", [(37, 13), (38, 13)])
 t.put("E", [(19, 3)])
-t.warp("D", [(20, 16)], "main", 90, 25)
+t.warp("D", [(20, 16)], "main", CX, CY - 84)
 
 # ---------------------------------------------------------------- engineering level
 e = A["eng"] = Area("eng", "Engineering Level", 58, 24, "M")
@@ -2088,7 +2178,7 @@ e.put("S", [(53, 1)])
 e.put("X", block(40, 18, 43, 19))
 e.put("e", [(50, 16), (52, 20), (35, 21), (47, 22)])
 e.outlines.append([26, 17, 2, 2])
-e.warp("U", [(33, 5)], "main", 90, 95)
+e.warp("U", [(33, 5)], "main", CX, CY + 84)
 e.warp("R", [(1, 11), (1, 12), (1, 13)], "mine", 38, 4)
 
 # ---------------------------------------------------------------- mine
@@ -2135,12 +2225,15 @@ u.warp("R", [(30, 38), (31, 38)], "mine", 22, 4)
 
 # ---------------------------------------------------------------- who and what is where
 START = ["west", 23, 67]
-MEDBAY = ["main", 137, 51]       # where you wake up after collapsing
+# NOTE: spots on the main level below (MEDBAY, PEOPLE, SCHEDULES_RAW, THINGS) are still written
+# in the OLD main-level coordinates; moved() turns them into the right room and tile.
+MEDBAY = list(moved("main", 137, 51))       # where you wake up after collapsing
 # name, area, tile x, tile y, talk radius (bigger when they stand behind a counter)
 PEOPLE = [
     # Sara appears as a hologram in several places
     ["Sara", "top", 19, 3, 26], ["Sara", "west", 26, 70, 26], ["Sara", "west", 48, 35, 36], ["Sara", "main", 90, 65, 26],
 ]
+PEOPLE = [[p[0]] + list(moved(p[1], p[2], p[3])) + [p[4]] for p in PEOPLE]
 
 # Daily schedules: "HH:MM", area, tile x, tile y, talk radius (36 = behind a counter).
 # Before their first time of the day, a resident is at their last entry (where they spent the night).
@@ -2190,9 +2283,9 @@ SCHEDULES_RAW = {
               ("13:30", "eng", 38, 19, 26, "r", "work"), ("16:30", "eng", 44, 5, 26, "r", "work"), ("17:30", "main", 140, 70, 26, "d", "eat"),
               ("19:15", "main", 58, 73, 26, "u", "idle"), ("21:30", "main", 20, 52, 26, "d", "idle")],
     "Job": [("06:30", "mine", 21, 8, 26, "d", "work"), ("12:00", "main", 120, 70, 26, "d", "eat"), ("13:30", "mine", 21, 8, 26, "d", "work"),
-            ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 60, 73, 26, "u", "idle"), ("22:00", "main", 158, 53, 26, "d", "idle")],
+            ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 60, 73, 26, "u", "idle"), ("22:00", "main", 18, 54, 26, "d", "idle")],
     "Zaas": [("07:00", "mine", 5, 5, 26, "l", "work"), ("12:15", "main", 126, 75, 26, "d", "eat"), ("13:45", "mine", 5, 5, 26, "l", "work"),
-             ("17:05", "main", 126, 75, 26, "d", "eat"), ("19:15", "top", 35, 3, 26, "r", "idle"), ("23:00", "main", 162, 53, 26, "d", "idle")],
+             ("17:05", "main", 126, 75, 26, "d", "eat"), ("19:15", "top", 35, 3, 26, "r", "idle"), ("23:00", "main", 16, 54, 26, "d", "idle")],
     "Tar'Besh": [("06:00", "top", 6, 5, 26, "d", "work"), ("17:35", "main", 131, 75, 26, "d", "eat"), ("19:15", "top", 31, 6, 26, "d", "idle"),
                  ("23:00", "top", 3, 15, 26, "d", "idle")],
     "Vzz'ket": [("06:00", "mine", 24, 19, 26, "d", "idle"), ("17:15", "main", 130, 70, 26, "d", "eat"), ("19:00", "mine", 24, 19, 26, "d", "idle"),
@@ -2233,6 +2326,7 @@ for who, rows in SCHEDULES_RAW.items():
     assert not keys or len(keys) == len(rows), ("ACTIONS must have one entry per schedule stop", who)
     sheet_rows = []
     for n, (hm, a, x, y, r, face_, act) in enumerate(rows):
+        a, x, y = moved(a, x, y)
         assert face_ in "dulr" and act in ("work", "eat", "idle"), (who, face_, act)
         row = -1
         if keys:
@@ -2297,6 +2391,10 @@ THINGS = [
     ["smelt_copper", "Copper furnace", "Smelt copper", "eng", [6 * 16, 1 * 16 + 8], 30],
     ["look", "Barricade", "Look", "mine", tc(20, 21), 26],
 ]
+for t_ in THINGS:
+    if t_[3] == "main":
+        a_, x_, y_ = moved("main", t_[4][0] // 16, t_[4][1] // 16)
+        t_[3], t_[4] = a_, [x_ * 16 + t_[4][0] % 16, y_ * 16 + t_[4][1] % 16]
 WRECK = ["eng", 42 * 16, 20 * 16]      # bottom-centre of the wreck sprite
 
 # ---------------------------------------------------------------- checks
@@ -2355,18 +2453,17 @@ print("all people, things and warps reachable;", len(seen), "walkable tiles;", _
 
 # ---------------------------------------------------------------- station map (for the Map page of the menu)
 # Every area drawn small on one picture. MAP_LAYOUT says where each area sits: [x, y, pixels per tile].
-MAP_LAYOUT = {"west": [0, 36, 0.5], "main": [55, 26, 0.5], "east": [150, 40, 0.5], "top": [80, 0, 1.0], "eng": [84, 90, 1.0], "mine": [34, 90, 1.0],
+MAP_LAYOUT = {"west": [0, 36, 0.5], "main": [56, 24, 1.0 / 3.0], "east": [136, 40, 0.5], "top": [80, 0, 1.0], "eng": [84, 90, 1.0], "mine": [34, 90, 1.0],
               "tunnels": [0, 92, 0.5]}
-MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 33], ["Town Square", 57, 37], ["Agri Dome", 152, 37], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
+MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 33], ["Main Level", 58, 30], ["Agri Dome", 150, 37], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
 MAP_MARKS = [
     [1, "west", 27, 71, "Your quarters"], [2, "west", 15, 35, "Spaceport"], [3, "west", 48, 40, "Reception"],
-    [4, "main", 23, 67, "Bram's Sundries"], [5, "main", 34, 67, "Fabrication shop"], [6, "main", 52, 48, "Common area"],
-    [7, "main", 124, 47, "Library"], [8, "main", 131, 72, "Mess hall"], [18, "main", 139, 52, "Medbay"], [19, "main", 149, 52, "Weaver's shop"],
-    [20, "main", 58, 72, "Rusk's bar"], [21, "main", 36, 52, "Furniture workshop"], [22, "main", 151, 67, "Armoury"], [9, "east", 38, 35, "Herb beds"],
+    [9, "east", 38, 35, "Herb beds"],
     [10, "top", 19, 4, "Sara's suite"], [11, "top", 32, 4, "Observatory"], [12, "eng", 8, 5, "Ore processing"],
     [13, "eng", 41, 5, "Engineering bay"], [14, "eng", 40, 19, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
-MAP_COLORS = {".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),
+MAP_MARKS = MAP_MARKS[:3] + [[20 + n, "main", DOORS[b[0]][3], DOORS[b[0]][4], b[1]] for n, b in enumerate(BUILDINGS[:N_SHOPS])] + MAP_MARKS[3:]
+MAP_COLORS = {"1": (238, 202, 64), "2": (238, 202, 64), "3": (238, 202, 64),".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),
               "m": (124, 106, 94), "i": (196, 172, 138), "U": (238, 202, 64), "D": (238, 202, 64), "A": (238, 202, 64), "R": (238, 202, 64),
               "#": (64, 76, 100), "w": (64, 76, 100), "Z": (64, 76, 100), "d": (110, 190, 210), "O": (70, 150, 210), "J": (70, 150, 210), "B": (170, 170, 182)}
 SM = Img(196, 116)
@@ -2387,7 +2484,7 @@ for ar in A.values():
     for y in range(ar.h):
         for x in range(ar.w):
             ch = ar.floor[y][x]
-            open_below = y + 1 < ar.h and ar.floor[y + 1][x] in WALK
+            open_below = y + 1 < ar.h and ar.floor[y + 1][x] in WALK and ar.floor[y + 1][x] not in "123"   # not above a door
             if ch in FACE_OF and open_below:
                 ar.floor[y][x] = FACE_OF[ch]
             elif ch == "w" and not open_below:
@@ -2404,6 +2501,8 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const TILE_OBJ = " + json.dumps(TILE_OBJ) + "\n")
     f.write("# The rows of each resident's action sheet (art/npc_<id>_act.png), top to bottom: action and facing.\n")
     f.write("const ACTION_ROWS = " + json.dumps(ACTION_ROWS) + "\n")
+    f.write("# Rooms that are their own small map: where their door is on the main level (for the station map).\n")
+    f.write("const MAP_PARENT = " + json.dumps(MAP_PARENT) + "\n")
     f.write("const VISITOR_DAYS = " + json.dumps(VISITOR_DAYS) + "\n")
     f.write("const MEDBAY = " + json.dumps(MEDBAY) + "\n")
     f.write("const SOLID_FLOOR = " + json.dumps(SOLID_FLOOR) + "\n")

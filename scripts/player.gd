@@ -94,10 +94,13 @@ func _ready() -> void:
 
 
 func set_limits(size: Vector2i) -> void:
-	_cam.limit_left = 0
-	_cam.limit_top = 0
-	_cam.limit_right = size.x
-	_cam.limit_bottom = size.y
+	# A room smaller than the screen (320x180) is centred instead of sitting in the top-left corner.
+	var pad_x: int = maxi(0, (320 - size.x) / 2)
+	var pad_y: int = maxi(0, (180 - size.y) / 2)
+	_cam.limit_left = -pad_x
+	_cam.limit_top = -pad_y
+	_cam.limit_right = size.x + pad_x
+	_cam.limit_bottom = size.y + pad_y
 	_cam.reset_smoothing()
 
 
