@@ -452,7 +452,7 @@ t = Tile("f", "a").r(0, 0, 15, 15, (226, 214, 190)).r(0, 0, 15, 0, (244, 234, 21
 # "B" the foot of a bed. A bed is two tiles long: the head ("b") and the foot below it.
 t = Tile("o", "B").r(1, 0, 14, 12, (86, 124, 190)).r(1, 0, 2, 12, (120, 156, 214)).r(13, 0, 14, 12, (60, 92, 150)).r(1, 13, 14, 15, (120, 84, 56)).r(1, 12, 14, 12, (60, 92, 150)).r(4, 3, 11, 3, (120, 156, 214))
 t.r(0, 0, 0, 15, OUTLINE).r(15, 0, 15, 15, OUTLINE)
-# Rounded corners (not used by the game yet: reserved so the art can be drawn). Each is a piece of wall
+# Rounded corners (placed by the pass just before map_data.gd is written). Each is a piece of wall
 # filling one corner of the tile, see-through elsewhere, laid over the floor where a round room steps.
 for n_, ch_ in enumerate("<>{}"):
     t = Tile("o", ch_)
@@ -3106,6 +3106,26 @@ for k_, ar_ in A.items():
                 if h_ < 19:
                     ar_.obj[y_][x_] = DRESS[set_[h_ % len(set_)]]
                     DRESSED.append((k_, set_[h_ % len(set_)], x_, y_))
+
+# Rounded corners: where a wall steps round a floor (the rim of a round room), a corner piece of wall is laid
+# over the floor tile in the step, so the edge reads as a curve and not as stairs. You can walk over them.
+OPEN_OBJ += "<>{}"
+ROUNDED = 0
+for k_, ar_ in A.items():
+    if k_ in ("mine", "tunnels"):
+        continue
+    for y_ in range(1, ar_.h - 1):
+        for x_ in range(1, ar_.w - 1):
+            if not _open(ar_, x_, y_) or not _quiet(ar_, x_, y_, 0):
+                continue
+            wl_, wr_, wu_, wd_ = [ar_.floor[y_ + ay][x_ + ax] in "#W" for (ax, ay) in ((-1, 0), (1, 0), (0, -1), (0, 1))]
+            ol_, or_, ou_, od_ = [ar_.floor[y_ + ay][x_ + ax] in WALK for (ax, ay) in ((-1, 0), (1, 0), (0, -1), (0, 1))]
+            ch_ = "<" if (wl_ and wu_ and or_ and od_) else ">" if (wr_ and wu_ and ol_ and od_) else \
+                  "{" if (wl_ and wd_ and or_ and ou_) else "}" if (wr_ and wd_ and ol_ and ou_) else ""
+            if ch_:
+                ar_.obj[y_][x_] = ch_
+                ROUNDED += 1
+print("rounded corners placed:", ROUNDED)
 
 areas = {}
 for k, ar in A.items():

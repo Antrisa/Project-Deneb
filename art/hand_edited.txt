@@ -110,3 +110,14 @@ npc_zaas_act.png
 slash.png
 weapon_spear.png
 weapon_sword.png
+dressing.png
+porch_armoury.png
+porch_bar.png
+porch_bram.png
+porch_common.png
+porch_fab.png
+porch_furn.png
+porch_library.png
+porch_medbay.png
+porch_mess.png
+porch_weaver.png
