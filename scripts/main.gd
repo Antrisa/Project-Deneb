@@ -601,6 +601,22 @@ func _spawn_things() -> void:
 	actors.add_child(wreck_sprite)
 	area_sprites.append([wreck_sprite, wreck[0]])
 
+	# Shop fronts on the main level: one big picture per shop, laid over its building at the door.
+	for f in MapData.FRONTS:
+		var front_key: String = f[0]
+		var front_path: String = "res://art/front_%s.png" % front_key
+		if not ResourceLoader.exists(front_path):
+			continue
+		var front := Sprite2D.new()
+		front.texture = load(front_path)
+		front.centered = false
+		_fit_sprite(front, 1, 1, 80.0)          # always 5 tiles wide in the world, whatever size it is drawn at
+		front.offset = Vector2.ZERO             # placed by its top-left corner
+		front.position = Vector2(float(f[1]), float(f[2]))
+		front.visible = false
+		ground_fx.add_child(front)
+		area_sprites.append([front, "main"])
+
 
 # Creates the shared state for a person the first time they are needed. Returns their art id.
 func _ensure_person(who: String) -> String:

@@ -1967,6 +1967,7 @@ m.put("E", sq([(90, 65)]))                      # Sara's hologram pad by the fou
 # ---- buildings: a block of wall with a door in one side and a little forecourt in front of it.
 # side: "s" = front door facing the camera, "n" = back entrance (an archway seen from behind),
 #       "e" / "w" = side doors. The door leads to the building's own map (see interior() below).
+DOOR_STEP = {}      # key -> which way you walk out of the door: (0, 1) down, (0, -1) up, (1, 0) right, (-1, 0) left
 SIGNS = []          # [title, x, y]
 DOORS = {}          # key -> (door x, door y, door tile, outside x, outside y)
 BUILDINGS = []      # [key, title, x, y, w, h]
@@ -2030,6 +2031,7 @@ def add_door(key_, title_, mid_, start_r_, sign_):
     ch_ = "1" if step_ == (0, 1) else ("3" if step_ == (0, -1) else "2")
     ox_, oy_ = dx_ + step_[0], dy_ + step_[1]
     DOORS[key_] = (dx_, dy_, ch_, ox_, oy_)
+    DOOR_STEP[key_] = step_
     m.floor[dy_][dx_] = ch_                      # the door (linked to its room by interior())
     # its sign, standing on the walkway beside the door
     side_ = (1, 0) if step_[0] == 0 else (0, 1)
@@ -2064,16 +2066,72 @@ for (key_, title_, a0_, a1_) in APARTMENTS:
 for (x, y) in WEDGE:
     if m.floor[y][x] == "z" and m.floor[y + 1][x] in WALK and m.floor[y + 1][x] not in "123":
         m.floor[y][x] = "8" if x % 3 == 0 else "7"
-# set dressing: lamps round the ring, a planter the other side of each shop door from its sign
-for k_ in range(12):
-    lx_, ly_ = int(round(CX + (RI + 2) * math.cos(math.radians(15 + 30 * k_)))), int(round(CY + (RI + 2) * math.sin(math.radians(15 + 30 * k_))))
-    if m.floor[ly_][lx_] == "a" and m.obj[ly_][lx_] == " ":
-        m.put("l", [(lx_, ly_)])
+# ---- shop fronts: a big picture per shop (art/front_<key>.png, 5 tiles wide and 3 tall), laid over the
+# building at its door, so you can tell the shops apart from across the square.
+FRONTS = []         # [key, x, y] in pixels: the picture's top-left corner
+FRONT_SIDE = {}     # key -> where the doorway is in the picture: "bottom", "top", "right" or "left"
 for b_ in BUILDINGS[:N_SHOPS]:
-    d_ = DOORS[b_[0]]
-    px_, py_ = (d_[3] - 2, d_[4]) if d_[0] == d_[3] else (d_[3], d_[4] - 2)
-    if m.floor[py_][px_] in WALK and m.obj[py_][px_] == " ":
-        m.put("p", [(px_, py_)])
+    k_ = b_[0]
+    dx_, dy_ = DOORS[k_][0], DOORS[k_][1]
+    st_ = DOOR_STEP[k_]
+    if st_ == (0, 1):
+        fx_, fy_, FRONT_SIDE[k_] = dx_ - 2, dy_ - 2, "bottom"
+    elif st_ == (0, -1):
+        fx_, fy_, FRONT_SIDE[k_] = dx_ - 2, dy_, "top"
+    elif st_ == (1, 0):
+        fx_, fy_, FRONT_SIDE[k_] = dx_ - 4, dy_ - 1, "right"
+    else:
+        fx_, fy_, FRONT_SIDE[k_] = dx_, dy_ - 1, "left"
+    FRONTS.append([k_, fx_ * 16, fy_ * 16])
+for n_, b_ in enumerate(BUILDINGS[:N_SHOPS]):          # placeholder pictures
+    k_, c_ = b_[0], SIGN_COLOURS[n_]
+    im_ = Img(80, 48)
+    im_.rect(0, 0, 79, 47, (222, 214, 200)); im_.rect(0, 0, 79, 9, c_); im_.rect(0, 10, 79, 10, dk(c_))
+    for x_ in range(0, 80, 8):
+        im_.rect(x_, 0, x_ + 3, 9, lt(c_, 1.3))                       # striped awning
+    im_.rect(0, 0, 79, 0, OUTLINE); im_.rect(0, 47, 79, 47, OUTLINE); im_.rect(0, 0, 0, 47, OUTLINE); im_.rect(79, 0, 79, 47, OUTLINE)
+    so_ = TILE_OBJ[str(n_)] * 16                                      # the shop's sign symbol, twice the size
+    ix_ = 8 if FRONT_SIDE[k_] in ("bottom", "top") else (8 if FRONT_SIDE[k_] == "right" else 40)
+    for yy_ in range(1, 10):
+        for xx_ in range(2, 14):
+            px_ = T.p[16 + yy_][so_ + xx_]
+            if px_[3] > 0:
+                im_.rect(ix_ + (xx_ - 2) * 2, 14 + (yy_ - 1) * 2, ix_ + (xx_ - 2) * 2 + 1, 14 + (yy_ - 1) * 2 + 1, px_)
+    wx_ = 52 if FRONT_SIDE[k_] in ("bottom", "top") else (40 if FRONT_SIDE[k_] == "right" else 8)
+    im_.rect(wx_, 16, wx_ + 19, 30, (60, 66, 84)); im_.rect(wx_ + 1, 17, wx_ + 18, 29, (250, 214, 130)); im_.rect(wx_ + 9, 17, wx_ + 10, 29, (60, 66, 84))   # a lit window
+    door_ = {"bottom": (32, 32, 47, 47), "top": (32, 0, 47, 15), "right": (64, 16, 79, 31), "left": (0, 16, 15, 31)}[FRONT_SIDE[k_]]
+    im_.rect(door_[0], door_[1], door_[2], door_[3], (240, 200, 80)); im_.rect(door_[0] + 2, door_[1] + 2, door_[2] - 2, door_[3] - 2, (30, 34, 48))
+    im_.save(art("front_%s.png" % k_))
+
+# ---- set dressing: lamps and planters round the ring, benches, planters and lamps round the rim of the
+# square (kept clear of doors, signs and the paths), crates and stalls by the shops that trade
+def near_door(x, y, gap=4):
+    return any(abs(x - d_[3]) <= gap and abs(y - d_[4]) <= gap for d_ in DOORS.values())
+
+
+def dress(ch, x, y, floors):
+    if m.floor[y][x] in floors and m.obj[y][x] == " " and not near_door(x, y) and not in_passage(x, y):
+        m.put(ch, [(x, y)])
+        return True
+    return False
+
+
+for k_ in range(24):                                   # the ring: a lamp or a planter every 15 degrees, on its inner edge
+    a_ = math.radians(7.5 + 15 * k_)
+    dress("l" if k_ % 2 == 0 else "p", int(round(CX + (RI + 1) * math.cos(a_))), int(round(CY + (RI + 1) * math.sin(a_))), "a")
+for k_ in range(36):                                   # the rim of the square: bench, planter, lamp, planter...
+    a_ = math.radians(5 + 10 * k_)
+    x_, y_ = int(round(CX + 27.5 * math.cos(a_))), int(round(CY + 27.5 * math.sin(a_)))
+    if abs(x_ - CX) > 4 and abs(y_ - CY) > 4:
+        dress("opl p"[k_ % 4] if k_ % 4 != 3 else "p", x_, y_, "i")
+for k_, things_ in (("bram", "cc"), ("fab", "cc"), ("armoury", "c"), ("mess", "qq"), ("bar", "c"), ("weaver", "q"), ("furn", "o")):
+    d_ = DOORS[k_]
+    st_ = DOOR_STEP[k_]
+    side_ = (1, 0) if st_[0] == 0 else (0, 1)
+    for n_, ch_ in enumerate(things_):                 # goods outside the shops that trade, beside the door
+        x_, y_ = d_[3] - side_[0] * (4 + n_) + st_[0], d_[4] - side_[1] * (4 + n_) + st_[1]
+        if m.floor[y_][x_] == "i" and m.obj[y_][x_] == " ":
+            m.put(ch_, [(x_, y_)])
 # walls: any rock that touches somewhere you can walk
 for y in range(m.h):
     for x in range(m.w):
@@ -2777,6 +2835,8 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const ACTION_ROWS = " + json.dumps(ACTION_ROWS) + "\n")
     f.write("# Rooms that are their own small map: where their door is on the main level (for the station map).\n")
     f.write("const MAP_PARENT = " + json.dumps(MAP_PARENT) + "\n")
+    f.write("# Big shop-front pictures: [shop key, x, y] in pixels (art/front_<key>.png, 5 tiles wide and 3 tall).\n")
+    f.write("const FRONTS = " + json.dumps(FRONTS) + "\n")
     f.write("const VISITOR_DAYS = " + json.dumps(VISITOR_DAYS) + "\n")
     f.write("const MEDBAY = " + json.dumps(MEDBAY) + "\n")
     f.write("const SOLID_FLOOR = " + json.dumps(SOLID_FLOOR) + "\n")
