@@ -452,6 +452,15 @@ t = Tile("f", "a").r(0, 0, 15, 15, (226, 214, 190)).r(0, 0, 15, 0, (244, 234, 21
 # "B" the foot of a bed. A bed is two tiles long: the head ("b") and the foot below it.
 t = Tile("o", "B").r(1, 0, 14, 12, (86, 124, 190)).r(1, 0, 2, 12, (120, 156, 214)).r(13, 0, 14, 12, (60, 92, 150)).r(1, 13, 14, 15, (120, 84, 56)).r(1, 12, 14, 12, (60, 92, 150)).r(4, 3, 11, 3, (120, 156, 214))
 t.r(0, 0, 0, 15, OUTLINE).r(15, 0, 15, 15, OUTLINE)
+# Rounded corners (not used by the game yet: reserved so the art can be drawn). Each is a piece of wall
+# filling one corner of the tile, see-through elsewhere, laid over the floor where a round room steps.
+for n_, ch_ in enumerate("<>{}"):
+    t = Tile("o", ch_)
+    for yy_ in range(16):
+        for xx_ in range(16):
+            ex_, ey_ = (xx_ if n_ in (0, 2) else 15 - xx_), (yy_ if n_ in (0, 1) else 15 - yy_)
+            if ex_ + ey_ <= 9:
+                t.r(xx_, yy_, xx_, yy_, (64, 76, 100) if ex_ + ey_ < 9 else (40, 46, 66))
 T.save(art("tiles.png"))
 
 # When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
