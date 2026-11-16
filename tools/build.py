@@ -1947,8 +1947,9 @@ for dy in range(-4, 5):
         m.floor[CY + dy][CX + dx] = "B" if k == 4 else ("J" if k == 0 else "O")
 m.zones += [["Town square", CX - 31, CY - 31, CX + 31, CY + 31]]
 # lift rooms at the ends of the north-south walkway
-m.room("Command lift", CX - 5, CY - RI - 31, CX + 5, CY - RI - 19, ".")
-m.room("Engineering lift", CX - 5, CY + RI + 19, CX + 5, CY + RI + 31, ".")
+m.circle(CX, CY - RI - 25, 6.3, ".")                  # the lift rooms are round too
+m.circle(CX, CY + RI + 25, 6.3, ".")
+m.zones += [["Command lift", CX - 7, CY - RI - 32, CX + 7, CY - RI - 19], ["Engineering lift", CX - 7, CY + RI + 19, CX + 7, CY + RI + 32]]
 m.setf(".", [(x, CY - RI - 19) for x in range(CX - 3, CX + 4)] + [(x, CY + RI + 19) for x in range(CX - 3, CX + 4)])
 m.warp("U", [(CX, CY - RI - 28)], "top", 20, 14)
 m.warp("D", [(CX, CY + RI + 28)], "eng", 34, 8)
@@ -2018,38 +2019,51 @@ SHOPS = [
     (1, None, "mess", "Mess hall"),                                                # south
     (0, 0, "armoury", "Armoury"),                                                  # south-east (its other half is an empty shop)
 ]
-for n_, (wedge_, half_, key_, title_) in enumerate(SHOPS):
-    mid_ = wedge_ * 60 + (30 if half_ is None else 15 + 30 * half_)
+def add_door(key_, title_, mid_, start_r_, sign_):
+    """Puts a building's door where it meets the walkway nearest the centre, on the line at angle mid_."""
     ux_, uy_ = math.cos(math.radians(mid_)), math.sin(math.radians(mid_))
-    step_ = (0, -1 if uy_ > 0 else 1) if abs(uy_) >= abs(ux_) else (-1 if ux_ > 0 else 1, 0)     # from the door toward the square
-    dx_, dy_ = int(round(CX + ux_ * 37)), int(round(CY + uy_ * 37))
+    step_ = (0, -1 if uy_ > 0 else 1) if abs(uy_) >= abs(ux_) else (-1 if ux_ > 0 else 1, 0)     # from the door toward the centre
+    dx_, dy_ = int(round(CX + ux_ * start_r_)), int(round(CY + uy_ * start_r_))
     while m.floor[dy_ + step_[1]][dx_ + step_[0]] not in WALK:
         dx_, dy_ = dx_ + step_[0], dy_ + step_[1]
-    assert m.floor[dy_][dx_] == "z", ("shop door is not in its building", key_)
+    assert m.floor[dy_][dx_] == "z", ("door is not in its building", key_)
     ch_ = "1" if step_ == (0, 1) else ("3" if step_ == (0, -1) else "2")
     ox_, oy_ = dx_ + step_[0], dy_ + step_[1]
     DOORS[key_] = (dx_, dy_, ch_, ox_, oy_)
     m.floor[dy_][dx_] = ch_                      # the door (linked to its room by interior())
-    # its own sign board, standing on the square beside the door
+    # its sign, standing on the walkway beside the door
     side_ = (1, 0) if step_[0] == 0 else (0, 1)
     spots_ = [(ox_ + side_[0] * k_ + step_[0] * f_, oy_ + side_[1] * k_ + step_[1] * f_) for f_ in (0, 1, 2) for k_ in (2, -2, 3, -3)]
-    sx_, sy_ = [c_ for c_ in spots_ if m.floor[c_[1]][c_[0]] == "i" and m.obj[c_[1]][c_[0]] == " "][0]
-    m.put(str(n_), [(sx_, sy_)])
+    sx_, sy_ = [c_ for c_ in spots_ if m.floor[c_[1]][c_[0]] in "ia" and m.obj[c_[1]][c_[0]] == " "][0]
+    m.put(sign_, [(sx_, sy_)])
     SIGNS.append([title_, sx_, sy_])
     BUILDINGS.append([key_, title_, dx_, dy_, 1, 1])
     m.zones.insert(0, [title_, ox_ - 3, oy_ - 3, ox_ + 3, oy_ + 3])
+
+
+for n_, (wedge_, half_, key_, title_) in enumerate(SHOPS):
+    add_door(key_, title_, wedge_ * 60 + (30 if half_ is None else 15 + 30 * half_), 37, str(n_))
 N_SHOPS = len(BUILDINGS)
+# apartments: curved blocks wrapped round the outside of the ring, between the lifts and the exits.
+# key, title, from angle, to angle (0 = east, 90 = south, 180 = west, 270 = north)
+APARTMENTS = [
+    ("aptB", "Apartments B", 190, 222), ("aptA", "Apartments A", 230, 262),
+    ("aptDoc", "Doctor's family", 278, 310), ("aptSec", "Security family", 318, 350),
+    ("aptEmpty", "Empty flats", 14, 76), ("aptMoog", "Moogli family", 104, 166),
+]
+for (key_, title_, a0_, a1_) in APARTMENTS:
+    for y in range(m.h):
+        for x in range(m.w):
+            d = ((x - CX) ** 2 + (y - CY) ** 2) ** 0.5
+            ang_ = math.degrees(math.atan2(y - CY, x - CX)) % 360
+            if RING_OUT + 1 < d <= RING_OUT + 13 and a0_ <= ang_ <= a1_ and m.floor[y][x] == "r":
+                m.floor[y][x] = "z"
+                WEDGE[(x, y)] = (9, 0)
+    add_door(key_, title_, (a0_ + a1_) / 2.0, RING_OUT + 6, "j")
 # store fronts: wherever a building has open floor below it, that edge is a front wall with windows
 for (x, y) in WEDGE:
     if m.floor[y][x] == "z" and m.floor[y + 1][x] in WALK and m.floor[y + 1][x] not in "123":
         m.floor[y][x] = "8" if x % 3 == 0 else "7"
-# apartments, outside the ring and touching it
-building("aptA", "Apartments A", CX - 34, CY - RI - 17, 20, 12, "s")
-building("aptDoc", "Doctor's family", CX + 14, CY - RI - 17, 20, 12, "s")
-building("aptB", "Apartments B", CX - RI - 25, CY - 34, 22, 12, "e")
-building("aptSec", "Security family", CX + RI + 4, CY - 34, 22, 12, "w")
-building("aptMoog", "Moogli family", CX - 34, CY + RI + 6, 20, 12, "n")
-building("aptEmpty", "Empty flats", CX + 14, CY + RI + 6, 20, 12, "n")
 # set dressing: lamps round the ring, a planter the other side of each shop door from its sign
 for k_ in range(12):
     lx_, ly_ = int(round(CX + (RI + 2) * math.cos(math.radians(15 + 30 * k_)))), int(round(CY + (RI + 2) * math.sin(math.radians(15 + 30 * k_))))
