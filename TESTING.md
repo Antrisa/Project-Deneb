@@ -4,13 +4,15 @@ Thanks for trying this. It is an early build: one town, 24 residents, a mine and
 
 ## This is the map-rework branch
 
-The main level has been rebuilt: the town square in the middle, four walkways out to a ring, shops between the square and the ring, apartments outside it. Shops and apartments are now doors; walk into one to go inside, and onto the green mat to come back out. Please check:
+The station has been rebuilt. Please walk all of it.
 
-- The **Spaceport District** (where you start) is rebuilt too: a round hub, Reception with a customs gate to the west, a sealed airlock beyond it, the old barracks to the south with a big empty drill hall, and to the north a second hub with the agri dome, a broken garden and your workshop. The old Agri Dome map on the east side is gone. Walk all of it and say if anything is cut off or cannot be reached.
-- Every door leads to the right room, and the mat puts you back outside the same door.
-- Residents get in and out of buildings and still reach dinner at 6:00 pm (the walks are longer now).
-- Small rooms sit in the middle of the screen, not in a corner.
-- The Map page of the menu shows the new level and puts you at the right door when you are indoors.
+- **Main level:** one open town inside a ring walkway. The town square is in the middle; shops stand around it with their doors facing it; apartments sit on the outside of the ring. Walk into a door to go inside and onto the green mat to come out. Each door has a sign post you can read.
+- **Spaceport District** (west, where you start): a hub, Reception with a customs gate, a sealed airlock, the old barracks, and to the north your agri dome, a broken garden and your workshop.
+- **East Complex** (east): a hub, Evarra's herb dome, the air reclamation plant and an airlock.
+- Check that every door leads to the right room and the mat puts you back outside the same door, that residents reach dinner at 6:00 pm, that small rooms sit in the middle of the screen, and that nothing blocks a path.
+- **Menu:** press J for the journal. On the Map page, point at a dot to see what it is.
+- **Furnaces:** hold ore on your hotbar and use any furnace.
+- **End of day:** sleep in your bunk; you should get a recap of the day's credits.
 
 ## Getting it running
 

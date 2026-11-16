@@ -19,7 +19,8 @@ Testing this build? See `TESTING.md` for what to look at and how to report probl
 | Talk, read, interact | E or Enter | Right click (or left click with nothing usable selected) |
 | Use the selected hotbar item | Space or F | Left click |
 | Pick a hotbar slot | 1 to 8 | Wheel, or click the slot |
-| Menu (inventory, crafting, map, friends) | Tab or I | The "Menu" button |
+| Menu (pack, crafting, map, friends, journal) | Tab or I | The "Menu" button |
+| Journal (your quests) | J | |
 | Decline / close | Q or Esc | Right click in conversations; click outside the menu |
 | Music on or off | M | |
 | Wipe the save and start again | F9 | |
@@ -96,9 +97,9 @@ Design notes, decisions and the roadmap live in the "Project Deneb" project on c
 
 ## How the main level is built
 
-The town square is the middle circle. Four walkways lead out to a ring walkway; shops sit between the square and the ring, apartments outside the ring. Every shop and apartment is a block of wall with a door, and its inside is its own small map (`interior()` in `tools/build.py`). To add one, add a `building(...)` line and an `interior(...)` block.
+Everything inside the ring walkway is open ground. The town square is the middle circle; shops stand on the ground around it, apartments outside the ring. Every shop and apartment is a block (roof, a front wall along its south side, a door in one side, a sign post) and its inside is its own small map: see `building(...)` and `interior(...)` in `tools/build.py`. To add one, add a line of each.
 
-Doors are floor tiles in `tiles.png`: slot 83 front door (in a wall facing the camera), 84 side door (in a left or right wall), 85 back entrance (the way in to a building below a walkway), 86 the mat by the way out of a room. All four are placeholders.
+New tiles are always added at the end of the tile list in `tools/build.py`, so slot numbers in `tiles.png` never change.
 
 ## Checking the player art
 
