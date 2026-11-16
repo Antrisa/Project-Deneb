@@ -73,7 +73,7 @@ def art(name):
 # Floors can have several variations; the game picks one per tile so big areas don't look like a grid.
 import random
 
-TILE_COLUMNS = 110
+TILE_COLUMNS = 140          # slots in tiles.png (raised from 110 when the first 110 filled up)
 T = Img(16 * TILE_COLUMNS, 32)
 TILE_FLOOR, TILE_OBJ, TILE_VARIANTS = {}, {}, {}
 SOLID_FLOOR = "~"          # '~' is empty space: solid, never drawn
@@ -461,6 +461,35 @@ for n_, ch_ in enumerate("<>{}"):
             ex_, ey_ = (xx_ if n_ in (0, 2) else 15 - xx_), (yy_ if n_ in (0, 1) else 15 - yy_)
             if ex_ + ey_ <= 9:
                 t.r(xx_, yy_, xx_, yy_, (64, 76, 100) if ex_ + ey_ < 9 else (40, 46, 66))
+# Shop sign boards: one per shop, standing by its door, so you can tell the shops apart at a glance.
+# Object tiles "0" to "9", in the order of SHOPS on the main level.
+SIGN_COLOURS = [(196, 140, 84), (96, 124, 196), (200, 170, 110), (120, 160, 110), (214, 90, 84), (190, 110, 170),
+                (180, 120, 60), (120, 130, 150), (226, 180, 80), (110, 116, 140)]
+for n_ in range(10):
+    c_ = SIGN_COLOURS[n_]
+    t = Tile("o", str(n_)).r(7, 9, 8, 14, (96, 72, 54)).r(2, 1, 13, 9, c_).r(2, 1, 13, 1, lt(c_)).r(2, 9, 13, 9, dk(c_)).r(3, 2, 12, 8, (244, 236, 214))
+    ic_ = dk(c_, 0.7)
+    if n_ == 0:      # furniture: a chair
+        t.r(5, 3, 5, 7, ic_).r(5, 5, 9, 5, ic_).r(9, 5, 9, 7, ic_)
+    elif n_ == 1:    # library: a book
+        t.r(4, 3, 11, 7, ic_).r(7, 3, 8, 7, (244, 236, 214))
+    elif n_ == 2:    # common room: a couch
+        t.r(4, 5, 11, 7, ic_).r(4, 3, 4, 7, ic_).r(11, 3, 11, 7, ic_)
+    elif n_ == 3:    # Bram's: a crate
+        t.r(5, 3, 10, 7, ic_).r(6, 4, 9, 6, (244, 236, 214)).r(7, 4, 8, 6, ic_)
+    elif n_ == 4:    # medbay: a cross
+        t.r(7, 3, 8, 7, (214, 60, 60)).r(5, 5, 10, 5, (214, 60, 60))
+    elif n_ == 5:    # weaver: a spool
+        t.r(5, 3, 10, 3, ic_).r(5, 7, 10, 7, ic_).r(6, 4, 9, 6, c_)
+    elif n_ == 6:    # bar: a mug
+        t.r(5, 3, 9, 7, ic_).r(10, 4, 11, 6, ic_).r(6, 4, 8, 4, (255, 255, 255))
+    elif n_ == 7:    # fabrication: a gear
+        t.r(5, 3, 10, 7, ic_).r(7, 5, 8, 5, (244, 236, 214)).r(7, 2, 8, 2, ic_).r(7, 8, 8, 8, ic_)
+    elif n_ == 8:    # mess hall: a bowl
+        t.r(4, 5, 11, 5, ic_).r(5, 6, 10, 7, ic_).r(7, 3, 7, 4, ic_)
+    else:            # armoury: a sword
+        t.r(7, 2, 8, 6, ic_).r(5, 6, 10, 6, ic_).r(7, 7, 8, 8, ic_)
+    t.outline()
 T.save(art("tiles.png"))
 
 # When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
@@ -481,7 +510,12 @@ def patch_hand_tiles():
         print("note: Pillow is not installed, so new tiles were not added to the hand-made tiles.png")
         return
     sheet_img = Image.open(art("tiles.png")).convert("RGBA")
-    cell = sheet_img.width // TILE_COLUMNS
+    cell = sheet_img.height // 2
+    if sheet_img.width < TILE_COLUMNS * cell:          # an older, narrower sheet: add the new empty slots on the right
+        wider = Image.new("RGBA", (TILE_COLUMNS * cell, sheet_img.height), (0, 0, 0, 0))
+        wider.paste(sheet_img, (0, 0))
+        sheet_img = wider
+        print("widened the hand-made tiles.png to %d slots" % TILE_COLUMNS)
     gen = Image.new("RGBA", (T.w, T.h))
     gen.putdata([px for row_ in T.p for px in row_])
     slots = [(ch, base + v, False) for ch, base in TILE_FLOOR.items() for v in range(TILE_VARIANTS[ch])]
@@ -1865,21 +1899,40 @@ def sq(cells):
     return [(x + CX - 90, y + CY - 60) for (x, y) in cells]
 
 
-# Everything inside the ring is open ground: you can walk anywhere, and the walkways are just a
-# different paving ("a"). Shops stand on that ground around the square, doors facing it.
-m.carve("", CX - 3, CY - 80, CX + 3, CY + 80, "a")      # north-south walkway
-m.carve("", CX - 80, CY - 3, CX + 84, CY + 3, "a")      # west-east walkway
+# One giant circle. The town square is the inner circle; a ring walkway runs round the outside;
+# six passages cross from the ring to the square. The wedges between the passages are the shop
+# buildings: they fill the gap, so they are not square, and their doors open onto the square.
+PASSAGES = [0, 60, 120, 180, 240, 300]      # degrees: 0 = east, 90 = south, 180 = west, 270 = north
+WEDGE = {}                                   # (x, y) -> (which wedge 0-5, which half 0-1)
+
+
+def in_passage(x, y):
+    dx_, dy_ = x - CX, y - CY
+    for a_ in PASSAGES:
+        ux_, uy_ = math.cos(math.radians(a_)), math.sin(math.radians(a_))
+        if dx_ * ux_ + dy_ * uy_ > 0 and abs(dy_ * ux_ - dx_ * uy_) <= 3.0:
+            return True
+    return False
+
+
+m.carve("", CX - 3, CY - 80, CX + 3, CY - 61, "a")      # ring to the north lift
+m.carve("", CX - 3, CY + 61, CX + 3, CY + 80, "a")      # ring to the south lift
+m.carve("", CX - 80, CY - 3, CX - 61, CY + 3, "a")      # ring to the Spaceport District
+m.carve("", CX + 61, CY - 3, CX + 84, CY + 3, "a")      # ring to the East Complex
 for y in range(m.h):
     for x in range(m.w):
         d = ((x - CX) ** 2 + (y - CY) ** 2) ** 0.5
-        if RING_IN + 1 <= d <= RING_OUT + 1:
-            m.floor[y][x] = "a"                 # the ring walkway
-        elif d < RING_IN + 1 and m.floor[y][x] == "r":
-            m.floor[y][x] = "."                 # open ground
-for y in range(m.h):
-    for x in range(m.w):
-        if ((x - CX) ** 2 + (y - CY) ** 2) ** 0.5 <= CR:
+        if d <= CR:
             m.floor[y][x] = "i"                 # the square itself, paved
+        elif d >= RING_IN + 1:
+            if d <= RING_OUT + 1:
+                m.floor[y][x] = "a"             # the ring walkway
+        elif in_passage(x, y):
+            m.floor[y][x] = "a"                 # a passage from the ring to the square
+        else:
+            m.floor[y][x] = "z"                 # a shop building's roof
+            ang_ = math.degrees(math.atan2(y - CY, x - CX)) % 360
+            WEDGE[(x, y)] = (int(ang_ // 60), int((ang_ % 60) // 30))
 for y in range(m.h):
     for x in range(m.w):
         d = ((x - CX) ** 2 + (y - CY) ** 2) ** 0.5
@@ -1954,18 +2007,41 @@ def building(key, title, x, y, w, h, side):
     m.zones.append([title, min(cs[0]), min(cs[1]), max(cs[0]), max(cs[1])])
 
 
-# shops and public rooms, between the square and the ring
-building("bram", "Bram's Sundries", CX - 50, CY - 34, 18, 11, "s")
-building("furn", "Furniture workshop", CX - 28, CY - 48, 18, 11, "s")
-building("library", "Library", CX + 11, CY - 48, 18, 11, "s")
-building("medbay", "Medbay", CX + 32, CY - 34, 18, 11, "s")
-building("common", "Common room", CX - 52, CY - 16, 16, 10, "s")
-building("fab", "Fabrication shop", CX - 52, CY + 8, 16, 12, "e")
-building("armoury", "Armoury", CX + 37, CY + 8, 16, 12, "w")
-building("bar", "Rusk's bar", CX - 46, CY + 26, 18, 11, "n")
-building("weaver", "Weaver's shop", CX - 24, CY + 40, 16, 10, "n")
-building("mess", "Mess hall", CX + 8, CY + 37, 28, 12, "n")
+# shops and public rooms: each fills half a wedge (the mess hall a whole one); the door is where the
+# building meets the square. (wedge, half) -> key, title. Half None = the whole wedge.
+SHOPS = [
+    (4, 0, "furn", "Furniture workshop"), (4, 1, "library", "Library"),            # north
+    (3, 0, "common", "Common room"), (3, 1, "bram", "Bram's Sundries"),            # north-west
+    (5, 0, "medbay", "Medbay"), (5, 1, "weaver", "Weaver's shop"),                 # north-east
+    (2, 0, "bar", "Rusk's bar"), (2, 1, "fab", "Fabrication shop"),                # south-west
+    (1, None, "mess", "Mess hall"),                                                # south
+    (0, 0, "armoury", "Armoury"),                                                  # south-east (its other half is an empty shop)
+]
+for n_, (wedge_, half_, key_, title_) in enumerate(SHOPS):
+    mid_ = wedge_ * 60 + (30 if half_ is None else 15 + 30 * half_)
+    ux_, uy_ = math.cos(math.radians(mid_)), math.sin(math.radians(mid_))
+    step_ = (0, -1 if uy_ > 0 else 1) if abs(uy_) >= abs(ux_) else (-1 if ux_ > 0 else 1, 0)     # from the door toward the square
+    dx_, dy_ = int(round(CX + ux_ * 37)), int(round(CY + uy_ * 37))
+    while m.floor[dy_ + step_[1]][dx_ + step_[0]] not in WALK:
+        dx_, dy_ = dx_ + step_[0], dy_ + step_[1]
+    assert m.floor[dy_][dx_] == "z", ("shop door is not in its building", key_)
+    ch_ = "1" if step_ == (0, 1) else ("3" if step_ == (0, -1) else "2")
+    ox_, oy_ = dx_ + step_[0], dy_ + step_[1]
+    DOORS[key_] = (dx_, dy_, ch_, ox_, oy_)
+    m.floor[dy_][dx_] = ch_                      # the door (linked to its room by interior())
+    # its own sign board, standing on the square beside the door
+    side_ = (1, 0) if step_[0] == 0 else (0, 1)
+    spots_ = [(ox_ + side_[0] * k_ + step_[0] * f_, oy_ + side_[1] * k_ + step_[1] * f_) for f_ in (0, 1, 2) for k_ in (2, -2, 3, -3)]
+    sx_, sy_ = [c_ for c_ in spots_ if m.floor[c_[1]][c_[0]] == "i" and m.obj[c_[1]][c_[0]] == " "][0]
+    m.put(str(n_), [(sx_, sy_)])
+    SIGNS.append([title_, sx_, sy_])
+    BUILDINGS.append([key_, title_, dx_, dy_, 1, 1])
+    m.zones.insert(0, [title_, ox_ - 3, oy_ - 3, ox_ + 3, oy_ + 3])
 N_SHOPS = len(BUILDINGS)
+# store fronts: wherever a building has open floor below it, that edge is a front wall with windows
+for (x, y) in WEDGE:
+    if m.floor[y][x] == "z" and m.floor[y + 1][x] in WALK and m.floor[y + 1][x] not in "123":
+        m.floor[y][x] = "8" if x % 3 == 0 else "7"
 # apartments, outside the ring and touching it
 building("aptA", "Apartments A", CX - 34, CY - 78, 20, 12, "s")
 building("aptDoc", "Doctor's family", CX + 14, CY - 78, 20, 12, "s")
@@ -1973,18 +2049,16 @@ building("aptB", "Apartments B", CX - 86, CY - 34, 22, 12, "e")
 building("aptSec", "Security family", CX + 65, CY - 34, 22, 12, "w")
 building("aptMoog", "Moogli family", CX - 34, CY + 67, 20, 12, "n")
 building("aptEmpty", "Empty flats", CX + 14, CY + 67, 20, 12, "n")
-# set dressing on the open ground: lamps along the walkways, planters by the buildings, benches
-m.put("l", [(CX - 5, CY + k) for k in (-56, -44, 44, 56)] + [(CX + 5, CY + k) for k in (-56, -44, 44, 56)]
-      + [(CX + k, CY - 5) for k in (-56, -44, 44, 56)] + [(CX + k, CY + 5) for k in (-56, -44, 44, 56)])
+# set dressing: lamps round the ring, a planter the other side of each shop door from its sign
+for k_ in range(12):
+    lx_, ly_ = int(round(CX + 63 * math.cos(math.radians(15 + 30 * k_)))), int(round(CY + 63 * math.sin(math.radians(15 + 30 * k_))))
+    if m.floor[ly_][lx_] == "a" and m.obj[ly_][lx_] == " ":
+        m.put("l", [(lx_, ly_)])
 for b_ in BUILDINGS[:N_SHOPS]:
-    bx_, by_, bw_, bh_ = b_[2], b_[3], b_[4], b_[5]
-    for (px_, py_) in ((bx_ - 1, by_ + bh_), (bx_ + bw_, by_ + bh_)):
-        if m.floor[py_][px_] == "." and m.obj[py_][px_] == " ":
-            m.put("p", [(px_, py_)])                # a planter at each front corner
-m.put("o", [(CX - 34, CY - 6), (CX - 33, CY - 6), (CX + 33, CY - 6), (CX + 34, CY - 6), (CX - 34, CY + 6), (CX - 33, CY + 6), (CX + 33, CY + 6), (CX + 34, CY + 6),
-            (CX - 7, CY - 36), (CX - 7, CY - 35), (CX + 7, CY + 35), (CX + 7, CY + 36)])
-m.put("c", [(CX - 30, CY + 22), (CX - 29, CY + 22), (CX + 30, CY - 20), (CX + 22, CY + 34)])
-m.put("q", [(CX + 26, CY + 30), (CX + 27, CY + 30)])
+    d_ = DOORS[b_[0]]
+    px_, py_ = (d_[3] - 2, d_[4]) if d_[0] == d_[3] else (d_[3], d_[4] - 2)
+    if m.floor[py_][px_] in WALK and m.obj[py_][px_] == " ":
+        m.put("p", [(px_, py_)])
 # walls: any rock that touches somewhere you can walk
 for y in range(m.h):
     for x in range(m.w):

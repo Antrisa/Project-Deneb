@@ -6,7 +6,7 @@ Thanks for trying this. It is an early build: one town, 24 residents, a mine and
 
 The station has been rebuilt. Please walk all of it.
 
-- **Main level:** one open town inside a ring walkway. The town square is in the middle; shops stand around it with their doors facing it; apartments sit on the outside of the ring. Walk into a door to go inside and onto the green mat to come out. Each door has a sign post you can read.
+- **Main level:** one big circle. The town square is the inner circle, a ring walkway runs round the outside, and six passages join them. The wedges between the passages are the shops: their doors open onto the square, each with its own sign board. Apartments sit on the outside of the ring. Walk into a door to go inside and onto the green mat to come out.
 - **Spaceport District** (west, where you start): a hub, Reception with a customs gate, a sealed airlock, the old barracks, and to the north your agri dome, a broken garden and your workshop.
 - **East Complex** (east): a hub, Evarra's herb dome, the air reclamation plant and an airlock.
 - Check that every door leads to the right room and the mat puts you back outside the same door, that residents reach dinner at 6:00 pm, that small rooms sit in the middle of the screen, and that nothing blocks a path.

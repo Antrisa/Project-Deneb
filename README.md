@@ -97,9 +97,9 @@ Design notes, decisions and the roadmap live in the "Project Deneb" project on c
 
 ## How the main level is built
 
-Everything inside the ring walkway is open ground. The town square is the middle circle; shops stand on the ground around it, apartments outside the ring. Every shop and apartment is a block (roof, a front wall along its south side, a door in one side, a sign post) and its inside is its own small map: see `building(...)` and `interior(...)` in `tools/build.py`. To add one, add a line of each.
+The main level is one circle: the town square is the inner circle, a ring walkway runs round the outside, and six passages join them (`PASSAGES` in `tools/build.py`). The wedges between the passages are the shop buildings, listed in `SHOPS`; each door is where its building meets the square, with its own sign board beside it. Apartments are blocks outside the ring (`building(...)`). The inside of every shop and apartment is its own small map (`interior(...)`).
 
-New tiles are always added at the end of the tile list in `tools/build.py`, so slot numbers in `tiles.png` never change.
+New tiles are always added at the end of the tile list in `tools/build.py`, so slot numbers in `tiles.png` never change. The sheet is 140 slots wide (4480x64).
 
 ## Checking the player art
 
