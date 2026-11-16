@@ -1933,9 +1933,9 @@ for y in range(m.h):
         elif in_passage(x, y):
             m.floor[y][x] = "a"                 # a passage from the ring to the square
         else:
-            m.floor[y][x] = "z"                 # a shop building's roof
             ang_ = math.degrees(math.atan2(y - CY, x - CX)) % 360
             WEDGE[(x, y)] = (int(ang_ // 60), int((ang_ % 60) // 30))
+            m.floor[y][x] = "#" if d <= CR + 1.6 else "z"       # the wall round the square, then the shop building's roof
 for y in range(m.h):
     for x in range(m.w):
         d = ((x - CX) ** 2 + (y - CY) ** 2) ** 0.5
@@ -2026,41 +2026,49 @@ PORCH_MOUTHS = []   # where each porch opens onto the walkway
 
 
 def add_door(key_, title_, mid_, start_r_, sign_, depth_=4, half_w_=3, decor_=""):
-    """Gives a building a front porch and an entrance, on the line at angle mid_ from the centre.
-    The porch is a bay cut into the building where it meets the walkway (depth_ tiles deep,
-    2 * half_w_ + 1 wide), dressed down both sides with decor_; the entrance is at the back of it."""
+    """Gives a building an entrance way and a store front, on the line at angle mid_ from the centre.
+    The entrance way is a gap three tiles wide in the wall where the building meets the walkway.
+    Beyond the wall is the store front: a yard depth_ tiles deep and 2 * half_w_ + 1 wide, dressed
+    down both sides with decor_, with the way in to the shop at the back of it."""
     ux_, uy_ = math.cos(math.radians(mid_)), math.sin(math.radians(mid_))
     step_ = (0, -1 if uy_ > 0 else 1) if abs(uy_) >= abs(ux_) else (-1 if ux_ > 0 else 1, 0)     # from the entrance toward the centre
     side_ = (1, 0) if step_[0] == 0 else (0, 1)
     dx_, dy_ = int(round(CX + ux_ * start_r_)), int(round(CY + uy_ * start_r_))
     while m.floor[dy_ + step_[1]][dx_ + step_[0]] not in WALK:
         dx_, dy_ = dx_ + step_[0], dy_ + step_[1]
-    assert m.floor[dy_][dx_] == "z", ("porch is not in its building", key_)
-    mx_, my_ = dx_ + step_[0], dy_ + step_[1]               # the walkway tile at the mouth of the porch
+    assert m.floor[dy_][dx_] in "z#", ("porch is not in its building", key_)
+    mx_, my_ = dx_ + step_[0], dy_ + step_[1]               # the walkway tile in front of the entrance way
     PORCH_MOUTHS.append((mx_, my_))
-    # the sign, on the walkway beside the mouth of the porch
-    spots_ = [(mx_ + side_[0] * k_ + step_[0] * f_, my_ + side_[1] * k_ + step_[1] * f_) for f_ in (0, 1, 2) for k_ in (half_w_ + 2, -half_w_ - 2, half_w_ + 3, -half_w_ - 3)]
+    # the sign, on the walkway beside the entrance way
+    spots_ = [(mx_ + side_[0] * k_ + step_[0] * f_, my_ + side_[1] * k_ + step_[1] * f_) for f_ in (0, 1, 2) for k_ in (3, -3, 4, -4)]
     sx_, sy_ = [c_ for c_ in spots_ if m.floor[c_[1]][c_[0]] in "ia" and m.obj[c_[1]][c_[0]] == " "][0]
     m.put(sign_, [(sx_, sy_)])
     SIGNS.append([title_, sx_, sy_])
-    # the porch floor
     porch_ = []
-    for d_ in range(depth_):
+
+    def deck(d_, k_, kinds_):
+        px_, py_ = dx_ - step_[0] * d_ + side_[0] * k_, dy_ - step_[1] * d_ + side_[1] * k_
+        if m.floor[py_][px_] in kinds_:
+            m.floor[py_][px_] = "p"
+            WEDGE.pop((px_, py_), None)
+            porch_.append((px_, py_, d_, k_))
+
+    # the entrance way: a gap three tiles wide through the wall of the circle...
+    for d_ in range(0, 3):
+        for k_ in (-1, 0, 1):
+            deck(d_, k_, "#z")
+    # ...and beyond the wall, the store front: a yard as wide as the porch, with the shop's entrance at the back
+    for d_ in range(2, 2 + depth_):
         for k_ in range(-half_w_, half_w_ + 1):
-            px_, py_ = dx_ - step_[0] * d_ + side_[0] * k_, dy_ - step_[1] * d_ + side_[1] * k_
-            if m.floor[py_][px_] == "z":
-                m.floor[py_][px_] = "p"
-                WEDGE.pop((px_, py_), None)
-                porch_.append((px_, py_, d_, k_))
-    # the entrance, at the back of the porch
-    ex_, ey_ = dx_ - step_[0] * depth_, dy_ - step_[1] * depth_
+            deck(d_, k_, "z")
+    ex_, ey_ = dx_ - step_[0] * (2 + depth_), dy_ - step_[1] * (2 + depth_)
     assert m.floor[ey_][ex_] == "z", ("entrance is not in its building", key_)
     ch_ = "1" if step_ == (0, 1) else ("3" if step_ == (0, -1) else "2")
     m.floor[ey_][ex_] = ch_
     DOORS[key_] = (ex_, ey_, ch_, ex_ + step_[0], ey_ + step_[1])
     DOOR_STEP[key_] = step_
     # themed things down both sides of the porch
-    places_ = [(px_, py_) for (px_, py_, d_, k_) in porch_ if abs(k_) == half_w_ and d_ in (1, depth_ - 1)]
+    places_ = [(px_, py_) for (px_, py_, d_, k_) in porch_ if abs(k_) == half_w_ and d_ in (3, depth_ + 1)]
     for ch2_, (px_, py_) in zip(decor_, places_):
         m.put(ch2_, [(px_, py_)])
     BUILDINGS.append([key_, title_, ex_, ey_, 1, 1])
@@ -2072,7 +2080,7 @@ def add_door(key_, title_, mid_, start_r_, sign_, depth_=4, half_w_=3, decor_=""
 PORCH_DECOR = {"furn": "otot", "library": "SStp", "common": "oopl", "bram": "ccqc", "medbay": "kpLp", "weaver": "qcpq",
                "bar": "hclh", "fab": "PckP", "mess": "dhdh", "armoury": "LcSc"}
 for n_, (wedge_, half_, key_, title_) in enumerate(SHOPS):
-    add_door(key_, title_, wedge_ * 60 + (30 if half_ is None else 15 + 30 * half_), 37, str(n_), 4, 3, PORCH_DECOR[key_])
+    add_door(key_, title_, wedge_ * 60 + (30 if half_ is None else 15 + 30 * half_), 37, str(n_), 5, 4, PORCH_DECOR[key_])
 N_SHOPS = len(BUILDINGS)
 # apartments: curved blocks wrapped round the outside of the ring, between the lifts and the exits.
 # key, title, from angle, to angle (0 = east, 90 = south, 180 = west, 270 = north)
