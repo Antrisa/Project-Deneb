@@ -490,6 +490,8 @@ for n_ in range(10):
     else:            # armoury: a sword
         t.r(7, 2, 8, 6, ic_).r(5, 6, 10, 6, ic_).r(7, 7, 8, 8, ic_)
     t.outline()
+# "p" porch decking: the floor of the porch in front of every shop and apartment
+t = Tile("f", "p").r(0, 0, 15, 15, (176, 132, 92)).r(0, 0, 15, 0, (204, 162, 118)).r(0, 5, 15, 5, (132, 96, 66)).r(0, 10, 15, 10, (132, 96, 66)).r(0, 15, 15, 15, (132, 96, 66)).r(6, 0, 6, 4, (132, 96, 66)).r(11, 6, 11, 9, (132, 96, 66)).r(3, 11, 3, 14, (132, 96, 66))
 T.save(art("tiles.png"))
 
 # When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
@@ -1817,7 +1819,7 @@ if not os.path.exists(os.path.join(AUDIO, "music_under.wav")):
     render_loop("music_under", 24.0, voices)
 
 # ================================================================ maps
-WALK = set(".,fhusmiUDAR1230Xa")
+WALK = set(".,fhusmiUDAR1230Xap")
 
 
 class Area:
@@ -2020,31 +2022,57 @@ SHOPS = [
     (1, None, "mess", "Mess hall"),                                                # south
     (0, 0, "armoury", "Armoury"),                                                  # south-east (its other half is an empty shop)
 ]
-def add_door(key_, title_, mid_, start_r_, sign_):
-    """Puts a building's door where it meets the walkway nearest the centre, on the line at angle mid_."""
+PORCH_MOUTHS = []   # where each porch opens onto the walkway
+
+
+def add_door(key_, title_, mid_, start_r_, sign_, depth_=4, half_w_=3, decor_=""):
+    """Gives a building a front porch and an entrance, on the line at angle mid_ from the centre.
+    The porch is a bay cut into the building where it meets the walkway (depth_ tiles deep,
+    2 * half_w_ + 1 wide), dressed down both sides with decor_; the entrance is at the back of it."""
     ux_, uy_ = math.cos(math.radians(mid_)), math.sin(math.radians(mid_))
-    step_ = (0, -1 if uy_ > 0 else 1) if abs(uy_) >= abs(ux_) else (-1 if ux_ > 0 else 1, 0)     # from the door toward the centre
+    step_ = (0, -1 if uy_ > 0 else 1) if abs(uy_) >= abs(ux_) else (-1 if ux_ > 0 else 1, 0)     # from the entrance toward the centre
+    side_ = (1, 0) if step_[0] == 0 else (0, 1)
     dx_, dy_ = int(round(CX + ux_ * start_r_)), int(round(CY + uy_ * start_r_))
     while m.floor[dy_ + step_[1]][dx_ + step_[0]] not in WALK:
         dx_, dy_ = dx_ + step_[0], dy_ + step_[1]
-    assert m.floor[dy_][dx_] == "z", ("door is not in its building", key_)
-    ch_ = "1" if step_ == (0, 1) else ("3" if step_ == (0, -1) else "2")
-    ox_, oy_ = dx_ + step_[0], dy_ + step_[1]
-    DOORS[key_] = (dx_, dy_, ch_, ox_, oy_)
-    DOOR_STEP[key_] = step_
-    m.floor[dy_][dx_] = ch_                      # the door (linked to its room by interior())
-    # its sign, standing on the walkway beside the door
-    side_ = (1, 0) if step_[0] == 0 else (0, 1)
-    spots_ = [(ox_ + side_[0] * k_ + step_[0] * f_, oy_ + side_[1] * k_ + step_[1] * f_) for f_ in (0, 1, 2) for k_ in (2, -2, 3, -3)]
+    assert m.floor[dy_][dx_] == "z", ("porch is not in its building", key_)
+    mx_, my_ = dx_ + step_[0], dy_ + step_[1]               # the walkway tile at the mouth of the porch
+    PORCH_MOUTHS.append((mx_, my_))
+    # the sign, on the walkway beside the mouth of the porch
+    spots_ = [(mx_ + side_[0] * k_ + step_[0] * f_, my_ + side_[1] * k_ + step_[1] * f_) for f_ in (0, 1, 2) for k_ in (half_w_ + 2, -half_w_ - 2, half_w_ + 3, -half_w_ - 3)]
     sx_, sy_ = [c_ for c_ in spots_ if m.floor[c_[1]][c_[0]] in "ia" and m.obj[c_[1]][c_[0]] == " "][0]
     m.put(sign_, [(sx_, sy_)])
     SIGNS.append([title_, sx_, sy_])
-    BUILDINGS.append([key_, title_, dx_, dy_, 1, 1])
-    m.zones.insert(0, [title_, ox_ - 3, oy_ - 3, ox_ + 3, oy_ + 3])
+    # the porch floor
+    porch_ = []
+    for d_ in range(depth_):
+        for k_ in range(-half_w_, half_w_ + 1):
+            px_, py_ = dx_ - step_[0] * d_ + side_[0] * k_, dy_ - step_[1] * d_ + side_[1] * k_
+            if m.floor[py_][px_] == "z":
+                m.floor[py_][px_] = "p"
+                WEDGE.pop((px_, py_), None)
+                porch_.append((px_, py_, d_, k_))
+    # the entrance, at the back of the porch
+    ex_, ey_ = dx_ - step_[0] * depth_, dy_ - step_[1] * depth_
+    assert m.floor[ey_][ex_] == "z", ("entrance is not in its building", key_)
+    ch_ = "1" if step_ == (0, 1) else ("3" if step_ == (0, -1) else "2")
+    m.floor[ey_][ex_] = ch_
+    DOORS[key_] = (ex_, ey_, ch_, ex_ + step_[0], ey_ + step_[1])
+    DOOR_STEP[key_] = step_
+    # themed things down both sides of the porch
+    places_ = [(px_, py_) for (px_, py_, d_, k_) in porch_ if abs(k_) == half_w_ and d_ in (1, depth_ - 1)]
+    for ch2_, (px_, py_) in zip(decor_, places_):
+        m.put(ch2_, [(px_, py_)])
+    BUILDINGS.append([key_, title_, ex_, ey_, 1, 1])
+    xs_, ys_ = [c_[0] for c_ in porch_] + [mx_], [c_[1] for c_ in porch_] + [my_]
+    m.zones.insert(0, [title_, min(xs_) - 1, min(ys_) - 1, max(xs_) + 1, max(ys_) + 1])
 
 
+# What stands on each shop's porch (existing objects for now; themed art comes later).
+PORCH_DECOR = {"furn": "otot", "library": "SStp", "common": "oopl", "bram": "ccqc", "medbay": "kpLp", "weaver": "qcpq",
+               "bar": "hclh", "fab": "PckP", "mess": "dhdh", "armoury": "LcSc"}
 for n_, (wedge_, half_, key_, title_) in enumerate(SHOPS):
-    add_door(key_, title_, wedge_ * 60 + (30 if half_ is None else 15 + 30 * half_), 37, str(n_))
+    add_door(key_, title_, wedge_ * 60 + (30 if half_ is None else 15 + 30 * half_), 37, str(n_), 4, 3, PORCH_DECOR[key_])
 N_SHOPS = len(BUILDINGS)
 # apartments: curved blocks wrapped round the outside of the ring, between the lifts and the exits.
 # key, title, from angle, to angle (0 = east, 90 = south, 180 = west, 270 = north)
@@ -2061,52 +2089,17 @@ for (key_, title_, a0_, a1_) in APARTMENTS:
             if RING_OUT + 1 < d <= RING_OUT + 13 and a0_ <= ang_ <= a1_ and m.floor[y][x] == "r":
                 m.floor[y][x] = "z"
                 WEDGE[(x, y)] = (9, 0)
-    add_door(key_, title_, (a0_ + a1_) / 2.0, RING_OUT + 6, "j")
+    add_door(key_, title_, (a0_ + a1_) / 2.0, RING_OUT + 6, "j", 2, 2, "pp")
 # store fronts: wherever a building has open floor below it, that edge is a front wall with windows
 for (x, y) in WEDGE:
     if m.floor[y][x] == "z" and m.floor[y + 1][x] in WALK and m.floor[y + 1][x] not in "123":
         m.floor[y][x] = "8" if x % 3 == 0 else "7"
-# ---- shop fronts: a big picture per shop (art/front_<key>.png, 5 tiles wide and 3 tall), laid over the
-# building at its door, so you can tell the shops apart from across the square.
-FRONTS = []         # [key, x, y] in pixels: the picture's top-left corner
-FRONT_SIDE = {}     # key -> where the doorway is in the picture: "bottom", "top", "right" or "left"
-for b_ in BUILDINGS[:N_SHOPS]:
-    k_ = b_[0]
-    dx_, dy_ = DOORS[k_][0], DOORS[k_][1]
-    st_ = DOOR_STEP[k_]
-    if st_ == (0, 1):
-        fx_, fy_, FRONT_SIDE[k_] = dx_ - 2, dy_ - 2, "bottom"
-    elif st_ == (0, -1):
-        fx_, fy_, FRONT_SIDE[k_] = dx_ - 2, dy_, "top"
-    elif st_ == (1, 0):
-        fx_, fy_, FRONT_SIDE[k_] = dx_ - 4, dy_ - 1, "right"
-    else:
-        fx_, fy_, FRONT_SIDE[k_] = dx_, dy_ - 1, "left"
-    FRONTS.append([k_, fx_ * 16, fy_ * 16])
-for n_, b_ in enumerate(BUILDINGS[:N_SHOPS]):          # placeholder pictures
-    k_, c_ = b_[0], SIGN_COLOURS[n_]
-    im_ = Img(80, 48)
-    im_.rect(0, 0, 79, 47, (222, 214, 200)); im_.rect(0, 0, 79, 9, c_); im_.rect(0, 10, 79, 10, dk(c_))
-    for x_ in range(0, 80, 8):
-        im_.rect(x_, 0, x_ + 3, 9, lt(c_, 1.3))                       # striped awning
-    im_.rect(0, 0, 79, 0, OUTLINE); im_.rect(0, 47, 79, 47, OUTLINE); im_.rect(0, 0, 0, 47, OUTLINE); im_.rect(79, 0, 79, 47, OUTLINE)
-    so_ = TILE_OBJ[str(n_)] * 16                                      # the shop's sign symbol, twice the size
-    ix_ = 8 if FRONT_SIDE[k_] in ("bottom", "top") else (8 if FRONT_SIDE[k_] == "right" else 40)
-    for yy_ in range(1, 10):
-        for xx_ in range(2, 14):
-            px_ = T.p[16 + yy_][so_ + xx_]
-            if px_[3] > 0:
-                im_.rect(ix_ + (xx_ - 2) * 2, 14 + (yy_ - 1) * 2, ix_ + (xx_ - 2) * 2 + 1, 14 + (yy_ - 1) * 2 + 1, px_)
-    wx_ = 52 if FRONT_SIDE[k_] in ("bottom", "top") else (40 if FRONT_SIDE[k_] == "right" else 8)
-    im_.rect(wx_, 16, wx_ + 19, 30, (60, 66, 84)); im_.rect(wx_ + 1, 17, wx_ + 18, 29, (250, 214, 130)); im_.rect(wx_ + 9, 17, wx_ + 10, 29, (60, 66, 84))   # a lit window
-    door_ = {"bottom": (32, 32, 47, 47), "top": (32, 0, 47, 15), "right": (64, 16, 79, 31), "left": (0, 16, 15, 31)}[FRONT_SIDE[k_]]
-    im_.rect(door_[0], door_[1], door_[2], door_[3], (240, 200, 80)); im_.rect(door_[0] + 2, door_[1] + 2, door_[2] - 2, door_[3] - 2, (30, 34, 48))
-    im_.save(art("front_%s.png" % k_))
+FRONTS = []         # (big shop-front pictures were tried and dropped in favour of porches)
 
 # ---- set dressing: lamps and planters round the ring, benches, planters and lamps round the rim of the
 # square (kept clear of doors, signs and the paths), crates and stalls by the shops that trade
-def near_door(x, y, gap=4):
-    return any(abs(x - d_[3]) <= gap and abs(y - d_[4]) <= gap for d_ in DOORS.values())
+def near_door(x, y, gap=5):
+    return any(abs(x - mx_) <= gap and abs(y - my_) <= gap for (mx_, my_) in PORCH_MOUTHS)
 
 
 def dress(ch, x, y, floors):
@@ -2124,14 +2117,6 @@ for k_ in range(36):                                   # the rim of the square: 
     x_, y_ = int(round(CX + 27.5 * math.cos(a_))), int(round(CY + 27.5 * math.sin(a_)))
     if abs(x_ - CX) > 4 and abs(y_ - CY) > 4:
         dress("opl p"[k_ % 4] if k_ % 4 != 3 else "p", x_, y_, "i")
-for k_, things_ in (("bram", "cc"), ("fab", "cc"), ("armoury", "c"), ("mess", "qq"), ("bar", "c"), ("weaver", "q"), ("furn", "o")):
-    d_ = DOORS[k_]
-    st_ = DOOR_STEP[k_]
-    side_ = (1, 0) if st_[0] == 0 else (0, 1)
-    for n_, ch_ in enumerate(things_):                 # goods outside the shops that trade, beside the door
-        x_, y_ = d_[3] - side_[0] * (4 + n_) + st_[0], d_[4] - side_[1] * (4 + n_) + st_[1]
-        if m.floor[y_][x_] == "i" and m.obj[y_][x_] == " ":
-            m.put(ch_, [(x_, y_)])
 # walls: any rock that touches somewhere you can walk
 for y in range(m.h):
     for x in range(m.w):
@@ -2795,7 +2780,7 @@ MAP_MARKS = [
     [13, "eng", 41, 5, "Engineering bay"], [14, "eng", 40, 19, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
 MAP_MARKS = MAP_MARKS[:9] + [[20 + n, "main", DOORS[b[0]][3], DOORS[b[0]][4], b[1]] for n, b in enumerate(BUILDINGS)] + MAP_MARKS[9:]
-MAP_COLORS = {"a": (226, 214, 190), "z": (64, 76, 100), "7": (64, 76, 100), "8": (64, 76, 100), "X": (90, 96, 112), "Y": (150, 144, 134), "1": (238, 202, 64), "2": (238, 202, 64), "3": (238, 202, 64),".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),
+MAP_COLORS = {"p": (176, 132, 92), "a": (226, 214, 190), "z": (64, 76, 100), "7": (64, 76, 100), "8": (64, 76, 100), "X": (90, 96, 112), "Y": (150, 144, 134), "1": (238, 202, 64), "2": (238, 202, 64), "3": (238, 202, 64),".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),
               "m": (124, 106, 94), "i": (196, 172, 138), "U": (238, 202, 64), "D": (238, 202, 64), "A": (238, 202, 64), "R": (238, 202, 64),
               "#": (64, 76, 100), "w": (64, 76, 100), "Z": (64, 76, 100), "d": (110, 190, 210), "O": (70, 150, 210), "J": (70, 150, 210), "B": (170, 170, 182)}
 SM = Img(196, 116)
