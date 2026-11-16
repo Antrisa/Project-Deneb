@@ -73,7 +73,7 @@ def art(name):
 # Floors can have several variations; the game picks one per tile so big areas don't look like a grid.
 import random
 
-TILE_COLUMNS = 140          # slots in tiles.png (raised from 110 when the first 110 filled up)
+TILE_COLUMNS = 180          # slots in tiles.png (110, then 140, then 180 as they filled up)
 T = Img(16 * TILE_COLUMNS, 32)
 TILE_FLOOR, TILE_OBJ, TILE_VARIANTS = {}, {}, {}
 SOLID_FLOOR = "~"          # '~' is empty space: solid, never drawn
@@ -492,6 +492,142 @@ for n_ in range(10):
     t.outline()
 # "p" porch decking: the floor of the porch in front of every shop and apartment
 t = Tile("f", "p").r(0, 0, 15, 15, (176, 132, 92)).r(0, 0, 15, 0, (204, 162, 118)).r(0, 5, 15, 5, (132, 96, 66)).r(0, 10, 15, 10, (132, 96, 66)).r(0, 15, 15, 15, (132, 96, 66)).r(6, 0, 6, 4, (132, 96, 66)).r(11, 6, 11, 9, (132, 96, 66)).r(3, 11, 3, 14, (132, 96, 66))
+# ---------------------------------------------------------------- store-front decorations and set dressing
+# 64 more objects. On the map they use the characters from U+00C0 on, so they never clash with the
+# letters above. Their art is also kept in small files the artist can redraw one at a time:
+# art/porch_<shop>.png (four objects each) and art/dressing.png (24 objects). The build copies
+# those files into these slots of tiles.png.
+_W, _WD, _WL = (150, 110, 74), (110, 80, 54), (190, 148, 106)
+_M, _MD, _ML = (120, 128, 142), (86, 94, 110), (170, 178, 192)
+_RED, _GRN, _BLU, _YEL, _WHT, _BLK = (206, 70, 62), (84, 150, 84), (84, 120, 196), (236, 200, 80), (236, 234, 226), (50, 46, 60)
+_CLOTH = [(190, 90, 130), (90, 150, 190), (220, 180, 90), (120, 170, 110)]
+EXTRA_SHEETS = []           # [file name, [object characters in the order of the file's cells]]
+EXTRA_NAMES = {}            # character -> what it is (for the art instructions)
+_extra_n = [0]
+
+
+def _obj(name, tall, draw, flat=False):
+    global OPEN_OBJ
+    ch = chr(0xC0 + _extra_n[0])
+    _extra_n[0] += 1
+    t = Tile("o", ch, tall=tall)
+    draw(t)
+    if not flat:
+        t.outline()
+    else:
+        OPEN_OBJ += ch
+    EXTRA_NAMES[ch] = name
+    return ch
+
+
+def _legs(t, xs, y0=12, c=_WD):
+    for x in xs:
+        t.r(x, y0, x, 14, c)
+    return t
+
+
+_porch = {
+    "furn": [
+        ("Finished chair", False, lambda t: _legs(t.r(4, 2, 5, 9, _W).r(4, 2, 11, 3, _WL).r(10, 2, 11, 9, _W).r(4, 9, 11, 10, _WL), (4, 11))),
+        ("Small table", False, lambda t: _legs(t.r(2, 6, 13, 8, _WL).r(2, 8, 13, 8, _WD), (3, 12), 9)),
+        ("Half-built stool on a sawhorse", False, lambda t: _legs(t.r(1, 8, 14, 9, _W).r(5, 3, 10, 4, _WL).r(6, 5, 6, 7, _W).r(9, 5, 9, 7, _W), (2, 13), 10)),
+        ("Stack of planks", False, lambda t: t.r(1, 11, 14, 13, _W).r(2, 8, 13, 10, _WL).r(1, 5, 12, 7, _W).r(1, 13, 14, 13, _WD).r(2, 10, 13, 10, _WD).r(1, 7, 12, 7, _WD)),
+    ],
+    "library": [
+        ("Book cart", False, lambda t: t.r(2, 5, 13, 12, _W).r(3, 6, 12, 8, _WD).r(3, 6, 4, 8, _RED).r(5, 6, 6, 8, _BLU).r(7, 6, 8, 8, _GRN).r(9, 7, 11, 8, _YEL).r(3, 10, 12, 11, _WD).r(4, 10, 6, 11, _BLU).r(3, 13, 4, 14, _BLK).r(11, 13, 12, 14, _BLK)),
+        ("Tall shelf of books", True, lambda t: [t.r(2, -10, 13, 14, _W).r(2, -10, 13, -10, _WL)] + [t.r(3, y, 12, y + 3, _WD).r(3, y, 4, y + 3, c1).r(5, y + 1, 6, y + 3, c2).r(7, y, 9, y + 3, c3).r(10, y + 1, 11, y + 3, c1)
+                                                    for (y, c1, c2, c3) in ((-8, _RED, _BLU, _YEL), (-3, _GRN, _RED, _BLU), (2, _BLU, _YEL, _GRN), (7, _YEL, _GRN, _RED))]),
+        ("Reading chair with a lamp", True, lambda t: t.r(2, 3, 9, 12, (120, 70, 60)).r(3, 8, 9, 11, (160, 96, 80)).r(2, 13, 3, 14, _WD).r(8, 13, 9, 14, _WD).r(12, -4, 12, 14, _MD).r(10, -8, 14, -5, _YEL).r(11, 14, 13, 14, _MD)),
+        ("Globe on a stand", True, lambda t: t.ell(7.5, 2, 5, 5, _BLU).ell(6, 1, 2, 1.5, _GRN).ell(9.5, 4, 1.5, 2, _GRN).r(7, 8, 8, 12, _WD).r(4, 13, 11, 14, _W)),
+    ],
+    "common": [
+        ("Worn couch", False, lambda t: t.r(1, 3, 14, 8, (130, 96, 110)).r(1, 8, 14, 12, (160, 120, 136)).r(1, 6, 2, 12, (110, 80, 94)).r(13, 6, 14, 12, (110, 80, 94)).r(5, 9, 7, 10, (200, 180, 120)).r(2, 13, 3, 14, _WD).r(12, 13, 13, 14, _WD)),
+        ("Kettle on a little stove", False, lambda t: t.r(3, 8, 12, 14, _MD).r(3, 8, 12, 8, _ML).r(5, 10, 10, 12, (240, 130, 50)).ell(7.5, 5, 3, 2.4, _ML).r(11, 4, 12, 5, _ML).r(7, 1, 8, 2, _M)),
+        ("Coat stand", True, lambda t: t.r(7, -10, 8, 13, _WD).r(4, 14, 11, 14, _WD).r(4, -9, 11, -9, _W).r(3, -8, 6, 0, _BLU).r(9, -8, 12, -2, _RED)),
+        ("Potted fern", True, lambda t: t.r(5, 9, 10, 14, (190, 104, 70)).r(5, 9, 10, 9, (224, 142, 104)).ell(7.5, 2, 6, 6, _GRN).ell(5, 0, 2, 3, (110, 180, 104)).ell(10, 3, 2, 3, (60, 120, 66))),
+    ],
+    "bram": [
+        ("Stacked crates", True, lambda t: t.r(1, 4, 14, 14, _W).r(1, 4, 14, 4, _WL).r(1, 9, 14, 9, _WD).r(7, 4, 8, 14, _WD).r(3, -6, 12, 3, _WL).r(3, -6, 12, -6, (220, 180, 136)).r(3, -1, 12, -1, _W)),
+        ("Sacks and jars", False, lambda t: t.ell(5, 10, 4, 4.4, (206, 184, 140)).r(4, 5, 6, 6, (170, 146, 104)).r(10, 7, 13, 14, (130, 190, 200)).r(10, 6, 13, 7, _WD).r(11, 10, 12, 13, (220, 120, 90))),
+        ("Market stall with a striped awning", True, lambda t: [t.r(1, 6, 14, 13, _W).r(1, 6, 14, 6, _WL).r(2, 13, 3, 14, _WD).r(12, 13, 13, 14, _WD).r(2, -4, 2, 5, _WD).r(13, -4, 13, 5, _WD).r(3, 3, 5, 5, _RED).r(7, 3, 9, 5, _YEL).r(11, 4, 12, 5, _GRN)]
+                                                                 + [t.r(x, -9, x + 1, -4, _RED if (x // 2) % 2 else _WHT) for x in range(0, 16, 2)]),
+        ("Hanging scale", True, lambda t: t.r(7, -8, 8, 13, _MD).r(4, 14, 11, 14, _MD).r(2, -7, 13, -6, _ML).r(3, -5, 3, 0, _M).r(12, -5, 12, 0, _M).r(1, 1, 5, 2, _YEL).r(10, 1, 14, 2, _YEL)),
+    ],
+    "medbay": [
+        ("Red-cross banner on a stand", True, lambda t: t.r(3, -10, 12, 6, _WHT).r(7, -7, 8, 2, _RED).r(4, -4, 11, -3, _RED).r(7, 7, 8, 13, _MD).r(4, 14, 11, 14, _MD)),
+        ("Stretcher", False, lambda t: _legs(t.r(1, 7, 14, 10, _WHT).r(1, 7, 4, 10, (190, 220, 236)).r(0, 11, 15, 11, _MD), (2, 13), 12, _MD)),
+        ("Medical cabinet", True, lambda t: t.r(2, -8, 13, 14, _WHT).r(2, -8, 13, -8, (255, 255, 255)).r(12, -7, 13, 14, (200, 200, 196)).r(7, -7, 7, 13, (190, 190, 186)).r(4, -4, 5, -1, _RED).r(3, -3, 6, -2, _RED).r(9, 2, 11, 3, _M)),
+        ("Clean white planter", True, lambda t: t.r(3, 7, 12, 14, _WHT).r(3, 7, 12, 7, (255, 255, 255)).r(11, 8, 12, 14, (200, 200, 196)).ell(7.5, 2, 5, 5, _GRN).ell(6, 0, 2, 2, (120, 190, 110))),
+    ],
+    "weaver": [
+        ("Bolts of cloth on a rack", True, lambda t: [t.r(1, -6, 14, 14, _WD).r(1, -6, 14, -6, _W)] + [t.r(2, -4 + 5 * i, 13, -1 + 5 * i, _CLOTH[i]).r(2, -4 + 5 * i, 13, -4 + 5 * i, lt(_CLOTH[i])) for i in range(4)]),
+        ("Dress form", True, lambda t: t.r(5, -6, 10, 4, _CLOTH[0]).r(4, -4, 11, -2, _CLOTH[0]).r(6, -1, 9, 1, dk(_CLOTH[0])).r(7, -8, 8, -7, _W).r(7, 5, 8, 13, _WD).r(4, 14, 11, 14, _WD)),
+        ("Baskets of thread", False, lambda t: t.r(1, 8, 7, 14, (200, 160, 100)).r(1, 8, 7, 8, (226, 190, 130)).r(9, 9, 14, 14, (200, 160, 100)).ell(3, 7, 1.5, 1.5, _RED).ell(6, 7, 1.5, 1.5, _BLU).ell(11.5, 8, 2, 1.5, _YEL)),
+        ("Hanging dyed fabric", True, lambda t: [t.r(1, -10, 1, 14, _WD).r(14, -10, 14, 14, _WD).r(1, -10, 14, -9, _W)] + [t.r(2 + 3 * i, -8, 4 + 3 * i, 6 - 2 * (i % 2), _CLOTH[i]) for i in range(4)]),
+    ],
+    "bar": [
+        ("Barrels", True, lambda t: t.r(1, 4, 7, 14, _W).r(1, 6, 7, 6, _MD).r(1, 12, 7, 12, _MD).r(8, 4, 14, 14, _W).r(8, 6, 14, 6, _MD).r(8, 12, 14, 12, _MD).r(4, -6, 11, 3, _WL).r(4, -4, 11, -4, _MD).r(4, 1, 11, 1, _MD)),
+        ("Rickety stool and table", False, lambda t: _legs(_legs(t.r(1, 5, 9, 6, _W), (2, 8), 7).r(11, 9, 14, 10, _WL), (11, 14), 11).r(4, 2, 6, 4, _YEL)),
+        ("Flickering mug sign on a pole", True, lambda t: t.r(7, -2, 8, 13, _MD).r(5, 14, 10, 14, _MD).r(2, -12, 13, -3, (60, 50, 70)).r(5, -10, 9, -5, _YEL).r(10, -9, 11, -6, _YEL).r(5, -11, 9, -10, _WHT)),
+        ("Crate of bottles", False, lambda t: [t.r(2, 8, 13, 14, _W).r(2, 8, 13, 8, _WL).r(2, 11, 13, 11, _WD)] + [t.r(x, 3, x + 1, 7, (70, 130, 90)).r(x, 2, x, 2, _YEL) for x in (3, 6, 9, 12)]),
+    ],
+    "fab": [
+        ("Machine with pipes", True, lambda t: t.r(2, -4, 13, 14, _M).r(2, -4, 13, -4, _ML).r(11, -3, 13, 14, _MD).r(4, 0, 9, 4, (40, 150, 164)).r(4, 8, 6, 9, _RED).r(8, 8, 10, 9, _GRN).r(4, -10, 5, -5, _MD).r(4, -10, 12, -9, _MD).r(11, -10, 12, -5, _MD)),
+        ("Crate of parts", False, lambda t: t.r(2, 7, 13, 14, _MD).r(2, 7, 13, 7, _ML).r(4, 4, 6, 6, _ML).r(8, 3, 11, 6, (190, 130, 70)).r(9, 4, 10, 5, _BLK)),
+        ("Welding cart", True, lambda t: t.r(2, 6, 13, 12, _M).r(2, 6, 13, 6, _ML).r(3, 13, 5, 14, _BLK).r(10, 13, 12, 14, _BLK).r(4, -6, 7, 5, _BLU).r(9, -4, 12, 5, _RED).r(5, -8, 6, -7, _ML).r(10, -6, 11, -5, _ML)),
+        ("Hazard-striped barrier", False, lambda t: [t.r(0, 5, 15, 10, _YEL).r(2, 11, 3, 14, _MD).r(12, 11, 13, 14, _MD)] + [t.p(x + d, 5 + d, _BLK) for x in range(-4, 16, 4) for d in range(6)] + [t.p(x + d + 1, 5 + d, _BLK) for x in range(-4, 16, 4) for d in range(6)]),
+    ],
+    "mess": [
+        ("Menu board", True, lambda t: t.r(2, -8, 13, 8, _WD).r(3, -7, 12, 7, (50, 70, 60)).r(5, -5, 10, -5, _WHT).r(5, -2, 9, -2, _WHT).r(5, 1, 11, 1, _WHT).r(5, 4, 8, 4, _YEL).r(3, 9, 3, 14, _WD).r(12, 9, 12, 14, _WD)),
+        ("Outdoor table", False, lambda t: _legs(t.r(1, 5, 14, 7, _WHT).r(1, 7, 14, 7, (200, 200, 196)).ell(5, 4, 2, 1, _BLU).ell(10.5, 4, 2, 1, _RED), (3, 12), 8, _MD)),
+        ("Steaming pot on a stand", True, lambda t: t.r(3, 2, 12, 8, _MD).r(3, 2, 12, 2, _ML).r(1, 3, 2, 4, _MD).r(13, 3, 14, 4, _MD).r(4, 9, 4, 14, _M).r(11, 9, 11, 14, _M).r(5, 11, 10, 12, (240, 130, 50)).ps([(6, -2), (6, -3), (7, -5), (9, -1), (9, -3), (10, -6), (8, -8)], (230, 236, 244))),
+        ("Stack of trays", False, lambda t: [t.r(2, 13 - 2 * i, 13, 14 - 2 * i, (200, 150, 90) if i % 2 else (170, 120, 70)) for i in range(5)]),
+    ],
+    "armoury": [
+        ("Rack of spears", True, lambda t: [t.r(1, 4, 14, 5, _W).r(1, 11, 14, 12, _W).r(1, 4, 1, 14, _WD).r(14, 4, 14, 14, _WD)] + [t.r(x, -9, x, 13, _WL).r(x - 1, -12, x + 1, -10, _ML).p(x, -13, _ML) for x in (4, 8, 12)]),
+        ("Shield on a stand", True, lambda t: t.ell(7.5, 1, 5.5, 7, _BLU).ell(7.5, 1, 3.5, 5, _ML).ell(7.5, 1, 1.5, 2, _YEL).r(7, 9, 8, 13, _WD).r(4, 14, 11, 14, _WD)),
+        ("Locked weapons locker", True, lambda t: t.r(2, -10, 13, 14, (70, 84, 110)).r(2, -10, 13, -10, (104, 120, 150)).r(12, -9, 13, 14, (52, 62, 86)).r(7, -9, 7, 13, (46, 56, 78)).r(6, 0, 9, 3, _YEL).r(7, 1, 8, 2, _BLK).r(4, -7, 5, -6, (46, 56, 78)).r(10, -7, 11, -6, (46, 56, 78))),
+        ("Training dummy", True, lambda t: t.ell(7.5, -7, 3, 3, (214, 190, 140)).r(4, -3, 11, 6, (214, 190, 140)).r(1, -2, 14, -1, _W).r(7, 7, 8, 13, _WD).r(4, 14, 11, 14, _WD).r(6, 0, 9, 3, _RED).r(7, 1, 8, 2, _WHT)),
+    ],
+}
+PORCH_OBJS = {}
+for key_, rows_ in _porch.items():
+    PORCH_OBJS[key_] = "".join(_obj(n_, tall_, d_) for (n_, tall_, d_) in rows_)
+    EXTRA_SHEETS.append(["porch_%s.png" % key_, PORCH_OBJS[key_]])
+
+_dressing = [
+    # name, tall, flat (you walk over it), where it goes, drawing
+    ("Awning", False, False, lambda t: [t.r(x, 6, x + 1, 13, _RED if (x // 2) % 2 else _WHT) for x in range(0, 16, 2)] + [t.r(0, 14, 15, 14, (150, 50, 46))]),
+    ("Hanging banner", False, False, lambda t: t.r(4, 1, 11, 12, _BLU).r(4, 1, 11, 1, _YEL).r(5, 13, 6, 14, _BLU).r(9, 13, 10, 14, _BLU).ell(7.5, 6, 2, 2, _YEL)),
+    ("Wall pipes", False, False, lambda t: t.r(0, 4, 15, 5, _ML).r(0, 6, 15, 6, _MD).r(0, 9, 15, 10, (190, 130, 70)).r(0, 11, 15, 11, (140, 90, 50)).r(5, 3, 6, 12, _M)),
+    ("Wall vent", False, False, lambda t: [t.r(3, 4, 12, 12, _MD).r(3, 4, 12, 4, _ML)] + [t.r(4, y, 11, y, _BLK) for y in (6, 8, 10)]),
+    ("Poster", False, False, lambda t: t.r(4, 2, 11, 12, (236, 222, 190)).r(5, 3, 10, 7, _BLU).ell(7.5, 5, 1.5, 1.5, _YEL).r(5, 9, 10, 9, _BLK).r(5, 11, 8, 11, _BLK)),
+    ("Wall lamp", False, False, lambda t: t.r(6, 4, 9, 5, _MD).r(5, 6, 10, 10, (255, 236, 160)).r(6, 11, 9, 11, _MD)),
+    ("Tree in a tub", True, False, lambda t: t.r(4, 9, 11, 14, _M).r(4, 9, 11, 9, _ML).r(7, 0, 8, 8, _WD).ell(7.5, -7, 7, 7, _GRN).ell(5, -9, 3, 3, (110, 180, 104)).ell(10, -4, 3, 3, (60, 120, 66))),
+    ("Barrel", False, False, lambda t: t.r(3, 3, 12, 14, _W).r(3, 3, 12, 3, _WL).r(3, 6, 12, 6, _MD).r(3, 11, 12, 11, _MD).r(11, 4, 12, 14, _WD)),
+    ("Crate stack", True, False, lambda t: t.r(1, 3, 14, 14, (176, 132, 84)).r(1, 3, 14, 3, (210, 170, 120)).r(1, 8, 14, 8, _WD).r(4, -7, 12, 2, (196, 150, 100)).r(4, -7, 12, -7, (224, 186, 138)).r(4, -3, 12, -3, _WD)),
+    ("Flower box", False, False, lambda t: [t.r(1, 9, 14, 14, _W).r(1, 9, 14, 9, _WL).r(1, 6, 14, 8, _GRN)] + [t.r(x, 5, x + 1, 6, c) for (x, c) in ((2, _RED), (5, _YEL), (8, (220, 130, 190)), (11, _RED))]),
+    ("Recycling bin", False, False, lambda t: t.r(4, 5, 11, 14, (70, 130, 110)).r(3, 4, 12, 5, (100, 170, 146)).r(10, 6, 11, 14, (50, 100, 84)).r(6, 8, 9, 10, _WHT)),
+    ("Vending machine", True, False, lambda t: [t.r(2, -10, 13, 14, (60, 90, 150)).r(2, -10, 13, -10, (100, 130, 190)).r(12, -9, 13, 14, (44, 66, 116)).r(3, -8, 9, 4, (20, 26, 48)).r(11, -6, 11, -2, _YEL).r(4, 8, 10, 11, _BLK)]
+                                                 + [t.r(x, y, x + 1, y + 2, c) for (x, y, c) in ((4, -7, _RED), (7, -7, _YEL), (4, -3, _GRN), (7, -3, _WHT), (4, 1, _YEL), (7, 1, _RED))]),
+    ("Floor grate", False, True, lambda t: [t.r(2, 2, 13, 13, _MD).r(2, 2, 13, 2, _ML)] + [t.r(3, y, 12, y, _BLK) for y in (4, 6, 8, 10, 12)]),
+    ("Rug", False, True, lambda t: t.r(0, 2, 15, 13, (150, 70, 80)).r(0, 3, 15, 3, _YEL).r(0, 12, 15, 12, _YEL).ps([(3, 7), (4, 8), (3, 8), (4, 7), (11, 7), (12, 8), (11, 8), (12, 7), (7, 6), (8, 9), (7, 9), (8, 6)], _YEL)),
+    ("Wide table, left half", False, False, lambda t: _legs(t.r(1, 3, 15, 9, _W).r(1, 3, 15, 3, _WL).r(1, 10, 15, 10, _WD).ell(8, 6, 2.5, 1.5, _WHT), (2,), 11)),
+    ("Wide table, right half", False, False, lambda t: _legs(t.r(0, 3, 14, 9, _W).r(0, 3, 14, 3, _WL).r(0, 10, 14, 10, _WD).r(5, 5, 8, 7, _BLU), (13,), 11)),
+    ("Desk, left half", False, False, lambda t: t.r(1, 3, 15, 7, _WL).r(1, 3, 15, 3, (220, 180, 136)).r(1, 8, 6, 14, _W).r(2, 10, 5, 10, _WD).r(2, 12, 5, 12, _WD).r(9, 1, 13, 4, (236, 234, 226))),
+    ("Desk, right half", False, False, lambda t: t.r(0, 3, 14, 7, _WL).r(0, 3, 14, 3, (220, 180, 136)).r(9, 8, 14, 14, _W).r(10, 10, 13, 10, _WD).r(10, 12, 13, 12, _WD).r(3, 0, 8, 4, _BLK).r(4, 1, 7, 3, (70, 190, 240))),
+    ("Customs desk", True, False, lambda t: t.r(0, 2, 15, 14, (70, 84, 110)).r(0, 2, 15, 2, (104, 120, 150)).r(0, 8, 15, 9, _YEL).r(4, -6, 11, 1, (150, 200, 230, 255)).r(4, -6, 11, -6, _ML).r(3, 11, 5, 12, _RED)),
+    ("Air scrubber", True, False, lambda t: [t.r(2, -12, 13, 14, _M).r(2, -12, 13, -12, _ML).r(12, -11, 13, 14, _MD).ell(7.5, -5, 4, 4, _BLK).ell(7.5, -5, 3, 3, (70, 190, 240)).r(7, -8, 8, -2, _ML).r(4, 9, 6, 10, _GRN).r(9, 9, 11, 10, _YEL)]
+                                              + [t.r(4, y, 11, y, _MD) for y in (2, 4, 6)]),
+    ("Armchair", False, False, lambda t: t.r(2, 3, 13, 9, (80, 120, 150)).r(4, 8, 11, 12, (110, 150, 180)).r(2, 7, 3, 12, (60, 94, 122)).r(12, 7, 13, 12, (60, 94, 122)).r(3, 13, 4, 14, _WD).r(11, 13, 12, 14, _WD)),
+    ("Wardrobe", True, False, lambda t: t.r(1, -11, 14, 14, _W).r(1, -11, 14, -11, _WL).r(13, -10, 14, 14, _WD).r(7, -10, 8, 13, _WD).r(5, 1, 6, 2, _YEL).r(9, 1, 10, 2, _YEL).r(1, 14, 14, 14, _WD)),
+    ("Side table with a lamp", True, False, lambda t: t.r(3, 7, 12, 9, _WL).r(4, 10, 4, 14, _WD).r(11, 10, 11, 14, _WD).r(7, 1, 8, 6, _MD).r(4, -5, 11, 0, (255, 226, 150)).r(5, -6, 10, -6, (255, 240, 190))),
+    ("Dresser", False, False, lambda t: t.r(1, 2, 14, 14, _W).r(1, 2, 14, 2, _WL).r(2, 6, 13, 6, _WD).r(2, 10, 13, 10, _WD).r(7, 4, 8, 4, _YEL).r(7, 8, 8, 8, _YEL).r(7, 12, 8, 12, _YEL).r(13, 3, 14, 14, _WD)),
+]
+DRESS = {}
+for (n_, tall_, flat_, d_) in _dressing:
+    DRESS[n_] = _obj(n_, tall_, d_, flat_)
+EXTRA_SHEETS.append(["dressing.png", "".join(DRESS[n_] for (n_, tall_, flat_, d_) in _dressing)])
 T.save(art("tiles.png"))
 
 # When tiles.png is hand-made art, the generator does not overwrite it. It only fills in:
@@ -582,6 +718,44 @@ def patch_hand_tiles():
 
 
 patch_hand_tiles()
+
+
+def sync_extra_sheets():
+    """The store-front and set-dressing objects live in small files of their own (art/porch_<shop>.png,
+    art/dressing.png): one cell per object. A file the artist has not made yet is written from the
+    placeholders; then every file's cells are copied into their slots of tiles.png, which the game reads."""
+    try:
+        from PIL import Image
+    except ImportError:
+        print("note: Pillow is not installed, so the store-front and dressing files were not copied into tiles.png")
+        return
+    sheet_img = Image.open(art("tiles.png")).convert("RGBA")
+    cell = sheet_img.height // 2
+    gen = Image.new("RGBA", (T.w, T.h))
+    gen.putdata([px for row_ in T.p for px in row_])
+    changed = False
+    for name, chars in EXTRA_SHEETS:
+        if not (name in HAND_EDITED and os.path.exists(art(name))):
+            small = Image.new("RGBA", (cell * len(chars), 2 * cell), (0, 0, 0, 0))
+            for i, ch in enumerate(chars):
+                idx = TILE_OBJ[ch]
+                small.paste(gen.crop((idx * 16, 0, idx * 16 + 16, 32)).resize((cell, 2 * cell), Image.NEAREST), (i * cell, 0))
+            small.save(art(name))
+        small = Image.open(art(name)).convert("RGBA")
+        assert small.size == (cell * len(chars), 2 * cell), (name, "should be", cell * len(chars), 2 * cell)
+        for i, ch in enumerate(chars):
+            idx = TILE_OBJ[ch]
+            part = small.crop((i * cell, 0, i * cell + cell, 2 * cell))
+            box = (idx * cell, 0, idx * cell + cell, 2 * cell)
+            if part.getbbox() is not None and sheet_img.crop(box).tobytes() != part.tobytes():
+                sheet_img.paste(part, box[:2])
+                changed = True
+    if changed:
+        sheet_img.save(art("tiles.png"))
+        print("copied store-front and dressing art into tiles.png")
+
+
+sync_extra_sheets()
 
 import math
 # ================================================================ animated overlays (4 frames of 16x16 each)
@@ -2080,7 +2254,7 @@ def add_door(key_, title_, mid_, start_r_, sign_, depth_=4, half_w_=3, decor_=""
 PORCH_DECOR = {"furn": "otot", "library": "SStp", "common": "oopl", "bram": "ccqc", "medbay": "kpLp", "weaver": "qcpq",
                "bar": "hclh", "fab": "PckP", "mess": "dhdh", "armoury": "LcSc"}
 for n_, (wedge_, half_, key_, title_) in enumerate(SHOPS):
-    add_door(key_, title_, wedge_ * 60 + (30 if half_ is None else 15 + 30 * half_), 37, str(n_), 5, 4, PORCH_DECOR[key_])
+    add_door(key_, title_, wedge_ * 60 + (30 if half_ is None else 15 + 30 * half_), 37, str(n_), 5, 4, PORCH_OBJS[key_])
 N_SHOPS = len(BUILDINGS)
 # apartments: curved blocks wrapped round the outside of the ring, between the lifts and the exits.
 # key, title, from angle, to angle (0 = east, 90 = south, 180 = west, 270 = north)
@@ -2685,6 +2859,105 @@ for t_ in THINGS:
 THINGS += SIGN_THINGS
 WRECK = ["eng", 42 * 16, 20 * 16]      # bottom-centre of the wreck sprite
 
+# ---------------------------------------------------------------- set dressing, second pass
+# New furniture and clutter (the DRESS objects), placed by rule so nothing can block a way through:
+# a thing against a wall needs open floor on its other sides; a thing in the open needs open floor all round.
+_keep = {(e[1], e[2], e[3]) for rows_ in SCHEDULES.values() for e in rows_} | {(p[1], p[2], p[3]) for p in PEOPLE} | {tuple(START)}
+_keep |= {(k_, w_[0], w_[1]) for k_, ar_ in A.items() for w_ in ar_.warps} | {(w_[2], w_[3], w_[4]) for ar_ in A.values() for w_ in ar_.warps}
+_keep |= {(t_[3], t_[4][0] // 16, t_[4][1] // 16) for t_ in THINGS}
+DRESSED = []
+
+
+def _open(ar, x, y):
+    return 0 <= x < ar.w and 0 <= y < ar.h and ar.floor[y][x] in WALK and ar.floor[y][x] not in "1230" and ar.obj[y][x] == " "
+
+
+def _quiet(ar, x, y, gap=1):
+    return not any((ar.key, x + ax, y + ay) in _keep for ax in range(-gap, gap + 1) for ay in range(-gap, gap + 1))
+
+
+def furnish(key, names, zone=None, seed=0):
+    """Puts each named thing in the area (or in one named zone of it). A name ending in '+' is a pair
+    (left half, right half) or a two-tile rug and stands in the open; other things stand against a wall,
+    except flat ones, which lie in the open."""
+    ar = A[key]
+    x0, y0, x1, y1 = 0, 0, ar.w - 1, ar.h - 1
+    if zone:
+        x0, y0, x1, y1 = [z_ for z_ in ar.zones if z_[0] == zone][0][1:5]
+    cells = [(x, y) for y in range(y0, y1 + 1) for x in range(x0, x1 + 1)]
+    random.Random(hash_seed(key, zone, seed)).shuffle(cells)
+    for name in names:
+        pair = name.endswith("+")
+        name = name.rstrip("+")
+        chars = [DRESS[name + ", left half"], DRESS[name + ", right half"]] if name + ", left half" in DRESS else [DRESS[name]] * (2 if pair else 1)
+        in_open = pair or chars[0] in OPEN_OBJ
+        for (x, y) in cells:
+            block = [(x + i, y) for i in range(len(chars))]
+            if not all(_open(ar, bx, by) and _quiet(ar, bx, by) for (bx, by) in block):
+                continue
+            ring = {(bx + ax, by + ay) for (bx, by) in block for ax in (-1, 0, 1) for ay in (-1, 0, 1)} - set(block)
+            if chars[0] in OPEN_OBJ:
+                ok = True               # flat on the floor: it cannot block anything
+            elif in_open:
+                ok = all(_open(ar, rx, ry) for (rx, ry) in ring)
+            else:
+                # against a wall: open floor below, and each open side must also be open diagonally below,
+                # so the floor round the thing stays joined up
+                ok = ar.floor[y - 1][x] not in WALK and _open(ar, x, y + 1) and all(
+                    not _open(ar, x + s_, y) or _open(ar, x + s_, y + 1) for s_ in (-1, 1))
+            if ok:
+                for ch, (bx, by) in zip(chars, block):
+                    ar.obj[by][bx] = ch
+                DRESSED.append((key, name, x, y))
+                break
+        else:
+            print("note: no room for", name, "in", key, zone or "")
+
+
+def hash_seed(*parts):
+    return sum((i + 1) * ord(c) for i, c in enumerate("|".join(str(p) for p in parts)))
+
+
+for key_ in ("aptA", "aptB", "aptDoc", "aptMoog", "aptSec", "aptEmpty"):
+    furnish(key_, ["Wardrobe", "Dresser", "Side table with a lamp", "Armchair", "Rug+"])
+furnish("common", ["Wide table+", "Armchair", "Armchair", "Vending machine", "Rug+", "Side table with a lamp"])
+furnish("mess", ["Wide table+", "Wide table+", "Vending machine", "Recycling bin"])
+furnish("library", ["Desk+", "Armchair", "Side table with a lamp", "Rug+"])
+furnish("bar", ["Barrel", "Barrel", "Crate stack"])
+furnish("bram", ["Crate stack", "Barrel", "Rug+"])
+furnish("fab", ["Crate stack", "Recycling bin", "Floor grate", "Floor grate"])
+furnish("furn", ["Wardrobe", "Dresser", "Armchair", "Side table with a lamp"])
+furnish("medbay", ["Side table with a lamp", "Recycling bin", "Armchair"])
+furnish("weaver", ["Dresser", "Rug+", "Armchair"])
+furnish("armoury", ["Crate stack", "Floor grate", "Barrel"])
+furnish("west", ["Customs desk", "Customs desk", "Armchair", "Armchair", "Vending machine", "Tree in a tub", "Tree in a tub", "Recycling bin"], "Reception")
+furnish("west", ["Tree in a tub", "Tree in a tub", "Armchair", "Side table with a lamp", "Rug+"], "Hotel hall")
+furnish("west", ["Wardrobe", "Dresser", "Rug+"], "Head officer's quarters")
+furnish("west", ["Crate stack", "Barrel", "Barrel", "Desk+", "Floor grate"], "Workshop")
+furnish("west", ["Crate stack", "Crate stack", "Barrel"], "Old drill hall")
+furnish("east", ["Air scrubber", "Air scrubber", "Air scrubber", "Air scrubber", "Floor grate", "Floor grate", "Floor grate", "Crate stack", "Desk+"], "Air reclamation plant")
+furnish("east", ["Crate stack", "Recycling bin"], "East airlock")
+furnish("top", ["Armchair", "Armchair", "Side table with a lamp", "Rug+"], "Observatory lounge")
+furnish("top", ["Desk+", "Crate stack"], "Artifact lab")
+furnish("top", ["Tree in a tub", "Vending machine"], "Upper hall")
+furnish("eng", ["Crate stack", "Barrel", "Floor grate", "Floor grate"], "Engineering corridor")
+furnish("eng", ["Crate stack", "Crate stack", "Barrel", "Barrel"], "Stores")
+# The main level: trees, flower boxes, barrels and bins along the outer edge of the ring, trees round the square.
+_ring_set = ["Tree in a tub", "Flower box", "Barrel", "Flower box", "Recycling bin", "Tree in a tub", "Crate stack", "Flower box"]
+for k_ in range(48):
+    a_ = math.radians(3.75 + 7.5 * k_)
+    x_, y_ = int(round(CX + (RING_OUT - 0.5) * math.cos(a_))), int(round(CY + (RING_OUT - 0.5) * math.sin(a_)))
+    if _open(m, x_, y_) and _quiet(m, x_, y_, 2) and not near_door(x_, y_, 4) and m.floor[y_][x_] == "a" \
+            and sum(_open(m, x_ + ax, y_ + ay) for ax in (-1, 0, 1) for ay in (-1, 0, 1)) >= 6:
+        m.obj[y_][x_] = DRESS[_ring_set[k_ % len(_ring_set)]]
+        DRESSED.append(("main", _ring_set[k_ % len(_ring_set)], x_, y_))
+for k_ in range(12):
+    a_ = math.radians(15 + 30 * k_)
+    x_, y_ = int(round(CX + 24 * math.cos(a_))), int(round(CY + 24 * math.sin(a_)))
+    if m.floor[y_][x_] == "i" and all(_open(m, x_ + ax, y_ + ay) for ax in (-1, 0, 1) for ay in (-1, 0, 1)) and _quiet(m, x_, y_, 2):
+        m.obj[y_][x_] = DRESS["Tree in a tub" if k_ % 2 == 0 else "Flower box"]
+        DRESSED.append(("main", "Tree in a tub", x_, y_))
+
 # ---------------------------------------------------------------- checks
 occupied = {(p[1], p[2], p[3]) for p in PEOPLE} | {(n[1], n[2], n[3]) for n in NODES}
 for (a, x, y) in occupied:
@@ -2814,6 +3087,25 @@ for ar in A.values():
                 ar.floor[y][x] = FACE_OF[ch]
             elif ch == "w" and not open_below:
                 ar.floor[y][x] = "#"
+
+# Things on wall faces: awnings and banners on the shop fronts, posters and lamps indoors, pipes and vents
+# in the working parts of the station. About one wall face in five gets one.
+_wall_sets = {"main": ["Awning", "Hanging banner", "Wall lamp", "Awning", "Poster"],
+              "eng": ["Wall pipes", "Wall vent", "Wall pipes"], "east": ["Wall pipes", "Wall vent", "Wall lamp"],
+              "west": ["Wall lamp", "Poster", "Wall vent", "Hanging banner"], "top": ["Wall lamp", "Poster"]}
+for k_, ar_ in A.items():
+    if k_ in ("mine", "tunnels"):
+        continue
+    set_ = _wall_sets.get(k_, ["Poster", "Wall lamp", "Hanging banner"])
+    for y_ in range(ar_.h - 1):
+        for x_ in range(1, ar_.w - 1):
+            if ar_.floor[y_][x_] in "W7" and ar_.obj[y_][x_] == " " and ar_.obj[y_ + 1][x_] not in TALL \
+                    and ar_.floor[y_][x_ - 1] in "W78" and ar_.floor[y_][x_ + 1] in "W78" \
+                    and ar_.obj[y_][x_ - 1] == " " and ar_.floor[y_ + 1][x_] not in "1230":
+                h_ = (x_ * 7919 + y_ * 104729 + hash_seed(k_)) % 97
+                if h_ < 19:
+                    ar_.obj[y_][x_] = DRESS[set_[h_ % len(set_)]]
+                    DRESSED.append((k_, set_[h_ % len(set_)], x_, y_))
 
 areas = {}
 for k, ar in A.items():
