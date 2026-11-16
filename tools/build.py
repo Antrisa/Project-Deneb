@@ -1891,7 +1891,8 @@ A = {}
 # West walkway leads to the Spaceport District, east to the East Complex; north lift up, south lift down.
 m = A["main"] = Area("main", "Main Level", 230, 190, "r")
 CX, CY, CR = 115, 95, 30.3
-RING_IN, RING_OUT = 60.0, 67.0
+RING_IN, RING_OUT = 46.0, 53.0
+RI = int(RING_IN) + 1          # the radius where the ring walkway starts; everything outside it is placed from this
 
 
 def sq(cells):
@@ -1915,10 +1916,10 @@ def in_passage(x, y):
     return False
 
 
-m.carve("", CX - 3, CY - 80, CX + 3, CY - 61, "a")      # ring to the north lift
-m.carve("", CX - 3, CY + 61, CX + 3, CY + 80, "a")      # ring to the south lift
-m.carve("", CX - 80, CY - 3, CX - 61, CY + 3, "a")      # ring to the Spaceport District
-m.carve("", CX + 61, CY - 3, CX + 84, CY + 3, "a")      # ring to the East Complex
+m.carve("", CX - 3, CY - RI - 19, CX + 3, CY - RI, "a")      # ring to the north lift
+m.carve("", CX - 3, CY + RI, CX + 3, CY + RI + 19, "a")      # ring to the south lift
+m.carve("", CX - RI - 19, CY - 3, CX - RI, CY + 3, "a")      # ring to the Spaceport District
+m.carve("", CX + RI, CY - 3, CX + RI + 23, CY + 3, "a")      # ring to the East Complex
 for y in range(m.h):
     for x in range(m.w):
         d = ((x - CX) ** 2 + (y - CY) ** 2) ** 0.5
@@ -1946,13 +1947,13 @@ for dy in range(-4, 5):
         m.floor[CY + dy][CX + dx] = "B" if k == 4 else ("J" if k == 0 else "O")
 m.zones += [["Town square", CX - 31, CY - 31, CX + 31, CY + 31]]
 # lift rooms at the ends of the north-south walkway
-m.room("Command lift", CX - 5, CY - 92, CX + 5, CY - 80, ".")
-m.room("Engineering lift", CX - 5, CY + 80, CX + 5, CY + 92, ".")
-m.setf(".", [(x, CY - 80) for x in range(CX - 3, CX + 4)] + [(x, CY + 80) for x in range(CX - 3, CX + 4)])
-m.warp("U", [(CX, CY - 89)], "top", 20, 14)
-m.warp("D", [(CX, CY + 89)], "eng", 34, 8)
-m.warp("A", [(CX - 80, y) for y in range(CY - 3, CY + 4)], "west", 163, 110)
-m.warp("A", [(CX + 84, y) for y in range(CY - 3, CY + 4)], "east", 4, 55)
+m.room("Command lift", CX - 5, CY - RI - 31, CX + 5, CY - RI - 19, ".")
+m.room("Engineering lift", CX - 5, CY + RI + 19, CX + 5, CY + RI + 31, ".")
+m.setf(".", [(x, CY - RI - 19) for x in range(CX - 3, CX + 4)] + [(x, CY + RI + 19) for x in range(CX - 3, CX + 4)])
+m.warp("U", [(CX, CY - RI - 28)], "top", 20, 14)
+m.warp("D", [(CX, CY + RI + 28)], "eng", 34, 8)
+m.warp("A", [(CX - RI - 19, y) for y in range(CY - 3, CY + 4)], "west", 163, 110)
+m.warp("A", [(CX + RI + 23, y) for y in range(CY - 3, CY + 4)], "east", 4, 55)
 # town square fixtures
 m.put("l", sq([(80, 50), (100, 50), (80, 70), (100, 70), (72, 42), (108, 42), (72, 78), (108, 78)]))
 m.put("o", sq([(83, 54), (84, 54), (96, 54), (97, 54), (83, 66), (84, 66), (96, 66), (97, 66), (70, 55), (71, 55), (109, 65), (110, 65)]))
@@ -2043,15 +2044,15 @@ for (x, y) in WEDGE:
     if m.floor[y][x] == "z" and m.floor[y + 1][x] in WALK and m.floor[y + 1][x] not in "123":
         m.floor[y][x] = "8" if x % 3 == 0 else "7"
 # apartments, outside the ring and touching it
-building("aptA", "Apartments A", CX - 34, CY - 78, 20, 12, "s")
-building("aptDoc", "Doctor's family", CX + 14, CY - 78, 20, 12, "s")
-building("aptB", "Apartments B", CX - 86, CY - 34, 22, 12, "e")
-building("aptSec", "Security family", CX + 65, CY - 34, 22, 12, "w")
-building("aptMoog", "Moogli family", CX - 34, CY + 67, 20, 12, "n")
-building("aptEmpty", "Empty flats", CX + 14, CY + 67, 20, 12, "n")
+building("aptA", "Apartments A", CX - 34, CY - RI - 17, 20, 12, "s")
+building("aptDoc", "Doctor's family", CX + 14, CY - RI - 17, 20, 12, "s")
+building("aptB", "Apartments B", CX - RI - 25, CY - 34, 22, 12, "e")
+building("aptSec", "Security family", CX + RI + 4, CY - 34, 22, 12, "w")
+building("aptMoog", "Moogli family", CX - 34, CY + RI + 6, 20, 12, "n")
+building("aptEmpty", "Empty flats", CX + 14, CY + RI + 6, 20, 12, "n")
 # set dressing: lamps round the ring, a planter the other side of each shop door from its sign
 for k_ in range(12):
-    lx_, ly_ = int(round(CX + 63 * math.cos(math.radians(15 + 30 * k_)))), int(round(CY + 63 * math.sin(math.radians(15 + 30 * k_))))
+    lx_, ly_ = int(round(CX + (RI + 2) * math.cos(math.radians(15 + 30 * k_)))), int(round(CY + (RI + 2) * math.sin(math.radians(15 + 30 * k_))))
     if m.floor[ly_][lx_] == "a" and m.obj[ly_][lx_] == " ":
         m.put("l", [(lx_, ly_)])
 for b_ in BUILDINGS[:N_SHOPS]:
@@ -2288,7 +2289,7 @@ w.put("x", [(140, 150), (141, 150), (152, 144), (148, 158), (157, 153)])
 w.put("e", [(136, 156), (150, 148), (158, 146), (144, 143)])
 w.put("c", [(160, 160), (161, 160), (160, 159)])
 w.put("p", [(133, 141), (161, 141)])
-w.warp("A", [(166, y) for y in range(108, 113)], "main", CX - 77, CY)
+w.warp("A", [(166, y) for y in range(108, 113)], "main", CX - RI - 16, CY)
 
 # ---------------------------------------------------------------- east complex (east map)
 # The mirror of the Spaceport District, on the other side of the Main Level: a hub with Evarra's
@@ -2330,7 +2331,7 @@ g.put("t", [(84, 70), (85, 70)])
 # airlock
 g.put("L", [(55, 79), (56, 79)])
 g.put("c", [(55, 87)])
-g.warp("A", [(2, y) for y in range(53, 58)], "main", CX + 81, CY)
+g.warp("A", [(2, y) for y in range(53, 58)], "main", CX + RI + 20, CY)
 
 # ---------------------------------------------------------------- top level
 t = A["top"] = Area("top", "Survey Level", 40, 22, "~")
@@ -2360,7 +2361,7 @@ t.put("e", [(14, 16), (29, 17)])
 t.put("P", [(25, 15)])
 t.put("L", [(37, 13), (38, 13)])
 t.put("E", [(19, 3)])
-t.warp("D", [(20, 16)], "main", CX, CY - 84)
+t.warp("D", [(20, 16)], "main", CX, CY - RI - 23)
 
 # ---------------------------------------------------------------- engineering level
 e = A["eng"] = Area("eng", "Engineering Level", 58, 24, "M")
@@ -2386,7 +2387,7 @@ e.put("S", [(53, 1)])
 e.put("X", block(40, 18, 43, 19))
 e.put("e", [(50, 16), (52, 20), (35, 21), (47, 22)])
 e.outlines.append([26, 17, 2, 2])
-e.warp("U", [(33, 5)], "main", CX, CY + 84)
+e.warp("U", [(33, 5)], "main", CX, CY + RI + 23)
 e.warp("R", [(1, 11), (1, 12), (1, 13)], "mine", 38, 4)
 
 # ---------------------------------------------------------------- mine
