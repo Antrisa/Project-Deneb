@@ -2724,7 +2724,8 @@ from concourse import rebuild as rebuild_concourse
 rebuild_concourse(globals())
 ENTRANCES += SURVEY_ENTRANCES     # doors between the Survey Level's three maps (tools/survey.py)
 ENTRANCES += ENG_ENTRANCES
-ENTRANCES += SPACEPORT_ENTRANCES        # Engineering to the shuttle bay (tools/engineering.py)
+ENTRANCES += SPACEPORT_ENTRANCES
+ENTRANCES += EAST_ENTRANCES        # Engineering to the shuttle bay (tools/engineering.py)
 
 # ---------------------------------------------------------------- checks
 occupied = {(p[1], p[2], p[3]) for p in PEOPLE} | {(n[1], n[2], n[3]) for n in NODES}
@@ -2865,7 +2866,7 @@ _wall_sets = {"main": ["Awning", "Hanging banner", "Wall lamp", "Awning", "Poste
               "eng": ["Wall pipes", "Wall vent", "Wall pipes"], "east": ["Wall pipes", "Wall vent", "Wall lamp"],
               "west": ["Wall lamp", "Poster", "Wall vent", "Hanging banner"], "top": ["Wall lamp", "Poster"]}
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "east", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "east", "mine", "tunnels") or k_ in LUNAR_EXTRA.values():
         continue
     set_ = _wall_sets.get(k_, ["Poster", "Wall lamp", "Hanging banner"])
     for y_ in range(ar_.h - 1):
@@ -2883,7 +2884,7 @@ for k_, ar_ in A.items():
 OPEN_OBJ += "<>{}"
 ROUNDED = 0
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "east", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "east", "mine", "tunnels") or k_ in LUNAR_EXTRA.values():
         continue
     for y_ in range(1, ar_.h - 1):
         for x_ in range(1, ar_.w - 1):
@@ -2916,7 +2917,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const ROOF_PROPS = " + json.dumps(ROOF_PROPS) + "\n")
     f.write("const ROOF_LIGHTS = " + json.dumps(ROOF_LIGHTS) + "\n")
     # Areas drawn in the promenade style (scripts/lunar_ground.gd), by title, and their props and extras.
-    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum", "Precursor Sanctum": "sanctum", "Engineering Level": "eng", "Shuttle Bay": "bay", "Spaceport District": "west", "Agri Complex": "agri", "Hotel": "hotel", "East Complex": "east"}) + "\n")
+    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum", "Precursor Sanctum": "sanctum", "Engineering Level": "eng", "Shuttle Bay": "bay", "Spaceport District": "west", "Agri Complex": "agri", "Hotel": "hotel", "East Complex": "east"} | LUNAR_EXTRA) + "\n")
     f.write("const AREA_PROPS = " + json.dumps(AREA_PROPS) + "\n")
     f.write("const AREA_ROOF_PROPS = " + json.dumps(AREA_ROOF_PROPS) + "\n")
     f.write("const AREA_LIGHTS = " + json.dumps(AREA_LIGHTS) + "\n")

@@ -669,6 +669,15 @@ def laundry_basket(d, w, h):
     d.ellipse((6, 4, 18, 16), fill=(120, 170, 210, 255), outline=INK); d.ellipse((14, 2, 26, 14), fill=(230, 180, 190, 255), outline=INK)
 
 
+def suit_locker_broken(d, w, h):
+    box(d, 4, 4, w - 4, h - 2, (226, 222, 210, 255), (246, 242, 232, 255), (180, 176, 166, 255))
+    d.rectangle((8, 10, w - 8, h - 12), fill=(60, 64, 76, 255), outline=INK)
+    d.polygon([(10, 12), (w - 20, 16), (w - 22, h - 16), (10, h - 14)], fill=(150, 150, 150, 255), outline=INK)      # door hanging open
+    d.ellipse((w // 2 - 6, 18, w // 2 + 8, 32), fill=(230, 230, 236, 255), outline=INK)                               # an empty helmet
+    d.line((14, 40, w - 12, 64), fill=(40, 40, 40, 255), width=2); d.line((w - 14, 36, 18, 70), fill=(40, 40, 40, 255), width=1)
+    d.rectangle((8, h - 10, w - 8, h - 6), fill=(232, 120, 40, 255)); d.ellipse((w - 16, 6, w - 10, 12), fill=RED)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -717,7 +726,7 @@ PROPS = {
     'key_board': (64, 80, key_board), 'luggage_cart': (64, 72, luggage_cart), 'sofa': (96, 64, sofa), 'fireplace': (96, 104, fireplace),
     'fridge': (64, 104, fridge),
     'fruit_tree': (64, 104, fruit_tree), 'park_tree': (64, 112, park_tree), 'treadmill': (64, 72, treadmill), 'weight_bench': (96, 64, weight_bench),
-    'punching_bag': (32, 80, punching_bag), 'court_hoop': (64, 104, court_hoop), 'washer': (64, 72, washer), 'laundry_basket': (32, 36, laundry_basket), 'case_empty': (64, 72, case_empty),
+    'punching_bag': (32, 80, punching_bag), 'court_hoop': (64, 104, court_hoop), 'washer': (64, 72, washer), 'laundry_basket': (32, 36, laundry_basket), 'suit_locker_broken': (64, 104, suit_locker_broken), 'case_empty': (64, 72, case_empty),
     'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
     'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
     'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),
