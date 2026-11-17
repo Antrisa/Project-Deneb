@@ -614,6 +614,61 @@ def fridge(d, w, h):
     d.rectangle((12, 10, 26, 16), fill=TEAL_D)
 
 
+def fruit_tree(d, w, h):
+    d.rectangle((w // 2 - 4, h - 34, w // 2 + 4, h - 4), fill=WOOD_D, outline=INK)
+    d.ellipse((w // 2 - 14, h - 10, w // 2 + 14, h - 2), fill=(110, 84, 62, 255))
+    d.ellipse((4, 4, w - 4, h - 30), fill=(90, 150, 70, 255), outline=INK, width=2)
+    for x, y in ((18, 20), (36, 14), (42, 34), (22, 40), (30, 28)): d.ellipse((x, y, x + 7, y + 7), fill=(230, 120, 60, 255), outline=INK)
+
+
+def park_tree(d, w, h):
+    d.rectangle((w // 2 - 4, h - 34, w // 2 + 4, h - 4), fill=WOOD_D, outline=INK)
+    d.ellipse((2, 2, w - 2, h - 28), fill=(80, 136, 70, 255), outline=INK, width=2)
+    d.ellipse((12, 10, w - 22, h - 50), fill=(110, 170, 90, 255))
+
+
+def treadmill(d, w, h):
+    d.rectangle((4, h - 22, w - 4, h - 6), fill=DARK, outline=INK); d.rectangle((8, h - 20, w - 8, h - 10), fill=(60, 64, 72, 255))
+    for x in (6, w - 10): d.rectangle((x, 10, x + 4, h - 20), fill=STEEL, outline=INK)
+    d.rectangle((6, 6, w - 6, 18), fill=STEEL_D, outline=INK); d.rectangle((w // 2 - 8, 8, w // 2 + 8, 15), fill=TEAL_D)
+
+
+def weight_bench(d, w, h):
+    d.rectangle((10, h - 26, w - 30, h - 16), fill=(60, 62, 70, 255), outline=INK)
+    legs(d, (14, w - 36), h - 16, h - 2)
+    for x in (w - 26, w - 12): d.rectangle((x, 8, x + 4, h - 4), fill=STEEL, outline=INK)
+    d.rectangle((w - 34, 14, w - 2, 18), fill=STEEL_L, outline=INK)
+    for x in (w - 34, w - 6): d.ellipse((x - 4, 6, x + 4, 26), fill=DARK, outline=INK)
+
+
+def punching_bag(d, w, h):
+    d.line((w // 2, 0, w // 2, 10), fill=STEEL_D, width=2)
+    d.rounded_rectangle((4, 10, w - 4, h - 14), 8, fill=(150, 50, 44, 255), outline=INK, width=2)
+    d.rectangle((4, 24, w - 4, 28), fill=(220, 200, 120, 255))
+    d.ellipse((6, h - 8, w - 6, h - 2), fill=(70, 70, 70, 255))
+
+
+def court_hoop(d, w, h):
+    d.rectangle((w // 2 - 3, 30, w // 2 + 3, h - 6), fill=STEEL, outline=INK)
+    d.ellipse((6, h - 10, w - 6, h - 2), fill=STEEL_D, outline=INK)
+    d.rectangle((4, 4, w - 4, 28), fill=(240, 240, 236, 255), outline=INK); d.rectangle((w // 2 - 8, 12, w // 2 + 8, 24), outline=RED, width=2)
+    d.ellipse((w // 2 - 9, 26, w // 2 + 9, 34), outline=(240, 130, 50, 255), width=3)
+
+
+def washer(d, w, h):
+    box(d, 4, 4, w - 4, h - 2, (236, 238, 240, 255), (255, 255, 255, 255), (190, 196, 200, 255))
+    d.rectangle((6, 6, w - 6, 16), fill=(200, 206, 212, 255), outline=INK)
+    d.ellipse((14, 22, w - 14, h - 10), fill=(120, 190, 220, 255), outline=INK, width=3)
+    d.ellipse((22, 30, w - 22, h - 18), fill=(170, 220, 240, 255))
+    for x in (w - 20, w - 12): d.ellipse((x, 9, x + 5, 14), fill=TEAL_D)
+
+
+def laundry_basket(d, w, h):
+    d.polygon([(2, 14), (w - 2, 14), (w - 6, h - 2), (6, h - 2)], fill=(200, 170, 120, 255), outline=INK)
+    for y in (20, 28): d.line((4, y, w - 4, y), fill=(160, 130, 90, 255))
+    d.ellipse((6, 4, 18, 16), fill=(120, 170, 210, 255), outline=INK); d.ellipse((14, 2, 26, 14), fill=(230, 180, 190, 255), outline=INK)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -660,7 +715,9 @@ PROPS = {
     'footlocker': (64, 36, footlocker), 'gym_rack': (96, 72, gym_rack),
     'front_desk': (160, 72, front_desk), 'front_desk_l': (96, 72, front_desk_side), 'front_desk_r': (96, 72, front_desk_side),
     'key_board': (64, 80, key_board), 'luggage_cart': (64, 72, luggage_cart), 'sofa': (96, 64, sofa), 'fireplace': (96, 104, fireplace),
-    'fridge': (64, 104, fridge), 'case_empty': (64, 72, case_empty),
+    'fridge': (64, 104, fridge),
+    'fruit_tree': (64, 104, fruit_tree), 'park_tree': (64, 112, park_tree), 'treadmill': (64, 72, treadmill), 'weight_bench': (96, 64, weight_bench),
+    'punching_bag': (32, 80, punching_bag), 'court_hoop': (64, 104, court_hoop), 'washer': (64, 72, washer), 'laundry_basket': (32, 36, laundry_basket), 'case_empty': (64, 72, case_empty),
     'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
     'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
     'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),

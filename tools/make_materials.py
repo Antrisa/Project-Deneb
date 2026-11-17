@@ -291,6 +291,46 @@ def sp_build():
 
 MATERIALS.update({'sp_marble': sp_marble, 'sp_kitchen': sp_kitchen, 'sp_carpet_red': sp_carpet_red, 'sp_build': sp_build})
 
+
+# ---------------------------------------------------------------- East Complex
+def ea_grass():
+    """The little park: short green grass, a few clover patches."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((104, 150, 84)), .82 + noise(50) * .3)
+    blade = (noise(51) > .8)
+    img[blade] = rgb((140, 186, 110))
+    return img
+
+
+def ea_deck():
+    """The pavilion: pale wooden decking boards."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((196, 160, 116)), .92 + noise(52) * .12)
+    img[(y % 8 == 0)] = rgb((140, 108, 74)); img[(y % 8 != 0) & ((x + (y // 8) * 22) % 48 == 0)] = rgb((150, 116, 80))
+    return img
+
+
+def ea_rubber():
+    """The fitness centre: red rubber gym flooring with white running-track lines."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((168, 72, 60)), .9 + noise(53) * .14)
+    img[(y % 32 == 0)] = rgb((230, 226, 220))
+    return img
+
+
+def ea_court():
+    """The low-gravity court: blue court surface with white lines every two tiles."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((70, 120, 170)), .95 + noise(54) * .06)
+    img[(x % 64 == 0) | (y % 64 == 0)] = rgb((232, 236, 240))
+    return img
+
+
+def ea_tile():
+    """The laundry: small pale blue tiles."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((186, 210, 222)), .95 + noise(55) * .06)
+    img[(x % 16 == 0) | (y % 16 == 0)] = rgb((140, 166, 180))
+    return img
+
+
+MATERIALS.update({'ea_grass': ea_grass, 'ea_deck': ea_deck, 'ea_rubber': ea_rubber, 'ea_court': ea_court, 'ea_tile': ea_tile})
+
 if __name__ == "__main__":
     for name, fn in MATERIALS.items():
         path = os.path.join(OUT, name + ".png")

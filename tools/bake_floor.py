@@ -252,6 +252,9 @@ AREA_FLOORS = {
              "A": ("sp_plaza", None), "Q": ("sp_moon", None), "V": ("eng_floor_pad", None), "g": ("sp_glass", None), "Y": ("sp_basin", None)},
     "agri": {"a": ("sp_soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("sp_spa", None),
              "u": ("sp_terminal", None), "O": ("sp_water", ("70c8d0", 0.25)), "Y": ("sp_water", None)},
+    "east": {".": ("sp_plaza", None), "s": ("ea_grass", None), "h": ("ea_deck", None), "a": ("sp_soil", None), "f": ("ea_rubber", None),
+             "k": ("ea_court", None), "o": ("sp_parquet", None), "t": ("ea_tile", None), "e": ("eng_floor_grate", None), "u": ("sp_terminal", None),
+             "A": ("sp_terminal", None)},
     "hotel": {"u": ("sp_parquet", None), "i": ("sp_marble", None), "O": ("sp_water", ("70c8d0", 0.25)), "p": ("sp_parquet", ("c08a50", 0.12)),
               "k": ("sp_kitchen", None), "h": ("sp_carpet", None), "o": ("sp_parquet", ("5a3a24", 0.25)), "t": ("sp_carpet_red", None), "e": ("sp_build", None)},
 }

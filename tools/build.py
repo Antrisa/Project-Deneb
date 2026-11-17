@@ -2130,7 +2130,7 @@ m.setf(".", [(x, CY - RI - 19) for x in range(CX - 3, CX + 4)] + [(x, CY + RI + 
 m.warp("U", [(CX, CY - RI - 28)], "top", 20, 14)
 m.warp("D", [(CX, CY + RI + 28)], "eng", 101, 15)
 m.warp("A", [(CX - RI - 19, y) for y in range(CY - 3, CY + 4)], "west", 109, 40)
-m.warp("A", [(CX + RI + 23, y) for y in range(CY - 3, CY + 4)], "east", 4, 55)
+m.warp("A", [(CX + RI + 23, y) for y in range(CY - 3, CY + 4)], "east", 2, 46)
 # town square fixtures
 m.put("l", sq([(80, 50), (100, 50), (80, 70), (100, 70), (72, 42), (108, 42), (72, 78), (108, 78)]))
 m.put("o", sq([(83, 54), (84, 54), (96, 54), (97, 54), (83, 66), (84, 66), (96, 66), (97, 66), (70, 55), (71, 55), (109, 65), (110, 65)]))
@@ -2404,47 +2404,7 @@ MAP_PARENT = {k: ["main", DOORS[k][3], DOORS[k][4]] for k in DOORS}
 
 # ---------------------------------------------------------------- spaceport district: see tools/spaceport.py (built after Engineering)
 
-# ---------------------------------------------------------------- east complex (east map)
-# The mirror of the Spaceport District, on the other side of the Main Level: a hub with Evarra's
-# small agri dome to the north, the air reclamation plant to the east and an airlock to the south.
-g = A["east"] = Area("east", "East Complex", 120, 100, "r")
-g.room("", 1, 52, 38, 58, "a")               # walkway from the Main Level
-g.room("", 46, 30, 54, 42, ".")              # hub - herb dome
-g.room("", 62, 52, 74, 58, ".")              # hub - plant
-g.room("", 46, 68, 54, 78, ".")              # hub - airlock
-g.room("Air reclamation plant", 74, 38, 112, 72, "f")
-g.room("East airlock", 43, 78, 57, 88, "f")
-for (x, y) in block(18, 76, 42, 96):
-    g.floor[y][x] = "Q"                      # outside: bare moon surface
-g.circle(50, 19, 13.3, "s", "d")             # Evarra's herb dome
-g.circle(50, 55, 14.3, ".")                  # the hub
-for y in range(6, 33):
-    for x in range(49, 52):
-        if ((x - 50) ** 2 + (y - 19) ** 2) ** 0.5 <= 13.3:
-            g.floor[y][x] = "u"              # the dome's walkway
-g.zones += [["East hub", 35, 40, 65, 70], ["Herb dome", 36, 5, 64, 33], ["Walkway to the Main Level", 1, 52, 38, 58]]
-g.setf(".", [(74, y) for y in range(53, 58)] + [(x, 78) for x in range(47, 54)])
-g.setf("6", [(43, 82), (43, 83), (43, 84)])
-# herb dome: every bed is planted
-g.put("H", row(13, range(42, 48)) + row(17, range(40, 48)) + row(21, range(40, 48)) + row(25, range(42, 48))
-      + row(13, range(53, 59)) + row(17, range(53, 61)) + row(21, range(53, 61)) + row(25, range(53, 59)))
-g.put("p", [(48, 31), (52, 31), (46, 9), (54, 9)])
-g.put("c", [(55, 28), (44, 28)])
-# hub
-g.put("o", [(44, 47), (45, 47), (55, 47), (56, 47), (44, 63), (45, 63), (55, 63), (56, 63)])
-g.put("p", [(40, 50), (60, 50), (40, 60), (60, 60)])
-g.put("l", [(46, 51), (54, 51), (46, 59), (54, 59)])
-# air reclamation plant: rows of machines, consoles along the back wall
-g.put("k", [(78, 39), (79, 39), (90, 39), (91, 39), (102, 39), (103, 39)])
-g.put("P", [(x, y) for y in (45, 51, 59, 65) for x in (80, 81, 88, 89, 96, 97, 104, 105)])
-g.put("S", [(110, 39), (111, 39)])
-g.put("c", [(76, 70), (77, 70), (76, 69), (110, 70)])
-g.put("L", [(108, 71), (109, 71)])
-g.put("t", [(84, 70), (85, 70)])
-# airlock
-g.put("L", [(55, 79), (56, 79)])
-g.put("c", [(55, 87)])
-g.warp("A", [(2, y) for y in range(53, 58)], "main", CX + RI + 20, CY)
+# ---------------------------------------------------------------- east complex: see tools/east.py (built after the Spaceport District)
 
 # ---------------------------------------------------------------- top level (Survey Level): see tools/survey.py
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -2458,6 +2418,10 @@ e = engineering.build(globals())
 # ---------------------------------------------------------------- spaceport district, agri complex and hotel: see tools/spaceport.py
 import spaceport
 spaceport.build(globals())
+
+# ---------------------------------------------------------------- east complex (residential quarter): see tools/east.py
+import east
+east.build(globals())
 
 # ---------------------------------------------------------------- mine
 n = A["mine"] = Area("mine", "The Mine", 44, 24, "M")
@@ -2527,7 +2491,7 @@ SCHEDULES_RAW = {
     "Ooma": [("06:00", "main", 100, 76, 26, "u", "work")],
     "Tobbin": [("07:00", "main", 36, 53, 26, "d", "work"), ("17:35", "main", 120, 72, 26, "u", "eat"), ("19:15", "main", 48, 49, 26, "d", "idle"),
                ("21:30", "main", 43, 67, 26, "d", "idle")],
-    "Merrow": [("06:30", "main", 90, 54, 26, "d", "work"), ("10:30", "east", 56, 18, 26, "u", "work"), ("14:00", "main", 96, 60, 26, "l", "work"),
+    "Merrow": [("06:30", "main", 90, 54, 26, "d", "work"), ("10:30", "east", 62, 19, 26, "u", "work"), ("14:00", "main", 96, 60, 26, "l", "work"),
                ("17:35", "main", 121, 72, 26, "u", "eat"), ("19:15", "main", 46, 68, 26, "d", "idle")],
     "Nub": [("08:00", "main", 123, 49, 26, "u", "work"), ("12:30", "main", 96, 57, 26, "d", "idle"), ("17:35", "main", 125, 72, 26, "u", "eat"),
             ("19:15", "main", 47, 67, 26, "d", "idle")],
@@ -2551,7 +2515,7 @@ SCHEDULES_RAW = {
                ("21:30", "eng", 45, 67, 26, "l", "idle")],
     "Jasper": [("06:00", "main", 137, 67, 36, "d", "work"), ("14:30", "main", 47, 48, 26, "d", "idle"), ("16:30", "main", 137, 67, 36, "d", "work"),
                ("21:30", "main", 26, 52, 26, "d", "idle")],
-    "Evarra": [("06:00", "main", 142, 67, 36, "d", "work"), ("09:30", "east", 44, 18, 26, "u", "work"), ("13:00", "main", 142, 67, 36, "d", "work"),
+    "Evarra": [("06:00", "main", 142, 67, 36, "d", "work"), ("09:30", "east", 48, 17, 26, "u", "work"), ("13:00", "main", 142, 67, 36, "d", "work"),
                ("20:30", "main", 29, 52, 26, "d", "idle")],
     "Bram": [("07:00", "main", 26, 68, 36, "l", "work"), ("17:35", "main", 125, 70, 26, "d", "eat"), ("19:15", "main", 56, 73, 26, "u", "idle"),
              ("22:00", "main", 17, 52, 26, "d", "idle")],
@@ -2647,9 +2611,6 @@ def tc(x, y):
 
 # kind, name, hint, area, [px, py], radius
 THINGS = [
-    ["look", "Herb beds", "Look", "east", [50 * 16 + 8, 19 * 16], 34],
-    ["look", "Air reclaimer", "Look", "east", tc(92, 46), 30],
-    ["look", "East airlock", "Look", "east", tc(44, 83), 22],
     ["pickup", "Crates", "Pick up a crate", "main", tc(31, 70), 26],
     ["look", "Fountain", "Look", "main", [90 * 16 + 8, 60 * 16 + 8], 92],
     ["board", "Bulletin board", "Read the board", "main", tc(95, 52), 24],
@@ -2743,8 +2704,6 @@ furnish("furn", ["Wardrobe", "Dresser", "Armchair", "Side table with a lamp"])
 furnish("medbay", ["Side table with a lamp", "Recycling bin", "Armchair"])
 furnish("weaver", ["Dresser", "Rug+", "Armchair"])
 furnish("armoury", ["Crate stack", "Floor grate", "Barrel"])
-furnish("east", ["Air scrubber", "Air scrubber", "Air scrubber", "Air scrubber", "Floor grate", "Floor grate", "Floor grate", "Crate stack", "Desk+"], "Air reclamation plant")
-furnish("east", ["Crate stack", "Recycling bin"], "East airlock")
 # The main level: trees, flower boxes, barrels and bins along the outer edge of the ring, trees round the square.
 _ring_set = ["Tree in a tub", "Flower box", "Barrel", "Flower box", "Recycling bin", "Tree in a tub", "Crate stack", "Flower box"]
 for k_ in range(48):
@@ -2868,7 +2827,7 @@ MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 28], ["Main Le
 MAP_MARKS = [
     [1, "hotel", 70, 48, "Your quarters"], [2, "west", 19, 40, "Airlock to the landing pad"], [3, "west", 42, 40, "Reception"],
     [4, "agri", 55, 23, "Your agri dome"], [5, "agri", 86, 64, "Hot springs & fish ponds"], [6, "agri", 24, 64, "Your workshop"],
-    [7, "east", 50, 19, "Evarra's herb dome"], [8, "east", 93, 55, "Air reclamation plant"], [9, "east", 50, 83, "East airlock"],
+    [7, "east", 56, 15, "Mess hall greenhouse"], [8, "east", 103, 45, "Air reclamation plant"], [9, "east", 100, 75, "East airlock"],
     [10, "top", 23, 23, "S.A.R.A.'s core"], [11, "top", 23, 5, "Observation Lounge"], [12, "eng", 22, 22, "Ore processing"],
     [13, "eng", 70, 20, "Engineering bay"], [14, "bay", 23, 17, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
@@ -2906,7 +2865,7 @@ _wall_sets = {"main": ["Awning", "Hanging banner", "Wall lamp", "Awning", "Poste
               "eng": ["Wall pipes", "Wall vent", "Wall pipes"], "east": ["Wall pipes", "Wall vent", "Wall lamp"],
               "west": ["Wall lamp", "Poster", "Wall vent", "Hanging banner"], "top": ["Wall lamp", "Poster"]}
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "east", "mine", "tunnels"):
         continue
     set_ = _wall_sets.get(k_, ["Poster", "Wall lamp", "Hanging banner"])
     for y_ in range(ar_.h - 1):
@@ -2924,7 +2883,7 @@ for k_, ar_ in A.items():
 OPEN_OBJ += "<>{}"
 ROUNDED = 0
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "east", "mine", "tunnels"):
         continue
     for y_ in range(1, ar_.h - 1):
         for x_ in range(1, ar_.w - 1):
@@ -2957,7 +2916,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const ROOF_PROPS = " + json.dumps(ROOF_PROPS) + "\n")
     f.write("const ROOF_LIGHTS = " + json.dumps(ROOF_LIGHTS) + "\n")
     # Areas drawn in the promenade style (scripts/lunar_ground.gd), by title, and their props and extras.
-    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum", "Precursor Sanctum": "sanctum", "Engineering Level": "eng", "Shuttle Bay": "bay", "Spaceport District": "west", "Agri Complex": "agri", "Hotel": "hotel"}) + "\n")
+    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum", "Precursor Sanctum": "sanctum", "Engineering Level": "eng", "Shuttle Bay": "bay", "Spaceport District": "west", "Agri Complex": "agri", "Hotel": "hotel", "East Complex": "east"}) + "\n")
     f.write("const AREA_PROPS = " + json.dumps(AREA_PROPS) + "\n")
     f.write("const AREA_ROOF_PROPS = " + json.dumps(AREA_ROOF_PROPS) + "\n")
     f.write("const AREA_LIGHTS = " + json.dumps(AREA_LIGHTS) + "\n")
