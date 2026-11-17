@@ -50,31 +50,39 @@ def build(g):
     for x in (CX - 1, CX, CX + 1):
         for y in range(CY - 24, CY - 21): F[y][x] = 'a' if F[y][x] == '#' else F[y][x]
         for y in range(CY + 22, CY + 25): F[y][x] = 'f' if F[y][x] == '#' else F[y][x]
-    # homes: the ring stays a clean circle. Four short lanes run out from it on the diagonals (like the Main
-    # Level's diagonal walks), each to a little square court with three front doors in its straight walls: a
-    # single apartment and a couple's home on the long wall, a family house at the end. Each door leads to the
-    # home's own map (see the end of build()).
+    # homes (Zachary's sketch): the ring stays a clean circle. In the four diagonal quarters, between the
+    # walkways, the greenhouse and the fitness centre, a curved residence block hugs the outside of the ring
+    # (its roof tinted, so you see it bulge out); each front door sits in a small entrance porch that bulges a
+    # little into the ring street. North-west and south-east: two single apartments each. North-east and
+    # south-west: two family houses each. Each door leads to the home's own map (make_home, below).
     homes = []
-    COURTS = [(45, 1, 1), (135, -1, 1), (225, -1, -1), (315, 1, -1)]          # angle, east/west, south/north
     n = 0
-    for ang, ex, sy in COURTS:
-        ca, sa = math.cos(math.radians(ang)), math.sin(math.radians(ang))
-        band(F, (CX + 20 * ca, CY + 20 * sa), (CX + 32 * ca, CY + 32 * sa), 1.7, '.')
-        cx_, cy_ = int(round(CX + 36 * ca)), int(round(CY + 36 * sa))
-        x0, x1, y0, y1 = cx_ - 5, cx_ + 5, cy_ - 4, cy_ + 4
-        chamfer_room(F, x0, y0, x1, y1, '.', 2)
-        band(F, (CX + 30 * ca, CY + 30 * sa), (cx_ + .5, cy_ + .5), 1.7, '.')
-        # the long wall faces away from the ring (north for the upper courts, south for the lower ones);
-        # the end wall is on the outer side
-        wall_y = y0 - 1 if sy < 0 else y1 + 1
-        long_face = 'S' if sy < 0 else 'N'
-        end_x = x1 + 1 if ex > 0 else x0 - 1
-        end_face = 'W' if ex > 0 else 'E'
-        for kind, door, face in (('single', (cx_ - 2 * ex, wall_y), long_face), ('couple', (cx_ + 2 * ex, wall_y), long_face),
-                                 ('family', (end_x, cy_), end_face)):
+    for (lo, hi), kind, doors in (((190, 234), 'single', (200, 224)), ((10, 41), 'single', (18, 33)),
+                                  ((306, 350), 'family', (316, 340)), ((139, 170), 'family', (147, 162))):
+        for ang in doors:
+            ca, sa = math.cos(math.radians(ang)), math.sin(math.radians(ang))
+            if abs(ca) >= abs(sa): facing = 'W' if ca > 0 else 'E'
+            else: facing = 'N' if sa > 0 else 'S'
+            step = {'S': (0, 1), 'N': (0, -1), 'E': (1, 0), 'W': (-1, 0)}[facing]
+            perp = (0, 1) if facing in 'EW' else (1, 0)
+            bx, by = int(round(CX - .5 + 20.4 * ca)), int(round(CY - .5 + 20.4 * sa))       # the entrance porch: a 3 x 2 block in the street
+            for k in (0, 1):
+                for j in (-1, 0, 1):
+                    F[by - step[1] * k + perp[1] * j][bx - step[0] * k + perp[0] * j] = '#'
+            door = (bx, by); F[by][bx] = '.'                           # the door, in the porch's face, facing the park
             n += 1
-            F[door[1]][door[0]] = '.'
-            homes.append((n, door, face, kind))
+            homes.append((n, door, facing, kind))
+    RES_BLOCKS = [212, 25.5, 328, 154.5]                             # each residence: a round block straddling the ring
+    import bake_floor
+    def east_roofs(px, py):
+        import numpy as np
+        r = np.hypot(px - CX, py - CY)
+        z = np.zeros(px.shape, dtype=np.int64)
+        for i, mid in enumerate(RES_BLOCKS):
+            bx_, by_ = CX + 24 * math.cos(math.radians(mid)), CY + 24 * math.sin(math.radians(mid))
+            z = np.where((np.hypot(px - bx_, py - by_) <= 9.5) & (r >= 22.3), 1 + i % 3, z)
+        return z
+    bake_floor.ROOF_ZONE_FN['east'] = east_roofs
     # west: the walkway in from the Main Level, and the laundry beside it
     fill(F, 1, 43, 34, 49, 'u')
     chamfer_room(F, 3, 26, 22, 41, 't', 3)                          # the laundry: 19 x 15 tiles

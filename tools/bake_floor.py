@@ -421,7 +421,12 @@ WALL_TINTS = ["ffffff", "e1e7ec", "ede2d5"]
 ROOF_TINTS = ["ffffff", "dbe4ee", "f0e9df", "c6d3e2"]
 
 
+ROOF_ZONE_FN = {}             # level key -> fn(tx, ty) giving roof zones, set by tools/east.py and others
+
+
 def _roof_zone(key, tx, ty):
+    if key in ROOF_ZONE_FN:
+        return ROOF_ZONE_FN[key](tx, ty)
     if key != "main":
         return np.zeros(tx.shape, dtype=np.int64)
     zone = np.zeros(tx.shape, dtype=np.int64)
@@ -501,7 +506,7 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     mat_wall = np.asarray(Image.open(os.path.join(art_dir, wall_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
     plain = key in SECTOR_WALLS                                   # sector materials are used as painted, no tints
     # roof: the material, tinted by roof plate
-    zone = _roof_zone(key, xx // 16, (yy + 16) // 16)
+    zone = ROOF_ZONE_FN[key](xx / 16.0, (yy + 16) / 16.0) if key in ROOF_ZONE_FN else _roof_zone(key, xx // 16, (yy + 16) // 16)
     tint = np.stack([hexc(h) for h in (["ffffff"] * 4 if plain else ROOF_TINTS)])[zone % 4]
     rc = mat_roof[(yy + 16) % 64, xx % 64] * tint
     out[roof, :3] = rc[roof]
