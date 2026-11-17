@@ -53,7 +53,7 @@ def rebuild(g):
             for angle in range(0,360,45):
                 u,v=math.cos(math.radians(angle)),math.sin(math.radians(angle))
                 along=(x-cx)*u+(y-cy)*v;across=abs((y-cy)*u-(x-cx)*v)
-                if 0<=along<=50 and across<=(2.5 if angle%90 else 2.5):floor(x,y,'.')
+                if 0<=along<=50 and across<=(2.9 if angle%90 else 2.5):floor(x,y,'.')
     exits=[('west',49,95,163,110),('east',185,95,4,55),('top',115,20,23,44),('eng',115,170,34,8)]
     for dest,x,y,tx,ty in exits:
         if x!=cx:rect(min(x,cx),cy-2,max(x,cx),cy+2,'a')
@@ -280,9 +280,11 @@ def rebuild(g):
         sx,sy=cell(spots[0][0],v0+spots[0][1]);assert free(sx,sy),('sign',key);m.obj[sy][sx]=str([sh[2] for sh in g['SHOPS']].index(key));thing('sign',title,'Read the sign',sx,sy,22)
         for ch_,(u,dv) in zip(g['PORCH_OBJS'][key],spots[1:]):
             ox,oy=cell(u,v0+dv);assert free(ox,oy),('store front',key,u);m.obj[oy][ox]=ch_
-        for i_,(u,v) in enumerate(((-3,6),(3,8))):
-            try:_local('front_%s_%d'%(key,i_+1),door,u,v+v0,FRONT_TITLES[key][i_])
-            except AssertionError:print('note: no room in the %s forecourt for its shop piece %d'%(key,i_+1))
+        for i_,choices in enumerate((((-3,6),(-4,9)),((3,8),(4,5),(5,10),(-5,11)))):
+            for (u,v) in choices:
+                try:_local('front_%s_%d'%(key,i_+1),door,u,v+v0,FRONT_TITLES[key][i_]);break
+                except AssertionError:pass
+            else:print('note: no room in the %s forecourt for its shop piece %d'%(key,i_+1))
         if key=='common':
             try:_local('play_piece',door,-3,10+v0,'Play corner')
             except AssertionError:print('note: no room for the play corner')
@@ -297,7 +299,16 @@ def rebuild(g):
     prop('trolley',136,90,'Delivery trolley')
     # Sesska's racks either side of her door; two small tables outside the bar.
     wd=[(xx,yy,f) for k,t,xx,yy,f,w,h,kd in shops if k=='weaver'][0]
-    beside(wd,-1,'clothes','Textile display',first_off=4);beside(wd,1,'textiles','Finished garments',first_off=4)
+    beside(wd,-1,'clothes','Textile display',first_off=4)
+    # the garment rack: right of the door if there is room, otherwise further along on the left
+    w_,h_,_=SIZES['textiles'];placed_=False
+    for side_,off_ in ((1,4),(1,5),(-1,7),(-1,8)):
+        x0_=wd[0]+off_ if side_>0 else wd[0]-off_-w_+1
+        for step_ in (1,2):
+            y0_=wd[1]+step_-h_+1
+            if not placed_ and fits('textiles',x0_,y0_) and all(free(xx,y0_+h_) for xx in range(x0_,x0_+w_)):
+                prop('textiles',x0_,y0_,'Finished garments');placed_=True
+    if not placed_:print('note: no room for the garment rack')
     bd=[(xx,yy,f) for k,t,xx,yy,f,w,h,kd in shops if k=='bar'][0]
     beside(bd,-1,'bar_table','Tall bar table',first_step=2,first_off=4);beside(bd,1,'bar_table','Tall bar table',first_step=2,first_off=4)
     # Each shop's two big pieces (Art Pack 5) stand either side of its way in.

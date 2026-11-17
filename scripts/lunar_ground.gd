@@ -8,6 +8,7 @@ var portals_above := {}
 var lights: Array = []
 var key := "main"               # which level this draws (main = the promenade)
 var window_art: Texture2D       # the view through a curved window, one strip across the whole level
+var walls_art: Texture2D        # the whole level's walls and roofs, baked (tools/bake_floor.py)
 # The floor picture is baked ahead of time by tools/bake_floor.py (run by tools/build.py). Working it out
 # here, pixel by pixel, took a very long time, so that is only a fallback for when the picture is missing.
 func prepare(rows: Array) -> void:
@@ -25,6 +26,9 @@ func prepare(rows: Array) -> void:
 		floor_art = ImageTexture.create_from_image(blank)
 	if ResourceLoader.exists("res://art/lunar/window_%s.png" % key):
 		window_art = load("res://art/lunar/window_%s.png" % key)
+	# Smooth walls baked by tools/bake_floor.py: real curves and straight diagonals instead of tile steps.
+	if ResourceLoader.exists("res://art/lunar/walls_%s.png" % key):
+		walls_art = load("res://art/lunar/walls_%s.png" % key)
 	for e in preload("res://scripts/map_data.gd").ENTRANCES:
 		if e[0] == key and e[6] == "S":
 			for dx in [-1,0,1]: portals_above[Vector2i(e[1]+dx,e[2]-1)] = true
@@ -48,7 +52,22 @@ func paint_region(n: Node2D, rows: Array, r: Rect2i) -> void:
 	var x1: int = mini(r.end.x,rows[0].length())
 	var y1: int = mini(r.end.y,rows.size())
 	var area_px := Rect2(Vector2(r.position*16),Vector2((Vector2i(x1,y1)-r.position)*16))
-	n.draw_texture_rect_region(floor_art,area_px,area_px)
+	if walls_art == null:
+		n.draw_texture_rect_region(floor_art,area_px,area_px)
+	if walls_art != null:
+		# Moon under the outer walls too, where the smoothed wall leaves a tile's corner open.
+		for y in range(r.position.y,y1):
+			for x in range(r.position.x,x1):
+				var c: String = rows[y][x]
+				if (c == "~" or (c in "#Wzw" and _next_to_moon(rows,x,y))) and moon_at(x,y):
+					tile(n,3,x,y)
+		n.draw_texture_rect_region(floor_art,area_px,area_px)
+		# The picture already has the roofs lifted into place, so each chunk draws exactly its own pixels.
+		n.draw_texture_rect_region(walls_art,area_px,area_px)
+		for l in lights:
+			if r.has_point(Vector2i(int(l[0]),int(l[1]))):
+				skylight(n,int(l[0]),int(l[1]))
+		return
 	for y in range(r.position.y,y1):
 		for x in range(r.position.x,x1):
 			var ch: String = rows[y][x]
@@ -183,3 +202,10 @@ func roof_tile(n: Node2D,rows: Array,x: int,y: int,lift: int) -> void:
 		uv.append((points[i]+Vector2((x%4)*16,(y%4)*16))/64.0)
 		points[i]+=Vector2(x*16,y*16+lift)
 	n.draw_polygon(points,PackedColorArray([tint]),uv,materials[1])
+func _next_to_moon(rows: Array,x: int,y: int) -> bool:
+	for dy in [-1,0,1]:
+		for dx in [-1,0,1]:
+			var yy := y+dy
+			var xx := x+dx
+			if yy>=0 and yy<rows.size() and xx>=0 and xx<rows[yy].length() and rows[yy][xx] == "~": return true
+	return false

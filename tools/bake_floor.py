@@ -156,6 +156,8 @@ def in_polygon(px, py, pts):
 def bake(rows, art_dir, style="new", strip=128):
     baker = Baker(art_dir)
     H, W = len(rows) * 16, len(rows[0]) * 16
+    if style != "v11":
+        rows = wall_border_chars(rows)
     chars = np.array([[ord(c) for c in row] for row in rows], dtype=np.int32)
     img = np.zeros((H, W, 4), dtype=np.uint8)
     smooth = lambda t: t * t * (3 - 2 * t)
@@ -247,6 +249,7 @@ AREA_FLOORS = {
 def bake_area(key, rows, art_dir, extras=None):
     baker = Baker(art_dir)
     table = AREA_FLOORS[key]
+    rows = wall_border_chars(rows)
     H, W = len(rows) * 16, len(rows[0]) * 16
     chars = np.array([[ord(c) for c in row] for row in rows], dtype=np.int32)
     y, x = np.mgrid[0:H, 0:W]
@@ -308,3 +311,126 @@ def window_strip(width_px, planet_x, seed=7):
     for mx in range(0, W, 16):
         img[:, mx:mx + 2, :3] = (150, 144, 128)
     return Image.fromarray(img, "RGBA")
+
+
+# ---------------------------------------------------------------- smooth walls
+# Walls used to be drawn tile by tile, so every curve and every 45-degree wall was a staircase. Here the
+# tile map's walls are smoothed (a soft blur of the solid tiles, cut at half way), which turns stairs into
+# straight diagonals and steps into curves, and then drawn the way the game drew them: a roof lifted 16
+# pixels, a wall face 32 pixels tall wherever floor lies in front, side edges, seams between roof plates
+# and a soft shadow on the floor. Collision is still the tile grid. The game draws this picture over the
+# floor (scripts/lunar_ground.gd); repainting material_1.png (roof) or material_2.png (wall face) still works.
+SOLID = "#Wzw"
+WALL_TINTS = ["ffffff", "e1e7ec", "ede2d5"]
+ROOF_TINTS = ["ffffff", "dbe4ee", "f0e9df", "c6d3e2"]
+
+
+def _roof_zone(key, tx, ty):
+    if key != "main":
+        return np.zeros(tx.shape, dtype=np.int64)
+    zone = np.zeros(tx.shape, dtype=np.int64)
+    dx, dy = tx + 0.5 - 115.5, ty + 0.5 - 95.5
+    a = np.degrees(np.arctan2(dy, dx)) % 360.0
+    inner = np.hypot(dx, dy) < 45.0
+    zone = np.where(inner, (a // 45).astype(np.int64) % 8, 8 + (((a + 11.25) % 360.0) // 22.5).astype(np.int64) % 16)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            zone = np.where(np.hypot(tx - 115 - sx * 39.6, ty - 95 - sy * 39.6) <= 14.0, 24, zone)
+    return zone
+
+
+def bake_walls(key, rows, art_dir, window=None, sigma=15.0):
+    from scipy.ndimage import gaussian_filter
+    rows = ["".join(r) for r in rows]
+    th, tw = len(rows), len(rows[0])
+    H, W = th * 16, tw * 16
+    tiles = np.array([[c in SOLID for c in r] for r in rows])
+    chars = np.array([[ord(c) for c in r] for r in rows], dtype=np.int32)
+    B = gaussian_filter(np.repeat(np.repeat(tiles.astype(np.float32), 16, 0), 16, 1), sigma, mode="constant", cval=0.0) > 0.5
+    # Keep doorways open: smoothing would close any gap in a wall one or two tiles wide.
+    open_ = ~tiles & (chars != ord("~"))
+    def sol(dx, dy):
+        out = np.zeros_like(tiles)
+        ys, xs = slice(max(0, -dy), th - max(0, dy)), slice(max(0, -dx), tw - max(0, dx))
+        out[ys, xs] = tiles[max(0, dy):th - max(0, -dy) if max(0, -dy) else th, max(0, dx):tw - max(0, -dx) if max(0, -dx) else tw]
+        return out
+    gap = (sol(-1, 0) & sol(1, 0)) | (sol(0, -1) & sol(0, 1)) | (sol(-1, 0) & sol(2, 0)) | (sol(-2, 0) & sol(1, 0)) | \
+          (sol(0, -1) & sol(0, 2)) | (sol(0, -2) & sol(0, 1))
+    B &= ~np.repeat(np.repeat(open_ & gap, 16, 0), 16, 1)
+    def up(m, k):                       # m moved up by k pixels (row y takes row y+k)
+        out = np.zeros_like(m); out[:H - k] = m[k:]; return out
+    def down(m, k):
+        out = np.zeros_like(m); out[k:] = m[:H - k]; return out
+    def left(m, k=1):
+        out = np.zeros_like(m); out[:, :W - k] = m[:, k:]; return out
+    def right(m, k=1):
+        out = np.zeros_like(m); out[:, k:] = m[:, :W - k]; return out
+    roof_lift = up(B, 16)
+    Wl = B | roof_lift
+    face = Wl & ~up(B, 32)
+    roof = Wl & ~face
+    # Where each face pixel's wall meets the floor (its bottom edge), scanning up from the bottom.
+    bottom = np.full((H, W), -1, dtype=np.int32)
+    edge = B & ~up(B, 1)
+    last = np.full(W, -1, dtype=np.int32)
+    for y in range(H - 1, -1, -1):
+        last = np.where(edge[y], y, last)
+        last = np.where(Wl[y], last, -1)
+        bottom[y] = last
+    yy, xx = np.mgrid[0:H, 0:W]
+    out = np.zeros((H, W, 4), dtype=np.float32)
+    mat_roof = np.asarray(Image.open(os.path.join(art_dir, "material_1.png")).convert("RGB"), dtype=np.float32) / 255.0
+    mat_wall = np.asarray(Image.open(os.path.join(art_dir, "material_2.png")).convert("RGB"), dtype=np.float32) / 255.0
+    # roof: the material, tinted by roof plate
+    zone = _roof_zone(key, xx // 16, (yy + 16) // 16)
+    tint = np.stack([hexc(h) for h in ROOF_TINTS])[zone % 4]
+    rc = mat_roof[(yy + 16) % 64, xx % 64] * tint
+    out[roof, :3] = rc[roof]
+    # wall face: the material stretched over 32 pixels, or the window view where the wall is a window
+    by = np.clip(bottom, 0, H - 1)
+    v = np.clip(31 - (by - yy), 0, 31)
+    fty, ftx = by // 16, xx // 16
+    wt = np.stack([hexc(h) for h in WALL_TINTS])[np.abs(((ftx // 3) * 73856093) ^ (fty * 19349663)) % 3]
+    fc = mat_wall[v * 2, (xx % 32) * 2] * wt
+    if window is not None:
+        win = np.asarray(window.convert("RGB"), dtype=np.float32) / 255.0
+        is_win = chars[np.clip(fty, 0, th - 1), np.clip(ftx, 0, tw - 1)] == ord("w")
+        wc = win[np.clip(v, 0, win.shape[0] - 1), np.clip(xx, 0, win.shape[1] - 1)]
+        fc = np.where(is_win[..., None], wc, fc)
+    out[face, :3] = fc[face]
+    out[Wl, 3] = 1.0
+    # seams between roof plates
+    zr = left(zone.astype(np.int32)); seam_x = roof & left(roof) & (zone != zr)
+    out[seam_x, :3] = hexc("36434f"); out[right(seam_x), :3] = np.where(right(roof)[right(seam_x)][:, None], hexc("a9b6c2"), out[right(seam_x), :3])
+    zd = up(zone.astype(np.int32), 1); seam_y = roof & up(roof, 1) & (zone != zd)
+    out[seam_y, :3] = hexc("36434f")
+    # edges: dark on the left side of a wall, light on the right, an outline round the roof's top, a lip
+    # where roof meets face, and a dark line where the face meets the floor
+    lft = Wl & ~right(Wl); out[lft | (Wl & right(lft)), :3] = hexc("394756")
+    rgt = Wl & ~left(Wl); out[rgt | (Wl & left(rgt)), :3] = hexc("7c828a")
+    top = roof & ~down(Wl, 1); out[top, :3] = hexc("2b3442"); out[roof & down(top, 1), :3] = hexc("b8c4cf")
+    lip = face & down(roof, 1); out[lip, :3] = hexc("dcc1a1"); out[face & down(lip, 1), :3] = hexc("59667b")
+    foot = face & ~up(face, 1) & up(~Wl, 1); out[foot, :3] = hexc("2b3442")
+    # soft shadow on the floor in front of each wall face
+    shadow = ~Wl & (down(B, 1) | down(B, 2) | down(B, 3) | down(B, 4))
+    out[shadow, :3] = (0.1, 0.12, 0.18); out[shadow, 3] = 0.22
+    return Image.fromarray(np.clip(out * 255.0, 0, 255).astype(np.uint8), "RGBA")
+
+
+def wall_border_chars(rows):
+    """Wall tiles next to floor take their neighbours' floor character, so the floor picture also covers
+    the bits of wall tile the smoothed walls leave open."""
+    rows = [list(r) for r in rows]
+    th, tw = len(rows), len(rows[0])
+    out = [r[:] for r in rows]
+    for y in range(th):
+        for x in range(tw):
+            if rows[y][x] in SOLID:
+                seen = {}
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        if 0 <= y + dy < th and 0 <= x + dx < tw and rows[y + dy][x + dx] not in SOLID + "~":
+                            c = rows[y + dy][x + dx]; seen[c] = seen.get(c, 0) + (2 if dx == 0 or dy == 0 else 1)
+                if seen:
+                    out[y][x] = max(seen, key=seen.get)
+    return ["".join(r) for r in out]
