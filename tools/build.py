@@ -2654,7 +2654,7 @@ MEDBAY = list(moved("main", 137, 51))       # where you wake up after collapsing
 # name, area, tile x, tile y, talk radius (bigger when they stand behind a counter)
 PEOPLE = [
     # Sara appears as a hologram in several places
-    ["Sara", "top", 23, 23, 26], ["Sara", "west", 78, 152, 26], ["Sara", "west", 65, 104, 36], ["Sara", "main", 90, 65, 26],
+    ["Sara", "top", 23, 21, 30], ["Sara", "west", 78, 152, 26], ["Sara", "west", 65, 104, 36], ["Sara", "main", 90, 65, 26],
 ]
 PEOPLE = [[p[0]] + list(moved(p[1], p[2], p[3])) + [p[4]] for p in PEOPLE]
 

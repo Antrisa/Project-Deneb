@@ -1,0 +1,346 @@
+{
+  "version": 2,
+  "body_frame": [
+    80,
+    96
+  ],
+  "object_frame": [
+    128,
+    96
+  ],
+  "frames_per_clip": 24,
+  "draw_scale": 0.5,
+  "origin": "bottom center at projector center; objects share the same origin",
+  "animations": [
+    {
+      "name": "idle",
+      "fps": 6,
+      "loop": true,
+      "frames": 24,
+      "body": "animations/idle_body.png",
+      "objects": "animations/idle_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "blink",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/blink_body.png",
+      "objects": "animations/blink_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "hair_sway",
+      "fps": 8,
+      "loop": true,
+      "frames": 24,
+      "body": "animations/hair_sway_body.png",
+      "objects": "animations/hair_sway_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "glance_left",
+      "fps": 6,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/glance_left_body.png",
+      "objects": "animations/glance_left_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "glance_right",
+      "fps": 6,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/glance_right_body.png",
+      "objects": "animations/glance_right_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "head_tilt",
+      "fps": 6,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/head_tilt_body.png",
+      "objects": "animations/head_tilt_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "clasp_hands",
+      "fps": 6,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/clasp_hands_body.png",
+      "objects": "animations/clasp_hands_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "stretch",
+      "fps": 6,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/stretch_body.png",
+      "objects": "animations/stretch_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "greeting",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/greeting_body.png",
+      "objects": "animations/greeting_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "explain",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/explain_body.png",
+      "objects": "animations/explain_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "talk_both",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/talk_both_body.png",
+      "objects": "animations/talk_both_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "nod",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/nod_body.png",
+      "objects": "animations/nod_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "laugh",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/laugh_body.png",
+      "objects": "animations/laugh_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "shrug",
+      "fps": 6,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/shrug_body.png",
+      "objects": "animations/shrug_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "thinking",
+      "fps": 6,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/thinking_body.png",
+      "objects": "animations/thinking_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "summon_screen",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/summon_screen_body.png",
+      "objects": "animations/summon_screen_objects.png",
+      "prop": "screen",
+      "finish": "idle"
+    },
+    {
+      "name": "swipe_panels",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/swipe_panels_body.png",
+      "objects": "animations/swipe_panels_objects.png",
+      "prop": "screen",
+      "finish": "idle"
+    },
+    {
+      "name": "rotate_moon",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/rotate_moon_body.png",
+      "objects": "animations/rotate_moon_objects.png",
+      "prop": "moon",
+      "finish": "idle"
+    },
+    {
+      "name": "unfold_map",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/unfold_map_body.png",
+      "objects": "animations/unfold_map_objects.png",
+      "prop": "star_map",
+      "finish": "idle"
+    },
+    {
+      "name": "warning",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/warning_body.png",
+      "objects": "animations/warning_objects.png",
+      "prop": "warning",
+      "finish": "idle"
+    },
+    {
+      "name": "conjure_teacup",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/conjure_teacup_body.png",
+      "objects": "animations/conjure_teacup_objects.png",
+      "prop": "teacup",
+      "finish": "idle"
+    },
+    {
+      "name": "admire_flower",
+      "fps": 6,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/admire_flower_body.png",
+      "objects": "animations/admire_flower_objects.png",
+      "prop": "flower",
+      "finish": "idle"
+    },
+    {
+      "name": "paris_daydream",
+      "fps": 6,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/paris_daydream_body.png",
+      "objects": "animations/paris_daydream_objects.png",
+      "prop": "tower",
+      "finish": "idle"
+    },
+    {
+      "name": "glitch_scan",
+      "fps": 12,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/glitch_scan_body.png",
+      "objects": "animations/glitch_scan_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "glitch_hand",
+      "fps": 10,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/glitch_hand_body.png",
+      "objects": "animations/glitch_hand_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "glitch_echo",
+      "fps": 10,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/glitch_echo_body.png",
+      "objects": "animations/glitch_echo_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "glitch_interrupt",
+      "fps": 10,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/glitch_interrupt_body.png",
+      "objects": "animations/glitch_interrupt_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "glitch_recover",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/glitch_recover_body.png",
+      "objects": "animations/glitch_recover_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "materialize",
+      "fps": 10,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/materialize_body.png",
+      "objects": "animations/materialize_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "dissolve",
+      "fps": 10,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/dissolve_body.png",
+      "objects": "animations/dissolve_objects.png",
+      "prop": null,
+      "finish": "hidden"
+    },
+    {
+      "name": "reconnect",
+      "fps": 10,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/reconnect_body.png",
+      "objects": "animations/reconnect_objects.png",
+      "prop": null,
+      "finish": "idle"
+    },
+    {
+      "name": "standby",
+      "fps": 6,
+      "loop": true,
+      "frames": 24,
+      "body": "animations/standby_body.png",
+      "objects": "animations/standby_objects.png",
+      "prop": null,
+      "finish": "standby"
+    },
+    {
+      "name": "wake",
+      "fps": 8,
+      "loop": false,
+      "frames": 24,
+      "body": "animations/wake_body.png",
+      "objects": "animations/wake_objects.png",
+      "prop": null,
+      "finish": "idle"
+    }
+  ]
+}

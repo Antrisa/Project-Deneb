@@ -731,7 +731,41 @@ func _fit_sprite(s: Sprite2D, columns: int, rows: int, world_width: float) -> vo
 	s.offset = Vector2(-frame_w / 2.0, -frame_h)
 
 
+# S.A.R.A. is the animated hologram from res://sara (33 clips, from Zachary's Survey Art Pack): one copy per
+# pad. On her core she stands on the hologram dais.
+var sara_nodes: Array = []
+func _add_sara(area_name: String, tile: Vector2i, radius: float) -> void:
+	_ensure_person("Sara")
+	var h = load("res://sara/sara_hologram.tscn").instantiate()
+	h.show_projector = false          # the dais or pad is already part of the map
+	h.art_scale = 0.45                # about a head taller than the residents: she floats
+	if area_name == "top":
+		h.position = Vector2(23 * TILE + 8, 21 * TILE - 11)   # the centre of the dais (tools/survey.py)
+	else:
+		h.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 12)
+	h.visible = false
+	actors.add_child(h)
+	area_sprites.append([h, area_name])
+	sara_nodes.append([h, area_name])
+	var here: Dictionary = blocked[area_name]
+	here[tile] = true
+	things.append({
+		"kind": "person", "name": "Sara", "hint": "Talk to S.A.R.A.", "area": area_name,
+		"pos": Vector2(tile.x * TILE + 8, tile.y * TILE + 10), "radius": radius, "who": "Sara",
+	})
+
+
+# The hologram in this area plays a clip (greeting, explain, laugh, ...), if it has one.
+func _sara_play(clip: String) -> void:
+	for pair in sara_nodes:
+		if pair[1] == current_area:
+			pair[0].play(clip)
+
+
 func _add_person(who: String, area_name: String, tile: Vector2i, radius: float) -> void:
+	if who == "Sara" and ResourceLoader.exists("res://sara/sara_hologram.tscn"):
+		_add_sara(area_name, tile, radius)
+		return
 	var id: String = _ensure_person(who)
 	var s := Sprite2D.new()
 	s.texture = load("res://art/npc_%s.png" % id)
@@ -993,6 +1027,8 @@ func _say(who: String, lines: Array, on_yes: Callable = Callable(), yes_text: St
 
 func _talk(who: String) -> void:
 	var st: Dictionary = persons[who]
+	if who == "Sara":
+		_sara_play("greeting" if not st["met"] else ["explain", "talk_both", "nod", "head_tilt", "laugh"].pick_random())
 	if not st["talked_today"]:
 		st["talked_today"] = true
 		st["friendship"] = int(st["friendship"]) + 1
