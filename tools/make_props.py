@@ -367,6 +367,107 @@ def kitchenette(d, w, h):
     d.line((32, 38, 32, h - 4), fill=INK)
 
 
+ROCK, ROCK_D, ROCK_L = (124, 108, 96, 255), (88, 76, 70, 255), (160, 146, 130, 255)
+HAZ = (226, 180, 48, 255)
+
+
+def ore_pile(d, w, h):
+    d.polygon([(4, h - 4), (20, h - 30), (44, h - 44), (70, h - 36), (w - 4, h - 4)], fill=ROCK, outline=INK)
+    for x, y in ((18, h - 14), (34, h - 26), (50, h - 18), (66, h - 12), (42, h - 36), (28, h - 8)):
+        d.ellipse((x, y, x + 12, y + 9), fill=ROCK_L if (x + y) % 3 else ROCK_D, outline=INK)
+    d.ellipse((56, h - 26, 62, h - 21), fill=(200, 150, 90, 255))
+
+
+def hopper(d, w, h):
+    legs(d, (10, w - 14), h - 40, h - 2)
+    d.polygon([(4, 6), (w - 4, 6), (w - 26, h - 44), (26, h - 44)], fill=STEEL, outline=INK)
+    d.rectangle((30, h - 44, w - 30, h - 30), fill=STEEL_D, outline=INK)
+    d.rectangle((4, 2, w - 4, 10), fill=STEEL_L, outline=INK)
+    for k in range(5): d.polygon([(10 + k * 16, 14), (18 + k * 16, 14), (12 + k * 16, 22), (4 + k * 16, 22)], fill=HAZ)
+    for x, y in ((24, 0), (40, -2), (56, 0)): d.ellipse((x, y, x + 12, y + 8), fill=ROCK, outline=INK)
+
+
+def ingot_stack(d, w, h):
+    d.rectangle((2, h - 8, w - 2, h - 2), fill=WOOD_D, outline=INK)
+    for row in range(4):
+        for k in range(3 - row % 2):
+            x = 6 + k * 18 + (row % 2) * 9; y = h - 18 - row * 9
+            d.polygon([(x, y + 8), (x + 16, y + 8), (x + 13, y), (x + 3, y)], fill=(196, 170, 120, 255) if row % 2 else (170, 176, 186, 255), outline=INK)
+
+
+def slag_bin(d, w, h):
+    d.polygon([(4, 14), (w - 4, 14), (w - 10, h - 4), (10, h - 4)], fill=(70, 66, 64, 255), outline=INK)
+    d.rectangle((4, 10, w - 4, 16), fill=STEEL_D, outline=INK)
+    for x, y in ((12, 4), (26, 2), (40, 5)): d.ellipse((x, y, x + 12, y + 10), fill=(60, 40, 36, 255), outline=INK)
+    d.ellipse((24, 6, 32, 11), fill=(250, 130, 40, 255))
+    d.rectangle((14, 28, w - 14, 36), fill=HAZ)
+
+
+def sorting_machine(d, w, h):
+    box(d, 6, 24, w - 6, h - 2, STEEL, STEEL_L, STEEL_D)
+    d.rectangle((0, h - 34, w, h - 20), fill=(64, 66, 74, 255), outline=INK)
+    for x in range(4, w, 8): d.line((x, h - 33, x, h - 21), fill=(118, 122, 132, 255))
+    for k, c in enumerate(((150, 120, 90, 255), (190, 170, 120, 255), (120, 160, 170, 255))):
+        x = 16 + k * 34; d.polygon([(x, 6), (x + 22, 6), (x + 18, 26), (x + 4, 26)], fill=c, outline=INK)
+    d.rectangle((w // 2 - 14, 40, w // 2 + 14, 54), fill=DARK, outline=INK); d.rectangle((w // 2 - 10, 43, w // 2 + 10, 51), fill=TEAL_D)
+    for x in (12, w - 20): d.ellipse((x, 36, x + 8, 44), fill=AMBER, outline=INK)
+
+
+def hazard_sign(d, w, h):
+    d.rectangle((w // 2 - 2, 28, w // 2 + 2, h - 2), fill=STEEL_D, outline=INK)
+    d.polygon([(w // 2, 2), (w - 2, 30), (2, 30)], fill=HAZ, outline=INK)
+    d.rectangle((w // 2 - 1, 11, w // 2 + 1, 21), fill=INK); d.rectangle((w // 2 - 1, 24, w // 2 + 1, 26), fill=INK)
+    d.rectangle((6, h - 6, w - 6, h - 2), fill=STEEL_D, outline=INK)
+
+
+def breaker_panel(d, w, h):
+    box(d, 6, 4, w - 6, h - 2, (110, 116, 126, 255), STEEL_L, STEEL_D)
+    d.rectangle((12, 12, w - 12, 50), fill=DARK, outline=INK)
+    for row in range(3):
+        for k in range(4):
+            x, y = 16 + k * 9, 16 + row * 11
+            d.rectangle((x, y, x + 5, y + 8), fill=(200, 200, 200, 255), outline=INK); d.rectangle((x + 1, y + (1 if (k + row) % 3 else 5), x + 4, y + (3 if (k + row) % 3 else 7)), fill=INK)
+    for k, c in enumerate((RED, (90, 200, 110, 255), AMBER)): d.ellipse((16 + k * 12, 58, 24 + k * 12, 66), fill=c, outline=INK)
+    d.rectangle((12, h - 14, w - 12, h - 8), fill=HAZ)
+    d.rectangle((w // 2 - 3, 0, w // 2 + 3, 6), fill=(60, 60, 66, 255))
+
+
+def storage_shelf(d, w, h):
+    for x in (4, w - 8): d.rectangle((x, 4, x + 4, h - 2), fill=(70, 110, 160, 255), outline=INK)
+    for y in (30, 62, 94): d.rectangle((4, y, w - 4, y + 4), fill=(214, 140, 50, 255), outline=INK)
+    import random; r = random.Random(w * h)
+    for y in (6, 38, 70):
+        x = 10
+        while x < w - 22:
+            bw = r.choice((14, 18, 22)); bh = r.choice((16, 20, 24))
+            c = r.choice(((176, 140, 96, 255), (150, 160, 170, 255), (120, 150, 110, 255), (196, 170, 120, 255)))
+            d.rectangle((x, y + 24 - bh, x + bw, y + 24), fill=c, outline=INK); x += bw + 3
+
+
+def barrel_stack(d, w, h):
+    for k, (x, y) in enumerate(((4, h - 40), (w - 32, h - 40), (18, h - 66))):
+        c = ((60, 120, 180, 255), (200, 80, 60, 255), (60, 120, 180, 255))[k]
+        d.rounded_rectangle((x, y, x + 28, y + 38), 6, fill=c, outline=INK, width=2)
+        for yy in (y + 10, y + 26): d.line((x + 2, yy, x + 26, yy), fill=INK)
+        d.ellipse((x + 4, y + 2, x + 24, y + 8), fill=STEEL_L, outline=INK)
+
+
+def pallet(d, w, h):
+    d.rectangle((2, h - 10, w - 2, h - 2), fill=WOOD, outline=INK)
+    for x in (6, w // 2 - 3, w - 12): d.rectangle((x, h - 10, x + 6, h - 2), fill=WOOD_D)
+    for k, (x, y) in enumerate(((4, h - 30), (32, h - 30), (18, h - 48))):
+        d.rounded_rectangle((x, y, x + 28, y + 20), 7, fill=(214, 200, 168, 255), outline=INK, width=2)
+        d.line((x + 6, y + 10, x + 22, y + 10), fill=(150, 130, 100, 255))
+
+
+def cargo_loader(d, w, h):
+    box(d, 10, 34, w - 10, h - 12, HAZ, (250, 214, 110, 255), (180, 140, 30, 255))
+    d.rectangle((16, 14, 52, 36), fill=GLASS, outline=INK, width=2); d.rectangle((14, 10, 54, 16), fill=DARK, outline=INK)
+    d.rectangle((w - 22, 6, w - 16, h - 14), fill=STEEL_D, outline=INK)
+    d.rectangle((w - 16, h - 22, w - 2, h - 16), fill=STEEL, outline=INK)
+    for x in (16, w - 40): d.ellipse((x, h - 22, x + 20, h - 2), fill=DARK, outline=INK); d.ellipse((x + 6, h - 16, x + 14, h - 8), fill=STEEL_L)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -403,7 +504,10 @@ PROPS = {
     'pump': (64, 96, pump), 'pipe_rack': (96, 64, pipe_rack), 'locker': (64, 104, locker), 'tool_cart': (64, 64, tool_cart),
     'welding_rig': (64, 96, welding_rig), 'fuel_tank': (64, 112, fuel_tank), 'parts_rack': (96, 104, parts_rack),
     'launch_console': (96, 72, launch_console), 'air_scrubber': (64, 104, air_scrubber), 'mag_clamp': (32, 32, mag_clamp),
-    'launch_door': (384, 112, launch_door), 'coolant_tank': (96, 128, coolant_tank), 'kitchenette': (128, 96, kitchenette), 'case_empty': (64, 72, case_empty),
+    'launch_door': (384, 112, launch_door), 'coolant_tank': (96, 128, coolant_tank), 'kitchenette': (128, 96, kitchenette),
+    'ore_pile': (96, 56, ore_pile), 'hopper': (96, 128, hopper), 'ingot_stack': (64, 56, ingot_stack), 'slag_bin': (64, 64, slag_bin),
+    'sorting_machine': (128, 104, sorting_machine), 'hazard_sign': (32, 72, hazard_sign), 'breaker_panel': (64, 104, breaker_panel),
+    'storage_shelf': (96, 112, storage_shelf), 'barrel_stack': (64, 72, barrel_stack), 'pallet': (64, 56, pallet), 'cargo_loader': (96, 96, cargo_loader), 'case_empty': (64, 72, case_empty),
     'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
     'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
     'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),

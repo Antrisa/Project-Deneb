@@ -1993,7 +1993,7 @@ if not os.path.exists(os.path.join(AUDIO, "music_under.wav")):
     render_loop("music_under", 24.0, voices)
 
 # ================================================================ maps
-WALK = set(".,fhusmiUDAR1230Xapokj")
+WALK = set(".,fhusmiUDAR1230Xapokjte")
 
 
 class Area:

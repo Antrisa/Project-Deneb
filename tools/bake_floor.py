@@ -243,10 +243,11 @@ AREA_FLOORS = {
     "lounge": {"u": (5, None)},
     "museum": {"h": (4, None), ".": (1, None), "f": (3, None)},
     "sanctum": {"s": (4, ("6f5a9a", 0.32)), "i": (0, ("8a6fc0", 0.30))},
-    "eng": {".": (5, ("5f6a78", 0.30)), "f": (4, ("8a8f96", 0.25)), "R": (3, ("6a5a4c", 0.35)), "i": (5, ("5f6a78", 0.30)), "U": (5, None),
-            "o": (4, ("8a6e58", 0.30)), "k": (5, ("6a3a2c", 0.45)), "q": (5, ("140e12", 0.88)), "j": (5, ("4a4e58", 0.35)),
-            "a": (1, ("d8b070", 0.25)), "h": (3, ("b08a68", 0.15))},
-    "bay": {"u": (5, ("7a828c", 0.22)), "a": (1, ("d8b070", 0.25)), "p": (3, None), "f": (4, None), "i": (5, None)},
+    "eng": {".": ("eng_floor_plate", None), "R": (3, ("6a5a4c", 0.35)), "i": ("eng_floor_plate", None), "U": ("eng_floor_plate", None),
+            "o": ("eng_floor_ore", None), "f": ("eng_floor_concrete", None), "t": ("eng_floor_tech", None), "h": ("eng_floor_lino", None),
+            "e": ("eng_floor_grate", None), "k": ("eng_floor_plate", ("6a3a2c", 0.45)), "q": (5, ("140e12", 0.88)),
+            "j": ("eng_floor_plate", ("4a4e58", 0.25)), "a": ("eng_floor_pad", None)},
+    "bay": {"u": ("eng_floor_hangar", None), "a": ("eng_floor_pad", None), "p": (3, None), "f": ("eng_floor_tech", None), "i": ("eng_floor_hangar", None)},
 }
 
 
@@ -264,7 +265,11 @@ def bake_area(key, rows, art_dir, extras=None):
         if not m.any():
             continue
         xs, ys = x[m], y[m]
-        col = baker.swatch(np.full(xs.shape, kind), xs, ys)
+        if isinstance(kind, str):                                 # a sector material: art/lunar/<kind>.png, 32 px a tile
+            tex = np.asarray(Image.open(os.path.join(art_dir, kind + ".png")).convert("RGB"), dtype=np.float32) / 255.0
+            col = tex[(ys * 2) % tex.shape[0], (xs * 2) % tex.shape[1]]
+        else:
+            col = baker.swatch(np.full(xs.shape, kind), xs, ys)
         if tint:
             col = lerp(col, hexc(tint[0]), tint[1])
         img[ys, xs, :3] = np.clip(col * 255.0, 0, 255).astype(np.uint8); img[ys, xs, 3] = 255
@@ -401,6 +406,8 @@ def window_strip(width_px, planet_x, seed=7):
 # and a soft shadow on the floor. Collision is still the tile grid. The game draws this picture over the
 # floor (scripts/lunar_ground.gd); repainting material_1.png (roof) or material_2.png (wall face) still works.
 SOLID = "#Wzw"
+# Levels with their own wall materials: (roof, wall face), files in art/lunar. Others use material_1 / material_2.
+SECTOR_WALLS = {"eng": ("eng_roof", "eng_wall"), "bay": ("eng_roof", "eng_wall")}
 WALL_TINTS = ["ffffff", "e1e7ec", "ede2d5"]
 ROOF_TINTS = ["ffffff", "dbe4ee", "f0e9df", "c6d3e2"]
 
@@ -480,18 +487,20 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
         bottom[y] = last
     yy, xx = np.mgrid[0:H, 0:W]
     out = np.zeros((H, W, 4), dtype=np.float32)
-    mat_roof = np.asarray(Image.open(os.path.join(art_dir, "material_1.png")).convert("RGB"), dtype=np.float32) / 255.0
-    mat_wall = np.asarray(Image.open(os.path.join(art_dir, "material_2.png")).convert("RGB"), dtype=np.float32) / 255.0
+    roof_name, wall_name = SECTOR_WALLS.get(key, ("material_1", "material_2"))
+    mat_roof = np.asarray(Image.open(os.path.join(art_dir, roof_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
+    mat_wall = np.asarray(Image.open(os.path.join(art_dir, wall_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
+    plain = key in SECTOR_WALLS                                   # sector materials are used as painted, no tints
     # roof: the material, tinted by roof plate
     zone = _roof_zone(key, xx // 16, (yy + 16) // 16)
-    tint = np.stack([hexc(h) for h in ROOF_TINTS])[zone % 4]
+    tint = np.stack([hexc(h) for h in (["ffffff"] * 4 if plain else ROOF_TINTS)])[zone % 4]
     rc = mat_roof[(yy + 16) % 64, xx % 64] * tint
     out[roof, :3] = rc[roof]
     # wall face: the material stretched over 32 pixels, or the window view where the wall is a window
     by = np.clip(bottom, 0, H - 1)
     v = np.clip(31 - (by - yy), 0, 31)
     fty, ftx = by // 16, xx // 16
-    wt = np.stack([hexc(h) for h in WALL_TINTS])[np.abs(((ftx // 3) * 73856093) ^ (fty * 19349663)) % 3]
+    wt = np.stack([hexc(h) for h in (["ffffff"] * 3 if plain else WALL_TINTS)])[np.abs(((ftx // 3) * 73856093) ^ (fty * 19349663)) % 3]
     fc = mat_wall[v * 2, (xx % 32) * 2] * wt
     if window is not None:
         win = np.asarray(window.convert("RGB"), dtype=np.float32) / 255.0

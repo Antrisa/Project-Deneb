@@ -13,7 +13,7 @@ import math
 import survey
 from survey import Room, SIZES, door_pair
 
-survey.WALKABLE = 'uihsmf.apRokj'
+survey.WALKABLE = 'uihsmf.apRokjte'
 SIZES.update({
     'geo_core': (5, 4, 3), 'furnace': (2, 3, 1), 'ore_crusher': (3, 3, 2), 'ore_cart': (2, 2, 1), 'pump': (2, 3, 1),
     'pipe_rack': (3, 2, 1), 'locker': (2, 3, 1), 'tool_cart': (2, 2, 1), 'welding_rig': (2, 3, 1), 'fuel_tank': (2, 3, 1),
@@ -22,6 +22,9 @@ SIZES.update({
     'bin': (1, 1, 1), 'drinking_fountain': (1, 2, 1), 'lamp_post': (1, 2, 1), 'bench_s': (3, 2, 1), 'chair_n': (1, 2, 0),
     'chair_s': (1, 2, 0), 'waiting_seat': (3, 2, 1), 'signpost': (1, 2, 1),
     'coolant_tank': (3, 4, 2), 'kitchenette': (4, 3, 1),
+    'ore_pile': (3, 2, 1), 'hopper': (3, 4, 2), 'ingot_stack': (2, 2, 1), 'slag_bin': (2, 2, 1), 'sorting_machine': (4, 3, 2),
+    'hazard_sign': (1, 2, 1), 'breaker_panel': (2, 3, 1), 'storage_shelf': (3, 3, 1), 'barrel_stack': (2, 2, 1), 'pallet': (2, 2, 1),
+    'cargo_loader': (3, 3, 2),
 })
 SHIP_W, SHIP_H = 7, 4                 # the player's ship, in tiles (art/lunar/player_ship.png: 4 frames of 224 x 128)
 
@@ -71,14 +74,14 @@ def build(g):
     for x in (13, 14, 15, 25, 26, 27): F[33][x] = F[39][x] = 'o'
     fill(1, 54, 5, 57, 'R')
     # --- Tikka's engineering bay: the whole north side; her office in the north-east corner, a drone pad
-    poly([(48, 23), (48, 12), (54, 6), (90, 6), (96, 12), (96, 23)], 'f')
+    poly([(48, 23), (48, 12), (54, 6), (90, 6), (96, 12), (96, 23)], 't')
     for x in range(68, 73): F[23][x] = '.'
     chamfer_room(F, 70, 10, 80, 18, 'a', 2)
     for y in range(6, 14): F[y][86] = '#'
     for x in range(86, 96): F[14][x] = '#'
     for y in range(6, 14):
         for x in range(87, 96):
-            if F[y][x] == 'f': F[y][x] = 'h'
+            if F[y][x] == 't': F[y][x] = 'h'
     F[14][90] = F[14][91] = 'h'
     # --- lift (north-east), stores, the corridor to the shuttle bay, cargo staging and a spare workshop
     chamfer_room(F, 98, 15, 104, 22, '.', 1)
@@ -89,13 +92,13 @@ def build(g):
     fill(101, 36, 116, 40, '.')
     eng_door = (117, 38); F[eng_door[1]][eng_door[0]] = '.'
     poly([(102, 42), (115, 42), (115, 52), (107, 60), (102, 60)], 'f')
-    for y in (45, 46, 47, 50, 51, 52): F[y][101] = 'f'
+    for y in (45, 46, 47): F[y][101] = 'f'
     chamfer_room(F, 98, 62, 110, 71, 'f', 3)
     for x in (103, 104, 105): F[60][x] = F[61][x] = 'f'
     # --- south side: crew break room (big), cooling & life support, a spare workshop
     poly([(40, 54), (57, 54), (57, 68), (51, 74), (38, 74), (32, 68), (32, 62)], 'h')
     for x in (46, 47, 48): F[53][x] = '.'
-    poly([(58, 54), (83, 54), (83, 64), (77, 70), (64, 70), (58, 64)], 'f')
+    poly([(58, 54), (83, 54), (83, 64), (77, 70), (64, 70), (58, 64)], 'e')
     for x in (69, 70, 71): F[53][x] = '.'
     chamfer_room(F, 85, 54, 96, 64, 'f', 3)
     for x in (89, 90, 91): F[53][x] = '.'
@@ -125,6 +128,14 @@ def build(g):
     N('terminal', 18, 27.5, 'Belt control'); N('pump', 9, 21.5, 'Dust extractor', None); N('cargo', 36, 30.5, 'Ingot crates', None)
     N('parts_rack', 20, 46.5, 'Ore bins', None); N('parts_rack', 30, 46.5, 'Ore bins', None); N('ore_cart', 22, 55.5, 'Ore cart', None)
     N('ore_cart', 10, 44.5, 'Ore cart', None); N('console', 33, 52.5, 'Sorting console'); N('cargo', 9, 50.5, 'Rock samples', None)
+    # more for the ore rooms: the hopper at the tunnel mouth, the sorter on the belt, heaps of ore, ingots, slag
+    N('hopper', 9.5, 52.5, 'Ore hopper', 'look', 'Look'); N('sorting_machine', 15, 46.5, 'Ore sorter', 'look', 'Look')
+    N('ore_pile', 25, 52.5, 'Heap of ore', None); N('ore_pile', 22, 57.5, 'Heap of ore', None); N('slag_bin', 34, 56.5, 'Slag bin', None)
+    N('hazard_sign', 18, 42.5, 'Warning: moving belt', None); N('barrel_stack', 36, 42.5, 'Flux barrels', None)
+    N('ingot_stack', 30, 25.5, 'Ingots', None); N('ingot_stack', 34, 25.5, 'Ingots', None); N('slag_bin', 37, 20.5, 'Slag bin', None)
+    N('ore_pile', 17, 14.5, 'Heap of crushed ore', None); N('hazard_sign', 27, 12.5, 'Warning: hot metal', None)
+    N('locker', 21, 10, 'Smelters\' lockers', None); N('locker', 24, 10, 'Smelters\' lockers', None); N('breaker_panel', 9, 27.5, 'Breaker panel')
+    N('air_scrubber', 11, 18, 'Fume extractor', None)
     # the power core in its pit: control panels down both long sides, coolant tanks at the ends
     P('geo_core', 68, 36, 'Geothermal power core', 'look', 'Look')
     P('coolant_tank', 55, 36, 'Coolant tank', None); P('coolant_tank', 83, 36, 'Coolant tank', None)
@@ -143,17 +154,21 @@ def build(g):
     # lift lobby
     N('plants', 103.5, 17.5, 'Lift planter', 'inspect', 'Inspect')
     # stores
-    for fx in (105.5, 110): N('parts_rack', fx, 26.5, 'Stores shelving', None)
-    N('cargo', 105, 33.5, 'Stored crates', None); N('cargo', 109, 33.5, 'Stored crates', None)
+    for fx in (103.5, 106.5): N('storage_shelf', fx, 26.5, 'Stores shelving', None)
+    for fx in (104.5, 107.5, 110.5): N('storage_shelf', fx, 34.5, 'Stores shelving', None)
+    N('breaker_panel', 110, 29, 'Breaker panel'); N('barrel_stack', 107.5, 30.5, 'Lubricant barrels', None)
+    N('terminal', 104, 31.5, 'Stores inventory')
     # cargo staging: the loading pad for Bram's crates; the belt ends here
-    N('cargo', 106, 44.5, 'Cargo crates', None); N('cargo', 112, 44.5, 'Cargo crates', None); N('trolley', 112, 54.5, 'Cargo trolley', None)
+    for fx in (104.5, 107.5, 110.5): N('storage_shelf', fx, 44.5, 'Cargo racks', None)
+    N('pallet', 104, 55.5, 'Pallet of sacks', None); N('pallet', 113, 47.5, 'Pallet of sacks', None); N('barrel_stack', 113, 51.5, 'Fuel barrels', None)
+    N('cargo_loader', 109.5, 56.5, 'Cargo loader', 'look', 'Look'); N('cargo', 104, 51.5, 'Cargo crates', None); N('breaker_panel', 114, 44.5, 'Loading panel')
     drop = (109, 50)
     eng.keep_clear(107, 48, 111, 52)
     eng.thing('drop', 'Loading pad', 'Set down the crate', *drop, 22)
     # cooling & life support: three big coolant tanks, pumps, scrubbers
     for x in (62, 68, 74): N('coolant_tank', x + 1.5, 65.5, 'Coolant tank', None)
     for x in (61, 66, 75, 80): N('pump', x, 57.5, 'Coolant pump', 'inspect', 'Inspect')
-    N('air_scrubber', 80, 63.5, 'Air scrubber'); N('water_tank', 61, 63.5, 'Water reserve', None); N('pipe_rack', 70.5, 69.5, 'Pipe manifold', None)
+    N('breaker_panel', 72, 56.5, 'Pump controls');     N('air_scrubber', 80, 63.5, 'Air scrubber'); N('water_tank', 61, 63.5, 'Water reserve', None); N('pipe_rack', 70.5, 69.5, 'Pipe manifold', None)
     # the crew break room: four tables, lockers, a kitchenette
     for tx, ty in ((42, 58), (49, 58), (42, 64), (49, 64)):
         P('table', tx, ty, 'Break table', None)
@@ -167,7 +182,7 @@ def build(g):
         N('cargo', x0 + 3, y0 + 4.5, 'Spare crates', None); N('workbench', x1 - 3, y0 + 4.5, 'Empty workbench', 'inspect', 'Inspect')
     # conveyor belts, coolant pipes and power cables, painted into the floor
     belts = [[(1, 55.5), (14.5, 55.5), (14.5, 23), (19, 18.5)], [(23, 18.5), (27, 18.5), (27, 13), (29, 12)],
-             [(31.5, 13), (31.5, 21), (26.5, 26), (26.5, 36.5), (42.5, 36.5), (42.5, 51.5), (106.5, 51.5)]]
+             [(31.5, 13), (31.5, 23)]]                                     # furnaces to the ingot stacks; nothing leaves the ore rooms
     pipes = [[(65.5, 63), (65.5, 44)], [(74.5, 63), (74.5, 44)]]
     cables = [[(70.5, 33), (70.5, 24.5), (100.5, 24.5), (100.5, 52.5)], [(48, 38.5), (40.5, 38.5), (40.5, 24.5)], [(40.5, 36), (6.5, 36)]]
     g.setdefault('FLOOR_EXTRAS', {})['eng'] = {'belts': belts, 'pipes': pipes, 'cables': cables, 'core': [70.5, 38],
