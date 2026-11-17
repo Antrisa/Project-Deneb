@@ -120,9 +120,14 @@ static func sample(rows: Array,x: int,y: int,ch: String) -> Color:
 	if pocket>0.5:kind=3 if w.x==pocket else 4 if w.y==pocket else 5
 	# Continuous eight-spoke layout and a round fountain circuit, clipped to walkable ground.
 	var on_route: bool=radius<174 or (route<40 and (radius<480 or ch in [".","a"]))
+	# The corner forecourts (squares 13 tiles across on the diagonals) are paved like the walks.
+	var fore: float=-1.0
+	for c in [Vector2(80.5,60.5),Vector2(150.5,60.5),Vector2(80.5,130.5),Vector2(150.5,130.5)]:
+		fore=maxf(fore,minf(6.5-absf(point.x-c.x),6.5-absf(point.y-c.y)))
+	if fore>0.0:on_route=true
 	if on_route:kind=1
 	var color:=swatch(kind,x,y)
-	if on_route and route>36 and radius>=170:
+	if on_route and route>36 and radius>=170 and fore<=0.0:
 		color=Color("a99579") if route>38 else Color("f1dfbc")
 	# A softly rounded border on garden / recreation / patio blends. Paths cut clear openings.
 	if w.x>0.39 and w.x<0.61 and route>44:
@@ -130,6 +135,8 @@ static func sample(rows: Array,x: int,y: int,ch: String) -> Color:
 	# A thin inlaid border round each court: one dark pixel, one pale pixel. No raised curb, no end caps.
 	if court>0.0 and court<0.125:
 		color=Color("8f8a78") if court<0.0625 else Color("e6d6b6")
+	if fore>0.0 and fore<0.125 and route>40:
+		color=Color("a99579") if fore<0.0625 else Color("f1dfbc")
 	# Brass direction studs are spaced far apart; no repeated stripes across the route.
 	if on_route and route<3 and int(radius)%96<4 and radius>175:
 		color=Color("c7ad70")

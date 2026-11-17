@@ -4,32 +4,52 @@ var floor_art: Texture2D
 var materials: Array[Texture2D] = []
 func _init() -> void:
 	for i in range(8): materials.append(load("res://art/lunar/material_%d.png" % i))
-func paint(n: Node2D, data: Dictionary) -> void:
-	var rows: Array = data.floor
-	if floor_art == null: floor_art = ImageTexture.create_from_image(bake_floor(rows))
-	n.draw_texture_rect(floor_art,Rect2(0,0,rows[0].length()*16,rows.size()*16),false)
-	preload("res://scripts/lunar_curbs.gd").paint(n)
-	var portals_above := {}
+var portals_above := {}
+var lights: Array = []
+# The floor picture is baked ahead of time by tools/bake_floor.py (run by tools/build.py). Working it out
+# here, pixel by pixel, took a very long time, so that is only a fallback for when the picture is missing.
+func prepare(rows: Array) -> void:
+	if floor_art != null: return
+	if ResourceLoader.exists("res://art/lunar/floor_main.png"):
+		floor_art = load("res://art/lunar/floor_main.png")
+	else:
+		push_warning("art/lunar/floor_main.png is missing: baking the promenade floor now (slow). Run tools/build.py.")
+		floor_art = ImageTexture.create_from_image(bake_floor(rows))
 	for e in preload("res://scripts/map_data.gd").ENTRANCES:
 		if e[0] == "main" and e[6] == "S":
 			for dx in [-1,0,1]: portals_above[Vector2i(e[1]+dx,e[2]-1)] = true
-	for y in rows.size():
-		for x in rows[y].length():
+	lights = preload("res://scripts/map_data.gd").ROOF_LIGHTS
+# Whole level in one go (kept for tools that want it). The game draws it in chunks with paint_region,
+# so Godot only draws the part on screen.
+func paint(n: Node2D, data: Dictionary) -> void:
+	var rows: Array = data.floor
+	paint_region(n,rows,Rect2i(0,0,rows[0].length(),rows.size()))
+# Moon surface round the station: a ring round the main circle and round the four corner pods.
+func moon_at(x: int,y: int) -> bool:
+	if Vector2(x-115,y-95).length() < 68: return true
+	for sx in [-1,1]:
+		for sy in [-1,1]:
+			if Vector2(x-115-sx*39.6,y-95-sy*39.6).length() < 25.0: return true
+	return false
+func paint_region(n: Node2D, rows: Array, r: Rect2i) -> void:
+	prepare(rows)
+	var x1: int = mini(r.end.x,rows[0].length())
+	var y1: int = mini(r.end.y,rows.size())
+	var area_px := Rect2(Vector2(r.position*16),Vector2((Vector2i(x1,y1)-r.position)*16))
+	n.draw_texture_rect_region(floor_art,area_px,area_px)
+	for y in range(r.position.y,y1):
+		for x in range(r.position.x,x1):
 			var ch: String = rows[y][x]
 			if ch == "~":
-				if Vector2(x-115,y-95).length() < 68:
+				if moon_at(x,y):
 					tile(n,3,x,y)
 				continue
 			if ch not in "#Wz":
 				continue
-			var material := 0
-			if ch == "a": material = 4
-			elif ch == "p": material = 5
-			elif ch in "#Wz": material = 1
 			roof_tile(n,rows,x,y,0)
 	# Wall bodies meet the same structural footprint, then their raised roof lip.
-	for y in rows.size():
-		for x in rows[y].length():
+	for y in range(r.position.y,y1):
+		for x in range(r.position.x,x1):
 			if rows[y][x] not in "#Wz": continue
 			var bottom: bool = y+1<rows.size() and rows[y+1][x] not in "#Wz~"
 			if bottom and not portals_above.has(Vector2i(x,y)):
@@ -51,12 +71,17 @@ func paint(n: Node2D, data: Dictionary) -> void:
 				n.draw_rect(Rect2(x*16,y*16-16,2,32),Color("394756"))
 			if x+1<rows[y].length() and rows[y][x+1] not in "#Wz~":
 				n.draw_rect(Rect2(x*16+14,y*16-16,2,32),Color("7c828a"))
-	for l in preload("res://scripts/map_data.gd").ROOF_LIGHTS:
-		skylight(n,int(l[0]),int(l[1]))
+	for l in lights:
+		if r.has_point(Vector2i(int(l[0]),int(l[1]))):
+			skylight(n,int(l[0]),int(l[1]))
 # The roofs are split into plates: eight over the shop band (one between each pair of spokes) and sixteen
 # round the outer shell. Each plate has its own tone.
 func roof_zone(x: int,y: int) -> int:
 	var d:=Vector2(x+0.5-115.5,y+0.5-95.5)
+	# Each corner pod is one plate of its own.
+	for sx in [-1,1]:
+		for sy in [-1,1]:
+			if Vector2(x-115-sx*39.6,y-95-sy*39.6).length() <= 14.0: return 24
 	var a: float=fposmod(rad_to_deg(d.angle()),360.0)
 	if d.length()<45.0:
 		return int(a/45.0)%8
@@ -116,6 +141,11 @@ func roof_tile(n: Node2D,rows: Array,x: int,y: int,lift: int) -> void:
 	var open_u: bool=y>0 and rows[y-1][x] not in "#Wz"
 	var open_d: bool=y+1<rows.size() and rows[y+1][x] not in "#Wz"
 	var rounded: Array[bool]=[open_l and open_u,open_r and open_u,open_r and open_d,open_l and open_d]
+	var tint: Color=[Color("ffffff"),Color("dbe4ee"),Color("f0e9df"),Color("c6d3e2")][roof_zone(x,y)%4]
+	if not (rounded[0] or rounded[1] or rounded[2] or rounded[3]):
+		# Most roof tiles: one plain textured square, which Godot draws far faster than a polygon.
+		n.draw_texture_rect_region(materials[1],Rect2(x*16,y*16+lift,16,16),Rect2((x%4)*16,(y%4)*16,16,16),tint)
+		return
 	var centers: Array[Vector2]=[Vector2(5,5),Vector2(11,5),Vector2(11,11),Vector2(5,11)]
 	var corners: Array[Vector2]=[Vector2(0,0),Vector2(16,0),Vector2(16,16),Vector2(0,16)]
 	var points:=PackedVector2Array();var uv:=PackedVector2Array()
@@ -126,5 +156,4 @@ func roof_tile(n: Node2D,rows: Array,x: int,y: int,lift: int) -> void:
 	for i in points.size():
 		uv.append((points[i]+Vector2((x%4)*16,(y%4)*16))/64.0)
 		points[i]+=Vector2(x*16,y*16+lift)
-	var tint: Color=[Color("ffffff"),Color("dbe4ee"),Color("f0e9df"),Color("c6d3e2")][roof_zone(x,y)%4]
 	n.draw_polygon(points,PackedColorArray([tint]),uv,materials[1])

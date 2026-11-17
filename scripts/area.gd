@@ -21,16 +21,37 @@ func setup(area_data: Dictionary, tex: Texture2D, is_overhead: bool = false) -> 
 	tiles_tex = tex
 	overhead = is_overhead
 	cell = tex.get_width() / int(MapData.TILE_COLUMNS)
+	if data["title"] == "Community Concourse" and not overhead:
+		_make_chunks()
+
+
+# The promenade is far bigger than the screen. Drawn as one item, Godot had to handle every tile of it
+# every frame. Split into chunks 16 tiles square, it only draws the few chunks on screen.
+const CHUNK := 16
+func _make_chunks() -> void:
+	var rows: Array = data["floor"]
+	for cy in range(0, rows.size(), CHUNK):
+		for cx in range(0, rows[0].length(), CHUNK):
+			var chunk := Node2D.new()
+			chunk.draw.connect(_draw_chunk.bind(chunk, Rect2i(cx, cy, CHUNK, CHUNK)))
+			add_child(chunk)
+
+
+func _draw_chunk(chunk: Node2D, r: Rect2i) -> void:
+	lunar.paint_region(chunk, data["floor"], r)
+	var obj_rows: Array = data["obj"]
+	for y in range(r.position.y, mini(r.end.y, obj_rows.size())):
+		var orow: String = obj_rows[y]
+		for x in range(r.position.x, mini(r.end.x, orow.length())):
+			var ch: String = orow[x]
+			if ch != "x" and MapData.TILE_OBJ.has(ch):
+				chunk.draw_texture_rect_region(tiles_tex, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2(int(MapData.TILE_OBJ[ch]) * cell, cell, cell, cell))
 
 
 func _draw() -> void:
 	if data["title"] == "Community Concourse":
 		if not overhead:
-			lunar.paint(self,data)
-			for y in data.obj.size():
-				for x in data.obj[y].length():
-					var ch: String = data.obj[y][x]
-					if ch != "x" and MapData.TILE_OBJ.has(ch): _tile(MapData.TILE_OBJ[ch],x,y)
+			pass                 # drawn by the chunks (see _make_chunks)
 		else:
 			# Tops of the tall store-front objects (sign boards, racks, shelves), drawn in front of characters.
 			for y in range(1, data.obj.size()):

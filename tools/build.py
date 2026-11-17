@@ -3241,3 +3241,10 @@ if PREV:
                 if och in fx_obj and fx_obj[och][1]:
                     im.alpha_composite(frame(fx_obj[och][0], 4, 1), (x * cell, (y - 1) * cell))
         im.save(os.path.join(PREV, k + ".png"))
+
+# ---------------------------------------------------------------- promenade floor picture
+# Baked here once instead of in the game (it took the game a long time). See tools/bake_floor.py.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import bake_floor
+bake_floor.bake(bake_floor.rows_from_map_data(os.path.join(OUT, "scripts", "map_data.gd")), os.path.join(OUT, "art", "lunar")).save(os.path.join(OUT, "art", "lunar", "floor_main.png"))
+print("promenade floor baked: art/lunar/floor_main.png")
