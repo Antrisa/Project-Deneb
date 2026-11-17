@@ -559,6 +559,61 @@ def gym_rack(d, w, h):
         d.ellipse((x, 8, x + 12, 22), fill=DARK, outline=INK); d.ellipse((x, 32, x + 12, 46), fill=DARK, outline=INK)
 
 
+def front_desk(d, w, h):
+    box(d, 2, 20, w - 2, h - 2, (150, 104, 66, 255), (186, 140, 100, 255), (108, 74, 48, 255))
+    d.rectangle((2, 18, w - 2, 26), fill=(226, 214, 190, 255), outline=INK)
+    for x in range(14, w - 10, 24): d.rectangle((x, 32, x + 14, h - 10), outline=(108, 74, 48, 255))
+    d.ellipse((w // 2 - 7, 8, w // 2 + 7, 20), fill=(220, 180, 80, 255), outline=INK)
+    d.rectangle((20, 8, 40, 18), fill=DARK, outline=INK); d.rectangle((23, 10, 37, 16), fill=TEAL_D)
+    d.rectangle((w - 44, 12, w - 24, 18), fill=(240, 236, 220, 255), outline=INK)
+
+
+def front_desk_side(d, w, h):
+    box(d, 2, 20, w - 2, h - 2, (150, 104, 66, 255), (186, 140, 100, 255), (108, 74, 48, 255))
+    d.rectangle((2, 18, w - 2, 26), fill=(226, 214, 190, 255), outline=INK)
+    d.rectangle((16, 32, w - 16, h - 10), outline=(108, 74, 48, 255))
+    d.rectangle((w // 2 - 10, 8, w // 2 + 10, 18), fill=(120, 170, 100, 255), outline=INK)
+
+
+def key_board(d, w, h):
+    legs(d, (10, w - 14), 50, h - 2)
+    box(d, 4, 4, w - 4, 54, WOOD, (186, 140, 100, 255), WOOD_D)
+    for r in range(3):
+        for c in range(4):
+            x, y = 12 + c * 12, 12 + r * 14
+            d.ellipse((x, y, x + 4, y + 4), fill=AMBER); d.line((x + 2, y + 4, x + 2, y + 10), fill=(220, 190, 110, 255))
+
+
+def luggage_cart(d, w, h):
+    d.rectangle((6, h - 16, w - 6, h - 10), fill=(220, 180, 80, 255), outline=INK)
+    for x in (8, w - 12): d.rectangle((x, 8, x + 4, h - 12), fill=(220, 180, 80, 255), outline=INK)
+    d.arc((8, 0, w - 8, 20), 180, 360, fill=(220, 180, 80, 255), width=4)
+    d.rectangle((14, 30, 40, h - 16), fill=(150, 70, 60, 255), outline=INK); d.rectangle((30, 40, 52, h - 16), fill=(60, 104, 112, 255), outline=INK)
+    for x in (8, w - 16): d.ellipse((x, h - 10, x + 8, h - 2), fill=DARK)
+
+
+def sofa(d, w, h):
+    box(d, 6, 8, w - 6, h - 22, (60, 104, 112, 255), (90, 140, 150, 255), (40, 76, 84, 255), r=8)
+    box(d, 2, 26, 14, h - 6, (60, 104, 112, 255)); box(d, w - 14, 26, w - 2, h - 6, (60, 104, 112, 255))
+    box(d, 12, 32, w - 12, h - 8, (80, 126, 134, 255))
+    d.line((w // 2, 34, w // 2, h - 10), fill=(40, 76, 84, 255))
+
+
+def fireplace(d, w, h):
+    box(d, 2, 10, w - 2, h - 2, (170, 150, 130, 255), (200, 184, 166, 255), (120, 104, 90, 255))
+    d.rectangle((0, 6, w, 14), fill=(150, 104, 66, 255), outline=INK)
+    d.rounded_rectangle((20, 40, w - 20, h - 8), 10, fill=(40, 30, 30, 255), outline=INK, width=2)
+    d.polygon([(32, h - 10), (40, h - 34), (48, h - 18), (56, h - 40), (64, h - 10)], fill=(250, 140, 50, 255))
+    d.polygon([(40, h - 10), (48, h - 26), (56, h - 10)], fill=(255, 220, 120, 255))
+
+
+def fridge(d, w, h):
+    box(d, 4, 4, w - 4, h - 2, (226, 230, 232, 255), (255, 255, 255, 255), (180, 186, 190, 255))
+    d.line((6, 40, w - 6, 40), fill=INK, width=2)
+    for y in (16, 52): d.rectangle((w - 14, y, w - 10, y + 20), fill=STEEL_D)
+    d.rectangle((12, 10, 26, 16), fill=TEAL_D)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -602,7 +657,10 @@ PROPS = {
     'customs_desk': (96, 64, customs_desk), 'stanchion': (32, 40, stanchion), 'departures_board': (128, 88, departures_board),
     'beacon_mast': (96, 144, beacon_mast), 'planter_dead': (96, 56, planter_dead), 'rubble': (64, 32, rubble), 'glass_shards': (64, 28, glass_shards),
     'shipping_bin': (64, 64, shipping_bin), 'steam_vent': (32, 48, steam_vent), 'bunk_bed': (64, 104, bunk_bed), 'armchair': (64, 72, armchair),
-    'footlocker': (64, 36, footlocker), 'gym_rack': (96, 72, gym_rack), 'case_empty': (64, 72, case_empty),
+    'footlocker': (64, 36, footlocker), 'gym_rack': (96, 72, gym_rack),
+    'front_desk': (160, 72, front_desk), 'front_desk_l': (96, 72, front_desk_side), 'front_desk_r': (96, 72, front_desk_side),
+    'key_board': (64, 80, key_board), 'luggage_cart': (64, 72, luggage_cart), 'sofa': (96, 64, sofa), 'fireplace': (96, 104, fireplace),
+    'fridge': (64, 104, fridge), 'case_empty': (64, 72, case_empty),
     'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
     'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
     'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),

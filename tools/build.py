@@ -2502,14 +2502,14 @@ u.put("O", [(40, 27), (20, 27), (38, 3)])
 u.warp("R", [(30, 38), (31, 38)], "mine", 22, 4)
 
 # ---------------------------------------------------------------- who and what is where
-START = ["hotel", 12, 27]
+START = ["hotel", 68, 48]
 # NOTE: spots on the main level below (MEDBAY, PEOPLE, SCHEDULES_RAW, THINGS) are still written
 # in the OLD main-level coordinates; moved() turns them into the right room and tile.
 MEDBAY = list(moved("main", 137, 51))       # where you wake up after collapsing
 # name, area, tile x, tile y, talk radius (bigger when they stand behind a counter)
 PEOPLE = [
     # Sara appears as a hologram in several places
-    ["Sara", "top", 23, 21, 30], ["Sara", "hotel", 15, 27, 26], ["Sara", "west", 40, 36, 36], ["Sara", "main", 90, 65, 26],
+    ["Sara", "top", 23, 21, 30], ["Sara", "hotel", 72, 47, 26], ["Sara", "west", 40, 36, 36], ["Sara", "main", 90, 65, 26],
 ]
 PEOPLE = [[p[0]] + list(moved(p[1], p[2], p[3])) + [p[4]] for p in PEOPLE]
 
@@ -2866,7 +2866,7 @@ MAP_LAYOUT = {"west": [0, 30, 0.5], "main": [60, 24, 1.0 / 3.0], "east": [142, 3
               "tunnels": [0, 92, 0.5]}
 MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 28], ["Main Level", 104, 28], ["East Complex", 144, 36], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
 MAP_MARKS = [
-    [1, "hotel", 12, 26, "Your quarters"], [2, "west", 19, 40, "Airlock to the landing pad"], [3, "west", 42, 40, "Reception"],
+    [1, "hotel", 70, 48, "Your quarters"], [2, "west", 19, 40, "Airlock to the landing pad"], [3, "west", 42, 40, "Reception"],
     [4, "agri", 55, 23, "Your agri dome"], [5, "agri", 86, 64, "Hot springs & fish ponds"], [6, "agri", 24, 64, "Your workshop"],
     [7, "east", 50, 19, "Evarra's herb dome"], [8, "east", 93, 55, "Air reclamation plant"], [9, "east", 50, 83, "East airlock"],
     [10, "top", 23, 23, "S.A.R.A.'s core"], [11, "top", 23, 5, "Observation Lounge"], [12, "eng", 22, 22, "Ore processing"],

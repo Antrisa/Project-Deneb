@@ -8,8 +8,10 @@ west   the district junction (option D): a big octagonal plaza with four empty b
 agri   three domes round a central storage shed: your agri dome (one corner still grows), your workshop, and
        the hot springs and fish ponds. Glass links join the shed to the agri dome and every dome to the others;
        the way in from the junction crosses the workshop-springs link at a small crossroads.
-hotel  the old barracks, the future hotel: the long hall (front desk), the head officer's quarters (you start
-       here), three bunk rooms, a big lower bunk room and the old drill hall (the lounge later).
+hotel  option C: a round lobby with a fountain and a curved front desk, the dining room and kitchen, the lounge,
+       your office and bedroom (you start here), a guest corridor and big empty wings to build guest rooms in. The
+       kitchen opens onto the dining room and the staff hall behind the desk; the dining room and the lounge each
+       have their own way down to the guest corridor.
 Drawn in the promenade style; walls faceted by tools/bake_floor.py."""
 import math
 import survey
@@ -17,7 +19,7 @@ import engineering                    # its prop sizes (benches, shelves, workbe
 from survey import Room, SIZES, door_pair
 from engineering import chamfer_room
 
-WALKABLE = '.pfhuAasmo'
+WALKABLE = '.pfhuAasmoiktei'
 SIZES.update({
     'kiosk': (3, 3, 2), 'seed_rack': (2, 2, 1), 'garden_tools': (2, 2, 1), 'hydroponics': (3, 2, 1), 'planter_long': (4, 2, 1),
     'tree_tub': (2, 2, 1), 'lamp_post': (1, 2, 1), 'waiting_seat_w': (1, 3, 2), 'waiting_seat_e': (1, 3, 2), 'market_counter': (3, 2, 1),
@@ -25,6 +27,8 @@ SIZES.update({
     'customs_desk': (3, 2, 1), 'stanchion': (1, 1, 1), 'departures_board': (4, 2, 1), 'beacon_mast': (3, 4, 2),
     'planter_dead': (3, 2, 1), 'rubble': (2, 1, 1), 'glass_shards': (2, 1, 0), 'shipping_bin': (2, 2, 1), 'steam_vent': (1, 1, 1),
     'bunk_bed': (2, 3, 2), 'armchair': (2, 2, 1), 'footlocker': (2, 1, 1), 'gym_rack': (3, 2, 1),
+    'front_desk': (5, 2, 1), 'front_desk_l': (3, 2, 1), 'front_desk_r': (3, 2, 1), 'key_board': (2, 2, 1), 'luggage_cart': (2, 2, 1),
+    'sofa': (3, 2, 1), 'fireplace': (3, 3, 1), 'fridge': (2, 3, 1), 'bar_table': (3, 2, 1), 'cafe_table': (2, 2, 1),
 })
 
 
@@ -154,43 +158,70 @@ def build(g):
     N('bench_n', 84, 77, 'Bench [N]', 'seat', 'Sit'); N('plants', 96, 59, 'Fern', 'inspect', 'Inspect'); N('plants', 75, 72, 'Fern', 'inspect', 'Inspect')
     a.thing('look', 'Hot spring', 'Look', 83, 64.5, 40); a.thing('look', 'Fish ponds', 'Look', 87, 72.5, 40)
 
-    # ================================================================== hotel: the old barracks
-    h = Room(g, 'hotel', 'Hotel', 72, 48)
+    # ================================================================== hotel (option C, Zachary 17 Nov)
+    # A round lobby under a glass dome with a fountain and the front desk curving along its back; the dining
+    # room and kitchen to the west, the lounge to the east, your office and bedroom behind the desk, a long
+    # guest corridor and big empty wings (and a spare room) to build guest rooms in later.
+    h = Room(g, 'hotel', 'Hotel', 120, 90)
     F = h.F
-    fill(F, 1, 1, 70, 46, '#')
-    chamfer_room(F, 5, 10, 69, 17, 'u', 2)                       # the hotel hall
-    hotel_in = (37, 9); F[hotel_in[1]][hotel_in[0]] = 'u'
-    chamfer_room(F, 5, 19, 19, 33, 'h', 2); F[18][12] = 'h'      # the head officer's quarters (yours)
-    for x0 in (21, 31, 41):
-        chamfer_room(F, x0, 19, x0 + 8, 33, 'f', 1); F[18][x0 + 4] = 'f'
-    chamfer_room(F, 51, 19, 69, 45, 'm', 3)                      # the old drill hall
-    for x in range(58, 63): F[18][x] = 'm'
-    chamfer_room(F, 5, 35, 49, 45, 'f', 2)                       # the big lower bunk room
-    for y in (38, 39, 40): F[y][50] = 'f'
-    h.t.zones += [['Hotel hall', 5, 10, 69, 17], ["Head officer's quarters", 5, 19, 19, 33], ['Bunk room', 21, 19, 49, 33],
-                  ['Old drill hall', 51, 19, 69, 45], ['Bunk room', 5, 35, 49, 45]]
-    h.keep_clear(35, 10, 39, 12); h.keep_clear(5, 12, 69, 15)
-    for x in (12, 25, 35, 45): h.keep_clear(x - 1, 16, x + 1, 20)
-    h.keep_clear(57, 16, 63, 21); h.keep_clear(48, 37, 52, 41)
+    fill(F, 1, 1, 118, 88, '#')
+    hotel_in = (60, 1)
+    fill(F, 59, 2, 61, 9, 'u'); F[hotel_in[1]][hotel_in[0]] = 'u'
+    disc(F, 60, 24, 15, 'i')                                     # the round lobby
+    disc(F, 60, 21.5, 3.2, 'O')                                  # its fountain
+    chamfer_room(F, 12, 10, 41, 33, 'p', 4)                      # dining room
+    fill(F, 42, 22, 45, 24, 'u')
+    chamfer_room(F, 12, 36, 31, 49, 'k', 3)                      # kitchen
+    fill(F, 21, 34, 23, 35, 'u')                                 # kitchen to dining room
+    fill(F, 32, 40, 41, 41, 'u')                                 # kitchen to the staff hall behind the desk
+    fill(F, 6, 21, 11, 23, 'u'); fill(F, 6, 21, 8, 55, 'u')      # dining room down to the guest corridor
+    chamfer_room(F, 78, 10, 108, 33, 'h', 4)                     # lounge
+    fill(F, 75, 22, 77, 24, 'u')
+    fill(F, 59, 39, 61, 41, 'u'); fill(F, 42, 40, 78, 41, 'u')   # the staff hall behind the desk
+    chamfer_room(F, 42, 43, 57, 54, 'o', 3); F[42][50] = 'o'     # your office
+    chamfer_room(F, 63, 43, 78, 54, 't', 3); F[42][70] = 't'     # your bedroom
+    fill(F, 59, 42, 61, 55, 'u')
+    chamfer_room(F, 84, 36, 108, 52, 'e', 2); fill(F, 94, 53, 96, 55, 'u')   # spare room (empty)
+    fill(F, 80, 34, 82, 55, 'u')                                 # lounge down to the guest corridor
+    fill(F, 4, 56, 116, 60, 'u')                                 # guest corridor
+    chamfer_room(F, 4, 63, 56, 86, 'e', 2); chamfer_room(F, 64, 63, 116, 86, 'e', 2)   # empty guest wings
+    for x in (29, 30, 31, 89, 90, 91): F[61][x] = F[62][x] = 'u'
+    h.t.zones += [['Hotel lobby', 45, 9, 75, 39], ['Dining room', 12, 10, 41, 33], ['Kitchen', 12, 36, 31, 49], ['Lounge', 78, 10, 108, 33],
+                  ['Your office', 42, 43, 57, 54], ['Your bedroom', 63, 43, 78, 54], ['Spare room', 84, 36, 108, 52],
+                  ['Guest corridor', 4, 56, 116, 60], ['West guest wing', 4, 63, 56, 86], ['East guest wing', 64, 63, 116, 86]]
+    h.keep_clear(58, 2, 62, 12); h.keep_clear(40, 21, 47, 25); h.keep_clear(73, 21, 80, 25); h.keep_clear(57, 36, 63, 57)
+    h.keep_clear(42, 39, 78, 42); h.keep_clear(19, 32, 25, 37); h.keep_clear(5, 20, 12, 57); h.keep_clear(30, 39, 42, 42); h.keep_clear(79, 32, 83, 57); h.keep_clear(4, 56, 116, 60)
+    h.keep_clear(27, 60, 33, 64); h.keep_clear(87, 60, 93, 64); h.keep_clear(92, 51, 98, 56)
     P, N = h.prop, h.near
-    N('market_counter', 30.5, 11.5, 'Old front desk', 'look', 'Look'); N('tree_tub', 8, 11.5, 'Potted tree', None); N('tree_tub', 66, 11.5, 'Potted tree', None)
-    N('armchair', 44, 11.5, 'Armchair', 'seat', 'Sit'); N('armchair', 48, 11.5, 'Armchair', 'seat', 'Sit')
-    # your quarters
-    P('bed', 6, 20, 'Your bunk', 'bed', 'Sleep'); P('wardrobe', 16, 19, 'Locker', 'wardrobe', 'Change look')
-    N('footlocker', 7.5, 24.5, 'Footlocker', None); N('armchair', 16, 31, 'Armchair', 'seat', 'Sit'); N('books', 7, 31.5, 'Old manuals', None)
-    N('plants', 12.5, 31.5, 'Plant', 'inspect', 'Inspect')
-    # bunk rooms, dusty
-    for x0 in (21, 31, 41):
-        N('bunk_bed', x0 + 1.5, 22.5, 'Old bunks', 'look', 'Look'); N('bunk_bed', x0 + 6.5, 22.5, 'Old bunks', None)
-        N('bunk_bed', x0 + 1.5, 30.5, 'Old bunks', None); N('footlocker', x0 + 6.5, 31.5, 'Footlocker', None)
-    for fx in (9, 15, 21, 27, 33, 39):
-        N('bunk_bed', fx, 38.5, 'Old bunks', None)
-    for fx in (11, 23, 35): N('rubble', fx, 44, 'Rubble', None)
-    N('locker', 45, 44.5, 'Old lockers', None)
-    # the old drill hall: empty, a few weights, crates
-    N('gym_rack', 55.5, 22.5, 'Old weights rack', None); N('cargo', 66, 22, 'Crates', None); N('cargo', 66, 43.5, 'Crates', None)
-    N('rubble', 57, 41, 'Rubble', None); N('bench_s', 60.5, 44, 'Bench', None)
-    h.thing('look', 'Old drill hall', 'Look', 60, 32, 60)
+    # the lobby: the curved front desk (key boards behind it), sofas and armchairs round the fountain, a luggage cart
+    P('front_desk', 58, 33, 'Front desk', 'look', 'Look'); P('front_desk_l', 52, 31, 'Front desk', None); P('front_desk_r', 66, 31, 'Front desk', None)
+    N('key_board', 56, 37, 'Room keys', 'look', 'Look'); N('key_board', 65, 37, 'Room keys', None)
+    N('luggage_cart', 52.5, 36.5, 'Luggage cart', None)
+    for fx, fy, name in ((52, 15, 'sofa'), (68, 15, 'sofa'), (49, 22.5, 'armchair'), (71, 22.5, 'armchair')):
+        N(name, fx, fy, 'Sofa' if name == 'sofa' else 'Armchair', 'seat', 'Sit')
+    for fx, fy in ((47.5, 29), (72.5, 29), (54, 11.5), (66, 11.5)): N('tree_tub', fx, fy, 'Potted tree', None)
+    h.thing('look', 'Lobby fountain', 'Look', 60, 25, 40)
+    # dining room: tables, a buffet counter, plants
+    for fx in (20, 27, 34):
+        for fy in (19, 27): N('cafe_table', fx, fy, 'Dining table', 'seat', 'Sit')
+    N('market_counter', 26.5, 12.5, 'Buffet counter', 'look', 'Look'); N('tree_tub', 15, 13, 'Potted tree', None); N('tree_tub', 38, 13, 'Potted tree', None)
+    # kitchen
+    N('kitchenette', 16.5, 39.5, 'Stove and sink', 'inspect', 'Inspect'); N('kitchenette', 26.5, 39.5, 'Stove and sink', None)
+    N('fridge', 29, 46, 'Cold store', 'look', 'Look'); N('table', 18.5, 45.5, 'Prep table', None); N('storage_shelf', 14.5, 47.5, 'Pantry shelves', None)
+    # lounge: sofas, armchairs, the bar and the fireplace
+    N('fireplace', 93.5, 12.5, 'Fireplace', 'look', 'Look'); N('sofa', 89, 19, 'Sofa', 'seat', 'Sit'); N('sofa', 98, 19, 'Sofa', 'seat', 'Sit')
+    N('armchair', 86, 26, 'Armchair', 'seat', 'Sit'); N('armchair', 101, 26, 'Armchair', 'seat', 'Sit'); N('cafe_table', 93.5, 25, 'Coffee table', None)
+    N('bar_table', 104, 30.5, 'Bar', 'look', 'Look'); N('books', 82, 13.5, 'Bookshelf', None); N('tree_tub', 106, 14, 'Potted tree', None)
+    # your office
+    N('curator_desk', 49.5, 46.5, 'Your desk', 'look', 'Look'); N('star_chart', 55, 46, 'Hotel plans', 'look', 'Look')
+    N('books', 45, 46.5, 'Ledgers', None); N('armchair', 46, 52, 'Armchair', 'seat', 'Sit'); N('plants', 53.5, 52.5, 'Plant', 'inspect', 'Inspect')
+    # your bedroom
+    P('bed', 65, 44, 'Your bed', 'bed', 'Sleep'); P('wardrobe', 75, 43, 'Locker', 'wardrobe', 'Change look')
+    N('footlocker', 65, 49.5, 'Footlocker', None); N('armchair', 75, 52, 'Armchair', 'seat', 'Sit'); N('plants', 66.5, 52.5, 'Plant', 'inspect', 'Inspect')
+    # the empty spaces: bare floor marked out for building, a few crates
+    N('cargo', 87, 39, 'Crates', None); N('cargo', 7, 66, 'Crates', None); N('cargo', 113, 66, 'Crates', None)
+    for (fx, fy, t) in ((95, 44, 'Spare room'), (30, 74, 'West guest wing'), (90, 74, 'East guest wing')):
+        h.thing('look', t, 'Look', fx, fy, 60)
 
     # ================================================================== doors and links
     warps = {'west': w.t.warps, 'agri': a.t.warps, 'hotel': h.t.warps}

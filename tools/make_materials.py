@@ -254,6 +254,43 @@ MATERIALS.update({'sp_terminal': sp_terminal, 'sp_plaza': sp_plaza, 'sp_carpet':
                   'sp_glass': sp_glass, 'sp_basin': sp_basin, 'sp_soil': sp_soil, 'sp_spa': sp_spa, 'sp_water': sp_water,
                   'sp_parquet': sp_parquet, 'sp_bunk': sp_bunk})
 
+
+def sp_marble():
+    """The hotel lobby: cream marble with soft grey veins, big slabs."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((230, 224, 210)), .95 + noise(40) * .06)
+    vein = np.abs(np.sin((x * 1.3 + y * .7 + noise(41) * 40) / 7.0)) > .985
+    img[vein] = rgb((176, 170, 160))
+    img[(x % 32 == 0) | (y % 32 == 0)] = rgb((196, 190, 176))
+    return img
+
+
+def sp_kitchen():
+    """The hotel kitchen: black and white tiles."""
+    c = ((x // 16) + (y // 16)) % 2 == 0
+    img = np.where(c[..., None], rgb((224, 224, 220)), rgb((60, 62, 66)))
+    img = shade(img, .96 + noise(42) * .06)
+    img[(x % 16 == 0) | (y % 16 == 0)] = rgb((140, 140, 140))
+    return img
+
+
+def sp_carpet_red():
+    """Your bedroom: a warm red carpet with a gold border pattern."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((140, 52, 52)), .95 + noise(43) * .08)
+    fig = ((x % 32 == 16) | (y % 32 == 16)) & ((x + y) % 4 == 0)
+    img[fig] = rgb((200, 160, 90))
+    return img
+
+
+def sp_build():
+    """Empty hotel space: bare concrete with faint chalk lines every two tiles, ready to build on."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((150, 148, 142)), .9 + noise(44) * .14)
+    chalk = ((x % 64 == 0) | (y % 64 == 0)) & ((x + y) % 4 < 2)
+    img[chalk] = rgb((214, 212, 204))
+    return img
+
+
+MATERIALS.update({'sp_marble': sp_marble, 'sp_kitchen': sp_kitchen, 'sp_carpet_red': sp_carpet_red, 'sp_build': sp_build})
+
 if __name__ == "__main__":
     for name, fn in MATERIALS.items():
         path = os.path.join(OUT, name + ".png")
