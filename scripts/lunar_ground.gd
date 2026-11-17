@@ -6,19 +6,30 @@ func _init() -> void:
 	for i in range(8): materials.append(load("res://art/lunar/material_%d.png" % i))
 var portals_above := {}
 var lights: Array = []
+var key := "main"               # which level this draws (main = the promenade)
+var window_art: Texture2D       # the view through a curved window, one strip across the whole level
 # The floor picture is baked ahead of time by tools/bake_floor.py (run by tools/build.py). Working it out
 # here, pixel by pixel, took a very long time, so that is only a fallback for when the picture is missing.
 func prepare(rows: Array) -> void:
 	if floor_art != null: return
-	if ResourceLoader.exists("res://art/lunar/floor_main.png"):
-		floor_art = load("res://art/lunar/floor_main.png")
-	else:
+	var path := "res://art/lunar/floor_%s.png" % key
+	if ResourceLoader.exists(path):
+		floor_art = load(path)
+	elif key == "main":
 		push_warning("art/lunar/floor_main.png is missing: baking the promenade floor now (slow). Run tools/build.py.")
 		floor_art = ImageTexture.create_from_image(bake_floor(rows))
+	else:
+		push_warning("%s is missing. Run tools/build.py." % path)
+		var blank := Image.create(rows[0].length()*16,rows.size()*16,false,Image.FORMAT_RGBA8)
+		blank.fill(Color("b8b2a4"))
+		floor_art = ImageTexture.create_from_image(blank)
+	if ResourceLoader.exists("res://art/lunar/window_%s.png" % key):
+		window_art = load("res://art/lunar/window_%s.png" % key)
 	for e in preload("res://scripts/map_data.gd").ENTRANCES:
-		if e[0] == "main" and e[6] == "S":
+		if e[0] == key and e[6] == "S":
 			for dx in [-1,0,1]: portals_above[Vector2i(e[1]+dx,e[2]-1)] = true
-	lights = preload("res://scripts/map_data.gd").ROOF_LIGHTS
+	var md = preload("res://scripts/map_data.gd")
+	lights = md.ROOF_LIGHTS if key == "main" else md.AREA_LIGHTS.get(key,[])
 # Whole level in one go (kept for tools that want it). The game draws it in chunks with paint_region,
 # so Godot only draws the part on screen.
 func paint(n: Node2D, data: Dictionary) -> void:
@@ -26,6 +37,7 @@ func paint(n: Node2D, data: Dictionary) -> void:
 	paint_region(n,rows,Rect2i(0,0,rows[0].length(),rows.size()))
 # Moon surface round the station: a ring round the main circle and round the four corner pods.
 func moon_at(x: int,y: int) -> bool:
+	if key != "main": return true
 	if Vector2(x-115,y-95).length() < 68: return true
 	for sx in [-1,1]:
 		for sy in [-1,1]:
@@ -44,32 +56,36 @@ func paint_region(n: Node2D, rows: Array, r: Rect2i) -> void:
 				if moon_at(x,y):
 					tile(n,3,x,y)
 				continue
-			if ch not in "#Wz":
+			if ch not in "#Wzw":
 				continue
 			roof_tile(n,rows,x,y,0)
 	# Wall bodies meet the same structural footprint, then their raised roof lip.
 	for y in range(r.position.y,y1):
 		for x in range(r.position.x,x1):
-			if rows[y][x] not in "#Wz": continue
-			var bottom: bool = y+1<rows.size() and rows[y+1][x] not in "#Wz~"
-			if bottom and not portals_above.has(Vector2i(x,y)):
+			if rows[y][x] not in "#Wzw": continue
+			var bottom: bool = y+1<rows.size() and rows[y+1][x] not in "#Wzw~"
+			if bottom and rows[y][x] == "w" and window_art != null:
+				# A window: the view outside, one strip drawn across the whole level so it lines up.
+				n.draw_rect(Rect2(x*16,y*16+16,16,4),Color(0.1,0.12,0.18,0.22))
+				n.draw_texture_rect_region(window_art,Rect2(x*16,y*16-16,16,32),Rect2(x*16,0,16,32))
+			elif bottom and not portals_above.has(Vector2i(x,y)):
 				n.draw_rect(Rect2(x*16,y*16+16,16,4),Color(0.1,0.12,0.18,0.22))
 				n.draw_texture_rect_region(materials[2],Rect2(x*16,y*16-16,16,32),Rect2((x%2)*32,0,32,64),wall_tint(x,y))
 				wall_detail(n,x,y)
 			else:
 				roof_tile(n,rows,x,y,-16)
-			if not bottom and y>0 and rows[y-1][x] in "#Wz":
+			if not bottom and y>0 and rows[y-1][x] in "#Wzw":
 				roof_detail(n,x,y)
 				# A seam where one roof plate meets the next, so the roof reads as separate buildings.
-				if x+1<rows[y].length() and rows[y][x+1] in "#Wz" and roof_zone(x+1,y)!=roof_zone(x,y):
+				if x+1<rows[y].length() and rows[y][x+1] in "#Wzw" and roof_zone(x+1,y)!=roof_zone(x,y):
 					n.draw_rect(Rect2(x*16+15,y*16-16,1,16),Color("36434f"))
 					n.draw_rect(Rect2(x*16+16,y*16-16,1,16),Color("a9b6c2"))
-				if y+1<rows.size() and rows[y+1][x] in "#Wz" and roof_zone(x,y+1)!=roof_zone(x,y):
+				if y+1<rows.size() and rows[y+1][x] in "#Wzw" and roof_zone(x,y+1)!=roof_zone(x,y):
 					n.draw_rect(Rect2(x*16,y*16-1,16,1),Color("36434f"))
 					n.draw_rect(Rect2(x*16,y*16,16,1),Color("a9b6c2"))
-			if x>0 and rows[y][x-1] not in "#Wz~":
+			if x>0 and rows[y][x-1] not in "#Wzw~":
 				n.draw_rect(Rect2(x*16,y*16-16,2,32),Color("394756"))
-			if x+1<rows[y].length() and rows[y][x+1] not in "#Wz~":
+			if x+1<rows[y].length() and rows[y][x+1] not in "#Wzw~":
 				n.draw_rect(Rect2(x*16+14,y*16-16,2,32),Color("7c828a"))
 	for l in lights:
 		if r.has_point(Vector2i(int(l[0]),int(l[1]))):
@@ -77,6 +93,7 @@ func paint_region(n: Node2D, rows: Array, r: Rect2i) -> void:
 # The roofs are split into plates: eight over the shop band (one between each pair of spokes) and sixteen
 # round the outer shell. Each plate has its own tone.
 func roof_zone(x: int,y: int) -> int:
+	if key != "main": return 0
 	var d:=Vector2(x+0.5-115.5,y+0.5-95.5)
 	# Each corner pod is one plate of its own.
 	for sx in [-1,1]:
@@ -136,10 +153,10 @@ func roof_detail(n: Node2D,x: int,y: int) -> void:
 		n.draw_line(at+Vector2(4,12),at+Vector2(11,12),Color("394c61"),1)
 func roof_tile(n: Node2D,rows: Array,x: int,y: int,lift: int) -> void:
 	# Round convex exterior corners inside the collision footprint, never into a path.
-	var open_l: bool=x>0 and rows[y][x-1] not in "#Wz"
-	var open_r: bool=x+1<rows[y].length() and rows[y][x+1] not in "#Wz"
-	var open_u: bool=y>0 and rows[y-1][x] not in "#Wz"
-	var open_d: bool=y+1<rows.size() and rows[y+1][x] not in "#Wz"
+	var open_l: bool=x>0 and rows[y][x-1] not in "#Wzw"
+	var open_r: bool=x+1<rows[y].length() and rows[y][x+1] not in "#Wzw"
+	var open_u: bool=y>0 and rows[y-1][x] not in "#Wzw"
+	var open_d: bool=y+1<rows.size() and rows[y+1][x] not in "#Wzw"
 	var rounded: Array[bool]=[open_l and open_u,open_r and open_u,open_r and open_d,open_l and open_d]
 	var tint: Color=[Color("ffffff"),Color("dbe4ee"),Color("f0e9df"),Color("c6d3e2")][roof_zone(x,y)%4]
 	if not (rounded[0] or rounded[1] or rounded[2] or rounded[3]):

@@ -231,3 +231,78 @@ if __name__ == "__main__":
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(root, "art", "lunar", "floor_main.png")
     bake(rows_from_map_data(os.path.join(root, "scripts", "map_data.gd")), os.path.join(root, "art", "lunar"), style).save(out)
     print("floor picture:", out)
+
+
+# ---------------------------------------------------------------- other levels in the promenade style
+# Each floor character gets one of the six paving families (0 hex, 1 ivory, 2 sage, 3 decking, 4 stone,
+# 5 blue-grey slabs), optionally tinted.
+AREA_FLOORS = {
+    "top": {"u": (5, None), "i": (0, None), "h": (4, None), "s": (4, ("6f5a9a", 0.32)), "m": (2, ("8a8f96", 0.35)),
+            "f": (3, None), ".": (1, None), "D": (1, None)},
+}
+
+
+def bake_area(key, rows, art_dir, extras=None):
+    baker = Baker(art_dir)
+    table = AREA_FLOORS[key]
+    H, W = len(rows) * 16, len(rows[0]) * 16
+    chars = np.array([[ord(c) for c in row] for row in rows], dtype=np.int32)
+    y, x = np.mgrid[0:H, 0:W]
+    ch = chars[y // 16, x // 16]
+    img = np.zeros((H, W, 4), dtype=np.uint8)
+    for c, (kind, tint) in table.items():
+        m = ch == ord(c)
+        if not m.any():
+            continue
+        xs, ys = x[m], y[m]
+        col = baker.swatch(np.full(xs.shape, kind), xs, ys)
+        if tint:
+            col = lerp(col, hexc(tint[0]), tint[1])
+        img[ys, xs, :3] = np.clip(col * 255.0, 0, 255).astype(np.uint8); img[ys, xs, 3] = 255
+    extras = extras or {}
+    if "data_lines" in extras:
+        # Glowing lines in S.A.R.A.'s floor, from her dais out to each memory core, and a ring round the dais.
+        glow = np.zeros((H, W), dtype=bool)
+        for (ax, ay), (bx, by) in extras["data_lines"]:
+            ax, ay, bx, by = ax * 16, ay * 16, bx * 16, by * 16
+            vx, vy = bx - ax, by - ay
+            t = np.clip(((x - ax) * vx + (y - ay) * vy) / float(vx * vx + vy * vy), 0, 1)
+            glow |= np.hypot(x - (ax + t * vx), y - (ay + t * vy)) < 1.6
+        dx, dy = extras["dais"][0] * 16, extras["dais"][1] * 16
+        rr = np.hypot(x - dx, y - dy)
+        glow |= (np.abs(rr - 46) < 1.2) | (np.abs(rr - 58) < 0.8)
+        glow &= ch == ord("i")
+        img[glow, :3] = (92, 214, 222)
+    return Image.fromarray(img, "RGBA")
+
+
+def window_strip(width_px, planet_x, seed=7):
+    """The view through a long curved window: one strip 32 pixels tall across the whole level, so the
+    gas giant lines up from one window tile to the next. Frame and sill top and bottom, mullions every tile."""
+    import random
+    rnd = random.Random(seed)
+    W, H = width_px, 32
+    img = np.zeros((H, W, 4), dtype=np.uint8)
+    y, x = np.mgrid[0:H, 0:W]
+    sky = np.stack([10 + y * 0.6, 14 + y * 0.8, 34 + y * 1.4], axis=-1)
+    img[..., :3] = sky.astype(np.uint8); img[..., 3] = 255
+    for _ in range(W // 6):                                   # stars
+        sx, sy = rnd.randrange(W), rnd.randrange(6, 26)
+        img[sy, sx, :3] = (230, 232, 250) if rnd.random() < .7 else (250, 220, 170)
+    # The gas giant: a big disc rising from below, banded blue and white.
+    cx, cy, R = planet_x, 300.0, 320.0
+    d = np.hypot(x + .5 - cx, y + .5 - cy)
+    inside = d < R
+    band = ((y + (x - cx) ** 2 / 2600.0) / 3.0).astype(int) % 5
+    pal = np.array([[96, 150, 206], [150, 196, 232], [74, 120, 186], [196, 222, 240], [110, 166, 214]], dtype=np.uint8)
+    col = pal[band]
+    shade = np.clip(1.0 - (d / R) ** 6 * 0.35, 0, 1)[..., None]
+    img[inside, :3] = (col[inside] * shade[inside]).astype(np.uint8)
+    rim = inside & (d > R - 2.2)
+    img[rim, :3] = (210, 236, 250)
+    # frame: lintel, sill and a mullion on every tile edge
+    img[0:5, :, :3] = (176, 168, 150); img[5, :, :3] = (90, 96, 112)
+    img[H - 6:H, :, :3] = (176, 168, 150); img[H - 7, :, :3] = (220, 214, 196)
+    for mx in range(0, W, 16):
+        img[:, mx:mx + 2, :3] = (150, 144, 128)
+    return Image.fromarray(img, "RGBA")

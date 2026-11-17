@@ -15,17 +15,18 @@ var cell := 16             # size of one tile in tiles.png (16, or 32 for double
 
 func setup(area_data: Dictionary, tex: Texture2D, is_overhead: bool = false) -> void:
 	data = area_data
+	lunar.key = MapData.LUNAR_AREAS.get(data["title"], "main")
 	if data["title"] == "Community Concourse":
 		for tile in MapData.CONCOURSE_HIDDEN:
 			hidden_objects[Vector2i(int(tile[0]), int(tile[1]))] = true
 	tiles_tex = tex
 	overhead = is_overhead
 	cell = tex.get_width() / int(MapData.TILE_COLUMNS)
-	if data["title"] == "Community Concourse" and not overhead:
+	if MapData.LUNAR_AREAS.has(data["title"]) and not overhead:
 		_make_chunks()
 
 
-# The promenade is far bigger than the screen. Drawn as one item, Godot had to handle every tile of it
+# Levels in the promenade style are far bigger than the screen. Drawn as one item, Godot had to handle every tile of it
 # every frame. Split into chunks 16 tiles square, it only draws the few chunks on screen.
 const CHUNK := 16
 func _make_chunks() -> void:
@@ -49,7 +50,7 @@ func _draw_chunk(chunk: Node2D, r: Rect2i) -> void:
 
 
 func _draw() -> void:
-	if data["title"] == "Community Concourse":
+	if MapData.LUNAR_AREAS.has(data["title"]):
 		if not overhead:
 			pass                 # drawn by the chunks (see _make_chunks)
 		else:

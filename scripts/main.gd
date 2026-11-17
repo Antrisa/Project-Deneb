@@ -2079,28 +2079,48 @@ func _spawn_concourse() -> void:
 		door_locks[key] = bool(e[8])
 		things.append({"kind":"portal","name":e[7],"hint":"Right-click to open" if door.kind != "lift" else "Right-click to ride", "area":e[0],"pos":Vector2(e[1]*16+8,e[2]*16+8),"radius":44.0,"who":"","entry":e,"key":key})
 	for p in MapData.CONCOURSE_PROPS:
-		var sprite: Sprite2D = preload("res://scripts/lunar_terminal.gd").new() if p[0] == "terminal" else Sprite2D.new()
-		if p[0] == "terminal": sprite.title = p[5]
-		sprite.texture = load("res://art/lunar/%s.png" % p[0])
-		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		sprite.centered = false
-		if p[0] == "game_chair" and "left" in p[5]: sprite.flip_h = true
-		# Uniform half-scale, matching the doubled-detail NPC artwork. Never stretch X/Y.
-		sprite.scale = Vector2.ONE * 0.5
-		sprite.offset = Vector2(0,-sprite.texture.get_height())
-		# Centred on its tiles and standing on its bottom edge, on whole pixels.
-		sprite.position = Vector2(p[1]*16+floorf((p[3]*16-sprite.texture.get_width()*0.5)*0.5),(p[2]+p[4])*16)
-		if p[0] == "game_chair" or p[0].begins_with("chair_") or p[0].begins_with("bench_"):
-			# The back of a chair sorts behind its occupant without moving the artwork.
-			sprite.position.y -= 12
-			sprite.offset.y += 24
-		sprite.visible = false
-		actors.add_child(sprite)
-		area_sprites.append([sprite,"main"])
-		if p[0] in ["fountain","terminal"]:
-			var water := ShaderMaterial.new()
-			water.shader = load("res://shaders/fountain_water.gdshader" if p[0] == "fountain" else "res://shaders/mess_lights.gdshader")
-			sprite.material = water
+		_spawn_prop(p,"main")
+	# Other levels drawn in the promenade style (the Survey Level, ...): their props and roof machinery.
+	for area_name in MapData.AREA_PROPS:
+		for p in MapData.AREA_PROPS[area_name]:
+			_spawn_prop(p,area_name)
+	for area_name in MapData.AREA_ROOF_PROPS:
+		for p in MapData.AREA_ROOF_PROPS[area_name]:
+			var roof_sprite := Sprite2D.new()
+			roof_sprite.texture = load("res://art/lunar/%s.png" % p[0])
+			roof_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			roof_sprite.centered = false
+			roof_sprite.scale = Vector2.ONE*0.5
+			roof_sprite.position = Vector2(p[1]*16+floorf((p[3]*16-roof_sprite.texture.get_width()*0.5)*0.5),(p[2]+p[4])*16-16)
+			roof_sprite.offset = Vector2(0,-roof_sprite.texture.get_height())
+			roof_sprite.visible = false
+			actors.add_child(roof_sprite)
+			area_sprites.append([roof_sprite,area_name])
+
+# One prop picture ([name, x, y, w, h, title] in tiles), standing on the bottom of its tiles.
+func _spawn_prop(p: Array, area_name: String) -> void:
+	var sprite: Sprite2D = preload("res://scripts/lunar_terminal.gd").new() if p[0] == "terminal" else Sprite2D.new()
+	if p[0] == "terminal": sprite.title = p[5]
+	sprite.texture = load("res://art/lunar/%s.png" % p[0])
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.centered = false
+	if p[0] == "game_chair" and "left" in p[5]: sprite.flip_h = true
+	# Uniform half-scale, matching the doubled-detail NPC artwork. Never stretch X/Y.
+	sprite.scale = Vector2.ONE * 0.5
+	sprite.offset = Vector2(0,-sprite.texture.get_height())
+	# Centred on its tiles and standing on its bottom edge, on whole pixels.
+	sprite.position = Vector2(p[1]*16+floorf((p[3]*16-sprite.texture.get_width()*0.5)*0.5),(p[2]+p[4])*16)
+	if p[0] == "game_chair" or p[0].begins_with("chair_") or p[0].begins_with("bench_"):
+		# The back of a chair sorts behind its occupant without moving the artwork.
+		sprite.position.y -= 12
+		sprite.offset.y += 24
+	sprite.visible = false
+	actors.add_child(sprite)
+	area_sprites.append([sprite,area_name])
+	if p[0] in ["fountain","terminal"]:
+		var water := ShaderMaterial.new()
+		water.shader = load("res://shaders/fountain_water.gdshader" if p[0] == "fountain" else "res://shaders/mess_lights.gdshader")
+		sprite.material = water
 
 func _portal_key(area_name: String,tile: Vector2i) -> String:
 	return "%s:%d:%d" % [area_name,tile.x,tile.y]
