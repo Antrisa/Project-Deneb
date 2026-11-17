@@ -11,6 +11,14 @@ var pulse := 0.0
 var window: Texture2D = preload("res://art/lunar/home.png")
 var panel: Texture2D = preload("res://art/lunar/material_2.png")
 var metal: Texture2D = preload("res://art/lunar/material_6.png")
+# Painted doors (Art Pack 5): a frame, and leaves that slide into the frame's jambs. Drawn at half size.
+var art := {}
+func _art(name: String) -> Texture2D:
+	if not art.has(name):
+		art[name] = load("res://art/lunar/%s.png" % name) if ResourceLoader.exists("res://art/lunar/%s.png" % name) else null
+	return art[name]
+# Opening of each painted frame, in the frame picture's own pixels: x from, x to, y from (to the bottom).
+const APERTURE := {"door_s_frame": [26, 66, 40], "lift_frame": [34, 88, 36]}
 func setup(e: Array, facade: Array = []) -> void:
 	position = Vector2(float(e[1])*16+8,float(e[2])*16+16)
 	facing = e[6]; title = e[7];destination = e[3];locked = e[8]
@@ -37,9 +45,24 @@ func _draw() -> void:
 		var remain := 14.0*(1.0-opening)
 		draw_rect(Rect2(-14,-18,remain,8),Color("8a9b9e"))
 		draw_rect(Rect2(14-remain,-18,remain,8),Color("8a9b9e"))
+		var lintel := _art("door_n_frame")
+		if lintel != null:
+			draw_texture_rect(lintel,Rect2(-24,-30,48,24),false)
 		return
 	if facing in ["E","W"]:
 		var side := -1.0 if facing == "W" else 1.0
+		var jamb := _art("door_side_frame")
+		var slide := _art("door_side_leaf")
+		if jamb != null and slide != null:
+			# The picture faces right (an east-facing door); mirrored for a west-facing one.
+			draw_set_transform(Vector2.ZERO,0.0,Vector2(side,1.0))
+			draw_texture_rect(jamb,Rect2(-8,-46,16,48),false)
+			var h := 32.0*(1.0-opening)
+			if h>0.5:
+				draw_texture_rect_region(slide,Rect2(-4,-38,8,h),Rect2(0,0,16,h*2.0))
+			draw_rect(Rect2(7,-36,1,30),accent)
+			draw_set_transform(Vector2.ZERO,0.0,Vector2.ONE)
+			return
 		draw_rect(Rect2(-8,-40,16,40),Color("333e50"))
 		draw_rect(Rect2(-5,-36,10,34*(1.0-opening)),Color("a69d8d"))
 		draw_rect(Rect2(side*8-1,-36,2,30),accent)
@@ -61,6 +84,12 @@ func _draw() -> void:
 			draw_line(at+Vector2(0,-30),at+Vector2(16,-30),Color("dcc1a1"),1)
 			if absi(dx)>1 and dx%2==0 and kind!="lift":
 				draw_texture_rect_region(window,Rect2(at+Vector2(2,-25),Vector2(12,20)),Rect2(57,42,44,50))
+	var frame_name := "lift_frame" if kind == "lift" else "door_s_frame"
+	var frame := _art(frame_name)
+	var leaf_art := _art("lift_leaf" if kind == "lift" else "door_s_leaf")
+	if frame != null and leaf_art != null:
+		_painted_door(frame,frame_name,leaf_art,accent)
+		return
 	var half := 16.0 if kind in ["major","lift"] else 12.0
 	draw_style_box(frame_style(),Rect2(-half-5,-42,half*2+10,44))
 	draw_rect(Rect2(-half,-36,half*2,36),Color("263440"))
@@ -94,3 +123,28 @@ func icon(at: Vector2, color: Color) -> void:
 		draw_arc(at,5,0,TAU,8,color,2);draw_line(at+Vector2(-7,0),at+Vector2(7,0),color,1)
 	else:
 		draw_rect(Rect2(at-Vector2(5,4),Vector2(10,8)),color,false,1);draw_line(at+Vector2(0,-4),at+Vector2(0,4),color,1)
+# A painted doorway: dark opening, two leaves sliding apart into the jambs, then the frame over them.
+# The frame stands on the door tile's bottom edge, centred on it, at half size.
+func _painted_door(frame: Texture2D,frame_name: String,leaf_art: Texture2D,accent: Color) -> void:
+	var fw := frame.get_width()*0.5
+	var fh := frame.get_height()*0.5
+	var top_left := Vector2(-fw*0.5,2.0-fh)
+	var ap: Array = APERTURE[frame_name]
+	var ax0: float = top_left.x+ap[0]*0.5
+	var ax1: float = top_left.x+ap[1]*0.5
+	var ay0: float = top_left.y+ap[2]*0.5
+	var ay1 := 2.0
+	draw_rect(Rect2(ax0,ay0,ax1-ax0,ay1-ay0),Color("263440"))
+	draw_rect(Rect2(ax0+1,ay1-3,ax1-ax0-2,2),Color("d7ba8a"))
+	var half := (ax1-ax0)*0.5
+	var shown := floorf(half*(1.0-opening))
+	if shown>0.5:
+		var src_w := shown*2.0*leaf_art.get_width()/(half*2.0)
+		var src := Rect2(leaf_art.get_width()-src_w,0,src_w,leaf_art.get_height())
+		draw_texture_rect_region(leaf_art,Rect2(ax0,ay0,shown,ay1-ay0),src)
+		draw_set_transform(Vector2.ZERO,0.0,Vector2(-1,1))
+		draw_texture_rect_region(leaf_art,Rect2(-ax1,ay0,shown,ay1-ay0),src)
+		draw_set_transform(Vector2.ZERO,0.0,Vector2.ONE)
+	draw_texture_rect(frame,Rect2(top_left,Vector2(fw,fh)),false)
+	draw_rect(Rect2(ax0+2,ay0-3,ax1-ax0-4,1),accent.lightened(0.08*sin(pulse*2)))
+	icon(Vector2(0,top_left.y-8),accent)

@@ -4,7 +4,7 @@ these at half size. Lossless: only fully transparent rows and columns are remove
 adding or replacing a prop picture:   python3 tools/trim_props.py ."""
 import os, sys
 from PIL import Image
-SKIP_PREFIX = ("material_", "paving_", "garden_stone", "fountain", "home", "major", "shop")
+SKIP_PREFIX = ("material_", "paving_", "garden_stone", "fountain", "home", "major", "shop", "door_", "lift_", "floor_", "window_")
 root = os.path.join(sys.argv[1] if len(sys.argv) > 1 else ".", "art", "lunar")
 for name in sorted(os.listdir(root)):
     if not name.endswith(".png") or name.startswith(SKIP_PREFIX):

@@ -131,7 +131,21 @@ def rebuild(g):
            'flowers':(4,2,2),'plants':(3,2,1),'hydroponics':(3,2,1),'water_tank':(2,2,1),'books':(2,2,1),
            'clothes':(3,2,1),'textiles':(3,2,1),'seed_rack':(2,2,1),'market_counter':(3,2,1),'cargo':(2,2,1),
            'trolley':(2,2,1),'workbench':(3,2,1),'medical':(2,3,1),'terminal':(1,2,1),'mailbox':(1,2,1),
-           'telescope':(2,3,1),'market_canopy':(4,4,0)}
+           'telescope':(2,3,1),'market_canopy':(4,4,0),
+           # Promenade Art Pack 5: back views, shop pieces, street furniture, garden and games extras
+           'terminal_n':(1,2,1),'mailbox_n':(1,2,1),'books_n':(2,2,1),'medical_n':(2,3,1),'workbench_n':(3,2,1),
+           'market_counter_n':(3,2,1),'waiting_seat_n':(3,2,1),'waiting_seat_e':(1,3,2),'waiting_seat_w':(1,3,2),
+           'lamp_post':(1,2,1),'tree_tub':(2,2,1),'bollard_light':(1,1,1),'bin':(1,1,1),'drinking_fountain':(1,2,1),
+           'signpost':(1,2,1),'banner_pole':(1,2,1),'kiosk':(3,3,2),'planter_long':(4,2,1),'play_piece':(3,2,1),
+           'garden_tools':(2,2,1),'bird_bath':(1,2,1),'scoreboard':(2,3,1),'arcade':(1,3,1),'bar_table':(3,2,1),
+           'garden_arch':(3,3,1)}
+    for shop_ in ('bar','bram','library','weaver','furn','armoury','mess','common','medbay','fab'):
+        SIZES['front_%s_1'%shop_]=SIZES['front_%s_2'%shop_]=(3,3,1)
+    FRONT_TITLES={'bar':("Rusk's kegs","Rusk's mug sign"),'bram':('Salvage bins','Hanging scale'),
+                  'library':('Outdoor bookcase','Globe and map stand'),'weaver':("Sesska's loom",'Dyed cloth on a frame'),
+                  'furn':("Tobbin's chair and table",'Half-built cabinet'),'armoury':('Weapon rack','Training dummy'),
+                  'mess':('Menu board and stock pot','Serving cart'),'common':('Notice pillar','Tea and coffee stand'),
+                  'medbay':('Medbay banner','Stretcher trolley'),'fab':('Fabricator','Welding cart')}
     # Nothing may stand on a spoke, on a door's approach or on a way out.
     clear={(w[0],w[1]) for w in m.warps}
     for key,title,x,y,facing,w,h,kind in shops+homes:
@@ -151,6 +165,21 @@ def rebuild(g):
             for xx in range(x,x+w):m.obj[yy][xx]='x'
         if solid==0:clear.update((xx,y+h-1) for xx in range(x,x+w))      # a chair keeps its own tile
         if kind:thing(kind,title,hint,x+(w-1)/2,y+h-1,30)
+    def soft(name,x,y,title,kind='inspect',hint='Inspect'):
+        """Places a prop if it fits; otherwise leaves it out quietly."""
+        if name in SIZES and fits(name,x,y):
+            prop(name,x,y,title,kind,hint);return True
+        return False
+    def near_spot(name,fx,fy,title,kind='inspect',hint='Inspect',reach=3,ok=None):
+        """Places a prop as close as it fits to fx,fy (its base centre, in tiles), or leaves it out."""
+        w,h,solid=SIZES[name];best=None
+        for yy in range(int(fy)-reach-h,int(fy)+reach+1):
+            for xx in range(int(fx)-reach-w,int(fx)+reach+1):
+                if fits(name,xx,yy) and (ok is None or ok(xx,yy,w,h)):
+                    d=math.hypot(xx+w/2-fx,yy+h-.5-fy)
+                    if d<=reach+1 and (best is None or d<best[0]):best=(d,xx,yy)
+        if best:prop(name,best[1],best[2],title,kind,hint);return best[1],best[2]
+        return None
     def facing_letter(x,y,focus):
         dx,dy=focus[0]-x,focus[1]-y
         return ('e' if dx>0 else 'w') if abs(dx)>=abs(dy) else ('s' if dy>0 else 'n')
@@ -246,11 +275,19 @@ def rebuild(g):
         # (Beside a north-facing door the first row is under the roof's edge, so they stand one row in.)
         v0=0 if facing=='S' else 1;east=x>cx;sv=1 if facing=='S' else -1
         def cell(u,v):return (x-u if east else x+u, y+sv*v)
-        _local('terminal',door,3,v0+1,{'mess':'Mess hall menu','common':'Community activities','fab':'Manufacturing work orders','medbay':'Medbay reception'}[key])
+        _local('terminal_n' if facing=='N' else 'terminal',door,3,v0+1,{'mess':'Mess hall menu','common':'Community activities','fab':'Manufacturing work orders','medbay':'Medbay reception'}[key])
         spots=[(-3,0),(-6,0),(-5,0),(5,0),(6,0)] if key=='mess' else [(-2,0),(-3,1),(-4,2),(5,0),(6,0)]
         sx,sy=cell(spots[0][0],v0+spots[0][1]);assert free(sx,sy),('sign',key);m.obj[sy][sx]=str([sh[2] for sh in g['SHOPS']].index(key));thing('sign',title,'Read the sign',sx,sy,22)
         for ch_,(u,dv) in zip(g['PORCH_OBJS'][key],spots[1:]):
             ox,oy=cell(u,v0+dv);assert free(ox,oy),('store front',key,u);m.obj[oy][ox]=ch_
+        for i_,(u,v) in enumerate(((-3,6),(3,8))):
+            try:_local('front_%s_%d'%(key,i_+1),door,u,v+v0,FRONT_TITLES[key][i_])
+            except AssertionError:print('note: no room in the %s forecourt for its shop piece %d'%(key,i_+1))
+        if key=='common':
+            try:_local('play_piece',door,-3,10+v0,'Play corner')
+            except AssertionError:print('note: no room for the play corner')
+        try:_local('bin',door,5,11+v0,'Recycling bin')
+        except AssertionError:pass
     # Bram's market: canopy, counter, crates and trolley, just below his door.
     prop('market_canopy',138,85,"Bram's canopy",None)
     for xx in (138,141):m.obj[88][xx]='x'
@@ -262,7 +299,12 @@ def rebuild(g):
     wd=[(xx,yy,f) for k,t,xx,yy,f,w,h,kd in shops if k=='weaver'][0]
     beside(wd,-1,'clothes','Textile display',first_off=4);beside(wd,1,'textiles','Finished garments',first_off=4)
     bd=[(xx,yy,f) for k,t,xx,yy,f,w,h,kd in shops if k=='bar'][0]
-    beside(bd,-1,'cafe_table','Bar table',first_step=2,first_off=4);beside(bd,1,'cafe_table','Bar table',first_step=2,first_off=4)
+    beside(bd,-1,'bar_table','Tall bar table',first_step=2,first_off=4);beside(bd,1,'bar_table','Tall bar table',first_step=2,first_off=4)
+    # Each shop's two big pieces (Art Pack 5) stand either side of its way in.
+    for key,title,x,y,facing,w,h,kind in shops[4:]:
+        for i_,side_ in enumerate((-1,1)):
+            try:beside((x,y,facing),side_,'front_%s_%d'%(key,i_+1),FRONT_TITLES[key][i_],first_step=2 if facing=='N' else 1,first_off=2)
+            except AssertionError:print('note: no room beside the %s door for its shop piece %d'%(key,i_+1))
     # Every shop: its sign board and its four store-front objects (Shop Art v4) either side of the way in.
     shop_order=[sh[2] for sh in g['SHOPS']]
     for key,title,x,y,facing,w,h,kind in shops[4:]:
@@ -276,8 +318,46 @@ def rebuild(g):
     # Homes: a mail terminal on one side of the door and a planter on the other.
     for key,title,x,y,facing,w,h,kind in homes:
         door=(x,y,facing)
-        beside(door,1,'mailbox','Residential mail terminal',first_step=3 if facing=='N' else 1)
+        # beside a north-facing door the mail terminal stands against the wall, seen from behind
+        beside(door,1,'mailbox_n' if facing=='N' else 'mailbox','Residential mail terminal',first_step=2 if facing=='N' else 1)
         beside(door,-1,'plants','Resident garden')
+    # ---------------------------------------------------------------- street furniture (Art Pack 5)
+    def at_angle(r,a,off=0.0):
+        a=math.radians(a);return cx+.5+r*math.cos(a)-off*math.sin(a),cy+.5+r*math.sin(a)+off*math.cos(a)
+    for k in range(8):                       # a direction post at every spoke's crossing with the ring
+        near_spot('signpost',*at_angle(40.5,45*k,3.2),'Direction post',reach=1)
+    for k in range(8):                       # low lights along each spoke where it crosses the shop band
+        for r_ in (32.0,36.5):
+            for off_ in (-3.4,3.4):near_spot('bollard_light',*at_angle(r_,45*k,off_),'Path light',None,reach=1)
+    for k in range(16):                      # tall lamps on the outer edge of the ring, between homes
+        near_spot('lamp_post',*at_angle(49.2,11.25+22.5*k),'Ring lamp',None,reach=1)
+    for k in range(8):                       # a tree half way between each pair of spokes, on the ring
+        near_spot('tree_tub',*at_angle(44.5,22.5+45*k),'Ring tree','inspect','Inspect',reach=2)
+    for k in range(8):                       # banner poles where each spoke leaves the plaza
+        near_spot('banner_pole',*at_angle(27.0,45*k,-3.2),'Promenade banner',None,reach=1)
+    for k in range(8):                       # long planters round the plaza, between the spokes
+        near_spot('planter_long',*at_angle(20.5,22.5+45*k),'Plaza planter','inspect','Inspect',reach=2)
+    for fx_,fy_ in ((109.5,104.5),(121.5,86.5)):
+        near_spot('drinking_fountain',fx_,fy_,'Drinking fountain','inspect','Inspect',reach=2)
+    for fx_,fy_ in ((101.5,89.5),(129.5,89.5),(101.5,102.5),(129.5,102.5)):
+        near_spot('bin',fx_,fy_,'Recycling bin',None,reach=2)
+    near_spot('kiosk',133.5,93.0,"Ooma's kiosk (closed today)",'inspect','Inspect',reach=3)
+    # Garden: an arch over the way in from the fountain, a tool rack and a bird bath.
+    gx_,gy_=at_angle(14.2,247.5)
+    for yy in range(int(gy_)-3,int(gy_)+3):
+        placed_=False
+        for xx in range(int(gx_)-3,int(gx_)+2):
+            if all(free(xx+dx_,yy+2) for dx_ in (0,2)) and m.floor[yy+2][xx+1] in 'ihupa':
+                props.append(['garden_arch',xx,yy,3,3,'Garden arch'])
+                m.obj[yy+2][xx]='x';m.obj[yy+2][xx+2]='x'          # the two posts; you walk under the middle
+                thing('inspect','Garden arch','Inspect',xx+1,yy+2,26);placed_=True;break
+        if placed_:break
+    garden_ok=lambda xx,yy,w,h:all(m.floor[yy+h-1][x2]=='h' for x2 in range(xx,xx+w))
+    games_ok=lambda xx,yy,w,h:all(m.floor[yy+h-1][x2]=='u' for x2 in range(xx,xx+w))
+    near_spot('garden_tools',110.0,77.0,'Garden tool rack','inspect','Inspect',reach=3,ok=garden_ok)
+    near_spot('bird_bath',104.0,79.0,'Bird bath','inspect','Inspect',reach=3,ok=garden_ok)
+    near_spot('scoreboard',128.0,111.0,'Games scoreboard','inspect','Inspect',reach=3,ok=games_ok)
+    near_spot('arcade',127.5,118.5,'Arcade cabinet','inspect','Inspect',reach=3,ok=games_ok)
     # Observation bay projects OUTWARD through the perimeter; no route to vacuum.
     outline=[(44,76),(48,72),(56,72),(61,77),(61,86),(56,90),(48,90),(44,86)]
     def inside(px,py):
@@ -307,7 +387,8 @@ def rebuild(g):
     def roof_clear(x,y,w,h,below=2):
         cells=[(xx,yy) for yy in range(y-1,y+h+below) for xx in range(x-1,x+w+1)]
         return all(0<=xx<m.w and 0<=yy<m.h and m.floor[yy][xx]=='#' and (xx,yy) not in used for xx,yy in cells)
-    kinds=[('roof_fan',2,2),('roof_duct',3,2),('roof_pipe',2,2),('roof_box',2,2)]
+    kinds=[('roof_fan',2,2),('roof_solar',4,2),('roof_duct',3,2),('roof_tank',2,3),('roof_hatch',2,2),
+           ('roof_garden',4,3),('roof_pipe',2,2),('roof_dish',2,3),('roof_lights',3,1),('roof_box',2,2)]
     for radius,step,first in [(34.5,45.0,11.0),(34.5,45.0,34.0),((50+R_OUT)/2+1,22.5,11.25)]:
         n=0;a=first
         while a<360:

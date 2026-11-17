@@ -104,7 +104,16 @@ func roof_zone(x: int,y: int) -> int:
 		return int(a/45.0)%8
 	return 8+int(fposmod(a+11.25,360.0)/22.5)%16
 # A two-by-two skylight set into the roof (x,y is its top-left roof tile).
+var skylight_art: Array = []
 func skylight(n: Node2D,x: int,y: int) -> void:
+	# Painted skylights (Art Pack 5), square and round in turn; a drawn one if the pictures are missing.
+	if skylight_art.is_empty():
+		for f in ["roof_skylight","roof_skylight_round"]:
+			if ResourceLoader.exists("res://art/lunar/%s.png" % f): skylight_art.append(load("res://art/lunar/%s.png" % f))
+	if not skylight_art.is_empty():
+		var tex: Texture2D = skylight_art[(x*7+y*3)%skylight_art.size()]
+		n.draw_texture_rect(tex,Rect2(x*16,y*16-16,tex.get_width()*0.5,tex.get_height()*0.5),false)
+		return
 	var r:=Rect2(x*16+2,y*16-16+2,28,28)
 	n.draw_rect(r.grow(1),Color("2f3b4a"))
 	n.draw_rect(r,Color("86bfc4"))
