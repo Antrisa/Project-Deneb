@@ -54,7 +54,7 @@ def rebuild(g):
                 u,v=math.cos(math.radians(angle)),math.sin(math.radians(angle))
                 along=(x-cx)*u+(y-cy)*v;across=abs((y-cy)*u-(x-cx)*v)
                 if 0<=along<=50 and across<=(2.5 if angle%90 else 2.5):floor(x,y,'.')
-    exits=[('west',49,95,163,110),('east',185,95,4,55),('top',115,20,43,42),('eng',115,170,34,8)]
+    exits=[('west',49,95,163,110),('east',185,95,4,55),('top',115,20,20,36),('eng',115,170,34,8)]
     for dest,x,y,tx,ty in exits:
         if x!=cx:rect(min(x,cx),cy-2,max(x,cx),cy+2,'a')
         else:rect(cx-2,min(y,cy),cx+2,max(y,cy),'a')

@@ -2654,7 +2654,7 @@ MEDBAY = list(moved("main", 137, 51))       # where you wake up after collapsing
 # name, area, tile x, tile y, talk radius (bigger when they stand behind a counter)
 PEOPLE = [
     # Sara appears as a hologram in several places
-    ["Sara", "top", 43, 26, 26], ["Sara", "west", 78, 152, 26], ["Sara", "west", 65, 104, 36], ["Sara", "main", 90, 65, 26],
+    ["Sara", "top", 20, 20, 26], ["Sara", "west", 78, 152, 26], ["Sara", "west", 65, 104, 36], ["Sara", "main", 90, 65, 26],
 ]
 PEOPLE = [[p[0]] + list(moved(p[1], p[2], p[3])) + [p[4]] for p in PEOPLE]
 
@@ -2708,9 +2708,9 @@ SCHEDULES_RAW = {
     "Job": [("06:30", "mine", 21, 8, 26, "d", "work"), ("12:00", "main", 120, 70, 26, "d", "eat"), ("13:30", "mine", 21, 8, 26, "d", "work"),
             ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 60, 73, 26, "u", "idle"), ("22:00", "main", 18, 54, 26, "d", "idle")],
     "Zaas": [("07:00", "mine", 5, 5, 26, "l", "work"), ("12:15", "main", 126, 75, 26, "d", "eat"), ("13:45", "mine", 5, 5, 26, "l", "work"),
-             ("17:05", "main", 126, 75, 26, "d", "eat"), ("19:15", "top", 43, 12, 26, "u", "idle"), ("23:00", "main", 16, 54, 26, "d", "idle")],
-    "Tar'Besh": [("06:00", "top", 25, 35, 26, "u", "work"), ("17:35", "main", 131, 75, 26, "d", "eat"), ("19:15", "top", 30, 22, 26, "u", "idle"),
-                 ("23:00", "top", 31, 39, 26, "d", "idle")],
+             ("17:05", "main", 126, 75, 26, "d", "eat"), ("19:15", "lounge", 31, 8, 26, "u", "idle"), ("23:00", "main", 16, 54, 26, "d", "idle")],
+    "Tar'Besh": [("06:00", "museum", 19, 13, 26, "u", "work"), ("17:35", "main", 131, 75, 26, "d", "eat"), ("19:15", "lounge", 20, 12, 26, "u", "idle"),
+                 ("23:00", "museum", 33, 30, 26, "d", "idle")],
     "Vzz'ket": [("06:00", "mine", 24, 19, 26, "d", "idle"), ("17:15", "main", 130, 70, 26, "d", "eat"), ("19:00", "mine", 24, 19, 26, "d", "idle"),
                 ("22:00", "main", 86, 70, 26, "d", "idle"), ("23:30", "mine", 24, 19, 26, "d", "idle")],
 }
@@ -2931,6 +2931,7 @@ for k_ in range(12):
 
 from concourse import rebuild as rebuild_concourse
 rebuild_concourse(globals())
+ENTRANCES += SURVEY_ENTRANCES     # doors between the Survey Level's three maps (tools/survey.py)
 
 # ---------------------------------------------------------------- checks
 occupied = {(p[1], p[2], p[3]) for p in PEOPLE} | {(n[1], n[2], n[3]) for n in NODES}
@@ -3011,7 +3012,10 @@ print("longest walk between two stops: %s, %d tiles (%d minutes)" % (LONGEST_WAL
 NEAR = ((1, 0), (-1, 0), (0, 1), (0, -1), (0, 2), (0, -2))
 for (name, a, x, y, r) in PEOPLE:
     assert any((a, x + dx, y + dy) in seen for dx, dy in NEAR), "cannot reach " + name + " in " + a
+LOCKED_AWAY = {"Precursor crystal"}      # behind a door the story opens later (the Sanctum)
 for (kind, name, hint, a, pos, r) in THINGS:
+    if name in LOCKED_AWAY:
+        continue
     tx, ty = pos[0] // 16, pos[1] // 16
     ok = any((a, tx + dx, ty + dy) in seen for dx in range(-7, 8) for dy in range(-7, 8)
              if ((tx + dx) * 16 + 8 - pos[0]) ** 2 + ((ty + dy) * 16 + 8 - pos[1]) ** 2 <= r * r)
@@ -3024,14 +3028,14 @@ print("all people, things and warps reachable;", len(seen), "walkable tiles;", _
 
 # ---------------------------------------------------------------- station map (for the Map page of the menu)
 # Every area drawn small on one picture. MAP_LAYOUT says where each area sits: [x, y, pixels per tile].
-MAP_LAYOUT = {"west": [0, 30, 1.0 / 3.0], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.5], "eng": [84, 90, 1.0], "mine": [34, 90, 1.0],
+MAP_LAYOUT = {"west": [0, 30, 1.0 / 3.0], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 1.0], "mine": [34, 90, 1.0],
               "tunnels": [0, 92, 0.5]}
 MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 28], ["Main Level", 104, 28], ["East Complex", 144, 36], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
 MAP_MARKS = [
     [1, "west", 79, 153, "Your quarters"], [2, "west", 48, 110, "Airlock to the landing pad"], [3, "west", 68, 110, "Reception"],
     [4, "west", 64, 50, "Your agri dome"], [5, "west", 100, 22, "Broken garden"], [6, "west", 140, 50, "Your workshop"],
     [7, "east", 50, 19, "Evarra's herb dome"], [8, "east", 93, 55, "Air reclamation plant"], [9, "east", 50, 83, "East airlock"],
-    [10, "top", 43, 26, "S.A.R.A.'s core"], [11, "top", 43, 12, "Observation Lounge"], [12, "eng", 8, 5, "Ore processing"],
+    [10, "top", 20, 20, "S.A.R.A.'s core"], [11, "top", 20, 5, "Observation Lounge"], [12, "eng", 8, 5, "Ore processing"],
     [13, "eng", 41, 5, "Engineering bay"], [14, "eng", 40, 19, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
 MAP_MARKS = MAP_MARKS[:9] + [[20 + n, "main", DOORS[b[0]][3], DOORS[b[0]][4], b[1]] for n, b in enumerate(BUILDINGS)] + MAP_MARKS[9:]
@@ -3068,7 +3072,7 @@ _wall_sets = {"main": ["Awning", "Hanging banner", "Wall lamp", "Awning", "Poste
               "eng": ["Wall pipes", "Wall vent", "Wall pipes"], "east": ["Wall pipes", "Wall vent", "Wall lamp"],
               "west": ["Wall lamp", "Poster", "Wall vent", "Hanging banner"], "top": ["Wall lamp", "Poster"]}
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "mine", "tunnels"):
         continue
     set_ = _wall_sets.get(k_, ["Poster", "Wall lamp", "Hanging banner"])
     for y_ in range(ar_.h - 1):
@@ -3086,7 +3090,7 @@ for k_, ar_ in A.items():
 OPEN_OBJ += "<>{}"
 ROUNDED = 0
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "mine", "tunnels"):
         continue
     for y_ in range(1, ar_.h - 1):
         for x_ in range(1, ar_.w - 1):
@@ -3119,7 +3123,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const ROOF_PROPS = " + json.dumps(ROOF_PROPS) + "\n")
     f.write("const ROOF_LIGHTS = " + json.dumps(ROOF_LIGHTS) + "\n")
     # Areas drawn in the promenade style (scripts/lunar_ground.gd), by title, and their props and extras.
-    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top"}) + "\n")
+    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum"}) + "\n")
     f.write("const AREA_PROPS = " + json.dumps(AREA_PROPS) + "\n")
     f.write("const AREA_ROOF_PROPS = " + json.dumps(AREA_ROOF_PROPS) + "\n")
     f.write("const AREA_LIGHTS = " + json.dumps(AREA_LIGHTS) + "\n")
@@ -3227,4 +3231,4 @@ print("promenade floor baked: art/lunar/floor_main.png")
 for key_ in bake_floor.AREA_FLOORS:
     bake_floor.bake_area(key_, ["".join(r_) for r_ in A[key_].floor], os.path.join(OUT, "art", "lunar"), FLOOR_EXTRAS.get(key_)).save(os.path.join(OUT, "art", "lunar", "floor_%s.png" % key_))
     print("floor baked: art/lunar/floor_%s.png" % key_)
-bake_floor.window_strip(A["top"].w * 16, survey.OX * 16).save(os.path.join(OUT, "art", "lunar", "window_top.png"))
+bake_floor.window_strip(A["lounge"].w * 16, 31.5 * 16).save(os.path.join(OUT, "art", "lunar", "window_lounge.png"))

@@ -168,6 +168,12 @@ def sanctum_door(d, w, h):
     d.ellipse((w // 2 - 4, 4, w // 2 + 4, 12), fill=RED, outline=INK)
 
 
+def lab_door(d, w, h):
+    box(d, 2, 2, w - 2, h - 2, STEEL_D, STEEL, DARK, r=6)
+    for k in range(5): d.polygon([(4, 20 + k * 16), (w - 4, 12 + k * 16), (w - 4, 18 + k * 16), (4, 26 + k * 16)], fill=AMBER)
+    d.ellipse((w // 2 - 4, 4, w // 2 + 4, 12), fill=RED, outline=INK)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -198,7 +204,7 @@ PROPS = {
     'concierge_desk': (96, 72, concierge_desk), 'paris_pictures': (96, 80, paris_pictures),
     'case_fossil': (64, 72, case(fossil)), 'case_relic': (64, 72, case(relic)), 'case_shard': (64, 72, case(shard)),
     'case_wreck': (64, 72, case(wreck)), 'museum_centerpiece': (128, 128, centerpiece), 'curator_desk': (96, 72, curator_desk),
-    'crystal_pedestal': (64, 112, crystal_pedestal), 'sealed_door': (96, 80, sealed_door), 'sanctum_door': (32, 112, sanctum_door),
+    'crystal_pedestal': (64, 112, crystal_pedestal), 'sanctum_door': (32, 112, sanctum_door), 'lab_door': (32, 112, lab_door),
     'star_chart': (64, 104, star_chart), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),
 }
 

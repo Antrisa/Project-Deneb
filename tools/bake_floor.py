@@ -237,8 +237,9 @@ if __name__ == "__main__":
 # Each floor character gets one of the six paving families (0 hex, 1 ivory, 2 sage, 3 decking, 4 stone,
 # 5 blue-grey slabs), optionally tinted.
 AREA_FLOORS = {
-    "top": {"u": (5, None), "i": (0, None), "h": (4, None), "s": (4, ("6f5a9a", 0.32)), "m": (2, ("8a8f96", 0.35)),
-            "f": (3, None), ".": (1, None), "D": (1, None)},
+    "top": {"i": (0, None), "f": (3, None), ".": (1, None), "D": (1, None)},
+    "lounge": {"u": (5, None)},
+    "museum": {"h": (4, None), "s": (4, ("6f5a9a", 0.32)), "f": (3, None)},
 }
 
 
