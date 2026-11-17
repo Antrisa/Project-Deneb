@@ -248,6 +248,11 @@ AREA_FLOORS = {
             "e": ("eng_floor_grate", None), "k": ("eng_floor_plate", ("6a3a2c", 0.45)), "q": (5, ("140e12", 0.88)),
             "j": ("eng_floor_plate", ("4a4e58", 0.25)), "a": ("eng_floor_pad", None)},
     "bay": {"u": ("eng_floor_hangar", None), "a": ("eng_floor_pad", None), "p": (3, None), "f": ("eng_floor_tech", None), "i": ("eng_floor_hangar", None)},
+    "west": {".": ("sp_terminal", None), "p": ("sp_plaza", None), "f": ("sp_carpet", None), "h": ("sp_star", None), "u": ("sp_terminal", None),
+             "A": ("sp_plaza", None), "Q": ("sp_moon", None), "V": ("eng_floor_pad", None), "g": ("sp_glass", None), "Y": ("sp_basin", None)},
+    "agri": {"a": ("sp_soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("sp_spa", None),
+             "u": ("sp_terminal", None), "O": ("sp_water", ("70c8d0", 0.25)), "Y": ("sp_water", None)},
+    "hotel": {"u": ("sp_parquet", None), "h": ("sp_carpet", None), "f": ("sp_bunk", None), "m": ("eng_floor_concrete", None)},
 }
 
 

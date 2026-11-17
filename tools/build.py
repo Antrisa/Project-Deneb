@@ -2129,7 +2129,7 @@ m.zones += [["Command lift", CX - 7, CY - RI - 32, CX + 7, CY - RI - 19], ["Engi
 m.setf(".", [(x, CY - RI - 19) for x in range(CX - 3, CX + 4)] + [(x, CY + RI + 19) for x in range(CX - 3, CX + 4)])
 m.warp("U", [(CX, CY - RI - 28)], "top", 20, 14)
 m.warp("D", [(CX, CY + RI + 28)], "eng", 101, 15)
-m.warp("A", [(CX - RI - 19, y) for y in range(CY - 3, CY + 4)], "west", 163, 110)
+m.warp("A", [(CX - RI - 19, y) for y in range(CY - 3, CY + 4)], "west", 109, 40)
 m.warp("A", [(CX + RI + 23, y) for y in range(CY - 3, CY + 4)], "east", 4, 55)
 # town square fixtures
 m.put("l", sq([(80, 50), (100, 50), (80, 70), (100, 70), (72, 42), (108, 42), (72, 78), (108, 78)]))
@@ -2402,133 +2402,7 @@ def moved(a, x, y):
 # Interiors are shown on the station map at their door.
 MAP_PARENT = {k: ["main", DOORS[k][3], DOORS[k][4]] for k in DOORS}
 
-# ---------------------------------------------------------------- spaceport district (west map)
-# You wake up here. A round hub in the middle. West: Reception (customs and a waiting room), then
-# the airlock to the landing pad, which is outside in vacuum and cannot be reached without a suit.
-# South: the old barracks, the future hotel. North: a second, smaller hub with the agri dome,
-# the broken garden and its dry fish ponds, and the workshop. East: the walkway to the Main Level.
-w = A["west"] = Area("west", "Spaceport District", 170, 168, "r")
-HX, HY = 100, 110            # the district hub
-NX, NY = 100, 50             # the north hub
-w.room("", 118, 107, 167, 113, ".")          # walkway east to the Main Level
-w.room("", 96, 60, 104, 94, ".")             # walkway north
-w.room("", 96, 126, 104, 140, ".")           # walkway south to the hotel
-w.room("Reception", 54, 98, 80, 122, ".")
-w.room("", 80, 107, 84, 113, ".")            # reception - hub
-w.room("Airlock", 44, 106, 54, 114, "f")
-w.room("", 84, 47, 90, 53, ".")              # agri dome - north hub
-w.room("", 96, 34, 104, 42, ".")             # garden - north hub
-w.room("", 110, 47, 122, 53, ".")            # north hub - workshop
-w.room("Workshop", 122, 36, 162, 64, "f")
-for (x, y) in block(1, 86, 43, 134):
-    w.floor[y][x] = "Q"                      # outside: bare moon surface
-w.circle(22, 110, 17.3, "X", "Q")            # the landing pad
-w.circle(64, 50, 20.3, "s", "d")             # agri dome
-w.circle(NX, 22, 16.3, "s", "d")             # broken garden
-w.circle(NX, NY, 11.3, ".")                  # north hub
-w.circle(HX, HY, 18.3, ".")                  # district hub
-for x in range(44, 85):
-    for y in range(49, 52):
-        if ((x - 64) ** 2 + (y - 50) ** 2) ** 0.5 <= 20.3:
-            w.floor[y][x] = "u"              # the agri dome's old central walkway
-# the old barracks: a long hall, the head officer's quarters, four bunk rooms and the empty drill hall
-w.room("Hotel hall", 72, 140, 132, 147, ".")
-w.room("Head officer's quarters", 72, 147, 86, 160, ",")
-w.room("Bunk room", 86, 147, 96, 160, ".")
-w.room("Bunk room", 96, 147, 106, 160, ".")
-w.room("Bunk room", 106, 147, 116, 160, ".")
-w.room("Bunk room", 116, 147, 132, 160, ".")
-w.room("Old drill hall", 132, 140, 162, 162, ".")
-w.zones += [["District hub", HX - 19, HY - 19, HX + 19, HY + 19], ["North hub", NX - 12, NY - 12, NX + 12, NY + 12],
-            ["Agri dome", 43, 29, 85, 71], ["Broken garden", NX - 17, 5, NX + 17, 39], ["Walkway to the Main Level", 118, 107, 167, 113]]
-w.setf(".", [(80, y) for y in range(108, 113)] + [(54, y) for y in range(108, 113)] + [(122, y) for y in range(48, 53)]
-       + [(x, 140) for x in range(98, 103)] + [(79, 147), (91, 147), (101, 147), (111, 147), (124, 147)] + [(132, y) for y in range(142, 146)])
-ring = [(x, y) for y in range(20, 80) for x in range(40, 90) if w.floor[y][x] == "d"]
-w.setf("r", [c for i, c in enumerate(ring) if (i * 7) % 5 == 0 and c[0] < 72])      # agri dome: broken panels, away from the way in
-ring = [(x, y) for y in range(0, 40) for x in range(80, 120) if w.floor[y][x] == "d"]
-w.setf("r", [c for i, c in enumerate(ring) if (i * 5) % 3 == 0 and c[1] < 30])      # garden: most of the glass is gone
-w.setf("Y", block(92, 14, 96, 17) + block(104, 20, 109, 23) + block(95, 26, 98, 28))    # what is left of the fish ponds
-w.setf("6", [(44, 109), (44, 110), (44, 111)])                                            # the airlock's outer door
-w.setf("9", [(47, 106), (48, 106), (50, 106), (51, 106)])                                 # windows onto the pad
-# landing pad (outside): painted lines and a few crates nobody can reach
-w.outlines.append([12, 102, 20, 16])
-
-
-def old_dome(cells):
-    """Agri dome things were written for the old Agri Dome map; it is mirrored and moved here."""
-    return [(116 - x, y + 15) for (x, y) in cells]
-
-
-def old_barracks(cells):
-    """Barracks things were written for the old district map and are moved here."""
-    return [(x + 52, y + 82) for (x, y) in cells]
-
-
-# reception: a customs gate across the room (a gap in the middle), waiting benches on the hub side
-w.put("I", [(66, y) for y in range(100, 107)] + [(66, y) for y in range(114, 121)])
-w.put("o", [(70, 100), (71, 100), (74, 100), (75, 100), (70, 120), (71, 120), (74, 120), (75, 120)])
-w.put("p", [(55, 99), (79, 99), (55, 121), (79, 121)])
-w.put("l", [(72, 105), (72, 115)])
-w.put("k", [(58, 99), (59, 99)])
-w.put("E", [(65, 104)])                      # Sara, at the customs desk
-# airlock
-w.put("L", [(46, 113), (47, 113)])
-w.put("c", [(52, 113)])
-# district hub
-w.put("o", [(92, 100), (93, 100), (107, 100), (108, 100), (92, 120), (93, 120), (107, 120), (108, 120)])
-w.put("p", [(88, 104), (112, 104), (88, 116), (112, 116)])
-w.put("l", [(95, 105), (105, 105), (95, 115), (105, 115)])
-# north hub
-w.put("p", [(93, 44), (107, 44), (93, 56), (107, 56)])
-w.put("o", [(99, 45), (100, 45)])
-# agri dome: the corner that still grows, by the way in
-w.put("H", old_dome(row(31, range(36, 42)) + row(39, range(36, 42)) + row(29, range(38, 42)) + row(41, range(38, 42))))
-w.put("p", old_dome([(34, 33), (34, 37)]))
-# the rest of it: dead planters, rubble, old machines
-w.put("x", old_dome([(50, 22), (51, 22), (60, 26), (64, 40), (65, 40), (56, 48), (47, 50), (58, 30), (66, 33), (48, 28), (54, 44), (61, 46)]))
-w.put("e", old_dome([(52, 26), (62, 31), (57, 40), (49, 46), (68, 37), (45, 24), (53, 52), (60, 42)]))
-w.put("P", old_dome([(55, 20), (56, 20), (55, 50), (56, 50), (70, 30), (70, 40)]))
-w.put("c", old_dome([(46, 44), (63, 23)]))
-# broken garden: rubble, dead planters, the dry ponds
-w.put("x", [(90, 20), (99, 12), (106, 16), (110, 27), (93, 30), (101, 31)])
-w.put("e", [(96, 21), (103, 26), (89, 25), (108, 13), (100, 18)])
-w.put("p", [(98, 35), (102, 35)])
-w.put("o", [(99, 9), (100, 9)])
-# workshop: yours. Benches, machines that need work, plenty of empty floor.
-w.put("t", [(126, 38), (127, 38), (134, 38), (135, 38)])
-w.put("P", [(142, 37), (143, 37), (150, 37), (151, 37)])
-w.put("k", [(158, 37), (159, 37)])
-w.put("S", [(123, 62), (123, 63), (160, 62), (161, 62)])
-w.put("c", [(156, 60), (157, 60), (156, 61), (124, 44)])
-w.put("L", [(130, 63), (131, 63)])
-w.put("x", [(146, 56), (147, 56), (138, 48)])
-w.put("e", [(152, 46), (133, 58), (144, 42)])
-# hotel hall
-w.put("p", old_barracks([(21, 59), (79, 59)]))
-w.put("C", old_barracks(row(61, range(28, 36))))
-w.put("e", old_barracks([(40, 62), (56, 60), (66, 63), (24, 63)]))
-w.put("x", old_barracks([(70, 60), (60, 63)]))
-# head officer's quarters
-w.put("b", old_barracks([(22, 67)]))
-w.put("L", old_barracks([(32, 66), (33, 66)]))
-w.put("t", old_barracks([(30, 73), (31, 73)]))
-w.put("S", old_barracks([(21, 73), (21, 74)]))
-w.put("p", old_barracks([(21, 77), (33, 77)]))
-w.put("o", old_barracks([(26, 76), (27, 76)]))
-# bunk rooms: dusty, some rubble
-w.put("b", old_barracks([(35, 67), (35, 70), (35, 73), (43, 67), (43, 70), (45, 67), (45, 70), (53, 67), (53, 73), (55, 67), (55, 70), (63, 67),
-                         (65, 67), (65, 70), (65, 73), (79, 67), (79, 70)]))
-w.put("L", old_barracks([(43, 77), (53, 77), (63, 77), (79, 77)]))
-w.put("x", old_barracks([(38, 75), (39, 75), (48, 72), (58, 74), (59, 74), (70, 72), (74, 76), (75, 76)]))
-w.put("e", old_barracks([(40, 69), (50, 76), (57, 69), (68, 68), (72, 74)]))
-w.put("c", old_barracks([(77, 66), (78, 66)]))
-w.put("E", old_barracks([(26, 70)]))         # Sara, in your quarters
-# old drill hall: a big empty room for the hotel to grow into
-w.put("x", [(140, 150), (141, 150), (152, 144), (148, 158), (157, 153)])
-w.put("e", [(136, 156), (150, 148), (158, 146), (144, 143)])
-w.put("c", [(160, 160), (161, 160), (160, 159)])
-w.put("p", [(133, 141), (161, 141)])
-w.warp("A", [(166, y) for y in range(108, 113)], "main", CX - RI - 16, CY)
+# ---------------------------------------------------------------- spaceport district: see tools/spaceport.py (built after Engineering)
 
 # ---------------------------------------------------------------- east complex (east map)
 # The mirror of the Spaceport District, on the other side of the Main Level: a hub with Evarra's
@@ -2581,6 +2455,10 @@ t = survey.build(globals())
 import engineering
 e = engineering.build(globals())
 
+# ---------------------------------------------------------------- spaceport district, agri complex and hotel: see tools/spaceport.py
+import spaceport
+spaceport.build(globals())
+
 # ---------------------------------------------------------------- mine
 n = A["mine"] = Area("mine", "The Mine", 44, 24, "M")
 n.carve("Mine head", 2, 2, 10, 7, "m")
@@ -2624,14 +2502,14 @@ u.put("O", [(40, 27), (20, 27), (38, 3)])
 u.warp("R", [(30, 38), (31, 38)], "mine", 22, 4)
 
 # ---------------------------------------------------------------- who and what is where
-START = ["west", 75, 149]
+START = ["hotel", 12, 27]
 # NOTE: spots on the main level below (MEDBAY, PEOPLE, SCHEDULES_RAW, THINGS) are still written
 # in the OLD main-level coordinates; moved() turns them into the right room and tile.
 MEDBAY = list(moved("main", 137, 51))       # where you wake up after collapsing
 # name, area, tile x, tile y, talk radius (bigger when they stand behind a counter)
 PEOPLE = [
     # Sara appears as a hologram in several places
-    ["Sara", "top", 23, 21, 30], ["Sara", "west", 78, 152, 26], ["Sara", "west", 65, 104, 36], ["Sara", "main", 90, 65, 26],
+    ["Sara", "top", 23, 21, 30], ["Sara", "hotel", 15, 27, 26], ["Sara", "west", 40, 36, 36], ["Sara", "main", 90, 65, 26],
 ]
 PEOPLE = [[p[0]] + list(moved(p[1], p[2], p[3])) + [p[4]] for p in PEOPLE]
 
@@ -2769,20 +2647,9 @@ def tc(x, y):
 
 # kind, name, hint, area, [px, py], radius
 THINGS = [
-    ["bed", "Your bunk", "Sleep", "west", tc(74, 149), 26],
-    ["wardrobe", "Locker", "Change look", "west", tc(85, 148), 26],
-    ["look", "Landing pad", "Look", "west", tc(49, 107), 24],
-    ["look", "Airlock", "Look", "west", tc(45, 110), 22],
-    ["look", "Customs gate", "Look", "west", tc(66, 107), 20],
-    ["look", "Old bunks", "Look", "west", tc(97, 149), 24],
-    ["look", "Hotel desk", "Look", "west", tc(84, 143), 26],
-    ["look", "Old drill hall", "Look", "west", [147 * 16, 151 * 16], 60],
     ["look", "Herb beds", "Look", "east", [50 * 16 + 8, 19 * 16], 34],
     ["look", "Air reclaimer", "Look", "east", tc(92, 46), 30],
     ["look", "East airlock", "Look", "east", tc(44, 83), 22],
-    ["look", "Broken agri dome", "Look", "west", [58 * 16, 50 * 16 + 8], 60],
-    ["look", "Dry ponds", "Look", "west", [100 * 16, 22 * 16], 50],
-    ["look", "Workbench", "Look", "west", tc(127, 39), 24],
     ["pickup", "Crates", "Pick up a crate", "main", tc(31, 70), 26],
     ["look", "Fountain", "Look", "main", [90 * 16 + 8, 60 * 16 + 8], 92],
     ["board", "Bulletin board", "Read the board", "main", tc(95, 52), 24],
@@ -2876,11 +2743,6 @@ furnish("furn", ["Wardrobe", "Dresser", "Armchair", "Side table with a lamp"])
 furnish("medbay", ["Side table with a lamp", "Recycling bin", "Armchair"])
 furnish("weaver", ["Dresser", "Rug+", "Armchair"])
 furnish("armoury", ["Crate stack", "Floor grate", "Barrel"])
-furnish("west", ["Customs desk", "Customs desk", "Armchair", "Armchair", "Vending machine", "Tree in a tub", "Tree in a tub", "Recycling bin"], "Reception")
-furnish("west", ["Tree in a tub", "Tree in a tub", "Armchair", "Side table with a lamp", "Rug+"], "Hotel hall")
-furnish("west", ["Wardrobe", "Dresser", "Rug+"], "Head officer's quarters")
-furnish("west", ["Crate stack", "Barrel", "Barrel", "Desk+", "Floor grate"], "Workshop")
-furnish("west", ["Crate stack", "Crate stack", "Barrel"], "Old drill hall")
 furnish("east", ["Air scrubber", "Air scrubber", "Air scrubber", "Air scrubber", "Floor grate", "Floor grate", "Floor grate", "Crate stack", "Desk+"], "Air reclamation plant")
 furnish("east", ["Crate stack", "Recycling bin"], "East airlock")
 # The main level: trees, flower boxes, barrels and bins along the outer edge of the ring, trees round the square.
@@ -2902,7 +2764,8 @@ for k_ in range(12):
 from concourse import rebuild as rebuild_concourse
 rebuild_concourse(globals())
 ENTRANCES += SURVEY_ENTRANCES     # doors between the Survey Level's three maps (tools/survey.py)
-ENTRANCES += ENG_ENTRANCES        # Engineering to the shuttle bay (tools/engineering.py)
+ENTRANCES += ENG_ENTRANCES
+ENTRANCES += SPACEPORT_ENTRANCES        # Engineering to the shuttle bay (tools/engineering.py)
 
 # ---------------------------------------------------------------- checks
 occupied = {(p[1], p[2], p[3]) for p in PEOPLE} | {(n[1], n[2], n[3]) for n in NODES}
@@ -2999,12 +2862,12 @@ print("all people, things and warps reachable;", len(seen), "walkable tiles;", _
 
 # ---------------------------------------------------------------- station map (for the Map page of the menu)
 # Every area drawn small on one picture. MAP_LAYOUT says where each area sits: [x, y, pixels per tile].
-MAP_LAYOUT = {"west": [0, 30, 1.0 / 3.0], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 0.48], "mine": [34, 90, 1.0],
+MAP_LAYOUT = {"west": [0, 30, 0.5], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 0.48], "mine": [34, 90, 1.0],
               "tunnels": [0, 92, 0.5]}
 MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 28], ["Main Level", 104, 28], ["East Complex", 144, 36], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
 MAP_MARKS = [
-    [1, "west", 79, 153, "Your quarters"], [2, "west", 48, 110, "Airlock to the landing pad"], [3, "west", 68, 110, "Reception"],
-    [4, "west", 64, 50, "Your agri dome"], [5, "west", 100, 22, "Broken garden"], [6, "west", 140, 50, "Your workshop"],
+    [1, "hotel", 12, 26, "Your quarters"], [2, "west", 19, 40, "Airlock to the landing pad"], [3, "west", 42, 40, "Reception"],
+    [4, "agri", 55, 23, "Your agri dome"], [5, "agri", 86, 64, "Hot springs & fish ponds"], [6, "agri", 24, 64, "Your workshop"],
     [7, "east", 50, 19, "Evarra's herb dome"], [8, "east", 93, 55, "Air reclamation plant"], [9, "east", 50, 83, "East airlock"],
     [10, "top", 23, 23, "S.A.R.A.'s core"], [11, "top", 23, 5, "Observation Lounge"], [12, "eng", 22, 22, "Ore processing"],
     [13, "eng", 70, 20, "Engineering bay"], [14, "bay", 23, 17, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
@@ -3043,7 +2906,7 @@ _wall_sets = {"main": ["Awning", "Hanging banner", "Wall lamp", "Awning", "Poste
               "eng": ["Wall pipes", "Wall vent", "Wall pipes"], "east": ["Wall pipes", "Wall vent", "Wall lamp"],
               "west": ["Wall lamp", "Poster", "Wall vent", "Hanging banner"], "top": ["Wall lamp", "Poster"]}
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "mine", "tunnels"):
         continue
     set_ = _wall_sets.get(k_, ["Poster", "Wall lamp", "Hanging banner"])
     for y_ in range(ar_.h - 1):
@@ -3061,7 +2924,7 @@ for k_, ar_ in A.items():
 OPEN_OBJ += "<>{}"
 ROUNDED = 0
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "west", "agri", "hotel", "mine", "tunnels"):
         continue
     for y_ in range(1, ar_.h - 1):
         for x_ in range(1, ar_.w - 1):
@@ -3094,7 +2957,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const ROOF_PROPS = " + json.dumps(ROOF_PROPS) + "\n")
     f.write("const ROOF_LIGHTS = " + json.dumps(ROOF_LIGHTS) + "\n")
     # Areas drawn in the promenade style (scripts/lunar_ground.gd), by title, and their props and extras.
-    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum", "Precursor Sanctum": "sanctum", "Engineering Level": "eng", "Shuttle Bay": "bay"}) + "\n")
+    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum", "Precursor Sanctum": "sanctum", "Engineering Level": "eng", "Shuttle Bay": "bay", "Spaceport District": "west", "Agri Complex": "agri", "Hotel": "hotel"}) + "\n")
     f.write("const AREA_PROPS = " + json.dumps(AREA_PROPS) + "\n")
     f.write("const AREA_ROOF_PROPS = " + json.dumps(AREA_ROOF_PROPS) + "\n")
     f.write("const AREA_LIGHTS = " + json.dumps(AREA_LIGHTS) + "\n")

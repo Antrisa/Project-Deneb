@@ -52,7 +52,7 @@ const JOB_IRON := 5                # what Job asks for in his first request
 const JOB_COPPER := 3
 
 # Which music plays where. Files are audio/music_<name>.ogg, or .wav if there is no .ogg.
-const MUSIC := {"main": "town", "west": "town", "east": "town", "top": "town", "eng": "under", "bay": "under", "mine": "under", "tunnels": "under"}
+const MUSIC := {"main": "town", "west": "town", "agri": "town", "hotel": "town", "east": "town", "top": "town", "eng": "under", "bay": "under", "mine": "under", "tunnels": "under"}
 
 # Bulletin board requests, one per day in rotation.
 const BOARD := [

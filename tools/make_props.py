@@ -468,6 +468,97 @@ def cargo_loader(d, w, h):
     for x in (16, w - 40): d.ellipse((x, h - 22, x + 20, h - 2), fill=DARK, outline=INK); d.ellipse((x + 6, h - 16, x + 14, h - 8), fill=STEEL_L)
 
 
+def customs_desk(d, w, h):
+    box(d, 2, 22, w - 2, h - 2, CREAM, (246, 238, 220, 255), CREAM_D)
+    d.rectangle((2, 22, w - 2, 30), fill=(60, 104, 112, 255), outline=INK)
+    d.rectangle((60, 4, 86, 22), fill=DARK, outline=INK); d.rectangle((63, 7, 83, 19), fill=TEAL_D)
+    d.rectangle((14, 12, 30, 22), fill=STEEL_L, outline=INK); d.line((22, 12, 22, 4), fill=INK, width=2)
+    d.rectangle((40, h - 20, 56, h - 10), fill=AMBER, outline=INK)
+
+
+def stanchion(d, w, h):
+    d.ellipse((6, h - 8, w - 6, h - 2), fill=STEEL_D, outline=INK)
+    d.rectangle((w // 2 - 2, 8, w // 2 + 2, h - 6), fill=(200, 170, 90, 255), outline=INK)
+    d.ellipse((w // 2 - 5, 2, w // 2 + 5, 12), fill=(220, 190, 110, 255), outline=INK)
+    d.rectangle((w // 2 + 3, 9, w - 1, 13), fill=RED)
+
+
+def departures_board(d, w, h):
+    legs(d, (16, w - 20), 50, h - 2)
+    box(d, 2, 2, w - 2, 54, DARK, STEEL, INK)
+    for k in range(5):
+        y = 10 + k * 8
+        d.rectangle((8, y, 60, y + 5), fill=(220, 200, 120, 255)); d.rectangle((66, y, w - 8, y + 5), fill=RED if k % 2 else (200, 80, 60, 255))
+
+
+def beacon_mast(d, w, h):
+    d.ellipse((6, h - 26, w - 6, h - 4), fill=STEEL_D, outline=INK, width=2)
+    d.rectangle((w // 2 - 6, 20, w // 2 + 6, h - 14), fill=STEEL, outline=INK)
+    for y in range(30, h - 20, 16): d.line((w // 2 - 6, y, w // 2 + 6, y + 10), fill=STEEL_L, width=2)
+    d.ellipse((w // 2 - 14, 2, w // 2 + 14, 26), fill=(250, 200, 80, 255), outline=INK, width=2)
+    d.ellipse((w // 2 - 6, 8, w // 2 + 6, 20), fill=(255, 240, 180, 255))
+    d.rectangle((14, h - 30, w - 14, h - 24), fill=(60, 104, 112, 255), outline=INK)
+
+
+def planter_dead(d, w, h):
+    box(d, 2, 16, w - 2, h - 2, (150, 136, 116, 255), (180, 166, 146, 255), (110, 100, 86, 255))
+    d.rectangle((6, 16, w - 6, 24), fill=(90, 74, 60, 255))
+    for x in (16, 34, 52, 70):
+        d.line((x, 18, x - 4, 4), fill=(120, 100, 70, 255), width=2); d.line((x - 2, 10, x + 4, 6), fill=(120, 100, 70, 255), width=2)
+
+
+def rubble(d, w, h):
+    for x, y, r in ((8, h - 12, 9), (24, h - 16, 11), (42, h - 12, 8), (54, h - 8, 5)):
+        d.polygon([(x - r, y + r // 2), (x - r // 2, y - r // 2), (x + r // 2, y - r // 2), (x + r, y + r // 2)], fill=(150, 140, 130, 255), outline=INK)
+    d.line((16, h - 22, 30, h - 4), fill=STEEL_D, width=3)
+
+
+def glass_shards(d, w, h):
+    for x, y in ((8, 10), (24, 16), (40, 8), (50, 18), (16, 22)):
+        d.polygon([(x, y), (x + 8, y - 4), (x + 10, y + 4), (x + 3, y + 6)], fill=(180, 230, 244, 255), outline=(90, 130, 150, 255))
+
+
+def shipping_bin(d, w, h):
+    box(d, 4, 18, w - 4, h - 2, WOOD, (186, 140, 100, 255), WOOD_D)
+    d.polygon([(4, 18), (w - 4, 18), (w - 10, 4), (10, 4)], fill=(186, 140, 100, 255), outline=INK)
+    for y in (30, 44): d.line((6, y, w - 6, y), fill=WOOD_D, width=2)
+    d.rectangle((w // 2 - 8, 34, w // 2 + 8, 42), fill=AMBER, outline=INK)
+
+
+def steam_vent(d, w, h):
+    d.ellipse((2, h - 12, w - 2, h - 2), fill=(110, 110, 110, 255), outline=INK)
+    d.ellipse((8, h - 10, w - 8, h - 5), fill=(60, 60, 60, 255))
+    for k, (x, y) in enumerate(((10, h - 22), (16, h - 30), (8, h - 36))):
+        d.ellipse((x, y, x + 12, y + 10), fill=(236, 244, 248, 255))
+
+
+def bunk_bed(d, w, h):
+    for x in (4, w - 8): d.rectangle((x, 4, x + 4, h - 2), fill=STEEL_D, outline=INK)
+    for y in (24, 64):
+        d.rectangle((4, y, w - 4, y + 16), fill=(150, 160, 150, 255), outline=INK)
+        d.rectangle((8, y - 4, 24, y + 4), fill=(226, 222, 210, 255), outline=INK)
+    d.line((8, 80, w - 8, 72), fill=(110, 110, 100, 255), width=3)
+
+
+def armchair(d, w, h):
+    box(d, 6, 8, w - 6, h - 20, (150, 70, 60, 255), (190, 100, 90, 255), (110, 50, 44, 255), r=8)
+    box(d, 2, 28, 14, h - 6, (150, 70, 60, 255)); box(d, w - 14, 28, w - 2, h - 6, (150, 70, 60, 255))
+    box(d, 12, 36, w - 12, h - 8, (176, 90, 80, 255))
+    for x in (8, w - 12): d.rectangle((x, h - 6, x + 4, h - 2), fill=WOOD_D)
+
+
+def footlocker(d, w, h):
+    box(d, 2, 6, w - 2, h - 2, (80, 100, 70, 255), (110, 130, 100, 255), (60, 76, 52, 255))
+    d.line((4, 14, w - 4, 14), fill=INK); d.rectangle((w // 2 - 4, 12, w // 2 + 4, 20), fill=STEEL_L, outline=INK)
+
+
+def gym_rack(d, w, h):
+    legs(d, (6, w - 10), 20, h - 2)
+    d.rectangle((2, 20, w - 2, 26), fill=STEEL, outline=INK); d.rectangle((2, 44, w - 2, 50), fill=STEEL, outline=INK)
+    for x in (12, 32, 52, 72):
+        d.ellipse((x, 8, x + 12, 22), fill=DARK, outline=INK); d.ellipse((x, 32, x + 12, 46), fill=DARK, outline=INK)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -507,7 +598,11 @@ PROPS = {
     'launch_door': (384, 112, launch_door), 'coolant_tank': (96, 128, coolant_tank), 'kitchenette': (128, 96, kitchenette),
     'ore_pile': (96, 56, ore_pile), 'hopper': (96, 128, hopper), 'ingot_stack': (64, 56, ingot_stack), 'slag_bin': (64, 64, slag_bin),
     'sorting_machine': (128, 104, sorting_machine), 'hazard_sign': (32, 72, hazard_sign), 'breaker_panel': (64, 104, breaker_panel),
-    'storage_shelf': (96, 112, storage_shelf), 'barrel_stack': (64, 72, barrel_stack), 'pallet': (64, 56, pallet), 'cargo_loader': (96, 96, cargo_loader), 'case_empty': (64, 72, case_empty),
+    'storage_shelf': (96, 112, storage_shelf), 'barrel_stack': (64, 72, barrel_stack), 'pallet': (64, 56, pallet), 'cargo_loader': (96, 96, cargo_loader),
+    'customs_desk': (96, 64, customs_desk), 'stanchion': (32, 40, stanchion), 'departures_board': (128, 88, departures_board),
+    'beacon_mast': (96, 144, beacon_mast), 'planter_dead': (96, 56, planter_dead), 'rubble': (64, 32, rubble), 'glass_shards': (64, 28, glass_shards),
+    'shipping_bin': (64, 64, shipping_bin), 'steam_vent': (32, 48, steam_vent), 'bunk_bed': (64, 104, bunk_bed), 'armchair': (64, 72, armchair),
+    'footlocker': (64, 36, footlocker), 'gym_rack': (96, 72, gym_rack), 'case_empty': (64, 72, case_empty),
     'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
     'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
     'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),
