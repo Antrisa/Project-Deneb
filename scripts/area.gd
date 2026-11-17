@@ -31,6 +31,13 @@ func _draw() -> void:
 				for x in data.obj[y].length():
 					var ch: String = data.obj[y][x]
 					if ch != "x" and MapData.TILE_OBJ.has(ch): _tile(MapData.TILE_OBJ[ch],x,y)
+		else:
+			# Tops of the tall store-front objects (sign boards, racks, shelves), drawn in front of characters.
+			for y in range(1, data.obj.size()):
+				for x in data.obj[y].length():
+					var top_ch: String = data.obj[y][x]
+					if top_ch != "x" and MapData.TALL.contains(top_ch) and MapData.TILE_OBJ.has(top_ch):
+						_top(int(MapData.TILE_OBJ[top_ch]), x, y - 1)
 		return
 	var floor_rows: Array = data["floor"]
 	var obj_rows: Array = data["obj"]

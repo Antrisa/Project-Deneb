@@ -3146,6 +3146,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("# Big shop-front pictures: [shop key, x, y] in pixels (art/front_<key>.png, 5 tiles wide and 3 tall).\n")
     f.write("const FRONTS = " + json.dumps(FRONTS) + "\n")
     f.write("const ROOF_PROPS = " + json.dumps(ROOF_PROPS) + "\n")
+    f.write("const ROOF_LIGHTS = " + json.dumps(ROOF_LIGHTS) + "\n")
     f.write("const SOCIAL_SPOTS = " + json.dumps(SOCIAL_SPOTS) + "\n")
     f.write("const ENTRANCES = " + json.dumps(ENTRANCES).replace("false", "false") + "\n")
     f.write("const MESS_OBJECTS = " + json.dumps(MESS_OBJECTS) + "\n")

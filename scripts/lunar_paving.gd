@@ -97,6 +97,12 @@ static func weights(rows: Array,px: float,py: float) -> Vector3:
 			elif c=="h":result.y+=w
 			elif c=="u":result.z+=w
 	return result
+# How far inside a court a point is, in tiles (negative: outside). side 1.0 is the garden, north-north-west of
+# the fountain; -1.0 the games court, south-south-east. tools/concourse.py uses the same numbers for the tiles.
+static func court_inset(point: Vector2,side: float) -> float:
+	var d: Vector2=(point-Vector2(115.5,95.5))*side
+	var r: float=d.length()
+	return minf(minf(r-14.0,24.5-r),minf(-d.x-3.25,(d.x-d.y)*0.70710678-3.25))
 static func sample(rows: Array,x: int,y: int,ch: String) -> Color:
 	var delta:=Vector2(x+1-1848,y+1-1528)
 	var radius: float=delta.length()
@@ -104,11 +110,12 @@ static func sample(rows: Array,x: int,y: int,ch: String) -> Color:
 	var route: float=minf(spoke,absf(radius-152)+20) if radius<480 else spoke
 	var kind:=2 if ch=="a" or radius>490 else 0
 	var w:=weights(rows,x+1,y+1)
-	# Social floors follow their furnished court footprints rather than floating ovals.
+	# The garden and games courts are wedges of the plaza: two arcs round the fountain, two sides parallel to the spokes.
 	var point:=Vector2(x+1,y+1)/16.0
-	w.y=1.0 if Geometry2D.is_point_in_polygon(point,PackedVector2Array([Vector2(99,72),Vector2(101,70),Vector2(110,70),Vector2(110,81),Vector2(108,83),Vector2(105,80),Vector2(99,74)])) else 0.0
-	if point.x>115 and point.y>100:
-		w.z=1.0 if Geometry2D.is_point_in_polygon(point,PackedVector2Array([Vector2(118,112),Vector2(120,110),Vector2(125,110),Vector2(130,115),Vector2(130,119),Vector2(120,119),Vector2(118,117)])) else 0.0
+	var court: float=maxf(court_inset(point,1.0),court_inset(point,-1.0))
+	w.y=1.0 if court_inset(point,1.0)>0.0 else 0.0
+	if court_inset(point,-1.0)>0.0:w.z=1.0
+	elif point.x>70.0:w.z=0.0          # (the observation bay, further west, keeps its own floor)
 	var pocket: float=maxf(w.x,maxf(w.y,w.z))
 	if pocket>0.5:kind=3 if w.x==pocket else 4 if w.y==pocket else 5
 	# Continuous eight-spoke layout and a round fountain circuit, clipped to walkable ground.
@@ -120,6 +127,9 @@ static func sample(rows: Array,x: int,y: int,ch: String) -> Color:
 	# A softly rounded border on garden / recreation / patio blends. Paths cut clear openings.
 	if w.x>0.39 and w.x<0.61 and route>44:
 		color=Color("928d7a") if pocket<0.49 else Color("e6d6b6")
+	# A thin inlaid border round each court: one dark pixel, one pale pixel. No raised curb, no end caps.
+	if court>0.0 and court<0.125:
+		color=Color("8f8a78") if court<0.0625 else Color("e6d6b6")
 	# Brass direction studs are spaced far apart; no repeated stripes across the route.
 	if on_route and route<3 and int(radius)%96<4 and radius>175:
 		color=Color("c7ad70")

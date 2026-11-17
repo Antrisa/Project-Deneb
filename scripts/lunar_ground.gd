@@ -40,10 +40,37 @@ func paint(n: Node2D, data: Dictionary) -> void:
 				roof_tile(n,rows,x,y,-16)
 			if not bottom and y>0 and rows[y-1][x] in "#Wz":
 				roof_detail(n,x,y)
+				# A seam where one roof plate meets the next, so the roof reads as separate buildings.
+				if x+1<rows[y].length() and rows[y][x+1] in "#Wz" and roof_zone(x+1,y)!=roof_zone(x,y):
+					n.draw_rect(Rect2(x*16+15,y*16-16,1,16),Color("36434f"))
+					n.draw_rect(Rect2(x*16+16,y*16-16,1,16),Color("a9b6c2"))
+				if y+1<rows.size() and rows[y+1][x] in "#Wz" and roof_zone(x,y+1)!=roof_zone(x,y):
+					n.draw_rect(Rect2(x*16,y*16-1,16,1),Color("36434f"))
+					n.draw_rect(Rect2(x*16,y*16,16,1),Color("a9b6c2"))
 			if x>0 and rows[y][x-1] not in "#Wz~":
 				n.draw_rect(Rect2(x*16,y*16-16,2,32),Color("394756"))
 			if x+1<rows[y].length() and rows[y][x+1] not in "#Wz~":
 				n.draw_rect(Rect2(x*16+14,y*16-16,2,32),Color("7c828a"))
+	for l in preload("res://scripts/map_data.gd").ROOF_LIGHTS:
+		skylight(n,int(l[0]),int(l[1]))
+# The roofs are split into plates: eight over the shop band (one between each pair of spokes) and sixteen
+# round the outer shell. Each plate has its own tone.
+func roof_zone(x: int,y: int) -> int:
+	var d:=Vector2(x+0.5-115.5,y+0.5-95.5)
+	var a: float=fposmod(rad_to_deg(d.angle()),360.0)
+	if d.length()<45.0:
+		return int(a/45.0)%8
+	return 8+int(fposmod(a+11.25,360.0)/22.5)%16
+# A two-by-two skylight set into the roof (x,y is its top-left roof tile).
+func skylight(n: Node2D,x: int,y: int) -> void:
+	var r:=Rect2(x*16+2,y*16-16+2,28,28)
+	n.draw_rect(r.grow(1),Color("2f3b4a"))
+	n.draw_rect(r,Color("86bfc4"))
+	n.draw_rect(Rect2(r.position,Vector2(28,8)),Color("a9d8d6"))
+	n.draw_rect(Rect2(r.position+Vector2(4,18),Vector2(20,6)),Color("e9c98a"))
+	n.draw_rect(Rect2(r.position+Vector2(13,0),Vector2(2,28)),Color("4a596b"))
+	n.draw_rect(Rect2(r.position+Vector2(0,13),Vector2(28,2)),Color("4a596b"))
+	n.draw_rect(r,Color("5b6b7e"),false,1.0)
 func tile(n: Node2D, material: int,x: int,y: int) -> void:
 	n.draw_texture_rect_region(materials[material],Rect2(x*16,y*16,16,16),Rect2((x%4)*16,(y%4)*16,16,16))
 
@@ -99,5 +126,5 @@ func roof_tile(n: Node2D,rows: Array,x: int,y: int,lift: int) -> void:
 	for i in points.size():
 		uv.append((points[i]+Vector2((x%4)*16,(y%4)*16))/64.0)
 		points[i]+=Vector2(x*16,y*16+lift)
-	var tint: Color=[Color("ffffff"),Color("e1e8f0"),Color("cdd9e5")][hash_cell(x,y)%3]
+	var tint: Color=[Color("ffffff"),Color("dbe4ee"),Color("f0e9df"),Color("c6d3e2")][roof_zone(x,y)%4]
 	n.draw_polygon(points,PackedColorArray([tint]),uv,materials[1])

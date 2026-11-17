@@ -2,6 +2,17 @@
 import math
 from collections import deque
 
+R_OUT=57            # outer edge of the station shell (was 61: four tiles less plain roof)
+# The garden and games courts are wedges of the plaza: two arcs round the fountain and two sides
+# parallel to the spokes. scripts/lunar_paving.gd uses the same numbers to draw them.
+COURT_R1,COURT_R2,COURT_MARGIN=14.0,24.5,3.25
+def court_inset(px,py,sign):
+    """How far inside a court a point is, in tiles (negative: outside). sign 1 is the garden
+    (north-north-west of the fountain), -1 the games court (south-south-east)."""
+    dx,dy=(px-115.5)*sign,(py-95.5)*sign
+    r=math.hypot(dx,dy)
+    return min(r-COURT_R1,COURT_R2-r,-dx-COURT_MARGIN,(dx-dy)/math.sqrt(2)-COURT_MARGIN)
+
 def rebuild(g):
     A,Area=g['A'],g['Area'];old=A['main'];cx,cy=115,95
     m=A['main']=Area('main','Community Concourse',231,191,'~');g['m']=m
@@ -16,7 +27,7 @@ def rebuild(g):
     for y in range(cy-62,cy+63):
         for x in range(cx-62,cx+63):
             r=math.hypot(x-cx,y-cy)
-            if r<=61:floor(x,y,'#')
+            if r<=R_OUT:floor(x,y,'#')
             if r<=30:floor(x,y,'i')
             if 8.5<=r<=10.5:floor(x,y,'.')
             if 39<=r<=50:floor(x,y,'a')
@@ -31,11 +42,11 @@ def rebuild(g):
         # Enclosed access corridors continue through the lunar perimeter shell.
         if x==cx:
             for yy in range(min(y,cy),max(y,cy)+1):
-                if abs(yy-cy)>60:
+                if abs(yy-cy)>R_OUT-1:
                     for xx in (cx-4,cx-3,cx+3,cx+4):floor(xx,yy,'#')
         else:
             for xx in range(min(x,cx),max(x,cx)+1):
-                if abs(xx-cx)>60:
+                if abs(xx-cx)>R_OUT-1:
                     for yy in (cy-4,cy-3,cy+3,cy+4):floor(xx,yy,'#')
         floor(x,y,'a');m.warps.append((x,y,dest,tx,ty))
         for ar in A.values():
@@ -55,7 +66,7 @@ def rebuild(g):
     shops=[('common','Community room',80,60,'S',17,10,'major'),('mess','Mess hall',150,60,'S',17,10,'major'),
            ('fab','Manufacturing hub',80,130,'N',17,10,'major'),('medbay','Medbay',150,130,'N',17,10,'major'),
            ('library','Library',102,68,'S',9,7,'shop'),('weaver',"Sesska's textiles",128,68,'S',9,7,'shop'),
-           ('bram',"Bram's supplies",144,95,'W',7,9,'shop'),('bar',"Rusk's bar",86,95,'E',7,9,'shop'),
+           ('bram',"Bram's supplies",143,83,'W',7,9,'shop'),('bar',"Rusk's bar",87,107,'E',7,9,'shop'),
            ('furn',"Tobbin's workshop",102,122,'N',9,7,'shop'),('armoury','Armoury',128,122,'N',9,7,'shop')]
     homes=[('aptB','Residences B',97,48,'S',9,7,'home'),('aptA','Residences A',133,48,'S',9,7,'home'),
            ('aptDoc','Family residences',164,83,'W',7,9,'home'),('aptSec','Security residences',66,107,'E',7,9,'home'),
@@ -90,78 +101,135 @@ def rebuild(g):
         # Room exits also require opening a door, so locking works consistently.
         for wx,wy,to,tx,ty in A[key].warps:
             if to=='main':entries.append([key,wx,wy,to,tx,ty,'N','Exit to promenade',False])
-    def prop(name,x,y,w,h,title,kind='inspect',hint='Inspect',solid=True):
+    # ------------------------------------------------------------------ props, placed by rule
+    # Every kind of prop has one size and one solid depth: (width, height, solid rows from the bottom).
+    # x,y is the top-left tile of that footprint; the picture stands on its bottom edge, centred.
+    SIZES={'bench':(3,2,1),'bench_s':(3,2,1),'bench_n':(3,2,1),'bench_e':(1,3,2),'bench_w':(1,3,2),
+           'waiting_seat':(3,2,1),'table':(3,2,1),'cafe_table':(2,2,1),'chess':(2,2,1),'hologame':(2,2,1),
+           'chair_e':(1,2,0),'chair_w':(1,2,0),'chair_s':(1,2,0),'chair_n':(1,2,0),
+           'flowers':(4,2,2),'plants':(3,2,1),'hydroponics':(3,2,1),'water_tank':(2,2,1),'books':(2,2,1),
+           'clothes':(3,2,1),'textiles':(3,2,1),'seed_rack':(2,2,1),'market_counter':(3,2,1),'cargo':(2,2,1),
+           'trolley':(2,2,1),'workbench':(3,2,1),'medical':(2,3,1),'terminal':(1,2,1),'mailbox':(1,2,1),
+           'telescope':(2,3,1),'market_canopy':(4,4,0)}
+    # Nothing may stand on a spoke, on a door's approach or on a way out.
+    clear={(w[0],w[1]) for w in m.warps}
+    for key,title,x,y,facing,w,h,kind in shops+homes:
+        ix,iy=offsets[facing]
+        for step in range(0,8):
+            for cross in (-1,0,1):clear.add((x+ix*step+(cross if iy else 0),y+iy*step+(cross if ix else 0)))
+    def free(x,y):
+        return 0<=x<m.w and 0<=y<m.h and m.floor[y][x] in 'ihupa' and m.obj[y][x]==' ' and (x,y) not in clear
+    def fits(name,x,y):
+        w,h,solid=SIZES[name]
+        return all(free(xx,yy) for yy in range(y+h-max(solid,1),y+h) for xx in range(x,x+w))
+    def prop(name,x,y,title,kind='inspect',hint='Inspect'):
+        w,h,solid=SIZES[name]
+        assert fits(name,x,y),('prop does not fit',name,x,y,title)
         props.append([name,x,y,w,h,title])
-        if solid:
-            for yy in range(y+h-1,y+h):
-                for xx in range(x,x+w):m.obj[yy][xx]='x'
+        for yy in range(y+h-solid,y+h):
+            for xx in range(x,x+w):m.obj[yy][xx]='x'
+        if solid==0:clear.update((xx,y+h-1) for xx in range(x,x+w))      # a chair keeps its own tile
         if kind:thing(kind,title,hint,x+(w-1)/2,y+h-1,30)
-    # The fountain basin is centered at 115.5,95.5. Its south plinth holds BOTH panels.
-    # Fountain is a multipart scene; reserve its complete basin footprint.
-    for yy in range(cy-2,cy+3):
-        for xx in range(cx-3,cx+4):
-            if ((xx-cx)/3.6)**2+((yy-cy)/2.6)**2<=1:m.obj[yy][xx]='x'
+    def facing_letter(x,y,focus):
+        dx,dy=focus[0]-x,focus[1]-y
+        return ('e' if dx>0 else 'w') if abs(dx)>=abs(dy) else ('s' if dy>0 else 'n')
+    def bench_at(x,y,focus,title):
+        """A bench whose sitter is on tile x,y and looks at the focus tile."""
+        d=facing_letter(x,y,focus)
+        if d in 'ew':prop('bench_'+d,x,y-2,'%s [%s]'%(title,d.upper()),'seat','Sit')
+        else:prop('bench_'+d,x-1,y-1,'%s [%s]'%(title,d.upper()),'seat','Sit')
+    def chair_at(x,y,focus,title):
+        d=facing_letter(x,y,focus)
+        prop('chair_'+d,x,y-1,'%s [%s]'%(title,d.upper()),'seat','Sit')
+    def beside(door,side,name,title,kind='inspect',hint='Inspect',first_step=1,first_off=2):
+        """Stands a prop next to a door's approach: side -1 or 1, as near the door as it fits."""
+        x,y,facing=door;ix,iy=offsets[facing];w,h,solid=SIZES.get(name,(1,1,1))
+        for step in range(first_step,8):
+            for off in range(first_off,7):
+                if iy:x0=x+off if side>0 else x-off-w+1;y0=y+iy*step-h+1
+                else:x0=x+ix*step if ix>0 else x+ix*step-w+1;y0=y+off if side>0 else y-off-h+1
+                if name in SIZES:
+                    if fits(name,x0,y0):prop(name,x0,y0,title,kind,hint);return x0,y0
+                elif free(x0,y0):return x0,y0
+        raise AssertionError(('no room beside door',door,name))
+    # Fountain: four benches in the gaps between the spokes, each looking at the water.
+    for bx,by in [(104,91),(126,91),(104,101),(126,101)]:bench_at(bx,by,(cx,cy),'Fountain seating')
     thing('board','Community board','Read requests',cx-1,cy+3,21)
     thing('calendar','Community calendar','Open calendar',cx+1,cy+3,21)
     thing('inspect','Water-recycling fountain','Inspect',cx,cy-3,30)
-    for x,y,d in [(104,91,'e'),(124,91,'w'),(104,103,'e'),(124,103,'w')]:prop('bench_'+d,x,y,1,3,'Fountain seating ['+d.upper()+']','seat','Sit')
-    # Tables and benches flank broad passageways, rather than forming a blocking fence.
-    for key,x,y,facing in [('mess',150,60,'S'),('common',80,60,'S'),('fab',80,130,'N'),('medbay',150,130,'N')]:
-        sign=1 if facing=='S' else -1
-        for ox in (-6,4):
-            if key in ('mess','common'):
-                px,py=x+ox,y+sign*5
-                prop('table',px,py,3,2,'Dining table','inspect')
-                thing('seat','Dining chair left','Sit',px,py+1,22);thing('seat','Dining chair right','Sit',px+2,py+1,22)
-            else:prop('bench',x+ox,y+sign*5,3,2,'Waiting bench','seat','Sit')
-        prop('plants',x-6,y+sign*9,3,2,'Hydroponic garden')
-        prop('terminal',x+3,y+sign*2-1,1,2,{'mess':'Mess hall menu','common':'Community activities','fab':'Manufacturing work orders','medbay':'Medbay reception'}[key])
-    prop('clothes',124,70,3,2,'Textile display')
-    prop('seed_rack',136,88,2,2,'Seed and plant display')
-    prop('plants',92,50,3,2,'Resident garden')
-    prop('plants',137,138,3,2,'Resident garden')
-    for key,title,x,y,facing,w,h,kind in homes:
-        ix,iy=offsets[facing]
-        px,py=x+ix*4+(3 if iy else 0),y+iy*4+(3 if ix else 0)
-        prop('plants',px,py,3,2,'Resident garden')
-    # Library garden and south-east games court are chamfered terraces with open approaches.
-    def in_poly(px,py,pts):
-        inside=False;j=len(pts)-1
-        for i,(ax,ay) in enumerate(pts):
-            bx,by=pts[j]
-            if (ay>py)!=(by>py) and px<(bx-ax)*(py-ay)/(by-ay)+ax:inside=not inside
-            j=i
-        return inside
-    garden=[(99,72),(101,70),(110,70),(110,81),(108,83),(105,80),(99,74)]
-    games=[(118,112),(120,110),(125,110),(130,115),(130,119),(120,119),(118,117)]
-    for pts,ch in [(garden,'h'),(games,'u')]:
-        for yy in range(min(p[1] for p in pts),max(p[1] for p in pts)+1):
-            for xx in range(min(p[0] for p in pts),max(p[0] for p in pts)+1):
-                if in_poly(xx+.5,yy+.5,pts) and m.floor[yy][xx]=='i':floor(xx,yy,ch)
-    prop('flowers',104,71,4,2,'Library flower border','garden','Water flowers')
-    prop('flowers',105,76,4,2,'Community planting bed','garden','Water flowers')
-    prop('water_tank',109,73,2,3,'Garden watering station','garden','Water flowers')
-    prop('bench_e',100,72,1,3,'Reading garden bench [E]','seat','Sit')
-    prop('bench_w',109,78,1,3,'Planting-view bench [W]','seat','Sit')
-    prop('bench_n',104,78,3,2,'Flower garden bench [N]','seat','Sit')
-    prop('books',100,71,2,2,'Garden book exchange','read','Read a community story')
-    prop('chess',121,112,2,2,'Community chess table','game','Play a short game')
-    prop('hologame',126,116,2,2,'Holographic strategy table','game','Play a short game')
-    for x,y,d in [(120,112,'e'),(123,112,'w'),(126,114,'s'),(126,117,'n')]:
-        prop('chair_'+d,x,y,1,2,'Game chair ['+d.upper()+']','seat','Sit',False)
-    prop('bench_s',124,112,3,2,'Games spectator bench [S]','seat','Sit')
-    prop('plants',128,113,2,2,'Games court planter')
-    # Market stall is recessed against Bram's wall, with a clear approach from plaza.
-    prop('market_canopy',138,85,4,4,"Bram's canopy",None,solid=False)
+    for yy in range(cy-2,cy+3):
+        for xx in range(cx-3,cx+4):
+            if ((xx-cx)/3.6)**2+((yy-cy)/2.6)**2<=1:m.obj[yy][xx]='x'
+    # Garden and games courts: clean wedges of the plaza (see court_inset above).
+    for yy in range(cy-30,cy+31):
+        for xx in range(cx-30,cx+31):
+            if m.floor[yy][xx]=='i':
+                if court_inset(xx+.5,yy+.5,1)>0:floor(xx,yy,'h')
+                elif court_inset(xx+.5,yy+.5,-1)>0:floor(xx,yy,'u')
+    # Garden: two flower beds, benches that look at them, the watering station and the book exchange.
+    prop('flowers',107,72,'Library flower border','garden','Water flowers')
+    prop('flowers',106,76,'Community planting bed','garden','Water flowers')
+    prop('water_tank',110,79,'Garden watering station','garden','Water flowers')
+    prop('books',105,73,'Garden book exchange','read','Read a community story')
+    bench_at(104,76,(106,76),'Reading garden bench')
+    bench_at(111,76,(109,76),'Planting-view bench')
+    bench_at(107,80,(107,77),'Flower garden bench')
+    # Games court: two tables with a chair on each side that faces the board, and a bench to watch from.
+    prop('chess',122,111,'Community chess table','game','Play a short game')
+    chair_at(121,112,(122,112),'Game chair');chair_at(124,112,(123,112),'Game chair')
+    prop('hologame',124,115,'Holographic strategy table','game','Play a short game')
+    chair_at(124,114,(124,115),'Game chair');chair_at(124,117,(124,116),'Game chair')
+    bench_at(120,114,(124,114),'Games spectator bench')
+    prop('plants',120,117,'Games court planter')
+    # The four big facilities: furniture in the forecourt, set out the same way on both sides of the way in.
+    for key,title,x,y,facing,w,h,kind in shops[:4]:
+        s=1 if facing=='S' else -1;door=(x,y,facing)
+        def row(k,hh=2):return y+s*k-hh+1          # top tile of a prop whose base is k tiles out from the door wall
+        if key=='mess':
+            for k in (6,10):
+                for px in (x-7,x+5):
+                    prop('table',px,row(k),'Dining table')
+                    thing('seat','Dining chair left','Sit',px,row(k)+1,22);thing('seat','Dining chair right','Sit',px+2,row(k)+1,22)
+        elif key=='common':
+            for px in (x-8,x+6):prop('waiting_seat',px,row(6),'Community sofa','seat','Sit')
+            for px in (x-6,x+5):prop('cafe_table',px,row(10),'Coffee table')
+        elif key=='medbay':
+            for px in (x-7,x+5):prop('waiting_seat',px,row(10),'Waiting seats','seat','Sit')
+            prop('medical',x+7,row(6,3),'First aid supplies')
+            prop('hydroponics',x-9,row(6),'Healing herb planter')
+        elif key=='fab':
+            prop('workbench',x-7,row(10),'Public repair bench','repair','Inspect tools')
+            prop('cargo',x+5,row(10),'Parts crates');prop('cargo',x-9,row(6),'Parts crates')
+            prop('trolley',x+7,row(6),'Delivery trolley')
+        # A front-view terminal needs open floor on its south side, so beside a north-facing door it stands out from the wall.
+        beside(door,1,'terminal',{'mess':'Mess hall menu','common':'Community activities','fab':'Manufacturing work orders','medbay':'Medbay reception'}[key],first_step=1 if s>0 else 3,first_off=4)
+    # Bram's market: canopy, counter, crates and trolley, just below his door.
+    prop('market_canopy',138,85,"Bram's canopy",None)
     for xx in (138,141):m.obj[88][xx]='x'
-    prop('market_counter',139,88,3,2,"Bram's supply counter",'market','Browse supplies')
-    prop('cargo',142,89,2,2,'Sealed supply crates')
-    prop('trolley',140,91,2,2,'Delivery trolley')
-    prop('workbench',74,125,3,2,'Public repair bench','repair','Inspect tools')
-    prop('medical',155,123,2,3,'First aid supplies','inspect')
+    prop('market_counter',139,88,"Bram's supply counter",'market','Browse supplies')
+    prop('seed_rack',135,88,'Seed and plant display')
+    prop('cargo',142,89,'Sealed supply crates')
+    prop('trolley',136,90,'Delivery trolley')
+    # Sesska's racks either side of her door; two small tables outside the bar.
+    wd=[(xx,yy,f) for k,t,xx,yy,f,w,h,kd in shops if k=='weaver'][0]
+    beside(wd,-1,'clothes','Textile display',first_off=4);beside(wd,1,'textiles','Finished garments',first_off=4)
+    bd=[(xx,yy,f) for k,t,xx,yy,f,w,h,kd in shops if k=='bar'][0]
+    beside(bd,-1,'cafe_table','Bar table',first_step=2,first_off=4);beside(bd,1,'cafe_table','Bar table',first_step=2,first_off=4)
+    # Every shop: its sign board and its four store-front objects (Shop Art v4) either side of the way in.
+    shop_order=[sh[2] for sh in g['SHOPS']]
+    for key,title,x,y,facing,w,h,kind in shops:
+        door=(x,y,facing);s_north=facing=='N'
+        sx,sy=beside(door,-1,'',title,first_step=2 if s_north else 1,first_off=2)
+        m.obj[sy][sx]=str(shop_order.index(key));thing('sign',title,'Read the sign',sx,sy,22)
+        chars=g['PORCH_OBJS'][key]
+        for n,(side,step) in enumerate([(-1,3),(1,2),(-1,5),(1,4)]):
+            ox,oy=beside(door,side,'',title,first_step=step,first_off=2)
+            m.obj[oy][ox]=chars[n]
+    # Homes: a mail terminal on one side of the door and a planter on the other.
     for key,title,x,y,facing,w,h,kind in homes:
-        ix,iy=offsets[facing]
-        prop('mailbox',x+ix*2+(2 if iy else 0),y+iy*2+(2 if ix else 0),1,2,'Residential mail terminal')
+        door=(x,y,facing)
+        beside(door,1,'mailbox','Residential mail terminal',first_step=3 if facing=='N' else 1)
+        beside(door,-1,'plants','Resident garden')
     # Observation bay projects OUTWARD through the perimeter; no route to vacuum.
     outline=[(44,76),(48,72),(56,72),(61,77),(61,86),(56,90),(48,90),(44,86)]
     def inside(px,py):
@@ -178,25 +246,40 @@ def rebuild(g):
         for xx in range(46,60):
             if all(inside(xx+dx,yy+dy) for dx,dy in [(-1,-1),(2,-1),(-1,2),(2,2)]):floor(xx,yy,'u')
     rect(58,78,70,83,'a')
-    prop('telescope',49,76,2,3,'Lunar telescope','observe','Look through telescope')
-    prop('bench_n',50,85,3,2,'Observation bench [N]','seat','Sit')
+    prop('telescope',49,76,'Lunar telescope','observe','Look through telescope')
+    bench_at(53,82,(53,75),'Observation bench')
     thing('observe','Panoramic lunar window','Look outside',54,76,38)
     m.zones.insert(0,['Observation bay',44,72,62,90])
-    m.zones.insert(0,['Flower garden',100,72,112,85])
-    m.zones.insert(0,['Community games',118,108,131,120])
-    m.zones.insert(0,["Bram's market",136,84,143,93])
-    # Utilities sit only on solid roof tiles, never on public floor or door approaches.
-    roof=[]
-    for key,title,x,y,w,h in buildings:
-        for name,ox,oy,ww,hh in [('roof_fan',1,1,2,2),('roof_pipe',w-4,h-4,2,2),('roof_duct',w//2,2,3,2)]:
-            px,py=x+ox,y+oy
-            if all(m.floor[yy][xx]=='#' for yy in range(py,py+hh) for xx in range(px,px+ww)):
-                roof.append([name,px,py,ww,hh])
+    m.zones.insert(0,['Flower garden',101,70,112,82])
+    m.zones.insert(0,['Community games',119,109,130,121])
+    m.zones.insert(0,["Bram's market",135,84,143,92])
+    # Roofs. Machinery and skylights sit in two orderly rings, one along the middle of the shop band and one
+    # along the middle of the outer shell, and only where the roof is clear all round them.
+    used=set();roof=[];lights=[]
+    def roof_clear(x,y,w,h,below=2):
+        cells=[(xx,yy) for yy in range(y-1,y+h+below) for xx in range(x-1,x+w+1)]
+        return all(0<=xx<m.w and 0<=yy<m.h and m.floor[yy][xx]=='#' and (xx,yy) not in used for xx,yy in cells)
+    kinds=[('roof_fan',2,2),('roof_duct',3,2),('roof_pipe',2,2),('roof_box',2,2)]
+    for radius,step,first in [(34.5,45.0,11.0),(34.5,45.0,34.0),((50+R_OUT)/2+1,22.5,11.25)]:
+        n=0;a=first
+        while a<360:
+            name,ww,hh=kinds[n%len(kinds)];n+=1
+            px,py=int(round(cx+.5+radius*math.cos(math.radians(a))-ww/2)),int(round(cy+.5+radius*math.sin(math.radians(a))-hh/2))
+            if roof_clear(px,py,ww,hh):
+                roof.append([name,px,py,ww,hh]);used.update((xx,yy) for yy in range(py-1,py+hh+1) for xx in range(px-1,px+ww+1))
+            a+=step
+    for radius,step in [(34.5,6.0),((50+R_OUT)/2+1,4.0)]:
+        a=0.0
+        while a<360:
+            px,py=int(round(cx+.5+radius*math.cos(math.radians(a))-1)),int(round(cy+.5+radius*math.sin(math.radians(a))-1))
+            if all(m.floor[yy][xx]=='#' and (xx,yy) not in used for yy in range(py-1,py+4) for xx in range(px,px+2)):
+                lights.append([px,py]);used.update((xx,yy) for yy in range(py-1,py+3) for xx in range(px-1,px+3))
+            a+=step
     g['ROOF_PROPS']=roof
-    g['SOCIAL_SPOTS']=[['garden',105,73],['garden',106,78],['chess',120,113],['chess',123,113],['hologame',126,115],['hologame',126,118],['observe',51,79],['read',54,85],['browse',138,90],['restock',140,87]]
+    g['SOCIAL_SPOTS']=[['garden',108,74],['garden',107,78],['chess',121,112],['chess',124,112],['hologame',124,114],['hologame',124,117],['observe',51,79],['read',54,85],['browse',140,90],['restock',140,87]]
     m.obj[89][122]='E'
     invisible=[[x,y] for y in range(m.h) for x in range(m.w) if m.obj[y][x]=='x']
-    g.update(CONCOURSE_PROPS=props,CONCOURSE_FRONTS=fronts,CONCOURSE_LABELS=[],CONCOURSE_HIDDEN=invisible,ENTRANCES=entries,
+    g.update(ROOF_LIGHTS=lights,CONCOURSE_PROPS=props,CONCOURSE_FRONTS=fronts,CONCOURSE_LABELS=[],CONCOURSE_HIDDEN=invisible,ENTRANCES=entries,
              MESS_OBJECTS=[],DOORS=doors,BUILDINGS=buildings,FRONTS=[],SIGNS=[],PORCH_MOUTHS=[(v[3],v[4]) for v in doors.values()])
     reserved={(w[0],w[1]) for w in m.warps}|{(v[3],v[4]) for v in doors.values()};owners={}
     def nearest(x,y,owner):
@@ -212,11 +295,11 @@ def rebuild(g):
     for p in g['PEOPLE']:
         if p[1]=='main':p[2],p[3]=122,89;reserved.add((122,89))
     outdoor={'Bram':(140,87),'Sesska':(128,71),'Tobbin':(102,119),'Tikka':(80,127),'Ooma':(120,108)}
-    visits=[('Evarra',840,900,105,73,'u','garden'),('Merrow',930,990,106,78,'u','garden'),
-            ('Owen',840,930,120,113,'r','chess'),("Tar'Besh",840,930,123,113,'l','chess'),
-            ('Kit',930,1020,126,115,'d','hologame'),('Pip',930,1020,126,118,'u','hologame'),
+    visits=[('Evarra',840,900,108,74,'u','garden'),('Merrow',930,990,107,78,'u','garden'),
+            ('Owen',840,930,121,112,'r','chess'),("Tar'Besh",840,930,124,112,'l','chess'),
+            ('Kit',930,1020,124,114,'d','hologame'),('Pip',930,1020,124,117,'u','hologame'),
             ('Zaas',840,930,51,79,'l','observe'),('Quill',930,990,54,85,'l','read'),
-            ('Saffi',780,840,138,90,'r','browse')]
+            ('Saffi',780,840,140,90,'u','browse')]
     for who,start,end,x,y,facing,act in visits:
         rows=g['SCHEDULES'][who]
         resume=list([e for e in rows if e[0]<=end][-1]);resume[0]=end

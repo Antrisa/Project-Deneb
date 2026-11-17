@@ -2051,7 +2051,8 @@ func _spawn_concourse() -> void:
 		roof_sprite.texture = load("res://art/lunar/%s.png" % p[0])
 		roof_sprite.centered = false
 		roof_sprite.scale = Vector2.ONE*0.5
-		roof_sprite.position = Vector2(p[1]*16,(p[2]+p[4])*16-16)
+		roof_sprite.position = Vector2(p[1]*16+floorf((p[3]*16-roof_sprite.texture.get_width()*0.5)*0.5),(p[2]+p[4])*16-16)
+		roof_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		roof_sprite.offset = Vector2(0,-roof_sprite.texture.get_height())
 		roof_sprite.visible = false
 		actors.add_child(roof_sprite)
@@ -2087,7 +2088,8 @@ func _spawn_concourse() -> void:
 		# Uniform half-scale, matching the doubled-detail NPC artwork. Never stretch X/Y.
 		sprite.scale = Vector2.ONE * 0.5
 		sprite.offset = Vector2(0,-sprite.texture.get_height())
-		sprite.position = Vector2(p[1]*16,(p[2]+p[4])*16)
+		# Centred on its tiles and standing on its bottom edge, on whole pixels.
+		sprite.position = Vector2(p[1]*16+floorf((p[3]*16-sprite.texture.get_width()*0.5)*0.5),(p[2]+p[4])*16)
 		if p[0] == "game_chair" or p[0].begins_with("chair_") or p[0].begins_with("bench_"):
 			# The back of a chair sorts behind its occupant without moving the artwork.
 			sprite.position.y -= 12
