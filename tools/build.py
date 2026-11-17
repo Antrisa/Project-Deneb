@@ -1993,7 +1993,7 @@ if not os.path.exists(os.path.join(AUDIO, "music_under.wav")):
     render_loop("music_under", 24.0, voices)
 
 # ================================================================ maps
-WALK = set(".,fhusmiUDAR1230Xap")
+WALK = set(".,fhusmiUDAR1230Xapokj")
 
 
 class Area:
@@ -2128,7 +2128,7 @@ m.circle(CX, CY + RI + 25, 6.3, ".")
 m.zones += [["Command lift", CX - 7, CY - RI - 32, CX + 7, CY - RI - 19], ["Engineering lift", CX - 7, CY + RI + 19, CX + 7, CY + RI + 32]]
 m.setf(".", [(x, CY - RI - 19) for x in range(CX - 3, CX + 4)] + [(x, CY + RI + 19) for x in range(CX - 3, CX + 4)])
 m.warp("U", [(CX, CY - RI - 28)], "top", 20, 14)
-m.warp("D", [(CX, CY + RI + 28)], "eng", 34, 8)
+m.warp("D", [(CX, CY + RI + 28)], "eng", 101, 15)
 m.warp("A", [(CX - RI - 19, y) for y in range(CY - 3, CY + 4)], "west", 163, 110)
 m.warp("A", [(CX + RI + 23, y) for y in range(CY - 3, CY + 4)], "east", 4, 55)
 # town square fixtures
@@ -2598,7 +2598,7 @@ n.put("O", [(17, 4), (18, 4), (29, 12), (28, 12), (25, 3), (17, 12)])
 n.put("x", [(28, 4), (20, 11), (28, 18), (17, 20)])
 n.put("P", [(26, 8)])
 n.put("k", [(40, 3)])
-n.warp("R", [(2, 3), (2, 4), (2, 5)], "eng", 4, 23)
+n.warp("R", [(2, 3), (2, 4), (2, 5)], "eng", 3, 55)
 n.carve("", 20, 1, 21, 2, "m")
 n.warp("R", [(20, 1), (21, 1)], "tunnels", 30, 35)
 n.mirror()      # you arrive walking left, so the mine continues to the left
@@ -2670,17 +2670,17 @@ SCHEDULES_RAW = {
     "Pip": [("07:30", "main", 125, 49, 26, "u", "work"), ("12:30", "main", 97, 57, 26, "d", "idle"), ("15:00", "main", 138, 54, 26, "u", "idle"),
             ("17:35", "main", 140, 75, 26, "d", "eat"), ("19:15", "main", 93, 67, 26, "d", "idle"), ("20:30", "main", 160, 51, 26, "d", "idle")],
     "Sesska": [("06:00", "main", 149, 52, 36, "d", "work"), ("17:30", "main", 136, 70, 26, "d", "eat"), ("19:15", "main", 36, 68, 26, "l", "idle"),
-               ("21:30", "eng", 57, 13, 26, "l", "idle")],
+               ("21:30", "eng", 45, 67, 26, "l", "idle")],
     "Jasper": [("06:00", "main", 137, 67, 36, "d", "work"), ("14:30", "main", 47, 48, 26, "d", "idle"), ("16:30", "main", 137, 67, 36, "d", "work"),
                ("21:30", "main", 26, 52, 26, "d", "idle")],
     "Evarra": [("06:00", "main", 142, 67, 36, "d", "work"), ("09:30", "east", 44, 18, 26, "u", "work"), ("13:00", "main", 142, 67, 36, "d", "work"),
                ("20:30", "main", 29, 52, 26, "d", "idle")],
     "Bram": [("07:00", "main", 26, 68, 36, "l", "work"), ("17:35", "main", 125, 70, 26, "d", "eat"), ("19:15", "main", 56, 73, 26, "u", "idle"),
              ("22:00", "main", 17, 52, 26, "d", "idle")],
-    "Tikka": [("06:00", "eng", 55, 12, 26, "u", "work"), ("17:30", "main", 135, 70, 26, "d", "eat"), ("19:15", "main", 34, 68, 26, "d", "work"),
-              ("21:30", "eng", 55, 13, 26, "r", "idle")],
+    "Tikka": [("06:00", "eng", 53, 11, 26, "u", "work"), ("17:30", "main", 135, 70, 26, "d", "eat"), ("19:15", "main", 34, 68, 26, "d", "work"),
+              ("21:30", "eng", 90, 11, 26, "r", "idle")],
     "Freya": [("06:00", "bay", 9, 12, 26, "u", "work"), ("11:00", "bay", 23, 19, 26, "u", "work"), ("12:30", "main", 140, 70, 26, "d", "eat"),
-              ("13:30", "bay", 23, 19, 26, "u", "work"), ("16:30", "eng", 53, 12, 26, "u", "work"), ("17:30", "main", 140, 70, 26, "d", "eat"),
+              ("13:30", "bay", 23, 19, 26, "u", "work"), ("16:30", "eng", 75, 19, 26, "u", "work"), ("17:30", "main", 140, 70, 26, "d", "eat"),
               ("19:15", "main", 58, 73, 26, "u", "idle"), ("21:30", "main", 20, 52, 26, "d", "idle")],
     "Job": [("06:30", "mine", 21, 8, 26, "d", "work"), ("12:00", "main", 120, 70, 26, "d", "eat"), ("13:30", "mine", 21, 8, 26, "d", "work"),
             ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 60, 73, 26, "u", "idle"), ("22:00", "main", 18, 54, 26, "d", "idle")],
@@ -2999,15 +2999,15 @@ print("all people, things and warps reachable;", len(seen), "walkable tiles;", _
 
 # ---------------------------------------------------------------- station map (for the Map page of the menu)
 # Every area drawn small on one picture. MAP_LAYOUT says where each area sits: [x, y, pixels per tile].
-MAP_LAYOUT = {"west": [0, 30, 1.0 / 3.0], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 0.58], "mine": [34, 90, 1.0],
+MAP_LAYOUT = {"west": [0, 30, 1.0 / 3.0], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 0.48], "mine": [34, 90, 1.0],
               "tunnels": [0, 92, 0.5]}
 MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 28], ["Main Level", 104, 28], ["East Complex", 144, 36], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
 MAP_MARKS = [
     [1, "west", 79, 153, "Your quarters"], [2, "west", 48, 110, "Airlock to the landing pad"], [3, "west", 68, 110, "Reception"],
     [4, "west", 64, 50, "Your agri dome"], [5, "west", 100, 22, "Broken garden"], [6, "west", 140, 50, "Your workshop"],
     [7, "east", 50, 19, "Evarra's herb dome"], [8, "east", 93, 55, "Air reclamation plant"], [9, "east", 50, 83, "East airlock"],
-    [10, "top", 23, 23, "S.A.R.A.'s core"], [11, "top", 23, 5, "Observation Lounge"], [12, "eng", 14, 12, "Ore processing"],
-    [13, "eng", 55, 12, "Engineering bay"], [14, "bay", 23, 17, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
+    [10, "top", 23, 23, "S.A.R.A.'s core"], [11, "top", 23, 5, "Observation Lounge"], [12, "eng", 22, 22, "Ore processing"],
+    [13, "eng", 70, 20, "Engineering bay"], [14, "bay", 23, 17, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
 MAP_MARKS = MAP_MARKS[:9] + [[20 + n, "main", DOORS[b[0]][3], DOORS[b[0]][4], b[1]] for n, b in enumerate(BUILDINGS)] + MAP_MARKS[9:]
 MAP_COLORS = {"p": (176, 132, 92), "a": (226, 214, 190), "z": (64, 76, 100), "7": (64, 76, 100), "8": (64, 76, 100), "X": (90, 96, 112), "Y": (150, 144, 134), "1": (238, 202, 64), "2": (238, 202, 64), "3": (238, 202, 64),".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),

@@ -1,9 +1,10 @@
 """Engineering (area "eng") and the shuttle bay (area "bay"), approved by Zachary on 17 Nov.
 
-eng  a long rectangular works floor between the mine ramp (west) and the shuttle bay doors (east), rooms
-     along both sides: ore processing, the geothermal power core, the lift, Tikka's engineering bay and two
-     spare workshops on the north; life support, stores, the crew break room, two spare workshops and cargo
-     staging on the south. Every room has 45-degree plates in its corners.
+eng  option E (Zachary, 17 Nov): a rectangular works hall looping round the geothermal power core, sunk in
+     its own pit (stairs down at both ends, panels and coolant tanks inside). Rooms bulge out on 45-degree walls:
+     ore processing (two rooms, conveyor belts from the mine tunnel in the south-west), Tikka's big engineering bay
+     with her office and a drone pad (north), lift, stores, cargo staging and the corridor to the shuttle bay (east),
+     a big crew break room, cooling & life support piped up into the pit, and two spare workshops (south).
 bay  the shuttle bay, its own map: a hangar cut into the crater wall, with big windows along the north wall
      either side of the launch doors, your ship on its pad, a bigger fighter under a tarp, Freya's work area,
      the launch control booth and the (locked) Shipwright's Suite.
@@ -12,7 +13,7 @@ import math
 import survey
 from survey import Room, SIZES, door_pair
 
-survey.WALKABLE = 'uihsmf.apR'
+survey.WALKABLE = 'uihsmf.apRokj'
 SIZES.update({
     'geo_core': (5, 4, 3), 'furnace': (2, 3, 1), 'ore_crusher': (3, 3, 2), 'ore_cart': (2, 2, 1), 'pump': (2, 3, 1),
     'pipe_rack': (3, 2, 1), 'locker': (2, 3, 1), 'tool_cart': (2, 2, 1), 'welding_rig': (2, 3, 1), 'fuel_tank': (2, 3, 1),
@@ -20,6 +21,7 @@ SIZES.update({
     'workbench': (3, 2, 1), 'table': (3, 2, 1), 'trolley': (2, 2, 1), 'water_tank': (2, 2, 1), 'bollard_light': (1, 1, 1),
     'bin': (1, 1, 1), 'drinking_fountain': (1, 2, 1), 'lamp_post': (1, 2, 1), 'bench_s': (3, 2, 1), 'chair_n': (1, 2, 0),
     'chair_s': (1, 2, 0), 'waiting_seat': (3, 2, 1), 'signpost': (1, 2, 1),
+    'coolant_tank': (3, 4, 2), 'kitchenette': (4, 3, 1),
 })
 SHIP_W, SHIP_H = 7, 4                 # the player's ship, in tiles (art/lunar/player_ship.png: 4 frames of 224 x 128)
 
@@ -34,80 +36,142 @@ def chamfer_room(F, x0, y0, x1, y1, ch, k=2):
 
 def build(g):
     entries = []
-    # ================================================================== eng: the works floor
-    eng = Room(g, 'eng', 'Engineering Level', 100, 46)
-    F = eng.F
-    for y in range(3, 44):
-        for x in range(1, 98):
+    # ================================================================== eng: option E (Zachary, 17 Nov)
+    # A rectangular works hall that loops round the geothermal power core, sunk in its own pit; the rooms
+    # bulge out of the hall on 45-degree walls. Ore processing fills the west end, fed by conveyor belts from
+    # the mine tunnel; cooling and life support bulge out south of the core, piped up into the pit.
+    eng = Room(g, 'eng', 'Engineering Level', 120, 78)
+    F, O = eng.F, eng.obj
+    for y in range(1, 77):
+        for x in range(1, 119):
             F[y][x] = '#'
-    chamfer_room(F, 6, 20, 93, 27, '.', 2)                     # the works floor
-    for y in range(22, 26):
-        for x in range(2, 7): F[y][x] = '.'                   # ramp down to the mine
-    north = [('ore', 'Ore processing', 7, 21), ('core', 'Geothermal power core', 24, 37), ('lift', 'Lift', 40, 46),
-             ('tikka', "Tikka's engineering bay", 49, 62), ('spareA', 'Spare workshop', 65, 74), ('spareB', 'Spare workshop', 77, 92)]
-    south = [('life', 'Life support', 7, 24), ('stores', 'Stores', 27, 36), ('break', 'Crew break room', 39, 50),
-             ('spareC', 'Spare workshop', 53, 62), ('spareD', 'Spare workshop', 65, 74), ('cargo', 'Cargo staging', 77, 92)]
-    rooms = {}
-    for key, title, x0, x1 in north:
-        y0 = 12 if key == 'lift' else 6
-        chamfer_room(F, x0, y0, x1, 18, '.' if key == 'lift' else 'f', 1 if key == 'lift' else 2)
-        mid = (x0 + x1) // 2
-        for x in (mid - 1, mid, mid + 1): F[19][x] = '.'
-        rooms[key] = (title, x0, y0, x1, 18)
-    for key, title, x0, x1 in south:
-        chamfer_room(F, x0, 29, x1, 40, 'f', 2)
-        mid = (x0 + x1) // 2
-        for x in (mid - 1, mid, mid + 1): F[28][x] = '.'
-        rooms[key] = (title, x0, 29, x1, 40)
-    eng.t.zones += [[t, x0, y0, x1, y1] for (t, x0, y0, x1, y1) in rooms.values()] + [['Engineering works floor', 6, 20, 93, 27]]
-    lift = (43, 11)
+    def poly(pts, ch, only=None):
+        n = len(pts)
+        for y in range(78):
+            for x in range(120):
+                px, py, inside = x + .5, y + .5, False
+                for i in range(n):
+                    (x1, y1), (x2, y2) = pts[i], pts[(i + 1) % n]
+                    if (y1 > py) != (y2 > py) and px < x1 + (py - y1) * (x2 - x1) / (y2 - y1):
+                        inside = not inside
+                if inside and (only is None or F[y][x] in only):
+                    F[y][x] = ch
+    def fill(x0, y0, x1, y1, ch):
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1): F[y][x] = ch
+    # --- the hall loop and the sunken core
+    fill(40, 24, 100, 52, '.')
+    chamfer_room(F, 48, 30, 92, 46, 'q', 5)                    # the drop round the pit (railed, not walkable)
+    chamfer_room(F, 52, 33, 88, 43, 'k', 4)                    # the pit floor
+    fill(48, 37, 51, 39, 'j'); fill(89, 37, 92, 39, 'j')       # stairs down, west and east
+    # --- ore processing: two rooms and a short hall between them, the mine tunnel in the south-west
+    poly([(6, 33), (6, 18), (16, 8), (34, 8), (39, 13), (39, 33)], 'o')
+    fill(6, 34, 39, 38, '.')
+    poly([(6, 40), (39, 40), (39, 52), (31, 60), (6, 60)], 'o')
+    for x in (13, 14, 15, 25, 26, 27): F[33][x] = F[39][x] = 'o'
+    fill(1, 54, 5, 57, 'R')
+    # --- Tikka's engineering bay: the whole north side; her office in the north-east corner, a drone pad
+    poly([(48, 23), (48, 12), (54, 6), (90, 6), (96, 12), (96, 23)], 'f')
+    for x in range(68, 73): F[23][x] = '.'
+    chamfer_room(F, 70, 10, 80, 18, 'a', 2)
+    for y in range(6, 14): F[y][86] = '#'
+    for x in range(86, 96): F[14][x] = '#'
+    for y in range(6, 14):
+        for x in range(87, 96):
+            if F[y][x] == 'f': F[y][x] = 'h'
+    F[14][90] = F[14][91] = 'h'
+    # --- lift (north-east), stores, the corridor to the shuttle bay, cargo staging and a spare workshop
+    chamfer_room(F, 98, 15, 104, 22, '.', 1)
+    for x in (98, 99, 100): F[23][x] = '.'
+    lift = (101, 14)
+    poly([(102, 24), (108, 24), (114, 30), (114, 35), (102, 35)], 'f')
+    for y in (28, 29, 30): F[y][101] = 'f'
+    fill(101, 36, 116, 40, '.')
+    eng_door = (117, 38); F[eng_door[1]][eng_door[0]] = '.'
+    poly([(102, 42), (115, 42), (115, 52), (107, 60), (102, 60)], 'f')
+    for y in (45, 46, 47, 50, 51, 52): F[y][101] = 'f'
+    chamfer_room(F, 98, 62, 110, 71, 'f', 3)
+    for x in (103, 104, 105): F[60][x] = F[61][x] = 'f'
+    # --- south side: crew break room (big), cooling & life support, a spare workshop
+    poly([(40, 54), (57, 54), (57, 68), (51, 74), (38, 74), (32, 68), (32, 62)], 'h')
+    for x in (46, 47, 48): F[53][x] = '.'
+    poly([(58, 54), (83, 54), (83, 64), (77, 70), (64, 70), (58, 64)], 'f')
+    for x in (69, 70, 71): F[53][x] = '.'
+    chamfer_room(F, 85, 54, 96, 64, 'f', 3)
+    for x in (89, 90, 91): F[53][x] = '.'
+    # the drop is not walkable
+    for y in range(78):
+        for x in range(120):
+            if F[y][x] == 'q': O[y][x] = 'x'
+    eng.t.zones += [['Ore processing', 6, 8, 38, 32], ['Ore sorting', 6, 40, 38, 59], ['Geothermal power core', 48, 30, 92, 46],
+                    ["Tikka's engineering bay", 48, 6, 95, 22], ["Tikka's office", 87, 6, 95, 13], ['Lift', 98, 15, 104, 22],
+                    ['Stores', 102, 24, 113, 34], ['Cargo staging', 102, 42, 114, 59], ['Spare workshop', 98, 62, 110, 71],
+                    ['Crew break room', 32, 54, 56, 73], ['Cooling & life support', 58, 54, 82, 69], ['Spare workshop', 85, 54, 96, 64],
+                    ['Engineering works hall', 40, 24, 100, 52], ['Engineering works hall', 6, 34, 39, 38]]
     eng.t.warp('U', [lift], 'main', 115, 169)                   # tools/concourse.py makes this a lift door
-    eng.t.warp('R', [(2, 22), (2, 23), (2, 24), (2, 25)], 'mine', 38, 4)
-    eng_door, bay_door = (94, 23), (3, 18)
-    F[eng_door[1]][eng_door[0]] = '.'
-    # keep the middle of the works floor, every doorway and the lift clear
-    eng.keep_clear(3, 22, 93, 25); eng.keep_clear(42, 12, 44, 21)
-    for _, _, x0, x1 in north + south:
-        mid = (x0 + x1) // 2; eng.keep_clear(mid - 1, 17, mid + 1, 21); eng.keep_clear(mid - 1, 26, mid + 1, 30)
+    eng.t.warp('R', [(1, y) for y in range(54, 58)], 'mine', 38, 4)
+    bay_door = (3, 18)
+    # keep the walking lanes of the hall and every doorway clear
+    eng.keep_clear(40, 24, 100, 27); eng.keep_clear(40, 49, 100, 52); eng.keep_clear(40, 24, 45, 52); eng.keep_clear(95, 24, 100, 52)
+    eng.keep_clear(6, 35, 39, 37); eng.keep_clear(1, 54, 9, 57); eng.keep_clear(101, 37, 117, 39)
+    for (x0, y0, x1, y1) in ((12, 31, 16, 41), (24, 31, 28, 41), (67, 21, 73, 26), (97, 21, 101, 26), (99, 27, 103, 31), (99, 44, 103, 48),
+                             (45, 51, 49, 56), (68, 51, 72, 56), (88, 51, 92, 56), (102, 58, 106, 63), (89, 13, 92, 16), (46, 36, 54, 40), (86, 36, 94, 40)):
+        eng.keep_clear(x0, y0, x1, y1)
     P = eng.prop; N = eng.near
-    # ore processing: two furnaces, a crusher, ore carts
-    for x in (9, 13):
-        P('furnace', x, 6, 'Furnace', 'furnace', 'Smelt what you are holding')
-    N('ore_crusher', 18.5, 9.5, 'Ore crusher'); N('ore_cart', 10, 13, 'Ore cart', None); N('ore_cart', 18, 15, 'Ore cart', None)
-    N('pipe_rack', 9.5, 17.5, 'Slag chute', None)
-    # the geothermal power core
-    P('geo_core', 28, 9, 'Power core', 'look', 'Look')
-    N('console', 26, 16.5, 'Core monitor'); N('console', 34, 16.5, 'Core monitor'); N('pump', 25.5, 8, 'Heat exchanger', None); N('pump', 36, 8, 'Heat exchanger', None)
-    # lift lobby
-    N('terminal', 41, 13.5, 'Engineering directory'); N('plants', 45, 17.5, 'Lift planter', 'inspect', 'Inspect')
+    # ore processing: the belt from the mine runs up the west side to the crusher, then on to the furnaces
+    N('ore_crusher', 20.5, 18.5, 'Ore crusher', 'look', 'Look')
+    for x in (29, 33): P('furnace', x, 9, 'Furnace', 'furnace', 'Smelt what you are holding')
+    N('pipe_rack', 36, 16.5, 'Slag chute', None); N('ore_cart', 23, 24.5, 'Ore cart', None); N('ore_cart', 9, 30.5, 'Ore cart', None)
+    N('terminal', 18, 27.5, 'Belt control'); N('pump', 9, 21.5, 'Dust extractor', None); N('cargo', 36, 30.5, 'Ingot crates', None)
+    N('parts_rack', 20, 46.5, 'Ore bins', None); N('parts_rack', 30, 46.5, 'Ore bins', None); N('ore_cart', 22, 55.5, 'Ore cart', None)
+    N('ore_cart', 10, 44.5, 'Ore cart', None); N('console', 33, 52.5, 'Sorting console'); N('cargo', 9, 50.5, 'Rock samples', None)
+    # the power core in its pit: control panels down both long sides, coolant tanks at the ends
+    P('geo_core', 68, 36, 'Geothermal power core', 'look', 'Look')
+    P('coolant_tank', 55, 36, 'Coolant tank', None); P('coolant_tank', 83, 36, 'Coolant tank', None)
+    for x in (58, 63, 76, 81): N('console', x, 34.5, 'Core control panel')
+    for x in (59, 66, 74): N('sensor_panel', x, 43.0, 'Core read-outs')
+    for x in (50, 58, 66, 74, 82, 90): N('bollard_light', x, 29.0, 'Rail light', None); N('bollard_light', x, 47.6, 'Rail light', None)
+    N('signpost', 43, 30.5, 'Direction post', None); N('terminal', 97, 30.5, 'Engineering directory')
     # Tikka's engineering bay
-    N('workbench', 52, 8.5, 'Tikka\'s workbench', 'repair', 'Inspect tools'); N('tool_cart', 57, 8.5, 'Tool cart', None)
-    N('welding_rig', 60.5, 9, 'Welding rig'); N('parts_rack', 51.5, 15.5, 'Parts rack'); N('console', 59, 15.5, 'Diagnostics console')
-    N('wall_screen', 55.5, 7.5, 'Systems board')
-    # spare workshops: a few crates and an empty bench, waiting for someone
-    for key in ('spareA', 'spareB', 'spareC', 'spareD'):
-        _, x0, y0, x1, y1 = rooms[key]
-        N('cargo', x0 + 3, y0 + 3.5, 'Spare crates', None); N('workbench', x1 - 3, y0 + 3.5, 'Empty workbench', 'inspect', 'Inspect')
-    # life support: pumps, scrubbers, water
-    for fx, fy in ((10, 32.5), (14, 32.5), (18, 32.5)): N('pump', fx, fy, 'Heating pump', 'inspect', 'Inspect')
-    N('air_scrubber', 22, 32.5, 'Air scrubber'); N('water_tank', 10, 38.5, 'Water reserve', None); N('water_tank', 21, 38.5, 'Water reserve', None)
-    N('pipe_rack', 15.5, 38.5, 'Pipe manifold', None)
+    N('workbench', 52.5, 8.5, "Tikka's workbench", 'repair', 'Inspect tools'); N('workbench', 52.5, 13.5, 'Workbench', None)
+    N('wall_screen', 61, 7.5, 'Systems board'); N('sensor_panel', 66, 8, 'Station read-outs'); N('console', 61, 12.5, 'Diagnostics console')
+    N('tool_cart', 57, 12, 'Tool cart', None); N('welding_rig', 51, 19, 'Welding rig'); N('parts_rack', 57, 20.5, 'Parts rack', None)
+    N('test_rig', 75, 14.5, 'Drone test rig', 'look', 'Look'); N('locker', 83, 9, 'Tool lockers', None)
+    N('parts_rack', 84, 20.5, 'Spare parts', None); N('pipe_rack', 92, 19.5, 'Pipe stock', None); N('fuel_tank', 81, 16.5, 'Gas bottles', None)
+    N('console', 89.5, 8.5, "Tikka's desk"); N('books', 94, 8.5, "Tikka's manuals", None); N('star_chart', 93.5, 12.5, 'Station blueprints')
+    N('plants', 88.5, 12.5, 'Office plant', 'inspect', 'Inspect')
+    # lift lobby
+    N('plants', 103.5, 17.5, 'Lift planter', 'inspect', 'Inspect')
     # stores
-    for fx, fy in ((29.5, 32.5), (34.5, 32.5)): N('parts_rack', fx, fy, 'Stores shelving', None)
-    N('cargo', 29, 38.5, 'Stored crates', None); N('cargo', 34, 38.5, 'Stored crates', None)
-    # crew break room
-    N('locker', 41, 32.5, 'Crew lockers', None); N('locker', 48, 32.5, 'Crew lockers', None)
-    N('table', 43.5, 36.5, 'Break table'); N('drinking_fountain', 49, 38.5, 'Water point', 'inspect', 'Inspect'); N('bin', 40, 39.5, 'Recycling bin', None)
-    N('bench_n', 44.5, 39.5, 'Break room bench [N]', 'seat', 'Sit')
-    # cargo staging: the loading pad for Bram's crates
-    N('cargo', 80, 32.5, 'Cargo crates', None); N('cargo', 89, 32.5, 'Cargo crates', None); N('trolley', 85, 38.5, 'Cargo trolley', None)
-    drop = (84, 34)
+    for fx in (105.5, 110): N('parts_rack', fx, 26.5, 'Stores shelving', None)
+    N('cargo', 105, 33.5, 'Stored crates', None); N('cargo', 109, 33.5, 'Stored crates', None)
+    # cargo staging: the loading pad for Bram's crates; the belt ends here
+    N('cargo', 106, 44.5, 'Cargo crates', None); N('cargo', 112, 44.5, 'Cargo crates', None); N('trolley', 112, 54.5, 'Cargo trolley', None)
+    drop = (109, 50)
+    eng.keep_clear(107, 48, 111, 52)
     eng.thing('drop', 'Loading pad', 'Set down the crate', *drop, 22)
-    # along the works floor: lights, carts and a direction post
-    for x in range(10, 92, 8):
-        N('bollard_light', x, 21.0, 'Floor light', None)
-        N('bollard_light', x + 4, 26.6, 'Floor light', None)
-    N('signpost', 47.5, 21.5, 'Direction post', None); N('ore_cart', 20, 26.5, 'Ore cart', None)
+    # cooling & life support: three big coolant tanks, pumps, scrubbers
+    for x in (62, 68, 74): N('coolant_tank', x + 1.5, 65.5, 'Coolant tank', None)
+    for x in (61, 66, 75, 80): N('pump', x, 57.5, 'Coolant pump', 'inspect', 'Inspect')
+    N('air_scrubber', 80, 63.5, 'Air scrubber'); N('water_tank', 61, 63.5, 'Water reserve', None); N('pipe_rack', 70.5, 69.5, 'Pipe manifold', None)
+    # the crew break room: four tables, lockers, a kitchenette
+    for tx, ty in ((42, 58), (49, 58), (42, 64), (49, 64)):
+        P('table', tx, ty, 'Break table', None)
+        P('chair_s', tx + 1, ty - 2, 'Chair [S]', 'seat', 'Sit'); P('chair_n', tx + 1, ty + 2, 'Chair [N]', 'seat', 'Sit')
+    for y in (58, 62): N('locker', 35, y + 1.5, 'Crew lockers', None)
+    N('kitchenette', 44.5, 72.5, 'Kitchenette', 'inspect', 'Make a cup of tea'); N('drinking_fountain', 53, 70.5, 'Water point', 'inspect', 'Inspect')
+    N('bin', 55, 56.5, 'Recycling bin', None); N('plants', 36, 69.5, 'Break room plant', 'inspect', 'Inspect')
+    N('bench_n', 51, 72.5, 'Break room bench [N]', 'seat', 'Sit')
+    # spare workshops: a few crates and an empty bench, waiting for someone
+    for (x0, y0, x1, y1) in ((85, 54, 96, 64), (98, 62, 110, 71)):
+        N('cargo', x0 + 3, y0 + 4.5, 'Spare crates', None); N('workbench', x1 - 3, y0 + 4.5, 'Empty workbench', 'inspect', 'Inspect')
+    # conveyor belts, coolant pipes and power cables, painted into the floor
+    belts = [[(1, 55.5), (14.5, 55.5), (14.5, 23), (19, 18.5)], [(23, 18.5), (27, 18.5), (27, 13), (29, 12)],
+             [(31.5, 13), (31.5, 21), (26.5, 26), (26.5, 36.5), (42.5, 36.5), (42.5, 51.5), (106.5, 51.5)]]
+    pipes = [[(65.5, 63), (65.5, 44)], [(74.5, 63), (74.5, 44)]]
+    cables = [[(70.5, 33), (70.5, 24.5), (100.5, 24.5), (100.5, 52.5)], [(48, 38.5), (40.5, 38.5), (40.5, 24.5)], [(40.5, 36), (6.5, 36)]]
+    g.setdefault('FLOOR_EXTRAS', {})['eng'] = {'belts': belts, 'pipes': pipes, 'cables': cables, 'core': [70.5, 38],
+                                      'pit': [[48, 30, 93, 47, 4.6], [52, 33, 89, 44, 3.6]]}
 
     # ================================================================== bay: the shuttle bay
     bay = Room(g, 'bay', 'Shuttle Bay', 50, 38)

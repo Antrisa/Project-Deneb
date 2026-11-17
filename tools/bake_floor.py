@@ -243,7 +243,9 @@ AREA_FLOORS = {
     "lounge": {"u": (5, None)},
     "museum": {"h": (4, None), ".": (1, None), "f": (3, None)},
     "sanctum": {"s": (4, ("6f5a9a", 0.32)), "i": (0, ("8a6fc0", 0.30))},
-    "eng": {".": (5, ("5f6a78", 0.30)), "f": (4, ("8a8f96", 0.25)), "R": (5, ("5f6a78", 0.30)), "i": (5, ("5f6a78", 0.30)), "U": (5, None)},
+    "eng": {".": (5, ("5f6a78", 0.30)), "f": (4, ("8a8f96", 0.25)), "R": (3, ("6a5a4c", 0.35)), "i": (5, ("5f6a78", 0.30)), "U": (5, None),
+            "o": (4, ("8a6e58", 0.30)), "k": (5, ("6a3a2c", 0.45)), "q": (5, ("140e12", 0.88)), "j": (5, ("4a4e58", 0.35)),
+            "a": (1, ("d8b070", 0.25)), "h": (3, ("b08a68", 0.15))},
     "bay": {"u": (5, ("7a828c", 0.22)), "a": (1, ("d8b070", 0.25)), "p": (3, None), "f": (4, None), "i": (5, None)},
 }
 
@@ -280,7 +282,83 @@ def bake_area(key, rows, art_dir, extras=None):
         glow |= (np.abs(rr - 46) < 1.2) | (np.abs(rr - 58) < 0.8)
         glow &= ch == ord("i")
         img[glow, :3] = (92, 214, 222)
+    if "core" in extras:
+        _engineering_extras(img, ch, x, y, extras)
     return Image.fromarray(img, "RGBA")
+
+
+def _segments(lines):
+    for pts in lines:
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            yield ax * 16, ay * 16, bx * 16, by * 16
+
+
+def _near_segment(x, y, ax, ay, bx, by):
+    """Distance from each pixel to the segment, and how far along it the nearest point lies (pixels)."""
+    vx, vy = bx - ax, by - ay
+    L = max(1e-6, (vx * vx + vy * vy) ** .5)
+    t = np.clip(((x - ax) * vx + (y - ay) * vy) / (L * L), 0, 1)
+    return np.hypot(x - (ax + t * vx), y - (ay + t * vy)), t * L
+
+
+def _engineering_extras(img, ch, x, y, extras):
+    """Engineering: the sunken core's glow, the railing round the pit, stair treads, coolant pipes under
+    floor grates, cable trays and the conveyor belts (drawn last, on top)."""
+    walk = (ch != ord("#")) & (ch != ord("~")) & (ch != ord("q"))
+    rgb = img[..., :3].astype(np.float32)
+    # the core's glow, strongest down in the pit
+    cx, cy = extras["core"][0] * 16, extras["core"][1] * 16
+    d = np.hypot((x - cx) / 1.6, y - cy)
+    pit = (ch == ord("k")) | (ch == ord("q")) | (ch == ord("j"))
+    k = np.clip(1 - d / 230.0, 0, 1)[..., None] * np.where(pit, .55, .12)[..., None]
+    rgb = rgb * (1 - k) + np.array([255, 130, 50], np.float32) * k
+    # the drop and the pit floor, as true 45-degree octagons (the tiles only say where you can walk)
+    def octagon(x0, y0, x1, y1, cut):
+        X, Y = x / 16.0, y / 16.0
+        return (X >= x0) & (X <= x1) & (Y >= y0) & (Y <= y1) & (np.minimum(X - x0, x1 - X) + np.minimum(Y - y0, y1 - Y) >= cut)
+    stairs = ch == ord("j")
+    outer, inner = octagon(*extras["pit"][0]), octagon(*extras["pit"][1])
+    hall_c = rgb[(ch == ord(".")) & ~outer].mean(axis=0)
+    floor_c = rgb[(ch == ord("k")) & inner].mean(axis=0)
+    q = ch == ord("q")
+    rgb[q & ~outer] = hall_c                                    # stepped corners outside the octagon look like hall
+    plate = ((x % 32 == 0) | (y % 24 == 0)).astype(np.float32)        # the pit floor: big plates, one surface
+    pf = inner & ~stairs
+    kk = np.clip(1 - d / 230.0, 0, 1) * .55
+    rgb[pf] = (floor_c * (1 - .18 * plate[pf, None])) * (1 - kk[pf, None]) + np.array([255, 130, 50], np.float32) * kk[pf, None]
+    drop = outer & ~inner & ~stairs
+    depth = np.zeros(drop.shape, np.float32)                    # darker near the pit floor's edge, as if looking down a wall
+    for r in range(1, 6):
+        depth = np.maximum(depth, octagon(extras["pit"][1][0] - r * .45, extras["pit"][1][1] - r * .45, extras["pit"][1][2] + r * .45,
+                                           extras["pit"][1][3] + r * .45, extras["pit"][1][4]) * (1 - r / 6.0))
+    rgb[drop] = np.array([30, 22, 26], np.float32) * (1 - depth[drop, None] * .5) + np.array([120, 60, 30], np.float32) * depth[drop, None] * .5
+    # stair treads
+    rgb[stairs & (x % 4 == 0)] *= 0.6
+    # railing just outside the drop: a dark lip and a steel rail
+    lip = octagon(extras["pit"][0][0] - .1, extras["pit"][0][1] - .1, extras["pit"][0][2] + .1, extras["pit"][0][3] + .1, extras["pit"][0][4]) & ~outer
+    rail = octagon(extras["pit"][0][0] - .3, extras["pit"][0][1] - .3, extras["pit"][0][2] + .3, extras["pit"][0][3] + .3, extras["pit"][0][4]) & ~outer & ~lip
+    gap = (np.abs(y / 16.0 - 38.5) < 1.6)                       # no rail across the stairways
+    rgb[lip & ~gap] = (60, 64, 76); rgb[rail & ~gap] = (182, 190, 202)
+    # coolant pipes under grates, cable trays
+    for lines, (col, half) in ((extras.get("pipes", []), ((70, 150, 230), 3.0)), (extras.get("cables", []), ((214, 176, 60), 1.6))):
+        for ax, ay, bx, by in _segments(lines):
+            dd, along = _near_segment(x, y, ax, ay, bx, by)
+            m = (dd < half + 1.2) & walk
+            rgb[m] = rgb[m] * .5
+            m2 = (dd < half) & walk
+            rgb[m2] = col
+            if half > 2:
+                rgb[m2 & (along % 8 < 1.5)] = (40, 60, 90)          # the grate over the pipe
+    # conveyor belts
+    for ax, ay, bx, by in _segments(extras.get("belts", [])):
+        dd, along = _near_segment(x, y, ax, ay, bx, by)
+        m = (dd < 6.5) & walk
+        rgb[m] = (34, 34, 40)
+        m2 = (dd < 5) & walk
+        rgb[m2] = (64, 66, 74)
+        rgb[m2 & (along % 6 < 1.2)] = (118, 122, 132)               # rollers
+        rgb[(dd >= 5) & (dd < 6.5) & walk & (along % 10 < 5)] = (220, 170, 50)   # hazard edge
+    img[..., :3] = np.clip(rgb, 0, 255).astype(np.uint8)
 
 
 def window_strip(width_px, planet_x, seed=7):

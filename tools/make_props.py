@@ -348,6 +348,25 @@ def launch_door(d, w, h):
     for x in (16, w - 24): d.ellipse((x, 2, x + 8, 10), fill=RED, outline=INK)
 
 
+def coolant_tank(d, w, h):
+    d.ellipse((6, h - 24, w - 6, h - 4), fill=STEEL_D, outline=INK, width=2)
+    d.rounded_rectangle((12, 10, w - 12, h - 14), 18, fill=(110, 170, 220, 255), outline=INK, width=2)
+    d.rectangle((12, 40, w - 12, 48), fill=STEEL_D); d.rectangle((12, 80, w - 12, 88), fill=STEEL_D)
+    d.line((22, 18, 22, h - 22), fill=(200, 230, 250, 255), width=3)
+    d.ellipse((w // 2 - 8, 56, w // 2 + 8, 72), fill=STEEL_L, outline=INK); d.line((w // 2, 64, w // 2 + 5, 60), fill=RED, width=2)
+    d.rectangle((w // 2 - 6, 0, w // 2 + 6, 12), fill=STEEL, outline=INK)
+
+
+def kitchenette(d, w, h):
+    box(d, 2, 30, w - 2, h - 2, (236, 232, 222, 255), (255, 255, 255, 255), (196, 190, 180, 255))
+    d.rectangle((2, 30, w - 2, 38), fill=(150, 120, 90, 255), outline=INK)
+    d.rectangle((14, 6, 50, 28), fill=(200, 210, 220, 255), outline=INK)
+    d.rectangle((66, 32, 92, 37), fill=STEEL_L, outline=INK)
+    d.ellipse((96, 18, 112, 34), fill=RED, outline=INK)
+    for x in (20, 60, 100): d.rectangle((x, 48, x + 2, 56), fill=INK)
+    d.line((32, 38, 32, h - 4), fill=INK)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -384,7 +403,7 @@ PROPS = {
     'pump': (64, 96, pump), 'pipe_rack': (96, 64, pipe_rack), 'locker': (64, 104, locker), 'tool_cart': (64, 64, tool_cart),
     'welding_rig': (64, 96, welding_rig), 'fuel_tank': (64, 112, fuel_tank), 'parts_rack': (96, 104, parts_rack),
     'launch_console': (96, 72, launch_console), 'air_scrubber': (64, 104, air_scrubber), 'mag_clamp': (32, 32, mag_clamp),
-    'launch_door': (384, 112, launch_door), 'case_empty': (64, 72, case_empty),
+    'launch_door': (384, 112, launch_door), 'coolant_tank': (96, 128, coolant_tank), 'kitchenette': (128, 96, kitchenette), 'case_empty': (64, 72, case_empty),
     'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
     'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
     'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),
