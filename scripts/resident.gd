@@ -29,6 +29,7 @@ var _act_rows := 1           # how many rows the action sheet has
 var _facing := 0             # which way they face once they have arrived
 var _act := "idle"           # what they do there: work, eat or idle
 var _idle_time := 0.0
+var activity_pose: Node2D
 var away := false            # a visitor who is not on the station today: not shown, cannot be talked to
 
 const FACING := {"d": 0, "u": 1, "l": 2, "r": 3}
@@ -55,6 +56,10 @@ func setup(main, person_name: String, tex: Texture2D, entries: Array, entry_thin
 	if _act_tex != null:
 		# Action frames are 1.5 times as wide as walking frames and the same height.
 		_act_rows = maxi(1, roundi(_act_tex.get_height() / frame_h))
+	activity_pose = preload("res://scripts/resident_activity.gd").new()
+	activity_pose.resident = self
+	activity_pose.scale = Vector2.ONE / _base_scale
+	add_child(activity_pose)
 	schedule = entries
 	thing = entry_thing
 
@@ -199,6 +204,15 @@ func _settle() -> void:
 # Without them, the resident breathes, leans into their work, nods over their food, or glances about.
 func _idle(delta: float) -> void:
 	_idle_time += delta
+	if _act in ["garden","chess","hologame","observe","read","browse","restock"]:
+		texture = _walk_tex
+		hframes = 4; vframes = 3
+		frame_coords = Vector2i(_facing,0)
+		offset = _foot_offset
+		scale = Vector2.ONE * _base_scale
+		rotation = 0.015 * sin(_idle_time*2) if _act in ["garden","browse"] else 0.0
+		self_modulate.a = 0.0 if _act in ["chess","hologame"] else 1.0
+		return
 	if _act_tex != null and _act_row >= 0 and _act_row < _act_rows:
 		if texture != _act_tex:
 			frame = 0
@@ -228,6 +242,8 @@ func _idle(delta: float) -> void:
 
 
 func _unsettle() -> void:
+	self_modulate.a = 1.0
+	if activity_pose != null: activity_pose.visible = false
 	if _settled:
 		var here: Dictionary = world.blocked[area]
 		here.erase(tile)

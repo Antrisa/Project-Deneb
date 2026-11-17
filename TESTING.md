@@ -1,62 +1,16 @@
-# Echo Landing: notes for testers
+# Checking this build
 
-Thanks for trying this. It is an early build: one town, 24 residents, a mine and some caves. A lot of it has never been run before today, so expect rough edges and please report them.
+Run from the project folder:
 
-## This is the map-rework branch
+```
+python3 tests/check_routes.py
+godot --headless --editor --import --quit
+godot --headless --script res://tests/concourse_test.gd
+godot --headless --script res://tests/player_art_test.gd
+godot --headless --script res://tests/social_test.gd
+godot --headless --script res://tests/paving_test.gd
+```
 
-The station has been rebuilt. Please walk all of it.
+For a visual review, run the game and press F11 to cycle the promenade landmarks at 14:35. F10 toggles the overview. Close the overview for interaction checks. Test both sides of each entrance, chair direction, board/calendar selection and the elevator return journeys. Normal movement must not trigger the new portals automatically.
 
-- **Main level:** one big circle. The town square is the inner circle, a ring walkway runs round the outside, and six passages join them. The wedges between the passages are the shops: their doors open onto the square, each with its own sign board. Apartments sit on the outside of the ring. Walk into a door to go inside and onto the green mat to come out.
-- **Spaceport District** (west, where you start): a hub, Reception with a customs gate, a sealed airlock, the old barracks, and to the north your agri dome, a broken garden and your workshop.
-- **East Complex** (east): a hub, Evarra's herb dome, the air reclamation plant and an airlock.
-- Check that every door leads to the right room and the mat puts you back outside the same door, that residents reach dinner at 6:00 pm, that small rooms sit in the middle of the screen, and that nothing blocks a path.
-- **Menu:** press J for the journal. On the Map page, point at a dot to see what it is.
-- **Furnaces:** hold ore on your hotbar and use any furnace.
-- **End of day:** sleep in your bunk; you should get a recap of the day's credits.
-
-## Getting it running
-
-1. Install **Godot 4.6** (standard version, not .NET) from godotengine.org.
-2. Download this project (on GitHub: **Code > Download ZIP**, then unzip it).
-3. Open Godot, choose **Import**, pick `project.godot` in the unzipped folder, then press **F5**.
-
-Controls are in `README.md`. **F9** wipes your save and starts a new game.
-
-## If it will not start
-
-If the game stops with a red error in Godot, that is the most useful thing you can send. Copy the red text from the **Debugger > Errors** tab or the **Output** panel at the bottom of the Godot window. It names a file and a line number.
-
-## What is new and has not been played yet
-
-Please look at these in particular.
-
-- **Character screen** at the start of a new game: gender, hair, face, clothes, colours. Do all the lines fit? Do the colour bars drag properly? You can reopen it at the locker in your quarters.
-- **Your character walking** in all four directions, both genders, especially hair from the side.
-- **The 14 new residents.** Find each one and talk to them. Do their walking pictures and portraits look right, and do they face the right way?
-  - Medbay (east of the square, north of the walkway): Maren and Quill. Library (north-east): Owen. Pip, Nub and Kit play by the fountain after noon.
-  - Weaver's shop (south, left of the walkway): Sesska. Armoury (east, south of the walkway): Garrick and Ix'ali.
-  - Rusk's bar (south-west). Furniture workshop (north-west): Tobbin. Merrow works at the fountain.
-  - Ooma's market stall is only there on **Wednesdays and Saturdays** (days 3 and 6).
-- **Residents doing things.** When the new residents stop walking they should play an action: checking a chart, wiping a glass, sweeping. Do they stand in the right spot, with feet on the floor? Does anyone jump sideways or float?
-- **Dinner at 6:00 pm** in the mess hall: 23 people should be seated. Does anyone get stuck on the way or sit on someone else?
-- **The bar in the evening** (from about 7:15 pm): Bram, Freya, Job and Garrick should be there.
-- **Medpacks:** buy one from Maren (40 credits) and use it from the hotbar.
-- **Collapsing:** run out of hearts in the tunnels. You should wake up in the medbay.
-- **Friends page** (Tab, fourth page): 24 residents in three columns. Is anything cut off?
-- **"He" and "she":** Evarra and Job each have a line that talks about you. It should match the gender you picked.
-
-- **The clock:** it now reads like "6:10 am", moves in ten-minute steps, and the day runs slower than before. Does a day feel too long or too short? Do residents get a decent stretch of work in before lunch and dinner?
-- **Passing out:** stay up until 1:00 am. You should wake in your bed the next morning with half your hearts and a few credits gone.
-
-## Known gaps (no need to report)
-
-- The ten original residents have no action animations yet; they bob in place.
-- Rusk, Ooma, Tobbin, Sesska and Ix'ali do not sell anything yet.
-- Some furniture is placeholder art: couch, counters, stove, sink, fridge, stools, tables.
-- The cave creatures, weapons and slash effect are in an older, blockier style.
-- Walls are one tile high, and the map is due a redesign (a ring of apartments around the square, shop interiors as their own rooms).
-- Sound effects and music are simple generated placeholders.
-
-## Reporting
-
-For each problem, say **where you were**, **what day and time it was** (top of the screen), **what you did**, and **what happened**. A screenshot helps.
+The new exterior art is a first integrated implementation of the approved moon-base layout. Other districts and room interiors have not received this art pass.

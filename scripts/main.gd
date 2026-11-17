@@ -19,6 +19,9 @@ const UiScript = preload("res://scripts/ui.gd")
 const EnemyScript = preload("res://scripts/enemy.gd")
 const DialogueScript = preload("res://scripts/dialogue_box.gd")
 const MakerScript = preload("res://scripts/player_maker.gd")
+const CalendarScript = preload("res://scripts/station_calendar.gd")
+var station_calendar
+
 const CreatorScript = preload("res://scripts/creator.gd")
 
 const DAY_START := 6 * 60          # 06:00
@@ -70,6 +73,16 @@ const SOUND_NAMES := ["step", "click", "coin", "zap", "smelt", "warp", "quest", 
 var tiles_tex: Texture2D
 var actors: Node2D
 var player
+var community_game: CanvasLayer
+var garden_watered_day := -1
+var garden_busy := false
+var travelling := false
+var portals := {}
+var door_locks := {}
+var overview := false
+var review_stop := -1
+var seated := false
+var seat_return := Vector2.ZERO
 var dialogue
 var wreck_sprite: Sprite2D
 var hud_clock: Label
@@ -190,9 +203,14 @@ func _ready() -> void:
 	player = PlayerScript.new()
 	player.world = self
 	actors.add_child(player)
+	_spawn_concourse()
 
 	_sync_slots()
 	_build_ui()
+	community_game = preload("res://scripts/community_game.gd").new()
+	add_child(community_game)
+	station_calendar = CalendarScript.new()
+	add_child(station_calendar)
 	_load_game()
 	wreck_sprite.frame = repair_stage
 	_go_home()
@@ -233,6 +251,34 @@ func _add_keys(action: String, keys: Array) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if travelling or garden_busy: return
+	if community_game != null and community_game.open:
+		community_game.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11 and OS.is_debug_build():
+		if creator != null: creator.open = false; creator.visible = false
+		if appearance.is_empty():
+			appearance = maker.defaults(); player.set_sheet(maker.sheet(appearance))
+		minutes = 875.0
+		review_stop = (review_stop+1)%10
+		_go_to("main",[Vector2i(115,100),Vector2i(106,80),Vector2i(122,110),Vector2i(54,81),Vector2i(139,91),Vector2i(150,64),Vector2i(150,126),Vector2i(80,126),Vector2i(115,23),Vector2i(115,167)][review_stop])
+		_snap_residents()
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10:
+		overview = not overview
+		player._cam.zoom = Vector2.ONE * (0.08 if overview else 1.0)
+		player._cam.position = Vector2(1848,1528)-player.position if overview and current_area == "main" else Vector2(0,-8)
+		return
+	if seated:
+		if event.is_action_pressed("interact") or event.is_action_pressed("cancel") or event.is_action_pressed("move_left") or event.is_action_pressed("move_right") or event.is_action_pressed("move_up") or event.is_action_pressed("move_down"):
+			_stand_from_seat()
+		get_viewport().set_input_as_handled()
+		return
+	if station_calendar != null and station_calendar.open:
+		station_calendar.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("new_game"):
 		# F9: wipe the save and start again.
 		var empty := ConfigFile.new()
@@ -293,6 +339,9 @@ func _interact_nearest() -> void:
 # Mouse: left click uses the selected item (or interacts if it has no use), right click interacts,
 # the wheel changes the hotbar slot. In the menu, clicks go to scripts/ui.gd.
 func _mouse_button(button: int) -> void:
+	if seated or travelling or garden_busy or (community_game != null and community_game.open): return
+	if station_calendar != null and station_calendar.open:
+		return
 	if creator != null and creator.open:
 		creator.handle_click(button)
 		return
@@ -350,6 +399,8 @@ func solid_at(p: Vector2) -> bool:
 	var frow: String = floor_rows[ty]
 	if tx < 0 or tx >= frow.length():
 		return true
+	var portal_key := _portal_key(current_area,Vector2i(tx,ty))
+	if portals.has(portal_key) and portals[portal_key].opening < 0.95: return true
 	var fch: String = frow[tx]
 	if MapData.SOLID_FLOOR.contains(fch):
 		return true
@@ -376,6 +427,7 @@ func _player_tile() -> Vector2i:
 
 
 func _go_to(area_name: String, tile: Vector2i, announce: bool = true) -> void:
+	if seated: _stand_from_seat()
 	if current_area != "":
 		area_nodes[current_area].visible = false
 		area_tops[current_area].visible = false
@@ -383,7 +435,7 @@ func _go_to(area_name: String, tile: Vector2i, announce: bool = true) -> void:
 	area_nodes[area_name].visible = true
 	area_tops[area_name].visible = true
 	for pair in area_sprites:
-		var s: Sprite2D = pair[0]
+		var s: CanvasItem = pair[0]
 		var where: String = pair[1]
 		s.visible = where == area_name
 	for r in residents:
@@ -457,13 +509,20 @@ func _animate() -> void:
 		if a[1] == current_area:
 			var s: Sprite2D = a[0]
 			s.frame = (int(now * float(a[2])) + int(a[3])) % 4
-	# Sara's holograms: see-through, flickering, bobbing a little above the projector pad.
+	# Stationary projection; frame-local shader dissolves legs and animates light.
 	for h in holos:
 		var hs: Sprite2D = h
-		var glitch: float = 0.12 if int(now * 11.0) % 23 == 0 else 0.0
-		hs.modulate = Color(0.85, 1.0, 1.0, 0.74 + 0.08 * sin(now * 6.0) - glitch)
-		var lift: float = (3.0 + sin(now * 1.6)) / hs.scale.y
-		hs.offset.y = -(hs.texture.get_height() / 3.0) - lift
+		if not hs.has_meta("sara_hologram_v5"):
+			var holo_material := ShaderMaterial.new()
+			holo_material.shader = load("res://shaders/sara_hologram.gdshader")
+			holo_material.set_shader_parameter("sheet_grid", Vector2(hs.hframes, hs.vframes))
+			holo_material.set_shader_parameter("phase", hs.position.x * 0.013)
+			hs.material = holo_material
+			hs.set_meta("sara_hologram_v5", true)
+		hs.modulate = Color.WHITE
+		hs.frame = 0
+		hs.offset.y = -(hs.texture.get_height() / float(hs.vframes)) - 3.0 / hs.scale.y
+
 
 
 # Soft glows on lamps, screens, furnaces and relics. They show up most in the evening.
@@ -829,10 +888,51 @@ func _nearest_thing():
 	return best
 
 
+func _stand_from_seat() -> void:
+	seated = false
+	player.position = seat_return
+	player.set_sitting(false)
+	player.frozen = false
+
 func _interact(t: Dictionary) -> void:
 	var kind: String = t["kind"]
 	sfx("click")
-	if kind == "person":
+	if travelling or garden_busy: return
+	if kind == "portal":
+		_enter_portal(t)
+	elif kind == "garden":
+		_water_garden(t)
+	elif kind == "game":
+		var company := _activity_near(t.pos,48.0,["chess","hologame"])
+		if not company.is_empty():
+			_say(t.name,["%s are using this table. You watch their next move; the other table may be free." % ", ".join(company)])
+		else: community_game.start()
+	elif kind == "observe":
+		_say(t.name,["Beyond the pressure glass: grey ridges, old impact craters, and the long shadows of the lunar plain.","The telescope picks out a survey beacon blinking against the dark horizon."])
+	elif kind == "read":
+		_say("Book exchange",[["A handwritten log of the first flowers grown at Echo Landing.","A battered collection of stories donated by passing crews.","A field guide to unfamiliar constellations, filled with notes in the margins."][day%3]])
+	elif kind == "market":
+		var company := _activity_near(t.pos,64.0,["restock"])
+		if company.has("Bram"): _talk("Bram")
+		else: _say("Bram’s supplies",["Sealed provisions, spare fittings and seed packets. Bram handles work requests and metal sales when he is at the counter."])
+	elif kind == "repair":
+		_say("Public repair bench",["Clamped tools, labelled parts drawers and a clean cutting mat. The hub crew keeps this bench ready for small repairs."])
+	elif kind == "inspect":
+		_say(t["name"], [_inspection(t["name"])])
+	elif kind == "seat":
+		if not _activity_near(t.pos,18.0,[]).is_empty():
+			_toast("Someone is using that seat")
+			return
+		seat_return = player.position
+		seated = true
+		player.frozen = true
+		player.position = t["pos"] + Vector2(0, -2)
+		player._dir = 1 if "[N]" in t.name else 3 if "[E]" in t.name or "left" in t.name else 2 if "[W]" in t.name or "right" in t.name else 0
+		player.set_sitting(true,player._dir)
+		_toast("Seated — interact or move to stand")
+	elif kind == "menu_terminal":
+		_say("Mess hall menu", ["Community dinner • 18:00\nWarm meals and a place for everyone.", "Head inside to meet the mess hall crew. Patio seating is open all day."])
+	elif kind == "person":
 		_talk(t["who"])
 	elif kind == "ore":
 		_mine(t)
@@ -851,6 +951,8 @@ func _interact(t: Dictionary) -> void:
 	elif kind == "sign":
 		var sign_name: String = t["name"]
 		_say("Sign", [sign_name])
+	elif kind == "calendar":
+		station_calendar.show_day(day)
 	elif kind == "board":
 		_read_board()
 	elif kind == "wreck":
@@ -917,7 +1019,8 @@ func _talk(who: String) -> void:
 	elif who == "Vzz'ket" and job_quest == 3:
 		_vzzket_weapon()
 	else:
-		_say(who, [_next_repeat(who)])
+		var activity_line := _activity_dialogue(who)
+		_say(who, [activity_line if activity_line != "" else _next_repeat(who)])
 
 
 func _next_repeat(who: String) -> String:
@@ -1687,13 +1790,13 @@ func _toast(msg: String) -> void:
 
 
 func _process(delta: float) -> void:
-	var paused: bool = dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open)
-	player.frozen = paused
+	var paused: bool = (community_game != null and community_game.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open)
+	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	_animate()
 	_update_pops(delta)
 
-	if not paused:
+	if not paused and not travelling and not garden_busy:
 		minutes += delta / SECONDS_PER_GAME_MINUTE
 		if minutes >= DAY_END:
 			_pass_out()
@@ -1707,7 +1810,7 @@ func _process(delta: float) -> void:
 		# Lifts, the airlock and the mine ramp: step on the pad to travel.
 		var here: Dictionary = warps[current_area]
 		var tile: Vector2i = _player_tile()
-		if here.has(tile):
+		if here.has(tile) and not portals.has(_portal_key(current_area,tile)):
 			var dest: Array = here[tile]
 			var dest_area: String = dest[0]
 			if dest_area == "tunnels" and weapon == "":
@@ -1882,6 +1985,8 @@ func _save_game() -> void:
 		cfg.set_value(section, "met", st["met"])
 		cfg.set_value(section, "friendship", st["friendship"])
 		cfg.set_value(section, "next", st["next"])
+	cfg.set_value("access", "garden_watered_day", garden_watered_day)
+	cfg.set_value("access", "doors", door_locks)
 	cfg.save(SAVE_PATH)
 
 
@@ -1919,3 +2024,178 @@ func _load_game() -> void:
 		st["met"] = bool(cfg.get_value(section, "met", false))
 		st["friendship"] = int(cfg.get_value(section, "friendship", 0))
 		st["next"] = int(cfg.get_value(section, "next", 0))
+
+	garden_watered_day = int(cfg.get_value("access", "garden_watered_day", -1))
+	var saved_locks = cfg.get_value("access", "doors", {})
+	if saved_locks is Dictionary:
+		for key in saved_locks:
+			door_locks[key] = bool(saved_locks[key])
+			if portals.has(key): portals[key].locked = bool(saved_locks[key])
+
+
+# Frontages and landmarks are separate sprites, not painted into giant roof tiles.
+func _spawn_concourse() -> void:
+	var fountain = preload("res://scripts/lunar_fountain.gd").new()
+	fountain.name = "LayeredFountain"
+	fountain.position = Vector2(1848,1528)
+	fountain.visible = false
+	actors.add_child(fountain)
+	area_sprites.append([fountain,"main"])
+	var window = preload("res://scripts/lunar_observatory.gd").new()
+	window.position = Vector2(47*16,75*16)
+	window.visible = false
+	actors.add_child(window)
+	area_sprites.append([window,"main"])
+	for p in MapData.ROOF_PROPS:
+		var roof_sprite := Sprite2D.new()
+		roof_sprite.texture = load("res://art/lunar/%s.png" % p[0])
+		roof_sprite.centered = false
+		roof_sprite.scale = Vector2.ONE*0.5
+		roof_sprite.position = Vector2(p[1]*16,(p[2]+p[4])*16-16)
+		roof_sprite.offset = Vector2(0,-roof_sprite.texture.get_height())
+		roof_sprite.visible = false
+		actors.add_child(roof_sprite)
+		area_sprites.append([roof_sprite,"main"])
+	for e in MapData.ENTRANCES:
+		var facade: Array = []
+		if e[0] == "main":
+			for f in MapData.CONCOURSE_FRONTS:
+				if f[1] == e[1] and f[2] == e[2]: facade = f; break
+		var door = preload("res://scripts/lunar_portal.gd").new()
+		door.setup(e,facade)
+		door.visible = false
+		actors.add_child(door)
+		area_sprites.append([door,e[0]])
+		if door.facing != "S":
+			var marker = preload("res://scripts/lunar_marker.gd").new()
+			marker.setup(e,facade)
+			marker.position += Vector2(0,-40) if door.facing == "N" else Vector2(-24 if door.facing == "W" else 24,-8)
+			marker.visible = false
+			ground_fx.add_child(marker)
+			area_sprites.append([marker,e[0]])
+		var key := _portal_key(e[0],Vector2i(e[1],e[2]))
+		portals[key] = door
+		door_locks[key] = bool(e[8])
+		things.append({"kind":"portal","name":e[7],"hint":"Right-click to open" if door.kind != "lift" else "Right-click to ride", "area":e[0],"pos":Vector2(e[1]*16+8,e[2]*16+8),"radius":44.0,"who":"","entry":e,"key":key})
+	for p in MapData.CONCOURSE_PROPS:
+		var sprite: Sprite2D = preload("res://scripts/lunar_terminal.gd").new() if p[0] == "terminal" else Sprite2D.new()
+		if p[0] == "terminal": sprite.title = p[5]
+		sprite.texture = load("res://art/lunar/%s.png" % p[0])
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.centered = false
+		if p[0] == "game_chair" and "left" in p[5]: sprite.flip_h = true
+		# Uniform half-scale, matching the doubled-detail NPC artwork. Never stretch X/Y.
+		sprite.scale = Vector2.ONE * 0.5
+		sprite.offset = Vector2(0,-sprite.texture.get_height())
+		sprite.position = Vector2(p[1]*16,(p[2]+p[4])*16)
+		if p[0] == "game_chair" or p[0].begins_with("chair_") or p[0].begins_with("bench_"):
+			# The back of a chair sorts behind its occupant without moving the artwork.
+			sprite.position.y -= 12
+			sprite.offset.y += 24
+		sprite.visible = false
+		actors.add_child(sprite)
+		area_sprites.append([sprite,"main"])
+		if p[0] in ["fountain","terminal"]:
+			var water := ShaderMaterial.new()
+			water.shader = load("res://shaders/fountain_water.gdshader" if p[0] == "fountain" else "res://shaders/mess_lights.gdshader")
+			sprite.material = water
+
+func _portal_key(area_name: String,tile: Vector2i) -> String:
+	return "%s:%d:%d" % [area_name,tile.x,tile.y]
+
+# Quest scripts can call this before access is earned; lock state is saved.
+func set_door_locked(area_name: String,tile: Vector2i,value: bool) -> void:
+	var key := _portal_key(area_name,tile)
+	door_locks[key] = value
+	if portals.has(key): portals[key].locked = value
+
+func _enter_portal(t: Dictionary) -> void:
+	var key: String = t.key
+	if door_locks.get(key,false):
+		_toast("Locked — access is not available yet")
+		sfx("deny")
+		return
+	var e: Array = t.entry
+	var door = portals[key]
+	travelling = true
+	player.frozen = true
+	var tween := create_tween()
+	tween.tween_property(door,"opening",1.0,0.35)
+	await tween.finished
+	var step := create_tween()
+	step.tween_property(player,"position",Vector2(e[1]*16+8,e[2]*16+12),0.25)
+	await step.finished
+	var layer := CanvasLayer.new()
+	layer.layer = 30
+	add_child(layer)
+	var fade := ColorRect.new()
+	fade.color = Color(0.08,0.1,0.15,0)
+	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(fade)
+	var is_lift: bool = door.kind == "lift"
+	if is_lift:
+		var close := create_tween()
+		close.tween_property(door,"opening",0.0,0.35)
+		await close.finished
+		_toast("Lift moving…")
+	var out := create_tween()
+	out.tween_property(fade,"color:a",1.0,0.22)
+	await out.finished
+	if is_lift: await get_tree().create_timer(0.7).timeout
+	_go_to(e[3],Vector2i(e[4],e[5]))
+	door.opening = 0.0
+	var inside := create_tween()
+	inside.tween_property(fade,"color:a",0.0,0.25)
+	await inside.finished
+	layer.queue_free()
+	travelling = false
+	player.frozen = false
+
+func _inspection(title: String) -> String:
+	var descriptions := {
+		"Water-recycling fountain":"Reclaimed water rises through the illuminated column. The south plinth holds the community board and calendar.",
+		"Dining table":"A shared table, mugs and a small hydroponic plant. Right-click a chair nearby to sit.",
+		"Mess hall menu":"Community dinner at 18:00. Warm bowls, fresh greens and a place at the table for everyone.",
+		"Community activities":"The next gathering is posted on the fountain calendar. The community room is just inside.",
+		"Manufacturing work orders":"Repair requests, fabrication queues and tool checkouts. Follow the gear-marked threshold into the hub.",
+		"Medbay reception":"Clean seating, a first-aid terminal and the green cross at the recessed entrance.",
+		"Textile display":"Locally tailored clothes and hard-wearing fabrics. Sesska keeps the newest samples here.",
+		"Seed and plant display":"Seed packets and starter plants for the base's sealed growing rooms.",
+		"Hydroponic garden":"A recirculating planter brings a little green into the lunar settlement.",
+		"Sealed supply crates":"Insulated containers keep provisions fresh and dust out.",
+		"Delivery trolley":"A compact electric trolley for moving supplies from the cargo lift to Bram’s stall.",
+		"First aid supplies":"Bandages, sterile packs and a first-aid terminal. Maren handles treatment inside the medbay.",
+		"Residential mail terminal":"A private delivery box with an unread-message indicator. Its owner has decorated the doorstep.",
+		"Resident garden":"Someone has carefully tended this little garden outside their home."
+	}
+	return descriptions.get(title,"A well-used piece of the community promenade.")
+
+func _activity_near(pos: Vector2,radius: float,activities: Array) -> Array[String]:
+	var names: Array[String]=[]
+	for r in residents:
+		if r.area==current_area and r._settled and (activities.is_empty() or r._act in activities) and r.position.distance_to(pos)<radius:names.append(r.who)
+	return names
+
+func _activity_dialogue(who: String) -> String:
+	for r in residents:
+		if r.who != who or not r._settled:continue
+		return {"garden":"These flowers make the base feel like a place to live. The irrigation tank recycles every drop.","chess":"One more move. Pull up a chair when this round is finished.","hologame":"The glowing pieces are easy to learn. Winning takes a little more practice.","observe":"Look at those shadows along the crater rim. The view never stays quite the same.","read":"Someone left notes in this book. It has travelled farther than most of us.","browse":"I only came for one thing. Now I’m looking at the seed packets too.","restock":"Fresh stock on the counter. Let me know if you need work or have metal to sell."}.get(r._act,"")
+	return ""
+
+func _water_garden(t: Dictionary) -> void:
+	if garden_watered_day==day:
+		_toast("The garden has enough water for today")
+		return
+	garden_busy=true
+	player.frozen=true
+	var effect:=preload("res://scripts/watering_effect.gd").new()
+	effect.position=t.pos+Vector2(0,-12)
+	actors.add_child(effect)
+	_toast("Watering the community flowers…")
+	await get_tree().create_timer(1.4).timeout
+	effect.queue_free()
+	garden_watered_day=day
+	garden_busy=false
+	player.frozen=false
+	_toast("Flowers watered — the reservoir will recirculate the excess")

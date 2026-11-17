@@ -2,6 +2,8 @@
 
 A cozy space-town sim: run a settlement built in an abandoned Terran listening post, get to know its residents, mine, craft, and fight off what comes up from the caves. Built in Godot 4 with GDScript.
 
+Latest update: **Lunar Promenade v9 — 18 Floor Subvariants**. See `CONCOURSE_UPDATE.md` for new spaces, activities and review controls.
+
 ## Running it
 
 1. Install Godot 4.6 (standard version, not .NET).

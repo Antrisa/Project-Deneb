@@ -231,6 +231,9 @@ func set_carrying(value: bool) -> void:
 
 
 func _process(delta: float) -> void:
+	if sitting:
+		sit_blend = move_toward(sit_blend,1.0,delta*5.0)
+		queue_redraw()
 	if _slash_time > 0.0:
 		_slash_time -= delta
 		if _slash_time <= 0.0:
@@ -295,3 +298,64 @@ func _blocked(p: Vector2) -> bool:
 		if world.solid_at(corner):
 			return true
 	return false
+
+# Seated pose uses the current customized character texture, articulated at hips/knees.
+# Unlike moving the standing sprite behind a bench, this hides the standing legs.
+var sitting := false
+var sit_blend := 0.0
+var seat_pants := Color("405363")
+var seat_boots := Color("26313d")
+func _seat_palette(row_start: int, row_end: int, fallback: Color) -> Color:
+	var image := _sprite.texture.get_image()
+	if image.is_compressed(): image.decompress()
+	var unit: float = image.get_width()/4.0/16.0
+	var votes := {}
+	var best := 0
+	var chosen := fallback
+	for y in range(row_start,row_end):
+		for x in range(4,12):
+			var c := image.get_pixel(int((_dir*16+x)*unit),int(y*unit))
+			if c.a<0.9: continue
+			var k := c.to_html()
+			votes[k] = int(votes.get(k,0))+1
+			if votes[k]>best:
+				best = votes[k]
+				chosen = c
+	return chosen
+func set_sitting(value: bool, direction: int = 0) -> void:
+	sitting = value
+	_dir = direction
+	if value:
+		seat_pants = _seat_palette(21,26,seat_pants)
+		seat_boots = _seat_palette(27,32,seat_boots)
+	_sprite.visible = not value
+	z_index = 1 if value else 0
+	if not value: sit_blend = 0.0
+	queue_redraw()
+func _seat_piece(src: Rect2, dest: Rect2) -> void:
+	var tex: Texture2D = _sprite.texture
+	var unit: float = tex.get_width()/4.0/16.0
+	var frame_x: float = _dir*16.0*unit
+	draw_texture_rect_region(tex,dest,Rect2(Vector2(frame_x,0)+src.position*unit,src.size*unit))
+func _draw() -> void:
+	if not sitting or _sprite == null:return
+	var lower := floorf((1.0-sit_blend)*3.0)
+	draw_set_transform(Vector2(0,-lower))
+	_seat_piece(Rect2(0,0,16,21),Rect2(-8,-29,16,21))
+	if _dir == 0:
+		# Knees project forward and outward; shins hang from the cushion.
+		for x in [-7.0,1.0]:
+			draw_rect(Rect2(x,-8,6,4),seat_pants)
+			draw_rect(Rect2(x+1,-8,4,2),seat_pants.lightened(0.12))
+			draw_rect(Rect2(x,-5,6,1),seat_pants.darkened(0.22))
+			draw_rect(Rect2(x+1,-4,4,4),seat_pants.darkened(0.12))
+			draw_rect(Rect2(x,0,6,3),seat_boots)
+			draw_rect(Rect2(x,2,6,1),seat_boots.darkened(0.2))
+	else:
+		# A right-angle bend at the hip and forward-shifted shins in side view.
+		var right := _dir == 3
+		draw_set_transform(Vector2(0,-8-lower),-PI/2.0 if right else PI/2.0)
+		_seat_piece(Rect2(4,21,8,7),Rect2(-4,0,8,7))
+		draw_set_transform(Vector2(0,-lower))
+		_seat_piece(Rect2(4,26,8,6),Rect2(3 if right else -11,-4,8,6))
+	draw_set_transform(Vector2.ZERO)

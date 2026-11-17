@@ -8,17 +8,30 @@ const MapData = preload("res://scripts/map_data.gd")
 var data: Dictionary
 var tiles_tex: Texture2D
 var overhead := false      # true for the layer drawn in front of characters (tops of tall objects)
+var hidden_objects := {}
+var lunar = preload("res://scripts/lunar_ground.gd").new()
 var cell := 16             # size of one tile in tiles.png (16, or 32 for double-detail art)
 
 
 func setup(area_data: Dictionary, tex: Texture2D, is_overhead: bool = false) -> void:
 	data = area_data
+	if data["title"] == "Community Concourse":
+		for tile in MapData.CONCOURSE_HIDDEN:
+			hidden_objects[Vector2i(int(tile[0]), int(tile[1]))] = true
 	tiles_tex = tex
 	overhead = is_overhead
 	cell = tex.get_width() / int(MapData.TILE_COLUMNS)
 
 
 func _draw() -> void:
+	if data["title"] == "Community Concourse":
+		if not overhead:
+			lunar.paint(self,data)
+			for y in data.obj.size():
+				for x in data.obj[y].length():
+					var ch: String = data.obj[y][x]
+					if ch != "x" and MapData.TILE_OBJ.has(ch): _tile(MapData.TILE_OBJ[ch],x,y)
+		return
 	var floor_rows: Array = data["floor"]
 	var obj_rows: Array = data["obj"]
 	if overhead:
@@ -55,7 +68,7 @@ func _draw() -> void:
 				if MapData.WALL_FACES.contains(ach):
 					draw_rect(Rect2(x * TILE, y * TILE, TILE, 4), Color(0, 0, 0, 0.18))
 			var och: String = orow[x]
-			if MapData.TILE_OBJ.has(och):
+			if MapData.TILE_OBJ.has(och) and not hidden_objects.has(Vector2i(x, y)):
 				_tile(int(MapData.TILE_OBJ[och]), x, y)
 	# Painted outlines on the floor (loading pad, landing pad). Values are in tiles.
 	var outlines: Array = data["outlines"]   # (base layer only)

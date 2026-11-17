@@ -2958,6 +2958,9 @@ for k_ in range(12):
         m.obj[y_][x_] = DRESS["Tree in a tub" if k_ % 2 == 0 else "Flower box"]
         DRESSED.append(("main", "Tree in a tub", x_, y_))
 
+from concourse import rebuild as rebuild_concourse
+rebuild_concourse(globals())
+
 # ---------------------------------------------------------------- checks
 occupied = {(p[1], p[2], p[3]) for p in PEOPLE} | {(n[1], n[2], n[3]) for n in NODES}
 for (a, x, y) in occupied:
@@ -3094,7 +3097,7 @@ _wall_sets = {"main": ["Awning", "Hanging banner", "Wall lamp", "Awning", "Poste
               "eng": ["Wall pipes", "Wall vent", "Wall pipes"], "east": ["Wall pipes", "Wall vent", "Wall lamp"],
               "west": ["Wall lamp", "Poster", "Wall vent", "Hanging banner"], "top": ["Wall lamp", "Poster"]}
 for k_, ar_ in A.items():
-    if k_ in ("mine", "tunnels"):
+    if k_ in ("main", "mine", "tunnels"):
         continue
     set_ = _wall_sets.get(k_, ["Poster", "Wall lamp", "Hanging banner"])
     for y_ in range(ar_.h - 1):
@@ -3112,7 +3115,7 @@ for k_, ar_ in A.items():
 OPEN_OBJ += "<>{}"
 ROUNDED = 0
 for k_, ar_ in A.items():
-    if k_ in ("mine", "tunnels"):
+    if k_ in ("main", "mine", "tunnels"):
         continue
     for y_ in range(1, ar_.h - 1):
         for x_ in range(1, ar_.w - 1):
@@ -3142,6 +3145,14 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const MAP_PARENT = " + json.dumps(MAP_PARENT) + "\n")
     f.write("# Big shop-front pictures: [shop key, x, y] in pixels (art/front_<key>.png, 5 tiles wide and 3 tall).\n")
     f.write("const FRONTS = " + json.dumps(FRONTS) + "\n")
+    f.write("const ROOF_PROPS = " + json.dumps(ROOF_PROPS) + "\n")
+    f.write("const SOCIAL_SPOTS = " + json.dumps(SOCIAL_SPOTS) + "\n")
+    f.write("const ENTRANCES = " + json.dumps(ENTRANCES).replace("false", "false") + "\n")
+    f.write("const MESS_OBJECTS = " + json.dumps(MESS_OBJECTS) + "\n")
+    f.write("const CONCOURSE_PROPS = " + json.dumps(CONCOURSE_PROPS) + "\n")
+    f.write("const CONCOURSE_FRONTS = " + json.dumps(CONCOURSE_FRONTS) + "\n")
+    f.write("const CONCOURSE_LABELS = " + json.dumps(CONCOURSE_LABELS) + "\n")
+    f.write("const CONCOURSE_HIDDEN = " + json.dumps(CONCOURSE_HIDDEN) + "\n")
     f.write("const VISITOR_DAYS = " + json.dumps(VISITOR_DAYS) + "\n")
     f.write("const MEDBAY = " + json.dumps(MEDBAY) + "\n")
     f.write("const SOLID_FLOOR = " + json.dumps(SOLID_FLOOR) + "\n")
