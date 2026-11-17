@@ -353,6 +353,18 @@ const PEOPLE = {
 # Things you can look at. Name must match the name in tools/build.py THINGS.
 const LOOKS = {
 	# Survey Level (tools/survey.py)
+	"Empty display": ["An empty case with a blank label. Tar'Besh has left a card in it: 'Waiting for something wonderful.'", "Things you find on the station and in the mine could go here."],
+	"Audio guide": ["A little guide terminal. Press it and Tar'Besh's recorded voice begins, very slowly, at the beginning of time."],
+	"Museum catalogue": ["Tar'Besh's catalogue: every piece numbered, described and cross-referenced in three languages."],
+	"Sanctum banner": ["A violet banner sewn with the Precursor diamond. The thread shines faintly in the dark."],
+	"Empty crystal cradle": ["An empty cradle on a pedestal, shaped to hold a crystal. There are more of them than crystals.", "Tar'Besh believes the rest are out there somewhere."],
+	"Precursor mural": ["A carved mural: a great wing spread over a world, and figures bringing crystals up from under the ground."],
+	"Crystal test rig": ["An arm of probes pointed at an empty sample cradle. The readings on its screen make no sense at all."],
+	"Resonance spectrometer": ["It measures the crystals' hum. The line on the screen rises and falls, slow as breathing."],
+	"Research console": ["Years of measurements. One note, in S.A.R.A.'s neat type: 'They are not decaying. They are waiting.'"],
+	"Measurement log": ["A log of every test run on the crystals, every one signed by Tar'Besh and countersigned by S.A.R.A."],
+	"Lounge bookshelf": ["Star atlases, travel guides and a well-thumbed copy of a Paris hotel brochure."],
+	"Lounge table": ["A little table with two cups and a pot of tea, still warm."],
 	"Fossil of a cave crawler": ["A fossil from the moon's own caverns: something with too many legs, a very long time ago."],
 	"Zaa'sh prayer bell": ["A Zaa'sh temple bell, cast in the shape of a Sky-Weaver's wing.", "Tar'Besh rings it once a year."],
 	"Precursor glass shard": ["A splinter of something that grew rather than being made.", "It is warm to the touch, through the glass."],

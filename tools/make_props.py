@@ -174,6 +174,64 @@ def lab_door(d, w, h):
     d.ellipse((w // 2 - 4, 4, w // 2 + 4, 12), fill=RED, outline=INK)
 
 
+def case_empty(d, w, h):
+    box(d, 4, h - 26, w - 4, h - 2, CREAM, (246, 238, 220, 255), CREAM_D)
+    d.rectangle((8, 10, w - 8, h - 26), fill=(200, 230, 240, 110), outline=INK, width=2)
+    d.line((12, 14, 20, 14), fill=(255, 255, 255, 200), width=2)
+    d.rectangle((w // 2 - 8, h - 34, w // 2 + 8, h - 28), fill=STEEL_L, outline=INK)     # an empty stand
+    d.rectangle((w // 2 - 10, h - 18, w // 2 + 10, h - 12), fill=CREAM_D)                # blank label
+
+
+def crystal_pedestal_empty(d, w, h):
+    box(d, 10, h - 40, w - 10, h - 2, STEEL, STEEL_L, STEEL_D)
+    d.rectangle((6, h - 44, w - 6, h - 36), fill=STEEL_L, outline=INK)
+    d.polygon([(w // 2 - 12, h - 44), (w // 2 - 6, h - 58), (w // 2 + 6, h - 58), (w // 2 + 12, h - 44)], outline=VIOLET, fill=(60, 44, 90, 255))
+    d.ellipse((w // 2 - 4, h - 54, w // 2 + 4, h - 48), fill=(120, 90, 180, 255))
+
+
+def precursor_mural(d, w, h):
+    box(d, 4, 4, w - 4, h - 2, (150, 136, 160, 255), (184, 170, 196, 255), (110, 96, 124, 255), r=8)
+    d.ellipse((w // 2 - 22, 16, w // 2 + 22, 60), outline=VIOLET, width=3)                # a world
+    for k in range(3): d.arc((w // 2 - 40 + k * 6, 8 + k * 4, w // 2 + 40 - k * 6, 72 - k * 4), 200, 340, fill=VIOLET_L, width=2)
+    for i in range(5): d.polygon([(14 + i * 16, h - 26), (20 + i * 16, h - 34), (26 + i * 16, h - 26), (20 + i * 16, h - 18)], outline=(80, 64, 100, 255), width=2)
+
+
+def test_rig(d, w, h):
+    box(d, 6, h - 30, w - 6, h - 2, STEEL, STEEL_L, STEEL_D)
+    d.rectangle((w // 2 - 3, 20, w // 2 + 3, h - 30), fill=STEEL_D, outline=INK)
+    d.line((w // 2, 22, w - 12, 12), fill=STEEL_D, width=5)
+    d.ellipse((w - 18, 6, w - 6, 18), fill=TEAL, outline=INK)
+    d.ellipse((12, h - 46, 28, h - 30), fill=(60, 44, 90, 255), outline=VIOLET, width=2)  # sample cradle
+    for x in range(12, w - 12, 8): d.rectangle((x, h - 20, x + 4, h - 16), fill=AMBER if x % 16 else TEAL)
+
+
+def spectrometer(d, w, h):
+    box(d, 4, h - 40, w - 4, h - 2, STEEL, STEEL_L, STEEL_D)
+    d.rectangle((10, h - 34, w - 10, h - 18), fill=DARK)
+    for i, x in enumerate(range(12, w - 12, 4)): d.line((x, h - 20, x, h - 22 - (i * 7) % 11), fill=VIOLET_L)
+    d.ellipse((w - 18, h - 52, w - 6, h - 40), fill=VIOLET, outline=INK)
+
+
+def brazier(d, w, h):
+    d.polygon([(6, h - 30), (w - 6, h - 30), (w - 10, h - 20), (10, h - 20)], fill=(150, 120, 80, 255), outline=INK)
+    d.rectangle((w // 2 - 3, h - 20, w // 2 + 3, h - 6), fill=WOOD_D, outline=INK)
+    d.rectangle((8, h - 6, w - 8, h - 2), fill=WOOD_D, outline=INK)
+    d.polygon([(8, h - 30), (w // 2, 4), (w - 8, h - 30)], fill=VIOLET)
+    d.polygon([(12, h - 30), (w // 2, 18), (w - 12, h - 30)], fill=VIOLET_L)
+
+
+def holy_banner(d, w, h):
+    d.rectangle((w // 2 - 2, 4, w // 2 + 2, h - 2), fill=WOOD_D, outline=INK)
+    d.rectangle((4, 4, w - 4, 8), fill=AMBER, outline=INK)
+    d.polygon([(4, 8), (w - 4, 8), (w - 4, h - 40), (w // 2, h - 30), (4, h - 40)], fill=(90, 56, 140, 255), outline=INK)
+    d.polygon([(w // 2, 24), (w // 2 + 7, 36), (w // 2, 48), (w // 2 - 7, 36)], outline=AMBER, width=2)
+
+
+def prayer_mat(d, w, h):
+    d.rounded_rectangle((2, 4, w - 2, h - 4), 4, fill=(110, 70, 150, 255), outline=INK, width=2)
+    d.rectangle((8, 10, w - 8, h - 10), outline=AMBER, width=2)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -205,7 +263,10 @@ PROPS = {
     'case_fossil': (64, 72, case(fossil)), 'case_relic': (64, 72, case(relic)), 'case_shard': (64, 72, case(shard)),
     'case_wreck': (64, 72, case(wreck)), 'museum_centerpiece': (128, 128, centerpiece), 'curator_desk': (96, 72, curator_desk),
     'crystal_pedestal': (64, 112, crystal_pedestal), 'sanctum_door': (32, 112, sanctum_door), 'lab_door': (32, 112, lab_door),
-    'star_chart': (64, 104, star_chart), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),
+    'star_chart': (64, 104, star_chart), 'case_empty': (64, 72, case_empty),
+    'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
+    'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
+    'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),
 }
 
 if __name__ == "__main__":

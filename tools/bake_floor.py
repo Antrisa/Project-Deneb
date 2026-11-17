@@ -239,7 +239,8 @@ if __name__ == "__main__":
 AREA_FLOORS = {
     "top": {"i": (0, None), "f": (3, None), ".": (1, None), "D": (1, None)},
     "lounge": {"u": (5, None)},
-    "museum": {"h": (4, None), "s": (4, ("6f5a9a", 0.32)), "f": (3, None)},
+    "museum": {"h": (4, None), ".": (1, None), "f": (3, None)},
+    "sanctum": {"s": (4, ("6f5a9a", 0.32)), "i": (0, ("8a6fc0", 0.30))},
 }
 
 
