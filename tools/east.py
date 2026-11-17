@@ -2,9 +2,9 @@
 
 A ring street round a little park with a pavilion in the middle. Built into the ring itself: the mess hall
 greenhouse (north: crop beds, an orchard corner and Evarra's herbs) and the fitness centre (south: a gym round a
-low-gravity court and running track), so you pass them on every lap. Eight homes round the ring (a small nook in
-its outer wall for each front door), each with its own map (home1..home8): an apartment with a living room
-and kitchenette, a bedroom and a bathroom. West, on the walkway in from the Main Level: a good-sized laundry. East: the air reclamation
+low-gravity court and running track), so you pass them on every lap. Twelve homes in four little courts at the end of
+short diagonal lanes (the ring itself stays a clean circle): in each court a single apartment, a couple's
+home and a family house, each its own map, mirrored and refloored from home to home. West, on the walkway in from the Main Level: a good-sized laundry. East: the air reclamation
 plant, with a row of broken spacesuit lockers, and the east airlock beyond it (sealed until you have a suit). No schoolroom: the library and the
 community room cover that.
 Drawn in the promenade style; walls faceted by tools/bake_floor.py."""
@@ -13,13 +13,13 @@ import survey
 import engineering, spaceport          # their prop sizes
 from survey import Room, SIZES
 from engineering import chamfer_room
-from spaceport import disc, fill
+from spaceport import disc, fill, band
 
-WALKABLE = '.shafkoteu'
+WALKABLE = '.shafkoteuj'
 SIZES.update({
     'fruit_tree': (2, 3, 1), 'park_tree': (2, 3, 1), 'treadmill': (2, 2, 1), 'weight_bench': (3, 2, 1), 'punching_bag': (1, 2, 1),
     'court_hoop': (2, 3, 1), 'washer': (2, 2, 1), 'laundry_basket': (1, 1, 1), 'scoreboard': (2, 3, 1), 'flowers': (4, 2, 2),
-    'bird_bath': (1, 2, 1), 'bench_e': (1, 3, 2), 'bench_w': (1, 3, 2), 'suit_locker_broken': (2, 3, 1), 'shower': (2, 3, 1), 'toilet': (1, 2, 1), 'bath_sink': (1, 2, 1),
+    'bird_bath': (1, 2, 1), 'bench_e': (1, 3, 2), 'bench_w': (1, 3, 2), 'suit_locker_broken': (2, 3, 1), 'shower': (2, 3, 1), 'toilet': (1, 2, 1), 'bath_sink': (1, 2, 1), 'bed_double': (3, 3, 2), 'bunk_bed': (2, 3, 2),
 })
 CX, CY = 56, 46
 HOME_ANGLES = [20, 40, 140, 160, 200, 220, 320, 340]
@@ -50,22 +50,31 @@ def build(g):
     for x in (CX - 1, CX, CX + 1):
         for y in range(CY - 24, CY - 21): F[y][x] = 'a' if F[y][x] == '#' else F[y][x]
         for y in range(CY + 22, CY + 25): F[y][x] = 'f' if F[y][x] == '#' else F[y][x]
-    # eight homes round the ring: a plain circle with a small square nook in its outer wall for each front
-    # door. Each door leads to the home's own map, an apartment.
+    # homes: the ring stays a clean circle. Four short lanes run out from it on the diagonals (like the Main
+    # Level's diagonal walks), each to a little square court with three front doors in its straight walls: a
+    # single apartment and a couple's home on the long wall, a family house at the end. Each door leads to the
+    # home's own map (see the end of build()).
     homes = []
-    for i, a in enumerate(HOME_ANGLES):
-        ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
-        if abs(ca) >= abs(sa): facing = 'W' if ca > 0 else 'E'
-        else: facing = 'N' if sa > 0 else 'S'
-        step = {'S': (0, 1), 'N': (0, -1), 'E': (1, 0), 'W': (-1, 0)}[facing]
-        perp = (0, 1) if facing in 'EW' else (1, 0)
-        dx_, dy_ = int(CX + 24.4 * ca), int(CY + 24.4 * sa)
-        F[dy_][dx_] = '.'
-        for k in range(1, 5):                                        # the nook: 3 tiles wide, back to the street
-            for j in (-1, 0, 1):
-                x, y = dx_ + step[0] * k + perp[0] * j, dy_ + step[1] * k + perp[1] * j
-                if F[y][x] == '#': F[y][x] = '.'
-        homes.append((i + 1, (dx_, dy_), facing, True))
+    COURTS = [(45, 1, 1), (135, -1, 1), (225, -1, -1), (315, 1, -1)]          # angle, east/west, south/north
+    n = 0
+    for ang, ex, sy in COURTS:
+        ca, sa = math.cos(math.radians(ang)), math.sin(math.radians(ang))
+        band(F, (CX + 20 * ca, CY + 20 * sa), (CX + 32 * ca, CY + 32 * sa), 1.7, '.')
+        cx_, cy_ = int(round(CX + 36 * ca)), int(round(CY + 36 * sa))
+        x0, x1, y0, y1 = cx_ - 5, cx_ + 5, cy_ - 4, cy_ + 4
+        chamfer_room(F, x0, y0, x1, y1, '.', 2)
+        band(F, (CX + 30 * ca, CY + 30 * sa), (cx_ + .5, cy_ + .5), 1.7, '.')
+        # the long wall faces away from the ring (north for the upper courts, south for the lower ones);
+        # the end wall is on the outer side
+        wall_y = y0 - 1 if sy < 0 else y1 + 1
+        long_face = 'S' if sy < 0 else 'N'
+        end_x = x1 + 1 if ex > 0 else x0 - 1
+        end_face = 'W' if ex > 0 else 'E'
+        for kind, door, face in (('single', (cx_ - 2 * ex, wall_y), long_face), ('couple', (cx_ + 2 * ex, wall_y), long_face),
+                                 ('family', (end_x, cy_), end_face)):
+            n += 1
+            F[door[1]][door[0]] = '.'
+            homes.append((n, door, face, kind))
     # west: the walkway in from the Main Level, and the laundry beside it
     fill(F, 1, 43, 34, 49, 'u')
     chamfer_room(F, 3, 26, 22, 41, 't', 3)                          # the laundry: 19 x 15 tiles
@@ -120,34 +129,18 @@ def build(g):
     for fx in (98, 101, 104, 107, 110): N('suit_locker_broken', fx, 30.5, 'Spacesuit locker (broken)', 'look' if fx == 104 else None, 'Look')
     # the airlock
     P('lab_door', 94, 73, 'Outer airlock door', 'look', 'Look', door=True); N('locker', 104, 73, 'Suit lockers', None); N('cargo', 103, 78.5, 'Crates', None)
-    # the homes' own maps: a round room each, a bed and a few things waiting for someone
+    # the homes' own maps (make_home, below)
     import bake_floor
     from survey import door_pair
     entries, warps = [], {'east': e.t.warps}
-    for n, door, facing, out in homes:
+    LIVING = [None, ('c08a50', .15), ('5a3a24', .25), ('a0a0a0', .25)]
+    BEDROOM = ['sp_carpet', 'sp_carpet_red', 'sp_parquet', 'sp_carpet']
+    for n, door, facing, kind in homes:
         key = 'home%d' % n
-        hm = Room(g, key, 'Home %d' % n, 30, 24)
-        H = hm.F
-        fill(H, 1, 1, 28, 22, '#')
-        chamfer_room(H, 3, 3, 17, 19, 'o', 2)                       # living room
-        for y in range(3, 8):                                        # its kitchenette corner
-            for x in range(3, 10):
-                if H[y][x] == 'o': H[y][x] = 'k'
-        chamfer_room(H, 19, 3, 26, 12, 'h', 2)                      # bedroom
-        chamfer_room(H, 19, 14, 26, 19, 't', 1)                     # bathroom
-        H[10][18] = H[11][18] = 'o'; H[16][18] = H[17][18] = 'o'
-        hm_door = (10, 20); H[20][10] = 'o'
-        hm.keep_clear(8, 16, 12, 20); hm.keep_clear(16, 9, 20, 12); hm.keep_clear(16, 15, 20, 18)
-        P_, N_ = hm.prop, hm.near
-        N_('kitchenette', 5.5, 5.5, 'Kitchenette', 'inspect', 'Inspect'); N_('fridge', 9, 5.5, 'Fridge', None)
-        N_('table', 6.5, 10.5, 'Dining table', 'seat', 'Sit')
-        N_('sofa', 13, 7.5, 'Sofa', 'seat', 'Sit'); N_('cafe_table', 13, 11, 'Coffee table', None); N_('armchair', 15.5, 14.5, 'Armchair', 'seat', 'Sit')
-        N_('books', 5, 17, 'Bookshelf', None); N_('plants', 14.5, 18.5, 'Plant', None)
-        N_('bed', 21, 6.5, 'Bed', None); N_('wardrobe', 25, 5.5, 'Wardrobe', None); N_('footlocker', 21, 10.5, 'Chest', None)
-        N_('plants', 25.5, 11, 'Plant', None)
-        N_('shower', 21, 17.5, 'Shower', None); N_('toilet', 24, 16.5, 'Toilet', None); N_('bath_sink', 25.5, 18.5, 'Washbasin', None)
-        hm.thing('look', 'Empty home', 'Look', 10, 12, 50)
-        hm.t.zones += [['Living room', 3, 3, 17, 19], ['Bedroom', 19, 3, 26, 12], ['Bathroom', 19, 14, 26, 19]]
+        hm, mirror = make_home(g, key, 'Home %d' % n, kind, n % 2 == 0)
+        bake_floor.AREA_FLOORS[key] = {'o': ('sp_parquet', LIVING[n % 4]), 'k': ('sp_kitchen', None), 'h': (BEDROOM[n % 4], None),
+                                       'j': (BEDROOM[(n + 1) % 4], ('e0c080', .1)), 't': ('ea_tile', None)}
+        hm_door = hm.door
         warps[key] = hm.t.warps
         door_pair(entries, warps, 'east', door, facing, key, hm_door, 'N', 'Home %d' % n, 'East Complex')
         step = {'S': (0, 1), 'N': (0, -1), 'E': (1, 0), 'W': (-1, 0)}[facing]
@@ -157,9 +150,71 @@ def build(g):
         g.setdefault('AREA_LIGHTS', {})[key] = []
         g.setdefault('EXTRA_THINGS', []).extend(hm.things)
         g.setdefault('LUNAR_EXTRA', {})['Home %d' % n] = key
-        bake_floor.AREA_FLOORS[key] = {'o': ('sp_parquet', None), 'k': ('sp_kitchen', None), 'h': ('sp_carpet', None), 't': ('ea_tile', None)}
     g['EAST_ENTRANCES'] = entries
     g.setdefault('AREA_PROPS', {})['east'] = e.props
     g.setdefault('AREA_ROOF_PROPS', {})['east'] = []
     g.setdefault('AREA_LIGHTS', {})['east'] = []
     g.setdefault('EXTRA_THINGS', []).extend(e.things)
+
+
+def make_home(g, key, title, kind, mirror):
+    """One home's own map. single: living room with a kitchenette corner, bedroom, bathroom. couple: bigger,
+    a double bed and a small study. family: kitchen and dining, living room, a main bedroom, a children's room
+    and a bathroom. Even-numbered homes are mirrored, and the floors change from home to home."""
+    W, Hh = {'single': (30, 24), 'couple': (34, 26), 'family': (42, 30)}[kind]
+    hm = Room(g, key, title, W, Hh)
+    H = hm.F
+    fill(H, 1, 1, W - 2, Hh - 2, '#')
+    X = (lambda x: W - 1 - x) if mirror else (lambda x: x)
+    FX = (lambda fx: W - fx) if mirror else (lambda fx: fx)
+    def room(x0, y0, x1, y1, ch, k=2):
+        a, b = sorted((X(x0), X(x1)))
+        chamfer_room(H, a, y0, b, y1, ch, k)
+    def tile(x, y, ch): H[y][X(x)] = ch
+    def put(name, fx, fy, t, kd=None, hint='Look'): return hm.near(name, FX(fx), fy, t, kd, hint)
+    if kind == 'single':
+        room(3, 3, 17, 19, 'o'); room(19, 3, 26, 12, 'h'); room(19, 14, 26, 19, 't', 1)
+        for y in range(3, 8):
+            for x in range(3, 10):
+                if H[y][X(x)] == 'o': tile(x, y, 'k')
+        for y in (10, 11, 16, 17): tile(18, y, 'o')
+        door = (X(10), 20); tile(10, 20, 'o')
+        put('kitchenette', 5.5, 5.5, 'Kitchenette', 'inspect', 'Inspect'); put('fridge', 9, 5.5, 'Fridge')
+        put('table', 6.5, 10.5, 'Dining table', 'seat', 'Sit'); put('sofa', 13, 7.5, 'Sofa', 'seat', 'Sit')
+        put('cafe_table', 13, 11, 'Coffee table'); put('armchair', 15.5, 14.5, 'Armchair', 'seat', 'Sit')
+        put('books', 5, 17, 'Bookshelf'); put('plants', 14.5, 18.5, 'Plant')
+        put('bed', 21, 6.5, 'Bed'); put('wardrobe', 25, 5.5, 'Wardrobe'); put('footlocker', 21, 10.5, 'Chest')
+        put('shower', 21, 17.5, 'Shower'); put('toilet', 24, 16.5, 'Toilet'); put('bath_sink', 25.5, 18.5, 'Washbasin')
+        hm.keep_clear(X(8) if not mirror else X(12), 16, X(12) if not mirror else X(8), 20)
+        zones = [['Living room', 3, 3, 17, 19], ['Bedroom', 19, 3, 26, 12], ['Bathroom', 19, 14, 26, 19]]
+    elif kind == 'couple':
+        room(3, 3, 20, 21, 'o'); room(22, 3, 30, 13, 'h'); room(22, 15, 30, 21, 't', 1)
+        for y in range(3, 10):                                       # kitchenette and study corners, inside the living room
+            for x in range(3, 21):
+                if H[y][X(x)] == 'o' and (x <= 9 or (x >= 12 and y <= 8)): tile(x, y, 'k' if x <= 9 else 'j')
+        for y in (9, 10, 11, 17, 18): tile(21, y, 'o')
+        door = (X(11), 22); tile(11, 22, 'o')
+        put('kitchenette', 6, 6, 'Kitchenette', 'inspect', 'Inspect'); put('fridge', 9.5, 5.5, 'Fridge')
+        put('table', 7, 12.5, 'Dining table', 'seat', 'Sit'); put('curator_desk', 16.5, 5.5, 'Desk'); put('books', 13.5, 5.5, 'Bookshelf')
+        put('sofa', 14.5, 13, 'Sofa', 'seat', 'Sit'); put('cafe_table', 14.5, 16.5, 'Coffee table'); put('armchair', 18.5, 16, 'Armchair', 'seat', 'Sit')
+        put('plants', 5, 20, 'Plant'); put('tree_tub', 18.5, 20, 'Potted tree')
+        put('bed_double', 25.5, 7.5, 'Double bed'); put('wardrobe', 29.5, 5.5, 'Wardrobe'); put('footlocker', 28.5, 12, 'Chest')
+        put('shower', 24, 19.5, 'Shower'); put('toilet', 27, 18.5, 'Toilet'); put('bath_sink', 29.5, 20.5, 'Washbasin')
+        zones = [['Living room', 3, 3, 20, 21], ['Bedroom', 22, 3, 30, 13], ['Bathroom', 22, 15, 30, 21]]
+    else:
+        room(3, 3, 22, 14, 'k'); room(3, 16, 22, 26, 'o'); room(24, 3, 38, 12, 'h'); room(24, 14, 38, 20, 'j'); room(24, 22, 38, 26, 't', 1)
+        for x in (11, 12, 13): tile(x, 15, 'o')
+        for y in (7, 8, 17, 18, 24): tile(23, y, 'o' if y > 14 else 'k')
+        door = (X(13), 27); tile(13, 27, 'o')
+        put('kitchenette', 6, 5.5, 'Kitchenette', 'inspect', 'Inspect'); put('kitchenette', 11, 5.5, 'Stove'); put('fridge', 15, 5.5, 'Fridge')
+        put('table', 9, 10.5, 'Family table', 'seat', 'Sit'); put('table', 15, 10.5, 'Family table', 'seat', 'Sit'); put('plants', 20.5, 6, 'Plant')
+        put('sofa', 8, 19.5, 'Sofa', 'seat', 'Sit'); put('sofa', 16, 19.5, 'Sofa', 'seat', 'Sit'); put('cafe_table', 12, 22.5, 'Coffee table')
+        put('books', 5, 25, 'Bookshelf'); put('tree_tub', 20.5, 25, 'Potted tree')
+        put('bed_double', 28.5, 7, "Parents' bed"); put('wardrobe', 36.5, 5.5, 'Wardrobe')
+        put('bunk_bed', 27, 18, "Children's bunk"); put('bunk_bed', 31, 18, "Children's bunk"); put('footlocker', 36, 19, 'Toy chest')
+        put('shower', 26, 25, 'Shower'); put('toilet', 30, 24.5, 'Toilet'); put('bath_sink', 33, 24.5, 'Washbasin')
+        zones = [['Kitchen', 3, 3, 22, 14], ['Living room', 3, 16, 22, 26], ['Bedroom', 24, 3, 38, 12], ["Children's room", 24, 14, 38, 20], ['Bathroom', 24, 22, 38, 26]]
+    hm.thing('look', 'Empty home', 'Look', door[0], door[1] - 4, 50)
+    hm.t.zones += [[t, min(X(a), X(c)), b, max(X(a), X(c)), d] for t, a, b, c, d in zones]
+    hm.door = door
+    return hm, mirror

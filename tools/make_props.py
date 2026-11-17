@@ -699,6 +699,14 @@ def bath_sink(d, w, h):
     d.line((w // 2, 16, w // 2, 22), fill=STEEL_D, width=2)
 
 
+def bed_double(d, w, h):
+    box(d, 4, 4, w - 4, 24, WOOD, (186, 140, 100, 255), WOOD_D)
+    d.rectangle((6, 22, w - 6, h - 8), fill=(236, 232, 222, 255), outline=INK, width=2)
+    for x in (12, w // 2 + 4): d.rounded_rectangle((x, 26, x + w // 2 - 20, 38), 4, fill=(250, 250, 246, 255), outline=INK)
+    d.rectangle((6, 44, w - 6, h - 8), fill=(110, 90, 170, 255), outline=INK); d.line((8, 50, w - 8, 50), fill=(150, 130, 210, 255), width=2)
+    for x in (6, w - 12): d.rectangle((x, h - 8, x + 6, h - 2), fill=WOOD_D)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -747,7 +755,7 @@ PROPS = {
     'key_board': (64, 80, key_board), 'luggage_cart': (64, 72, luggage_cart), 'sofa': (96, 64, sofa), 'fireplace': (96, 104, fireplace),
     'fridge': (64, 104, fridge),
     'fruit_tree': (64, 104, fruit_tree), 'park_tree': (64, 112, park_tree), 'treadmill': (64, 72, treadmill), 'weight_bench': (96, 64, weight_bench),
-    'punching_bag': (32, 80, punching_bag), 'court_hoop': (64, 104, court_hoop), 'washer': (64, 72, washer), 'laundry_basket': (32, 36, laundry_basket), 'suit_locker_broken': (64, 104, suit_locker_broken), 'shower': (64, 104, shower), 'toilet': (32, 72, toilet), 'bath_sink': (32, 72, bath_sink), 'case_empty': (64, 72, case_empty),
+    'punching_bag': (32, 80, punching_bag), 'court_hoop': (64, 104, court_hoop), 'washer': (64, 72, washer), 'laundry_basket': (32, 36, laundry_basket), 'suit_locker_broken': (64, 104, suit_locker_broken), 'bed_double': (96, 104, bed_double), 'shower': (64, 104, shower), 'toilet': (32, 72, toilet), 'bath_sink': (32, 72, bath_sink), 'case_empty': (64, 72, case_empty),
     'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
     'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
     'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),
