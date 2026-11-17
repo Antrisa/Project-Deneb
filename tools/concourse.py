@@ -12,6 +12,17 @@ COURT_R1,COURT_R2,COURT_MARGIN=14.0,24.5,3.25
 POD_DIST,POD_R=56.0,14.0
 POD_R_I=14
 FORECOURT_OFF,FORECOURT_HALF=35,6
+# The outer corner of each forecourt (the one furthest from the fountain) is rounded, except the mess
+# hall's, which Zachary wanted to keep square. tools/bake_floor.py and lunar_paving.gd use the same numbers.
+FORECOURT_ROUND=5.5
+def forecourt_inset(px,py,fx,fy,rounded):
+    """How far inside a forecourt a point is, in tiles. fx,fy is the square's centre."""
+    qx,qy=(px-fx)*(1 if fx>115.5 else -1),(py-fy)*(1 if fy>95.5 else -1)   # positive: away from the fountain
+    h=FORECOURT_HALF+0.5
+    inset=min(h-abs(px-fx),h-abs(py-fy))
+    c=h-FORECOURT_ROUND
+    if rounded and qx>c and qy>c:inset=min(inset,FORECOURT_ROUND-math.hypot(qx-c,qy-c))
+    return inset
 def in_pod(x,y):
     return any(math.hypot(x-(115+sx*POD_DIST/math.sqrt(2)),y-(95+sy*POD_DIST/math.sqrt(2)))<=POD_R for sx in (-1,1) for sy in (-1,1))
 def court_inset(px,py,sign):
@@ -89,7 +100,7 @@ def rebuild(g):
             fy=y+iy*Hf
             for yy in range(fy-Hf,fy+Hf+1):
                 for xx in range(x-Hf,x+Hf+1):
-                    if m.floor[yy][xx]!='.':floor(xx,yy,'a')
+                    if m.floor[yy][xx]!='.' and forecourt_inset(xx+.5,yy+.5,x+.5,fy+.5,key!='mess')>0:floor(xx,yy,'a')
         if facing in ('S','N'):
             x0,x1=x-w//2,x+w//2;y0,y1=(y-h+1,y) if facing=='S' else (y,y+h-1)
         else:
@@ -236,9 +247,10 @@ def rebuild(g):
         v0=0 if facing=='S' else 1;east=x>cx;sv=1 if facing=='S' else -1
         def cell(u,v):return (x-u if east else x+u, y+sv*v)
         _local('terminal',door,3,v0+1,{'mess':'Mess hall menu','common':'Community activities','fab':'Manufacturing work orders','medbay':'Medbay reception'}[key])
-        sx,sy=cell(-3,v0);assert free(sx,sy),('sign',key);m.obj[sy][sx]=str([sh[2] for sh in g['SHOPS']].index(key));thing('sign',title,'Read the sign',sx,sy,22)
-        for ch_,u in zip(g['PORCH_OBJS'][key],(-6,-5,5,6)):
-            ox,oy=cell(u,v0);assert free(ox,oy),('store front',key,u);m.obj[oy][ox]=ch_
+        spots=[(-3,0),(-6,0),(-5,0),(5,0),(6,0)] if key=='mess' else [(-2,0),(-3,1),(-4,2),(5,0),(6,0)]
+        sx,sy=cell(spots[0][0],v0+spots[0][1]);assert free(sx,sy),('sign',key);m.obj[sy][sx]=str([sh[2] for sh in g['SHOPS']].index(key));thing('sign',title,'Read the sign',sx,sy,22)
+        for ch_,(u,dv) in zip(g['PORCH_OBJS'][key],spots[1:]):
+            ox,oy=cell(u,v0+dv);assert free(ox,oy),('store front',key,u);m.obj[oy][ox]=ch_
     # Bram's market: canopy, counter, crates and trolley, just below his door.
     prop('market_canopy',138,85,"Bram's canopy",None)
     for xx in (138,141):m.obj[88][xx]='x'

@@ -127,10 +127,19 @@ def court_inset(px, py, side):
     return np.minimum(np.minimum(r - 14.0, 24.5 - r), np.minimum(-dx - 3.25, (dx - dy) * 0.70710678 - 3.25))
 
 
+FORECOURT_ROUND = 5.5        # outer corner rounded, except the mess hall's (north-east)
+
+
 def forecourt_inset(px, py):
     out = np.full(px.shape, -1e9, dtype=np.float32)
     for fx, fy in FORECOURTS:
-        out = np.maximum(out, np.minimum(FORECOURT_HALF - np.abs(px - fx), FORECOURT_HALF - np.abs(py - fy)))
+        inset = np.minimum(FORECOURT_HALF - np.abs(px - fx), FORECOURT_HALF - np.abs(py - fy))
+        if not (fx > 115.5 and fy < 95.5):
+            qx = (px - fx) * (1 if fx > 115.5 else -1); qy = (py - fy) * (1 if fy > 95.5 else -1)
+            c = FORECOURT_HALF - FORECOURT_ROUND
+            corner = (qx > c) & (qy > c)
+            inset = np.where(corner, np.minimum(inset, FORECOURT_ROUND - np.hypot(qx - c, qy - c)), inset)
+        out = np.maximum(out, inset)
     return out
 
 

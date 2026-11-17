@@ -123,7 +123,11 @@ static func sample(rows: Array,x: int,y: int,ch: String) -> Color:
 	# The corner forecourts (squares 13 tiles across on the diagonals) are paved like the walks.
 	var fore: float=-1.0
 	for c in [Vector2(80.5,60.5),Vector2(150.5,60.5),Vector2(80.5,130.5),Vector2(150.5,130.5)]:
-		fore=maxf(fore,minf(6.5-absf(point.x-c.x),6.5-absf(point.y-c.y)))
+		var inset: float=minf(6.5-absf(point.x-c.x),6.5-absf(point.y-c.y))
+		if not (c.x>115.5 and c.y<95.5):      # outer corner rounded, except the mess hall's
+			var q:=Vector2((point.x-c.x)*signf(c.x-115.5),(point.y-c.y)*signf(c.y-95.5))
+			if q.x>1.0 and q.y>1.0:inset=minf(inset,5.5-(q-Vector2(1,1)).length())
+		fore=maxf(fore,inset)
 	if fore>0.0:on_route=true
 	if on_route:kind=1
 	var color:=swatch(kind,x,y)
