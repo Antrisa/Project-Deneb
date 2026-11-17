@@ -678,6 +678,27 @@ def suit_locker_broken(d, w, h):
     d.rectangle((8, h - 10, w - 8, h - 6), fill=(232, 120, 40, 255)); d.ellipse((w - 16, 6, w - 10, 12), fill=RED)
 
 
+def shower(d, w, h):
+    d.rectangle((4, 6, w - 4, h - 4), fill=(200, 226, 236, 255), outline=INK, width=2)
+    d.rectangle((8, 10, w - 8, h - 8), fill=(160, 210, 228, 150))
+    d.line((w - 14, 8, w - 14, 20), fill=STEEL_D, width=3); d.ellipse((w - 22, 18, w - 8, 26), fill=STEEL_L, outline=INK)
+    d.rectangle((4, h - 10, w - 4, h - 4), fill=(236, 240, 242, 255), outline=INK)
+
+
+def toilet(d, w, h):
+    d.rectangle((6, 6, w - 6, 24), fill=(240, 242, 244, 255), outline=INK)
+    d.ellipse((2, 22, w - 2, h - 10), fill=(240, 242, 244, 255), outline=INK, width=2)
+    d.ellipse((8, 28, w - 8, h - 16), fill=(200, 220, 230, 255))
+    d.rectangle((10, h - 10, w - 10, h - 2), fill=(220, 224, 228, 255), outline=INK)
+
+
+def bath_sink(d, w, h):
+    d.rectangle((w // 2 - 3, 26, w // 2 + 3, h - 2), fill=(230, 234, 236, 255), outline=INK)
+    d.ellipse((2, 18, w - 2, 32), fill=(240, 242, 244, 255), outline=INK, width=2)
+    d.rectangle((8, 2, w - 8, 18), fill=(180, 220, 236, 255), outline=INK)
+    d.line((w // 2, 16, w // 2, 22), fill=STEEL_D, width=2)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -726,7 +747,7 @@ PROPS = {
     'key_board': (64, 80, key_board), 'luggage_cart': (64, 72, luggage_cart), 'sofa': (96, 64, sofa), 'fireplace': (96, 104, fireplace),
     'fridge': (64, 104, fridge),
     'fruit_tree': (64, 104, fruit_tree), 'park_tree': (64, 112, park_tree), 'treadmill': (64, 72, treadmill), 'weight_bench': (96, 64, weight_bench),
-    'punching_bag': (32, 80, punching_bag), 'court_hoop': (64, 104, court_hoop), 'washer': (64, 72, washer), 'laundry_basket': (32, 36, laundry_basket), 'suit_locker_broken': (64, 104, suit_locker_broken), 'case_empty': (64, 72, case_empty),
+    'punching_bag': (32, 80, punching_bag), 'court_hoop': (64, 104, court_hoop), 'washer': (64, 72, washer), 'laundry_basket': (32, 36, laundry_basket), 'suit_locker_broken': (64, 104, suit_locker_broken), 'shower': (64, 104, shower), 'toilet': (32, 72, toilet), 'bath_sink': (32, 72, bath_sink), 'case_empty': (64, 72, case_empty),
     'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
     'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
     'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),

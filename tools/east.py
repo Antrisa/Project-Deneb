@@ -2,8 +2,9 @@
 
 A ring street round a little park with a pavilion in the middle. Built into the ring itself: the mess hall
 greenhouse (north: crop beds, an orchard corner and Evarra's herbs) and the fitness centre (south: a gym round a
-low-gravity court and running track), so you pass them on every lap. Eight homes on the ring, shaped to its
-curve (alternately bulging out of it and into it), each with its own map (home1..home8, a round room). West, on the walkway in from the Main Level: a good-sized laundry. East: the air reclamation
+low-gravity court and running track), so you pass them on every lap. Eight homes round the ring (a small nook in
+its outer wall for each front door), each with its own map (home1..home8): an apartment with a living room
+and kitchenette, a bedroom and a bathroom. West, on the walkway in from the Main Level: a good-sized laundry. East: the air reclamation
 plant, with a row of broken spacesuit lockers, and the east airlock beyond it (sealed until you have a suit). No schoolroom: the library and the
 community room cover that.
 Drawn in the promenade style; walls faceted by tools/bake_floor.py."""
@@ -18,7 +19,7 @@ WALKABLE = '.shafkoteu'
 SIZES.update({
     'fruit_tree': (2, 3, 1), 'park_tree': (2, 3, 1), 'treadmill': (2, 2, 1), 'weight_bench': (3, 2, 1), 'punching_bag': (1, 2, 1),
     'court_hoop': (2, 3, 1), 'washer': (2, 2, 1), 'laundry_basket': (1, 1, 1), 'scoreboard': (2, 3, 1), 'flowers': (4, 2, 2),
-    'bird_bath': (1, 2, 1), 'bench_e': (1, 3, 2), 'bench_w': (1, 3, 2), 'suit_locker_broken': (2, 3, 1),
+    'bird_bath': (1, 2, 1), 'bench_e': (1, 3, 2), 'bench_w': (1, 3, 2), 'suit_locker_broken': (2, 3, 1), 'shower': (2, 3, 1), 'toilet': (1, 2, 1), 'bath_sink': (1, 2, 1),
 })
 CX, CY = 56, 46
 HOME_ANGLES = [20, 40, 140, 160, 200, 220, 320, 340]
@@ -49,28 +50,22 @@ def build(g):
     for x in (CX - 1, CX, CX + 1):
         for y in range(CY - 24, CY - 21): F[y][x] = 'a' if F[y][x] == '#' else F[y][x]
         for y in range(CY + 22, CY + 25): F[y][x] = 'f' if F[y][x] == '#' else F[y][x]
-    # eight homes on the ring, matching its curve: on alternate plots the house bulges out of the ring (a
-    # curved porch cut into the outer wall, the house behind it) or into it (a curved block standing in the
-    # street). Each front door leads to the home's own map, a round room.
+    # eight homes round the ring: a plain circle with a small square nook in its outer wall for each front
+    # door. Each door leads to the home's own map, an apartment.
     homes = []
     for i, a in enumerate(HOME_ANGLES):
-        out = i % 2 == 0
         ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
-        for y in range(90):
-            for x in range(120):
-                ang = (math.degrees(math.atan2(y + .5 - CY, x + .5 - CX)) - a + 180) % 360 - 180
-                r = d(x, y)
-                if abs(ang) <= 10.5:
-                    if out and 21.5 <= r <= 27.0 and F[y][x] == '#': F[y][x] = 'h'      # the porch, cut into the wall
-                    if not out and 17.0 <= r <= 22.5: F[y][x] = '#'                     # the house, standing in the street
-        rd = 27.7 if out else 17.6                                   # the front door, at the back of the porch / in the block's face
-        dx_, dy_ = int(CX + rd * ca), int(CY + rd * sa)
         if abs(ca) >= abs(sa): facing = 'W' if ca > 0 else 'E'
         else: facing = 'N' if sa > 0 else 'S'
         step = {'S': (0, 1), 'N': (0, -1), 'E': (1, 0), 'W': (-1, 0)}[facing]
-        F[dy_][dx_] = 'h' if out else '.'
-        if F[dy_ + step[1]][dx_ + step[0]] == '#': F[dy_ + step[1]][dx_ + step[0]] = 'h' if out else '.'
-        homes.append((i + 1, (dx_, dy_), facing, out))
+        perp = (0, 1) if facing in 'EW' else (1, 0)
+        dx_, dy_ = int(CX + 24.4 * ca), int(CY + 24.4 * sa)
+        F[dy_][dx_] = '.'
+        for k in range(1, 5):                                        # the nook: 3 tiles wide, back to the street
+            for j in (-1, 0, 1):
+                x, y = dx_ + step[0] * k + perp[0] * j, dy_ + step[1] * k + perp[1] * j
+                if F[y][x] == '#': F[y][x] = '.'
+        homes.append((i + 1, (dx_, dy_), facing, True))
     # west: the walkway in from the Main Level, and the laundry beside it
     fill(F, 1, 43, 34, 49, 'u')
     chamfer_room(F, 3, 26, 22, 41, 't', 3)                          # the laundry: 19 x 15 tiles
@@ -131,15 +126,28 @@ def build(g):
     entries, warps = [], {'east': e.t.warps}
     for n, door, facing, out in homes:
         key = 'home%d' % n
-        hm = Room(g, key, 'Home %d' % n, 20, 21)
-        fill(hm.F, 1, 1, 18, 19, '#'); disc(hm.F, 10, 10, 7.2, 'o')
-        hm_door = (10, 18); hm.F[17][10] = hm.F[18][10] = 'o'
-        hm.keep_clear(8, 14, 12, 18)
-        hm.near('bed', 7, 7.5, 'Bed', None); hm.near('wardrobe', 13, 6.5, 'Wardrobe', None)
-        hm.near('cafe_table', 13.5, 12.5, 'Table', 'seat', 'Sit'); hm.near('armchair', 6, 13, 'Armchair', 'seat', 'Sit')
-        hm.near('plants', 10.5, 4.5, 'Plant', None)
-        hm.thing('look', 'Empty home', 'Look', 10, 10, 40)
-        hm.t.zones += [['Home %d' % n, 2, 2, 18, 18]]
+        hm = Room(g, key, 'Home %d' % n, 30, 24)
+        H = hm.F
+        fill(H, 1, 1, 28, 22, '#')
+        chamfer_room(H, 3, 3, 17, 19, 'o', 2)                       # living room
+        for y in range(3, 8):                                        # its kitchenette corner
+            for x in range(3, 10):
+                if H[y][x] == 'o': H[y][x] = 'k'
+        chamfer_room(H, 19, 3, 26, 12, 'h', 2)                      # bedroom
+        chamfer_room(H, 19, 14, 26, 19, 't', 1)                     # bathroom
+        H[10][18] = H[11][18] = 'o'; H[16][18] = H[17][18] = 'o'
+        hm_door = (10, 20); H[20][10] = 'o'
+        hm.keep_clear(8, 16, 12, 20); hm.keep_clear(16, 9, 20, 12); hm.keep_clear(16, 15, 20, 18)
+        P_, N_ = hm.prop, hm.near
+        N_('kitchenette', 5.5, 5.5, 'Kitchenette', 'inspect', 'Inspect'); N_('fridge', 9, 5.5, 'Fridge', None)
+        N_('table', 6.5, 10.5, 'Dining table', 'seat', 'Sit')
+        N_('sofa', 13, 7.5, 'Sofa', 'seat', 'Sit'); N_('cafe_table', 13, 11, 'Coffee table', None); N_('armchair', 15.5, 14.5, 'Armchair', 'seat', 'Sit')
+        N_('books', 5, 17, 'Bookshelf', None); N_('plants', 14.5, 18.5, 'Plant', None)
+        N_('bed', 21, 6.5, 'Bed', None); N_('wardrobe', 25, 5.5, 'Wardrobe', None); N_('footlocker', 21, 10.5, 'Chest', None)
+        N_('plants', 25.5, 11, 'Plant', None)
+        N_('shower', 21, 17.5, 'Shower', None); N_('toilet', 24, 16.5, 'Toilet', None); N_('bath_sink', 25.5, 18.5, 'Washbasin', None)
+        hm.thing('look', 'Empty home', 'Look', 10, 12, 50)
+        hm.t.zones += [['Living room', 3, 3, 17, 19], ['Bedroom', 19, 3, 26, 12], ['Bathroom', 19, 14, 26, 19]]
         warps[key] = hm.t.warps
         door_pair(entries, warps, 'east', door, facing, key, hm_door, 'N', 'Home %d' % n, 'East Complex')
         step = {'S': (0, 1), 'N': (0, -1), 'E': (1, 0), 'W': (-1, 0)}[facing]
@@ -149,7 +157,7 @@ def build(g):
         g.setdefault('AREA_LIGHTS', {})[key] = []
         g.setdefault('EXTRA_THINGS', []).extend(hm.things)
         g.setdefault('LUNAR_EXTRA', {})['Home %d' % n] = key
-        bake_floor.AREA_FLOORS[key] = {'o': ('sp_parquet', None)}
+        bake_floor.AREA_FLOORS[key] = {'o': ('sp_parquet', None), 'k': ('sp_kitchen', None), 'h': ('sp_carpet', None), 't': ('ea_tile', None)}
     g['EAST_ENTRANCES'] = entries
     g.setdefault('AREA_PROPS', {})['east'] = e.props
     g.setdefault('AREA_ROOF_PROPS', {})['east'] = []
