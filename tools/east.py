@@ -65,10 +65,11 @@ def build(g):
             else: facing = 'N' if sa > 0 else 'S'
             step = {'S': (0, 1), 'N': (0, -1), 'E': (1, 0), 'W': (-1, 0)}[facing]
             perp = (0, 1) if facing in 'EW' else (1, 0)
-            bx, by = int(round(CX - .5 + 20.4 * ca)), int(round(CY - .5 + 20.4 * sa))       # the entrance porch: a 3 x 2 block in the street
-            for k in (0, 1):
-                for j in (-1, 0, 1):
-                    F[by - step[1] * k + perp[1] * j][bx - step[0] * k + perp[0] * j] = '#'
+            bx, by = int(round(CX - .5 + 20.4 * ca)), int(round(CY - .5 + 20.4 * sa))       # the entrance porch: a small block in the street, its sides at 45 degrees
+            for k in (0, 1, 2):                                      # widening by a tile each side per row: 45-degree sides
+                for j in range(-1 - k, 2 + k):
+                    x, y = bx - step[0] * k + perp[0] * j, by - step[1] * k + perp[1] * j
+                    if math.hypot(x + .5 - CX, y + .5 - CY) <= 23.5: F[y][x] = '#'
             door = (bx, by); F[by][bx] = '.'                           # the door, in the porch's face, facing the park
             n += 1
             homes.append((n, door, facing, kind))
