@@ -339,15 +339,13 @@ def _roof_zone(key, tx, ty):
     return zone
 
 
-def bake_walls(key, rows, art_dir, window=None, sigma=15.0):
+def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     from scipy.ndimage import gaussian_filter
     rows = ["".join(r) for r in rows]
     th, tw = len(rows), len(rows[0])
     H, W = th * 16, tw * 16
     tiles = np.array([[c in SOLID for c in r] for r in rows])
     chars = np.array([[ord(c) for c in r] for r in rows], dtype=np.int32)
-    B = gaussian_filter(np.repeat(np.repeat(tiles.astype(np.float32), 16, 0), 16, 1), sigma, mode="constant", cval=0.0) > 0.5
-    # Keep doorways open: smoothing would close any gap in a wall one or two tiles wide.
     open_ = ~tiles & (chars != ord("~"))
     def sol(dx, dy):
         out = np.zeros_like(tiles)
@@ -356,7 +354,30 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0):
         return out
     gap = (sol(-1, 0) & sol(1, 0)) | (sol(0, -1) & sol(0, 1)) | (sol(-1, 0) & sol(2, 0)) | (sol(-2, 0) & sol(1, 0)) | \
           (sol(0, -1) & sol(0, 2)) | (sol(0, -2) & sol(0, 1))
-    B &= ~np.repeat(np.repeat(open_ & gap, 16, 0), 16, 1)
+    if style == "smooth":
+        B = gaussian_filter(np.repeat(np.repeat(tiles.astype(np.float32), 16, 0), 16, 1), sigma, mode="constant", cval=0.0) > 0.5
+    else:
+        # Faceted: every edge is straight or exactly 45 degrees. A wall tile open on two neighbouring sides
+        # (and on the corner between them) loses that corner as a half-tile triangle, so a staircase of
+        # single steps becomes one straight diagonal. The tiles beside a doorway stay square.
+        B = np.repeat(np.repeat(tiles, 16, 0), 16, 1)
+        door_near = np.zeros_like(tiles)
+        dg = open_ & gap
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                door_near |= np.roll(np.roll(dg, dy, 0), dx, 1)
+        def opn(dx, dy):
+            return ~sol(dx, dy)
+        v, u = np.mgrid[0:16, 0:16]
+        tri = {"tl": (u + v) < 16, "tr": ((15 - u) + v) < 16, "bl": (u + (15 - v)) < 16, "br": ((15 - u) + (15 - v)) < 16}
+        cut = {"tl": opn(-1, 0) & opn(0, -1) & opn(-1, -1), "tr": opn(1, 0) & opn(0, -1) & opn(1, -1),
+               "bl": opn(-1, 0) & opn(0, 1) & opn(-1, 1), "br": opn(1, 0) & opn(0, 1) & opn(1, 1)}
+        for k_, m_ in cut.items():
+            m_ = tiles & m_ & ~door_near
+            for ty, tx in zip(*np.nonzero(m_)):
+                B[ty * 16:(ty + 1) * 16, tx * 16:(tx + 1) * 16] &= ~tri[k_]
+    if style == "smooth":
+        B &= ~np.repeat(np.repeat(open_ & gap, 16, 0), 16, 1)
     def up(m, k):                       # m moved up by k pixels (row y takes row y+k)
         out = np.zeros_like(m); out[:H - k] = m[k:]; return out
     def down(m, k):
