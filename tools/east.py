@@ -57,8 +57,10 @@ def build(g):
     # south-west: two family houses each. Each door leads to the home's own map (make_home, below).
     homes = []
     n = 0
-    for (lo, hi), kind, doors in (((190, 234), 'single', (200, 224)), ((10, 41), 'single', (18, 33)),
-                                  ((306, 350), 'family', (316, 340)), ((139, 170), 'family', (147, 162))):
+    # doors sit within about 33 degrees of east or west, where the ring wall runs nearly upright, so the
+    # porches meet it cleanly (mirror pairs: 147/162 and 18/33 below, 198/213 and 327/342 above)
+    for (lo, hi), kind, doors in (((190, 234), 'single', (198, 213)), ((10, 41), 'single', (18, 33)),
+                                  ((306, 350), 'family', (327, 342)), ((139, 170), 'family', (147, 162))):
         for ang in doors:
             ca, sa = math.cos(math.radians(ang)), math.sin(math.radians(ang))
             if abs(ca) >= abs(sa): facing = 'W' if ca > 0 else 'E'
@@ -73,7 +75,7 @@ def build(g):
             door = (bx, by); F[by][bx] = '.'                           # the door, in the porch's face, facing the park
             n += 1
             homes.append((n, door, facing, kind))
-    RES_BLOCKS = [212, 25.5, 328, 154.5]                             # each residence: a round block straddling the ring
+    RES_BLOCKS = [205.5, 25.5, 334.5, 154.5]                             # each residence: a round block straddling the ring
     import bake_floor
     def east_roofs(px, py):
         import numpy as np
