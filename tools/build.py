@@ -2577,32 +2577,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import survey
 t = survey.build(globals())
 
-# ---------------------------------------------------------------- engineering level
-e = A["eng"] = Area("eng", "Engineering Level", 58, 24, "M")
-e.room("Ore processing", 0, 0, 16, 10, "f")
-e.room("Power core", 16, 0, 31, 10, "f")
-e.room("Lift", 31, 4, 35, 10, ".")
-e.room("Engineering bay", 35, 0, 48, 10, "f")
-e.room("Stores", 48, 0, 57, 10, "f")
-e.room("Station internals", 4, 14, 22, 23, "f")
-e.room("Cargo and shuttle bay", 22, 14, 57, 23, "h")
-e.room("Engineering corridor", 0, 10, 57, 14, "f")
-e.setf("f", row(10, [8, 9, 23, 24, 33, 41, 42, 52]) + row(14, [12, 30, 31, 44, 45]))
-e.put("F", row(1, [2, 3, 5, 6]))
-e.put("O", [(12, 2), (13, 2), (13, 3), (2, 7), (3, 7)])
-e.put("P", [(10, 1), (11, 1), (17, 8), (30, 8), (45, 4), (45, 5),
-            (6, 16), (7, 16), (8, 16), (10, 18), (11, 18), (14, 16), (15, 16), (18, 19), (19, 19), (6, 21), (7, 21), (16, 21)])
-e.put("G", block(22, 3, 25, 5))
-e.put("k", [(18, 1), (19, 1), (28, 1), (29, 1), (36, 1), (37, 1), (20, 15)])
-e.put("t", [(40, 1), (41, 1)])
-e.put("c", [(14, 8), (47, 8), (47, 9), (55, 2), (56, 2), (56, 3), (54, 8), (23, 15), (24, 15), (23, 16), (56, 22), (55, 22), (56, 21)])
-e.put("L", [(49, 1), (50, 1), (51, 1), (34, 15), (35, 15)])
-e.put("S", [(53, 1)])
-e.put("X", block(40, 18, 43, 19))
-e.put("e", [(50, 16), (52, 20), (35, 21), (47, 22)])
-e.outlines.append([26, 17, 2, 2])
-e.warp("U", [(33, 5)], "main", CX, CY + RI + 23)
-e.warp("R", [(1, 11), (1, 12), (1, 13)], "mine", 38, 4)
+# ---------------------------------------------------------------- engineering level and shuttle bay: see tools/engineering.py
+import engineering
+e = engineering.build(globals())
 
 # ---------------------------------------------------------------- mine
 n = A["mine"] = Area("mine", "The Mine", 44, 24, "M")
@@ -2621,7 +2598,7 @@ n.put("O", [(17, 4), (18, 4), (29, 12), (28, 12), (25, 3), (17, 12)])
 n.put("x", [(28, 4), (20, 11), (28, 18), (17, 20)])
 n.put("P", [(26, 8)])
 n.put("k", [(40, 3)])
-n.warp("R", [(2, 3), (2, 4), (2, 5)], "eng", 3, 12)
+n.warp("R", [(2, 3), (2, 4), (2, 5)], "eng", 4, 23)
 n.carve("", 20, 1, 21, 2, "m")
 n.warp("R", [(20, 1), (21, 1)], "tunnels", 30, 35)
 n.mirror()      # you arrive walking left, so the mine continues to the left
@@ -2693,17 +2670,17 @@ SCHEDULES_RAW = {
     "Pip": [("07:30", "main", 125, 49, 26, "u", "work"), ("12:30", "main", 97, 57, 26, "d", "idle"), ("15:00", "main", 138, 54, 26, "u", "idle"),
             ("17:35", "main", 140, 75, 26, "d", "eat"), ("19:15", "main", 93, 67, 26, "d", "idle"), ("20:30", "main", 160, 51, 26, "d", "idle")],
     "Sesska": [("06:00", "main", 149, 52, 36, "d", "work"), ("17:30", "main", 136, 70, 26, "d", "eat"), ("19:15", "main", 36, 68, 26, "l", "idle"),
-               ("21:30", "eng", 41, 4, 26, "d", "idle")],
+               ("21:30", "eng", 57, 13, 26, "l", "idle")],
     "Jasper": [("06:00", "main", 137, 67, 36, "d", "work"), ("14:30", "main", 47, 48, 26, "d", "idle"), ("16:30", "main", 137, 67, 36, "d", "work"),
                ("21:30", "main", 26, 52, 26, "d", "idle")],
     "Evarra": [("06:00", "main", 142, 67, 36, "d", "work"), ("09:30", "east", 44, 18, 26, "u", "work"), ("13:00", "main", 142, 67, 36, "d", "work"),
                ("20:30", "main", 29, 52, 26, "d", "idle")],
     "Bram": [("07:00", "main", 26, 68, 36, "l", "work"), ("17:35", "main", 125, 70, 26, "d", "eat"), ("19:15", "main", 56, 73, 26, "u", "idle"),
              ("22:00", "main", 17, 52, 26, "d", "idle")],
-    "Tikka": [("06:00", "eng", 39, 4, 26, "d", "work"), ("17:30", "main", 135, 70, 26, "d", "eat"), ("19:15", "main", 34, 68, 26, "d", "work"),
-              ("21:30", "eng", 39, 4, 26, "d", "idle")],
-    "Freya": [("06:00", "eng", 44, 5, 26, "r", "work"), ("11:00", "eng", 38, 19, 26, "r", "work"), ("12:30", "main", 140, 70, 26, "d", "eat"),
-              ("13:30", "eng", 38, 19, 26, "r", "work"), ("16:30", "eng", 44, 5, 26, "r", "work"), ("17:30", "main", 140, 70, 26, "d", "eat"),
+    "Tikka": [("06:00", "eng", 55, 12, 26, "u", "work"), ("17:30", "main", 135, 70, 26, "d", "eat"), ("19:15", "main", 34, 68, 26, "d", "work"),
+              ("21:30", "eng", 55, 13, 26, "r", "idle")],
+    "Freya": [("06:00", "bay", 9, 12, 26, "u", "work"), ("11:00", "bay", 23, 19, 26, "u", "work"), ("12:30", "main", 140, 70, 26, "d", "eat"),
+              ("13:30", "bay", 23, 19, 26, "u", "work"), ("16:30", "eng", 53, 12, 26, "u", "work"), ("17:30", "main", 140, 70, 26, "d", "eat"),
               ("19:15", "main", 58, 73, 26, "u", "idle"), ("21:30", "main", 20, 52, 26, "d", "idle")],
     "Job": [("06:30", "mine", 21, 8, 26, "d", "work"), ("12:00", "main", 120, 70, 26, "d", "eat"), ("13:30", "mine", 21, 8, 26, "d", "work"),
             ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 60, 73, 26, "u", "idle"), ("22:00", "main", 18, 54, 26, "d", "idle")],
@@ -2817,11 +2794,6 @@ THINGS = [
     ["look", "Medbay beds", "Look", "main", tc(137, 50), 24],
     ["look", "Loom", "Look", "main", tc(149, 50), 24],
     ["look", "Library shelves", "Look", "main", tc(121, 45), 26],
-    ["wreck", "Your ship", "Your ship", "eng", [42 * 16, 19 * 16], 46],
-    ["drop", "Loading pad", "Set down the crate", "eng", [27 * 16, 18 * 16], 22],
-    ["look", "Power core", "Look", "eng", [24 * 16, 4 * 16 + 8], 52],
-    ["furnace", "Furnace", "Smelt what you are holding", "eng", [3 * 16, 1 * 16 + 8], 30],
-    ["furnace", "Furnace", "Smelt what you are holding", "eng", [6 * 16, 1 * 16 + 8], 30],
     ["look", "Barricade", "Look", "mine", tc(20, 21), 26],
 ]
 THINGS += EXTRA_THINGS            # the Survey Level's things (tools/survey.py)
@@ -2831,7 +2803,7 @@ for t_ in THINGS:
         a_, x_, y_ = moved("main", t_[4][0] // 16, t_[4][1] // 16)
         t_[3], t_[4] = a_, [x_ * 16 + t_[4][0] % 16, y_ * 16 + t_[4][1] % 16]
 THINGS += SIGN_THINGS
-WRECK = ["eng", 42 * 16, 20 * 16]      # bottom-centre of the wreck sprite
+WRECK = WRECK_SPOT                    # bottom-centre of the ship sprite (tools/engineering.py)
 
 # ---------------------------------------------------------------- set dressing, second pass
 # New furniture and clutter (the DRESS objects), placed by rule so nothing can block a way through:
@@ -2911,8 +2883,6 @@ furnish("west", ["Crate stack", "Barrel", "Barrel", "Desk+", "Floor grate"], "Wo
 furnish("west", ["Crate stack", "Crate stack", "Barrel"], "Old drill hall")
 furnish("east", ["Air scrubber", "Air scrubber", "Air scrubber", "Air scrubber", "Floor grate", "Floor grate", "Floor grate", "Crate stack", "Desk+"], "Air reclamation plant")
 furnish("east", ["Crate stack", "Recycling bin"], "East airlock")
-furnish("eng", ["Crate stack", "Barrel", "Floor grate", "Floor grate"], "Engineering corridor")
-furnish("eng", ["Crate stack", "Crate stack", "Barrel", "Barrel"], "Stores")
 # The main level: trees, flower boxes, barrels and bins along the outer edge of the ring, trees round the square.
 _ring_set = ["Tree in a tub", "Flower box", "Barrel", "Flower box", "Recycling bin", "Tree in a tub", "Crate stack", "Flower box"]
 for k_ in range(48):
@@ -2932,6 +2902,7 @@ for k_ in range(12):
 from concourse import rebuild as rebuild_concourse
 rebuild_concourse(globals())
 ENTRANCES += SURVEY_ENTRANCES     # doors between the Survey Level's three maps (tools/survey.py)
+ENTRANCES += ENG_ENTRANCES        # Engineering to the shuttle bay (tools/engineering.py)
 
 # ---------------------------------------------------------------- checks
 occupied = {(p[1], p[2], p[3]) for p in PEOPLE} | {(n[1], n[2], n[3]) for n in NODES}
@@ -3028,15 +2999,15 @@ print("all people, things and warps reachable;", len(seen), "walkable tiles;", _
 
 # ---------------------------------------------------------------- station map (for the Map page of the menu)
 # Every area drawn small on one picture. MAP_LAYOUT says where each area sits: [x, y, pixels per tile].
-MAP_LAYOUT = {"west": [0, 30, 1.0 / 3.0], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 1.0], "mine": [34, 90, 1.0],
+MAP_LAYOUT = {"west": [0, 30, 1.0 / 3.0], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 0.58], "mine": [34, 90, 1.0],
               "tunnels": [0, 92, 0.5]}
 MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 28], ["Main Level", 104, 28], ["East Complex", 144, 36], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
 MAP_MARKS = [
     [1, "west", 79, 153, "Your quarters"], [2, "west", 48, 110, "Airlock to the landing pad"], [3, "west", 68, 110, "Reception"],
     [4, "west", 64, 50, "Your agri dome"], [5, "west", 100, 22, "Broken garden"], [6, "west", 140, 50, "Your workshop"],
     [7, "east", 50, 19, "Evarra's herb dome"], [8, "east", 93, 55, "Air reclamation plant"], [9, "east", 50, 83, "East airlock"],
-    [10, "top", 23, 23, "S.A.R.A.'s core"], [11, "top", 23, 5, "Observation Lounge"], [12, "eng", 8, 5, "Ore processing"],
-    [13, "eng", 41, 5, "Engineering bay"], [14, "eng", 40, 19, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
+    [10, "top", 23, 23, "S.A.R.A.'s core"], [11, "top", 23, 5, "Observation Lounge"], [12, "eng", 14, 12, "Ore processing"],
+    [13, "eng", 55, 12, "Engineering bay"], [14, "bay", 23, 17, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
 ]
 MAP_MARKS = MAP_MARKS[:9] + [[20 + n, "main", DOORS[b[0]][3], DOORS[b[0]][4], b[1]] for n, b in enumerate(BUILDINGS)] + MAP_MARKS[9:]
 MAP_COLORS = {"p": (176, 132, 92), "a": (226, 214, 190), "z": (64, 76, 100), "7": (64, 76, 100), "8": (64, 76, 100), "X": (90, 96, 112), "Y": (150, 144, 134), "1": (238, 202, 64), "2": (238, 202, 64), "3": (238, 202, 64),".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),
@@ -3072,7 +3043,7 @@ _wall_sets = {"main": ["Awning", "Hanging banner", "Wall lamp", "Awning", "Poste
               "eng": ["Wall pipes", "Wall vent", "Wall pipes"], "east": ["Wall pipes", "Wall vent", "Wall lamp"],
               "west": ["Wall lamp", "Poster", "Wall vent", "Hanging banner"], "top": ["Wall lamp", "Poster"]}
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "lounge", "museum", "sanctum", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "mine", "tunnels"):
         continue
     set_ = _wall_sets.get(k_, ["Poster", "Wall lamp", "Hanging banner"])
     for y_ in range(ar_.h - 1):
@@ -3090,7 +3061,7 @@ for k_, ar_ in A.items():
 OPEN_OBJ += "<>{}"
 ROUNDED = 0
 for k_, ar_ in A.items():
-    if k_ in ("main", "top", "lounge", "museum", "sanctum", "mine", "tunnels"):
+    if k_ in ("main", "top", "lounge", "museum", "sanctum", "eng", "bay", "mine", "tunnels"):
         continue
     for y_ in range(1, ar_.h - 1):
         for x_ in range(1, ar_.w - 1):
@@ -3123,7 +3094,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const ROOF_PROPS = " + json.dumps(ROOF_PROPS) + "\n")
     f.write("const ROOF_LIGHTS = " + json.dumps(ROOF_LIGHTS) + "\n")
     # Areas drawn in the promenade style (scripts/lunar_ground.gd), by title, and their props and extras.
-    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum", "Precursor Sanctum": "sanctum"}) + "\n")
+    f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum", "Precursor Sanctum": "sanctum", "Engineering Level": "eng", "Shuttle Bay": "bay"}) + "\n")
     f.write("const AREA_PROPS = " + json.dumps(AREA_PROPS) + "\n")
     f.write("const AREA_ROOF_PROPS = " + json.dumps(AREA_ROOF_PROPS) + "\n")
     f.write("const AREA_LIGHTS = " + json.dumps(AREA_LIGHTS) + "\n")
@@ -3236,6 +3207,7 @@ for key_ in bake_floor.AREA_FLOORS:
     bake_floor.bake_area(key_, ["".join(r_) for r_ in A[key_].floor], os.path.join(OUT, "art", "lunar"), FLOOR_EXTRAS.get(key_)).save(os.path.join(OUT, "art", "lunar", "floor_%s.png" % key_))
     print("floor baked: art/lunar/floor_%s.png" % key_)
 bake_floor.window_strip(A["lounge"].w * 16, 37.5 * 16).save(os.path.join(OUT, "art", "lunar", "window_lounge.png"))
+bake_floor.crater_strip(A["bay"].w * 16).save(os.path.join(OUT, "art", "lunar", "window_bay.png"))
 for key_ in ["main"] + list(bake_floor.AREA_FLOORS):
     win_ = os.path.join(OUT, "art", "lunar", "window_%s.png" % key_)
     bake_floor.bake_walls(key_, A[key_].floor, os.path.join(OUT, "art", "lunar"), bake_floor.Image.open(win_) if os.path.exists(win_) else None).save(os.path.join(OUT, "art", "lunar", "walls_%s.png" % key_))

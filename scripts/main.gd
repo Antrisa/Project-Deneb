@@ -52,7 +52,7 @@ const JOB_IRON := 5                # what Job asks for in his first request
 const JOB_COPPER := 3
 
 # Which music plays where. Files are audio/music_<name>.ogg, or .wav if there is no .ogg.
-const MUSIC := {"main": "town", "west": "town", "east": "town", "top": "town", "eng": "under", "mine": "under", "tunnels": "under"}
+const MUSIC := {"main": "town", "west": "town", "east": "town", "top": "town", "eng": "under", "bay": "under", "mine": "under", "tunnels": "under"}
 
 # Bulletin board requests, one per day in rotation.
 const BOARD := [
@@ -651,10 +651,13 @@ func _spawn_things() -> void:
 	# The wreck in the shuttle bay. art/wreck.png has 4 frames: wrecked -> repaired.
 	var wreck: Array = MapData.WRECK
 	wreck_sprite = Sprite2D.new()
-	wreck_sprite.texture = load("res://art/wreck.png")
+	# The new ship (art/lunar/player_ship.png: 4 frames of 224 x 128, drawn at half size: 7 x 4 tiles).
+	var ship_art := "res://art/lunar/player_ship.png" if ResourceLoader.exists("res://art/lunar/player_ship.png") else "res://art/wreck.png"
+	wreck_sprite.texture = load(ship_art)
+	wreck_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	wreck_sprite.hframes = 4
 	wreck_sprite.centered = false
-	_fit_sprite(wreck_sprite, 4, 1, 64.0)
+	_fit_sprite(wreck_sprite, 4, 1, wreck_sprite.texture.get_width() / 8.0 if ship_art.ends_with("player_ship.png") else 64.0)
 	wreck_sprite.position = Vector2(float(wreck[1]), float(wreck[2]))
 	wreck_sprite.visible = false
 	actors.add_child(wreck_sprite)

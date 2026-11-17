@@ -232,6 +232,122 @@ def prayer_mat(d, w, h):
     d.rectangle((8, 10, w - 8, h - 10), outline=AMBER, width=2)
 
 
+ORANGE_T, ORANGE_TD = (232, 120, 40, 255), (184, 82, 30, 255)
+WHITE_T = (238, 236, 228, 255)
+
+
+def geo_core(d, w, h):
+    d.ellipse((6, h - 70, w - 6, h - 4), fill=STEEL_D, outline=INK, width=2)
+    box(d, 30, 24, w - 30, h - 34, STEEL, STEEL_L, STEEL_D, r=12)
+    d.ellipse((44, 6, w - 44, 46), fill=STEEL_L, outline=INK, width=2)
+    d.ellipse((58, 14, w - 58, 38), fill=(250, 140, 50, 255), outline=INK, width=2)
+    d.ellipse((68, 20, w - 68, 32), fill=(255, 214, 120, 255))
+    for k in range(5): d.rectangle((40, 54 + k * 12, w - 40, 58 + k * 12), fill=ORANGE_T if k % 2 else STEEL_D)
+    for x in (16, w - 30): d.rectangle((x, h - 52, x + 14, h - 20), fill=STEEL_D, outline=INK)
+
+
+def furnace(d, w, h):
+    box(d, 4, 14, w - 4, h - 2, (110, 96, 92, 255), (150, 130, 120, 255), (80, 70, 68, 255))
+    d.rectangle((w // 2 - 6, 2, w // 2 + 6, 16), fill=STEEL_D, outline=INK)
+    d.rounded_rectangle((14, h - 50, w - 14, h - 18), 6, fill=(60, 30, 20, 255), outline=INK, width=2)
+    d.rounded_rectangle((20, h - 44, w - 20, h - 24), 4, fill=(250, 130, 40, 255))
+    d.rectangle((24, h - 38, w - 24, h - 30), fill=(255, 214, 120, 255))
+
+
+def ore_crusher(d, w, h):
+    box(d, 6, 34, w - 6, h - 2, STEEL, STEEL_L, STEEL_D)
+    d.polygon([(10, 34), (w - 10, 34), (w - 24, 6), (24, 6)], fill=STEEL_D, outline=INK)
+    d.rectangle((30, 10, w - 30, 30), fill=(70, 60, 56, 255))
+    for k in range(4): d.polygon([(14 + k * 18, h - 30), (22 + k * 18, h - 30), (30 + k * 18, h - 18), (22 + k * 18, h - 18)], fill=AMBER)
+
+
+def ore_cart(d, w, h):
+    d.polygon([(4, 14), (w - 4, 14), (w - 10, h - 14), (10, h - 14)], fill=STEEL, outline=INK)
+    for x, y in ((14, 8), (26, 6), (38, 9), (22, 12)): d.ellipse((x, y, x + 12, y + 10), fill=(120, 100, 90, 255), outline=INK)
+    for x in (10, w - 22): d.ellipse((x, h - 16, x + 12, h - 4), fill=DARK, outline=INK)
+
+
+def pump(d, w, h):
+    box(d, 8, h - 46, w - 8, h - 2, STEEL, STEEL_L, STEEL_D)
+    d.rectangle((w // 2 - 8, 6, w // 2 + 8, h - 44), fill=(190, 130, 70, 255), outline=INK)
+    d.ellipse((w // 2 - 14, h - 40, w // 2 + 14, h - 14), fill=STEEL_L, outline=INK, width=2)
+    d.line((w // 2, h - 27, w // 2 + 9, h - 33), fill=RED, width=2)
+
+
+def pipe_rack(d, w, h):
+    legs(d, (8, w - 12), 20, h - 2)
+    for k, c in enumerate(((190, 130, 70, 255), STEEL_L, (120, 160, 120, 255))):
+        d.rectangle((2, 10 + k * 12, w - 2, 18 + k * 12), fill=c, outline=INK)
+
+
+def locker(d, w, h):
+    box(d, 4, 4, w - 4, h - 2, (80, 110, 140, 255), (120, 150, 180, 255), (60, 84, 110, 255))
+    d.line((w // 2, 8, w // 2, h - 6), fill=INK, width=2)
+    for x in (w // 4, 3 * w // 4):
+        for y in range(16, 40, 6): d.line((x - 8, y, x + 8, y), fill=(50, 70, 92, 255))
+        d.rectangle((x - 2, h // 2, x + 2, h // 2 + 6), fill=AMBER)
+
+
+def tool_cart(d, w, h):
+    box(d, 6, 14, w - 6, h - 12, (200, 70, 60, 255), (236, 110, 96, 255), (150, 50, 44, 255))
+    for y in (24, 34): d.line((10, y, w - 10, y), fill=INK)
+    for x in (12, 26, 40): d.rectangle((x, 6, x + 4, 14), fill=STEEL_L, outline=INK)
+    for x in (10, w - 18): d.ellipse((x, h - 12, x + 8, h - 4), fill=DARK)
+
+
+def welding_rig(d, w, h):
+    box(d, 6, h - 40, w - 6, h - 6, STEEL, STEEL_L, STEEL_D)
+    for x, c in ((12, (90, 140, 200, 255)), (34, (200, 80, 70, 255))): d.rounded_rectangle((x, 10, x + 16, h - 40), 6, fill=c, outline=INK)
+    for k in range(4): d.polygon([(8 + k * 12, h - 20), (14 + k * 12, h - 20), (20 + k * 12, h - 12), (14 + k * 12, h - 12)], fill=AMBER)
+    d.ellipse((10, h - 8, 20, h - 2), fill=DARK); d.ellipse((w - 20, h - 8, w - 10, h - 2), fill=DARK)
+
+
+def fuel_tank(d, w, h):
+    d.rounded_rectangle((8, 8, w - 8, h - 8), 14, fill=WHITE_T, outline=INK, width=2)
+    d.rectangle((8, h // 2 - 6, w - 8, h // 2 + 6), fill=ORANGE_T)
+    d.line((16, 14, 16, h - 16), fill=(255, 255, 255, 255), width=2)
+    d.rectangle((14, h - 10, w - 14, h - 2), fill=STEEL_D, outline=INK)
+
+
+def parts_rack(d, w, h):
+    box(d, 4, 4, w - 4, h - 2, STEEL_D, STEEL, DARK)
+    for y in (16, 46, 76):
+        d.rectangle((8, y, w - 8, y + 24), fill=(60, 66, 80, 255))
+        for x in range(12, w - 16, 14):
+            c = (WHITE_T, ORANGE_T, STEEL_L, AMBER)[(x + y) % 4]
+            d.rectangle((x, y + 8, x + 10, y + 22), fill=c, outline=INK)
+
+
+def launch_console(d, w, h):
+    box(d, 4, h - 34, w - 4, h - 2, WHITE_T, (255, 255, 255, 255), (190, 190, 186, 255))
+    d.polygon([(8, h - 34), (w - 8, h - 34), (w - 16, h - 64), (16, h - 64)], fill=DARK, outline=INK)
+    d.polygon([(18, h - 38), (w - 18, h - 38), (w - 22, h - 58), (22, h - 58)], fill=TEAL_D)
+    d.rectangle((w // 2 - 10, h - 28, w // 2 + 10, h - 18), fill=RED, outline=INK)
+    d.rectangle((10, h - 12, w - 10, h - 8), fill=ORANGE_T)
+
+
+def air_scrubber(d, w, h):
+    box(d, 4, 4, w - 4, h - 2, STEEL, STEEL_L, STEEL_D)
+    d.ellipse((12, 14, w - 12, 50), fill=DARK, outline=INK, width=2)
+    d.line((w // 2, 18, w // 2, 46), fill=STEEL_L, width=3); d.line((16, 32, w - 16, 32), fill=STEEL_L, width=3)
+    for y in range(58, h - 12, 8): d.line((12, y, w - 12, y), fill=STEEL_D)
+
+
+def mag_clamp(d, w, h):
+    d.rectangle((4, 4, w - 4, h - 4), fill=STEEL_D, outline=INK, width=2)
+    d.rectangle((10, 10, w - 10, h - 10), fill=ORANGE_T)
+
+
+def launch_door(d, w, h):
+    d.rectangle((0, 0, w - 1, h - 1), fill=STEEL_D, outline=INK, width=3)
+    d.rectangle((8, 12, w - 9, h - 10), fill=STEEL, outline=INK, width=2)
+    d.line((w // 2, 12, w // 2, h - 10), fill=INK, width=3)
+    for k in range(0, w, 24):
+        d.polygon([(k, h - 10), (k + 12, h - 10), (k + 24, h), (k + 12, h)], fill=AMBER)
+    for x in range(20, w - 20, 40): d.rectangle((x, 24, x + 20, 30), fill=STEEL_L)
+    for x in (16, w - 24): d.ellipse((x, 2, x + 8, 10), fill=RED, outline=INK)
+
+
 def star_chart(d, w, h):
     legs(d, (16, w - 20), h - 20, h - 2)
     box(d, 4, 4, w - 4, h - 18, DARK, STEEL_L)
@@ -263,7 +379,12 @@ PROPS = {
     'case_fossil': (64, 72, case(fossil)), 'case_relic': (64, 72, case(relic)), 'case_shard': (64, 72, case(shard)),
     'case_wreck': (64, 72, case(wreck)), 'museum_centerpiece': (128, 128, centerpiece), 'curator_desk': (96, 72, curator_desk),
     'crystal_pedestal': (64, 112, crystal_pedestal), 'sanctum_door': (32, 112, sanctum_door), 'lab_door': (32, 112, lab_door),
-    'star_chart': (64, 104, star_chart), 'case_empty': (64, 72, case_empty),
+    'star_chart': (64, 104, star_chart),
+    'geo_core': (160, 144, geo_core), 'furnace': (64, 104, furnace), 'ore_crusher': (96, 104, ore_crusher), 'ore_cart': (64, 56, ore_cart),
+    'pump': (64, 96, pump), 'pipe_rack': (96, 64, pipe_rack), 'locker': (64, 104, locker), 'tool_cart': (64, 64, tool_cart),
+    'welding_rig': (64, 96, welding_rig), 'fuel_tank': (64, 112, fuel_tank), 'parts_rack': (96, 104, parts_rack),
+    'launch_console': (96, 72, launch_console), 'air_scrubber': (64, 104, air_scrubber), 'mag_clamp': (32, 32, mag_clamp),
+    'launch_door': (384, 112, launch_door), 'case_empty': (64, 72, case_empty),
     'crystal_pedestal_empty': (64, 112, crystal_pedestal_empty), 'precursor_mural': (96, 112, precursor_mural),
     'test_rig': (64, 96, test_rig), 'spectrometer': (64, 72, spectrometer), 'brazier': (32, 64, brazier),
     'holy_banner': (32, 112, holy_banner), 'prayer_mat': (64, 32, prayer_mat), 'bed': (64, 96, bed), 'wardrobe': (64, 112, wardrobe),
