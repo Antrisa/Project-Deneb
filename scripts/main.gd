@@ -118,6 +118,8 @@ var swing_cd := 0.0                # seconds until the player can swing again
 var tunnel_kills := 0
 var smelt_pos := Vector2.ZERO      # the furnace being used
 var area_sprites: Array = []       # [sprite, area name] for everyone and everything placed in an area
+var anim_props: Array = []         # [sprite, frames, phase] for machinery with a looping strip in art/lunar/anim/
+const PROP_ANIM_FPS := 8.0
 var warps := {}                    # area name -> {Vector2i tile: [area, x, y]}
 var blocked := {}                  # area name -> {Vector2i tile: true} (tiles people stand on)
 var persons := {}                  # person name -> their state (friendship, lines, portrait)
@@ -1834,6 +1836,7 @@ func _process(delta: float) -> void:
 	tint.color = _light_color()
 	_animate()
 	_update_pops(delta)
+	_animate_props()
 
 	if not paused and not travelling and not garden_busy:
 		minutes += delta / SECONDS_PER_GAME_MINUTE
@@ -2141,6 +2144,16 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 	var sprite: Sprite2D = preload("res://scripts/lunar_terminal.gd").new() if p[0] == "terminal" else Sprite2D.new()
 	if p[0] == "terminal": sprite.title = p[5]
 	sprite.texture = load("res://art/lunar/%s.png" % p[0])
+	var fw: int = sprite.texture.get_width()
+	# Machinery with a looping strip (same size frames side by side) animates; the frame count is the
+	# strip's width over the still picture's width, so no list is needed.
+	var strip_path := "res://art/lunar/anim/%s.png" % p[0]
+	if ResourceLoader.exists(strip_path):
+		var strip: Texture2D = load(strip_path)
+		var frames: int = maxi(1, int(round(float(strip.get_width()) / float(fw))))
+		sprite.texture = strip
+		sprite.hframes = frames
+		anim_props.append([sprite, frames, randf() * frames])
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.centered = false
 	if p[0] == "game_chair" and "left" in p[5]: sprite.flip_h = true
@@ -2148,7 +2161,7 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 	sprite.scale = Vector2.ONE * 0.5
 	sprite.offset = Vector2(0,-sprite.texture.get_height())
 	# Centred on its tiles and standing on its bottom edge, on whole pixels.
-	sprite.position = Vector2(p[1]*16+floorf((p[3]*16-sprite.texture.get_width()*0.5)*0.5),(p[2]+p[4])*16)
+	sprite.position = Vector2(p[1]*16+floorf((p[3]*16-fw*0.5)*0.5),(p[2]+p[4])*16)
 	if p[0] == "game_chair" or p[0].begins_with("chair_") or p[0].begins_with("bench_"):
 		# The back of a chair sorts behind its occupant without moving the artwork.
 		sprite.position.y -= 12
@@ -2160,6 +2173,14 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 		var water := ShaderMaterial.new()
 		water.shader = load("res://shaders/fountain_water.gdshader" if p[0] == "fountain" else "res://shaders/mess_lights.gdshader")
 		sprite.material = water
+
+func _animate_props() -> void:
+	# Each machine loops at 8 frames a second from its own random start, so twins don't pulse together.
+	var t: float = Time.get_ticks_msec() / 1000.0 * PROP_ANIM_FPS
+	for a in anim_props:
+		var sp: Sprite2D = a[0]
+		if is_instance_valid(sp) and sp.visible:
+			sp.frame = int(t + a[2]) % int(a[1])
 
 func _portal_key(area_name: String,tile: Vector2i) -> String:
 	return "%s:%d:%d" % [area_name,tile.x,tile.y]

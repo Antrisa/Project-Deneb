@@ -9,6 +9,8 @@ root = os.path.join(sys.argv[1] if len(sys.argv) > 1 else ".", "art", "lunar")
 for name in sorted(os.listdir(root)):
     if not name.endswith(".png") or name.startswith(SKIP_PREFIX):
         continue
+    if os.path.exists(os.path.join(root, "anim", name)):       # animated: the still must keep its strip's frame size
+        continue
     path = os.path.join(root, name)
     im = Image.open(path).convert("RGBA")
     box = im.split()[3].getbbox()
