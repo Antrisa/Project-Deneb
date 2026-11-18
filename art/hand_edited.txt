@@ -215,3 +215,10 @@ lunar/portal_n_canopy.png
 lunar/portal_n_leaf.png
 lunar/door_access_ready.png
 lunar/door_access_locked.png
+npc_ana.png
+npc_ana_chernog.png
+npc_artie.png
+npc_artie_found.png
+npc_stu.png
+npc_stu_uniform.png
+npc_tally.png
