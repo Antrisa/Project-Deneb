@@ -189,6 +189,7 @@ def make_home(g, key, title, kind, mirror):
             for x in range(3, 10):
                 if H[y][X(x)] == 'o': tile(x, y, 'k')
         for y in (10, 11, 16, 17): tile(18, y, 'o')
+        inner = [(18, 10, 1, 2, 'bedroom'), (18, 16, 1, 2, 'bathroom')]
         door = (X(10), 20); tile(10, 20, 'o')
         put('kitchenette', 5.5, 5.5, 'Kitchenette', 'inspect', 'Inspect'); put('fridge', 9, 5.5, 'Fridge')
         put('table', 6.5, 10.5, 'Dining table', 'seat', 'Sit'); put('sofa', 13, 7.5, 'Sofa', 'seat', 'Sit')
@@ -204,6 +205,7 @@ def make_home(g, key, title, kind, mirror):
             for x in range(3, 21):
                 if H[y][X(x)] == 'o' and (x <= 9 or (x >= 12 and y <= 8)): tile(x, y, 'k' if x <= 9 else 'j')
         for y in (9, 10, 11, 17, 18): tile(21, y, 'o')
+        inner = [(21, 9, 1, 3, 'bedroom'), (21, 17, 1, 2, 'bathroom')]
         door = (X(11), 22); tile(11, 22, 'o')
         put('kitchenette', 6, 6, 'Kitchenette', 'inspect', 'Inspect'); put('fridge', 9.5, 5.5, 'Fridge')
         put('table', 7, 12.5, 'Dining table', 'seat', 'Sit'); put('curator_desk', 16.5, 5.5, 'Desk'); put('books', 13.5, 5.5, 'Bookshelf')
@@ -216,6 +218,7 @@ def make_home(g, key, title, kind, mirror):
         room(3, 3, 22, 14, 'k'); room(3, 16, 22, 26, 'o'); room(24, 3, 38, 12, 'h'); room(24, 14, 38, 20, 'j'); room(24, 22, 38, 26, 't', 1)
         for x in (11, 12, 13): tile(x, 15, 'o')
         for y in (7, 8, 17, 18, 24): tile(23, y, 'o' if y > 14 else 'k')
+        inner = [(23, 7, 1, 2, 'bedroom'), (23, 17, 1, 2, 'bedroom'), (23, 24, 1, 1, 'bathroom')]
         door = (X(13), 27); tile(13, 27, 'o')
         put('kitchenette', 6, 5.5, 'Kitchenette', 'inspect', 'Inspect'); put('kitchenette', 11, 5.5, 'Stove'); put('fridge', 15, 5.5, 'Fridge')
         put('table', 9, 10.5, 'Family table', 'seat', 'Sit'); put('table', 15, 10.5, 'Family table', 'seat', 'Sit'); put('plants', 20.5, 6, 'Plant')
@@ -228,4 +231,9 @@ def make_home(g, key, title, kind, mirror):
     hm.thing('look', 'Empty home', 'Look', door[0], door[1] - 4, 50)
     hm.t.zones += [[t, min(X(a), X(c)), b, max(X(a), X(c)), d] for t, a, b, c, d in zones]
     hm.door = door
+    # Doors between rooms (Zachary, 17 Nov): they slide open as you come near. A bedroom door locks when its
+    # owner has one and you are not yet friends with them (see BEDROOM_HEARTS in main.gd).
+    for x, y, w_, h_, what in inner:
+        xs = sorted((X(x), X(x + w_ - 1)))
+        g.setdefault('INNER_DOORS', []).append([key, xs[0], y, xs[1] - xs[0] + 1, h_, 'E' if h_ > w_ else 'S', '', what])
     return hm, mirror

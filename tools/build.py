@@ -2942,6 +2942,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     # The museum's display cases ([x, y, gallery, exhibit or "" when empty]) and the Sanctum's crystal cradles,
     # for the donation system to fill later.
     f.write("const MUSEUM_SLOTS = " + json.dumps(MUSEUM_SLOTS) + "\n")
+    f.write("const INNER_DOORS = " + json.dumps(globals().get("INNER_DOORS", [])) + "  # [map, x, y, w, h, facing, owner, room]\n")
     f.write("const SANCTUM_CRADLES = " + json.dumps(SANCTUM_CRADLES) + "\n")
     f.write("const SOCIAL_SPOTS = " + json.dumps(SOCIAL_SPOTS) + "\n")
     f.write("const ENTRANCES = " + json.dumps(ENTRANCES).replace("false", "false") + "\n")

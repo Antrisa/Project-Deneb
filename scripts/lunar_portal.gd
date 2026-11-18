@@ -39,15 +39,19 @@ func _draw() -> void:
 	# Inward-facing north entrances are under the near-side roof; do not paint a
 	# south-facing storefront onto the back. Their lit threshold is readable from above.
 	if facing == "N":
-		draw_rect(Rect2(-20,-25,40,17),Color("424d60"))
-		draw_rect(Rect2(-17,-24,34,4),accent)
-		draw_rect(Rect2(-14,-19,28,9),Color("202b39"))
-		var remain := 14.0*(1.0-opening)
-		draw_rect(Rect2(-14,-18,remain,8),Color("8a9b9e"))
-		draw_rect(Rect2(14-remain,-18,remain,8),Color("8a9b9e"))
-		var lintel := _art("door_n_frame")
-		if lintel != null:
-			draw_texture_rect(lintel,Rect2(-24,-30,48,24),false)
+		# The building is south of you, so you look down on its roof. Show an open doorway cut into the
+		# roof's edge under a small canopy, not a door seen from behind (Zachary, 17 Nov: the medbay door
+		# looked clipped and at a strange angle).
+		draw_rect(Rect2(-22,-34,44,6),accent.darkened(0.35))
+		draw_rect(Rect2(-22,-28,44,2),accent)
+		draw_rect(Rect2(-18,-26,36,22),Color("1b2230"))
+		var remain := 18.0*(1.0-opening)
+		if remain > 0.5:
+			draw_rect(Rect2(-18,-26,remain,22),Color("8a9b9e"))
+			draw_rect(Rect2(18-remain,-26,remain,22),Color("8a9b9e"))
+			draw_rect(Rect2(-18+remain-1,-26,1,22),Color("5d6670"))
+			draw_rect(Rect2(18-remain,-26,1,22),Color("5d6670"))
+		draw_rect(Rect2(-18,-5,36,3),accent.lightened(0.2))
 		return
 	if facing in ["E","W"]:
 		var side := -1.0 if facing == "W" else 1.0

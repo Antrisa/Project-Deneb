@@ -55,6 +55,9 @@ class Room:
 
     def fits(self, name, x, y, door=False):
         w, h, solid = SIZES[name]
+        # Nothing stands on the floor tile just above a wall: the wall's roof is drawn over it.
+        if not door and any(0 <= y + h < len(self.F) and 0 <= xx < len(self.F[0]) and self.F[y + h][xx] in '#Wzw' for xx in range(x, x + w)):
+            return False
         return all(self.free(xx, yy, door) for yy in range(y + h - max(solid, 1), y + h) for xx in range(x, x + w))
 
     def thing(self, kind, title, hint, x, y, rad=26):

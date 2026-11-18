@@ -158,6 +158,9 @@ var blocked := {}                  # area name -> {Vector2i tile: true} (tiles p
 var persons := {}                  # person name -> their state (friendship, lines, portrait)
 var things: Array = []             # everything you can talk to or use
 var residents: Array = []          # residents who walk around on a schedule
+var inner_doors: Array = []        # doors between rooms of one map (scripts/inner_door.gd)
+const FRIEND_PER_HEART := 10       # friendship points per heart, until the hearts system replaces this
+const BEDROOM_HEARTS := 3          # a resident's bedroom opens to you from this many hearts (Zachary, 17 Nov)
 var area_links := {}               # area name -> {neighbouring area: [pad tiles that lead there]}
 var current_area := ""
 
@@ -440,6 +443,8 @@ func solid_at(p: Vector2) -> bool:
 		return true
 	var portal_key := _portal_key(current_area,Vector2i(tx,ty))
 	if portals.has(portal_key) and portals[portal_key].opening < 0.95: return true
+	for d in inner_doors:
+		if d.area == current_area and d.blocks() and d.tiles.has(Vector2i(tx,ty)): return true
 	var fch: String = frow[tx]
 	if MapData.SOLID_FLOOR.contains(fch):
 		return true
@@ -1972,6 +1977,7 @@ func _process(delta: float) -> void:
 	_update_pops(delta)
 	_animate_props()
 	_update_cut(delta, paused or travelling or garden_busy)
+	_update_inner_doors(delta)
 
 	if not paused and not travelling and not garden_busy:
 		minutes += delta / SECONDS_PER_GAME_MINUTE
@@ -2264,6 +2270,13 @@ func _spawn_concourse() -> void:
 		portals[key] = door
 		door_locks[key] = bool(e[8])
 		things.append({"kind":"portal","name":e[7],"hint":"Right-click to open" if door.kind != "lift" else "Right-click to ride", "area":e[0],"pos":Vector2(e[1]*16+8,e[2]*16+8),"radius":44.0,"who":"","entry":e,"key":key})
+	for e in MapData.INNER_DOORS:
+		var inner = preload("res://scripts/inner_door.gd").new()
+		inner.setup(e)
+		inner.visible = false
+		actors.add_child(inner)
+		area_sprites.append([inner,e[0]])
+		inner_doors.append(inner)
 	for p in MapData.CONCOURSE_PROPS:
 		_spawn_prop(p,"main")
 	# Other levels drawn in the promenade style (the Survey Level, ...): their props and roof machinery.
@@ -2599,3 +2612,28 @@ func _harbinger_slain() -> void:
 	_say("Underground ocean", ["The Harbinger sinks back into the dark water, and does not rise again.",
 		"For the first time, the ocean is quiet. Zaas is going to want to see this.",
 		"You pull a scale the size of a dinner plate from the shingle. (+500 credits)"])
+
+
+# Doors between rooms: open for whoever is near, shut again behind them. A bedroom with an owner stays
+# locked to the player until they have BEDROOM_HEARTS hearts with that owner.
+func _update_inner_doors(delta: float) -> void:
+	for d in inner_doors:
+		if d.area != current_area: continue
+		var c: Vector2 = d.center()
+		var reach: float = 22.0 + maxf(d.size_px.x, d.size_px.y) * 0.5
+		d.locked = d.owner != "" and persons.has(d.owner) and int(persons[d.owner]["friendship"]) < BEDROOM_HEARTS * FRIEND_PER_HEART
+		var player_near: bool = player.position.distance_to(c) < reach
+		var want: bool = player_near and not d.locked
+		for r in residents:
+			if r.area == current_area and r.position.distance_to(c) < reach: want = true
+		if player_near and d.locked and not d.has_meta("warned"):
+			d.set_meta("warned", true)
+			_toast("%s's room — locked. Get to know %s better first." % [d.owner, d.owner])
+			sfx("deny")
+		elif not player_near and d.has_meta("warned"):
+			d.remove_meta("warned")
+		var target: float = 1.0 if want else 0.0
+		if not is_equal_approx(d.opening, target):
+			d.opening = move_toward(d.opening, target, delta * 4.0)
+			d.queue_redraw()
+

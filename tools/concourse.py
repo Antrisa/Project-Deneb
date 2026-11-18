@@ -164,7 +164,10 @@ def rebuild(g):
         return 0<=x<m.w and 0<=y<m.h and m.floor[y][x] in 'ihupa' and m.obj[y][x]==' ' and (x,y) not in clear
     def fits(name,x,y):
         w,h,solid=SIZES[name]
-        return all(free(xx,yy) for yy in range(y+h-max(solid,1),y+h) for xx in range(x,x+w))
+        # The roof of a wall is drawn a tile higher than the wall, over the floor tile above it: nothing
+        # may stand there, or it looks like it floats on the roof (Zachary, 17 Nov).
+        under_roof=any(0<=y+h<m.h and m.floor[y+h][xx] in '#Wzw' for xx in range(x,x+w))
+        return not under_roof and all(free(xx,yy) for yy in range(y+h-max(solid,1),y+h) for xx in range(x,x+w))
     def prop(name,x,y,title,kind='inspect',hint='Inspect'):
         w,h,solid=SIZES[name]
         assert fits(name,x,y),('prop does not fit',name,x,y,title)
@@ -269,12 +272,23 @@ def rebuild(g):
         elif key=='common':
             local('waiting_seat',door,-5,3,'Community sofa','seat','Sit');local('waiting_seat',door,3,3,'Community sofa','seat','Sit')
             local('cafe_table',door,-5,8,'Coffee table');local('cafe_table',door,-2,12,'Coffee table')
-        elif key=='medbay':
-            local('waiting_seat',door,-5,3,'Waiting seats','seat','Sit');local('waiting_seat',door,3,3,'Waiting seats','seat','Sit')
-            local('medical',door,-5,8,'First aid supplies');local('hydroponics',door,-2,12,'Healing herb planter')
-        elif key=='fab':
-            local('workbench',door,-5,3,'Public repair bench','repair','Inspect tools');local('cargo',door,3,3,'Parts crates')
-            local('cargo',door,-5,8,'Parts crates');local('trolley',door,-2,12,'Delivery trolley')
+        elif key in ('medbay','fab'):
+            # The way in crosses the forecourt diagonally, from the plaza corner to the door, so the furniture
+            # goes in the two triangles either side of it, set square to the walls (Zachary, 17 Nov: the
+            # medbay's things looked dropped at random).
+            east_=x>cx
+            plan={'medbay':[('front_medbay_2','outer',-9),('waiting_seat','outer',-5),('front_medbay_1','inner',-6),('medical','inner',-2)],
+                  'fab':[('front_fab_2','outer',-9),('workbench','outer',-5),('front_fab_1','inner',-6),('cargo','inner',-2)]}[key]
+            names={'waiting_seat':('Waiting seats','seat','Sit'),'medical':('First aid supplies','inspect','Inspect'),
+                   'workbench':('Public repair bench','repair','Inspect tools'),'cargo':('Parts crates','inspect','Inspect'),
+                   'front_medbay_1':(FRONT_TITLES['medbay'][0],'inspect','Inspect'),'front_medbay_2':(FRONT_TITLES['medbay'][1],'inspect','Inspect'),
+                   'front_fab_1':(FRONT_TITLES['fab'][0],'inspect','Inspect'),'front_fab_2':(FRONT_TITLES['fab'][1],'inspect','Inspect')}
+            for nm,side_,dy_ in plan:
+                pw,ph,_=SIZES[nm];away=(side_=='outer')==east_
+                x0_=x+3 if away else x-3-pw+1;y0_=y+dy_-ph+1
+                t_=names[nm]
+                if not soft(nm,x0_,y0_,*t_) and not near_spot(nm,x0_+pw/2,y0_+ph-.5,*t_,reach=2):
+                    print('note: no room in the %s forecourt for %s'%(key,nm))
         local=_local
         s=1 if facing=='S' else -1
         # Along the back wall, either side of the door: sign, store-front pieces and the terminal, in a line.
@@ -286,7 +300,7 @@ def rebuild(g):
         sx,sy=cell(spots[0][0],v0+spots[0][1]);assert free(sx,sy),('sign',key);m.obj[sy][sx]=str([sh[2] for sh in g['SHOPS']].index(key));thing('sign',title,'Read the sign',sx,sy,22)
         for ch_,(u,dv) in zip(g['PORCH_OBJS'][key],spots[1:]):
             ox,oy=cell(u,v0+dv);assert free(ox,oy),('store front',key,u);m.obj[oy][ox]=ch_
-        for i_,choices in enumerate((((-3,6),(-4,9)),((3,8),(4,5),(5,10),(-5,11)))):
+        for i_,choices in enumerate(() if key in ('medbay','fab') else (((-3,6),(-4,9)),((3,8),(4,5),(5,10),(-5,11)))):
             for (u,v) in choices:
                 try:_local('front_%s_%d'%(key,i_+1),door,u,v+v0,FRONT_TITLES[key][i_]);break
                 except AssertionError:pass
@@ -294,8 +308,9 @@ def rebuild(g):
         if key=='common':
             try:_local('play_piece',door,-3,10+v0,'Play corner')
             except AssertionError:print('note: no room for the play corner')
-        try:_local('bin',door,5,11+v0,'Recycling bin')
-        except AssertionError:pass
+        if key not in ('medbay','fab'):
+            try:_local('bin',door,5,11+v0,'Recycling bin')
+            except AssertionError:pass
     # Bram's market: canopy, counter, crates and trolley, just below his door.
     prop('market_canopy',138,85,"Bram's canopy",None)
     for xx in (138,141):m.obj[88][xx]='x'
