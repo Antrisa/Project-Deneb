@@ -152,31 +152,35 @@ def finish(g, room, band, arrive, decor_seed, decor_n=6):
     g.setdefault('EXTRA_THINGS', []).extend(room.things)
     g.setdefault('LUNAR_EXTRA', {})[room.t.title] = room.key
     g['MAP_PARENT'][room.key] = ['mine', 5, 26]                   # shown on the station map at the cavern gate
-    return {'up': [ax, ay], 'spots': [list(p) for p in spots], 'band': band}
+    keep = sorted(random.Random(decor_seed + 1).sample(spots, min(300, len(spots))))    # plenty for a floor, and keeps map_data.gd small
+    return {'up': [ax, ay], 'spots': [list(p) for p in keep], 'band': band}
 
 
 def build(g):
     survey.WALKABLE = WALK
     maps, bands = {}, {k: [] for k in BANDS}
     T = lambda pts: [(M + x * S, M + y * S) for x, y in pts]
-    for n, (name, shapes, up) in enumerate(layouts(), 1):
-        for band in BANDS:
-            key = 'cav_%d_%s' % (n, band)
-            room = Room(g, key, 'Caverns: %s (%s)' % (name.lower(), BANDS[band]['title']), W, H)
-            F = room.F
-            for y in range(1, H - 1):
-                for x in range(1, W - 1): F[y][x] = '#'
-            for kind, ch in (('floor', 'm'), ('hole', 'O'), ('bridge', 'p'), ('solid', '#')):
-                for k, pts in shapes:
-                    if k == kind: fill_poly(F, T(pts), ch)
-            ux, uy = int(M + up[0] * S), int(M + up[1] * S)
-            assert F[uy][ux] == 'm' and F[uy - 2][ux] == 'm', ('ladder spot not on open floor', key)
-            room.t.zones.append(['The Caverns', 1, 1, W - 2, H - 2])
-            holes = [T(pts) for k, pts in shapes if k == 'hole']
-            if holes:
-                g.setdefault('FLOOR_EXTRAS', {})[key] = {'holes': [[list(p) for p in h] for h in holes]}
-            maps[key] = finish(g, room, band, (ux, uy), n * 7 + len(band))
-            bands[band].append(key)
+    for n, (name, shapes0, up0) in enumerate(layouts(), 1):
+        for mirror in (False, True):                 # every layout also comes mirrored left to right
+            shapes = [(k, [(30 - x, y) for x, y in pts][::-1]) for k, pts in shapes0] if mirror else shapes0
+            up = (30 - up0[0], up0[1]) if mirror else up0
+            for band in BANDS:
+                key = 'cav_%d_%s%s' % (n, band, '_m' if mirror else '')
+                room = Room(g, key, 'Caverns: %s (%s%s)' % (name.lower(), BANDS[band]['title'], ', mirrored' if mirror else ''), W, H)
+                F = room.F
+                for y in range(1, H - 1):
+                    for x in range(1, W - 1): F[y][x] = '#'
+                for kind, ch in (('floor', 'm'), ('hole', 'O'), ('bridge', 'p'), ('solid', '#')):
+                    for k, pts in shapes:
+                        if k == kind: fill_poly(F, T(pts), ch)
+                ux, uy = int(M + up[0] * S), int(M + up[1] * S)
+                assert F[uy][ux] == 'm' and F[uy - 2][ux] == 'm', ('ladder spot not on open floor', key)
+                room.t.zones.append(['The Caverns', 1, 1, W - 2, H - 2])
+                holes = [T(pts) for k, pts in shapes if k == 'hole']
+                if holes:
+                    g.setdefault('FLOOR_EXTRAS', {})[key] = {'holes': [[list(p) for p in h] for h in holes]}
+                maps[key] = finish(g, room, band, (ux, uy), n * 7 + len(band))
+                bands[band].append(key)
     # ================================================================== floor 45: the underground ocean
     room = Room(g, 'cav_45', 'Caverns: the underground ocean', W, H)
     F = room.F
@@ -187,9 +191,7 @@ def build(g):
     fill_poly(F, ocean, 'O', only='m')
     g.setdefault('FLOOR_EXTRAS', {})['cav_45'] = {'holes': [ocean]}
     ux, uy = 7, 8
-    room.props.append(['harbinger', 34, 9, 8, 6, 'The Harbinger'])         # it rises out of the water
-    room.thing('look', 'The Harbinger', 'Look', 29, 17, 60)
-    room.thing('look', 'Underground ocean', 'Look', 28, 26, 50)
+    room.thing('look', 'Underground ocean', 'Look', 28, 26, 50)          # the Harbinger itself is a creature (main.gd)
     room.t.zones.append(['The underground ocean', 1, 1, W - 2, H - 2])
     maps['cav_45'] = finish(g, room, 'steam', (ux, uy), 45, 4)
-    g['CAVERNS'] = {'maps': maps, 'bands': bands, 'last': 45, 'gate': [7, 26]}
+    g['CAVERNS'] = {'maps': maps, 'bands': bands, 'last': 45, 'gate': [7, 26], 'boss': [20, 22]}

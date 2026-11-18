@@ -36,15 +36,29 @@ const ITEMS = {
 			"desc": "Rare yellow veins, deep in the caverns. Bram pays 40 credits a lump."},
 	"titanium_ore": {"name": "Titanium ore", "icon": 16, "use": "",
 			"desc": "Hard blue-grey ore from the steamy depths. It takes the laser a long time to cut."},
+	"carbon": {"name": "Carbon", "icon": 17, "use": "",
+			"desc": "Soft black graphite from the rock floors of the caverns. With iron, it makes steel."},
+	"steel_bar": {"name": "Steel bar", "icon": 18, "use": "",
+			"desc": "Two iron bars and a lump of carbon, worked on the Crafting page. Bram pays 30."},
+	"steel_laser": {"name": "Steel mining laser", "icon": 19, "use": "mine", "tier": 2,
+			"desc": "Job's old laser rebuilt in steel. It cuts faster than the basic one, and it can cut titanium."},
+	"gold_bar": {"name": "Gold bar", "icon": 20, "use": "",
+			"desc": "Poured from gold ore at any furnace. Bram pays 90."},
+	"titanium_bar": {"name": "Titanium bar", "icon": 21, "use": "",
+			"desc": "Poured from titanium ore at any furnace. Light and very strong. Bram pays 60."},
+	"harbinger_scale": {"name": "Harbinger scale", "icon": 22, "use": "",
+			"desc": "A plate from the Harbinger's hide, still warm. Tar'Besh would give a great deal to see it."},
 	"medpack": {"name": "Medpack", "icon": 12, "use": "eat", "heal": 10,
 			"desc": "From Maren in the medbay. Select it and press Space to mend every heart."},
 }
 
 # What a furnace makes from each ore you can hold.
-const SMELTS = {"iron_ore": "iron_bar", "copper_ore": "copper_bar"}
+const SMELTS = {"iron_ore": "iron_bar", "copper_ore": "copper_bar", "gold_ore": "gold_bar", "titanium_ore": "titanium_bar"}
 
 # What the Crafting page offers. "needs" is item -> how many.
 const RECIPES = [
 	{"makes": "hull_plate", "n": 1, "needs": {"iron_bar": 3}},
 	{"makes": "coil_wire", "n": 1, "needs": {"copper_bar": 2}},
+	{"makes": "steel_bar", "n": 1, "needs": {"iron_bar": 2, "carbon": 1}},
+	{"makes": "steel_laser", "n": 1, "needs": {"laser": 1, "steel_bar": 3, "coil_wire": 1}},
 ]

@@ -1285,6 +1285,43 @@ for f in range(2):
         LIZ.rect(o + x, 11, o + x, y, LD); LIZ.px(o + x - 1, y, LD)
     outline_img(LIZ, o, 0, 16, 16)
 LIZ.save(art("enemy_lizard.png"))
+# Deeper creatures (tools/caverns.py bands): a spore crawler (green floors), a vent crab (steam floors), and the
+# Harbinger (floor 45), which the game draws four times bigger.
+SPC = Img(32, 16)
+for f in range(2):
+    o = f * 16
+    SPC.ell(o + 7.5, 14, 6, 1.5, (0, 0, 0, 70))
+    SPC.ell(o + 8, 10, 6, 3, (70, 110, 70)); SPC.ell(o + 8, 9, 5, 2, (110, 170, 100))
+    for x, h in ((5, 4), (8, 6), (11, 4)):
+        SPC.rect(o + x, 9 - h, o + x, 8, (200, 220, 180)); SPC.rect(o + x - 1, 9 - h - 1, o + x + 1, 9 - h, (180, 240, 160))
+    SPC.px(o + 2, 10, (250, 220, 90))
+    for i, x in enumerate([4, 7, 10, 12]):
+        y = 13 if (i + f) % 2 == 0 else 12
+        SPC.rect(o + x, 12, o + x, y, (50, 80, 50))
+    outline_img(SPC, o, 0, 16, 16)
+SPC.save(art("enemy_spore_crawler.png"))
+VCR = Img(32, 16)
+for f in range(2):
+    o = f * 16
+    VCR.ell(o + 7.5, 14, 6.5, 1.5, (0, 0, 0, 70))
+    VCR.ell(o + 8, 9, 5.5, 3.2, (170, 70, 50)); VCR.ell(o + 8, 8, 4, 2, (220, 120, 80))
+    VCR.rect(o + 1, 5 + f, o + 3, 7 + f, (200, 90, 60)); VCR.rect(o + 13, 6 - f, o + 15, 8 - f, (200, 90, 60))
+    VCR.px(o + 6, 6, (255, 240, 200)); VCR.px(o + 9, 6, (255, 240, 200))
+    for i, x in enumerate([4, 6, 10, 12]):
+        y = 13 if (i + f) % 2 == 0 else 12
+        VCR.rect(o + x, 11, o + x, y, (120, 50, 40))
+    outline_img(VCR, o, 0, 16, 16)
+VCR.save(art("enemy_vent_crab.png"))
+HRB = Img(32, 16)
+for f in range(2):
+    o = f * 16
+    HRB.ell(o + 8, 14, 7.5, 1.6, (0, 0, 0, 80))
+    HRB.ell(o + 8, 9 - f * .5, 7, 5, (54, 30, 52)); HRB.ell(o + 8, 7 - f * .5, 5, 3.5, (80, 40, 76))
+    HRB.px(o + 5, 6, (255, 130, 60)); HRB.px(o + 10, 6, (255, 130, 60))
+    for x in (2, 5, 11, 14):
+        HRB.rect(o + x, 11, o + x, 13 - (x + f) % 2, (40, 22, 40))
+    outline_img(HRB, o, 0, 16, 16)
+HRB.save(art("enemy_harbinger.png"))
 
 # ================================================================ portraits (64x64, six expressions each)
 # Each portrait file is six 64x64 pictures side by side, in this order.
@@ -1758,6 +1795,7 @@ ore_sprite("stone", (120, 110, 104), (156, 146, 138))          # a plain rock: c
 ore_sprite("quartz", (230, 232, 240), (255, 255, 255))           # cavern finds
 ore_sprite("gold_ore", (232, 190, 70), (255, 240, 170))
 ore_sprite("titanium_ore", (170, 190, 214), (236, 244, 255))
+ore_sprite("carbon", (40, 40, 46), (120, 124, 140))             # graphite seams, for steel
 
 # ================================================================ sounds (16-bit mono WAV)
 import math, wave
@@ -1815,7 +1853,7 @@ save_wav("deny", tone(170, 130, 0.14, 0.45, "square", 2.0))
 
 # ================================================================ item icons, hearts, weapon swing (for the menus and hotbar)
 # Order here must match "icon" in scripts/item_data.gd.
-IT = Img(16 * 17, 16)
+IT = Img(16 * 23, 16)
 
 
 def icon(i):
@@ -1872,6 +1910,17 @@ i.r(3, 9, 12, 12, (104, 88, 82)).ps([(5, 8), (5, 7), (6, 6), (6, 5), (7, 4), (7,
 for n, (vein, glint) in enumerate([((232, 190, 70), (255, 240, 170)), ((170, 190, 214), (236, 244, 255))]):
     i = icon(15 + n)   # gold ore, titanium ore
     i.r(3, 6, 12, 12, (104, 88, 82)).r(5, 4, 10, 6, (104, 88, 82)).r(10, 8, 12, 12, (82, 68, 66)).ps([(5, 8), (6, 8), (7, 6), (8, 10), (9, 10), (6, 11)], vein).ps([(6, 7), (9, 9)], glint).done()
+i = icon(17)    # carbon (graphite)
+i.r(3, 6, 12, 12, (60, 60, 68)).r(5, 4, 10, 6, (60, 60, 68)).r(10, 8, 12, 12, (40, 40, 46)).ps([(5, 7), (8, 5), (9, 9), (6, 10)], (150, 154, 170)).done()
+i = icon(18)    # steel bar
+i.r(2, 8, 13, 12, (120, 130, 146)).r(3, 6, 12, 8, (186, 196, 210)).r(2, 12, 13, 12, dk((120, 130, 146))).r(12, 8, 13, 12, dk((120, 130, 146))).done()
+i = icon(19)    # steel laser: the laser, blued, with a gold tip
+i.r(2, 8, 9, 11, (96, 116, 150)).r(2, 8, 9, 8, (160, 186, 220)).r(4, 12, 6, 14, (60, 70, 96)).r(10, 9, 12, 10, (60, 70, 96)).r(13, 9, 14, 10, (250, 200, 80)).ps([(14, 8), (15, 9), (14, 11)], (255, 240, 170)).done()
+for n, (c, hi) in enumerate([((232, 186, 70), (255, 236, 150)), ((150, 172, 200), (220, 232, 248))]):
+    i = icon(20 + n)   # gold bar, titanium bar
+    i.r(2, 8, 13, 12, c).r(3, 6, 12, 8, hi).r(2, 12, 13, 12, dk(c)).r(12, 8, 13, 12, dk(c)).done()
+i = icon(22)    # Harbinger scale
+i.ps([(x, y) for y in range(3, 14) for x in range(8 - (y - 3) // 2, 9 + (y - 3) // 2) if y < 13], (74, 38, 70)).ps([(8, 4), (8, 6), (7, 8), (9, 8), (8, 10)], (200, 110, 190)).done()
 IT.save(art("items.png"))
 
 

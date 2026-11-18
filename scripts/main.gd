@@ -42,14 +42,17 @@ const REPAIRS := [
 ]
 const SLOT_COUNT := 24             # inventory slots; the first 8 are the hotbar
 
-const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1, "quartz": 12, "gold_ore": 40, "titanium_ore": 25}      # what Bram pays
+const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1, "quartz": 12, "gold_ore": 40, "titanium_ore": 25,
+		"carbon": 6, "steel_bar": 30, "gold_bar": 90, "titanium_bar": 60}      # what Bram pays
 const MAX_HP := 10
 const WEAPON_DAMAGE := 2
 const TUNNEL_GOAL := 6             # creatures Job asks you to clear out of the north tunnels
 const MAX_ENERGY := 270            # Stardew-style energy: cuts cost it, food tops it up, sleep refills it
 const CUT_ENERGY := 2              # energy per laser cut
 # Seconds of holding the laser per cut: harder rock takes longer. Anything not listed takes DEFAULT_CUT_TIME.
-const CUT_TIME := {"stone": 0.5, "copper_ore": 0.8, "iron_ore": 1.2, "quartz": 1.0, "gold_ore": 1.6, "titanium_ore": 2.0}
+const CUT_TIME := {"stone": 0.5, "copper_ore": 0.8, "iron_ore": 1.2, "quartz": 1.0, "carbon": 1.0, "gold_ore": 1.6, "titanium_ore": 2.0}
+const NEEDS_TIER := {"titanium_ore": 2}   # too hard for the basic laser
+const TIER_SPEED := {1: 1.0, 2: 0.6}      # cut time multiplier for each laser tier
 const DEFAULT_CUT_TIME := 1.0
 const NODE_HITS := 2               # cuts per ore vein each time it refills (daily, or every few days: MapData.NODES)
 const ORE_PER_BAR := 2
@@ -126,10 +129,11 @@ var cut_buzz := 0.0                # seconds until the next laser sound
 var cut_bar: Node2D                # the little progress bar over what you are cutting
 # The Caverns (tools/caverns.py): floors under the mine, a new layout each visit.
 const CAV_ORES := {                # what veins each depth band has, with weights
-	"rock": [["copper_ore", 5], ["iron_ore", 3], ["quartz", 1]],
-	"lush": [["iron_ore", 4], ["copper_ore", 2], ["quartz", 2], ["gold_ore", 1]],
+	"rock": [["copper_ore", 5], ["iron_ore", 3], ["carbon", 2], ["quartz", 1]],
+	"lush": [["iron_ore", 4], ["copper_ore", 2], ["carbon", 1], ["quartz", 2], ["gold_ore", 1]],
 	"steam": [["quartz", 2], ["gold_ore", 2], ["titanium_ore", 2], ["iron_ore", 1]],
 }
+const CAV_MOBS := {"rock": ["bug", "lizard"], "lush": ["spore_crawler", "spore_crawler", "bug", "lizard"], "steam": ["vent_crab", "vent_crab", "lizard"]}
 const CAV_POWER := {"rock": [1.0, 0, 1.0], "lush": [2.0, 1, 1.3], "steam": [3.5, 2, 1.6]}   # creature health x, extra bite, size
 var cav_floor := 0                 # the floor you are on, 0 when not in the caverns
 var cav_lift := 0                  # the deepest lift stop reached (every 5 floors)
@@ -141,6 +145,7 @@ var cav_shaft := false             # the way down has been found on this floor
 var cav_static_nodes := 0          # ore_nodes from MapData; the floor's own come after them
 var cav_sprites: Array = []
 var cav_enemies: Array = []
+var harbinger_slain := false
 var hurt_cd := 0.0                 # seconds until the player can be hurt again
 var swing_cd := 0.0                # seconds until the player can swing again
 var tunnel_kills := 0
@@ -1395,13 +1400,17 @@ func _start_cut(t: Dictionary) -> void:
 
 func _can_cut(t: Dictionary) -> bool:
 	var node: Dictionary = ore_nodes[int(t["node"])]
-	if _count("laser") <= 0:
+	if _count("laser") <= 0 and _count("steel_laser") <= 0:
 		sfx("deny")
 		_say("Ore vein", ["A seam of ore in solid rock. You would need a mining laser to cut it. Job might have a spare."])
 		return false
 	if _selected_use() != "mine":
 		sfx("deny")
 		_toast("Select the mining laser on your hotbar (number keys) first")
+		return false
+	if _laser_tier() < int(NEEDS_TIER.get(str(node["item"]), 1)):
+		sfx("deny")
+		_toast("Too hard for the basic laser. Steel would cut it: see the Crafting page.")
 		return false
 	if int(node["hits"]) <= 0:
 		sfx("deny")
@@ -1415,7 +1424,14 @@ func _can_cut(t: Dictionary) -> bool:
 
 
 func _cut_seconds(item: String) -> float:
-	return float(CUT_TIME.get(item, DEFAULT_CUT_TIME))
+	return float(CUT_TIME.get(item, DEFAULT_CUT_TIME)) * float(TIER_SPEED.get(_laser_tier(), 1.0))
+
+
+func _laser_tier() -> int:
+	var item: String = slots[selected]
+	if item == "" or _selected_use() != "mine":
+		return 0
+	return int(ItemData.ITEMS[item].get("tier", 1))
 
 
 # Called every frame: carries on a held cut, or stops it if the button is let go or you walk away.
@@ -1433,7 +1449,7 @@ func _update_cut(delta: float, paused: bool) -> void:
 	var need: float = _cut_seconds(node["item"])
 	cut_time += delta
 	cut_buzz -= delta
-	player.fire_laser(t["pos"], _item_icon("laser"))
+	player.fire_laser(t["pos"], _item_icon(slots[selected]))
 	if cut_buzz <= 0.0:
 		sfx("zap", randf_range(0.85, 1.05), -8.0)
 		cut_buzz = 0.35
@@ -1742,6 +1758,8 @@ func enemy_died(en) -> void:
 	var epos: Vector2 = en.position
 	_give(drop, 1)
 	_pop_item(drop, epos + Vector2(0, -8))
+	if en.kind == "harbinger":
+		_harbinger_slain()
 	if en.area == "tunnels" and job_quest == 4:
 		tunnel_kills += 1
 		if tunnel_kills == TUNNEL_GOAL:
@@ -2139,6 +2157,7 @@ func _save_game() -> void:
 	cfg.set_value("game", "tunnel_kills", tunnel_kills)
 	cfg.set_value("game", "cav_lift", cav_lift)
 	cfg.set_value("game", "cav_deepest", cav_deepest)
+	cfg.set_value("game", "harbinger_slain", harbinger_slain)
 	cfg.set_value("game", "board_taken_day", board_taken_day)
 	cfg.set_value("game", "board_done_day", board_done_day)
 	if not appearance.is_empty():
@@ -2179,6 +2198,7 @@ func _load_game() -> void:
 	tunnel_kills = int(cfg.get_value("game", "tunnel_kills", 0))
 	cav_lift = int(cfg.get_value("game", "cav_lift", 0))
 	cav_deepest = int(cfg.get_value("game", "cav_deepest", 0))
+	harbinger_slain = bool(cfg.get_value("game", "harbinger_slain", false))
 	board_taken_day = int(cfg.get_value("game", "board_taken_day", 0))
 	board_done_day = int(cfg.get_value("game", "board_done_day", 0))
 	var saved_look = cfg.get_value("game", "appearance", {})
@@ -2454,8 +2474,10 @@ func _enter_cavern(n: int) -> void:
 	_toast(note)
 	if n < last:
 		_fill_cavern(key, info, n, band)
+	elif not harbinger_slain:
+		_wake_harbinger(key)
 	else:
-		_toast("Something vast moves under the water.")
+		_toast("The water is still. Somewhere far out, something is not breathing.")
 
 
 func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
@@ -2476,7 +2498,8 @@ func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
 		var tile := Vector2i(int(s[0]), int(s[1]))
 		if i < mobs:
 			var en = EnemyScript.new()
-			en.setup(self, ["bug", "lizard"][randi() % 2], key, Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
+			var kinds: Array = CAV_MOBS[band]
+			en.setup(self, kinds[randi() % kinds.size()], key, Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
 			en.boost(float(power[0]), int(power[1]), float(power[2]))
 			actors.add_child(en)
 			enemies.append(en)
@@ -2552,3 +2575,27 @@ func _clear_cavern() -> void:
 	if cav_key != "":
 		blocked[cav_key] = {}
 		fixed[cav_key] = {}
+
+
+# Floor 45: the Harbinger heaves itself out of the water onto the shore and comes for you.
+func _wake_harbinger(key: String) -> void:
+	var spot: Array = MapData.CAVERNS["boss"]
+	var en = EnemyScript.new()
+	en.setup(self, "harbinger", key, Vector2(int(spot[0]) * TILE + 8, int(spot[1]) * TILE + 12))
+	en.boost(1.0, 0, 4.0)
+	actors.add_child(en)
+	enemies.append(en)
+	cav_enemies.append(en)
+	en.visible = true
+	sfx("hurt", 0.4)
+	_say("The Harbinger", ["The black water bulges. Something the size of a shuttle drags itself up onto the shore.",
+		"Its eyes are the colour of the power core. It has seen you."])
+
+
+func _harbinger_slain() -> void:
+	harbinger_slain = true
+	sfx("quest")
+	_money(500, "The Harbinger, defeated")
+	_say("Underground ocean", ["The Harbinger sinks back into the dark water, and does not rise again.",
+		"For the first time, the ocean is quiet. Zaas is going to want to see this.",
+		"You pull a scale the size of a dinner plate from the shingle. (+500 credits)"])

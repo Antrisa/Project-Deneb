@@ -5,6 +5,9 @@ extends Sprite2D
 const KINDS := {
 	"bug": {"art": "res://art/enemy_bug.png", "hp": 2, "speed": 34.0, "damage": 1, "drop": "chitin", "sight": 70.0},
 	"lizard": {"art": "res://art/enemy_lizard.png", "hp": 4, "speed": 24.0, "damage": 2, "drop": "hide", "sight": 90.0},
+	"spore_crawler": {"art": "res://art/enemy_spore_crawler.png", "hp": 3, "speed": 30.0, "damage": 1, "drop": "chitin", "sight": 80.0},
+	"vent_crab": {"art": "res://art/enemy_vent_crab.png", "hp": 5, "speed": 26.0, "damage": 2, "drop": "hide", "sight": 85.0},
+	"harbinger": {"art": "res://art/enemy_harbinger.png", "hp": 40, "speed": 22.0, "damage": 3, "drop": "harbinger_scale", "sight": 420.0},
 }
 
 var world                    # main.gd
