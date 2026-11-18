@@ -39,6 +39,15 @@ func setup(main, enemy_kind: String, area_name: String, start: Vector2) -> void:
 	reset()
 
 
+# Deeper in the caverns: tougher, harder-biting and bigger (main.gd CAV_POWER).
+func boost(hp_mult: float, extra_damage: int, size: float) -> void:
+	_info = _info.duplicate()
+	_info["hp"] = maxi(1, int(round(float(_info["hp"]) * hp_mult)))
+	_info["damage"] = int(_info["damage"]) + extra_damage
+	scale *= size
+	reset()
+
+
 # Back to full health at its starting spot (each morning, and after the player collapses).
 func reset() -> void:
 	alive = true

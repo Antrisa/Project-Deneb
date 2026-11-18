@@ -30,6 +30,12 @@ const ITEMS = {
 			"desc": "Jasper's special. Select it and press Space to eat it: mends 5 hearts and 25 energy."},
 	"stone": {"name": "Stone", "icon": 13, "use": "",
 			"desc": "Plain moon rock, cut from the boulders in the mine. Bram pays a credit apiece; builders will want it."},
+	"quartz": {"name": "Quartz", "icon": 14, "use": "",
+			"desc": "Clear crystal from the caverns. Bram pays well; one day it will make glass and lenses."},
+	"gold_ore": {"name": "Gold ore", "icon": 15, "use": "",
+			"desc": "Rare yellow veins, deep in the caverns. Bram pays 40 credits a lump."},
+	"titanium_ore": {"name": "Titanium ore", "icon": 16, "use": "",
+			"desc": "Hard blue-grey ore from the steamy depths. It takes the laser a long time to cut."},
 	"medpack": {"name": "Medpack", "icon": 12, "use": "eat", "heal": 10,
 			"desc": "From Maren in the medbay. Select it and press Space to mend every heart."},
 }

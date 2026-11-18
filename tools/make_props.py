@@ -777,7 +777,54 @@ def work_light(d, w, h):
     d.rectangle((8, 8, w - 8, 18), fill=(255, 230, 140, 255))
 
 
+def cavern_ladder(d, w, h):
+    d.polygon([(6, h - 4), (w - 6, h - 4), (w - 2, h - 14), (2, h - 14)], fill=(20, 16, 18, 255), outline=INK)    # the hole above
+    for x0 in (16, w - 20): d.rectangle((x0, 0, x0 + 4, h - 8), fill=WOOD, outline=INK)
+    for yy in range(8, h - 10, 12): d.rectangle((16, yy, w - 16, yy + 3), fill=WOOD_D, outline=INK)
+
+
+def stalagmite(d, w, h):
+    d.polygon([(4, h - 2), (w - 4, h - 2), (w // 2 + 3, 6), (w // 2 - 2, 2)], fill=ROCK_C, outline=INK)
+    d.line((w // 2 - 1, 10, 9, h - 8), fill=ROCK_L, width=2)
+
+
+def giant_mushroom(d, w, h):
+    d.rectangle((w // 2 - 7, 34, w // 2 + 7, h - 2), fill=(226, 214, 190, 255), outline=INK)
+    d.pieslice((2, 4, w - 2, 64), 180, 360, fill=(110, 170, 120, 255), outline=INK, width=2)
+    for x0, y0 in ((14, 20), (36, 14), (46, 26)): d.ellipse((x0, y0, x0 + 7, y0 + 6), fill=(190, 240, 190, 255))
+
+
+def fern(d, w, h):
+    for a in (-60, -30, 0, 30, 60):
+        import math as _m
+        ex, ey = w / 2 + 14 * _m.sin(_m.radians(a)), h - 4 - 16 * _m.cos(_m.radians(a))
+        d.line((w / 2, h - 3, ex, ey), fill=(70, 140, 70, 255), width=3)
+        d.line((w / 2, h - 3, ex, ey), fill=(120, 190, 110, 255), width=1)
+
+
+def crystal_column(d, w, h):
+    d.polygon([(4, h - 2), (w - 4, h - 2), (w - 6, 14), (w // 2, 2), (6, 14)], fill=(130, 190, 226, 255), outline=INK)
+    d.line((w // 2, 8, w // 2 - 2, h - 8), fill=(220, 244, 255, 255), width=2)
+
+
+def harbinger(d, w, h):
+    """Floor 45: a vast shape rising from the water. Placeholder until Zachary paints it."""
+    d.ellipse((10, 30, w - 10, h + 40), fill=(54, 30, 52, 255), outline=INK, width=3)
+    d.ellipse((40, 10, w - 40, 110), fill=(74, 38, 70, 255), outline=INK, width=3)
+    for x0 in (90, 140): d.ellipse((x0, 46, x0 + 22, 64), fill=(255, 120, 60, 255), outline=INK, width=2)
+    d.rectangle((0, h - 30, w, h), fill=(64, 136, 196, 255))
+
+
+def cavern_shaft(d, w, h):
+    d.ellipse((2, 6, w - 2, h - 4), fill=(40, 34, 36, 255), outline=INK, width=2)
+    d.ellipse((7, 10, w - 7, h - 8), fill=(12, 10, 12, 255))
+    for x0 in (10, w - 13): d.rectangle((x0, 2, x0 + 3, h - 12), fill=WOOD, outline=INK)
+    d.rectangle((10, 8, w - 10, 10), fill=WOOD_D)
+
+
 PROPS = {
+    'cavern_ladder': (64, 104, cavern_ladder), 'stalagmite': (32, 72, stalagmite), 'giant_mushroom': (64, 104, giant_mushroom),
+    'fern': (32, 32, fern), 'crystal_column': (32, 104, crystal_column), 'harbinger': (256, 200, harbinger), 'cavern_shaft': (32, 32, cavern_shaft),
     'boulder': (64, 64, boulder), 'ore_analyzer': (64, 104, ore_analyzer), 'barricade': (128, 64, barricade),
     'crystal_cluster': (64, 64, crystal_cluster), 'glow_fungus': (32, 40, glow_fungus), 'work_light': (32, 72, work_light),
     'holo_dais': (96, 96, holo_dais), 'memory_core': (64, 112, memory_core), 'wall_screen': (128, 80, wall_screen),

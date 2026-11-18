@@ -269,10 +269,8 @@ def bake_area(key, rows, art_dir, extras=None):
     y, x = np.mgrid[0:H, 0:W]
     ch = chars[y // 16, x // 16]
     img = np.zeros((H, W, 4), dtype=np.uint8)
-    for c, (kind, tint) in table.items():
-        m = ch == ord(c)
-        if not m.any():
-            continue
+    def paint(c, m):
+        kind, tint = table[c]
         xs, ys = x[m], y[m]
         if isinstance(kind, str):                                 # a sector material: art/lunar/<kind>.png, 32 px a tile
             tex = np.asarray(Image.open(os.path.join(art_dir, kind + ".png")).convert("RGB"), dtype=np.float32) / 255.0
@@ -282,7 +280,36 @@ def bake_area(key, rows, art_dir, extras=None):
         if tint:
             col = lerp(col, hexc(tint[0]), tint[1])
         img[ys, xs, :3] = np.clip(col * 255.0, 0, 255).astype(np.uint8); img[ys, xs, 3] = 255
+    for c in table:
+        m = ch == ord(c)
+        if m.any():
+            paint(c, m)
     extras = extras or {}
+    if "holes" in extras:
+        # Pits and pools drawn on their true 45-degree outlines (the tiles only say where you cannot walk):
+        # hole tiles outside the outline get the cave floor, floor tiles inside it get the hole, and a dark lip
+        # runs round the edge. extras["holes"]: [[(x, y), ...] in tiles], extras["hole_char"], extras["floor_char"].
+        hc, fc = extras.get("hole_char", "O"), extras.get("floor_char", "m")
+        inside = np.zeros((H, W), dtype=bool)
+        X, Y = (x + .5) / 16.0, (y + .5) / 16.0
+        for pts in extras["holes"]:
+            m = np.zeros((H, W), dtype=bool)
+            n = len(pts)
+            for i in range(n):
+                (x1, y1), (x2, y2) = pts[i], pts[(i + 1) % n]
+                if y1 == y2:
+                    continue
+                cross = ((y1 > Y) != (y2 > Y)) & (X < x1 + (Y - y1) * (x2 - x1) / (y2 - y1))
+                m ^= cross
+            inside |= m
+        area = (ch == ord(hc)) | (ch == ord(fc))
+        paint(fc, area & ~inside & (ch == ord(hc)))
+        paint(hc, area & inside & (ch == ord(fc)))
+        sh = inside.copy()
+        for dx, dy in ((2, 0), (-2, 0), (0, 2), (0, -2), (1, 1), (-1, -1), (1, -1), (-1, 1)):
+            sh &= np.roll(np.roll(inside, dy, 0), dx, 1)
+        lip = inside & ~sh & area
+        img[lip, :3] = (img[lip, :3] * .35).astype(np.uint8)
     if "data_lines" in extras:
         # Glowing lines in S.A.R.A.'s floor, from her dais out to each memory core, and a ring round the dais.
         glow = np.zeros((H, W), dtype=bool)

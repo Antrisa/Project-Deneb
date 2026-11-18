@@ -366,6 +366,48 @@ def mine_roof():
     return shade(np.ones((N, N, 3), np.float32) * rgb((70, 62, 58)), .78 + noise(69) * .36)
 
 
+def cav_moss():
+    """Green cavern floor (floors 16-30): damp rock under patches of moss."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((96, 104, 84)), .82 + noise(71) * .3)
+    moss = noise(72) > .5
+    img[moss] = img[moss] * .5 + rgb((88, 150, 80)) * .5
+    return img
+
+
+def cav_slate():
+    """Steamy cavern floor (floors 31-44): wet blue-grey slate, a sheen of water."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((104, 122, 138)), .85 + noise(73) * .26)
+    wet = noise(74) > .68
+    img[wet] = img[wet] * .7 + rgb((150, 190, 214)) * .3
+    return img
+
+
+def cav_lush_wall():
+    img = mine_wall()
+    hang = (noise(75) > .55) & (y < 40) & ((x + (noise(76) * 6).astype(int)) % 9 < 3)
+    img[hang] = img[hang] * .4 + rgb((70, 140, 70)) * .6
+    return img
+
+
+def cav_lush_roof():
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((56, 70, 52)), .78 + noise(77) * .36)
+    return img
+
+
+def cav_steam_wall():
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((84, 98, 124)), .82 + noise(78) * .3)
+    vein = (np.abs(((x * 3 - y * 2) % 48) - 24) < 2) & (noise(79) > .45)
+    img[vein] = rgb((150, 214, 236))
+    img[y >= 54] *= .7
+    return img
+
+
+def cav_steam_roof():
+    return shade(np.ones((N, N, 3), np.float32) * rgb((50, 58, 76)), .78 + noise(80) * .36)
+
+
+MATERIALS.update({'cav_moss': cav_moss, 'cav_slate': cav_slate, 'cav_lush_wall': cav_lush_wall, 'cav_lush_roof': cav_lush_roof,
+                  'cav_steam_wall': cav_steam_wall, 'cav_steam_roof': cav_steam_roof})
 MATERIALS.update({'mine_rock': mine_rock, 'mine_path': mine_path, 'mine_wall': mine_wall, 'mine_roof': mine_roof})
 
 if __name__ == "__main__":

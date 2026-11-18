@@ -392,6 +392,8 @@ const LOOKS = {
 	"Telescope": ["The gas giant fills the eyepiece, blue and enormous.", "Somewhere past it, the signal is still coming."],
 	"Sealed lab": ["TERRAN SIGNALS DIRECTORATE. AUTHORISED STAFF ONLY.", "The lock is still lit."],
 	"Power core": ["The station's heart. It runs at a fraction of what it was built for, and it sounds tired."],
+	"The Harbinger": ["Something vast rises out of the black water, older than the station and maybe older than the moon.", "It has not noticed you. Yet."],
+	"Underground ocean": ["Warm, dark water as far as the lamp reaches. Zaas would weep.", "Somewhere out there, the Harbinger is waiting."],
 	"Barricade": ["Planks, hull plate and a lot of bolts. Past it the tunnel drops into the dark.", "Something down there is scratching."],
 	"Villa door": ["Locked. Whoever built a private villa out here did not leave a forwarding address."],
 	"Herb beds": ["Evarra's herbs, under the one small dome on the Landing that holds air, water and light. It smells green here."],

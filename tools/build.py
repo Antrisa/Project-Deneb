@@ -1755,6 +1755,9 @@ def ore_sprite(name, vein, glint):
 ore_sprite("iron_ore", (176, 96, 84), (232, 190, 176))
 ore_sprite("copper_ore", (72, 178, 140), (250, 190, 96))
 ore_sprite("stone", (120, 110, 104), (156, 146, 138))          # a plain rock: cut it for stone
+ore_sprite("quartz", (230, 232, 240), (255, 255, 255))           # cavern finds
+ore_sprite("gold_ore", (232, 190, 70), (255, 240, 170))
+ore_sprite("titanium_ore", (170, 190, 214), (236, 244, 255))
 
 # ================================================================ sounds (16-bit mono WAV)
 import math, wave
@@ -1812,7 +1815,7 @@ save_wav("deny", tone(170, 130, 0.14, 0.45, "square", 2.0))
 
 # ================================================================ item icons, hearts, weapon swing (for the menus and hotbar)
 # Order here must match "icon" in scripts/item_data.gd.
-IT = Img(16 * 14, 16)
+IT = Img(16 * 17, 16)
 
 
 def icon(i):
@@ -1864,6 +1867,11 @@ i = icon(12)    # medpack
 i.r(3, 4, 12, 12, (236, 240, 244)).r(3, 4, 12, 4, (255, 255, 255)).r(11, 5, 12, 12, (190, 198, 208)).r(7, 6, 8, 11, (214, 60, 60)).r(5, 8, 10, 9, (214, 60, 60)).r(6, 3, 9, 3, (150, 158, 172)).done()
 i = icon(13)    # stone
 i.r(3, 6, 12, 12, (128, 118, 110)).r(5, 4, 10, 6, (128, 118, 110)).r(10, 8, 12, 12, (96, 88, 82)).r(5, 4, 9, 4, (166, 156, 146)).ps([(6, 8), (9, 10), (5, 11)], (96, 88, 82)).done()
+i = icon(14)    # quartz
+i.r(3, 9, 12, 12, (104, 88, 82)).ps([(5, 8), (5, 7), (6, 6), (6, 5), (7, 4), (7, 8), (8, 8), (9, 6), (9, 7), (10, 8), (8, 5)], (226, 230, 244)).ps([(6, 6), (9, 6)], (255, 255, 255)).done()
+for n, (vein, glint) in enumerate([((232, 190, 70), (255, 240, 170)), ((170, 190, 214), (236, 244, 255))]):
+    i = icon(15 + n)   # gold ore, titanium ore
+    i.r(3, 6, 12, 12, (104, 88, 82)).r(5, 4, 10, 6, (104, 88, 82)).r(10, 8, 12, 12, (82, 68, 66)).ps([(5, 8), (6, 8), (7, 6), (8, 10), (9, 10), (6, 11)], vein).ps([(6, 7), (9, 9)], glint).done()
 IT.save(art("items.png"))
 
 
@@ -2430,6 +2438,10 @@ east.build(globals())
 import caves
 caves.build(globals())
 
+# ---------------------------------------------------------------- the Caverns: see tools/caverns.py
+import caverns
+caverns.build(globals())
+
 # ---------------------------------------------------------------- who and what is where
 START = ["hotel", 68, 48]
 # NOTE: spots on the main level below (MEDBAY, PEOPLE, SCHEDULES_RAW, THINGS) are still written
@@ -2699,7 +2711,8 @@ for ar in A.values():
         assert walkable(dest, tx, ty), ("warp lands on bad tile", ar.key, dest, tx, ty)
         assert not any(w[0] == tx and w[1] == ty for w in A[dest].warps), "warp lands on a warp"
 assert walkable(*START)
-seen, q = {tuple(START)}, deque([tuple(START)])
+_starts = [tuple(START)] + [(k_, c_["up"][0], c_["up"][1]) for k_, c_ in CAVERNS["maps"].items()]   # caverns: entered by the gate, not a warp
+seen, q = set(_starts), deque(_starts)
 while q:
     a, x, y = q.popleft()
     nxt = [(a, x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
@@ -2901,6 +2914,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const PEOPLE = " + json.dumps(PEOPLE) + "\n")
     f.write("const NODES = " + json.dumps(NODES) + "\n")
     f.write("const ENEMIES = " + json.dumps(ENEMIES) + "\n")
+    f.write("const CAVERNS = " + json.dumps(CAVERNS) + "\n")
     f.write("const MAP_LAYOUT = " + json.dumps(MAP_LAYOUT) + "\n")
     f.write("const MAP_TITLES = " + json.dumps(MAP_TITLES) + "\n")
     f.write("const MAP_MARKS = " + json.dumps(MAP_MARKS) + "\n")

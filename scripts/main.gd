@@ -42,14 +42,14 @@ const REPAIRS := [
 ]
 const SLOT_COUNT := 24             # inventory slots; the first 8 are the hotbar
 
-const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1}      # what Bram pays
+const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1, "quartz": 12, "gold_ore": 40, "titanium_ore": 25}      # what Bram pays
 const MAX_HP := 10
 const WEAPON_DAMAGE := 2
 const TUNNEL_GOAL := 6             # creatures Job asks you to clear out of the north tunnels
 const MAX_ENERGY := 270            # Stardew-style energy: cuts cost it, food tops it up, sleep refills it
 const CUT_ENERGY := 2              # energy per laser cut
 # Seconds of holding the laser per cut: harder rock takes longer. Anything not listed takes DEFAULT_CUT_TIME.
-const CUT_TIME := {"stone": 0.5, "copper_ore": 0.8, "iron_ore": 1.2}
+const CUT_TIME := {"stone": 0.5, "copper_ore": 0.8, "iron_ore": 1.2, "quartz": 1.0, "gold_ore": 1.6, "titanium_ore": 2.0}
 const DEFAULT_CUT_TIME := 1.0
 const NODE_HITS := 2               # cuts per ore vein each time it refills (daily, or every few days: MapData.NODES)
 const ORE_PER_BAR := 2
@@ -124,6 +124,23 @@ var cutting = null                 # the vein or rock the laser is held on (a th
 var cut_time := 0.0                # seconds held on it so far
 var cut_buzz := 0.0                # seconds until the next laser sound
 var cut_bar: Node2D                # the little progress bar over what you are cutting
+# The Caverns (tools/caverns.py): floors under the mine, a new layout each visit.
+const CAV_ORES := {                # what veins each depth band has, with weights
+	"rock": [["copper_ore", 5], ["iron_ore", 3], ["quartz", 1]],
+	"lush": [["iron_ore", 4], ["copper_ore", 2], ["quartz", 2], ["gold_ore", 1]],
+	"steam": [["quartz", 2], ["gold_ore", 2], ["titanium_ore", 2], ["iron_ore", 1]],
+}
+const CAV_POWER := {"rock": [1.0, 0, 1.0], "lush": [2.0, 1, 1.3], "steam": [3.5, 2, 1.6]}   # creature health x, extra bite, size
+var cav_floor := 0                 # the floor you are on, 0 when not in the caverns
+var cav_lift := 0                  # the deepest lift stop reached (every 5 floors)
+var cav_deepest := 0
+var cav_key := ""                  # the map in use for this floor
+var cav_rocks := 0                 # rocks placed on this floor, and how many are still standing
+var cav_rocks_left := 0
+var cav_shaft := false             # the way down has been found on this floor
+var cav_static_nodes := 0          # ore_nodes from MapData; the floor's own come after them
+var cav_sprites: Array = []
+var cav_enemies: Array = []
 var hurt_cd := 0.0                 # seconds until the player can be hurt again
 var swing_cd := 0.0                # seconds until the player can swing again
 var tunnel_kills := 0
@@ -461,7 +478,7 @@ func _go_to(area_name: String, tile: Vector2i, announce: bool = true) -> void:
 		en.visible = en.alive and en.area == area_name
 	player.position = _feet(tile)
 	player.set_limits(map_pixel_size())
-	var track: String = MUSIC.get(area_name, "town")
+	var track: String = MUSIC.get(area_name, "under" if area_name.begins_with("cav_") else "town")
 	_play_music(track)
 	if announce:
 		var data: Dictionary = MapData.AREAS[area_name]
@@ -601,6 +618,8 @@ func _light_color() -> Color:
 		c = c * Color(0.8, 0.78, 0.86)
 	elif current_area == "tunnels":
 		c = c * Color(0.62, 0.6, 0.74)
+	elif current_area.begins_with("cav_"):
+		c = Color(0.58, 0.58, 0.7)          # no day and night down there
 	return c
 
 
@@ -640,32 +659,11 @@ func _spawn_things() -> void:
 			"pos": Vector2(float(pos[0]), float(pos[1])), "radius": float(item[5]), "who": "",
 		})
 
-	# Ore veins. Each art file has 2 frames: full, worked out.
-	for i in MapData.NODES.size():
-		var entry: Array = MapData.NODES[i]
-		var item: String = entry[0]
-		var node_area: String = entry[1]
-		var tile := Vector2i(int(entry[2]), int(entry[3]))
-		var vein := Sprite2D.new()
-		vein.texture = load("res://art/%s.png" % item)
-		vein.hframes = 2
-		vein.centered = false
-		_fit_sprite(vein, 2, 1, 16.0)
-		vein.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 16)
-		vein.visible = false
-		actors.add_child(vein)
-		area_sprites.append([vein, node_area])
-		var here: Dictionary = blocked[node_area]
-		here[tile] = true
-		var fixed_here: Dictionary = fixed[node_area]
-		fixed_here[tile] = true
+	# Ore veins and rocks. Each art file has 2 frames: full, worked out.
+	for entry in MapData.NODES:
 		# an optional fifth number: refill every that many days (the North Cave's beds: 2)
-		var every: int = int(entry[4]) if entry.size() > 4 else 1
-		ore_nodes.append({"item": item, "hits": _node_hits(item), "sprite": vein, "every": every})
-		things.append({
-			"kind": "ore", "name": "Rock" if item == "stone" else _item_name(item), "hint": "Hold to cut %s" % ("rock" if item == "stone" else _item_name(item).to_lower()), "area": node_area,
-			"pos": Vector2(tile.x * TILE + 8, tile.y * TILE + 8), "radius": 26.0, "who": "", "node": i,
-		})
+		_add_node(str(entry[0]), str(entry[1]), Vector2i(int(entry[2]), int(entry[3])), int(entry[4]) if entry.size() > 4 else 1, false)
+	cav_static_nodes = ore_nodes.size()
 
 	# The wreck in the shuttle bay. art/wreck.png has 4 frames: wrecked -> repaired.
 	var wreck: Array = MapData.WRECK
@@ -991,7 +989,14 @@ func _interact(t: Dictionary) -> void:
 	elif kind == "person":
 		_talk(t["who"])
 	elif kind == "ore":
-		_mine(t)
+		if _can_cut(t):
+			_toast("Hold Space (or the left button) with the laser to cut it")
+	elif kind == "cav_gate":
+		_cavern_gate()
+	elif kind == "cav_up":
+		_say("Ladder up", ["Climb back up to the mine?"], Callable(self, "_leave_caverns"), "Climb up")
+	elif kind == "shaft":
+		_enter_cavern(cav_floor + 1)
 	elif kind == "furnace":
 		# Any furnace smelts whatever ore you are holding (the selected hotbar slot).
 		smelt_pos = t["pos"]
@@ -1454,12 +1459,40 @@ func _mine(t: Dictionary) -> void:
 		s.frame = 1
 	_give(item, 1)
 	energy = maxi(0, energy - CUT_ENERGY)
+	if bool(node.get("cav", false)) and item == "stone" and int(node["hits"]) <= 0:
+		cav_rocks_left -= 1
+		_maybe_open_shaft(t, node)
 	sfx("zap", randf_range(0.9, 1.1))
 	var vein_pos: Vector2 = t["pos"]
 	_pop_item(item, vein_pos + Vector2(0, -10))
 	_toast("+1 %s  (%d)" % [_item_name(item), _count(item)])
 	if energy < CUT_ENERGY:
 		_toast("You're worn out. Eat something, or call it a day.")
+
+
+# One ore vein or rock: its sprite, its tile blocked, and a thing to cut. Cavern ones (cav) go when you leave the floor.
+func _add_node(item: String, node_area: String, tile: Vector2i, every: int, cav: bool) -> void:
+	var vein := Sprite2D.new()
+	vein.texture = load("res://art/%s.png" % item)
+	vein.hframes = 2
+	vein.centered = false
+	_fit_sprite(vein, 2, 1, 16.0)
+	vein.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 16)
+	vein.visible = node_area == current_area
+	actors.add_child(vein)
+	area_sprites.append([vein, node_area])
+	var here: Dictionary = blocked[node_area]
+	here[tile] = true
+	var fixed_here: Dictionary = fixed[node_area]
+	fixed_here[tile] = true
+	var index: int = ore_nodes.size()
+	ore_nodes.append({"item": item, "hits": _node_hits(item), "sprite": vein, "every": every, "cav": cav, "tile": tile})
+	things.append({
+		"kind": "ore", "name": "Rock" if item == "stone" else _item_name(item), "hint": "Hold to cut %s" % ("rock" if item == "stone" else _item_name(item).to_lower()), "area": node_area,
+		"pos": Vector2(tile.x * TILE + 8, tile.y * TILE + 8), "radius": 26.0, "who": "", "node": index, "cav": cav,
+	})
+	if cav:
+		cav_sprites.append(vein)
 
 
 func _node_hits(item: String) -> int:
@@ -1731,6 +1764,7 @@ func hurt_player(amount: int, from: Vector2) -> void:
 
 # Out of health: you wake up back in your quarters, two hours later and a little poorer.
 func _collapse() -> void:
+	_clear_cavern()
 	hp = MAX_HP / 2
 	energy = maxi(energy, MAX_ENERGY / 4)
 	var lost: int = credits / 10
@@ -1927,7 +1961,7 @@ func _process(delta: float) -> void:
 			_pass_out()
 		for r in residents:
 			r.tick(delta, minutes)
-		for en in enemies:
+		for en in enemies.duplicate():       # a bite can end the day and clear a cavern floor mid-loop
 			en.tick(delta)
 		hurt_cd = maxf(0.0, hurt_cd - delta)
 		swing_cd = maxf(0.0, swing_cd - delta)
@@ -2078,6 +2112,7 @@ func _next_day() -> void:
 	player.set_carrying(false)
 	hp = MAX_HP
 	energy = MAX_ENERGY
+	_clear_cavern()
 	_reset_enemies()
 	_reset_nodes()
 	for who in persons:
@@ -2102,6 +2137,8 @@ func _save_game() -> void:
 	cfg.set_value("game", "weapon", weapon)
 	cfg.set_value("game", "job_quest", job_quest)
 	cfg.set_value("game", "tunnel_kills", tunnel_kills)
+	cfg.set_value("game", "cav_lift", cav_lift)
+	cfg.set_value("game", "cav_deepest", cav_deepest)
 	cfg.set_value("game", "board_taken_day", board_taken_day)
 	cfg.set_value("game", "board_done_day", board_done_day)
 	if not appearance.is_empty():
@@ -2140,6 +2177,8 @@ func _load_game() -> void:
 	_sync_slots()
 	job_quest = int(cfg.get_value("game", "job_quest", 0))
 	tunnel_kills = int(cfg.get_value("game", "tunnel_kills", 0))
+	cav_lift = int(cfg.get_value("game", "cav_lift", 0))
+	cav_deepest = int(cfg.get_value("game", "cav_deepest", 0))
 	board_taken_day = int(cfg.get_value("game", "board_taken_day", 0))
 	board_done_day = int(cfg.get_value("game", "board_done_day", 0))
 	var saved_look = cfg.get_value("game", "appearance", {})
@@ -2366,3 +2405,150 @@ func _water_garden(t: Dictionary) -> void:
 	garden_busy=false
 	player.frozen=false
 	_toast("Flowers watered — the reservoir will recirculate the excess")
+
+
+# ---------------------------------------------------------------- the Caverns
+# Floors under the mine (tools/caverns.py). Each visit to a floor picks one of its band's ten maps and scatters
+# rocks, ore and creatures over it. The way down is under a rock: each rock you break has a small chance to show the
+# shaft, rising as fewer are left, and the last rock always shows it. Every fifth floor becomes a lift stop.
+
+func _cav_band(n: int) -> String:
+	return "rock" if n <= 15 else ("lush" if n <= 30 else "steam")
+
+
+func _cavern_gate() -> void:
+	if job_quest < 5:
+		_say("Vzz'ket", ["[angry] The caverns stay shut. Job wants the north tunnels cleared first.", "Clear them. Then we will see what you are."])
+		return
+	if cav_lift > 0:
+		_say("Cavern gate", ["Vzz'ket unbolts the barricade. The old cage lift still runs.", "Take the lift down to floor %d?" % cav_lift],
+				Callable(self, "_enter_cavern").bind(cav_lift), "Floor %d" % cav_lift, Callable(self, "_enter_cavern").bind(1), "Floor 1")
+	else:
+		_say("Cavern gate", ["Vzz'ket unbolts the barricade. A ladder drops away into the dark.", "Climb down into the Caverns?"],
+				Callable(self, "_enter_cavern").bind(1), "Climb down")
+
+
+func _enter_cavern(n: int) -> void:
+	_clear_cavern()
+	var data: Dictionary = MapData.CAVERNS
+	var last: int = int(data["last"])
+	n = clampi(n, 1, last)
+	cav_floor = n
+	var band: String = _cav_band(n)
+	var key := "cav_45"
+	if n < last:
+		var keys: Array = data["bands"][band]
+		key = keys[randi() % keys.size()]
+		if key == cav_key and keys.size() > 1:            # never the same layout twice running
+			key = keys[(keys.find(key) + 1) % keys.size()]
+	cav_key = key
+	var info: Dictionary = data["maps"][key]
+	var up: Array = info["up"]
+	_go_to(key, Vector2i(int(up[0]), int(up[1])), false)
+	sfx("warp")
+	cav_deepest = maxi(cav_deepest, n)
+	var note := "The Caverns, floor %d" % n
+	if n % 5 == 0 and n > cav_lift and n < last:
+		cav_lift = n
+		note += "  (the lift stops here now)"
+	_toast(note)
+	if n < last:
+		_fill_cavern(key, info, n, band)
+	else:
+		_toast("Something vast moves under the water.")
+
+
+func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
+	var spots: Array = info["spots"].duplicate()
+	spots.shuffle()
+	var mobs: int = mini(3 + n / 8, 8)
+	var veins: int = randi_range(5, 8)
+	cav_rocks = randi_range(22, 30)
+	cav_rocks_left = cav_rocks
+	cav_shaft = false
+	var weights: Array = CAV_ORES[band]
+	var total := 0
+	for w in weights:
+		total += int(w[1])
+	var power: Array = CAV_POWER[band]
+	var i := 0
+	for s in spots:
+		var tile := Vector2i(int(s[0]), int(s[1]))
+		if i < mobs:
+			var en = EnemyScript.new()
+			en.setup(self, ["bug", "lizard"][randi() % 2], key, Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
+			en.boost(float(power[0]), int(power[1]), float(power[2]))
+			actors.add_child(en)
+			enemies.append(en)
+			cav_enemies.append(en)
+			en.visible = true
+		elif i < mobs + veins:
+			var roll: int = randi() % total
+			var item := "stone"
+			for w in weights:
+				roll -= int(w[1])
+				if roll < 0:
+					item = str(w[0])
+					break
+			_add_node(item, key, tile, 1, true)
+		elif i < mobs + veins + cav_rocks:
+			_add_node("stone", key, tile, 1, true)
+		else:
+			break
+		i += 1
+
+
+func _maybe_open_shaft(t: Dictionary, node: Dictionary) -> void:
+	if cav_shaft or cav_floor <= 0 or cav_floor >= int(MapData.CAVERNS["last"]):
+		return
+	var chance: float = 0.04 + 0.3 * (1.0 - float(cav_rocks_left) / float(maxi(1, cav_rocks)))
+	if cav_rocks_left > 0 and randf() >= chance:
+		return
+	cav_shaft = true
+	var tile: Vector2i = node["tile"]
+	var s: Sprite2D = node["sprite"]
+	s.visible = false
+	var here: Dictionary = blocked[current_area]
+	here.erase(tile)
+	var fixed_here: Dictionary = fixed[current_area]
+	fixed_here.erase(tile)
+	things.erase(t)
+	var hole := Sprite2D.new()
+	hole.texture = load("res://art/lunar/cavern_shaft.png")
+	hole.scale = Vector2.ONE * (16.0 / float(hole.texture.get_width()))
+	hole.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 8)
+	hole.z_index = -1
+	actors.add_child(hole)
+	area_sprites.append([hole, current_area])
+	cav_sprites.append(hole)
+	things.append({"kind": "shaft", "name": "Shaft down", "hint": "Climb down to floor %d" % (cav_floor + 1), "area": current_area,
+		"pos": Vector2(tile.x * TILE + 8, tile.y * TILE + 8), "radius": 22.0, "who": "", "cav": true})
+	sfx("quest")
+	_toast("A shaft down! It leads to floor %d." % (cav_floor + 1))
+
+
+func _leave_caverns() -> void:
+	_clear_cavern()
+	var gate: Array = MapData.CAVERNS["gate"]
+	_go_to("mine", Vector2i(int(gate[0]), int(gate[1])))
+
+
+# Takes away everything placed for the current floor (its rocks, veins, creatures and shaft).
+func _clear_cavern() -> void:
+	cutting = null
+	cav_floor = 0
+	if cav_sprites.is_empty() and cav_enemies.is_empty():
+		return
+	area_sprites = area_sprites.filter(func(pair): return not cav_sprites.has(pair[0]))
+	things = things.filter(func(th): return not bool(th.get("cav", false)))
+	for sp in cav_sprites:
+		sp.queue_free()
+	cav_sprites.clear()
+	for en in cav_enemies:
+		enemies.erase(en)
+		en.queue_free()
+	cav_enemies.clear()
+	ore_nodes.resize(cav_static_nodes)
+	if cav_key != "":
+		blocked[cav_key] = {}
+		fixed[cav_key] = {}

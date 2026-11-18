@@ -127,7 +127,7 @@ def build(g):
     N('star_chart', 11, 36.5, 'Map of the deep caverns', 'look', 'Look'); N('storage_shelf', 5.5, 43, 'Sample shelves', None)
     # the cavern gate: barricaded until the Caverns open
     P('barricade', 2, 24, 'Barricade', None)
-    m.thing('look', 'Cavern gate', 'Look', 4.5, 26, 40)
+    m.thing('cav_gate', 'Cavern gate', 'Go down into the Caverns', 4.5, 26, 40)
     N('work_light', 4, 22, 'Work light', None); N('work_light', 4, 31, 'Work light', None)
     N('hazard_sign', 7.5, 22.5, 'Sign: caverns closed', None)
     # the conveyor from the hopper out to Engineering, painted into the floor along the loading spot's north side
