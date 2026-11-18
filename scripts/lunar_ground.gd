@@ -203,9 +203,9 @@ func roof_tile(n: Node2D,rows: Array,x: int,y: int,lift: int) -> void:
 		points[i]+=Vector2(x*16,y*16+lift)
 	n.draw_polygon(points,PackedColorArray([tint]),uv,materials[1])
 func _next_to_moon(rows: Array,x: int,y: int) -> bool:
-	for dy in [-1,0,1]:
-		for dx in [-1,0,1]:
-			var yy := y+dy
-			var xx := x+dx
+	for dy: int in [-1,0,1]:
+		for dx: int in [-1,0,1]:
+			var yy: int = y+dy
+			var xx: int = x+dx
 			if yy>=0 and yy<rows.size() and xx>=0 and xx<rows[yy].length() and rows[yy][xx] == "~": return true
 	return false
