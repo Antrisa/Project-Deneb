@@ -3,7 +3,7 @@
 mine     option A, shortened: you come in from Engineering on the east into Job's mine head (lockers, tool crib,
          his desk, ore analyzers). The loading spot sits north of it, where a hopper tips ore onto a conveyor that
          runs out east along the north wall to Engineering's ore processing (it never crosses a walkway). West of
-         the head, the main gallery: a clear walkway down the middle, lamps, loose rock. The iron bay bulges north
+         the head, the main gallery: a clear walkway down the middle, lamps, rocks to cut for stone. The iron bay bulges north
          off the gallery on 45-degree walls (the passage up to the North Cave leaves its top), the copper bay south.
          Zaas's survey room is in the south-west; at the west end, the barricaded cavern gate that Vzz'ket guards.
 tunnels  the North Cave, option A without water: one big octagonal chamber round four rock pillars, with four
@@ -100,6 +100,10 @@ def build(g):
                                   ('iron_ore', (12, 20, 46, 22), 1, 15), ('copper_ore', (12, 29, 46, 31), 1, 16)):
         for x, y in pick_spots(m, region, n, seed):
             nodes.append([kind, 'mine', x, y])
+    # plain rocks to cut for stone, scattered over both bays and the gallery's edges (they come back each morning)
+    for region, n, seed in (((16, 6, 44, 18), 10, 21), ((24, 34, 48, 46), 10, 22), ((10, 20, 47, 22), 3, 23), ((10, 29, 47, 31), 3, 24)):
+        for x, y in pick_spots(m, region, n, seed, gap=2.3):
+            nodes.append(['stone', 'mine', x, y])
     P, N = m.prop, m.near
     # Job's mine head: his desk and board, lockers, the tool crib, two ore analyzers, a water cooler, a bench
     N('curator_desk', 54.5, 19.5, "Job's desk", 'look', 'Look'); N('star_chart', 58.5, 18.5, 'Dig plan', 'look', 'Look')
@@ -116,8 +120,6 @@ def build(g):
     # the gallery: work lights along both sides, loose boulders in the bays
     for fx in (12, 24, 36, 48):
         N('work_light', fx, 21.5, 'Work light', None); N('work_light', fx, 30.5, 'Work light', None)
-    for fx, fy in ((19, 13), (27, 9), (33, 14), (40, 10), (22, 17), (29, 39), (36, 44), (43, 38), (46, 42), (32, 36)):
-        N('boulder', fx, fy, 'Boulder', None)
     N('ore_cart', 36, 22.5, 'Ore cart', None); N('ore_cart', 20, 30.5, 'Ore cart', None)
     # Zaas's survey room: crystal samples, an analyzer, a console and a map of the deep
     N('crystal_cluster', 6.5, 38, 'Crystal samples', 'inspect', 'Inspect'); N('crystal_cluster', 15.5, 38, 'Crystal samples', None)
@@ -150,13 +152,14 @@ def build(g):
         c.keep_clear(bx - 3, by - 2, bx + 3, by + 2)
     for fx, fy in ((8, 18), (55, 18), (22, 30), (40, 30), (20, 5.5), (40, 5.5), (33, 31), (56, 28)):
         c.near('glow_fungus', fx, fy, 'Glowing fungus', None)
-    for fx, fy in ((15, 17), (31, 18), (44, 22), (24, 25), (55, 12), (39, 28)):
-        c.near('boulder', fx, fy, 'Boulder', None)
     # creatures, for Job's quest: they come back each morning
     for kind, (x, y) in (('bug', (24, 23)), ('bug', (38, 22)), ('bug', (33, 30)), ('bug', (52, 21)), ('bug', (30, 11)),
                          ('lizard', (8, 22)), ('lizard', (9, 15)), ('lizard', (56, 21)), ('lizard', (24, 8)), ('lizard', (43, 7))):
         assert c.free(x, y), ('creature on a blocked tile', kind, x, y)
         enemies.append([kind, 'tunnels', x, y])
+        c.keep_clear(x - 1, y - 1, x + 1, y + 1)
+    for x, y in pick_spots(c, (6, 5, 56, 32), 14, 31, gap=3.5):          # rocks to cut for stone
+        nodes.append(['stone', 'tunnels', x, y])
 
     for room in (m, c):
         g.setdefault('AREA_PROPS', {})[room.key] = room.props

@@ -42,10 +42,15 @@ const REPAIRS := [
 ]
 const SLOT_COUNT := 24             # inventory slots; the first 8 are the hotbar
 
-const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10}      # what Bram pays
+const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1}      # what Bram pays
 const MAX_HP := 10
 const WEAPON_DAMAGE := 2
 const TUNNEL_GOAL := 6             # creatures Job asks you to clear out of the north tunnels
+const MAX_ENERGY := 270            # Stardew-style energy: cuts cost it, food tops it up, sleep refills it
+const CUT_ENERGY := 2              # energy per laser cut
+# Seconds of holding the laser per cut: harder rock takes longer. Anything not listed takes DEFAULT_CUT_TIME.
+const CUT_TIME := {"stone": 0.5, "copper_ore": 0.8, "iron_ore": 1.2}
+const DEFAULT_CUT_TIME := 1.0
 const NODE_HITS := 2               # cuts per ore vein each time it refills (daily, or every few days: MapData.NODES)
 const ORE_PER_BAR := 2
 const JOB_IRON := 5                # what Job asks for in his first request
@@ -113,6 +118,12 @@ var glow_tex: Texture2D
 var glow_mat: CanvasItemMaterial
 var enemies: Array = []            # cave creatures (scripts/enemy.gd)
 var hp := MAX_HP
+var energy := MAX_ENERGY
+var max_energy := MAX_ENERGY       # for the HUD (scripts/ui.gd)
+var cutting = null                 # the vein or rock the laser is held on (a thing), or null
+var cut_time := 0.0                # seconds held on it so far
+var cut_buzz := 0.0                # seconds until the next laser sound
+var cut_bar: Node2D                # the little progress bar over what you are cutting
 var hurt_cd := 0.0                 # seconds until the player can be hurt again
 var swing_cd := 0.0                # seconds until the player can swing again
 var tunnel_kills := 0
@@ -205,6 +216,10 @@ func _ready() -> void:
 	player = PlayerScript.new()
 	player.world = self
 	actors.add_child(player)
+	cut_bar = load("res://scripts/cut_bar.gd").new()
+	cut_bar.z_index = 50
+	cut_bar.visible = false
+	add_child(cut_bar)
 	_spawn_concourse()
 
 	_sync_slots()
@@ -646,9 +661,9 @@ func _spawn_things() -> void:
 		fixed_here[tile] = true
 		# an optional fifth number: refill every that many days (the North Cave's beds: 2)
 		var every: int = int(entry[4]) if entry.size() > 4 else 1
-		ore_nodes.append({"item": item, "hits": NODE_HITS, "sprite": vein, "every": every})
+		ore_nodes.append({"item": item, "hits": _node_hits(item), "sprite": vein, "every": every})
 		things.append({
-			"kind": "ore", "name": _item_name(item), "hint": "Mine %s" % _item_name(item).to_lower(), "area": node_area,
+			"kind": "ore", "name": "Rock" if item == "stone" else _item_name(item), "hint": "Hold to cut %s" % ("rock" if item == "stone" else _item_name(item).to_lower()), "area": node_area,
 			"pos": Vector2(tile.x * TILE + 8, tile.y * TILE + 8), "radius": 26.0, "who": "", "node": i,
 		})
 
@@ -1340,7 +1355,7 @@ func _use_tool() -> void:
 		if vein == null or vein["kind"] != "ore" or not _in_reach(vein):
 			vein = _nearest_of_kind("ore")
 		if vein != null:
-			_mine(vein)
+			_start_cut(vein)
 		else:
 			sfx("deny")
 			_toast("Stand next to an ore vein to use the laser")
@@ -1363,39 +1378,99 @@ func _item_icon(item: String) -> int:
 
 # ---------------------------------------------------------------- mining and smelting
 
-func _mine(t: Dictionary) -> void:
+func _start_cut(t: Dictionary) -> void:
+	# Mining is held, like swinging a pickaxe: keep Space or the left button down on a vein or rock.
+	if not _can_cut(t):
+		return
+	if cutting != t:
+		cutting = t
+		cut_time = 0.0
+		cut_buzz = 0.0
+
+
+func _can_cut(t: Dictionary) -> bool:
 	var node: Dictionary = ore_nodes[int(t["node"])]
-	var item: String = node["item"]
 	if _count("laser") <= 0:
 		sfx("deny")
 		_say("Ore vein", ["A seam of ore in solid rock. You would need a mining laser to cut it. Job might have a spare."])
-		return
+		return false
 	if _selected_use() != "mine":
 		sfx("deny")
 		_toast("Select the mining laser on your hotbar (number keys) first")
-		return
+		return false
 	if int(node["hits"]) <= 0:
 		sfx("deny")
-		_toast("Worked out for today")
+		_toast("Nothing left to cut here today" if node["item"] == "stone" else "Worked out for now")
+		return false
+	if energy < CUT_ENERGY:
+		sfx("deny")
+		_toast("Too tired to hold the laser steady. Eat something, or sleep.")
+		return false
+	return true
+
+
+func _cut_seconds(item: String) -> float:
+	return float(CUT_TIME.get(item, DEFAULT_CUT_TIME))
+
+
+# Called every frame: carries on a held cut, or stops it if the button is let go or you walk away.
+func _update_cut(delta: float, paused: bool) -> void:
+	if cutting == null:
+		cut_bar.visible = false
 		return
+	var held: bool = Input.is_action_pressed("use") or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	var t: Dictionary = cutting
+	if paused or not held or _selected_use() != "mine" or t["area"] != current_area or not _in_reach(t):
+		cutting = null
+		cut_bar.visible = false
+		return
+	var node: Dictionary = ore_nodes[int(t["node"])]
+	var need: float = _cut_seconds(node["item"])
+	cut_time += delta
+	cut_buzz -= delta
+	player.fire_laser(t["pos"], _item_icon("laser"))
+	if cut_buzz <= 0.0:
+		sfx("zap", randf_range(0.85, 1.05), -8.0)
+		cut_buzz = 0.35
+	cut_bar.visible = true
+	cut_bar.position = Vector2(t["pos"]) + Vector2(-8, -16)
+	cut_bar.set_meta("f", clampf(cut_time / need, 0.0, 1.0))
+	cut_bar.queue_redraw()
+	if cut_time >= need:
+		_mine(t)
+		cut_time = 0.0
+		# keep cutting while the button is held, if there is anything left and the energy for it
+		if int(node["hits"]) <= 0 or energy < CUT_ENERGY:
+			cutting = null
+			cut_bar.visible = false
+
+
+func _mine(t: Dictionary) -> void:
+	var node: Dictionary = ore_nodes[int(t["node"])]
+	var item: String = node["item"]
 	node["hits"] = int(node["hits"]) - 1
 	if int(node["hits"]) <= 0:
 		var s: Sprite2D = node["sprite"]
 		s.frame = 1
 	_give(item, 1)
-	minutes += 10.0           # each cut takes ten minutes
+	energy = maxi(0, energy - CUT_ENERGY)
 	sfx("zap", randf_range(0.9, 1.1))
-	player.fire_laser(t["pos"], _item_icon("laser"))
 	var vein_pos: Vector2 = t["pos"]
 	_pop_item(item, vein_pos + Vector2(0, -10))
 	_toast("+1 %s  (%d)" % [_item_name(item), _count(item)])
+	if energy < CUT_ENERGY:
+		_toast("You're worn out. Eat something, or call it a day.")
+
+
+func _node_hits(item: String) -> int:
+	return 1 if item == "stone" else NODE_HITS     # a rock breaks in one cut; a vein gives NODE_HITS
 
 
 func _reset_nodes() -> void:
 	for node in ore_nodes:
 		if day % maxi(1, int(node.get("every", 1))) != 0:
 			continue
-		node["hits"] = NODE_HITS
+		node["hits"] = _node_hits(str(node["item"]))
 		var s: Sprite2D = node["sprite"]
 		s.frame = 0
 
@@ -1657,6 +1732,7 @@ func hurt_player(amount: int, from: Vector2) -> void:
 # Out of health: you wake up back in your quarters, two hours later and a little poorer.
 func _collapse() -> void:
 	hp = MAX_HP / 2
+	energy = maxi(energy, MAX_ENERGY / 4)
 	var lost: int = credits / 10
 	_money(-(lost), "Dropped when you collapsed")
 	minutes = minf(minutes + 120.0, DAY_END - 1.0)
@@ -1676,12 +1752,14 @@ func _collapse() -> void:
 
 
 func _eat(item: String) -> void:
-	if hp >= MAX_HP:
-		_toast("You're not hurt")
+	var info: Dictionary = ItemData.ITEMS[item]
+	var gives_energy: int = int(info.get("energy", 0))
+	if hp >= MAX_HP and (gives_energy == 0 or energy >= MAX_ENERGY):
+		_toast("You're not hurt" if gives_energy == 0 else "You're not hungry")
 		return
 	_give(item, -1)
-	var info: Dictionary = ItemData.ITEMS[item]
 	hp = mini(MAX_HP, hp + int(info.get("heal", 5)))
+	energy = mini(MAX_ENERGY, energy + gives_energy)
 	sfx("eat")
 	if item == "medpack":
 		_toast("The medpack hisses. Everything stops hurting at once.")
@@ -1841,6 +1919,7 @@ func _process(delta: float) -> void:
 	_animate()
 	_update_pops(delta)
 	_animate_props()
+	_update_cut(delta, paused or travelling or garden_busy)
 
 	if not paused and not travelling and not garden_busy:
 		minutes += delta / SECONDS_PER_GAME_MINUTE
@@ -1907,6 +1986,7 @@ func _pass_out() -> void:
 	_money(-(lost), "Dropped when you passed out")
 	_end_day()
 	hp = MAX_HP / 2
+	energy = MAX_ENERGY / 2
 	var lines: Array = ["[sad] You were found asleep on your feet at one in the morning. Someone carried you to bed."]
 	if lost > 0:
 		lines.append("[angry] You dropped %d credits on the way. You start today tired. Be in bed before one." % lost)
@@ -1997,6 +2077,7 @@ func _next_day() -> void:
 	job_done_today = false
 	player.set_carrying(false)
 	hp = MAX_HP
+	energy = MAX_ENERGY
 	_reset_enemies()
 	_reset_nodes()
 	for who in persons:

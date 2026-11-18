@@ -299,6 +299,12 @@ func _draw_hotbar() -> void:
 	# Health: ten hearts above the hotbar.
 	for h in 10:
 		draw_texture_rect_region(_hearts_tex, Rect2(316 - 80 + h * 8, origin.y - 9, 7, 6), Rect2(0.0 if h < world.hp else _hearts_tex.get_width() / 2.0, 0, _hearts_tex.get_width() / 2.0, _hearts_tex.get_height()))
+	# Energy: a bar above the hearts (Stardew-style). It turns red when you are nearly worn out.
+	var e_frac: float = clampf(float(world.energy) / float(world.max_energy), 0.0, 1.0)
+	var bar := Rect2(316 - 80, origin.y - 16, 79, 4)
+	draw_rect(bar.grow(1), Color(0.05, 0.05, 0.08, 0.8))
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * e_frac, bar.size.y)), Color(0.9, 0.3, 0.25) if e_frac < 0.2 else Color(0.55, 0.9, 0.4))
+	_txt(Vector2(bar.position.x - 9, bar.position.y + 4), "E", DIM, 6)
 	# A small button to open the menu with the mouse.
 	var button: Rect2 = _menu_button_rect()
 	_tab(button, 0)

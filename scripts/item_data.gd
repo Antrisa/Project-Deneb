@@ -5,7 +5,7 @@ extends RefCounted
 
 const ITEMS = {
 	"laser": {"name": "Mining laser", "icon": 0, "use": "mine",
-			"desc": "Job's spare. Select it on the hotbar and press Space next to an ore vein."},
+			"desc": "Job's spare. Select it on the hotbar and hold Space (or the left button) on a vein or rock. Harder ore takes longer, and every cut tires you."},
 	"spear": {"name": "Zaa'sh spear", "icon": 1, "use": "weapon",
 			"desc": "It stabs: far and narrow. It was Vzz'ket's clutch-brother's. Bring it back clean."},
 	"sword": {"name": "Zaa'sh sword", "icon": 2, "use": "weapon",
@@ -26,8 +26,10 @@ const ITEMS = {
 			"desc": "A cave bug's shell, light and hard. Bram buys these."},
 	"hide": {"name": "Lizard hide", "icon": 10, "use": "",
 			"desc": "Tough, scaly hide from a rock lizard. Bram buys these."},
-	"ration": {"name": "Ration pack six", "icon": 11, "use": "eat",
-			"desc": "Jasper's special. Select it and press Space to eat it and mend 5 hearts."},
+	"ration": {"name": "Ration pack six", "icon": 11, "use": "eat", "energy": 25,
+			"desc": "Jasper's special. Select it and press Space to eat it: mends 5 hearts and 25 energy."},
+	"stone": {"name": "Stone", "icon": 13, "use": "",
+			"desc": "Plain moon rock, cut from the boulders in the mine. Bram pays a credit apiece; builders will want it."},
 	"medpack": {"name": "Medpack", "icon": 12, "use": "eat", "heal": 10,
 			"desc": "From Maren in the medbay. Select it and press Space to mend every heart."},
 }
