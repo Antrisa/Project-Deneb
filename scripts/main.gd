@@ -292,6 +292,32 @@ func _add_keys(action: String, keys: Array) -> void:
 		InputMap.action_add_event(action, ev)
 
 
+# Screen size. The game is drawn at 320x180 and only ever scaled by whole numbers, so every art pixel is the
+# same size on screen: 1080p is exactly 6x (3 screen pixels per art pixel), 1440p 8x (4), 4K 12x (6), 720p 4x.
+# It starts in borderless fullscreen, which fills those screens with no bars. Alt+Enter switches to a window
+# sized to the largest whole multiple that fits the desktop, so windowed play stays sharp too.
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ENTER and event.alt_pressed:
+		_toggle_fullscreen()
+		get_viewport().set_input_as_handled()
+
+func _toggle_fullscreen() -> void:
+	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN or DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		_size_window()
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+func _size_window() -> void:
+	var screen: int = DisplayServer.window_get_current_screen()
+	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
+	# Leave room for the title bar, then take the biggest whole multiple of 320x180 that fits.
+	var k: int = maxi(2, mini(int((usable.size.x - 16) / 320.0), int((usable.size.y - 48) / 180.0)))
+	if k * 320 >= usable.size.x: k = maxi(2, k - 1)
+	var size := Vector2i(320 * k, 180 * k)
+	DisplayServer.window_set_size(size)
+	DisplayServer.window_set_position(usable.position + (usable.size - size) / 2)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if travelling or garden_busy: return
 	if community_game != null and community_game.open:
@@ -768,7 +794,7 @@ func _add_sara(area_name: String, tile: Vector2i, radius: float) -> void:
 	_ensure_person("Sara")
 	var h = load("res://sara/sara_hologram.tscn").instantiate()
 	h.show_projector = false          # the dais or pad is already part of the map
-	h.art_scale = 0.45                # about a head taller than the residents: she floats
+	h.art_scale = 0.5                 # whole-pixel scale like all other art; about a head taller than the residents
 	if area_name == "top":
 		h.position = Vector2(23 * TILE + 8, 21 * TILE - 11)   # the centre of the dais (tools/survey.py)
 	else:

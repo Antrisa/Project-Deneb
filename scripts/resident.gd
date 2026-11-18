@@ -210,7 +210,7 @@ func _idle(delta: float) -> void:
 		frame_coords = Vector2i(_facing,0)
 		offset = _foot_offset
 		scale = Vector2.ONE * _base_scale
-		rotation = 0.015 * sin(_idle_time*2) if _act in ["garden","browse"] else 0.0
+		rotation = 0.0   # no tilting pixel art (it breaks pixels at 1080p and 1440p)
 		self_modulate.a = 0.0 if _act in ["chess","hologame"] else 1.0
 		return
 	if _act_tex != null and _act_row >= 0 and _act_row < _act_rows:
@@ -228,9 +228,12 @@ func _idle(delta: float) -> void:
 	var look: int = _facing
 	rotation = 0.0
 	offset = _foot_offset
-	scale = Vector2(_base_scale, _base_scale * (1.0 + 0.015 * sin(_idle_time * 2.2)))
+	# Breathing and working move the sprite by whole art pixels (1 texture pixel = half a world pixel). Stretching
+	# or tilting pixel art drops and doubles pixel rows on screen, so neither is used.
+	scale = Vector2(_base_scale, _base_scale)
+	if sin(_idle_time * 2.2) > 0.6: offset = _foot_offset + Vector2(0, -1)
 	if _act == "work":
-		rotation = 0.05 * sin(_idle_time * 5.0)
+		if sin(_idle_time * 5.0) > 0.0: offset = _foot_offset + Vector2(0, -1)
 	elif _act == "eat":
 		if fmod(_idle_time, 1.7) < 0.3:
 			offset = _foot_offset + Vector2(0, 1.0 / _base_scale)
