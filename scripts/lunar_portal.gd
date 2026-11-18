@@ -1,5 +1,10 @@
 extends Node2D
 # A reusable portal component: separate frame, sliding leaves, light and approach marker.
+const NORTH_CANOPY = preload("res://art/lunar/portal_n_canopy.png")
+const NORTH_LEAF = preload("res://art/lunar/portal_n_leaf.png")
+const ACCESS_READY = preload("res://art/lunar/door_access_ready.png")
+const ACCESS_LOCKED = preload("res://art/lunar/door_access_locked.png")
+
 var facing := "S"
 var kind := "shop"
 var destination := ""
@@ -39,19 +44,16 @@ func _draw() -> void:
 	# Inward-facing north entrances are under the near-side roof; do not paint a
 	# south-facing storefront onto the back. Their lit threshold is readable from above.
 	if facing == "N":
-		# The building is south of you, so you look down on its roof. Show an open doorway cut into the
-		# roof's edge under a small canopy, not a door seen from behind (Zachary, 17 Nov: the medbay door
-		# looked clipped and at a strange angle).
-		draw_rect(Rect2(-22,-34,44,6),accent.darkened(0.35))
-		draw_rect(Rect2(-22,-28,44,2),accent)
-		draw_rect(Rect2(-18,-26,36,22),Color("1b2230"))
-		var remain := 18.0*(1.0-opening)
-		if remain > 0.5:
-			draw_rect(Rect2(-18,-26,remain,22),Color("8a9b9e"))
-			draw_rect(Rect2(18-remain,-26,remain,22),Color("8a9b9e"))
-			draw_rect(Rect2(-18+remain-1,-26,1,22),Color("5d6670"))
-			draw_rect(Rect2(18-remain,-26,1,22),Color("5d6670"))
-		draw_rect(Rect2(-18,-5,36,3),accent.lightened(0.2))
+		draw_texture_rect(NORTH_CANOPY, Rect2(-24, -45, 48, 48), false)
+		var shown := roundf(17.0 * (1.0 - opening))
+		if shown > 0.0:
+			var source := Rect2(34.0 - shown * 2, 0, shown * 2, 32)
+			draw_texture_rect_region(NORTH_LEAF, Rect2(-17, -21, shown, 16), source)
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2(-1, 1))
+			draw_texture_rect_region(NORTH_LEAF, Rect2(-17, -21, shown, 16), source)
+			draw_set_transform(Vector2.ZERO)
+		draw_rect(Rect2(-7, -25, 14, 1), accent)
+		draw_texture_rect(ACCESS_LOCKED if locked else ACCESS_READY, Rect2(-2, -30, 4, 2), false)
 		return
 	if facing in ["E","W"]:
 		var side := -1.0 if facing == "W" else 1.0

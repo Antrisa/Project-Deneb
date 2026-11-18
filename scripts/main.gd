@@ -2647,14 +2647,14 @@ func _update_inner_doors(delta: float) -> void:
 		if d.area != current_area: continue
 		var c: Vector2 = d.center()
 		var reach: float = 22.0 + maxf(d.size_px.x, d.size_px.y) * 0.5
-		d.locked = d.owner != "" and persons.has(d.owner) and int(persons[d.owner]["friendship"]) < BEDROOM_HEARTS * FRIEND_PER_HEART
+		d.locked = d.room_owner != "" and persons.has(d.room_owner) and int(persons[d.room_owner]["friendship"]) < BEDROOM_HEARTS * FRIEND_PER_HEART
 		var player_near: bool = player.position.distance_to(c) < reach
 		var want: bool = player_near and not d.locked
 		for r in residents:
 			if r.area == current_area and r.position.distance_to(c) < reach: want = true
 		if player_near and d.locked and not d.has_meta("warned"):
 			d.set_meta("warned", true)
-			_toast("%s's room — locked. Get to know %s better first." % [d.owner, d.owner])
+			_toast("%s's room — locked. Get to know %s better first." % [d.room_owner, d.room_owner])
 			sfx("deny")
 		elif not player_near and d.has_meta("warned"):
 			d.remove_meta("warned")
