@@ -331,6 +331,43 @@ def ea_tile():
 
 MATERIALS.update({'ea_grass': ea_grass, 'ea_deck': ea_deck, 'ea_rubber': ea_rubber, 'ea_court': ea_court, 'ea_tile': ea_tile})
 
+# ---------------------------------------------------------------- the Mine and the North Cave
+def mine_rock():
+    """Dig floor: rough brown-grey rock, grit and a few cracks; no grid lines."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((132, 116, 98)), .8 + noise(61) * .36)
+    grit = noise(62) > .72
+    img[grit] = img[grit] * .7 + rgb((84, 74, 66)) * .3
+    pale = noise(63) > .78
+    img[pale] = img[pale] * .75 + rgb((176, 160, 138)) * .25
+    crack = (np.abs(((x * 5 + y * 3) % 64) - 32) < 1) & (noise(64) > .6)
+    img[crack] *= .6
+    return img
+
+
+def mine_path():
+    """The walkway: packed, paler earth with boot-worn streaks running east-west."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((164, 146, 118)), .9 + noise(65) * .16)
+    streak = (noise(66) > .66) & (y % 8 < 3)
+    img[streak] = img[streak] * .88
+    return img
+
+
+def mine_wall():
+    """Rock wall face (64 tall = 32 world pixels): layered strata, a darker foot."""
+    img = shade(np.ones((N, N, 3), np.float32) * rgb((112, 98, 86)), .82 + noise(67) * .3)
+    bands = ((y + (noise(68) * 10).astype(int)) // 12) % 2 == 0
+    img[bands] *= .9
+    img[y >= 54] *= .7
+    return img
+
+
+def mine_roof():
+    """Rock seen from above: dark, lumpy, no plates."""
+    return shade(np.ones((N, N, 3), np.float32) * rgb((70, 62, 58)), .78 + noise(69) * .36)
+
+
+MATERIALS.update({'mine_rock': mine_rock, 'mine_path': mine_path, 'mine_wall': mine_wall, 'mine_roof': mine_roof})
+
 if __name__ == "__main__":
     for name, fn in MATERIALS.items():
         path = os.path.join(OUT, name + ".png")

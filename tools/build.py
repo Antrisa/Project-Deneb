@@ -2423,47 +2423,9 @@ spaceport.build(globals())
 import east
 east.build(globals())
 
-# ---------------------------------------------------------------- mine
-n = A["mine"] = Area("mine", "The Mine", 44, 24, "M")
-n.carve("Mine head", 2, 2, 10, 7, "m")
-n.carve("", 10, 4, 16, 5, "m")
-n.carve("Main dig", 16, 3, 30, 13, "m")
-n.carve("", 30, 6, 35, 7, "m")
-n.carve("Survey tunnel", 35, 2, 41, 10, "m")
-n.carve("", 22, 13, 23, 17, "m")
-n.carve("Cavern gate", 16, 17, 30, 21, "m")
-n.setf("V", row(22, range(21, 26)))
-n.put("y", row(21, range(21, 26)))
-n.put("c", [(9, 2), (10, 2), (36, 9)])
-n.put("L", [(4, 2)])
-n.put("O", [(17, 4), (18, 4), (29, 12), (28, 12), (25, 3), (17, 12)])
-n.put("x", [(28, 4), (20, 11), (28, 18), (17, 20)])
-n.put("P", [(26, 8)])
-n.put("k", [(40, 3)])
-n.warp("R", [(2, 3), (2, 4), (2, 5)], "eng", 3, 55)
-n.carve("", 20, 1, 21, 2, "m")
-n.warp("R", [(20, 1), (21, 1)], "tunnels", 30, 35)
-n.mirror()      # you arrive walking left, so the mine continues to the left
-
-# ---------------------------------------------------------------- north tunnels (reached from the top of the mine's main dig)
-u = A["tunnels"] = Area("tunnels", "North Tunnels", 60, 40, "M")
-u.carve("Tunnel mouth", 26, 32, 35, 37, "m")
-u.carve("", 30, 26, 31, 32, "m")
-u.carve("Fungus hollow", 20, 19, 40, 27, "m")
-u.carve("", 12, 22, 20, 23, "m")
-u.carve("Lizard den", 3, 16, 12, 27, "m")
-u.carve("", 40, 23, 47, 24, "m")
-u.carve("Crystal gallery", 46, 13, 57, 26, "m")
-u.carve("", 29, 12, 30, 19, "m")
-u.carve("Deep chamber", 21, 3, 38, 12, "m")
-u.carve("", 38, 6, 50, 7, "m")
-u.carve("", 49, 7, 50, 13, "m")
-u.carve("", 30, 38, 31, 38, "m")
-u.put("x", [(22, 21), (38, 25), (5, 18), (10, 26), (48, 15), (55, 24), (24, 5), (36, 10)])
-u.put("f", [(21, 19), (39, 19), (33, 27), (27, 20), (4, 26), (11, 17), (47, 25), (56, 14), (22, 11), (37, 4), (27, 37), (34, 33)])
-u.put("v", [(25, 24), (35, 21), (7, 21), (52, 18), (28, 6), (33, 9), (27, 33), (34, 36), (3, 16), (57, 26)])
-u.put("O", [(40, 27), (20, 27), (38, 3)])
-u.warp("R", [(30, 38), (31, 38)], "mine", 22, 4)
+# ---------------------------------------------------------------- the mine and the North Cave: see tools/caves.py
+import caves
+caves.build(globals())
 
 # ---------------------------------------------------------------- who and what is where
 START = ["hotel", 68, 48]
@@ -2501,7 +2463,7 @@ SCHEDULES_RAW = {
               ("15:00", "main", 161, 68, 26, "d", "work"), ("17:35", "main", 131, 72, 26, "u", "eat"), ("19:15", "main", 160, 66, 26, "d", "idle")],
     "Kit": [("08:00", "main", 127, 50, 26, "u", "work"), ("12:30", "main", 98, 57, 26, "d", "idle"), ("15:00", "main", 162, 69, 26, "d", "idle"),
             ("17:35", "main", 135, 72, 26, "u", "eat"), ("19:15", "main", 164, 66, 26, "d", "idle")],
-    "Ix'ali": [("06:30", "main", 153, 70, 26, "d", "work"), ("17:35", "main", 126, 70, 26, "d", "eat"), ("19:15", "mine", 22, 19, 26, "r", "work"),
+    "Ix'ali": [("06:30", "main", 153, 70, 26, "d", "work"), ("17:35", "main", 126, 70, 26, "d", "eat"), ("19:15", "mine", 11, 28, 26, "l", "work"),
                ("22:00", "main", 153, 70, 26, "d", "idle")],
     "Maren": [("06:30", "main", 141, 52, 26, "d", "work"), ("17:35", "main", 135, 75, 26, "d", "eat"), ("19:15", "main", 141, 52, 26, "d", "work"),
               ("21:30", "main", 157, 51, 26, "d", "idle")],
@@ -2524,14 +2486,14 @@ SCHEDULES_RAW = {
     "Freya": [("06:00", "bay", 9, 12, 26, "u", "work"), ("11:00", "bay", 23, 19, 26, "u", "work"), ("12:30", "main", 140, 70, 26, "d", "eat"),
               ("13:30", "bay", 23, 19, 26, "u", "work"), ("16:30", "eng", 75, 19, 26, "u", "work"), ("17:30", "main", 140, 70, 26, "d", "eat"),
               ("19:15", "main", 58, 73, 26, "u", "idle"), ("21:30", "main", 20, 52, 26, "d", "idle")],
-    "Job": [("06:30", "mine", 21, 8, 26, "d", "work"), ("12:00", "main", 120, 70, 26, "d", "eat"), ("13:30", "mine", 21, 8, 26, "d", "work"),
+    "Job": [("06:30", "mine", 55, 22, 26, "u", "work"), ("12:00", "main", 120, 70, 26, "d", "eat"), ("13:30", "mine", 55, 22, 26, "u", "work"),
             ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 60, 73, 26, "u", "idle"), ("22:00", "main", 18, 54, 26, "d", "idle")],
-    "Zaas": [("07:00", "mine", 5, 5, 26, "l", "work"), ("12:15", "main", 126, 75, 26, "d", "eat"), ("13:45", "mine", 5, 5, 26, "l", "work"),
+    "Zaas": [("07:00", "mine", 9, 40, 26, "u", "work"), ("12:15", "main", 126, 75, 26, "d", "eat"), ("13:45", "mine", 9, 40, 26, "u", "work"),
              ("17:05", "main", 126, 75, 26, "d", "eat"), ("19:15", "lounge", 37, 9, 26, "u", "idle"), ("23:00", "main", 16, 54, 26, "d", "idle")],
     "Tar'Besh": [("06:00", "museum", 55, 28, 26, "u", "work"), ("17:35", "main", 131, 75, 26, "d", "eat"), ("19:15", "lounge", 24, 14, 26, "u", "idle"),
                  ("23:00", "museum", 45, 44, 26, "d", "idle")],
-    "Vzz'ket": [("06:00", "mine", 24, 19, 26, "d", "idle"), ("17:15", "main", 130, 70, 26, "d", "eat"), ("19:00", "mine", 24, 19, 26, "d", "idle"),
-                ("22:00", "main", 86, 70, 26, "d", "idle"), ("23:30", "mine", 24, 19, 26, "d", "idle")],
+    "Vzz'ket": [("06:00", "mine", 8, 27, 26, "r", "idle"), ("17:15", "main", 130, 70, 26, "d", "eat"), ("19:00", "mine", 8, 27, 26, "r", "idle"),
+                ("22:00", "main", 86, 70, 26, "d", "idle"), ("23:30", "mine", 8, 27, 26, "r", "idle")],
 }
 # What each resident is doing at each stop of their schedule, in the same order as SCHEDULES_RAW.
 # Each different (action, facing) pair is one row of their action sheet art/npc_<id>_act.png, in order of first use.
@@ -2592,17 +2554,9 @@ for k_, ar_ in A.items():
             if ar_.obj[y][x] == "b" and ar_.obj[y + 1][x] == " " and ar_.floor[y + 1][x] in WALK and (k_, x, y + 1) not in _keep_clear:
                 ar_.obj[y + 1][x] = "B"
 
-NODES = [
-    ["iron_ore", "mine", 14, 6], ["iron_ore", "mine", 20, 3], ["iron_ore", "mine", 27, 9], ["iron_ore", "mine", 4, 9],
-    ["copper_ore", "mine", 19, 13], ["copper_ore", "mine", 26, 7], ["copper_ore", "mine", 7, 3], ["copper_ore", "mine", 13, 10],
-    ["iron_ore", "tunnels", 6, 19], ["iron_ore", "tunnels", 51, 22], ["iron_ore", "tunnels", 34, 4], ["iron_ore", "tunnels", 23, 26],
-    ["copper_ore", "tunnels", 9, 24], ["copper_ore", "tunnels", 54, 16], ["copper_ore", "tunnels", 25, 9], ["copper_ore", "tunnels", 37, 20],
-]
+NODES = CAVE_NODES            # kind, area, tile x, tile y[, days to refill] (tools/caves.py)
 # Creatures: kind, area, tile x, tile y. They come back each morning.
-ENEMIES = [
-    ["bug", "tunnels", 24, 22], ["bug", "tunnels", 36, 22], ["bug", "tunnels", 33, 25], ["bug", "tunnels", 50, 19], ["bug", "tunnels", 30, 9],
-    ["lizard", "tunnels", 6, 22], ["lizard", "tunnels", 8, 18], ["lizard", "tunnels", 53, 23], ["lizard", "tunnels", 26, 6], ["lizard", "tunnels", 35, 7],
-]
+ENEMIES = CAVE_ENEMIES        # tools/caves.py
 
 
 def tc(x, y):
@@ -2622,7 +2576,6 @@ THINGS = [
     ["look", "Medbay beds", "Look", "main", tc(137, 50), 24],
     ["look", "Loom", "Look", "main", tc(149, 50), 24],
     ["look", "Library shelves", "Look", "main", tc(121, 45), 26],
-    ["look", "Barricade", "Look", "mine", tc(20, 21), 26],
 ]
 THINGS += EXTRA_THINGS            # the Survey Level's things (tools/survey.py)
 SIGN_THINGS = [["sign", s_[0], "Read the sign", "main", tc(s_[1], s_[2]), 22] for s_ in SIGNS]
@@ -2754,7 +2707,7 @@ while q:
         if nb not in seen and walkable(*nb):
             seen.add(nb)
             q.append(nb)
-for (item, a, x, y) in NODES:
+for (item, a, x, y, *_) in NODES:
     assert any((a, x + dx, y + dy) in seen for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))), ("cannot reach ore vein", a, x, y)
 for (kind, a, x, y) in ENEMIES:
     assert (a, x, y) in seen, ("creature on a bad tile", kind, a, x, y)
@@ -2822,7 +2775,7 @@ print("all people, things and warps reachable;", len(seen), "walkable tiles;", _
 
 # ---------------------------------------------------------------- station map (for the Map page of the menu)
 # Every area drawn small on one picture. MAP_LAYOUT says where each area sits: [x, y, pixels per tile].
-MAP_LAYOUT = {"west": [0, 30, 0.5], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 0.48], "mine": [34, 90, 1.0],
+MAP_LAYOUT = {"west": [0, 30, 0.5], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 0.48], "mine": [34, 90, 0.5],
               "tunnels": [0, 92, 0.5]}
 MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 28], ["Main Level", 104, 28], ["East Complex", 144, 36], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
 MAP_MARKS = [
@@ -2830,7 +2783,7 @@ MAP_MARKS = [
     [4, "agri", 55, 23, "Your agri dome"], [5, "agri", 86, 64, "Hot springs & fish ponds"], [6, "agri", 24, 64, "Your workshop"],
     [7, "east", 56, 15, "Mess hall greenhouse"], [8, "east", 103, 45, "Air reclamation plant"], [9, "east", 100, 75, "East airlock"],
     [10, "top", 23, 23, "S.A.R.A.'s core"], [11, "top", 23, 5, "Observation Lounge"], [12, "eng", 22, 22, "Ore processing"],
-    [13, "eng", 70, 20, "Engineering bay"], [14, "bay", 23, 17, "Shuttle bay"], [15, "mine", 20, 8, "Main dig"], [16, "mine", 20, 19, "Cavern gate"], [17, "tunnels", 30, 23, "North tunnels"],
+    [13, "eng", 70, 20, "Engineering bay"], [14, "bay", 23, 17, "Shuttle bay"], [15, "mine", 30, 12, "Iron bay"], [16, "mine", 5, 26, "Cavern gate"], [17, "tunnels", 31, 20, "North Cave"],
 ]
 MAP_MARKS = MAP_MARKS[:9] + [[20 + n, "main", DOORS[b[0]][3], DOORS[b[0]][4], b[1]] for n, b in enumerate(BUILDINGS)] + MAP_MARKS[9:]
 MAP_COLORS = {"p": (176, 132, 92), "a": (226, 214, 190), "z": (64, 76, 100), "7": (64, 76, 100), "8": (64, 76, 100), "X": (90, 96, 112), "Y": (150, 144, 134), "1": (238, 202, 64), "2": (238, 202, 64), "3": (238, 202, 64),".": (200, 206, 214), ",": (176, 84, 76), "f": (110, 120, 134), "h": (130, 138, 150), "u": (170, 184, 198), "s": (132, 96, 66),
@@ -2998,7 +2951,7 @@ if PREV:
                     im.alpha_composite(piece(TILE_OBJ[och], False), (x * cell, y * cell))
                     if och in fx_obj and not fx_obj[och][1]:
                         im.alpha_composite(frame(fx_obj[och][0], 4, 1), (x * cell, y * cell))
-        for (item, a, x, y) in NODES:
+        for (item, a, x, y, *_) in NODES:
             if a == k:
                 im.alpha_composite(frame(item + ".png", 2, 1), (x * cell, y * cell))
         first = [[who, rows[0][1], rows[0][2], rows[0][3], 0] for who, rows in SCHEDULES.items()]

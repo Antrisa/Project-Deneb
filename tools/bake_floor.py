@@ -298,7 +298,23 @@ def bake_area(key, rows, art_dir, extras=None):
         img[glow, :3] = (92, 214, 222)
     if "core" in extras:
         _engineering_extras(img, ch, x, y, extras)
+    elif "belts" in extras:
+        _belt_extras(img, ch, x, y, extras)
     return Image.fromarray(img, "RGBA")
+
+
+def _belt_extras(img, ch, x, y, extras):
+    """Conveyor belts on their own (the mine's loading spot), drawn the same way as Engineering's."""
+    walk = (ch != ord("#")) & (ch != ord("~"))
+    rgb = img[..., :3].astype(np.float32)
+    for ax, ay, bx, by in _segments(extras["belts"]):
+        dd, along = _near_segment(x, y, ax, ay, bx, by)
+        m2 = (dd < 5) & walk
+        rgb[(dd < 6.5) & walk] = (34, 34, 40)
+        rgb[m2] = (64, 66, 74)
+        rgb[m2 & (along % 6 < 1.2)] = (118, 122, 132)
+        rgb[(dd >= 5) & (dd < 6.5) & walk & (along % 10 < 5)] = (220, 170, 50)
+    img[..., :3] = np.clip(rgb, 0, 255).astype(np.uint8)
 
 
 def _segments(lines):

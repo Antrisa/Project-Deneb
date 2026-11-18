@@ -46,7 +46,7 @@ const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10}      #
 const MAX_HP := 10
 const WEAPON_DAMAGE := 2
 const TUNNEL_GOAL := 6             # creatures Job asks you to clear out of the north tunnels
-const NODE_HITS := 2               # cuts per ore vein per day
+const NODE_HITS := 2               # cuts per ore vein each time it refills (daily, or every few days: MapData.NODES)
 const ORE_PER_BAR := 2
 const JOB_IRON := 5                # what Job asks for in his first request
 const JOB_COPPER := 3
@@ -644,7 +644,9 @@ func _spawn_things() -> void:
 		here[tile] = true
 		var fixed_here: Dictionary = fixed[node_area]
 		fixed_here[tile] = true
-		ore_nodes.append({"item": item, "hits": NODE_HITS, "sprite": vein})
+		# an optional fifth number: refill every that many days (the North Cave's beds: 2)
+		var every: int = int(entry[4]) if entry.size() > 4 else 1
+		ore_nodes.append({"item": item, "hits": NODE_HITS, "sprite": vein, "every": every})
 		things.append({
 			"kind": "ore", "name": _item_name(item), "hint": "Mine %s" % _item_name(item).to_lower(), "area": node_area,
 			"pos": Vector2(tile.x * TILE + 8, tile.y * TILE + 8), "radius": 26.0, "who": "", "node": i,
@@ -1391,6 +1393,8 @@ func _mine(t: Dictionary) -> void:
 
 func _reset_nodes() -> void:
 	for node in ore_nodes:
+		if day % maxi(1, int(node.get("every", 1))) != 0:
+			continue
 		node["hits"] = NODE_HITS
 		var s: Sprite2D = node["sprite"]
 		s.frame = 0

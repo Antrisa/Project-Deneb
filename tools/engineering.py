@@ -112,7 +112,7 @@ def build(g):
                     ['Crew break room', 32, 54, 56, 73], ['Cooling & life support', 58, 54, 82, 69], ['Spare workshop', 85, 54, 96, 64],
                     ['Engineering works hall', 40, 24, 100, 52], ['Engineering works hall', 6, 34, 39, 38]]
     eng.t.warp('U', [lift], 'main', 115, 169)                   # tools/concourse.py makes this a lift door
-    eng.t.warp('R', [(1, y) for y in range(54, 58)], 'mine', 38, 4)
+    eng.t.warp('R', [(1, y) for y in range(54, 58)], 'mine', 66, 25)   # tools/caves.py ENG_LANDING
     bay_door = (3, 18)
     # keep the walking lanes of the hall and every doorway clear
     eng.keep_clear(40, 24, 100, 27); eng.keep_clear(40, 49, 100, 52); eng.keep_clear(40, 24, 45, 52); eng.keep_clear(95, 24, 100, 52)

@@ -731,7 +731,55 @@ def wardrobe(d, w, h):
     for x in (w // 2 - 7, w // 2 + 4): d.rectangle((x, h // 2 - 4, x + 3, h // 2 + 4), fill=AMBER)
 
 
+# ---------------------------------------------------------------- the Mine and the North Cave
+ROCK_C, ROCK_L, ROCK_D = (120, 108, 98, 255), (160, 148, 136, 255), (78, 70, 64, 255)
+
+
+def boulder(d, w, h):
+    d.polygon([(8, h - 6), (4, h - 26), (14, h - 46), (34, h - 54), (52, h - 44), (w - 4, h - 22), (w - 10, h - 6)], fill=ROCK_C, outline=INK)
+    d.line((16, h - 40, 32, h - 48), fill=ROCK_L, width=3); d.line((12, h - 12, w - 14, h - 10), fill=ROCK_D, width=3)
+
+
+def ore_analyzer(d, w, h):
+    box(d, 6, 30, w - 6, h - 2, STEEL, STEEL_L, STEEL_D)
+    d.rounded_rectangle((12, 8, w - 12, 40), 4, fill=DARK, outline=INK, width=2)
+    d.rectangle((16, 12, w - 16, 26), fill=(90, 200, 210, 255))
+    for k in range(3): d.line((18, 15 + k * 4, 30 + k * 6, 15 + k * 4), fill=(20, 80, 90, 255), width=2)
+    d.rectangle((18, h - 40, w - 18, h - 30), fill=(60, 50, 46, 255), outline=INK)       # the sample tray
+    d.ellipse((w - 22, 30, w - 14, 38), fill=(120, 220, 120, 255))
+
+
+def barricade(d, w, h):
+    for x0 in (8, w - 20):
+        d.rectangle((x0, 10, x0 + 10, h - 2), fill=WOOD_D, outline=INK)
+    for k, y0 in enumerate((14, 30)):
+        d.polygon([(2, y0), (w - 2, y0 + 4), (w - 2, y0 + 14), (2, y0 + 10)], fill=WOOD, outline=INK)
+        for sx in range(6, w - 6, 16): d.polygon([(sx, y0 + 1), (sx + 8, y0 + 2), (sx + 2, y0 + 11), (sx - 6, y0 + 10)], fill=AMBER if k == 0 else DARK)
+
+
+def crystal_cluster(d, w, h):
+    d.ellipse((6, h - 18, w - 6, h - 4), fill=ROCK_D, outline=INK)
+    for cx, top, half in ((22, 10, 7), (36, 4, 8), (46, 18, 6), (14, 24, 5)):
+        d.polygon([(cx - half, h - 10), (cx, top), (cx + half, h - 10)], fill=(176, 136, 226, 255), outline=INK)
+        d.line((cx, top + 4, cx - 2, h - 14), fill=(220, 200, 250, 255), width=2)
+
+
+def glow_fungus(d, w, h):
+    for cx, cy, r in ((10, h - 12, 7), (22, h - 16, 9), (16, h - 24, 6)):
+        d.rectangle((cx - 1, cy, cx + 1, h - 4), fill=(200, 230, 200, 255))
+        d.ellipse((cx - r, cy - r // 2, cx + r, cy + r // 2), fill=(140, 230, 150, 255), outline=INK)
+
+
+def work_light(d, w, h):
+    d.rectangle((w // 2 - 2, 20, w // 2 + 2, h - 6), fill=STEEL_D, outline=INK)
+    d.polygon([(w // 2 - 10, h - 4), (w // 2 + 10, h - 4), (w // 2 + 4, h - 10), (w // 2 - 4, h - 10)], fill=STEEL_D, outline=INK)
+    d.rounded_rectangle((4, 4, w - 4, 22), 3, fill=STEEL, outline=INK, width=2)
+    d.rectangle((8, 8, w - 8, 18), fill=(255, 230, 140, 255))
+
+
 PROPS = {
+    'boulder': (64, 64, boulder), 'ore_analyzer': (64, 104, ore_analyzer), 'barricade': (128, 64, barricade),
+    'crystal_cluster': (64, 64, crystal_cluster), 'glow_fungus': (32, 40, glow_fungus), 'work_light': (32, 72, work_light),
     'holo_dais': (96, 96, holo_dais), 'memory_core': (64, 112, memory_core), 'wall_screen': (128, 80, wall_screen),
     'console': (64, 64, console), 'tape_archive': (64, 104, tape_archive), 'sensor_panel': (64, 104, sensor_panel),
     'concierge_desk': (96, 72, concierge_desk), 'paris_pictures': (96, 80, paris_pictures),
