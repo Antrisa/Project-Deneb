@@ -33,6 +33,7 @@ var _current := ""            # the line being shown, without its expression tag
 
 func _ready() -> void:
 	layer = 10
+	scale = Vector2(2, 2)   # the interface is laid out for 320x180; the screen is 640x360
 	# The box is drawn from art/ui_dialogue.png (see scripts/nine_frame.gd).
 	var box = NineFrame.new()
 	box.tex = load("res://art/ui_dialogue.png")

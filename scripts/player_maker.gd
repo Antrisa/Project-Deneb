@@ -2,8 +2,8 @@ extends RefCounted
 # Builds the player's walk sheet from layers: bottoms, tops, faces and hair, each recoloured.
 #
 # The layer files are in art/player/. Each is 4 directions across (down, up, left, right) and
-# 10 choices down, each with 3 pose rows (idle, step A, step B) in 32x64 cells.
-# Atlas size: 128x1920. Arm/leg articulation and waist overlap are baked into each layer. Each has a "_mask" file saying which pixels take a colour:
+# 10 choices down, each with 3 pose rows (idle, step A, step B) in 24x48 cells (32x64 before the 24-pixel grid).
+# Atlas size: 96x1440. Arm/leg articulation and waist overlap are baked into each layer. Each has a "_mask" file saying which pixels take a colour:
 # red = the layer's main colour (hair, top, bottom or skin), green = skin, blue = eyes.
 # This follows the same rules as the customizer tool that came with the art, so the two match.
 
@@ -54,8 +54,8 @@ var _art := {}       # layer name -> Image
 var _mask := {}
 var _art2 := {}      # the second body's layers, if art/player/body2/ exists
 var _mask2 := {}
-const ATLAS_SIZE := Vector2i(128, 1920)
-const CHOICE_HEIGHT := 192
+const ATLAS_SIZE := Vector2i(96, 1440)     # 4 x 24 wide; 10 choices x 3 poses x 48 tall
+const CHOICE_HEIGHT := 144
 
 
 # Loads the layer pictures. Returns false if any are missing (the game then keeps art/player.png).
@@ -71,7 +71,7 @@ func load_layers() -> bool:
 		var img: Image = _image(art_path)
 		var mask: Image = _image(mask_path)
 		if img.get_size() != ATLAS_SIZE or mask.get_size() != ATLAS_SIZE:
-			push_warning("Player layers must be v2 animated 128x1920 atlases: " + str(k))
+			push_warning("Player layers must be 96x1440 atlases (24x48 frames): " + str(k))
 			return false
 		art[k] = img
 		masks[k] = mask
@@ -93,7 +93,7 @@ func _load_second_body() -> void:
 		var img: Image = _image(art_path)
 		var mask: Image = _image(mask_path)
 		if img.get_size() != ATLAS_SIZE or mask.get_size() != ATLAS_SIZE:
-			push_warning("art/player/body2 layers must be 128x1920: " + str(k))
+			push_warning("art/player/body2 layers must be 96x1440: " + str(k))
 			return
 		art[k] = img
 		masks[k] = mask
@@ -166,14 +166,14 @@ func random_look() -> Dictionary:
 	return out
 
 
-# One choice's three baked poses (four directions, 128x192), recoloured.
+# One choice's three baked poses (four directions, 96x144), recoloured.
 func _tinted(k: String, look: Dictionary) -> Image:
 	var choice: int = look[k]
 	var second: bool = int(look.get("body", 0)) == 1 and not _art2.is_empty()
 	var art_all: Image = _art2[k] if second else _art[k]
 	var mask_all: Image = _mask2[k] if second else _mask[k]
-	var art: Image = art_all.get_region(Rect2i(0, choice * CHOICE_HEIGHT, 128, CHOICE_HEIGHT))
-	var mask: Image = mask_all.get_region(Rect2i(0, choice * CHOICE_HEIGHT, 128, CHOICE_HEIGHT))
+	var art: Image = art_all.get_region(Rect2i(0, choice * CHOICE_HEIGHT, ATLAS_SIZE.x, CHOICE_HEIGHT))
+	var mask: Image = mask_all.get_region(Rect2i(0, choice * CHOICE_HEIGHT, ATLAS_SIZE.x, CHOICE_HEIGHT))
 	var primary_key: String = PRIMARY[k]
 	var targets: Array = [Color.html(look[primary_key]), Color.html(look["skinColor"]), Color.html(look["eyeColor"])]
 	var px: PackedByteArray = art.get_data()
@@ -192,7 +192,7 @@ func _tinted(k: String, look: Dictionary) -> Image:
 			px[i + 1] = clampi(roundi(t.g8 * factor), 0, 255)
 			px[i + 2] = clampi(roundi(t.b8 * factor), 0, 255)
 		i += 4
-	return Image.create_from_data(128, CHOICE_HEIGHT, false, Image.FORMAT_RGBA8, px)
+	return Image.create_from_data(ATLAS_SIZE.x, CHOICE_HEIGHT, false, Image.FORMAT_RGBA8, px)
 
 
 # Draws part of src onto dst, trimming anything that would fall outside dst.
@@ -211,12 +211,12 @@ func _blend(dst: Image, src: Image, sx: int, sy: int, w: int, h: int, dx: int, d
 		dst.blend_rect(src, Rect2i(sx, sy, w, h), Vector2i(dx, dy))
 
 
-# The full walk sheet: 4 directions across, 3 rows (standing, step A, step B), 32x64 frames.
+# The full walk sheet: 4 directions across, 3 rows (standing, step A, step B), 24x48 frames.
 # The poses are already drawn into the layers; this recolours them and stacks them.
 func sheet(look_in: Dictionary) -> ImageTexture:
 	var look: Dictionary = tidy(look_in)
-	var out: Image = Image.create_empty(128, 192, false, Image.FORMAT_RGBA8)
+	var out: Image = Image.create_empty(ATLAS_SIZE.x, CHOICE_HEIGHT, false, Image.FORMAT_RGBA8)
 	for k in LAYERS:
 		var layer: Image = _tinted(k, look)
-		out.blend_rect(layer, Rect2i(0, 0, 128, 192), Vector2i.ZERO)
+		out.blend_rect(layer, Rect2i(0, 0, ATLAS_SIZE.x, CHOICE_HEIGHT), Vector2i.ZERO)
 	return ImageTexture.create_from_image(out)

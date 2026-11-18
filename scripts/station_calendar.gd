@@ -13,6 +13,7 @@ var _days: Array[Button] = []
 
 func _ready() -> void:
 	layer = 15
+	scale = Vector2(2, 2)   # the interface is laid out for 320x180; the screen is 640x360
 	_panel = Panel.new()
 	_panel.position = Vector2(10, 6)
 	_panel.size = Vector2(300, 168)

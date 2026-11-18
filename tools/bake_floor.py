@@ -21,6 +21,28 @@ FORECOURTS = [(115.5 + sx * 35.0, 95.5 + sy * 35.0) for sx in (-1, 1) for sy in 
 FORECOURT_HALF = 6.5
 
 
+
+# Pixels per tile in the baked pictures. 24 since the move to 24x48 characters (18 Nov): every baked floor and
+# wall picture is 24 pixels a tile, and the game draws it into its 16-unit tiles at two-thirds scale, so one
+# baked pixel is one art pixel like every other picture. Parts still designed on the old 16-pixel grid
+# (the main level's paving pattern, engineering's painted belts and pit) are worked out on that grid and
+# spread over the new one, a pixel or two at a time; new floor textures (48x48 = 2x2 tiles) are used 1:1.
+PX = 24
+
+
+def _grid(H, W):
+    """Pixel rows and columns of a PX-per-tile picture, and where each falls on the old 16-per-tile grid."""
+    Y, X = np.mgrid[0:H, 0:W]
+    return Y, X, (Y * 16) // PX, (X * 16) // PX
+
+
+def _tex_lookup(tex, ys, xs):
+    """Sample a floor or wall texture made at its own pixels per tile (48x48 = 24 a tile; old 64x64 = 32)."""
+    per_tile = tex.shape[0] / 2.0
+    ty = (ys * per_tile / PX).astype(np.int64) % tex.shape[0]
+    tx = (xs * per_tile / PX).astype(np.int64) % tex.shape[1]
+    return tex[ty, tx]
+
 def hexc(h):
     return np.array([int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4)], dtype=np.float32)
 
@@ -155,19 +177,20 @@ def in_polygon(px, py, pts):
 
 def bake(rows, art_dir, style="new", strip=128):
     baker = Baker(art_dir)
-    H, W = len(rows) * 16, len(rows[0]) * 16
+    H, W = len(rows) * PX, len(rows[0]) * PX
     if style != "v11":
         rows = wall_border_chars(rows)
     chars = np.array([[ord(c) for c in row] for row in rows], dtype=np.int32)
     img = np.zeros((H, W, 4), dtype=np.uint8)
     smooth = lambda t: t * t * (3 - 2 * t)
     for y0 in range(0, H, strip):
-        y, x = np.mgrid[y0:min(H, y0 + strip), 0:W]
-        ch = chars[y // 16, x // 16]
+        Yn, Xn = np.mgrid[y0:min(H, y0 + strip), 0:W]
+        ch = chars[Yn // PX, Xn // PX]
         draw = ~np.isin(ch, [ord(c) for c in "#Wz~"])
         if not draw.any():
             continue
-        x, y, ch = x[draw], y[draw], ch[draw]
+        Yn, Xn, ch = Yn[draw], Xn[draw], ch[draw]
+        y, x = (Yn * 16) // PX, (Xn * 16) // PX          # the pattern is designed on the old 16-per-tile grid
         dxp = (x + 1 - CX_PX).astype(np.float32); dyp = (y + 1 - CY_PX).astype(np.float32)
         radius = np.hypot(dxp, dyp)
         spoke = np.minimum(np.minimum(np.abs(dxp), np.abs(dyp)), np.minimum(np.abs(dxp - dyp), np.abs(dxp + dyp)) * np.float32(0.70710678))
@@ -216,7 +239,7 @@ def bake(rows, art_dir, style="new", strip=128):
         b = on_route & (route < 3) & (np.floor(radius).astype(np.int64) % 96 < 4) & (radius > 175)
         color = np.where(b[..., None], hexc("c7ad70"), color)
         rgb = np.clip(color * 255.0, 0, 255).astype(np.uint8)
-        img[y, x, :3] = rgb; img[y, x, 3] = 255
+        img[Yn, Xn, :3] = rgb; img[Yn, Xn, 3] = 255
     return Image.fromarray(img, "RGBA")
 
 
@@ -264,19 +287,19 @@ def bake_area(key, rows, art_dir, extras=None):
     baker = Baker(art_dir)
     table = AREA_FLOORS[key]
     rows = wall_border_chars(rows)
-    H, W = len(rows) * 16, len(rows[0]) * 16
+    H, W = len(rows) * PX, len(rows[0]) * PX
     chars = np.array([[ord(c) for c in row] for row in rows], dtype=np.int32)
-    y, x = np.mgrid[0:H, 0:W]
-    ch = chars[y // 16, x // 16]
+    Yn, Xn, y, x = _grid(H, W)
+    ch = chars[Yn // PX, Xn // PX]
     img = np.zeros((H, W, 4), dtype=np.uint8)
     def paint(c, m):
         kind, tint = table[c]
-        xs, ys = x[m], y[m]
-        if isinstance(kind, str):                                 # a sector material: art/lunar/<kind>.png, 32 px a tile
+        ys, xs = Yn[m], Xn[m]
+        if isinstance(kind, str):                                 # a sector material: art/lunar/<kind>.png, 2x2 tiles
             tex = np.asarray(Image.open(os.path.join(art_dir, kind + ".png")).convert("RGB"), dtype=np.float32) / 255.0
-            col = tex[(ys * 2) % tex.shape[0], (xs * 2) % tex.shape[1]]
+            col = _tex_lookup(tex, ys, xs)
         else:
-            col = baker.swatch(np.full(xs.shape, kind), xs, ys)
+            col = baker.swatch(np.full(xs.shape, kind), x[m], y[m])
         if tint:
             col = lerp(col, hexc(tint[0]), tint[1])
         img[ys, xs, :3] = np.clip(col * 255.0, 0, 255).astype(np.uint8); img[ys, xs, 3] = 255
@@ -291,7 +314,7 @@ def bake_area(key, rows, art_dir, extras=None):
         # runs round the edge. extras["holes"]: [[(x, y), ...] in tiles], extras["hole_char"], extras["floor_char"].
         hc, fc = extras.get("hole_char", "O"), extras.get("floor_char", "m")
         inside = np.zeros((H, W), dtype=bool)
-        X, Y = (x + .5) / 16.0, (y + .5) / 16.0
+        X, Y = (Xn + .5) / PX, (Yn + .5) / PX
         for pts in extras["holes"]:
             m = np.zeros((H, W), dtype=bool)
             n = len(pts)
@@ -487,7 +510,7 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     from scipy.ndimage import gaussian_filter
     rows = ["".join(r) for r in rows]
     th, tw = len(rows), len(rows[0])
-    H, W = th * 16, tw * 16
+    H, W = th * PX, tw * PX
     tiles = np.array([[c in SOLID for c in r] for r in rows])
     chars = np.array([[ord(c) for c in r] for r in rows], dtype=np.int32)
     open_ = ~tiles & (chars != ord("~"))
@@ -499,12 +522,12 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     gap = (sol(-1, 0) & sol(1, 0)) | (sol(0, -1) & sol(0, 1)) | (sol(-1, 0) & sol(2, 0)) | (sol(-2, 0) & sol(1, 0)) | \
           (sol(0, -1) & sol(0, 2)) | (sol(0, -2) & sol(0, 1))
     if style == "smooth":
-        B = gaussian_filter(np.repeat(np.repeat(tiles.astype(np.float32), 16, 0), 16, 1), sigma, mode="constant", cval=0.0) > 0.5
+        B = gaussian_filter(np.repeat(np.repeat(tiles.astype(np.float32), PX, 0), PX, 1), sigma * PX / 16.0, mode="constant", cval=0.0) > 0.5
     else:
         # Faceted: every edge is straight or exactly 45 degrees. A wall tile open on two neighbouring sides
         # (and on the corner between them) loses that corner as a half-tile triangle, so a staircase of
         # single steps becomes one straight diagonal. The tiles beside a doorway stay square.
-        B = np.repeat(np.repeat(tiles, 16, 0), 16, 1)
+        B = np.repeat(np.repeat(tiles, PX, 0), PX, 1)
         door_near = np.zeros_like(tiles)
         dg = open_ & gap
         for dy in (-1, 0, 1):
@@ -512,8 +535,8 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
                 door_near |= np.roll(np.roll(dg, dy, 0), dx, 1)
         def opn(dx, dy):
             return ~sol(dx, dy)
-        v, u = np.mgrid[0:16, 0:16]
-        tri = {"tl": (u + v) < 16, "tr": ((15 - u) + v) < 16, "bl": (u + (15 - v)) < 16, "br": ((15 - u) + (15 - v)) < 16}
+        v, u = np.mgrid[0:PX, 0:PX]
+        tri = {"tl": (u + v) < PX, "tr": ((PX - 1 - u) + v) < PX, "bl": (u + (PX - 1 - v)) < PX, "br": ((PX - 1 - u) + (PX - 1 - v)) < PX}
         # Only cut a corner that is part of a real staircase: the wall carries on diagonally on at least one
         # side. Cutting the lone corner at the end of a straight wall made sawtooth ends and odd notches.
         cut = {"tl": opn(-1, 0) & opn(0, -1) & opn(-1, -1) & (sol(-1, 1) | sol(1, -1)),
@@ -523,9 +546,9 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
         for k_, m_ in cut.items():
             m_ = tiles & m_
             for ty, tx in zip(*np.nonzero(m_)):
-                B[ty * 16:(ty + 1) * 16, tx * 16:(tx + 1) * 16] &= ~tri[k_]
+                B[ty * PX:(ty + 1) * PX, tx * PX:(tx + 1) * PX] &= ~tri[k_]
     if style == "smooth":
-        B &= ~np.repeat(np.repeat(open_ & gap, 16, 0), 16, 1)
+        B &= ~np.repeat(np.repeat(open_ & gap, PX, 0), PX, 1)
     def up(m, k):                       # m moved up by k pixels (row y takes row y+k)
         out = np.zeros_like(m); out[:H - k] = m[k:]; return out
     def down(m, k):
@@ -534,9 +557,9 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
         out = np.zeros_like(m); out[:, :W - k] = m[:, k:]; return out
     def right(m, k=1):
         out = np.zeros_like(m); out[:, k:] = m[:, :W - k]; return out
-    roof_lift = up(B, 16)
+    roof_lift = up(B, PX)
     Wl = B | roof_lift
-    face = Wl & ~up(B, 32)
+    face = Wl & ~up(B, 2 * PX)
     roof = Wl & ~face
     # Where each face pixel's wall meets the floor (its bottom edge), scanning up from the bottom.
     bottom = np.full((H, W), -1, dtype=np.int32)
@@ -553,16 +576,17 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     mat_wall = np.asarray(Image.open(os.path.join(art_dir, wall_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
     plain = key in SECTOR_WALLS                                   # sector materials are used as painted, no tints
     # roof: the material, tinted by roof plate
-    zone = ROOF_ZONE_FN[key](xx / 16.0, (yy + 16) / 16.0) if key in ROOF_ZONE_FN else _roof_zone(key, xx // 16, (yy + 16) // 16)
+    zone = ROOF_ZONE_FN[key](xx / float(PX), (yy + PX) / float(PX)) if key in ROOF_ZONE_FN else _roof_zone(key, xx // PX, (yy + PX) // PX)
     tint = np.stack([hexc(h) for h in (["ffffff"] * 4 if plain else ROOF_TINTS)])[zone % 4]
-    rc = mat_roof[(yy + 16) % 64, xx % 64] * tint
+    rc = _tex_lookup(mat_roof, yy + PX, xx) * tint
     out[roof, :3] = rc[roof]
     # wall face: the material stretched over 32 pixels, or the window view where the wall is a window
     by = np.clip(bottom, 0, H - 1)
-    v = np.clip(31 - (by - yy), 0, 31)
-    fty, ftx = by // 16, xx // 16
+    v = np.clip(2 * PX - 1 - (by - yy), 0, 2 * PX - 1)               # 0 at the top of the face, down to its foot
+    fty, ftx = by // PX, xx // PX
     wt = np.stack([hexc(h) for h in (["ffffff"] * 3 if plain else WALL_TINTS)])[np.abs(((ftx // 3) * 73856093) ^ (fty * 19349663)) % 3]
-    fc = mat_wall[v * 2, (xx % 32) * 2] * wt
+    # The wall texture is 2 tiles square and covers the 2-tile-tall face once top to bottom.
+    fc = mat_wall[(v * mat_wall.shape[0]) // (2 * PX), ((xx % (2 * PX)) * mat_wall.shape[1]) // (2 * PX)] * wt
     if window is not None:
         win = np.asarray(window.convert("RGB"), dtype=np.float32) / 255.0
         is_win = chars[np.clip(fty, 0, th - 1), np.clip(ftx, 0, tw - 1)] == ord("w")

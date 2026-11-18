@@ -90,14 +90,16 @@ func _ready() -> void:
 
 	_cam = Camera2D.new()
 	_cam.position = Vector2(0, -8)
+	_cam.zoom = Vector2.ONE * 1.5          # 640x360 screen, 24-pixel art at two-thirds: one art pixel per screen pixel
 	add_child(_cam)
 	_cam.make_current()
 
 
 func set_limits(size: Vector2i) -> void:
-	# A room smaller than the screen (320x180) is centred instead of sitting in the top-left corner.
-	var pad_x: int = maxi(0, (320 - size.x) / 2)
-	var pad_y: int = maxi(0, (180 - size.y) / 2)
+	# A room smaller than the view (640x360 at 1.5x zoom: about 427x240 world units) is centred instead of
+	# sitting in the top-left corner.
+	var pad_x: int = maxi(0, (427 - size.x) / 2)
+	var pad_y: int = maxi(0, (240 - size.y) / 2)
 	_cam.limit_left = -pad_x
 	_cam.limit_top = -pad_y
 	_cam.limit_right = size.x + pad_x
@@ -193,7 +195,7 @@ func swing(kind: String) -> void:
 	_attack_time = ATTACK_LEN
 	_weapon.texture = _spear_tex if kind == "spear" else _sword_tex
 	# Weapon art can be any size: the spear is shown 7 high in the world, the sword 9.
-	var weapon_scale: float = (7.0 if kind == "spear" else 9.0) / _weapon.texture.get_height()
+	var weapon_scale: float = 2.0 / 3.0       # 24-pixel-grid art, like everything else
 	_weapon.scale = Vector2(weapon_scale, weapon_scale)
 	_weapon.offset = (Vector2(-3, -3.5) if kind == "spear" else Vector2(-2, -4.5)) / weapon_scale
 	_weapon.flip_v = _attack_dir.x < 0.0

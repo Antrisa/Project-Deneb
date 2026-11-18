@@ -8,6 +8,7 @@ var buttons: Array[Button]=[]
 var status: Label
 func _ready() -> void:
 	layer=18
+	scale=Vector2(2,2)   # interface laid out for 320x180 on a 640x360 screen
 	panel=Panel.new();panel.position=Vector2(70,12);panel.size=Vector2(180,156);add_child(panel)
 	var title:=Label.new();title.text="Community table • Three in a row";title.position=Vector2(6,4);title.add_theme_font_size_override("font_size",9);panel.add_child(title)
 	for i in range(9):

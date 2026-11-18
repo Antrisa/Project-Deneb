@@ -25,7 +25,7 @@ func _sprite(parent: Node2D,asset: String,at: Vector2) -> void:
 	var s := Sprite2D.new()
 	s.texture=load("res://art/lunar/%s.png"%asset)
 	s.centered=false
-	s.scale=Vector2.ONE*0.5
-	s.offset=at*2.0
+	s.scale=Vector2.ONE*(2.0/3.0)   # 24-pixel-grid art, like everything else
+	s.offset=at*1.5
 	s.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST
 	parent.add_child(s)

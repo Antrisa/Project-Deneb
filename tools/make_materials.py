@@ -415,5 +415,8 @@ if __name__ == "__main__":
         path = os.path.join(OUT, name + ".png")
         if os.path.exists(path):
             continue
-        Image.fromarray(np.clip(fn(), 0, 255).astype(np.uint8), "RGB").save(path)
+        # Drawn at 32 a tile (64x64), then moved onto the game's 24-pixel grid (48x48) (18 Nov 2026).
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "dev"))
+        import to24
+        to24.shrink_tileable(Image.fromarray(np.clip(fn(), 0, 255).astype(np.uint8), "RGB")).convert("RGB").save(path)
         print("placeholder:", path)

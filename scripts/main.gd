@@ -9,6 +9,13 @@ extends Node2D
 #   People and their lines:    scripts/npc_data.gd
 
 const TILE := 16
+# The 24-pixel grid (18 Nov 2026). The game world still counts 16 units a tile, but all art is drawn at 24
+# pixels a tile and 24x48 for characters, so art is shown at two-thirds scale. The screen is 640x360 and the
+# camera zooms 1.5x, so one art pixel is one screen pixel of the 640x360 picture: exactly 3 real pixels at
+# 1080p and 4 at 1440p. About 27 x 15 tiles are on screen. The interface keeps its 320x180 layout, doubled.
+const ART := 2.0 / 3.0             # world units per art pixel
+const CAMERA_ZOOM := 1.5
+const UI_SCALE := 2.0
 const MapData = preload("res://scripts/map_data.gd")
 const NpcData = preload("res://scripts/npc_data.gd")
 const AreaScript = preload("res://scripts/area.gd")
@@ -292,8 +299,8 @@ func _add_keys(action: String, keys: Array) -> void:
 		InputMap.action_add_event(action, ev)
 
 
-# Screen size. The game is drawn at 320x180 and only ever scaled by whole numbers, so every art pixel is the
-# same size on screen: 1080p is exactly 6x (3 screen pixels per art pixel), 1440p 8x (4), 4K 12x (6), 720p 4x.
+# Screen size. The game is drawn at 640x360 and only ever scaled by whole numbers, so every art pixel is the
+# same size on screen: 1080p is exactly 3x (3 screen pixels per art pixel), 1440p 4x, 4K 6x, 720p 2x.
 # It starts in borderless fullscreen, which fills those screens with no bars. Alt+Enter switches to a window
 # sized to the largest whole multiple that fits the desktop, so windowed play stays sharp too.
 func _input(event: InputEvent) -> void:
@@ -312,9 +319,9 @@ func _size_window() -> void:
 	var screen: int = DisplayServer.window_get_current_screen()
 	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
 	# Leave room for the title bar, then take the biggest whole multiple of 320x180 that fits.
-	var k: int = maxi(2, mini(int((usable.size.x - 16) / 320.0), int((usable.size.y - 48) / 180.0)))
-	if k * 320 >= usable.size.x: k = maxi(2, k - 1)
-	var size := Vector2i(320 * k, 180 * k)
+	var k: int = maxi(1, mini(int((usable.size.x - 16) / 640.0), int((usable.size.y - 48) / 360.0)))
+	if k * 640 >= usable.size.x: k = maxi(1, k - 1)
+	var size := Vector2i(640 * k, 360 * k)
 	DisplayServer.window_set_size(size)
 	DisplayServer.window_set_position(usable.position + (usable.size - size) / 2)
 
@@ -335,7 +342,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10:
 		overview = not overview
-		player._cam.zoom = Vector2.ONE * (0.08 if overview else 1.0)
+		player._cam.zoom = Vector2.ONE * (0.08 if overview else 1.0) * CAMERA_ZOOM
 		player._cam.position = Vector2(1848,1528)-player.position if overview and current_area == "main" else Vector2(0,-8)
 		return
 	if seated:
@@ -710,7 +717,7 @@ func _spawn_things() -> void:
 	wreck_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	wreck_sprite.hframes = 4
 	wreck_sprite.centered = false
-	_fit_sprite(wreck_sprite, 4, 1, wreck_sprite.texture.get_width() / 8.0 if ship_art.ends_with("player_ship.png") else 64.0)
+	_fit_sprite(wreck_sprite, 4, 1, wreck_sprite.texture.get_width() / 4.0 * ART if ship_art.ends_with("player_ship.png") else 64.0)
 	wreck_sprite.position = Vector2(float(wreck[1]), float(wreck[2]))
 	wreck_sprite.visible = false
 	actors.add_child(wreck_sprite)
@@ -794,7 +801,7 @@ func _add_sara(area_name: String, tile: Vector2i, radius: float) -> void:
 	_ensure_person("Sara")
 	var h = load("res://sara/sara_hologram.tscn").instantiate()
 	h.show_projector = false          # the dais or pad is already part of the map
-	h.art_scale = 0.5                 # whole-pixel scale like all other art; about a head taller than the residents
+	h.art_scale = ART                 # the same art scale as everything else; about a head taller than the residents
 	if area_name == "top":
 		h.position = Vector2(23 * TILE + 8, 21 * TILE - 11)   # the centre of the dais (tools/survey.py)
 	else:
@@ -1933,6 +1940,7 @@ func _interact_clicked() -> void:
 func _build_ui() -> void:
 	var hud := CanvasLayer.new()
 	hud.layer = 5
+	hud.scale = Vector2.ONE * UI_SCALE
 	add_child(hud)
 	hud_clock = _hud_label(hud, Vector2(4, 2), Vector2(150, 12))
 	hud_goal = _hud_label(hud, Vector2(156, 2), Vector2(160, 12))
@@ -1951,6 +1959,7 @@ func _build_ui() -> void:
 
 	var ui_layer := CanvasLayer.new()
 	ui_layer.layer = 8
+	ui_layer.scale = Vector2.ONE * UI_SCALE
 	add_child(ui_layer)
 	ui = UiScript.new()
 	ui.world = self
@@ -1961,6 +1970,7 @@ func _build_ui() -> void:
 	if maker.load_layers():
 		var top_layer := CanvasLayer.new()
 		top_layer.layer = 12
+		top_layer.scale = Vector2.ONE * UI_SCALE
 		add_child(top_layer)
 		creator = CreatorScript.new()
 		creator.world = self
@@ -2268,8 +2278,8 @@ func _spawn_concourse() -> void:
 		var roof_sprite := Sprite2D.new()
 		roof_sprite.texture = load("res://art/lunar/%s.png" % p[0])
 		roof_sprite.centered = false
-		roof_sprite.scale = Vector2.ONE*0.5
-		roof_sprite.position = Vector2(p[1]*16+floorf((p[3]*16-roof_sprite.texture.get_width()*0.5)*0.5),(p[2]+p[4])*16-16)
+		roof_sprite.scale = Vector2.ONE*ART
+		roof_sprite.position = Vector2(p[1]*16+(p[3]*16-roof_sprite.texture.get_width()*ART)*0.5,(p[2]+p[4])*16-16)
 		roof_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		roof_sprite.offset = Vector2(0,-roof_sprite.texture.get_height())
 		roof_sprite.visible = false
@@ -2315,8 +2325,8 @@ func _spawn_concourse() -> void:
 			roof_sprite.texture = load("res://art/lunar/%s.png" % p[0])
 			roof_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			roof_sprite.centered = false
-			roof_sprite.scale = Vector2.ONE*0.5
-			roof_sprite.position = Vector2(p[1]*16+floorf((p[3]*16-roof_sprite.texture.get_width()*0.5)*0.5),(p[2]+p[4])*16-16)
+			roof_sprite.scale = Vector2.ONE*ART
+			roof_sprite.position = Vector2(p[1]*16+(p[3]*16-roof_sprite.texture.get_width()*ART)*0.5,(p[2]+p[4])*16-16)
 			roof_sprite.offset = Vector2(0,-roof_sprite.texture.get_height())
 			roof_sprite.visible = false
 			actors.add_child(roof_sprite)
@@ -2340,11 +2350,11 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.centered = false
 	if p[0] == "game_chair" and "left" in p[5]: sprite.flip_h = true
-	# Uniform half-scale, matching the doubled-detail NPC artwork. Never stretch X/Y.
-	sprite.scale = Vector2.ONE * 0.5
+	# Art on the 24-pixel grid, shown at two-thirds (see ART). Never stretch X/Y.
+	sprite.scale = Vector2.ONE * ART
 	sprite.offset = Vector2(0,-sprite.texture.get_height())
-	# Centred on its tiles and standing on its bottom edge, on whole pixels.
-	sprite.position = Vector2(p[1]*16+floorf((p[3]*16-fw*0.5)*0.5),(p[2]+p[4])*16)
+	# Centred on its tiles and standing on its bottom edge.
+	sprite.position = Vector2(p[1]*16+(p[3]*16-fw*ART)*0.5,(p[2]+p[4])*16)
 	if p[0] == "game_chair" or p[0].begins_with("chair_") or p[0].begins_with("bench_"):
 		# The back of a chair sorts behind its occupant without moving the artwork.
 		sprite.position.y -= 12
@@ -2392,6 +2402,7 @@ func _enter_portal(t: Dictionary) -> void:
 	await step.finished
 	var layer := CanvasLayer.new()
 	layer.layer = 30
+	layer.scale = Vector2.ONE * UI_SCALE
 	add_child(layer)
 	var fade := ColorRect.new()
 	fade.color = Color(0.08,0.1,0.15,0)

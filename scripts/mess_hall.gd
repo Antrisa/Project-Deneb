@@ -13,7 +13,7 @@ func piece(key: String, point: Vector2) -> Sprite2D:
 	s.texture = load("res://art/mess_hall/%s.png" % key)
 	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	s.centered = false
-	s.scale = Vector2.ONE * 0.5
+	s.scale = Vector2.ONE * (2.0 / 3.0)   # 24-pixel-grid art
 	s.position = point
 	add_child(s)
 	return s

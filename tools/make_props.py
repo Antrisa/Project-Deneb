@@ -869,5 +869,8 @@ if __name__ == "__main__":
             for xx in range(w):
                 r, g, b, a = px[xx, yy]
                 px[xx, yy] = (r, g, b, 255 if a >= 100 else 0) if a not in (0, 255) and a < 150 and (r, g, b) == (170, 220, 236) else (r, g, b, 0 if a < 100 else 255)
-        im.save(path)
+        # Drawn at 32 a tile, then moved onto the game's 24-pixel grid (18 Nov 2026).
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "dev"))
+        import to24
+        to24.shrink(im).save(path)
         print("placeholder:", path)

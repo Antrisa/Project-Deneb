@@ -52,8 +52,12 @@ func paint_region(n: Node2D, rows: Array, r: Rect2i) -> void:
 	var x1: int = mini(r.end.x,rows[0].length())
 	var y1: int = mini(r.end.y,rows.size())
 	var area_px := Rect2(Vector2(r.position*16),Vector2((Vector2i(x1,y1)-r.position)*16))
+	# The baked pictures have their own pixels per tile (24 since the 24-pixel grid; 16 before), drawn into
+	# the game's 16-unit tiles, so one baked pixel is one art pixel on screen.
+	var k: float = floor_art.get_width() / float(rows[0].length() * 16)
+	var src := Rect2(area_px.position * k, area_px.size * k)
 	if walls_art == null:
-		n.draw_texture_rect_region(floor_art,area_px,area_px)
+		n.draw_texture_rect_region(floor_art,area_px,src)
 	if walls_art != null:
 		# Moon under the outer walls too, where the smoothed wall leaves a tile's corner open.
 		for y in range(r.position.y,y1):
@@ -61,9 +65,10 @@ func paint_region(n: Node2D, rows: Array, r: Rect2i) -> void:
 				var c: String = rows[y][x]
 				if (c == "~" or (c in "#Wzw" and _next_to_moon(rows,x,y))) and moon_at(x,y):
 					tile(n,3,x,y)
-		n.draw_texture_rect_region(floor_art,area_px,area_px)
+		n.draw_texture_rect_region(floor_art,area_px,src)
 		# The picture already has the roofs lifted into place, so each chunk draws exactly its own pixels.
-		n.draw_texture_rect_region(walls_art,area_px,area_px)
+		var kw: float = walls_art.get_width() / float(rows[0].length() * 16)
+		n.draw_texture_rect_region(walls_art,area_px,Rect2(area_px.position * kw, area_px.size * kw))
 		for l in lights:
 			if r.has_point(Vector2i(int(l[0]),int(l[1]))):
 				skylight(n,int(l[0]),int(l[1]))
@@ -142,7 +147,8 @@ func skylight(n: Node2D,x: int,y: int) -> void:
 	n.draw_rect(Rect2(r.position+Vector2(0,13),Vector2(28,2)),Color("4a596b"))
 	n.draw_rect(r,Color("5b6b7e"),false,1.0)
 func tile(n: Node2D, material: int,x: int,y: int) -> void:
-	n.draw_texture_rect_region(materials[material],Rect2(x*16,y*16,16,16),Rect2((x%4)*16,(y%4)*16,16,16))
+	var t: float = materials[material].get_width() / 2.0      # a material picture is 2x2 tiles, at any pixels per tile
+	n.draw_texture_rect_region(materials[material],Rect2(x*16,y*16,16,16),Rect2((x%2)*t,(y%2)*t,t,t))
 
 func bake_floor(rows: Array) -> Image:
 	return preload("res://scripts/lunar_paving.gd").bake(rows)

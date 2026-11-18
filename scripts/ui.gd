@@ -282,7 +282,9 @@ func _draw_slot(pos: Vector2, item: String, state: int) -> void:
 		return
 	var info: Dictionary = ItemData.ITEMS[item]
 	var icon: int = info["icon"]
-	draw_texture_rect_region(_items_tex, Rect2(pos + Vector2(1, 1), Vector2(16, 16)), Rect2(icon * _items_tex.get_height(), 0, _items_tex.get_height(), _items_tex.get_height()))
+	# One art pixel to one screen pixel of the 640x360 picture: half an interface unit (24-pixel icons are 12 across).
+	var isz: float = _items_tex.get_height() * 0.5
+	draw_texture_rect_region(_items_tex, Rect2(pos + Vector2(9 - isz * 0.5, 9 - isz * 0.5), Vector2(isz, isz)), Rect2(icon * _items_tex.get_height(), 0, _items_tex.get_height(), _items_tex.get_height()))
 	var n: int = world.count_of(item)
 	if n > 1:
 		var label: String = str(n)

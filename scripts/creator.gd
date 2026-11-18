@@ -205,7 +205,10 @@ func _draw() -> void:
 		var cycle: Array = [1, 0, 2, 0]
 		var step: int = cycle[int(_time * 5.0) % 4]
 		for d in 4:
-			draw_texture_rect_region(_sheet, Rect2(18 + d * 33, 38, 32, 64), Rect2(d * 32, step * 64, 32, 64))
+			# One art pixel to one interface unit (two screen pixels): sharp at any frame size.
+			var fw: float = _sheet.get_width() / 4.0
+			var fh: float = _sheet.get_height() / 3.0
+			draw_texture_rect_region(_sheet, Rect2(18 + d * 33 + (32 - fw) * 0.5, 38 + 64 - fh, fw, fh), Rect2(d * fw, step * fh, fw, fh))
 	_txt(Vector2(22, 34), "Front       Back        Left        Right", DIM, 6)
 
 	_button(SHUFFLE, "Shuffle  R", 0)
