@@ -2,14 +2,14 @@
 
 This is for making pixel art with ChatGPT, or any image tool, for Echo Landing. It is a 2D, top-down 3/4-view station sim in the style of Stardew Valley, made in Godot. Give this whole document to ChatGPT, together with two or three existing sprites from the game as style references. Item, environment and effects art is in **art handoff 2**.
 
-Written 18 Nov 2026 from the game files on branch `promenade-v11`.
+Written 18 Nov 2026; **updated the same day for the 24-pixel grid** (24×48 characters, branch `art24`).
 
 ---
 
 ## 1. Style rules (every picture)
 
 - **Pixel art only.** Hard pixel edges, no anti-aliasing, no blur, no gradients that are not dithered or banded, no soft shadows.
-- **Detail level:** like Stardew Valley characters, drawn at double detail. Use Stardew only as a guide to the amount of detail. **Never copy or trace Stardew Valley art.** Every design is original.
+- **Detail level:** about 1.5× Stardew Valley's: characters are **24×48** (Stardew's are 16×32). Use Stardew only as a guide to the amount of detail. **Never copy or trace Stardew Valley art.** Every design is original.
 - **Look:**
   - big heads;
   - clear silhouettes;
@@ -18,13 +18,13 @@ Written 18 Nov 2026 from the game files on branch `promenade-v11`.
   - 3 to 5 shades per colour.
 - **View:** top-down 3/4, like Stardew. Characters are seen from the front and slightly above.
 - **Background: transparent PNG.** If the tool can't do transparency, use flat magenta (#FF00FF) with no shading, so it can be keyed out.
-- **Exact sizes matter.** The game scales art by exactly one half, and screens show it at 6× (1080p) or 8× (1440p). A picture one pixel off size, or with blurry edges, will look broken.
+- **Exact sizes matter.** One art pixel is exactly 3 screen pixels at 1080p and 4 at 1440p. A picture one pixel off size, or with blurry edges, will look broken.
 - **Feet** sit at the bottom centre of each frame, about 2 px above the bottom edge, in the same spot in every frame. That keeps the character from jittering.
 
 ### Getting exact pixel art out of ChatGPT
 Image tools draw large, soft pictures. To turn one into a game sprite:
 1. **Ask for a large picture.** Have it drawn on a flat background (transparent, or #FF00FF), at a whole multiple of the target size, with the pixel grid clearly visible. "Each art pixel is an 8×8 block" works well.
-2. **Shrink it to the exact size** using nearest-neighbour resampling. ChatGPT can do this with Python. Ask: "downscale to exactly 128×192 with nearest-neighbour, remove the magenta background, and give me the PNG."
+2. **Shrink it to the exact size** using nearest-neighbour resampling. ChatGPT can do this with Python. Ask: "downscale to exactly 96×144 with nearest-neighbour, remove the magenta background, and give me the PNG."
 3. **Check and fix it** in a pixel editor (Aseprite, Pixelorama or LibreSprite):
    - stray coloured pixels;
    - soft edges;
@@ -39,18 +39,18 @@ Prompt template:
 
 ## 2. Sheet formats (what the game expects)
 
-### Walk sheet: `art/npc_<id>.png`, **128 × 192**
-- 4 columns × 3 rows. Each frame is **32 × 64**.
+### Walk sheet: `art/npc_<id>.png`, **96 × 144**
+- 4 columns × 3 rows. Each frame is **24 × 48**.
 - **Columns**, left to right: facing **down** (toward the viewer), **up** (back to the viewer), **left**, **right**.
 - **Rows**, top to bottom: **standing**, **step A** (left foot forward), **step B** (right foot forward). The game plays step A, standing, step B, standing.
-- The character fills most of the frame height. Adults are about 52–58 px tall, children about 40–46 px, with headroom for hair and ears.
+- The character fills most of the frame height. Adults are about 40–44 px tall, children about 30–34 px, with headroom for hair and ears.
 
-### Action sheet: `art/npc_<id>_act.png`, **192 wide**, **64 × number of rows** tall
-- 4 frames across, each **48 × 64**. They play in a loop at 3 frames a second.
+### Action sheet: `art/npc_<id>_act.png`, **144 wide**, **48 × number of rows** tall
+- 4 frames across, each **36 × 48**. They play in a loop at 3 frames a second.
 - One row per action, in the order listed for that character. Each action faces one way (down, up, left or right).
 - The frames are wider than walk frames so arms and tools fit. Feet stay at the bottom centre.
 
-### Portrait: `art/portrait_<id>.png`, **768 × 128**
+### Portrait: `art/portrait_<id>.png`, **768 × 128** (unchanged: portraits belong to the interface)
 - 6 frames of **128 × 128**, left to right: **neutral, happy, sad, surprised, love, angry**.
 - Head and shoulders, turned slightly toward the viewer. Same framing in all 6 frames: only the face and a little of the posture change.
 - Transparent background. The dialogue box supplies the panel.
@@ -59,7 +59,7 @@ Prompt template:
 
 ## 3. What already exists (keep matching it)
 
-All 24 current residents have a walk sheet, an action sheet and a portrait, painted by Zachary:
+All 24 current residents have a walk sheet, an action sheet and a portrait, painted by Zachary. On 18 Nov their walk and action sheets were shrunk automatically to 24×48 as stand-ins; **every character is being redrawn at 24×48**, keeping the same designs:
 - Bram, Evarra, Freya, Garrick, Ix'ali, Jasper, Job, Kit, Maren, Merrow, Nub, Ooma
 - Owen, Pip, Quill, Rusk, Saffi, Sesska, Tar'Besh, Tikka, Tobbin, Vzz'ket, Zaas
 - S.A.R.A. She also has a separate hologram animation module in `sara/`.
@@ -109,7 +109,7 @@ Each needs a walk sheet, an action sheet and a portrait, using the file ids belo
 | `ana` | Anastasia "Ana", human woman, reformed pirate heir | Pilot's jacket with a torn-off pirate insignia, practical, guarded posture, a scar or bandage at first | tune thrusters (up), chart at console (up), eat (down), drink (left), rest (down) |
 
 ### 4b. Heart-event poses (event sheet per character)
-Heart events are short scenes, and they need poses the daily action sheets don't have. Give each character one more file: **`art/npc_<id>_event.png`**, in the same format as the action sheet (192 wide, rows 48 × 64, 4 frames).
+Heart events are short scenes, and they need poses the daily action sheets don't have. Give each character one more file: **`art/npc_<id>_event.png`**, in the same format as the action sheet (144 wide, rows of 4 frames of 36 × 48).
 - **Shared rows, every character, in this order:**
   1. talk with hands (down)
   2. laugh (down)
@@ -140,7 +140,7 @@ Start with the six romance candidates who are already in the game (Freya, Jasper
 
 ### 4c. Player animations (layered: ask Claude before starting)
 The player is built from layers so the character creator works:
-- **Layers:** bottoms, tops, faces and hair. Each is 128 × 1920: 4 directions × 10 style choices × 3 walk poses.
+- **Layers:** bottoms, tops, faces and hair. Each is 96 × 1440: 4 directions × 10 style choices × 3 walk poses, frames 24 × 48.
 - **Body types:** two, `art/player/` (Male) and `art/player/body2/` (Female).
 - **Masks:** each layer has a mask where **red** = the layer's colour, **green** = skin and **blue** = eyes.
 
@@ -159,14 +159,14 @@ New player actions are needed for:
 Every one of these must exist on every layer, for every style choice and both bodies, so it is a lot of work. **Ask Claude to set up the pose-sheet format and code first.** It may be simpler to draw action poses as a single full-body sheet per body type, with only the hair and clothes colours tinted.
 
 ### 4d. Creatures (caverns)
-- **Format:** `art/enemy_<id>.png`, **2 frames side by side**, each **32 × 32**. The 2 frames are a simple idle or move loop.
+- **Format:** `art/enemy_<id>.png`, **2 frames side by side**, each **24 × 24** for normal creatures. The 2 frames are a simple idle or move loop.
 - **Existing:** bug, lizard, spore crawler, vent crab. Check the mine chat's latest list for what is already done.
 - **Needed:**
   - Creatures for each cavern band, getting bigger every 15 floors:
     - floors 1–15, rock: stone beetle, cave bat;
     - floors 16–30, lush: vine creeper, glow moth, fungus brute;
     - floors 31–45, steamy and watery: steam eel, magma slug, armoured crab.
-  - **The Harbinger of Destruction** (boss, floor 45). Its current file is a tiny placeholder. A boss needs a much bigger sprite, and the game currently shows every creature 16 px wide, so **ask Claude to add boss sizing first**. Suggested: 4 frames of 128 × 128.
+  - **The Harbinger of Destruction** (boss, floor 45). Its current file is a tiny placeholder. A boss needs a much bigger sprite, and the game currently shows every creature one tile wide, so **ask Claude to add boss sizing first**. Suggested: 4 frames of 96 × 96.
 
 ---
 

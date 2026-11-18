@@ -2,14 +2,14 @@
 
 This is for making pixel art with ChatGPT, or any image tool, for Echo Landing. It is a 2D, top-down 3/4-view station sim in the style of Stardew Valley, made in Godot. Give this whole document to ChatGPT with a few existing pictures from the game as style references. Characters, portraits and animations are in **art handoff 1**. The full item list with recipes is in the sheet "Echo Landing: items, crafting and hotel meals".
 
-Written 18 Nov 2026 from the game files on branch `promenade-v11`.
+Written 18 Nov 2026; **updated the same day for the 24-pixel grid** (branch `art24`). For redrawing the existing environment, use the pack **Echo_Landing_Environment_Art_24px.zip**: it lists all 300 pictures with their new sizes.
 
 ---
 
 ## 1. Style rules (every picture)
 
 - **Pixel art only.** Hard pixel edges, no anti-aliasing, no blur, no soft shadows.
-- **Detail level:** like Stardew Valley, drawn at double detail. **Never copy or trace Stardew Valley art.** Every design is original.
+- **Detail level:** about 1.5× Stardew Valley's: 24 art pixels a tile (Stardew uses 16). **Never copy or trace Stardew Valley art.** Every design is original.
 - **Look:**
   - a 1-pixel dark outline, coloured (deep blue-grey), never pure black;
   - light from the top left;
@@ -18,16 +18,16 @@ Written 18 Nov 2026 from the game files on branch `promenade-v11`.
   - **Materials:** white and cream station panels, navy trim, warm wood and brass in homes and the hotel, copper and orange in engineering.
 - **View:** top-down 3/4. Furniture and machines are drawn **from the front**, with the top surface visible.
 - **Background: transparent PNG.** If the tool can't do transparency, use flat magenta (#FF00FF).
-- **Scale:** **32 art pixels = 1 floor tile.** The game halves everything, and screens show it at 6× (1080p) or 8× (1440p). Sizes must be exact multiples, as given below.
+- **Scale:** **24 art pixels = 1 floor tile.** Characters are 24×48. One art pixel is exactly 3 screen pixels at 1080p and 4 at 1440p. Sizes must be exact, as given below.
 
 ### Getting exact pixel art out of ChatGPT
 1. **Ask for a large picture.** Have it drawn on a flat background at a whole multiple of the target size, with the pixel grid visible, e.g. "each art pixel is an 8×8 block".
-2. **Shrink it to the exact size** with nearest-neighbour resampling. ChatGPT can do it with Python: "downscale to exactly 96×64 with nearest-neighbour and remove the magenta background".
+2. **Shrink it to the exact size** with nearest-neighbour resampling. ChatGPT can do it with Python: "downscale to exactly 72×48 with nearest-neighbour and remove the magenta background".
 3. **Check and fix it** in a pixel editor (Aseprite, Pixelorama or LibreSprite): stray pixels, soft edges, a complete outline.
 4. **For sets** (all hotel beds, all ores), make them in one chat, so the palette and outline stay the same.
 
 Prompt template:
-> Pixel art game asset for a cozy sci-fi lunar station life sim (Stardew Valley level of detail, original design). Top-down 3/4 view, seen from the front with the top visible, 1-px dark blue-grey outline, light from top-left, hard pixels, no anti-aliasing, flat #FF00FF background. Exact size: [W×H] art pixels ([w×h] floor tiles at 32 px per tile). Object: [description]. Match the attached reference assets.
+> Pixel art game asset for a cozy sci-fi lunar station life sim (about 1.5× Stardew Valley's level of detail, original design). Top-down 3/4 view, seen from the front with the top visible, 1-px dark blue-grey outline, light from top-left, hard pixels, no anti-aliasing, flat #FF00FF background. Exact size: [W×H] art pixels ([w×h] floor tiles at 24 px per tile). Object: [description]. Match the attached reference assets.
 
 ---
 
@@ -35,17 +35,17 @@ Prompt template:
 
 | Kind | File | Size | Notes |
 |---|---|---|---|
-| Item icon | `art/items/<item_id>.png` | **32 × 32** | One per item, centred, with a little margin. Claude packs them into the game's icon strip. |
-| Ore or rock node in the world | `art/<item_id>.png` | **64 × 32** | 2 frames of 32 × 32: **whole**, then **cracked** (half mined). The base sits at the bottom of the frame. |
-| Furniture, machine, prop | `art/lunar/<name>.png` | width = **tiles wide × 32**; height = whatever it needs | Bottom edge = where it stands. Tall pieces (wardrobes, lamps) can be 2–3 tiles tall. A piece seen from behind (facing up) is `<name>_n.png`. |
+| Item icon | `art/items/<item_id>.png` | **24 × 24** | One per item, centred, with a little margin. Claude packs them into the game's icon strip. |
+| Ore or rock node in the world | `art/<item_id>.png` | **48 × 24** | 2 frames of 24 × 24: **whole**, then **cracked** (half mined). The base sits at the bottom of the frame. |
+| Furniture, machine, prop | `art/lunar/<name>.png` | width = **tiles wide × 24**; height = whatever it needs | Bottom edge = where it stands. Tall pieces (wardrobes, lamps) can be 2–3 tiles tall. A piece seen from behind (facing up) is `<name>_n.png`. |
 | Animated prop | `art/lunar/anim/<name>.png` | **(still width × frames) × still height** | A horizontal strip of frames, each exactly the size of the still. It loops at 8 frames a second. Also deliver the still. |
-| Floor texture | `art/lunar/<name>.png` | **64 × 64** | Covers 2 × 2 tiles and must **tile seamlessly**. Keep it low contrast so props stand out. |
-| Wall roof / wall face | `art/lunar/<sector>_roof.png`, `<sector>_wall.png` | **64 × 64** each, seamless | The roof is the top surface of walls, seen from above. The wall is the front face, shown 2 tiles tall below each roof edge. |
-| Window strip | `art/lunar/window_<name>.png` | **width × 32** | For long windows in walls (like the Shuttle Bay's crater view). |
+| Floor texture | `art/lunar/<name>.png` | **48 × 48** | Covers 2 × 2 tiles and must **tile seamlessly**. Keep it low contrast so props stand out. |
+| Wall roof / wall face | `art/lunar/<sector>_roof.png`, `<sector>_wall.png` | **48 × 48** each, seamless | The roof is the top surface of walls, seen from above. The wall is the front face, shown 2 tiles tall below each roof edge. |
+| Window strip | `art/lunar/window_<name>.png` | **width × 48** | For long windows in walls (like the Shuttle Bay's crater view). |
 
 ---
 
-## 3. Item icons needed (32 × 32 each)
+## 3. Item icons needed (24 × 24 each)
 
 Today the game has 23 icons, made by the game's generator rather than painted. The new crafting list needs these. Ids are the names in lower case with underscores, e.g. `steel_bar`, `moon_opal`.
 
@@ -92,21 +92,21 @@ Ids: `<tool>_basic`, `<tool>_steel`, `<tool>_titanium`, `<tool>_precursor`.
 - Grilled cave-trout, crayfish boil, lantern-eel sushi, king crab feast
 - Mess hall stew, station breakfast
 
-Also an icon for every furniture piece and machine below, so they can sit in the inventory: a small 32 × 32 version.
+Also an icon for every furniture piece and machine below, so they can sit in the inventory: a small 24 × 24 version.
 
 ---
 
 ## 4. In-world objects needed
 
-### 4a. Mine and caverns: ore and rock nodes (64 × 32, whole + cracked)
+### 4a. Mine and caverns: ore and rock nodes (48 × 24, whole + cracked)
 - **One node per mineable resource:** stone, copper, iron, carbon, silica, quartz, aluminium, titanium, gold, rare earths, lithium, thermal quartz, sulphur, basalt core, cobalt-60, ice, geode, gem node (opal, garnet, sapphire), Precursor crystal.
 - **Plain rock in three looks, one per cavern band:**
   - floors 1–15: grey moon rock;
   - floors 16–30: mossy green, with glow-moss;
   - floors 31–45: wet blue-black, steaming.
-- **Cavern floors** (64 × 64 seamless, one per band) and **cavern walls** (roof + wall, per band).
+- **Cavern floors** (48 × 48 seamless, one per band) and **cavern walls** (roof + wall, per band).
 - **Cavern details:**
-  - the ladder or hole down to the next floor (32 × 32);
+  - the ladder or hole down to the next floor (24 × 24);
   - glowing fungus clusters and crystal clusters;
   - steam vents (animated);
   - shallow water edges (floors 31–45);
@@ -187,11 +187,11 @@ Suggested footprints, in tiles wide × deep:
 | Room sign / number plate | wall-mounted |
 | Vending machine | 1 × 1, tall |
 
-- **Floors you can build** (64 × 64 seamless): brick path, parquet, marble.
-- **Wallpaper:** 64 × 64 seamless wall face, 3 or 4 styles.
+- **Floors you can build** (48 × 48 seamless): brick path, parquet, marble.
+- **Wallpaper:** 48 × 48 seamless wall face, 3 or 4 styles.
 
 ### 4d. Farming, fishing, hot springs (not designed yet: art can wait)
-- Crops: 4–5 growth stages each, 32 × 64 per stage, as a strip.
+- Crops: 4–5 growth stages each, 24 × 48 per stage, as a strip.
 - Fishing: bobber, splash and fish icons.
 - Hot springs: a dry state and a filled state.
 - Beehive honey states.
@@ -203,13 +203,13 @@ The farming design comes first. Ask the economy chat for the crop list.
 ## 5. Other details
 
 - **Effects** (strips, 8 fps):
-  - mining sparks and dust, 4 frames, 32 × 32;
+  - mining sparks and dust, 4 frames, 24 × 24;
   - rock breaking apart, 6 frames;
   - ore pickup sparkle;
   - water splash;
   - heal sparkle;
   - level-up / "new recipe" burst.
-- **Emote bubbles over heads** (16 × 16 art, 32 × 32 file): heart, music note, "!", "?", sweat drop, anger mark, zZz, lightbulb.
+- **Emote bubbles over heads** (24 × 24): heart, music note, "!", "?", sweat drop, anger mark, zZz, lightbulb.
 - **UI:**
   - **Energy bar frame:** vertical, about 24 × 96, with a separate fill strip.
   - **Hearts for the friendship page:** full, half and empty heart, 14 × 12 each, with a locked-bedroom padlock icon.
@@ -217,10 +217,10 @@ The farming design comes first. Ask the economy chat for the crop list.
   - The scrip currency coin icon.
   - Clock and calendar frames.
 - **Door art:** the new doors between rooms (scripts/inner_door.gd) are drawn by code for now.
-  - A front-view sliding door: frame 32 wide × 48 tall, plus a leaf.
-  - A side-view door for walls running north–south: 16 × 48.
+  - A front-view sliding door: frame 24 wide × 36 tall, plus a leaf.
+  - A side-view door for walls running north–south: 12 × 36.
   - A locked light (red) and an unlocked light (green).
-- **North-facing doors:** a doorway with a canopy seen from above, for buildings you enter from their north side (medbay, fab). 48 × 48.
+- **North-facing doors:** a doorway with a canopy seen from above, for buildings you enter from their north side (medbay, fab). 36 × 36.
 
 ---
 
