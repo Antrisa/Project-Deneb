@@ -85,7 +85,7 @@ def build(g):
             bx_, by_ = CX + 24 * math.cos(math.radians(mid)), CY + 24 * math.sin(math.radians(mid))
             z = np.where((np.hypot(px - bx_, py - by_) <= 9.5) & (r >= 22.3), 1 + i % 3, z)
         return z
-    bake_floor.ROOF_ZONE_FN['east'] = east_roofs
+    # bake_floor.ROOF_ZONE_FN['east'] = east_roofs   # off: the outlines read as odd arcs across the roof (Zachary, 17 Nov)
     # west: the walkway in from the Main Level, and the laundry beside it
     fill(F, 1, 43, 34, 49, 'u')
     chamfer_room(F, 3, 26, 22, 41, 't', 3)                          # the laundry: 19 x 15 tiles
@@ -178,7 +178,7 @@ def make_home(g, key, title, kind, mirror):
     fill(H, 1, 1, W - 2, Hh - 2, '#')
     X = (lambda x: W - 1 - x) if mirror else (lambda x: x)
     FX = (lambda fx: W - fx) if mirror else (lambda fx: fx)
-    def room(x0, y0, x1, y1, ch, k=2):
+    def room(x0, y0, x1, y1, ch, k=0):   # square rooms: chamfers on one-tile walls between rooms left stray roof bits
         a, b = sorted((X(x0), X(x1)))
         chamfer_room(H, a, y0, b, y1, ch, k)
     def tile(x, y, ch): H[y][X(x)] = ch

@@ -67,7 +67,15 @@ def rebuild(g):
             for xx in range(min(x,cx),max(x,cx)+1):
                 if abs(xx-cx)>R_OUT-1:
                     for yy in (cy-4,cy-3,cy+3,cy+4):floor(xx,yy,'#')
+        if x!=cx:
+            # The corridor runs into the next building, not into empty space: a block of roof beyond it.
+            bx0,bx1=(x-9,x-1) if x<cx else (x+1,x+9)
+            rect(bx0,cy-6,bx1,cy+6,'#')
         floor(x,y,'a');m.warps.append((x,y,dest,tx,ty))
+        # The whole width of the corridor end takes you through, not only its middle tile.
+        for k in ((-2,-1,1,2) if x!=cx else ()):
+            wx,wy=(x+k,y) if x==cx else (x,y+k)
+            m.warps.append((wx,wy,dest,tx,ty))
         for ar in A.values():
             if ar.key==dest:ar.warps=[(wx,wy,to,x+(1 if x<cx else -1 if x>cx else 0),y+(1 if y<cy else -1 if y>cy else 0)) if to=='main' else (wx,wy,to,dx,dy) for wx,wy,to,dx,dy in ar.warps]
         if dest in ('top','eng'):
@@ -217,13 +225,11 @@ def rebuild(g):
                 if court_inset(xx+.5,yy+.5,1)>0:floor(xx,yy,'h')
                 elif court_inset(xx+.5,yy+.5,-1)>0:floor(xx,yy,'u')
     # Garden: two flower beds, benches that look at them, the watering station and the book exchange.
-    prop('flowers',107,72,'Library flower border','garden','Water flowers')
+    # Garden (spaced out after Zachary's 17 Nov play test: beds and seats were overlapping)
     prop('flowers',106,76,'Community planting bed','garden','Water flowers')
-    prop('water_tank',110,79,'Garden watering station','garden','Water flowers')
-    prop('books',105,73,'Garden book exchange','read','Read a community story')
-    bench_at(104,76,(106,76),'Reading garden bench')
-    bench_at(111,76,(109,76),'Planting-view bench')
-    bench_at(107,80,(107,77),'Flower garden bench')
+    prop('books',110,73,'Garden book exchange','read','Read a community story')
+    prop('water_tank',111,77,'Garden watering station','garden','Water flowers')
+    bench_at(104,76,(106,76),'Garden bench')
     # Games court: two tables with a chair on each side that faces the board, and a bench to watch from.
     prop('chess',122,111,'Community chess table','game','Play a short game')
     chair_at(121,112,(122,112),'Game chair');chair_at(124,112,(123,112),'Game chair')
@@ -363,7 +369,7 @@ def rebuild(g):
                 m.obj[yy+2][xx]='x';m.obj[yy+2][xx+2]='x'          # the two posts; you walk under the middle
                 thing('inspect','Garden arch','Inspect',xx+1,yy+2,26);placed_=True;break
         if placed_:break
-    garden_ok=lambda xx,yy,w,h:all(m.floor[yy+h-1][x2]=='h' for x2 in range(xx,xx+w))
+    garden_ok=lambda xx,yy,w,h:all(m.floor[y2][x2]=='h' for y2 in range(yy,yy+h+1) for x2 in range(xx-1,xx+w+1))
     games_ok=lambda xx,yy,w,h:all(m.floor[yy+h-1][x2]=='u' for x2 in range(xx,xx+w))
     near_spot('garden_tools',110.0,77.0,'Garden tool rack','inspect','Inspect',reach=3,ok=garden_ok)
     near_spot('bird_bath',104.0,79.0,'Bird bath','inspect','Inspect',reach=3,ok=garden_ok)

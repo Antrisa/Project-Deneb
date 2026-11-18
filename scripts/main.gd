@@ -2253,7 +2253,7 @@ func _spawn_concourse() -> void:
 		door.visible = false
 		actors.add_child(door)
 		area_sprites.append([door,e[0]])
-		if door.facing != "S":
+		if false and door.facing != "S":   # wayfinding squares by side doors read as glitches (Zachary, 17 Nov); off until there is real art
 			var marker = preload("res://scripts/lunar_marker.gd").new()
 			marker.setup(e,facade)
 			marker.position += Vector2(0,-40) if door.facing == "N" else Vector2(-24 if door.facing == "W" else 24,-8)

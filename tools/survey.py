@@ -128,6 +128,12 @@ def build(g):
         for x in (22, 23, 24): F[y][x] = '.'                      # core to lobby
     for y in (43, 44): F[y][28] = F[y][29] = 'f'                  # lobby to spare room
     north, west = (23, 4), (6, 21)
+    # The lounge, museum and sealed lab are buildings of their own beyond these doors: show their bulk
+    # as roof running off the edge, not bare moon (Zachary, 17 Nov).
+    for (x0, y0, x1, y1) in ((14, 0, 32, 4), (0, 12, 6, 30), (40, 13, 46, 29)):
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                if F[y][x] not in 'i.f': F[y][x] = '#'
     F[north[1]][north[0]] = 'i'; F[west[1]][west[0]] = 'i'
     for y in (20, 21, 22): F[y][40] = F[y][39] = 'i'              # sealed lab doorway (blocked by its door)
     core.t.warp('D', [LIFT], 'main', 115, 21)

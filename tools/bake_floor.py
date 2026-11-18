@@ -248,9 +248,9 @@ AREA_FLOORS = {
             "e": ("eng_floor_grate", None), "k": ("eng_floor_plate", ("6a3a2c", 0.45)), "q": (5, ("140e12", 0.88)),
             "j": ("eng_floor_plate", ("4a4e58", 0.25)), "a": ("eng_floor_pad", None)},
     "bay": {"u": ("eng_floor_hangar", None), "a": ("eng_floor_pad", None), "p": (3, None), "f": ("eng_floor_tech", None), "i": ("eng_floor_hangar", None)},
-    "west": {".": ("sp_terminal", None), "p": ("sp_plaza", None), "f": ("sp_carpet", None), "h": ("sp_star", None), "u": ("sp_terminal", None),
+    "west": {".": ("sp_terminal", None), "p": ("sp_plaza", None), "f": ("sp_carpet", None), "h": ("sp_carpet", ("1c2440", 0.55)), "u": ("sp_terminal", None),
              "A": ("sp_plaza", None), "Q": ("sp_moon", None), "V": ("eng_floor_pad", None), "g": ("sp_glass", None), "Y": ("sp_basin", None)},
-    "agri": {"a": ("sp_soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("sp_spa", None),
+    "agri": {"Q": ("sp_moon", None), "a": ("sp_soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("sp_spa", None),
              "u": ("sp_terminal", None), "O": ("sp_water", ("70c8d0", 0.25)), "Y": ("sp_water", None)},
     "east": {".": ("sp_plaza", None), "s": ("ea_grass", None), "h": ("ea_deck", None), "a": ("sp_soil", None), "f": ("ea_rubber", None),
              "k": ("ea_court", None), "o": ("sp_parquet", None), "t": ("ea_tile", None), "e": ("eng_floor_grate", None), "u": ("sp_terminal", None),
@@ -514,10 +514,14 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
             return ~sol(dx, dy)
         v, u = np.mgrid[0:16, 0:16]
         tri = {"tl": (u + v) < 16, "tr": ((15 - u) + v) < 16, "bl": (u + (15 - v)) < 16, "br": ((15 - u) + (15 - v)) < 16}
-        cut = {"tl": opn(-1, 0) & opn(0, -1) & opn(-1, -1), "tr": opn(1, 0) & opn(0, -1) & opn(1, -1),
-               "bl": opn(-1, 0) & opn(0, 1) & opn(-1, 1), "br": opn(1, 0) & opn(0, 1) & opn(1, 1)}
+        # Only cut a corner that is part of a real staircase: the wall carries on diagonally on at least one
+        # side. Cutting the lone corner at the end of a straight wall made sawtooth ends and odd notches.
+        cut = {"tl": opn(-1, 0) & opn(0, -1) & opn(-1, -1) & (sol(-1, 1) | sol(1, -1)),
+               "tr": opn(1, 0) & opn(0, -1) & opn(1, -1) & (sol(1, 1) | sol(-1, -1)),
+               "bl": opn(-1, 0) & opn(0, 1) & opn(-1, 1) & (sol(-1, -1) | sol(1, 1)),
+               "br": opn(1, 0) & opn(0, 1) & opn(1, 1) & (sol(1, -1) | sol(-1, 1))}
         for k_, m_ in cut.items():
-            m_ = tiles & m_ & ~door_near
+            m_ = tiles & m_
             for ty, tx in zip(*np.nonzero(m_)):
                 B[ty * 16:(ty + 1) * 16, tx * 16:(tx + 1) * 16] &= ~tri[k_]
     if style == "smooth":

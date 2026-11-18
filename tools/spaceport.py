@@ -113,7 +113,7 @@ def build(g):
     N('drinking_fountain', 88, 44.5, 'Water point', 'inspect', 'Inspect'); N('bin', 54, 44, 'Bin', None)
     for fx, fy in ((61.5, 26.5), (80.5, 26.5), (61.5, 53.5), (80.5, 53.5)): w.thing('look', 'Empty basin', 'Look', fx, fy + (5 if fy < 40 else -5), 40)
     # the Star dome
-    N('telescope', 58, 6, 'Telescope', 'look', 'Look through it'); N('view_bench', 54.5, 10.5, 'Bench', 'seat', 'Sit')
+    N('telescope', 58, 6, 'Telescope', 'look', 'Look through it'); N('view_bench', 56, 9.5, 'Bench', 'seat', 'Sit')
     N('star_chart', 62, 9, 'Star chart', 'look', 'Look')
 
     # ================================================================== agri: three domes round the storage shed
@@ -130,6 +130,12 @@ def build(g):
     band(F, (55, 40), (55, 47), 1.6, 'u')                        # shed to agri dome
     fill(F, 54, 60, 56, 87, 'u')                                 # the way in, from the junction
     agri_in = (55, 88); F[agri_in[1]][agri_in[0]] = 'u'
+    # Outside the domes and links is bare moon, with a two-tile station wall round everything inside.
+    inside = {(x, y) for y in range(90) for x in range(110) if F[y][x] not in '#Q~'}
+    for y in range(1, 89):
+        for x in range(1, 109):
+            if F[y][x] == '#' and not any((x + dx, y + dy) in inside for dx in range(-2, 3) for dy in range(-2, 3)):
+                F[y][x] = 'Q'
     a.t.zones += [['Agri dome', 36, 4, 74, 42], ['Storage shed', 47, 45, 63, 59], ['Your workshop', 11, 51, 37, 77],
                   ['Hot springs & fish ponds', 71, 49, 101, 79], ['Glass link', 1, 1, 108, 88]]
     a.keep_clear(53, 60, 57, 88); a.keep_clear(36, 62, 74, 66); a.keep_clear(53, 38, 57, 47)
