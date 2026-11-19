@@ -294,8 +294,8 @@ AREA_FLOORS = {
     "bay": {"u": ("eng_floor_hangar", None), "a": ("eng_floor_pad", None), "p": ("eng_floor_plate", None), "f": ("eng_floor_tech", None), "i": ("eng_floor_hangar", None)},
     "west": {".": ("arrivals/terminal", None), "p": ("arrivals/plaza", None), "f": ("arrivals/carpet", None), "h": ("arrivals/carpet_blue", None), "u": ("arrivals/terminal", None),
              "A": ("arrivals/plaza", None), "Q": ("sp_moon", None), "V": ("eng_floor_pad", None), "g": ("arrivals/glass", None), "Y": ("arrivals/basin", None)},
-    "agri": {"Q": ("sp_moon", None), "a": ("sp_soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("sp_spa", None),
-             "u": ("sp_terminal", None), "O": ("sp_water", ("70c8d0", 0.25)), "Y": ("sp_water", None)},
+    "agri": {"Q": ("agri/moon", None), "a": ("agri/soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("agri/spa", None),
+             "u": ("sp_terminal", None), "O": ("agri/water", ("70c8d0", 0.25)), "Y": ("agri/water", None)},
     "east": {".": ("sp_plaza", None), "s": ("ea_grass", None), "h": ("ea_deck", None), "a": ("sp_soil", None), "f": ("ea_rubber", None),
              "k": ("ea_court", None), "o": ("ea_deck", None), "t": ("ea_tile", None), "e": ("eng_floor_grate", None), "u": ("sp_terminal", None),
              "A": ("sp_terminal", None)},
@@ -323,7 +323,12 @@ def bake_area(key, rows, art_dir, extras=None):
         ys, xs = Yn[m], Xn[m]
         if isinstance(kind, str):                                 # a sector material: art/lunar/<kind>.png, 2x2 tiles
             tex = np.asarray(Image.open(os.path.join(art_dir, kind + ".png")).convert("RGB"), dtype=np.float32) / 255.0
-            if kind.startswith("hotel/"):
+            if kind.startswith("agri/"):
+                # Pick one complete two-tile swatch per map block, on the native grid.
+                span = 2 * PX
+                variant = ((xs // span * 17) ^ (ys // span * 29)) % (tex.shape[1] // span)
+                col = tex[ys % span, variant * span + xs % span]
+            elif kind.startswith("hotel/"):
                 # These atlases have multiple two-tile swatches, each already on the 24px grid.
                 col = tex[ys % tex.shape[0], xs % tex.shape[1]]
             else:

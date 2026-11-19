@@ -215,6 +215,10 @@ func _ready() -> void:
 			var window := BayWindow.new()
 			window.setup(self, data["floor"])
 			node.add_child(window)
+		elif area_name == "agri":
+			var terrain := preload("res://scripts/agri_terrain.gd").new()
+			terrain.setup(self, data["floor"])
+			node.add_child(terrain)
 		elif area_name == "mess":
 			var dining_view := MessWindow.new()
 			dining_view.setup(self, data["floor"][0].length())
@@ -577,7 +581,7 @@ func _add_fx() -> void:
 			var orow: String = obj_rows[y]
 			for x in frow.length():
 				var fch: String = frow[x]
-				if FX_FLOOR.has(fch) and not (area_name == "hotel" and fch == "O"):
+				if FX_FLOOR.has(fch) and not (area_name in ["hotel", "agri"] and fch == "O"):
 					_add_fx_sprite(FX_FLOOR[fch], area_name, x, y)
 				var och: String = orow[x]
 				if FX_OBJ.has(och):
@@ -2496,13 +2500,13 @@ func _water_garden(t: Dictionary) -> void:
 	var effect:=preload("res://scripts/watering_effect.gd").new()
 	effect.position=t.pos+Vector2(0,-12)
 	actors.add_child(effect)
-	_toast("Watering the community flowers…")
+	_toast("Watering the crop beds…" if current_area == "agri" else "Watering the community flowers…")
 	await get_tree().create_timer(1.4).timeout
 	effect.queue_free()
 	garden_watered_day=day
 	garden_busy=false
 	player.frozen=false
-	_toast("Flowers watered — the reservoir will recirculate the excess")
+	_toast("Crop beds watered" if current_area == "agri" else "Flowers watered — the reservoir will recirculate the excess")
 
 
 # ---------------------------------------------------------------- the Caverns
