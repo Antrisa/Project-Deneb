@@ -544,6 +544,15 @@ const FX_FLOOR := {
 
 
 func _add_fx() -> void:
+	var ripple := Sprite2D.new()
+	ripple.texture = preload("res://art/lunar/hotel/fountain_ripples.png")
+	ripple.hframes = 8
+	ripple.scale = Vector2.ONE * ART
+	ripple.position = Vector2(60, 21.5) * TILE
+	ripple.visible = false
+	ground_fx.add_child(ripple)
+	area_sprites.append([ripple, "hotel"])
+	anim.append([ripple, "hotel", 6.5, 0])
 	for area_name in MapData.AREAS:
 		var data: Dictionary = MapData.AREAS[area_name]
 		var floor_rows: Array = data["floor"]
@@ -553,7 +562,7 @@ func _add_fx() -> void:
 			var orow: String = obj_rows[y]
 			for x in frow.length():
 				var fch: String = frow[x]
-				if FX_FLOOR.has(fch):
+				if FX_FLOOR.has(fch) and not (area_name == "hotel" and fch == "O"):
 					_add_fx_sprite(FX_FLOOR[fch], area_name, x, y)
 				var och: String = orow[x]
 				if FX_OBJ.has(och):
@@ -585,7 +594,7 @@ func _animate() -> void:
 	for a in anim:
 		if a[1] == current_area:
 			var s: Sprite2D = a[0]
-			s.frame = (int(now * float(a[2])) + int(a[3])) % 4
+			s.frame = (int(now * float(a[2])) + int(a[3])) % (s.hframes * s.vframes)
 	# Stationary projection; frame-local shader dissolves legs and animates light.
 	for h in holos:
 		var hs: Sprite2D = h

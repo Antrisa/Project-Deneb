@@ -266,11 +266,11 @@ AREA_FLOORS = {
     "lounge": {"u": (5, None)},
     "museum": {"h": (4, None), ".": (1, None), "f": (3, None)},
     "sanctum": {"s": (4, ("6f5a9a", 0.32)), "i": (0, ("8a6fc0", 0.30))},
-    "eng": {".": ("eng_floor_plate", None), "R": (3, ("6a5a4c", 0.35)), "i": ("eng_floor_plate", None), "U": ("eng_floor_plate", None),
+    "eng": {".": ("eng_floor_plate", None), "R": ("eng_floor_plate", ("6a5a4c", 0.20)), "i": ("eng_floor_plate", None), "U": ("eng_floor_plate", None),
             "o": ("eng_floor_ore", None), "f": ("eng_floor_concrete", None), "t": ("eng_floor_tech", None), "h": ("eng_floor_lino", None),
             "e": ("eng_floor_grate", None), "k": ("eng_floor_plate", ("6a3a2c", 0.45)), "q": (5, ("140e12", 0.88)),
             "j": ("eng_floor_plate", ("4a4e58", 0.25)), "a": ("eng_floor_pad", None)},
-    "bay": {"u": ("eng_floor_hangar", None), "a": ("eng_floor_pad", None), "p": (3, None), "f": ("eng_floor_tech", None), "i": ("eng_floor_hangar", None)},
+    "bay": {"u": ("eng_floor_hangar", None), "a": ("eng_floor_pad", None), "p": ("eng_floor_plate", None), "f": ("eng_floor_tech", None), "i": ("eng_floor_hangar", None)},
     "west": {".": ("sp_terminal", None), "p": ("sp_plaza", None), "f": ("sp_carpet", None), "h": ("sp_carpet", ("1c2440", 0.55)), "u": ("sp_terminal", None),
              "A": ("sp_plaza", None), "Q": ("sp_moon", None), "V": ("eng_floor_pad", None), "g": ("sp_glass", None), "Y": ("sp_basin", None)},
     "agri": {"Q": ("sp_moon", None), "a": ("sp_soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("sp_spa", None),
@@ -278,8 +278,13 @@ AREA_FLOORS = {
     "east": {".": ("sp_plaza", None), "s": ("ea_grass", None), "h": ("ea_deck", None), "a": ("sp_soil", None), "f": ("ea_rubber", None),
              "k": ("ea_court", None), "o": ("sp_parquet", None), "t": ("ea_tile", None), "e": ("eng_floor_grate", None), "u": ("sp_terminal", None),
              "A": ("sp_terminal", None)},
-    "hotel": {"u": ("sp_parquet", None), "i": ("sp_marble", None), "O": ("sp_water", ("70c8d0", 0.25)), "p": ("sp_parquet", ("c08a50", 0.12)),
-              "k": ("sp_kitchen", None), "h": ("sp_carpet", None), "o": ("sp_parquet", ("5a3a24", 0.25)), "t": ("sp_carpet_red", None), "e": ("sp_build", None)},
+    "hotel": {
+        "u": ("hotel/warm_deck_mix", None), "i": ("hotel/warm_deck_mix", None),
+        "O": ("sp_water", ("70c8d0", 0.25)), "p": ("hotel/dining_mineral_mix", None),
+        "k": ("hotel/kitchen_ceramic_mix", None), "h": ("hotel/warm_deck_mix", None),
+        "o": ("hotel/warm_deck_mix", None), "t": ("hotel/navy_mix", None),
+        "e": ("hotel/subfloor_mix", None),
+    },
 }
 
 
@@ -297,7 +302,17 @@ def bake_area(key, rows, art_dir, extras=None):
         ys, xs = Yn[m], Xn[m]
         if isinstance(kind, str):                                 # a sector material: art/lunar/<kind>.png, 2x2 tiles
             tex = np.asarray(Image.open(os.path.join(art_dir, kind + ".png")).convert("RGB"), dtype=np.float32) / 255.0
-            col = _tex_lookup(tex, ys, xs)
+            if kind.startswith("hotel/"):
+                # These atlases have multiple two-tile swatches, each already on the 24px grid.
+                col = tex[ys % tex.shape[0], xs % tex.shape[1]]
+            else:
+                col = _tex_lookup(tex, ys, xs)
+                if key in ("eng", "bay") and kind.startswith("eng_floor_"):
+                    index = (xs // (2*PX) * 7 + ys // (2*PX) * 3) % 11
+                    for value, suffix in ((3, "_a"), (8, "_b")):
+                        use = index == value
+                        variant = np.asarray(Image.open(os.path.join(art_dir, kind + suffix + ".png"))) / 255.
+                        col[use] = _tex_lookup(variant, ys[use], xs[use])
         else:
             col = baker.swatch(np.full(xs.shape, kind), x[m], y[m])
         if tint:
@@ -307,6 +322,8 @@ def bake_area(key, rows, art_dir, extras=None):
         m = ch == ord(c)
         if m.any():
             paint(c, m)
+    if key == "hotel":
+        _hotel_finishes(img, art_dir)
     extras = extras or {}
     if "holes" in extras:
         # Pits and pools drawn on their true 45-degree outlines (the tiles only say where you cannot walk):
@@ -351,6 +368,58 @@ def bake_area(key, rows, art_dir, extras=None):
     elif "belts" in extras:
         _belt_extras(img, ch, x, y, extras)
     return Image.fromarray(img, "RGBA")
+
+
+def _hotel_finishes(img, art_dir):
+    """Place the lobby inlay, lounge rug, hearth, service panels and sills in map coordinates."""
+    def texture(name):
+        return np.asarray(Image.open(os.path.join(art_dir, "hotel", name + ".png")).convert("RGB"))
+
+    # The fountain coping covers the staircase at the edge of the water tiles.
+    radius = 5.2 * PX
+    cx, cy = 60 * PX, int(21.5 * PX)
+    extent = int(np.ceil(radius))
+    patch = img[cy-extent:cy+extent, cx-extent:cx+extent, :3]
+    yy, xx = np.indices(patch.shape[:2])
+    dx, dy = xx + .5 - extent, yy + .5 - extent
+    rr = np.hypot(dx, dy) / PX
+    angle = np.arctan2(dy, dx)
+    wedge = np.floor((angle + np.pi) * 12 / np.pi).astype(int)
+    for index, name in enumerate(("mineral", "mineral_a", "mineral_b")):
+        stone = texture(name)
+        mask = (rr >= 3.04) & (rr < 5.15) & (wedge % 3 == index)
+        patch[mask] = stone[yy[mask] % stone.shape[0], xx[mask] % stone.shape[1]]
+    joints = np.abs(np.sin(angle * 12)) * rr * PX / 12 < .8
+    patch[(rr >= 3.22) & (rr < 5.15) & joints] = (161, 152, 134)
+    water = texture("basin_water")
+    wet = rr < 3.04
+    patch[wet] = water[yy[wet] % water.shape[0], xx[wet] % water.shape[1]]
+    patch[(rr >= 3.04) & (rr < 3.16)] = (75, 102, 106)
+    patch[(rr >= 3.16) & (rr < 3.29)] = (192, 181, 152)
+    patch[(rr >= 5.10) & (rr < 5.18)] = (147, 135, 111)
+
+    for name, tx, ty, w, h, cut, edge in (
+        ("red_carpet_mix", 93.35, 21.7, 9.4, 5.5, .7, (102, 65, 62)),
+        ("hearth_slate_mix", 93.5, 12.1, 4.9, 2.44, .8, (122, 114, 94)),
+    ):
+        x0, x1 = round((tx-w)*PX), round((tx+w)*PX)
+        y0, y1 = round((ty-h)*PX), round((ty+h)*PX)
+        region = img[y0:y1, x0:x1]
+        y, x = np.mgrid[y0:y1, x0:x1]
+        fx = w*PX - np.abs(x + .5 - tx*PX)
+        fy = h*PX - np.abs(y + .5 - ty*PX)
+        depth = np.minimum(np.minimum(fx, fy), (fx + fy - cut*PX) / np.sqrt(2))
+        inside = (depth >= 0) & (region[..., 3] != 0)
+        tex = texture(name)
+        region[inside, :3] = tex[y[inside] % tex.shape[0], x[inside] % tex.shape[1]]
+        region[inside & (depth < 1.5), :3] = edge
+    for index, name in enumerate(("service_panel_a", "service_panel", "service_panel_b")):
+        tile = np.asarray(Image.fromarray(texture(name)).resize((36, 36), Image.Resampling.NEAREST))
+        x, y = 51*PX + index*36, 47*PX
+        img[y:y+36, x:x+36, :3] = tile
+    for tx, name in ((29, "sill_a"), (89, "sill_b")):
+        tex = texture(name)
+        img[63*PX:63*PX+tex.shape[0], tx*PX:tx*PX+tex.shape[1], :3] = tex
 
 
 def _belt_extras(img, ch, x, y, extras):
@@ -482,7 +551,8 @@ def window_strip(width_px, planet_x, seed=7):
 # floor (scripts/lunar_ground.gd); repainting material_1.png (roof) or material_2.png (wall face) still works.
 SOLID = "#Wzw"
 # Levels with their own wall materials: (roof, wall face), files in art/lunar. Others use material_1 / material_2.
-SECTOR_WALLS = {"eng": ("eng_roof", "eng_wall"), "bay": ("eng_roof", "eng_wall")}
+SECTOR_WALLS = {"eng": ("eng_roof", "eng_wall"), "bay": ("eng_roof", "eng_wall"),
+                "hotel": ("hotel/cap_mix", "hotel/hotel_enamel_mix")}
 WALL_TINTS = ["ffffff", "e1e7ec", "ede2d5"]
 ROOF_TINTS = ["ffffff", "dbe4ee", "f0e9df", "c6d3e2"]
 
@@ -579,6 +649,12 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     zone = ROOF_ZONE_FN[key](xx / float(PX), (yy + PX) / float(PX)) if key in ROOF_ZONE_FN else _roof_zone(key, xx // PX, (yy + PX) // PX)
     tint = np.stack([hexc(h) for h in (["ffffff"] * 4 if plain else ROOF_TINTS)])[zone % 4]
     rc = _tex_lookup(mat_roof, yy + PX, xx) * tint
+    if key in ("eng", "bay"):
+        indices = ((xx // (2*PX))*7 + ((yy+PX) // (2*PX))*3) % 11
+        for index, suffix in ((3, "_a"), (8, "_b")):
+            mask = roof & (indices == index)
+            tile = np.asarray(Image.open(os.path.join(art_dir, roof_name + suffix + ".png"))) / 255.
+            rc[mask] = tile[(yy[mask]+PX) % (2*PX), xx[mask] % (2*PX)]
     out[roof, :3] = rc[roof]
     # wall face: the material stretched over 32 pixels, or the window view where the wall is a window
     by = np.clip(bottom, 0, H - 1)
@@ -587,6 +663,18 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     wt = np.stack([hexc(h) for h in (["ffffff"] * 3 if plain else WALL_TINTS)])[np.abs(((ftx // 3) * 73856093) ^ (fty * 19349663)) % 3]
     # The wall texture is 2 tiles square and covers the 2-tile-tall face once top to bottom.
     fc = mat_wall[(v * mat_wall.shape[0]) // (2 * PX), ((xx % (2 * PX)) * mat_wall.shape[1]) // (2 * PX)] * wt
+    if key == "hotel":
+        # End-to-end wall modules follow the corridor; the unfinished wings show bare ribs.
+        fc = mat_wall[v, xx % mat_wall.shape[1]]
+        wing = face & (by >= 62*PX)
+        steel = np.asarray(Image.open(os.path.join(art_dir, "hotel/exposed_steel_mix.png"))) / 255.
+        fc[wing] = steel[v[wing], xx[wing] % steel.shape[1]]
+    if key in ("eng", "bay"):
+        indices = ((xx // (2*PX))*7 + (by // PX)*3) % 11
+        for index, suffix in ((3, "_a"), (8, "_b")):
+            mask = face & (indices == index)
+            tile = np.asarray(Image.open(os.path.join(art_dir, wall_name + suffix + ".png"))) / 255.
+            fc[mask] = tile[v[mask], xx[mask] % (2*PX)]
     if window is not None:
         win = np.asarray(window.convert("RGB"), dtype=np.float32) / 255.0
         is_win = chars[np.clip(fty, 0, th - 1), np.clip(ftx, 0, tw - 1)] == ord("w")
