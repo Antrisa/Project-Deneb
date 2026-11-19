@@ -56,7 +56,7 @@ Priority,Area,Kind,File(s),New size,Status,What to do / notes,Done?
 1,Engineering,furniture & prop,art/lunar/sorting_machine.png,96x74,Auto-shrunk stand-in,Ore sorter (stands on 4x3 tiles),
 1,Engineering,wall & roof texture,art/lunar/eng_roof.png,48x48,Integrated on art24; Engineering and Shuttle Bay verified at 1080p and 1440p,Seamless; 2x2 tiles. Roof = top of walls seen from above; wall = the front face.,Yes
 1,Engineering,wall & roof texture,art/lunar/eng_wall.png,48x48,Integrated on art24; Engineering and Shuttle Bay verified at 1080p and 1440p,Seamless; 2x2 tiles. Roof = top of walls seen from above; wall = the front face.,Yes
-1,Main level & shared,Floor pattern,"Main level paving (tools/bake_floor.py pattern) + paving_painted, garden_stone",48x48 textures,Promenade packs ready; main paving generator still uses legacy pattern,"The main level floor is drawn by code on the old grid, so some pixels are doubled. Needs new 48x48 floor textures for the plaza, walks, garden and games courts; Claude then switches the bake to use them.",
+1,Main level & shared,Floor pattern,tools/bake_floor.py + art/lunar/promenade/ + art/lunar/floor_main.png,48x48 textures,Integrated on art24,Six 48x48 paving families with two variations each. Five in-game locations verified at 1080p and 1440p.,Yes
 1,Main level & shared,animation strip,art/lunar/anim/air_scrubber.png,704x75 (16 frames),Auto-shrunk stand-in,"Looping machinery, 16 frames side by side, 8 fps. Same size frames as the still.",
 1,Main level & shared,furniture & prop,art/lunar/air_scrubber.png,44x75,Auto-shrunk stand-in,Fume extractor (stands on 2x3 tiles),
 1,Main level & shared,furniture & prop,art/lunar/arcade.png,36x56,Auto-shrunk stand-in,Arcade cabinet (stands on 1x3 tiles),

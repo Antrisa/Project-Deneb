@@ -1,9 +1,8 @@
 """Bakes the promenade's floor picture (art/lunar/floor_main.png) ahead of time.
 
 The game used to work this out pixel by pixel in GDScript (scripts/lunar_paving.gd) the first time you
-entered the main level: about eleven million pixels, which is why loading the level took so long. This is
-the same calculation in Python with numpy, run by tools/build.py. scripts/lunar_paving.gd is kept as the
-reference and as a fallback when the picture is missing.
+entered the main level: about eleven million pixels, which is why loading the level took so long. The build now samples native 48px promenade textures.
+scripts/lunar_paving.gd is retained as a legacy fallback when the baked picture is missing.
 
     python3 tools/bake_floor.py .            # bake from scripts/map_data.gd
 """
@@ -24,8 +23,8 @@ FORECOURT_HALF = 6.5
 
 # Pixels per tile in the baked pictures. 24 since the move to 24x48 characters (18 Nov): every baked floor and
 # wall picture is 24 pixels a tile, and the game draws it into its 16-unit tiles at two-thirds scale, so one
-# baked pixel is one art pixel like every other picture. Parts still designed on the old 16-pixel grid
-# (the main level's paving pattern, engineering's painted belts and pit) are worked out on that grid and
+# baked pixel is one art pixel like every other picture. Details still designed on the old 16-pixel grid
+# (engineering's painted belts and pit) are worked out on that grid and
 # spread over the new one, a pixel or two at a time; new floor textures (48x48 = 2x2 tiles) are used 1:1.
 PX = 24
 
@@ -175,8 +174,27 @@ def in_polygon(px, py, pts):
     return inside
 
 
+PROMENADE_MATERIALS = (
+    ("plaza_hex", "plaza_hex_plug", "plaza_hex_repair"),
+    ("fountain_walk", "fountain_walk_grip", "fountain_walk_plate"),
+    ("ring_sage", "ring_sage_brass_dash", "ring_sage_replacement"),
+    ("station_deck", "station_deck_a", "station_deck_b"),
+    ("garden_stone", "garden_stone_moss", "garden_stone_mineral"),
+    ("games_slab", "games_slab_pegs", "games_slab_course_marks"),
+)
+
+
 def bake(rows, art_dir, style="new", strip=128):
-    baker = Baker(art_dir)
+    if style == "v11":
+        baker = Baker(art_dir)
+    else:
+        tiles = np.array([
+            [np.asarray(Image.open(os.path.join(art_dir, "promenade", name + ".png")).convert("RGB"))
+             for name in family]
+            for family in PROMENADE_MATERIALS
+        ])
+        if tiles.shape != (6, 3, 2 * PX, 2 * PX, 3):
+            raise ValueError("Promenade materials must be 48x48 RGB tiles")
     H, W = len(rows) * PX, len(rows[0]) * PX
     if style != "v11":
         rows = wall_border_chars(rows)
@@ -190,7 +208,12 @@ def bake(rows, art_dir, style="new", strip=128):
         if not draw.any():
             continue
         Yn, Xn, ch = Yn[draw], Xn[draw], ch[draw]
-        y, x = (Yn * 16) // PX, (Xn * 16) // PX          # the pattern is designed on the old 16-per-tile grid
+        if style == "v11":
+            y, x = (Yn * 16) // PX, (Xn * 16) // PX
+        else:
+            # Distances below are world units; sample geometry at each native pixel centre.
+            y = (Yn + 0.5) * (16.0 / PX) - 1.0
+            x = (Xn + 0.5) * (16.0 / PX) - 1.0
         dxp = (x + 1 - CX_PX).astype(np.float32); dyp = (y + 1 - CY_PX).astype(np.float32)
         radius = np.hypot(dxp, dyp)
         spoke = np.minimum(np.minimum(np.abs(dxp), np.abs(dyp)), np.minimum(np.abs(dxp - dyp), np.abs(dxp + dyp)) * np.float32(0.70710678))
@@ -226,7 +249,13 @@ def bake(rows, art_dir, style="new", strip=128):
         on_route = (radius < 174) | ((route < 40) & ((radius < 480) | (ch == ord(".")) | (ch == ord("a"))))
         on_route |= fore > 0                                   # forecourts are paved like the walks
         kind = np.where(on_route, 1, kind)
-        color = baker.swatch(kind, x, y)
+        if style == "v11":
+            color = baker.swatch(kind, x, y)
+        else:
+            span = 2 * PX
+            seed = noise_at(Xn // span, Yn // span)
+            variant = (seed >= 75).astype(int) + (seed >= 88)
+            color = tiles[kind, variant, Yn % span, Xn % span].astype(np.float32) / 255.0
         edge_band = on_route & (route > 36) & (radius >= 170) & ~(fore > 0)
         color = np.where(edge_band[..., None], np.where((route > 38)[..., None], hexc("a99579"), hexc("f1dfbc")), color)
         b = (wp > 0.39) & (wp < 0.61) & (route > 44)
@@ -248,14 +277,6 @@ def rows_from_map_data(path):
     i = src.index('"main": {', src.index("const AREAS"))
     a = src.index('"floor": [', i)
     return json.loads(re.sub(r",\s*\]$", "]", src[a + 9: src.index("]", a) + 1]))
-
-
-if __name__ == "__main__":
-    root = sys.argv[1] if len(sys.argv) > 1 else "."
-    style = sys.argv[3] if len(sys.argv) > 3 else "new"
-    out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(root, "art", "lunar", "floor_main.png")
-    bake(rows_from_map_data(os.path.join(root, "scripts", "map_data.gd")), os.path.join(root, "art", "lunar"), style).save(out)
-    print("floor picture:", out)
 
 
 # ---------------------------------------------------------------- other levels in the promenade style
@@ -751,3 +772,11 @@ def crater_strip(width_px, seed=5):
     for mx in range(0, W, 16):
         img[:, mx:mx + 2, :3] = (150, 144, 128)
     return Image.fromarray(img, "RGBA")
+
+
+if __name__ == "__main__":
+    root = sys.argv[1] if len(sys.argv) > 1 else "."
+    style = sys.argv[3] if len(sys.argv) > 3 else "new"
+    out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(root, "art", "lunar", "floor_main.png")
+    bake(rows_from_map_data(os.path.join(root, "scripts", "map_data.gd")), os.path.join(root, "art", "lunar"), style).save(out)
+    print("floor picture:", out)
