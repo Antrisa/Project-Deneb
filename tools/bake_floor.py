@@ -655,11 +655,12 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     mat_roof = np.asarray(Image.open(os.path.join(art_dir, roof_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
     mat_wall = np.asarray(Image.open(os.path.join(art_dir, wall_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
     plain = key == "main" or key in SECTOR_WALLS                                   # sector materials are used as painted, no tints
+    varied_walls = key in ("main", "eng", "bay", "mine")
     # roof: the material, tinted by roof plate
     zone = ROOF_ZONE_FN[key](xx / float(PX), (yy + PX) / float(PX)) if key in ROOF_ZONE_FN else _roof_zone(key, xx // PX, (yy + PX) // PX)
     tint = np.stack([hexc(h) for h in (["ffffff"] * 4 if plain else ROOF_TINTS)])[zone % 4]
     rc = _tex_lookup(mat_roof, yy + PX, xx) * tint
-    if key in ("main", "eng", "bay"):
+    if varied_walls:
         indices = ((xx // (2*PX))*7 + ((yy+PX) // (2*PX))*3) % 11
         for index, suffix in ((3, "_a"), (8, "_b")):
             mask = roof & (indices == index)
@@ -679,7 +680,7 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
         wing = face & (by >= 62*PX)
         steel = np.asarray(Image.open(os.path.join(art_dir, "hotel/exposed_steel_mix.png"))) / 255.
         fc[wing] = steel[v[wing], xx[wing] % steel.shape[1]]
-    if key in ("main", "eng", "bay"):
+    if varied_walls:
         indices = ((xx // (2*PX))*7 + (by // PX)*3) % 11
         for index, suffix in ((3, "_a"), (8, "_b")):
             mask = face & (indices == index)

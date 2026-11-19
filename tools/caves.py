@@ -173,7 +173,8 @@ def build(g):
                                       'h': ('eng_floor_tech', ('8a7ab0', .2)), 'R': ('mine_path', ('6a5a4c', .35))}
     bake_floor.AREA_FLOORS['tunnels'] = {'m': ('mine_rock', ('3a3850', .2)), 'u': ('mine_path', ('3a3850', .2)),
                                          'o': ('mine_rock', ('5a4030', .35)), 'R': ('mine_path', ('6a5a4c', .35))}
-    bake_floor.SECTOR_WALLS['mine'] = bake_floor.SECTOR_WALLS['tunnels'] = ('mine_roof', 'mine_wall')
+    bake_floor.SECTOR_WALLS['mine'] = ('mine/roof', 'mine/wall')
+    bake_floor.SECTOR_WALLS['tunnels'] = ('mine_roof', 'mine_wall')
     g['CAVE_NODES'], g['CAVE_ENEMIES'] = nodes, enemies
     g['MINE_SPOTS'] = {'job': (55, 22), 'zaas': (9, 40), 'vzzket': (8, 27), 'ixali': (11, 28)}
     for who, (x, y) in g['MINE_SPOTS'].items():
