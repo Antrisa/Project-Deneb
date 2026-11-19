@@ -292,8 +292,8 @@ AREA_FLOORS = {
             "e": ("eng_floor_grate", None), "k": ("eng_floor_plate", ("6a3a2c", 0.45)), "q": (5, ("140e12", 0.88)),
             "j": ("eng_floor_plate", ("4a4e58", 0.25)), "a": ("eng_floor_pad", None)},
     "bay": {"u": ("eng_floor_hangar", None), "a": ("eng_floor_pad", None), "p": ("eng_floor_plate", None), "f": ("eng_floor_tech", None), "i": ("eng_floor_hangar", None)},
-    "west": {".": ("sp_terminal", None), "p": ("sp_plaza", None), "f": ("sp_carpet", None), "h": ("sp_carpet", ("1c2440", 0.55)), "u": ("sp_terminal", None),
-             "A": ("sp_plaza", None), "Q": ("sp_moon", None), "V": ("eng_floor_pad", None), "g": ("sp_glass", None), "Y": ("sp_basin", None)},
+    "west": {".": ("arrivals/terminal", None), "p": ("arrivals/plaza", None), "f": ("arrivals/carpet", None), "h": ("arrivals/carpet_blue", None), "u": ("arrivals/terminal", None),
+             "A": ("arrivals/plaza", None), "Q": ("sp_moon", None), "V": ("eng_floor_pad", None), "g": ("arrivals/glass", None), "Y": ("arrivals/basin", None)},
     "agri": {"Q": ("sp_moon", None), "a": ("sp_soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("sp_spa", None),
              "u": ("sp_terminal", None), "O": ("sp_water", ("70c8d0", 0.25)), "Y": ("sp_water", None)},
     "east": {".": ("sp_plaza", None), "s": ("ea_grass", None), "h": ("ea_deck", None), "a": ("sp_soil", None), "f": ("ea_rubber", None),
@@ -329,7 +329,8 @@ def bake_area(key, rows, art_dir, extras=None):
             else:
                 col = _tex_lookup(tex, ys, xs)
                 if ((key in ("eng", "bay") and kind.startswith("eng_floor_"))
-                        or (key == "east" and kind.startswith("ea_"))):
+                        or (key == "east" and kind.startswith("ea_"))
+                        or kind.startswith("arrivals/")):
                     index = (xs // (2*PX) * 7 + ys // (2*PX) * 3) % 11
                     # Index 2 also lands on a whole panel in the small East pavilion.
                     first = 2 if key == "east" else 3
