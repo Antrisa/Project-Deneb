@@ -3,7 +3,7 @@
 Ten hand-made layouts (the shapes in tools/dev/mock_mine3.py, drawn half as big again), each built three times,
 once per depth band, so the game has 30 cavern maps:
     rock   floors 1-15   stalagmite walls, dark chasms, iron and copper, a little quartz
-    lush   floors 16-30  mossy walls, giant mushrooms and ferns, overgrown pits, gold appears
+    lush   floors 16-30  mossy walls, giant mushrooms and glowing fungi, overgrown pits, gold appears
     steam  floors 31-44  crystal-blue walls, steam vents, hot pools, titanium and gold
 plus floor 45 (`cav_45`), the shore of the underground ocean, where the Harbinger waits.
 
@@ -28,8 +28,8 @@ SIZES.update({
 BANDS = {
     'rock': dict(title='rock', floor=('mine_rock', None), hole=(5, ('140e12', .88)), walls=('mine_roof', 'mine_wall'),
                  decor=[('stalagmite', 'Stalagmite')]),
-    'lush': dict(title='green', floor=('cav_moss', None), hole=(5, ('12301a', .82)), walls=('cav_lush_roof', 'cav_lush_wall'),
-                 decor=[('giant_mushroom', 'Giant mushroom'), ('fern', 'Cave fern'), ('fern', 'Cave fern')]),
+    'lush': dict(title='green', floor=('cav_moss', None), hole=(5, ('12301a', .82)), walls=('lush/roof', 'lush/wall'),
+                 decor=[('giant_mushroom', 'Giant mushroom'), ('glow_fungus', 'Glowing fungus'), ('glow_fungus', 'Glowing fungus')]),
     'steam': dict(title='steam', floor=('cav_slate', None), hole=('sp_water', ('f0a080', .18)), walls=('cav_steam_roof', 'cav_steam_wall'),
                   decor=[('steam_vent', 'Steam vent'), ('crystal_column', 'Crystal column')]),
 }

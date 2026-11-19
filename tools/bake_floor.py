@@ -655,7 +655,7 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     mat_roof = np.asarray(Image.open(os.path.join(art_dir, roof_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
     mat_wall = np.asarray(Image.open(os.path.join(art_dir, wall_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
     plain = key == "main" or key in SECTOR_WALLS                                   # sector materials are used as painted, no tints
-    varied_walls = key in ("main", "eng", "bay", "mine")
+    varied_walls = key in ("main", "eng", "bay", "mine") or roof_name == "lush/roof"
     # roof: the material, tinted by roof plate
     zone = ROOF_ZONE_FN[key](xx / float(PX), (yy + PX) / float(PX)) if key in ROOF_ZONE_FN else _roof_zone(key, xx // PX, (yy + PX) // PX)
     tint = np.stack([hexc(h) for h in (["ffffff"] * 4 if plain else ROOF_TINTS)])[zone % 4]
