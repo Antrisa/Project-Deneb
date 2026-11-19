@@ -90,6 +90,10 @@ static func events_for(day: int) -> Array[String]:
 	var view: String = sky.sky_for(day)
 	if sky.LABELS.has(view):
 		events.push_front("%s at the Observation Lounge" % sky.LABELS[view])
+	var bay = preload("res://scripts/bay_window.gd")
+	var lunar_view: String = bay.view_for(day)
+	if bay.LABELS.has(lunar_view):
+		events.append("%s at the Shuttle Bay" % bay.LABELS[lunar_view])
 	return events
 
 func _refresh() -> void:

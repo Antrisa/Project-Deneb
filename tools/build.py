@@ -3051,7 +3051,7 @@ for key_ in bake_floor.AREA_FLOORS:
     print("floor baked: art/lunar/floor_%s.png" % key_)
 # The lounge bake uses the quiet frame of the animated view.
 bake_floor.lounge_window_strip(A["lounge"].w, os.path.join(OUT, "art", "lunar")).save(os.path.join(OUT, "art", "lunar", "window_lounge.png"))
-bake_floor.crater_strip(A["bay"].w * 16).resize((A["bay"].w * bake_floor.PX, 2 * bake_floor.PX), bake_floor.Image.NEAREST).save(os.path.join(OUT, "art", "lunar", "window_bay.png"))
+bake_floor.bay_window_strip(A["bay"].w, os.path.join(OUT, "art", "lunar")).save(os.path.join(OUT, "art", "lunar", "window_bay.png"))
 for key_ in ["main"] + list(bake_floor.AREA_FLOORS):
     win_ = os.path.join(OUT, "art", "lunar", "window_%s.png" % key_)
     bake_floor.bake_walls(key_, A[key_].floor, os.path.join(OUT, "art", "lunar"), bake_floor.Image.open(win_) if os.path.exists(win_) else None).save(os.path.join(OUT, "art", "lunar", "walls_%s.png" % key_))

@@ -720,38 +720,12 @@ def wall_border_chars(rows):
     return ["".join(r) for r in out]
 
 
-def crater_strip(width_px, seed=5):
-    """The view out of the shuttle bay's windows: black sky and stars, the gas giant low on one side, the far
-    rim of the crater, and the grey crater floor close up. One strip 32 pixels tall across the whole map."""
-    import random
-    rnd = random.Random(seed)
-    W, H = width_px, 32
-    img = np.zeros((H, W, 4), dtype=np.uint8)
-    y, x = np.mgrid[0:H, 0:W]
-    img[..., :3] = np.stack([6 + y * 0.5, 8 + y * 0.6, 20 + y * 1.0], axis=-1).astype(np.uint8); img[..., 3] = 255
-    for _ in range(W // 5):
-        sx, sy = rnd.randrange(W), rnd.randrange(6, 20)
-        img[sy, sx, :3] = (230, 232, 250)
-    cx, cy, R = W * 0.78, 200.0, 190.0
-    d = np.hypot(x + .5 - cx, y + .5 - cy); inside = d < R
-    band = ((y + (x - cx) ** 2 / 3000.0) / 3.0).astype(int) % 5
-    pal = np.array([[96, 150, 206], [150, 196, 232], [74, 120, 186], [196, 222, 240], [110, 166, 214]], dtype=np.uint8)
-    img[inside, :3] = pal[band][inside]
-    # far crater rim: a ragged grey line, then the near floor
-    rim = 18 + (np.sin(x / 37.0) * 2 + np.sin(x / 11.0 + 1.3) * 1.2).astype(int)
-    far = (y >= rim) & (y < 22)
-    img[far, :3] = (118, 114, 124)
-    near = y >= 22
-    shade = (150 - (y - 22) * 3).clip(100, 160)
-    img[near, 0] = shade[near]; img[near, 1] = (shade - 6)[near]; img[near, 2] = (shade + 4)[near]
-    for _ in range(W // 9):
-        bx, by = rnd.randrange(W), rnd.randrange(23, 26)
-        img[by:by + 1, bx:bx + 3, :3] = (96, 92, 100)
-    img[0:5, :, :3] = (176, 168, 150); img[5, :, :3] = (90, 96, 112)
-    img[H - 6:H, :, :3] = (176, 168, 150); img[H - 7, :, :3] = (220, 214, 196)
-    for mx in range(0, W, 16):
-        img[:, mx:mx + 2, :3] = (150, 144, 128)
-    return Image.fromarray(img, "RGBA")
+def bay_window_strip(map_width, art_dir):
+    """Use the quiet view's first native frame for the static wall bake."""
+    with Image.open(os.path.join(art_dir, "bay_sky", "quiet.png")) as atlas:
+        if atlas.width != map_width * PX or atlas.height % (2 * PX):
+            raise ValueError("Shuttle Bay window atlas does not fit the current map")
+        return atlas.crop((0, 0, atlas.width, 2 * PX))
 
 
 if __name__ == "__main__":
