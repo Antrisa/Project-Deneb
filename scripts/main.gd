@@ -26,6 +26,7 @@ const UiScript = preload("res://scripts/ui.gd")
 const EnemyScript = preload("res://scripts/enemy.gd")
 const DialogueScript = preload("res://scripts/dialogue_box.gd")
 const MakerScript = preload("res://scripts/player_maker.gd")
+const MessWindow = preload("res://scripts/mess_window.gd")
 const BayWindow = preload("res://scripts/bay_window.gd")
 const LoungeSky = preload("res://scripts/lounge_sky.gd")
 const CalendarScript = preload("res://scripts/station_calendar.gd")
@@ -214,6 +215,10 @@ func _ready() -> void:
 			var window := BayWindow.new()
 			window.setup(self, data["floor"])
 			node.add_child(window)
+		elif area_name == "mess":
+			var dining_view := MessWindow.new()
+			dining_view.setup(self, data["floor"][0].length())
+			node.add_child(dining_view)
 		node.visible = false
 		add_child(node)
 		area_nodes[area_name] = node
@@ -530,7 +535,7 @@ func _go_to(area_name: String, tile: Vector2i, announce: bool = true) -> void:
 	for en in enemies:
 		en.visible = en.alive and en.area == area_name
 	player.position = _feet(tile)
-	player.set_limits(map_pixel_size())
+	player.set_limits(map_pixel_size(), MessWindow.HEADROOM if area_name == "mess" else 0)
 	var track: String = MUSIC.get(area_name, "under" if area_name.begins_with("cav_") else "town")
 	_play_music(track)
 	if announce:

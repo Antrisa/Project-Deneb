@@ -297,7 +297,7 @@ AREA_FLOORS = {
     "agri": {"Q": ("sp_moon", None), "a": ("sp_soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("sp_spa", None),
              "u": ("sp_terminal", None), "O": ("sp_water", ("70c8d0", 0.25)), "Y": ("sp_water", None)},
     "east": {".": ("sp_plaza", None), "s": ("ea_grass", None), "h": ("ea_deck", None), "a": ("sp_soil", None), "f": ("ea_rubber", None),
-             "k": ("ea_court", None), "o": ("sp_parquet", None), "t": ("ea_tile", None), "e": ("eng_floor_grate", None), "u": ("sp_terminal", None),
+             "k": ("ea_court", None), "o": ("ea_deck", None), "t": ("ea_tile", None), "e": ("eng_floor_grate", None), "u": ("sp_terminal", None),
              "A": ("sp_terminal", None)},
     "hotel": {
         "u": ("hotel/warm_deck_mix", None), "i": ("hotel/warm_deck_mix", None),
@@ -328,9 +328,12 @@ def bake_area(key, rows, art_dir, extras=None):
                 col = tex[ys % tex.shape[0], xs % tex.shape[1]]
             else:
                 col = _tex_lookup(tex, ys, xs)
-                if key in ("eng", "bay") and kind.startswith("eng_floor_"):
+                if ((key in ("eng", "bay") and kind.startswith("eng_floor_"))
+                        or (key == "east" and kind.startswith("ea_"))):
                     index = (xs // (2*PX) * 7 + ys // (2*PX) * 3) % 11
-                    for value, suffix in ((3, "_a"), (8, "_b")):
+                    # Index 2 also lands on a whole panel in the small East pavilion.
+                    first = 2 if key == "east" else 3
+                    for value, suffix in ((first, "_a"), (8, "_b")):
                         use = index == value
                         variant = np.asarray(Image.open(os.path.join(art_dir, kind + suffix + ".png"))) / 255.
                         col[use] = _tex_lookup(variant, ys[use], xs[use])

@@ -2,7 +2,7 @@ extends Node2D
 # Door frame and two independently clipped leaves, with a lit interior behind.
 var opening := 0.0
 var tex: Texture2D = preload("res://art/mess_hall/door.png")
-var room: Texture2D = preload("res://art/mess_hall/window.png")
+var room: Texture2D = preload("res://art/mess_hall/door_interior.png")
 func region(src: Rect2, dest: Vector2) -> void:
 	draw_texture_rect_region(tex,Rect2(dest,src.size*0.5),src)
 func _draw() -> void:

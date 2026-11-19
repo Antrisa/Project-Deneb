@@ -95,13 +95,13 @@ func _ready() -> void:
 	_cam.make_current()
 
 
-func set_limits(size: Vector2i) -> void:
+func set_limits(size: Vector2i, headroom: int = 0) -> void:
 	# A room smaller than the view (640x360 at 1.5x zoom: about 427x240 world units) is centred instead of
 	# sitting in the top-left corner.
 	var pad_x: int = maxi(0, (427 - size.x) / 2)
 	var pad_y: int = maxi(0, (240 - size.y) / 2)
 	_cam.limit_left = -pad_x
-	_cam.limit_top = -pad_y
+	_cam.limit_top = -pad_y - headroom
 	_cam.limit_right = size.x + pad_x
 	_cam.limit_bottom = size.y + pad_y
 	_cam.reset_smoothing()
