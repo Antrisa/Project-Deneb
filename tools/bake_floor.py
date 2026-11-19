@@ -328,7 +328,7 @@ def bake_area(key, rows, art_dir, extras=None):
                 span = 2 * PX
                 variant = ((xs // span * 17) ^ (ys // span * 29)) % (tex.shape[1] // span)
                 col = tex[ys % span, variant * span + xs % span]
-            elif kind.startswith("hotel/"):
+            elif kind.startswith(("hotel/", "residential/")):
                 # These atlases have multiple two-tile swatches, each already on the 24px grid.
                 col = tex[ys % tex.shape[0], xs % tex.shape[1]]
             else:

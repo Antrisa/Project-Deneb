@@ -144,13 +144,17 @@ def build(g):
     import bake_floor
     from survey import door_pair
     entries, warps = [], {'east': e.t.warps}
-    LIVING = [None, ('c08a50', .15), ('5a3a24', .25), ('a0a0a0', .25)]
-    BEDROOM = ['sp_carpet', 'sp_carpet_red', 'sp_parquet', 'sp_carpet']
     for n, door, facing, kind in homes:
         key = 'home%d' % n
         hm, mirror = make_home(g, key, 'Home %d' % n, kind, n % 2 == 0)
-        bake_floor.AREA_FLOORS[key] = {'o': ('sp_parquet', LIVING[n % 4]), 'k': ('sp_kitchen', None), 'h': (BEDROOM[n % 4], None),
-                                       'j': (BEDROOM[(n + 1) % 4], ('e0c080', .1)), 't': ('ea_tile', None)}
+        slate = kind == 'single' and mirror
+        deck = ('residential/slate_deck_mix' if slate else 'hotel/warm_deck_mix', None)
+        navy = ('hotel/navy_mix', None)
+        red = ('residential/red_carpet_mix', None)
+        bake_floor.AREA_FLOORS[key] = {
+            'o': deck, 'k': deck, 'h': navy if slate else red,
+            'j': navy if kind == 'family' else deck, 't': ('residential/bath_ceramic_mix', None),
+        }
         hm_door = hm.door
         warps[key] = hm.t.warps
         door_pair(entries, warps, 'east', door, facing, key, hm_door, 'N', 'Home %d' % n, 'East Complex')
