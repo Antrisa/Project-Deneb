@@ -186,8 +186,8 @@ Priority,Area,Kind,File(s),New size,Status,What to do / notes,Done?
 1,Main level & shared,furniture & prop,art/lunar/work_light.png,20x50,Auto-shrunk stand-in,Work light (stands on 1x2 tiles),
 1,Main level & shared,furniture & prop,art/lunar/workbench.png,72x62,Auto-shrunk stand-in,Tikka's workbench (stands on 3x2 tiles),
 1,Main level & shared,wall & roof texture,art/lunar/material_0.png,48x48,Auto-shrunk stand-in,Seamless; 2x2 tiles. Roof = top of walls seen from above; wall = the front face.,
-1,Main level & shared,wall & roof texture,art/lunar/material_1.png,48x48,Auto-shrunk stand-in,Seamless; 2x2 tiles. Roof = top of walls seen from above; wall = the front face.,
-1,Main level & shared,wall & roof texture,art/lunar/material_2.png,48x48,Auto-shrunk stand-in,Seamless; 2x2 tiles. Roof = top of walls seen from above; wall = the front face.,
+1,Main level & shared,wall & roof texture,art/lunar/material_1.png,48x48,Integrated on art24,Terran enamel roof cap with retaining-strap and service-cover variations. Promenade bake verified at 1080p and 1440p.,Yes
+1,Main level & shared,wall & roof texture,art/lunar/material_2.png,48x48,Integrated on art24,Terran enamel wall face with access-panel and vent variations. Promenade bake verified at 1080p and 1440p.,Yes
 1,Main level & shared,wall & roof texture,art/lunar/material_3.png,48x48,Auto-shrunk stand-in,Seamless; 2x2 tiles. Roof = top of walls seen from above; wall = the front face.,
 1,Main level & shared,wall & roof texture,art/lunar/material_4.png,48x48,Auto-shrunk stand-in,Seamless; 2x2 tiles. Roof = top of walls seen from above; wall = the front face.,
 1,Main level & shared,wall & roof texture,art/lunar/material_5.png,48x48,Auto-shrunk stand-in,Seamless; 2x2 tiles. Roof = top of walls seen from above; wall = the front face.,
@@ -314,7 +314,7 @@ Priority,Area,Kind,File(s),New size,Status,What to do / notes,Done?
 2,Main level & shared,prop / door / roof piece,art/lunar/waiting_seat_n.png,72x44,Auto-shrunk stand-in,waiting seat n,
 2,Main level & shared,prop / door / roof piece,art/lunar/workbench_n.png,72x56,Auto-shrunk stand-in,workbench n,
 2,Main level & shared,window strip,art/lunar/window_bay.png,600x24,Auto-shrunk stand-in,A long window band set into a wall; the view outside through the glass.,
-2,Main level & shared,window strip,art/lunar/window_lounge.png,912x24,Auto-shrunk stand-in,A long window band set into a wall; the view outside through the glass.,
+2,Main level & shared,window strip,art/lunar/window_lounge.png,1824x48 fallback; 912x64 per animated frame,Integrated on art24,Four-block-high curved glazing across 57 bays. Seven animated views verified in Godot at 1080p and 1440p.,Yes
 2,Mine & caverns,Boss,enemy_harbinger,tbd (suggested 4 frames of 96x96),Placeholder,Ask Claude to add boss sizing first.,
 2,Mine & caverns,Creatures,"enemy_bug, enemy_lizard, enemy_spore_crawler, enemy_vent_crab",48x24 (2 frames of 24x24),Auto-shrunk / enlarged stand-in,Bug and lizard were shrunk; spore crawler and vent crab are enlarged code placeholders. Redraw all.,
 2,Mine & caverns,prop / door / roof piece,art/lunar/boulder.png,44x38,Auto-shrunk stand-in,boulder,
@@ -327,7 +327,7 @@ Priority,Area,Kind,File(s),New size,Status,What to do / notes,Done?
 2,Shared,Effects,"fx_console, fx_display, fx_furnace, fx_core, fx_water, slash",96x24 (4 frames) / 48x24,Auto-shrunk stand-in,"Screen flicker, furnace glow, core, water, sword slash.",
 2,Shared,Item icons,art/items.png,24x24 each,Auto-shrunk stand-in,23 icons now; the crafting list needs about 200 more (Art Handoff 2).,
 2,Shared,Weapons in hand,"weapon_spear, weapon_sword",42x11 / 33x14,Auto-shrunk stand-in,Held during attacks.,
-2,Shared,Window views,"window_bay, window_lounge (made by the build)",map width x 48,"Old 16-grid, spread",Crater and gas-giant views drawn by code on the old grid. Optional: paint a 48-tall view strip.,
+2,Shared,Window views,"window_bay, window_lounge (made by the build)",Map width x 48 fallback,Lounge integrated; Shuttle Bay open,Lounge uses the animated sky and a matching quiet fallback. Shuttle Bay still uses the original crater view.,
 2,Spaceport & hotel,prop / door / roof piece,art/lunar/sp_bunk.png,48x48,Auto-shrunk stand-in,sp bunk,
 2,Spaceport & hotel,prop / door / roof piece,art/lunar/sp_star.png,48x48,Auto-shrunk stand-in,sp star,
 2,Survey Level,prop / door / roof piece,art/lunar/sanctum_door.png,24x84,Auto-shrunk stand-in,sanctum door,

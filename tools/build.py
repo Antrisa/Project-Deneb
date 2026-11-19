@@ -3049,8 +3049,8 @@ print("promenade floor baked: art/lunar/floor_main.png")
 for key_ in bake_floor.AREA_FLOORS:
     bake_floor.bake_area(key_, ["".join(r_) for r_ in A[key_].floor], os.path.join(OUT, "art", "lunar"), FLOOR_EXTRAS.get(key_)).save(os.path.join(OUT, "art", "lunar", "floor_%s.png" % key_))
     print("floor baked: art/lunar/floor_%s.png" % key_)
-# The window views are drawn on the old 16-per-tile grid, then spread onto the baked walls' grid.
-bake_floor.window_strip(A["lounge"].w * 16, 37.5 * 16).resize((A["lounge"].w * bake_floor.PX, 2 * bake_floor.PX), bake_floor.Image.NEAREST).save(os.path.join(OUT, "art", "lunar", "window_lounge.png"))
+# The lounge bake uses the quiet frame of the animated view.
+bake_floor.lounge_window_strip(A["lounge"].w, os.path.join(OUT, "art", "lunar")).save(os.path.join(OUT, "art", "lunar", "window_lounge.png"))
 bake_floor.crater_strip(A["bay"].w * 16).resize((A["bay"].w * bake_floor.PX, 2 * bake_floor.PX), bake_floor.Image.NEAREST).save(os.path.join(OUT, "art", "lunar", "window_bay.png"))
 for key_ in ["main"] + list(bake_floor.AREA_FLOORS):
     win_ = os.path.join(OUT, "art", "lunar", "window_%s.png" % key_)

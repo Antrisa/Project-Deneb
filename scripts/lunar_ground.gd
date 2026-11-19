@@ -91,10 +91,10 @@ func paint_region(n: Node2D, rows: Array, r: Rect2i) -> void:
 			if bottom and rows[y][x] == "w" and window_art != null:
 				# A window: the view outside, one strip drawn across the whole level so it lines up.
 				n.draw_rect(Rect2(x*16,y*16+16,16,4),Color(0.1,0.12,0.18,0.22))
-				n.draw_texture_rect_region(window_art,Rect2(x*16,y*16-16,16,32),Rect2(x*16,0,16,32))
+				n.draw_texture_rect_region(window_art,Rect2(x*16,y*16-16,16,32),Rect2(x * window_art.get_height()/2, 0, window_art.get_height()/2, window_art.get_height()))
 			elif bottom and not portals_above.has(Vector2i(x,y)):
 				n.draw_rect(Rect2(x*16,y*16+16,16,4),Color(0.1,0.12,0.18,0.22))
-				n.draw_texture_rect_region(materials[2],Rect2(x*16,y*16-16,16,32),Rect2((x%2)*32,0,32,64),wall_tint(x,y))
+				n.draw_texture_rect_region(materials[2],Rect2(x*16,y*16-16,16,32),Rect2((x%2)*materials[2].get_width()/2,0,materials[2].get_width()/2,materials[2].get_height()),wall_tint(x,y))
 				wall_detail(n,x,y)
 			else:
 				roof_tile(n,rows,x,y,-16)
@@ -195,7 +195,7 @@ func roof_tile(n: Node2D,rows: Array,x: int,y: int,lift: int) -> void:
 	var tint: Color=[Color("ffffff"),Color("dbe4ee"),Color("f0e9df"),Color("c6d3e2")][roof_zone(x,y)%4]
 	if not (rounded[0] or rounded[1] or rounded[2] or rounded[3]):
 		# Most roof tiles: one plain textured square, which Godot draws far faster than a polygon.
-		n.draw_texture_rect_region(materials[1],Rect2(x*16,y*16+lift,16,16),Rect2((x%4)*16,(y%4)*16,16,16),tint)
+		n.draw_texture_rect_region(materials[1],Rect2(x*16,y*16+lift,16,16),Rect2(Vector2(x%2,y%2)*materials[1].get_size()/2,materials[1].get_size()/2),tint)
 		return
 	var centers: Array[Vector2]=[Vector2(5,5),Vector2(11,5),Vector2(11,11),Vector2(5,11)]
 	var corners: Array[Vector2]=[Vector2(0,0),Vector2(16,0),Vector2(16,16),Vector2(0,16)]
@@ -205,7 +205,7 @@ func roof_tile(n: Node2D,rows: Array,x: int,y: int,lift: int) -> void:
 			for j in range(5):points.append(centers[i]+Vector2.from_angle(PI+i*PI/2+j*PI/8)*5)
 		else:points.append(corners[i])
 	for i in points.size():
-		uv.append((points[i]+Vector2((x%4)*16,(y%4)*16))/64.0)
+		uv.append((points[i]+Vector2((x%2)*16,(y%2)*16))/32.0)
 		points[i]+=Vector2(x*16,y*16+lift)
 	n.draw_polygon(points,PackedColorArray([tint]),uv,materials[1])
 func _next_to_moon(rows: Array,x: int,y: int) -> bool:

@@ -86,6 +86,10 @@ static func events_for(day: int) -> Array[String]:
 	for who in MapData.VISITOR_DAYS:
 		if weekday in MapData.VISITOR_DAYS[who]:
 			events.append("%s visiting market" % who)
+	var sky = preload("res://scripts/lounge_sky.gd")
+	var view: String = sky.sky_for(day)
+	if sky.LABELS.has(view):
+		events.push_front("%s at the Observation Lounge" % sky.LABELS[view])
 	return events
 
 func _refresh() -> void:

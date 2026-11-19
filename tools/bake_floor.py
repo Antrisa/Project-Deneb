@@ -531,36 +531,16 @@ def _engineering_extras(img, ch, x, y, extras):
     img[..., :3] = np.clip(rgb, 0, 255).astype(np.uint8)
 
 
-def window_strip(width_px, planet_x, seed=7):
-    """The view through a long curved window: one strip 32 pixels tall across the whole level, so the
-    gas giant lines up from one window tile to the next. Frame and sill top and bottom, mullions every tile."""
-    import random
-    rnd = random.Random(seed)
-    W, H = width_px, 32
-    img = np.zeros((H, W, 4), dtype=np.uint8)
-    y, x = np.mgrid[0:H, 0:W]
-    sky = np.stack([10 + y * 0.6, 14 + y * 0.8, 34 + y * 1.4], axis=-1)
-    img[..., :3] = sky.astype(np.uint8); img[..., 3] = 255
-    for _ in range(W // 6):                                   # stars
-        sx, sy = rnd.randrange(W), rnd.randrange(6, 26)
-        img[sy, sx, :3] = (230, 232, 250) if rnd.random() < .7 else (250, 220, 170)
-    # The gas giant: a big disc rising from below, banded blue and white.
-    cx, cy, R = planet_x, 300.0, 320.0
-    d = np.hypot(x + .5 - cx, y + .5 - cy)
-    inside = d < R
-    band = ((y + (x - cx) ** 2 / 2600.0) / 3.0).astype(int) % 5
-    pal = np.array([[96, 150, 206], [150, 196, 232], [74, 120, 186], [196, 222, 240], [110, 166, 214]], dtype=np.uint8)
-    col = pal[band]
-    shade = np.clip(1.0 - (d / R) ** 6 * 0.35, 0, 1)[..., None]
-    img[inside, :3] = (col[inside] * shade[inside]).astype(np.uint8)
-    rim = inside & (d > R - 2.2)
-    img[rim, :3] = (210, 236, 250)
-    # frame: lintel, sill and a mullion on every tile edge
-    img[0:5, :, :3] = (176, 168, 150); img[5, :, :3] = (90, 96, 112)
-    img[H - 6:H, :, :3] = (176, 168, 150); img[H - 7, :, :3] = (220, 214, 196)
-    for mx in range(0, W, 16):
-        img[:, mx:mx + 2, :3] = (150, 144, 128)
-    return Image.fromarray(img, "RGBA")
+def lounge_window_strip(map_width, art_dir):
+    """Align the bottom two blocks of the quiet sky with the baked lounge wall."""
+    with Image.open(os.path.join(art_dir, "lounge_sky", "clear.png")) as atlas:
+        frame_height = atlas.height // 32
+        view = atlas.crop((0, frame_height // 2, atlas.width, frame_height))
+    left = 9 * PX
+    view = view.resize((57 * PX, 2 * PX), Image.Resampling.NEAREST)
+    strip = Image.new("RGB", (map_width * PX, 2 * PX))
+    strip.paste(view, (left, 0))
+    return strip
 
 
 # ---------------------------------------------------------------- smooth walls
@@ -665,12 +645,12 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     roof_name, wall_name = SECTOR_WALLS.get(key, ("material_1", "material_2"))
     mat_roof = np.asarray(Image.open(os.path.join(art_dir, roof_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
     mat_wall = np.asarray(Image.open(os.path.join(art_dir, wall_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
-    plain = key in SECTOR_WALLS                                   # sector materials are used as painted, no tints
+    plain = key == "main" or key in SECTOR_WALLS                                   # sector materials are used as painted, no tints
     # roof: the material, tinted by roof plate
     zone = ROOF_ZONE_FN[key](xx / float(PX), (yy + PX) / float(PX)) if key in ROOF_ZONE_FN else _roof_zone(key, xx // PX, (yy + PX) // PX)
     tint = np.stack([hexc(h) for h in (["ffffff"] * 4 if plain else ROOF_TINTS)])[zone % 4]
     rc = _tex_lookup(mat_roof, yy + PX, xx) * tint
-    if key in ("eng", "bay"):
+    if key in ("main", "eng", "bay"):
         indices = ((xx // (2*PX))*7 + ((yy+PX) // (2*PX))*3) % 11
         for index, suffix in ((3, "_a"), (8, "_b")):
             mask = roof & (indices == index)
@@ -690,7 +670,7 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
         wing = face & (by >= 62*PX)
         steel = np.asarray(Image.open(os.path.join(art_dir, "hotel/exposed_steel_mix.png"))) / 255.
         fc[wing] = steel[v[wing], xx[wing] % steel.shape[1]]
-    if key in ("eng", "bay"):
+    if key in ("main", "eng", "bay"):
         indices = ((xx // (2*PX))*7 + (by // PX)*3) % 11
         for index, suffix in ((3, "_a"), (8, "_b")):
             mask = face & (indices == index)

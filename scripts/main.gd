@@ -26,6 +26,7 @@ const UiScript = preload("res://scripts/ui.gd")
 const EnemyScript = preload("res://scripts/enemy.gd")
 const DialogueScript = preload("res://scripts/dialogue_box.gd")
 const MakerScript = preload("res://scripts/player_maker.gd")
+const LoungeSky = preload("res://scripts/lounge_sky.gd")
 const CalendarScript = preload("res://scripts/station_calendar.gd")
 var station_calendar
 
@@ -204,6 +205,10 @@ func _ready() -> void:
 		var data: Dictionary = MapData.AREAS[area_name]
 		var node = AreaScript.new()
 		node.setup(data, tiles_tex)
+		if area_name == "lounge":
+			var glass := LoungeSky.new()
+			glass.setup(self)
+			node.add_child(glass)
 		node.visible = false
 		add_child(node)
 		area_nodes[area_name] = node
@@ -1013,6 +1018,8 @@ func _interact(t: Dictionary) -> void:
 		if not company.is_empty():
 			_say(t.name,["%s are using this table. You watch their next move; the other table may be free." % ", ".join(company)])
 		else: community_game.start()
+	elif current_area == "lounge" and (kind == "observe" or (kind == "look" and t.name == "Panoramic window")):
+		_say(t.name, [LoungeSky.OBSERVATIONS[LoungeSky.sky_for(day)]])
 	elif kind == "observe":
 		_say(t.name,["Beyond the pressure glass: grey ridges, old impact craters, and the long shadows of the lunar plain.","The telescope picks out a survey beacon blinking against the dark horizon."])
 	elif kind == "read":
