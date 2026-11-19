@@ -30,7 +30,7 @@ BANDS = {
                  decor=[('stalagmite', 'Stalagmite')]),
     'lush': dict(title='green', floor=('cav_moss', None), hole=(5, ('12301a', .82)), walls=('lush/roof', 'lush/wall'),
                  decor=[('giant_mushroom', 'Giant mushroom'), ('glow_fungus', 'Glowing fungus'), ('glow_fungus', 'Glowing fungus')]),
-    'steam': dict(title='steam', floor=('cav_slate', None), hole=('sp_water', ('f0a080', .18)), walls=('cav_steam_roof', 'cav_steam_wall'),
+    'steam': dict(title='steam', floor=('cav_slate', None), hole=('sp_water', ('f0a080', .18)), walls=('steam/roof', 'steam/wall'),
                   decor=[('steam_vent', 'Steam vent'), ('crystal_column', 'Crystal column')]),
 }
 
@@ -119,7 +119,7 @@ def reachable(room, start):
     return seen
 
 
-def finish(g, room, band, arrive, decor_seed, decor_n=6):
+def finish(g, room, band, arrive, decor_seed, decor_n=6, walls=None):
     """Ladder, decoration, the open spots for the game to fill, and registration."""
     b = BANDS[band]
     ax, ay = arrive
@@ -147,7 +147,7 @@ def finish(g, room, band, arrive, decor_seed, decor_n=6):
     assert len(spots) >= 80, ('too few open spots', room.key, len(spots))
     import bake_floor
     bake_floor.AREA_FLOORS[room.key] = {'m': b['floor'], 'p': (3, ('5a4030', .3)), 'O': b['hole']}
-    bake_floor.SECTOR_WALLS[room.key] = b['walls']
+    bake_floor.SECTOR_WALLS[room.key] = walls or b['walls']
     for k in ('AREA_PROPS', 'AREA_ROOF_PROPS', 'AREA_LIGHTS'): g.setdefault(k, {})[room.key] = room.props if k == 'AREA_PROPS' else []
     g.setdefault('EXTRA_THINGS', []).extend(room.things)
     g.setdefault('LUNAR_EXTRA', {})[room.t.title] = room.key
@@ -193,5 +193,5 @@ def build(g):
     ux, uy = 7, 8
     room.thing('look', 'Underground ocean', 'Look', 28, 26, 50)          # the Harbinger itself is a creature (main.gd)
     room.t.zones.append(['The underground ocean', 1, 1, W - 2, H - 2])
-    maps['cav_45'] = finish(g, room, 'steam', (ux, uy), 45, 4)
+    maps['cav_45'] = finish(g, room, 'steam', (ux, uy), 45, 4, walls=('cav_steam_roof', 'cav_steam_wall'))
     g['CAVERNS'] = {'maps': maps, 'bands': bands, 'last': 45, 'gate': [7, 26], 'boss': [20, 22]}
