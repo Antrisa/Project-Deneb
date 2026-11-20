@@ -1,0 +1,53 @@
+[gd_resource type="Theme" format=3]
+
+[sub_resource type="StyleBoxFlat" id="Panel"]
+bg_color = Color(0.95,0.92,0.85,1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.65,0.36,0.24,1)
+shadow_color = Color(0.12,0.11,0.18,0.8)
+shadow_size = 2
+shadow_offset = Vector2(1, 2)
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="Button"]
+bg_color = Color(0.87,0.82,0.72,1)
+border_width_bottom = 1
+border_color = Color(0.64,0.51,0.39,1)
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 3.0
+content_margin_bottom = 3.0
+
+[sub_resource type="StyleBoxFlat" id="Over"]
+bg_color = Color(0.72,0.35,0.20,1)
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 3.0
+content_margin_bottom = 3.0
+
+[sub_resource type="StyleBoxFlat" id="Focus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.65,0.28,0.15,1)
+
+[resource]
+default_font_size = 12
+PanelContainer/styles/panel = SubResource("Panel")
+Label/colors/font_color = Color(0.20,0.18,0.20,1)
+Button/colors/font_color = Color(0.20,0.18,0.20,1)
+Button/colors/font_focus_color = Color(0.20,0.18,0.20,1)
+Button/colors/font_hover_color = Color(1,0.96,0.86,1)
+Button/colors/font_pressed_color = Color(1,0.96,0.86,1)
+Button/styles/normal = SubResource("Button")
+Button/styles/pressed = SubResource("Over")
+Button/styles/hover = SubResource("Over")
+Button/styles/focus = SubResource("Focus")

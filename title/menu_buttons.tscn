@@ -1,0 +1,93 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://title/menu_buttons.gd" id="overlay"]
+[ext_resource type="Script" path="res://title/menu_button.gd" id="button"]
+[ext_resource type="Texture2D" path="res://title/art/play_idle.png" id="play_idle"]
+[ext_resource type="Texture2D" path="res://title/art/play_focus.png" id="play_focus"]
+[ext_resource type="Texture2D" path="res://title/art/play_pressed.png" id="play_pressed"]
+[ext_resource type="Texture2D" path="res://title/art/coop_idle.png" id="coop_idle"]
+[ext_resource type="Texture2D" path="res://title/art/coop_focus.png" id="coop_focus"]
+[ext_resource type="Texture2D" path="res://title/art/coop_pressed.png" id="coop_pressed"]
+[ext_resource type="Texture2D" path="res://title/art/settings_idle.png" id="settings_idle"]
+[ext_resource type="Texture2D" path="res://title/art/settings_focus.png" id="settings_focus"]
+[ext_resource type="Texture2D" path="res://title/art/settings_pressed.png" id="settings_pressed"]
+[ext_resource type="Texture2D" path="res://title/art/quit_idle.png" id="quit_idle"]
+[ext_resource type="Texture2D" path="res://title/art/quit_focus.png" id="quit_focus"]
+[ext_resource type="Texture2D" path="res://title/art/quit_pressed.png" id="quit_pressed"]
+
+[node name="MenuButtons" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("overlay")
+
+[node name="Stack" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 150.0
+offset_bottom = 150.0
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Play" type="TextureButton" parent="Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 33)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+texture_filter = 1
+ignore_texture_size = true
+stretch_mode = 0
+accessibility_name = "Play"
+texture_normal = ExtResource("play_idle")
+texture_pressed = ExtResource("play_pressed")
+script = ExtResource("button")
+active_texture = ExtResource("play_focus")
+
+[node name="Coop" type="TextureButton" parent="Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 33)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+texture_filter = 1
+ignore_texture_size = true
+stretch_mode = 0
+accessibility_name = "Co-op"
+texture_normal = ExtResource("coop_idle")
+texture_pressed = ExtResource("coop_pressed")
+script = ExtResource("button")
+active_texture = ExtResource("coop_focus")
+
+[node name="Settings" type="TextureButton" parent="Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 33)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+texture_filter = 1
+ignore_texture_size = true
+stretch_mode = 0
+accessibility_name = "Settings"
+texture_normal = ExtResource("settings_idle")
+texture_pressed = ExtResource("settings_pressed")
+script = ExtResource("button")
+active_texture = ExtResource("settings_focus")
+
+[node name="Quit" type="TextureButton" parent="Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 33)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+texture_filter = 1
+ignore_texture_size = true
+stretch_mode = 0
+accessibility_name = "Quit"
+texture_normal = ExtResource("quit_idle")
+texture_pressed = ExtResource("quit_pressed")
+script = ExtResource("button")
+active_texture = ExtResource("quit_focus")

@@ -270,6 +270,23 @@ func play_eating(look: Dictionary, food: Texture2D = null) -> bool:
 	return true
 
 
+# The walk sheet (4 directions x 3 poses), for pictures of the player elsewhere: the datapad's gear page.
+func front_sheet() -> Texture2D:
+	return _sprite.texture
+
+
+# A bubble over the player's head (overhead_emotes/), picked on the datapad's emote page (V).
+var _emote = null
+func show_emote(id: StringName) -> void:
+	if _emote == null:
+		if not ResourceLoader.exists("res://overhead_emotes/overhead_emote.tscn"):
+			return
+		_emote = load("res://overhead_emotes/overhead_emote.tscn").instantiate()
+		_emote.scale = Vector2.ONE * (2.0 / 3.0)       # 24-pixel art; its foot sits just above the 32-tall sprite
+		add_child(_emote)
+	_emote.show_story(id, 1.4)
+
+
 func _look_colour(look: Dictionary, key: String) -> Color:
 	var hex: String = str(look.get(key, ""))
 	return Color.html(hex) if Color.html_is_valid(hex) else Color.WHITE

@@ -34,6 +34,8 @@ var station_calendar
 
 const CreatorScript = preload("res://scripts/creator.gd")
 const TitleScript = preload("res://scripts/title_screen.gd")
+const BridgeScript = preload("res://scripts/datapad_bridge.gd")
+var datapad                        # the Terran datapad HUD and pages (scripts/datapad_bridge.gd); null = old UI
 const EMOTE_SCENE := "res://overhead_emotes/overhead_emote.tscn"     # bubbles over residents' heads (20 Nov)
 var title                          # the title screen (scripts/title_screen.gd) until Play is pressed, then null
 var emote_scene: PackedScene
@@ -296,6 +298,7 @@ func _ready() -> void:
 			player.set_sheet(maker.sheet(appearance))
 	# The title screen covers everything (the character screen included) until Play is pressed.
 	title = TitleScript.new()
+	title.world = self
 	title.play_requested.connect(_on_title_play)
 	add_child(title)
 
@@ -362,6 +365,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		title.handle_input(event)
 		get_viewport().set_input_as_handled()
 		return
+	if datapad != null and datapad.blocking():
+		return                     # a datapad page is open; it takes its own keys
 	if travelling or garden_busy: return
 	if community_game != null and community_game.open:
 		community_game.handle_input(event)
@@ -422,11 +427,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			dialogue.cancel()
 		return
 	if event.is_action_pressed("menu"):
-		ui.show_menu()
-		sfx("click")
+		if datapad != null:
+			datapad.open_page("Inventory")
+		else:
+			ui.show_menu()
+			sfx("click")
 	elif event.is_action_pressed("journal"):
-		ui.show_menu(4)
-		sfx("click")
+		if datapad != null:
+			datapad.open_page("Journal")
+		else:
+			ui.show_menu(4)
+			sfx("click")
 	elif event.is_action_pressed("interact"):
 		_interact_nearest()
 	elif event.is_action_pressed("use"):
@@ -478,8 +489,8 @@ func _mouse_button(button: int) -> void:
 		selected = (selected + 1) % 8
 	elif button == MOUSE_BUTTON_LEFT:
 		var at: Vector2 = ui.mouse()
-		var slot: int = ui.hotbar_slot_at(at)
-		if ui.menu_button_at(at):
+		var slot: int = ui.hotbar_slot_at(at) if datapad == null else -1
+		if datapad == null and ui.menu_button_at(at):
 			ui.show_menu()
 			sfx("click")
 		elif slot != -1:
@@ -1881,7 +1892,7 @@ func enemy_died(en) -> void:
 
 
 func hurt_player(amount: int, from: Vector2) -> void:
-	if hurt_cd > 0.0 or dialogue.active or ui.open:
+	if hurt_cd > 0.0 or dialogue.active or ui.open or (datapad != null and datapad.blocking()):
 		return
 	hurt_cd = 0.9
 	hp -= amount
@@ -2065,6 +2076,23 @@ func _build_ui() -> void:
 	ui.world = self
 	ui_layer.add_child(ui)
 
+	# The Terran datapad (datapad/, 20 Nov) draws the HUD and the menu pages: health and energy, the clock and
+	# scrip, the quick slots, Inventory, Crafting, NPC relations, Map, Quests and Settings. The old hotbar,
+	# menu and day summary (scripts/ui.gd) are only used if the datapad folder is missing.
+	var bridge = BridgeScript.new()
+	add_child(bridge)
+	if bridge.setup(self):
+		datapad = bridge
+		ui.visible = false
+		hud_clock.visible = false            # the datapad's clock shows the time, date and scrip
+		hud_toast.visible = false            # messages show on the datapad
+		# Keep the zone, goal and [E] hint clear of the datapad's corner plates, item label and messages.
+		hud_zone.position = Vector2(4, 33)
+		hud_goal.position = Vector2(156, 33)
+		hud_hint.position = Vector2(4, 120)
+	else:
+		bridge.queue_free()
+
 	# The character screen, if the layered player art is installed (art/player/).
 	maker = MakerScript.new()
 	if maker.load_layers():
@@ -2103,10 +2131,15 @@ func _hud_label(parent: Node, pos: Vector2, size: Vector2) -> Label:
 func _toast(msg: String) -> void:
 	hud_toast.text = msg
 	toast_time = 3.5
+	if datapad != null:
+		datapad.notify(msg)
 
 
 func _process(delta: float) -> void:
-	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open)
+	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (datapad != null and datapad.blocking())
+	if datapad != null:
+		# The datapad leaves the keys alone while one of the game's own windows is open.
+		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (station_calendar != null and station_calendar.open) or travelling or garden_busy)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	_animate()
@@ -2211,7 +2244,10 @@ func _end_day() -> void:
 	var finished: int = day
 	ledger = {}
 	_next_day()
-	ui.show_recap(finished, lines, net, credits, talked)
+	if datapad != null:
+		datapad.show_recap(finished, lines, net, credits, talked)
+	else:
+		ui.show_recap(finished, lines, net, credits, talked)
 
 
 # What the Journal page shows: [title, [lines], finished?]
