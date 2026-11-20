@@ -31,6 +31,7 @@ var _act := "idle"           # what they do there: work, eat or idle
 var _idle_time := 0.0
 var activity_pose: Node2D
 var away := false            # a visitor who is not on the station today: not shown, cannot be talked to
+var emote = null             # the bubble over their head (overhead_emotes/overhead_emote.gd), added by main.gd
 
 const FACING := {"d": 0, "u": 1, "l": 2, "r": 3}
 const ACT_ROW := {"work": 0, "eat": 1, "idle": 2}

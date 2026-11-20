@@ -33,6 +33,10 @@ const CalendarScript = preload("res://scripts/station_calendar.gd")
 var station_calendar
 
 const CreatorScript = preload("res://scripts/creator.gd")
+const TitleScript = preload("res://scripts/title_screen.gd")
+const EMOTE_SCENE := "res://overhead_emotes/overhead_emote.tscn"     # bubbles over residents' heads (20 Nov)
+var title                          # the title screen (scripts/title_screen.gd) until Play is pressed, then null
+var emote_scene: PackedScene
 
 const DAY_START := 6 * 60          # 06:00
 const DAY_END := 25 * 60           # 1:00 am: if you are still up, you pass out
@@ -290,6 +294,15 @@ func _ready() -> void:
 			creator.show_for(maker.defaults(), true)
 		else:
 			player.set_sheet(maker.sheet(appearance))
+	# The title screen covers everything (the character screen included) until Play is pressed.
+	title = TitleScript.new()
+	title.play_requested.connect(_on_title_play)
+	add_child(title)
+
+
+func _on_title_play() -> void:
+	title = null
+	_toast("Day %d" % day)
 
 
 # ---------------------------------------------------------------- input
@@ -345,6 +358,10 @@ func _size_window() -> void:
 	DisplayServer.window_set_position(usable.position + (usable.size - size) / 2)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if title != null and title.open:
+		title.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
 	if travelling or garden_busy: return
 	if community_game != null and community_game.open:
 		community_game.handle_input(event)
@@ -425,6 +442,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _interact_nearest() -> void:
+	if player.eating:
+		return
 	var t = _nearest_thing()
 	if t != null:
 		_interact(t)
@@ -799,6 +818,22 @@ func _add_resident(who: String, entries: Array) -> void:
 	r.visible = false
 	actors.add_child(r)
 	residents.append(r)
+	# An emote bubble over the head (overhead_emotes/). It is a child of the resident, so it follows them and
+	# shares their two-thirds scale: one art pixel per screen pixel, the bubble's foot just above a 48-tall sprite.
+	if emote_scene == null and ResourceLoader.exists(EMOTE_SCENE):
+		emote_scene = load(EMOTE_SCENE)
+	if emote_scene != null:
+		r.emote = emote_scene.instantiate()
+		r.add_child(r.emote)
+
+
+# Shows an emote bubble over a resident's head: surprise, question, love, joy, sad, frustrated, hello, ready,
+# no, wait, help, follow or cute (overhead_emotes/README.md).
+func _emote(who: String, id: StringName, seconds: float = 1.4) -> void:
+	for r in residents:
+		if r.who == who and r.emote != null:
+			r.emote.show_story(id, seconds)
+			return
 
 
 func _snap_residents() -> void:
@@ -1131,6 +1166,10 @@ func _talk(who: String) -> void:
 	var st: Dictionary = persons[who]
 	if who == "Sara":
 		_sara_play("greeting" if not st["met"] else ["explain", "talk_both", "nod", "head_tilt", "laugh"].pick_random())
+	if not st["met"]:
+		_emote(who, &"hello")
+	elif not st["talked_today"]:
+		_emote(who, &"joy")
 	if not st["talked_today"]:
 		st["talked_today"] = true
 		st["friendship"] = int(st["friendship"]) + 1
@@ -1427,6 +1466,8 @@ func _nearest_of_kind(kind: String):
 
 
 func _use_tool() -> void:
+	if player.eating:
+		return
 	var use: String = _selected_use()
 	var item: String = slots[selected]
 	if use == "mine":
@@ -1883,10 +1924,35 @@ func _eat(item: String) -> void:
 	hp = mini(MAX_HP, hp + int(info.get("heal", 5)))
 	energy = mini(MAX_ENERGY, energy + gives_energy)
 	sfx("eat")
+	# The eating animation (player_eating/) needs the layered player art; the medpack is held up instead.
+	var animated := false
+	if gives_energy > 0 and creator != null:
+		animated = player.play_eating(appearance if not appearance.is_empty() else maker.defaults(), _food_picture(item))
+	if not animated:
+		player.show_tool(_item_icon(item))
 	if item == "medpack":
 		_toast("The medpack hisses. Everything stops hurting at once.")
 	else:
 		_toast("Ration pack six. It restores you, and that is all that can be said for it.")
+
+
+# The picture the eating animation holds: the ration has its own small hand-drawn one in player_eating/
+# (null asks for it); anything else uses its inventory icon cropped to the drawn part.
+func _food_picture(item: String) -> Texture2D:
+	if item == "ration":
+		return null
+	var size: int = items_tex.get_height()
+	var icon: int = _item_icon(item)
+	var img: Image = items_tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	var used: Rect2i = img.get_region(Rect2i(icon * size, 0, size, size)).get_used_rect()
+	if used.size.x <= 0 or used.size.y <= 0:
+		used = Rect2i(0, 0, size, size)
+	var pic := AtlasTexture.new()
+	pic.atlas = items_tex
+	pic.region = Rect2(icon * size + used.position.x, used.position.y, used.size.x, used.size.y)
+	return pic
 
 
 # ---------------------------------------------------------------- little effects
@@ -2038,7 +2104,7 @@ func _toast(msg: String) -> void:
 
 
 func _process(delta: float) -> void:
-	var paused: bool = (community_game != null and community_game.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open)
+	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	_animate()

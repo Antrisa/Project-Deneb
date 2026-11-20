@@ -33,6 +33,11 @@ var _attack_dir := Vector2.DOWN
 const ATTACK_LEN := 0.26
 const HAND := Vector2(0, -11)
 
+# The eating animation (player_eating/, from the 20 Nov player pack). It is made the first time it is needed.
+const EAT_SCENE := "res://player_eating/eating.tscn"
+var eating := false
+var _eat_anim = null         # player_eating/eating.gd
+
 
 func _ready() -> void:
 	_sprite = Sprite2D.new()
@@ -232,6 +237,49 @@ func set_carrying(value: bool) -> void:
 	_crate.visible = value
 
 
+# Plays the eating animation: the food is lifted to the mouth, eaten, and the hand comes back down (0.58 s).
+# look is the character-screen choices (scripts/player_maker.gd), so the animation wears the player's own
+# hair, clothes and colours. food is the item's picture; null uses the pack's own small ration picture.
+# Returns false, changing nothing, if it can't play just now (sitting, carrying, or already eating).
+func play_eating(look: Dictionary, food: Texture2D = null) -> bool:
+	if eating or sitting or carrying or look.is_empty() or not ResourceLoader.exists(EAT_SCENE):
+		return false
+	if _eat_anim == null:
+		_eat_anim = load(EAT_SCENE).instantiate()
+		_eat_anim.scale = Vector2.ONE * (2.0 / 3.0)       # 24-pixel art, like the walk sheet
+		# Its cells (48x68, feet at 24,63) put the feet one art pixel higher than the walk sheet does.
+		_eat_anim.position = Vector2(0, 2.0 / 3.0)
+		add_child(_eat_anim)
+		_eat_anim.eating_finished.connect(_eating_done)
+	_eat_anim.body_type = 2 if int(look.get("body", 0)) == 1 else 1       # Female uses body 2, as in player_maker
+	_eat_anim.hair_style = clampi(int(look.get("hair", 0)), 0, 9)
+	_eat_anim.face_style = clampi(int(look.get("faces", 0)), 0, 9)
+	_eat_anim.top_style = clampi(int(look.get("tops", 0)), 0, 9)
+	_eat_anim.bottom_style = clampi(int(look.get("bottoms", 0)), 0, 9)
+	_eat_anim.hair_color = _look_colour(look, "hairColor")
+	_eat_anim.skin_color = _look_colour(look, "skinColor")
+	_eat_anim.eye_color = _look_colour(look, "eyeColor")
+	_eat_anim.top_color = _look_colour(look, "topColor")
+	_eat_anim.bottom_color = _look_colour(look, "bottomColor")
+	var facings: Array = [&"south", &"north", &"west", &"east"]
+	var started: bool = _eat_anim.play_eating(facings[_dir]) if food == null else _eat_anim.play_eating(facings[_dir], food)
+	if not started:
+		return false
+	eating = true
+	_sprite.visible = false
+	return true
+
+
+func _look_colour(look: Dictionary, key: String) -> Color:
+	var hex: String = str(look.get(key, ""))
+	return Color.html(hex) if Color.html_is_valid(hex) else Color.WHITE
+
+
+func _eating_done() -> void:
+	eating = false
+	_sprite.visible = not sitting
+
+
 func _process(delta: float) -> void:
 	if sitting:
 		sit_blend = move_toward(sit_blend,1.0,delta*5.0)
@@ -253,12 +301,14 @@ func _process(delta: float) -> void:
 	if _flash_time > 0.0:
 		_flash_time -= delta
 		_sprite.modulate = Color(1.0, 0.45, 0.45) if int(_flash_time * 16.0) % 2 == 0 and _flash_time > 0.0 else Color.WHITE
+		if _eat_anim != null:
+			_eat_anim.modulate = _sprite.modulate
 	if _beam_time > 0.0:
 		_beam_time -= delta
 		_beam.default_color = Color(1.0, 0.35, 0.3) if int(_beam_time * 40.0) % 2 == 0 else Color(1.0, 0.85, 0.8)
 		if _beam_time <= 0.0:
 			_beam.visible = false
-	if frozen:
+	if frozen or eating:
 		_sprite.frame_coords = Vector2i(_dir, 0)
 		return
 
