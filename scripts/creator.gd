@@ -7,7 +7,7 @@ const MakerScript = preload("res://scripts/player_maker.gd")
 
 # What each line of the screen changes: [key in the look, label]
 const ROWS := [
-	["hair", "Hair"], ["hairColor", "Hair colour"], ["faces", "Face"], ["eyeColor", "Eyes"], ["skinColor", "Skin"],
+	["hair", "Hair"], ["hairColor", "Hair colour"], ["eyeColor", "Eyes"], ["skinColor", "Skin"],
 	["tops", "Top"], ["topColor", "Top colour"], ["bottoms", "Bottom"], ["bottomColor", "Bottom colour"],
 ]
 const PANEL := Rect2(4, 4, 312, 172)

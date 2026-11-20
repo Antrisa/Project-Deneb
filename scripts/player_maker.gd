@@ -12,8 +12,10 @@ const PRIMARY := {"hair": "hairColor", "tops": "topColor", "bottoms": "bottomCol
 const DIVISOR := [140.0, 185.0, 150.0]                          # brightness that counts as "full colour": main, skin, eyes
 
 const NAMES := {
-	"hair": ["Side part", "Tousled crop", "Short curls", "Bob", "Shoulder length", "Ponytail", "Bun", "Undercut", "Textured coils", "Long waves"],
-	"faces": ["Soft oval", "Square", "Freckled", "Angular", "Heart-shaped", "High cheekbones", "Rounded", "Mature", "Strong chin", "Cheek scar"],
+	# 20 Nov player art: eight new hairstyles, then the two kept from before. Every face slot now holds the same
+	# shared face, so the character screen no longer offers a face choice (creator.gd).
+	"hair": ["Tousled crop", "Side part", "Low ponytail", "Medium bob", "Long loose hair", "Twin braids", "Buzz cut", "Short faux hawk", "Textured coils", "Long waves"],
+	"faces": ["Face", "Face", "Face", "Face", "Face", "Face", "Face", "Face", "Face", "Face"],
 	"tops": ["Crew tee", "Utility vest", "Flight jacket", "Mechanic coveralls", "Space tunic", "Hoodie", "Expedition coat", "Light armor", "Workshirt", "Circuit suit"],
 	"bottoms": ["Work pants", "Cargo pants", "Flight trousers", "Fitted trousers", "Explorer shorts", "Utility skirt", "Expedition pants", "Mechanic trousers", "Tech leggings", "Cuffed trousers"],
 }
