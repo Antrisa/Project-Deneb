@@ -7,7 +7,10 @@ extends CanvasLayer
 
 # A line may start with one of these in square brackets to pick the speaker's expression,
 # for example "[happy] Good morning!". The order matches the pictures in each portrait file.
-const EMOTES := ["neutral", "happy", "sad", "surprised", "love", "angry"]
+# The 20 Nov portraits have a seventh picture, "shocked"; older six-picture files show neutral for it.
+# "bashful" is another name for the fifth picture (the new art draws it as bashful rather than love).
+const EMOTES := ["neutral", "happy", "sad", "surprised", "love", "angry", "shocked"]
+const EMOTE_ALIASES := {"bashful": 4}
 
 const NineFrame = preload("res://scripts/nine_frame.gd")
 
@@ -25,7 +28,7 @@ var _panel: Control
 var _speaker: Label
 var _text: Label
 var _choice: Label
-var _portrait: Sprite2D        # the speaker's face; the art file holds six expressions side by side
+var _portrait: Sprite2D        # the speaker's face; the art file holds six or seven square expressions side by side
 var _portrait_back: ColorRect
 var _portrait_frame: Control
 var _current := ""            # the line being shown, without its expression tag
@@ -93,6 +96,8 @@ func start(speaker: String, lines: Array, on_yes: Callable = Callable(), yes_tex
 	if portrait != null:
 		left = 74.0
 		_portrait.texture = portrait
+		# Each picture is square, so the number of pictures is the width over the height (6 or 7).
+		_portrait.hframes = maxi(1, portrait.get_width() / maxi(1, portrait.get_height()))
 		_portrait.frame = 0
 		var fit: float = 64.0 / portrait.get_height()
 		_portrait.scale = Vector2(fit, fit)
@@ -153,10 +158,11 @@ func _show_line() -> void:
 	if line.begins_with("["):
 		var close: int = line.find("]")
 		if close > 0:
-			emote = maxi(0, EMOTES.find(line.substr(1, close - 1)))
+			var tag: String = line.substr(1, close - 1)
+			emote = int(EMOTE_ALIASES.get(tag, maxi(0, EMOTES.find(tag))))
 			line = line.substr(close + 1).strip_edges()
 	if _portrait.visible:
-		_portrait.frame = emote
+		_portrait.frame = emote if emote < _portrait.hframes else 0
 	_current = line
 	_text.text = line
 	_shown = 0.0
