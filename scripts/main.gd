@@ -864,7 +864,9 @@ func _add_sara(area_name: String, tile: Vector2i, radius: float) -> void:
 	_ensure_person("Sara")
 	var h = load("res://sara/sara_hologram.tscn").instantiate()
 	h.show_projector = false          # the dais or pad is already part of the map
-	h.art_scale = ART                 # the same art scale as everything else; about a head taller than the residents
+	# The 19 Nov hologram art (SARA_Hologram_Game_Sprites.zip) stores each pixel as a 2x2 block, so half the
+	# usual art scale keeps one of her pixels the size of everyone else's. She is now resident-sized (24x48).
+	h.art_scale = ART / 2.0
 	if area_name == "top":
 		h.position = Vector2(23 * TILE + 8, 21 * TILE - 11)   # the centre of the dais (tools/survey.py)
 	else:
