@@ -26,6 +26,7 @@ const UiScript = preload("res://scripts/ui.gd")
 const EnemyScript = preload("res://scripts/enemy.gd")
 const DialogueScript = preload("res://scripts/dialogue_box.gd")
 const BattleScript = preload("res://scripts/ship_battle.gd")
+const MapScript = preload("res://scripts/ship_map.gd")
 const ShipData = preload("res://scripts/ship_data.gd")
 const MakerScript = preload("res://scripts/player_maker.gd")
 const MessWindow = preload("res://scripts/mess_window.gd")
@@ -102,11 +103,14 @@ var actors: Node2D
 var player
 var community_game: CanvasLayer
 var battle                         # the space battle screen (scripts/ship_battle.gd)
+var ship_map                       # the jump map (scripts/ship_map.gd)
 # The ship after Act 1 (21 Nov): hull carried between fights and repaired by Freya, how many times you have
 # flown, and the day Artie's pod came home (the Wave 1 arrivals count from it; slice 2).
 var ship_hull := 12
 var flights := 0
 var artie_found_day := -1
+var fuel := 6
+var said_goodbye := false          # the send-off at launch has played
 var garden_watered_day := -1
 var garden_busy := false
 # Farming (21 Nov), one tile at a time like Stardew. tile -> {"crop": id or "", "age": watered days grown,
@@ -299,6 +303,9 @@ func _ready() -> void:
 	_build_ui()
 	community_game = preload("res://scripts/community_game.gd").new()
 	add_child(community_game)
+	ship_map = MapScript.new()
+	ship_map.world = self
+	add_child(ship_map)
 	battle = BattleScript.new()
 	battle.world = self
 	add_child(battle)
@@ -436,6 +443,16 @@ func _unhandled_input(event: InputEvent) -> void:
 				dialogue.cancel()
 		else:
 			battle.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
+	if ship_map != null and ship_map.open:
+		if dialogue.active:
+			if event.is_action_pressed("interact") or event.is_action_pressed("use"):
+				dialogue.advance()
+			elif event.is_action_pressed("cancel"):
+				dialogue.cancel()
+		else:
+			ship_map.handle_input(event)
 		get_viewport().set_input_as_handled()
 		return
 	if community_game != null and community_game.open:
@@ -1284,6 +1301,8 @@ func _talk(who: String) -> void:
 		_say(who, st["first"])
 	elif _board_delivery(who):
 		pass
+	elif _farewell(who):
+		pass
 	elif who == "Maren":
 		_maren_shop()
 	elif who == "Bram" and _bars_value() > 0:
@@ -1423,14 +1442,22 @@ func _look_at_ship() -> void:
 
 
 # ---------------------------------------------------------------- the ship: launching and space fights (21 Nov)
-# Design: claude/echo-landing-ship-combat.md in the Project. The battle screen is scripts/ship_battle.gd; ships,
-# weapons and rewards are in scripts/ship_data.gd. First flight: you leave, see the Rabble heading for the Landing,
-# turn back, fight a Rabble Cutter (the tutorial) and then Ivan's flagship. Ivan goes down with his ship and you
+# Design: claude/echo-landing-ship-combat.md in the Project. The battle screen is scripts/ship_battle.gd and the
+# jump map scripts/ship_map.gd; ships, weapons, the route and rewards are in scripts/ship_data.gd.
+# First flight (Zachary, 21 Nov): once the ship is repaired the residents say goodbye when you talk to them
+# (NpcData.FAREWELLS), and Tikka, Freya and S.A.R.A. see you off at launch. As you leave, the station alert goes:
+# Rabble ships heading for the Landing, and S.A.R.A. pleads for help. The jump map's route is locked: an ice field
+# (salvage), a drifting freighter (distress call), a Rabble picket (the combat tutorial, where the drone teaches
+# ordering crew), a Moogli trader (repairs and fuel), then Ivan's flagship. Ivan goes down with his ship and you
 # tow home a stasis pod from the wreck: Artie. Losing wakes you in the Medbay with the ship wrecked; Freya repairs
-# the hull. Ship runs and Ana's fight (on the second flight) come in slice 2.
+# the hull. Free ship runs and Ana's fight (on the second flight) come in slice 2.
 
 const HULL_REPAIR_PRICE := 10      # Freya's price per hull point
 const SHIP_LOSS_SHARE := 10        # percent of your credits lost when the ship is beaten (capped at 150)
+const TRADER_PATCH := 4            # hull points the Moogli trader patches...
+const TRADER_PATCH_PRICE := 30     # ...for this many credits
+const TRADER_FUEL := 2             # fuel cells the trader sells...
+const TRADER_FUEL_PRICE := 12      # ...for this many credits
 
 
 func _launch_console() -> void:
@@ -1438,22 +1465,65 @@ func _launch_console() -> void:
 		_say("Launch control", ["The launch doors won't open for a ship that can't fly.", "Tikka is still repairing yours."])
 	elif ship_hull <= 0:
 		_say("Launch control", ["[sad] The board shows your ship in red from nose to engines.", "Freya can patch her up before she flies again."])
+	elif flights == 0 and not said_goodbye:
+		_say("Launch control", ["The board shows your ship in green. The launch doors are waiting on your code.",
+			"Once you go, you're gone. Have you said your goodbyes?", "Take her out?"],
+			Callable(self, "_send_off"), "Launch")
 	elif flights == 0:
-		_say("Launch control", ["The board shows your ship in green. The launch doors are waiting on your code.", "Take her out?"],
-			Callable(self, "_first_flight"), "Launch")
+		_say("Launch control", ["The Rabble are still out there, and the Landing is still in their way.", "Take her out again?"],
+			Callable(self, "_lift_off"), "Launch")
 	else:
 		_say("Launch control", ["The board shows your ship in green.", "(Ship runs into the neutral zone come in the next update.)"])
 
 
-func _first_flight() -> void:
+# What a resident says when you talk to them between finishing the ship and the first flight (once each).
+func _farewell(who: String) -> bool:
+	if repair_stage < REPAIRS.size() or flights > 0 or said_goodbye:
+		return false
+	var st: Dictionary = persons[who]
+	if bool(st.get("farewell_said", false)):
+		return false
+	st["farewell_said"] = true
+	_say(who, NpcData.FAREWELLS.get(who, NpcData.FAREWELL_ANYONE))
+	return true
+
+
+func _send_off() -> void:
+	said_goodbye = true
+	_say("Tikka", [
+		"[happy] Wait! Wait. I triple-checked the drive. It is one drive. It will stay one drive.",
+		"[sad] If anything rattles, come back. Or just come back. Either.",
+	])
+	_say_then(Callable(self, "_send_off_freya"))
+
+
+func _send_off_freya() -> void:
+	_say("Freya", [
+		"I'll take the doors. Dad always opened them himself for a first flight.",
+		"[happy] She's a good little ship. Don't scratch her.",
+	])
+	_say_then(Callable(self, "_send_off_sara"))
+
+
+func _send_off_sara() -> void:
+	_say("Sara", [
+		"[sad] Doors opening. It has been a pleasure having you, truly.",
+		"Fly safely. If you are ever near this moon again, there will be a bed for you.",
+	])
+	_say_then(Callable(self, "_lift_off"))
+
+
+func _lift_off() -> void:
+	fuel = maxi(fuel, ShipData.FIRST_FLIGHT_FUEL)
 	sfx("warp")
-	battle.start({"enemy": "rabble_cutter", "story": true, "tutorial": true}, Callable(self, "_after_cutter"), ship_hull)
+	ship_map.open_route(ShipData.FIRST_FLIGHT, -1, Callable(self, "_arrive"), false, "First flight")
 	_say("Sara", [
 		"You're clear of the crater. The fold drive is spinning up. Safe travels...",
-		"[surprised] Wait. Sensors show ships coming round the gas giant. Rabble markings.",
+		"[surprised] Station alert. Station alert. Ships coming round the gas giant, Rabble markings, a whole pack of them.",
 		"[sad] They're heading for the Landing. We have no guns here worth the name.",
-		"You could still go. Nobody here would blame you.",
-	], Callable(self, "_turn_back"), "Turn back", Callable(self, "_keep_going"), "Keep going")
+		"[sad] I know you were leaving. I know this isn't your fight. But you're the only ship we have.",
+		"Please. Will you help us?",
+	], Callable(self, "_head_them_off"), "Help", Callable(self, "_keep_going"), "Keep going")
 
 
 func _keep_going() -> void:
@@ -1462,16 +1532,81 @@ func _keep_going() -> void:
 		"...",
 		"You watch the station shrink on the rear screen. Your hands have already turned the ship around.",
 	])
-	_say_then(Callable(self, "_turn_back"))
+	_say_then(Callable(self, "_head_them_off"))
 
 
-func _turn_back() -> void:
+func _head_them_off() -> void:
+	ship_map.show_route = true
 	_say("Sara", [
-		"[happy] Thank you. Then listen: this is how you fight in that ship.",
+		"[happy] Thank you. I've plotted a course to get ahead of them. It's on your jump map.",
+		"The Landing is in the middle. The rings go out into the neutral zone, and each zone leans toward someone: Terrans north, Zaa'sh east, the Collective west.",
+		"[angry] The south is the Rabble's Reach. Pirate country.",
+		"Each jump takes you to the next stop and uses one fuel cell. Some stops are salvage, some are calls for help, some are traders, and some are pirates.",
+		"Normally you'd pick your own way. Today, follow my course. Click the next stop, or press E, to jump.",
+	])
+
+
+func _arrive(i: int) -> void:
+	fuel = maxi(0, fuel - 1)
+	var stop: Dictionary = ShipData.FIRST_FLIGHT[i]
+	match str(stop["kind"]):
+		"salvage":
+			_say("Sensors", ["Wreckage, frozen into a drift of ice. An old freighter's cargo pod, still sealed.",
+				"Cut it free?"], Callable(self, "_salvage_take"), "Cut it free", Callable(self, "_salvage_leave"), "Leave it")
+		"distress":
+			_say("Freighter captain", [
+				"[sad] Collective freighter Patient Wren, drive dead, three aboard. The Rabble shot us up on their way past.",
+				"They were heading for some moon station. Can you spare anything? A spark for the drive would do it.",
+			], Callable(self, "_distress_help"), "Send the drone over", Callable(self, "_distress_leave"), "Leave them")
+		"fight":
+			_stop_fight(stop)
+		"trade":
+			_stop_trade()
+		"boss":
+			_stop_ivan(stop)
+
+
+func _salvage_take() -> void:
+	_give("hull_plate", 1)
+	_money(15, "Salvage")
+	_toast("Salvage: 15 credits, 1 hull plate")
+	sfx("coin")
+	_say("Sara", ["[happy] That's salvage: whatever's out there that nobody's coming back for. Bram will be jealous.",
+		"Next stop when you're ready."])
+
+
+func _salvage_leave() -> void:
+	_say("Sara", ["Fair enough. Salvage stops are always a choice. Next stop when you're ready."])
+
+
+func _distress_help() -> void:
+	fuel += 2
+	_money(30, "Paid by the Patient Wren")
+	_toast("The Patient Wren pays you: 30 credits, 2 fuel cells")
+	sfx("coin")
+	_say("Freighter captain", ["[happy] She's turning over! Take these fuel cells, and our thanks. Watch yourself: there were a lot of them."])
+	_say_then(Callable(self, "_distress_after"))
+
+
+func _distress_after() -> void:
+	_say("Sara", ["Distress calls are like that: someone needs something, and what you do about it is up to you.",
+		"Sometimes it's a trap. Not this time. Next stop: the Rabble's picket ship."])
+
+
+func _distress_leave() -> void:
+	_say("Sara", ["[sad] We can't help everyone. I'll log their position in case someone else passes.",
+		"Next stop: the Rabble's picket ship."])
+
+
+func _stop_fight(stop: Dictionary) -> void:
+	ship_map.visible = false
+	battle.start({"enemy": str(stop["enemy"]), "story": true, "tutorial": true}, Callable(self, "_after_picket"), ship_hull)
+	_say("Sara", [
+		"That's a Rabble Cutter, scouting ahead of the others. You'll have to go through it.",
 		"Space pauses the fight. You can give every order while it's paused.",
 		"The bars at the bottom left move power from the reactor to shields, engines, weapons and oxygen.",
 		"Click your Burst laser, then a room on their ship. Hit their Shields room first, then the rest.",
-		"Your bays are sealed, so you can't reach them. Your repair drone can.",
+		"Your bays are sealed, so you can't reach them, but your drone can. It's your crew today: click it, then click a bay to send it there.",
 		"Press Space when you're ready.",
 	])
 	_say_then(Callable(self, "_hold_battle"))
@@ -1494,13 +1629,77 @@ func _flight_reward(enemy_id: String) -> void:
 	_toast("Salvage: %d credits%s" % [cash, (", " + ", ".join(got)) if not got.is_empty() else ""])
 
 
-func _after_cutter(result: String, hull_left: int) -> void:
+func _after_picket(result: String, hull_left: int) -> void:
 	ship_hull = hull_left
 	if result != "won":
 		_ship_lost()
 		return
 	_flight_reward("rabble_cutter")
-	battle.start({"enemy": "ivan_flagship", "story": true, "uplink": true}, Callable(self, "_after_ivan"), ship_hull)
+	battle.close()
+	ship_map.visible = true
+	_say("Sara", [
+		"[happy] One down. Their main force is still coming, and Ivan is with it.",
+		"There's a Moogli trader keeping out of the way on your course. If you're hurt, stop and patch up.",
+	])
+
+
+func _stop_trade() -> void:
+	_say("Moogli trader", [
+		"[happy] A customer! Out here! The Rabble have been very bad for business.",
+	])
+	_say_then(Callable(self, "_trade_repair_offer"))
+
+
+func _trade_repair_offer() -> void:
+	if ship_hull >= int(ShipData.STARTER["hull"]):
+		_trade_fuel_offer()
+		return
+	_say("Moogli trader", ["Your hull looks chewed. I can patch %d points for %d credits. Yes?" % [TRADER_PATCH, TRADER_PATCH_PRICE]],
+		Callable(self, "_trade_repair"), "Patch (%d cr)" % TRADER_PATCH_PRICE, Callable(self, "_trade_fuel_offer"), "No thanks")
+
+
+func _trade_repair() -> void:
+	if credits < TRADER_PATCH_PRICE:
+		sfx("deny")
+		_say("Moogli trader", ["[sad] No credits, no patch. I am a trader, not a charity. Well. Mostly not."])
+		_say_then(Callable(self, "_trade_fuel_offer"))
+		return
+	_money(-TRADER_PATCH_PRICE, "Ship repairs")
+	ship_hull = mini(int(ShipData.STARTER["hull"]), ship_hull + TRADER_PATCH)
+	sfx("coin")
+	_trade_fuel_offer()
+
+
+func _trade_fuel_offer() -> void:
+	_say("Moogli trader", ["Fuel? %d cells for %d credits." % [TRADER_FUEL, TRADER_FUEL_PRICE]],
+		Callable(self, "_trade_fuel"), "Buy (%d cr)" % TRADER_FUEL_PRICE, Callable(self, "_trade_bye"), "No thanks")
+
+
+func _trade_fuel() -> void:
+	if credits < TRADER_FUEL_PRICE:
+		sfx("deny")
+		_say("Moogli trader", ["[sad] Short again. Come back richer."])
+		_say_then(Callable(self, "_trade_bye"))
+		return
+	_money(-TRADER_FUEL_PRICE, "Fuel")
+	fuel += TRADER_FUEL
+	sfx("coin")
+	_trade_bye()
+
+
+func _trade_bye() -> void:
+	_say("Moogli trader", ["[happy] Good luck with the Rabble. If you win, tell everyone where you shopped."])
+	_say_then(Callable(self, "_trade_sara"))
+
+
+func _trade_sara() -> void:
+	_say("Sara", ["Traders sell what you need out here: repairs, fuel, and later parts and weapons.",
+		"Ivan is just ahead. This is it."])
+
+
+func _stop_ivan(stop: Dictionary) -> void:
+	ship_map.visible = false
+	battle.start({"enemy": str(stop["enemy"]), "story": true, "uplink": true}, Callable(self, "_after_ivan"), ship_hull)
 	_say("Ivan", [
 		"[angry] You. The one who got away from me at the jump.",
 		"I'll take that station apart plate by plate, and you can watch from what's left of your ship.",
@@ -1510,8 +1709,8 @@ func _after_cutter(result: String, hull_left: int) -> void:
 
 func _ivan_sara() -> void:
 	_say("Sara", [
-		"That's Ivan's own ship. You're close enough to the Landing for me to reach you.",
-		"I'm lending you my shield emitter over the link: one extra layer. Make it count.",
+		"That's Ivan's own ship. I'm pushing everything the old listening dish has into your shield emitter.",
+		"One extra shield layer, for as long as I can hold it. Make it count.",
 	])
 	_say_then(Callable(self, "_hold_battle"))
 
@@ -1547,10 +1746,11 @@ func _pod_found() -> void:
 
 func _land_after_first_flight() -> void:
 	battle.close()
+	ship_map.close()
 	minutes = minf(minutes + 180.0, DAY_END - 1.0)
 	_snap_residents()
 	var lines: Array = [
-		"[happy] You brought her home. And company, by the look of it.",
+		"[happy] You came back! With company, by the look of it.",
 		"Maren and Quill are taking the pod up to the Medbay. Whoever's inside, they'll be asleep a while yet.",
 	]
 	if ship_hull < int(ShipData.STARTER["hull"]):
@@ -1562,6 +1762,7 @@ func _land_after_first_flight() -> void:
 # The ship was beaten: you wake in the Medbay, a little poorer, and the ship needs Freya before it flies again.
 func _ship_lost() -> void:
 	battle.close()
+	ship_map.close()
 	ship_hull = 0
 	var lost: int = mini(credits * SHIP_LOSS_SHARE / 100, 150)
 	_money(-(lost), "Lost when your ship was beaten")
@@ -2436,10 +2637,10 @@ func _toast(msg: String) -> void:
 
 
 func _process(delta: float) -> void:
-	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (datapad != null and datapad.blocking())
+	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (datapad != null and datapad.blocking())
 	if datapad != null:
 		# The datapad leaves the keys alone while one of the game's own windows is open.
-		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (station_calendar != null and station_calendar.open) or travelling or garden_busy)
+		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (station_calendar != null and station_calendar.open) or travelling or garden_busy)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	_animate()
@@ -2565,7 +2766,7 @@ func journal() -> Array:
 	else:
 		out.append(["Get off this moon", ["Tikka has finished your ship. It is ready when you are."], true])
 		if flights == 0:
-			out.append(["Take her out", ["Launch control is in the booth in the Shuttle Bay, by the south-west wall."], false])
+			out.append(["Take her out", ["Say your goodbyes, then launch from the booth in the Shuttle Bay, by the south-west wall."], false])
 		else:
 			out.append(["Take her out", ["You turned back for the Landing, and Ivan went down with his ship.",
 				"Something was in his wreck: a stasis pod, and a man asleep inside it. He is in the Medbay."], true])
@@ -2661,6 +2862,8 @@ func _save_game() -> void:
 	cfg.set_value("ship", "hull", ship_hull)
 	cfg.set_value("ship", "flights", flights)
 	cfg.set_value("ship", "artie_found_day", artie_found_day)
+	cfg.set_value("ship", "fuel", fuel)
+	cfg.set_value("ship", "said_goodbye", said_goodbye)
 	cfg.save(SAVE_PATH)
 
 
@@ -2710,6 +2913,8 @@ func _load_game() -> void:
 	ship_hull = clampi(int(cfg.get_value("ship", "hull", int(ShipData.STARTER["hull"]))), 0, int(ShipData.STARTER["hull"]))
 	flights = int(cfg.get_value("ship", "flights", 0))
 	artie_found_day = int(cfg.get_value("ship", "artie_found_day", -1))
+	fuel = int(cfg.get_value("ship", "fuel", 6))
+	said_goodbye = bool(cfg.get_value("ship", "said_goodbye", false))
 	if farm_view != null: farm_view.sync_crops()
 	var saved_locks = cfg.get_value("access", "doors", {})
 	if saved_locks is Dictionary:

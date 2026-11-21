@@ -1,8 +1,10 @@
 extends CanvasLayer
 # The FTL-style space battle (21 Nov 2026). Real time; Space pauses. Your ship on the left in cut-away, the enemy
 # on the right. Power goes from the reactor to shields, engines, weapons and life support. Pick a weapon, then an
-# enemy room, and it fires when charged. Your starter ship's bays are sealed: the repair drone crawls through the
-# ducts and fixes damaged bays (click a bay to send it; it also goes on its own).
+# enemy room, and it fires when charged. Your starter ship's bays are sealed: the repair drone is your one crew
+# member. Click it, then click a bay, and it crawls there through the ducts. It repairs the bay it is in, and in a
+# working bay it boosts that system (ShipData.DRONE_BOOST). It never moves on its own: this is the lesson for
+# ordering crew about on bigger ships.
 #
 # main.gd owns the story around a fight: it calls start() with a fight, shows any dialogue (which pauses the
 # battle), and gets on_end.call(result, hull_left) with result "won", "lost" or "fled". Ships, weapons and
@@ -60,6 +62,7 @@ var drone_path: Array = []       # points still to walk
 var drone_room := "drones"
 var drone_goal := ""
 var drone_work := 0.0
+var drone_selected := false      # clicked, waiting for a bay to go to
 
 # the enemy
 var foe: Dictionary = {}
@@ -133,6 +136,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	drone_path = []
 	drone_goal = ""
 	drone_work = 0.0
+	drone_selected = false
 
 	foe_id = str(fight["enemy"])
 	foe = ShipData.ENEMIES[foe_id]
@@ -231,7 +235,7 @@ func _tick(delta: float) -> void:
 	if layers > top: layers = top
 	if layers < top:
 		shield_timer += delta
-		if shield_timer >= ShipData.SHIELD_RECHARGE:
+		if shield_timer >= ShipData.SHIELD_RECHARGE * (0.75 if _boosting("shields") else 1.0):
 			shield_timer = 0.0
 			layers += 1
 	else:
@@ -289,7 +293,8 @@ func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool)
 		var powered: bool = bool(w["on"]) and cost <= budget
 		if powered:
 			budget -= cost
-			w["charge"] = minf(float(data["charge"]), float(w["charge"]) + delta)
+			var speed: float = 1.15 if mine and _boosting("weapons") else 1.0
+			w["charge"] = minf(float(data["charge"]), float(w["charge"]) + delta * speed)
 		else:
 			w["charge"] = maxf(0.0, float(w["charge"]) - delta * 2.0)
 		if not powered or float(w["charge"]) < float(data["charge"]):
@@ -337,6 +342,20 @@ func _evasion(systems: Dictionary) -> int:
 	if eng <= 0 or _eff(systems, "pilot") <= 0:
 		return 0
 	return 5 * eng + 5
+
+
+# Your evasion: the engines, the cockpit, and the drone if it is boosting the engines.
+func _my_evasion() -> int:
+	var base: int = _evasion(sys)
+	return base + 5 if base > 0 and _boosting("engines") else base
+
+
+# True when the drone has arrived in an undamaged bay holding that system.
+func _boosting(sname: String) -> bool:
+	if drone_path.size() > 0 or drone_room == "":
+		return false
+	var room: Dictionary = _room(ShipData.STARTER["rooms"], drone_room)
+	return str(room.get("sys", "")) == sname and sys.has(sname) and int(sys[sname]["damage"]) == 0
 
 
 func spare_power() -> int:
@@ -392,7 +411,7 @@ func _fire(w: Dictionary, at_player: bool) -> void:
 	var target: String = str(w["target"])
 	var from: Vector2 = _room_center(not at_player, "weapons")
 	var to: Vector2 = _room_center(at_player, target)
-	var dodge: int = _evasion(sys) if at_player else _evasion(e_sys)
+	var dodge: int = _my_evasion() if at_player else _evasion(e_sys)
 	for i in range(int(data["shots"])):
 		shots.append({"from": from, "to": to + Vector2(randf_range(-3, 3), randf_range(-3, 3)),
 			"t": -0.3 * i, "dmg": int(data["damage"]), "at_player": at_player, "room": target,
@@ -485,6 +504,8 @@ func _damaged_rooms() -> Array:
 func send_drone(room_id: String) -> void:
 	if room_id == drone_goal and drone_path.size() > 0:
 		return
+	if room_id == drone_room and drone_path.is_empty():
+		return
 	var me: Dictionary = ShipData.STARTER
 	var target: Dictionary = _room(me["rooms"], room_id)
 	if target.is_empty():
@@ -521,10 +542,8 @@ func _move_drone(delta: float) -> void:
 			sys[sname]["damage"] = int(sys[sname]["damage"]) - 1
 			_pop(PLAYER_POS + drone_pos + Vector2(0, -6), "Fixed", GOOD)
 			world.sfx("click", 1.6, -4.0)
-		return
-	var todo: Array = _damaged_rooms()
-	if todo.size() > 0:
-		send_drone(str(todo[0]))
+			if int(sys[sname]["damage"]) == 0 and ShipData.DRONE_BOOST.has(sname):
+				_pop(PLAYER_POS + drone_pos + Vector2(0, -14), "Boosting", GOLD)
 
 
 func _enemy_repairs(delta: float) -> void:
@@ -551,13 +570,22 @@ func _tutorial_hints() -> void:
 	for w in weapons:
 		if str(w["target"]) != "":
 			any_target = true
-	if not tutorial_said.has("hit") and hull < hull_max:
+	var hurt: Array = _damaged_rooms()
+	if not tutorial_said.has("hit") and hurt.size() > 0:
 		tutorial_said["hit"] = true
 		paused = true
+		var room: Dictionary = _room(ShipData.STARTER["rooms"], str(hurt[0]))
 		world._say("Sara", [
-			"You've taken a hit. A damaged bay shows red, and its system loses bars.",
-			"Your repair drone goes to damaged bays on its own. Click a bay to send it there first.",
+			"Your %s has been hit. A damaged bay shows red, and its system loses bars until it's mended." % str(room["label"]),
+			"Your drone is your crew. Click the drone, then click the %s. It repairs whatever bay it's in." % str(room["label"]),
 			"Press Space when you're ready.",
+		])
+	elif tutorial_said.has("hit") and not tutorial_said.has("boost") and hurt.is_empty() and drone_room != "drones" and drone_path.is_empty():
+		tutorial_said["boost"] = true
+		world._say("Sara", [
+			"[happy] Mended. And while the drone sits in a working bay, it boosts that system.",
+			"Shields recharge faster, weapons charge faster, or the engines give you more evasion. Put it where it helps most.",
+			"Ordering a crew about works the same way: click them, then click where they should go.",
 		])
 	elif not tutorial_said.has("power") and _eff(sys, "shields") < 2 and int(sys["shields"]["damage"]) == 0:
 		tutorial_said["power"] = true
@@ -584,11 +612,20 @@ func handle_input(event: InputEvent) -> void:
 			_pick_weapon(key.physical_keycode - KEY_1)
 		KEY_ESCAPE, KEY_Q:
 			selected = -1
+			drone_selected = false
+		KEY_D, KEY_TAB:
+			_select_drone()
 		KEY_V:
 			autofire = not autofire
 			world.sfx("click")
 		KEY_J:
 			_jump()
+
+
+func _select_drone() -> void:
+	drone_selected = not drone_selected
+	selected = -1
+	world.sfx("click", 1.4)
 
 
 func _pick_weapon(i: int) -> void:
@@ -601,6 +638,7 @@ func _pick_weapon(i: int) -> void:
 	if _eff(sys, "weapons") < cost:
 		_add_power("weapons")
 	selected = i if selected != i else -1
+	drone_selected = false
 	world.sfx("click")
 
 
@@ -652,8 +690,27 @@ func _on_gui_input(event: InputEvent) -> void:
 				weapons[i]["on"] = false
 				if selected == i: selected = -1
 			return
+	# the drone: click it (on the ship or in the Aboard list) to select it
+	var dp: Vector2 = PLAYER_POS + drone_pos
+	if left and (Rect2(dp - Vector2(6, 6), Vector2(12, 12)).has_point(p) or _drone_card_rect().has_point(p)):
+		_select_drone()
+		return
+	# a bay on your ship: with the drone selected, send it there (left or right click, as with crew in FTL)
+	for room in ShipData.STARTER["rooms"]:
+		var r2: Rect2 = room["rect"]
+		if Rect2(PLAYER_POS + r2.position, r2.size).has_point(p):
+			if bool(room.get("crew", false)):
+				if drone_selected: _pop(p, "Only you fit in here", DIM)
+			elif drone_selected:
+				drone_selected = false
+				send_drone(str(room["id"]))
+				world.sfx("click", 1.4)
+			elif left:
+				_pop(p, "Click the drone first", DIM)
+			return
 	if right:
 		selected = -1
+		drone_selected = false
 		return
 	# a room on their ship: aim
 	if selected >= 0:
@@ -664,13 +721,6 @@ func _on_gui_input(event: InputEvent) -> void:
 				selected = -1
 				world.sfx("click", 1.2)
 				return
-	# a bay on your ship: send the drone
-	for room in ShipData.STARTER["rooms"]:
-		var r2: Rect2 = room["rect"]
-		if Rect2(PLAYER_POS + r2.position, r2.size).has_point(p) and not bool(room.get("crew", false)):
-			send_drone(str(room["id"]))
-			world.sfx("click", 1.4)
-			return
 
 
 # ---------------------------------------------------------------- layout
@@ -680,6 +730,7 @@ func _pause_rect() -> Rect2: return Rect2(124, 18, 42, 11)
 func _auto_rect() -> Rect2: return Rect2(170, 18, 42, 11)
 func _sys_rect(i: int) -> Rect2: return Rect2(24 + i * 24, 142, 20, 30)
 func _weapon_rect(i: int) -> Rect2: return Rect2(124 + i * 56, 142, 52, 34)
+func _drone_card_rect() -> Rect2: return Rect2(242, 160, 74, 11)
 
 
 # ---------------------------------------------------------------- drawing
@@ -779,8 +830,8 @@ func _draw_player(off: Vector2) -> void:
 			for i in range(int(sys[sname]["max"])):
 				var on: bool = i < int(sys[sname]["max"]) - dmg
 				view.draw_rect(Rect2(rr.position + Vector2(2 + i * 4, rr.size.y - 4), Vector2(3, 2)), GOOD if on else BAD)
-		if rr.has_point(hover) and not bool(room.get("crew", false)) and result == "":
-			view.draw_rect(rr, Color(1, 0.86, 0.35, 0.8), false, 1.0)
+		if drone_selected and rr.has_point(hover) and not bool(room.get("crew", false)) and result == "":
+			view.draw_rect(rr, GOOD, false, 1.0)
 	# you, in the cockpit
 	var cockpit: Rect2 = _room(me["rooms"], "cockpit")["rect"]
 	var you: Vector2 = base + cockpit.get_center() + Vector2(2, 2)
@@ -788,6 +839,8 @@ func _draw_player(off: Vector2) -> void:
 	view.draw_arc(you, 5.0, 0.0, TAU, 16, Color("201e28"), 1.0)
 	# the drone
 	var dp: Vector2 = base + drone_pos
+	if drone_selected:
+		view.draw_arc(dp, 6.0, 0.0, TAU, 16, GOOD, 1.0)
 	view.draw_rect(Rect2(dp - Vector2(3, 3), Vector2(6, 6)), GOLD)
 	view.draw_rect(Rect2(dp - Vector2(3, 3), Vector2(6, 6)), Color("282018"), false, 1.0)
 	if drone_room != "" and drone_work > 0.0:
@@ -877,7 +930,7 @@ func _draw_top() -> void:
 		view.draw_arc(c, 3.5, 0.0, TAU, 12, Color("c8e6ff"), 1.0)
 	if uplink:
 		_text(Vector2(58, 21), "S.A.R.A. uplink", Color("78f0ff"), 6)
-	_text(Vector2(5, 32), "Evasion %d%%   Oxygen %d%%" % [_evasion(sys), int(oxygen)], DIM if oxygen > 40 else BAD, 7)
+	_text(Vector2(5, 32), "Evasion %d%%   Oxygen %d%%" % [_my_evasion(), int(oxygen)], DIM if oxygen > 40 else BAD, 7)
 	# fold drive, pause, autofire
 	view.draw_rect(Rect2(122, 2, 94, 30), PANEL)
 	_text(Vector2(125, 10), "FOLD DRIVE", WHITE, 7)
@@ -959,11 +1012,20 @@ func _draw_bottom() -> void:
 	_text(Vector2(243, 146), "ABOARD", WHITE, 6)
 	view.draw_circle(Vector2(248, 154), 3.5, Color("ffc878"))
 	_text(Vector2(254, 157), "You: pilot", WHITE, 6)
+	var card := _drone_card_rect()
+	if drone_selected:
+		view.draw_rect(card, Color(0.35, 0.86, 0.43, 0.25))
 	view.draw_rect(Rect2(245, 162, 6, 6), GOLD)
 	var drone_note := "idle"
-	if drone_path.size() > 0:
+	if drone_selected:
+		drone_note = "pick a bay"
+	elif drone_path.size() > 0:
 		drone_note = "moving"
 	elif drone_work > 0.0:
 		drone_note = "repairing"
+	else:
+		for sname in ShipData.DRONE_BOOST:
+			if _boosting(sname):
+				drone_note = "boosting %s" % sname
 	_text(Vector2(254, 168), "Drone: %s" % drone_note, WHITE, 6)
-	_text(Vector2(243, 176), "Space: pause", DIM, 6)
+	_text(Vector2(243, 176), "Space pause  D drone", DIM, 6)

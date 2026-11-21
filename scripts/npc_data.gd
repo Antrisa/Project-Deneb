@@ -351,6 +351,38 @@ const PEOPLE = {
 }
 
 # Things you can look at. Name must match the name in tools/build.py THINGS.
+# Goodbyes (21 Nov): what each resident says the first time you talk to them after the ship is finished and
+# before the first flight. Claude placeholders for Zachary to replace. Anyone not listed says FAREWELL_ANYONE.
+const FAREWELLS = {
+	"Sara": ["[sad] Tikka tells me your ship is whole. So this is goodbye, then.",
+		"I am glad it was here you woke up. Fly carefully, and write, if anyone out there still carries mail."],
+	"Tikka": ["Your drive is one drive again. I checked it twice. Then a third time, because I like you.",
+		"[sad] Launch control is in the bay booth. Don't make me fix her twice."],
+	"Freya": ["[sad] So you're really going? Huh. She was good practice. You were... all right company.",
+		"[happy] Come to the bay when you're ready. I'll open the doors myself."],
+	"Jasper": ["[sad] You are leaving before I have butter? Tragic.",
+		"[happy] When you are somewhere with real butter, think of me. Then send some."],
+	"Evarra": ["Leaving already? The one corner of the dome that grows was just getting used to you.",
+		"Eat something green when you can. Safe travels."],
+	"Job": ["[sad] Headin' out, cher? Figured. Ain't many stay.",
+		"You ever come back this way, me and my drill'll still be diggin'."],
+	"Maren": ["Medically, you're cleared to fly. Try to stay that way.",
+		"[sad] Stitches don't travel well. Neither do pilots."],
+	"Quill": ["[sad] I hope wherever you're going has a proper medbay. Ours is... ours.",
+		"Take care of yourself out there."],
+	"Bram": ["[happy] Leaving! The first-week feeling never wore off, I see.",
+		"If you find salvage out there with no owner, you know where I am."],
+	"Vzz'ket": ["You leave with the tunnels half cleared. The tunnels will wait.",
+		"Fly the way you fight. Straight at it."],
+	"Ix'ali": ["Your guard has improved. Keep it up, out there.", "Go well, pilot."],
+	"Garrick": ["Clear skies. If you see Rabble markings out there, run first and be brave later."],
+	"Rusk": ["[happy] Off, are you? One for the road, on the house. Don't tell anyone, it'll ruin me."],
+	"Zaas": ["Out to the stars, then. I'd have liked to show you the sea, if we ever find it.", "Safe travels."],
+	"Sesska": ["Tikka has been humming at your drive for days. She will miss it. And you, I think.", "Safe travels."],
+}
+const FAREWELL_ANYONE = ["[sad] Leaving? I heard your ship was finished.", "Safe travels. The Landing will be quieter without you."]
+
+
 const LOOKS = {
 	# Survey Level (tools/survey.py)
 	"Empty display": ["An empty case with a blank label. Tar'Besh has left a card in it: 'Waiting for something wonderful.'", "Things you find on the station and in the mine could go here."],

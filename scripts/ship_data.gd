@@ -13,6 +13,10 @@ const DRONE_SPEED := 70.0          # ship-picture pixels a second through the du
 const ENEMY_REPAIR_TIME := 7.0     # seconds for an enemy crew to fix one bar
 const SHOT_TIME := 0.7             # seconds a shot takes to cross the gap
 
+# The repair drone is your first crew member (Zachary, 21 Nov): you select it and send it bay to bay, the way you
+# will order crew around on bigger ships. It repairs the bay it is in. In a working bay it boosts that system.
+const DRONE_BOOST := {"shields": "shields recharge 25% faster", "weapons": "weapons charge 15% faster", "engines": "+5% evasion"}
+
 const WEAPONS := {
 	"burst_laser": {"name": "Burst laser", "shots": 2, "damage": 1, "charge": 9.0, "power": 2, "color": Color("ff6a5a")},
 	"rabble_laser": {"name": "Rabble laser", "shots": 1, "damage": 1, "charge": 11.0, "power": 1, "color": Color("7dff8a")},
@@ -85,3 +89,41 @@ const REWARDS := {
 	"rabble_cutter": [40, {"hull_plate": 1}],
 	"ivan_flagship": [150, {"hull_plate": 2, "coil_wire": 2}],
 }
+
+# ---------------------------------------------------------------- the jump map (scripts/ship_map.gd)
+# A big circle round the Landing: five rings, split into four zones of control. All of it is the neutral zone.
+# Angles in degrees: 0 points right (east), 90 points down (south).
+const ZONES := [
+	{"name": "Terran influence", "from": -135.0, "to": -45.0, "color": Color("222e5c"), "text": Color("6eaaff")},
+	{"name": "Zaa'sh influence", "from": -45.0, "to": 45.0, "color": Color("4e361e"), "text": Color("f0aa5a")},
+	{"name": "The Rabble's Reach", "from": 45.0, "to": 135.0, "color": Color("46161e"), "text": Color("f05050")},
+	{"name": "Collective influence", "from": 135.0, "to": 225.0, "color": Color("1c4030"), "text": Color("6edc8c")},
+]
+const RING_STOPS := [0, 4, 8, 12, 16, 20]      # how many stops each ring has (ring 0 is the Landing)
+const STOP_KINDS := {
+	"salvage": {"label": "Salvage", "color": Color("6edc78")},
+	"distress": {"label": "Distress call", "color": Color("fadc5a")},
+	"fight": {"label": "Pirates", "color": Color("e65046")},
+	"trade": {"label": "Trader", "color": Color("c8a0ff")},
+	"patrol": {"label": "Terran patrol", "color": Color("6eaaff")},
+	"shrine": {"label": "Zaa'sh shrine", "color": Color("f0aa5a")},
+	"convoy": {"label": "Refugee convoy", "color": Color("6edcc8")},
+	"market": {"label": "Pirate market", "color": Color("c83c8c")},
+	"boss": {"label": "The Rabble", "color": Color("ff8c3c")},
+}
+
+# The first flight (Zachary, 21 Nov): the route is locked. It heads off the Rabble and stops once at each kind
+# of stop on the way, as a tutorial for exploring and fighting. Ring and angle place each stop on the map.
+const FIRST_FLIGHT := [
+	{"kind": "salvage", "name": "Ice field", "ring": 1, "angle": 100.0,
+		"about": "Wreckage frozen into a drift of ice. Something might still be worth cutting free."},
+	{"kind": "distress", "name": "Drifting freighter", "ring": 2, "angle": 15.0,
+		"about": "A distress call on a Collective band. Scorch marks on the hull."},
+	{"kind": "fight", "name": "Rabble picket", "ring": 3, "angle": 55.0, "enemy": "rabble_cutter",
+		"about": "A Rabble Cutter scouting ahead of the others."},
+	{"kind": "trade", "name": "Moogli trader", "ring": 2, "angle": 125.0,
+		"about": "A trader's skiff, keeping out of the way. Repairs and fuel, for a price."},
+	{"kind": "boss", "name": "Ivan's flagship", "ring": 3, "angle": 95.0, "enemy": "ivan_flagship",
+		"about": "The Rabble's main force, on its way to the Landing. Ivan leads it himself."},
+]
+const FIRST_FLIGHT_FUEL := 6          # you set off with at least this much
