@@ -42,6 +42,7 @@ var art_tilled: Texture2D
 var art_wet: Texture2D
 var art_border: Texture2D
 var crop_art := {}
+var crop_sprites := {}                     # tile -> Sprite2D in the game's depth-sorted layer (station.actors)
 
 func setup(game: Node, rows: Array) -> void:
 	station = game
@@ -116,7 +117,7 @@ func _draw_field() -> void:
 		_draw_dug(tile, int(t["watered"]) == day)
 	for tile in station.farm:
 		var stage: int = station.crop_stage(station.farm[tile])
-		if stage >= 0:
+		if stage >= 0 and not crop_sprites.has(tile):          # stand-ins only: painted crops are sprites
 			_draw_crop(tile, str(station.farm[tile]["crop"]), stage)
 	if cursor.x >= 0:
 		draw_rect(Rect2(cursor * TILE, Vector2.ONE * TILE).grow(-ART * 0.5), Color(1, 1, 1, 0.75), false, ART)
@@ -183,6 +184,53 @@ func _draw_dug(tile: Vector2i, wet: bool) -> void:
 		draw_rect(Rect2(o + Vector2(TILE - 2 * ART, 0), Vector2(ART, TILE)), LIP_SHADOW); draw_rect(Rect2(o + Vector2(TILE - ART, 0), Vector2(ART, TILE)), LIP)
 
 # ---------------------------------------------------------------- crops
+
+# Painted crops stand in the same depth-sorted layer as people and props, so a tall crop in the row above
+# the player covers their feet and one in the row below stays behind them (21 Nov). Their sort point is the
+# planted tile's foot line, as for a person standing on it. Call after anything changes on the field.
+func sync_crops() -> void:
+	queue_redraw()
+	if station == null or station.actors == null:
+		return
+	var keep := {}
+	for tile in station.farm:
+		var t: Dictionary = station.farm[tile]
+		var stage: int = station.crop_stage(t)
+		if stage < 0:
+			continue
+		var crop: String = str(t["crop"])
+		if not crop_art.has(crop):
+			crop_art[crop] = _load("res://art/farm/crops/%s.png" % crop)
+		var tex: Texture2D = crop_art[crop]
+		if tex == null:
+			continue                                   # no art: the stand-in is drawn on the ground
+		var sp: Sprite2D = crop_sprites.get(tile)
+		if sp == null:
+			sp = Sprite2D.new()
+			sp.centered = false
+			sp.region_enabled = true
+			sp.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			sp.scale = Vector2.ONE * ART
+			sp.offset = Vector2(-12, -42)              # bottom of the picture on the tile's bottom edge
+			sp.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 12)
+			station.actors.add_child(sp)
+			station.area_sprites.append([sp, "agri"])
+			crop_sprites[tile] = sp
+		sp.texture = tex
+		var frames: int = maxi(1, tex.get_width() / 24)
+		sp.region_rect = Rect2(mini(stage, frames - 1) * 24, 0, 24, 48)
+		sp.visible = station.current_area == "agri"
+		keep[tile] = true
+	for tile in crop_sprites.keys():
+		if keep.has(tile):
+			continue
+		var gone: Sprite2D = crop_sprites[tile]
+		crop_sprites.erase(tile)
+		for i in range(station.area_sprites.size() - 1, -1, -1):
+			if station.area_sprites[i][0] == gone:
+				station.area_sprites.remove_at(i)
+		gone.queue_free()
+
 
 func _draw_crop(tile: Vector2i, crop: String, stage: int) -> void:
 	if not crop_art.has(crop):

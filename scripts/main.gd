@@ -2474,7 +2474,7 @@ func _load_game() -> void:
 	if saved_farm is Dictionary:
 		farm = saved_farm
 	seeds_taken_day = int(cfg.get_value("farm", "seeds_taken_day", -1))
-	if farm_view != null: farm_view.queue_redraw()
+	if farm_view != null: farm_view.sync_crops()
 	var saved_locks = cfg.get_value("access", "doors", {})
 	if saved_locks is Dictionary:
 		for key in saved_locks:
@@ -2758,7 +2758,7 @@ func _farm_use(use: String, item: String) -> void:
 			farm[tile]["age"] = 0
 			_give(item, -1)
 			sfx("click", 0.8)
-			if farm_view != null: farm_view.queue_redraw()
+			if farm_view != null: farm_view.sync_crops()
 		return
 	if swing_cd > 0.0:
 		return
@@ -2779,7 +2779,7 @@ func _farm_use(use: String, item: String) -> void:
 		get_tree().create_timer(0.6).timeout.connect(splash.queue_free)
 		if on_field and farm.has(tile):
 			farm[tile]["watered"] = day
-	if farm_view != null: farm_view.queue_redraw()
+	if farm_view != null: farm_view.sync_crops()
 
 
 func _farm_energy() -> bool:
@@ -2810,7 +2810,7 @@ func _try_harvest() -> bool:
 	else:
 		t["crop"] = ""
 		t["age"] = 0
-	if farm_view != null: farm_view.queue_redraw()
+	if farm_view != null: farm_view.sync_crops()
 	return true
 
 
@@ -2820,6 +2820,7 @@ func _grow_crops() -> void:
 		var t: Dictionary = farm[tile]
 		if str(t["crop"]) != "" and int(t["watered"]) == day:
 			t["age"] = int(t["age"]) + 1
+	if farm_view != null: farm_view.sync_crops()
 
 
 # The irrigation valve in the Agri dome waters every dug tile at once.
@@ -2839,7 +2840,7 @@ func _irrigate(t: Dictionary) -> void:
 		farm[tile]["watered"] = day
 	garden_busy = false
 	player.frozen = false
-	if farm_view != null: farm_view.queue_redraw()
+	if farm_view != null: farm_view.sync_crops()
 	_toast("Every dug tile is watered")
 
 
