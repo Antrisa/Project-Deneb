@@ -9,6 +9,8 @@ extends Node2D
 ##                               i = 1 (north dug) + 2 (east) + 4 (south) + 8 (west); tile i is at column i % 4, row i / 4
 ##      art/farm/tilled_wet.png  the same 16, watered
 ##      art/farm/crops/<crop>.png  one 24 x 48 picture per growth stage, side by side, the last one ripe
+##      art/farm/field_border.png  a grass edge drawn over the field's own edge tiles, in the same 16-tile layout
+##                               as tilled.png, numbered by which neighbours are inside the field (21 Nov)
 ##  - until then, cut from the old 48-pixel soil art: a quarter of the furrowed (or watered) texture per tile, with a
 ##    raised lip drawn where it meets undug ground, and simple drawn crops.
 const EDGES := preload("res://art/lunar/agri/crop_edges.png")
@@ -38,6 +40,7 @@ var field := Rect2i()
 var art_field: Texture2D
 var art_tilled: Texture2D
 var art_wet: Texture2D
+var art_border: Texture2D
 var crop_art := {}
 
 func setup(game: Node, rows: Array) -> void:
@@ -54,6 +57,7 @@ func setup(game: Node, rows: Array) -> void:
 	art_field = _load("res://art/farm/field.png")
 	art_tilled = _load("res://art/farm/tilled.png")
 	art_wet = _load("res://art/farm/tilled_wet.png")
+	art_border = _load("res://art/farm/field_border.png")
 	visibility_changed.connect(_sync_visibility)
 
 func _load(path: String) -> Texture2D:
@@ -93,6 +97,10 @@ func _draw_field() -> void:
 			for x in range(field.position.x, field.end.x):
 				var v := _variant(x, y)
 				draw_texture_rect_region(art_field, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2(v * 24, 0, 24, 24))
+				var inside := (1 if y > field.position.y else 0) + (2 if x < field.end.x - 1 else 0) \
+					+ (4 if y < field.end.y - 1 else 0) + (8 if x > field.position.x else 0)
+				if art_border != null and inside != 15:
+					draw_texture_rect_region(art_border, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2((inside % 4) * 24, (inside / 4) * 24, 24, 24))
 	else:
 		var c0: Vector2i = field.position / 2
 		var cells: Vector2i = field.size / 2
