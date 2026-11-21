@@ -22,6 +22,17 @@ var _beam: Line2D
 var _beam_time := 0.0
 var _tool: Sprite2D
 var _tool_time := 0.0
+# Farm and mining tools in the hand (21 Nov): the held poses from the tool pack (art/tools/<tool>_<tier>/<view>.png,
+# 96 x 96 with the grip at the centre), moved in code: the hoe lifts and chops, the can tips and pours, the laser
+# kicks back. Painted hand-and-tool frames can replace this later.
+var _held: Sprite2D
+var _held_kind := ""
+var _held_time := 0.0
+const HELD_LEN := 0.42
+const HELD_VIEWS := ["south", "north", "west", "east"]                 # by _dir
+const HELD_GRIP := [Vector2(1, -9), Vector2(0, -12), Vector2(-4, -11), Vector2(4, -11)]   # hand, by _dir
+# Where the beam leaves the laser, from grips.csv, relative to the grip in art pixels (same for every tier).
+const LASER_EMITTER := [Vector2(0, 12), Vector2(0, -13), Vector2(-17, -6), Vector2(17, -6)]
 var _flash_time := 0.0
 var _weapon: Sprite2D        # the spear or sword while it is being swung
 var _spear_tex: Texture2D
@@ -84,6 +95,11 @@ func _ready() -> void:
 	_tool.scale = Vector2.ONE * (16.0 / _tool.texture.get_height())     # icons can be any size
 	_tool.visible = false
 	add_child(_tool)
+
+	_held = Sprite2D.new()
+	_held.scale = Vector2.ONE * (2.0 / 3.0)       # one tool pixel = one player pixel
+	_held.visible = false
+	add_child(_held)
 
 	# Weapon art is drawn pointing right with the grip at the left end, so it can be turned about the hand.
 	_spear_tex = load("res://art/weapon_spear.png")
@@ -168,8 +184,10 @@ func face(target: Vector2) -> void:
 
 
 # Draws the mining laser's beam from the player to a point in the world for a moment.
-func fire_laser(target: Vector2, icon: int) -> void:
+func fire_laser(target: Vector2, icon: int, tool_id: String = "") -> void:
 	face(target + Vector2(0, 8))
+	if tool_id != "" and tool_action(tool_id, "laser", target):
+		return
 	# Hold the laser in the hand, pointed at the vein, with the beam coming out of its tip.
 	var hand: Vector2 = HAND + facing() * 5.0
 	var aim: Vector2 = (target - position) - hand
@@ -186,6 +204,64 @@ func fire_laser(target: Vector2, icon: int) -> void:
 	_beam.add_point(target - position)
 	_beam.visible = true
 	_beam_time = 0.18
+
+
+# Plays a tool action facing the way the player faces. tool_id is a folder in art/tools ("hoe_basic"); kind is
+# "hoe", "water" or "laser". Returns false if there is no art for it (the caller shows the icon instead).
+func tool_action(tool_id: String, kind: String, beam_to: Vector2 = Vector2.INF) -> bool:
+	var path := "res://art/tools/%s/%s.png" % [tool_id, HELD_VIEWS[_dir]]
+	if not ResourceLoader.exists(path):
+		return false
+	_tool.visible = false
+	_held.texture = load(path)
+	_held_kind = kind
+	_held_time = HELD_LEN
+	_held.visible = true
+	_behind(_held, _dir == 1)
+	_animate_held()
+	if kind == "laser":
+		var from: Vector2 = HELD_GRIP[_dir] + LASER_EMITTER[_dir] * (2.0 / 3.0)
+		_beam.clear_points()
+		_beam.add_point(from)
+		_beam.add_point(beam_to - position if beam_to != Vector2.INF else from + facing() * 10.0)
+		_beam.visible = true
+		_beam_time = 0.18 if beam_to != Vector2.INF else 0.08
+	return true
+
+
+func _animate_held() -> void:
+	var k: float = clampf(1.0 - _held_time / HELD_LEN, 0.0, 1.0)      # 0 at the start, 1 at the end
+	var grip: Vector2 = HELD_GRIP[_dir]
+	var side: float = -1.0 if _dir == 2 else 1.0
+	_held.position = grip
+	_held.rotation = 0.0
+	_held.flip_v = false
+	match _held_kind:
+		"hoe":
+			if _dir >= 2:
+				# Side view: raise the blade back over the shoulder, then chop down into the tile ahead.
+				var a: float
+				if k < 0.35:
+					a = lerpf(0.0, -1.3, sin(k / 0.35 * PI / 2.0))
+				elif k < 0.6:
+					a = lerpf(-1.3, 0.35, pow((k - 0.35) / 0.25, 2.0))
+				else:
+					a = 0.35
+				_held.rotation = a * side
+			else:
+				# Front or back: lift (facing us, blade up overhead), then bring it down.
+				var lift: float = -6.0 * sin(k / 0.35 * PI / 2.0) if k < 0.35 else lerpf(-6.0, 2.0, minf(1.0, (k - 0.35) / 0.25))
+				_held.position = grip + Vector2(0, lift)
+				_held.flip_v = _dir == 0 and k < 0.35
+		"water":
+			# Tip the can over the tile ahead, hold while it pours, tip it back.
+			var tilt: float = smoothstep(0.0, 0.25, k) * (1.0 - smoothstep(0.8, 1.0, k))
+			if _dir >= 2:
+				_held.rotation = 0.7 * tilt * side
+			else:
+				_held.position = grip + Vector2(0, 2.0 * tilt * (1.0 if _dir == 0 else -1.0))
+		"laser":
+			_held.position = grip - facing() * 1.5 * (1.0 - smoothstep(0.0, 0.3, k))
 
 
 # Draws a held item behind the body (when facing away) or in front of it.
@@ -315,6 +391,11 @@ func _process(delta: float) -> void:
 		_tool_time -= delta
 		if _tool_time <= 0.0:
 			_tool.visible = false
+	if _held_time > 0.0:
+		_held_time -= delta
+		_animate_held()
+		if _held_time <= 0.0:
+			_held.visible = false
 	if _flash_time > 0.0:
 		_flash_time -= delta
 		_sprite.modulate = Color(1.0, 0.45, 0.45) if int(_flash_time * 16.0) % 2 == 0 and _flash_time > 0.0 else Color.WHITE

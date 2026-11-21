@@ -1551,7 +1551,8 @@ func _use_tool() -> void:
 		elif swing_cd <= 0.0:
 			# Nothing in reach: the laser still fires, like a pickaxe swung at the ground (and costs the same).
 			swing_cd = 0.4
-			player.show_tool(_item_icon(item))
+			if not player.tool_action(_tool_art(item), "laser"):
+				player.show_tool(_item_icon(item))
 			sfx("zap", 0.7, -6.0)
 			energy = maxi(0, energy - CUT_ENERGY)
 	elif use == "weapon":
@@ -1565,6 +1566,12 @@ func _use_tool() -> void:
 		_eat(item)
 	elif use in ["hoe", "water", "plant"]:
 		_farm_use(use, item)
+
+
+# The tool art folder for an item (art/tools/<id>), for the hand animations. "" if it has none.
+func _tool_art(item: String) -> String:
+	return {"hoe": "hoe_basic", "watering_can": "watering_can_basic", "laser": "mining_laser_basic",
+		"steel_laser": "mining_laser_steel"}.get(item, "")
 
 
 func _item_icon(item: String) -> int:
@@ -1636,7 +1643,7 @@ func _update_cut(delta: float, paused: bool) -> void:
 	var need: float = _cut_seconds(node["item"])
 	cut_time += delta
 	cut_buzz -= delta
-	player.fire_laser(t["pos"], _item_icon(slots[selected]))
+	player.fire_laser(t["pos"], _item_icon(slots[selected]), _tool_art(slots[selected]))
 	if cut_buzz <= 0.0:
 		sfx("zap", randf_range(0.85, 1.05), -8.0)
 		cut_buzz = 0.35
@@ -2757,7 +2764,9 @@ func _farm_use(use: String, item: String) -> void:
 		return
 	swing_cd = 0.4
 	if not _farm_energy(): return
-	player.show_tool(_item_icon(item))
+	player.face(Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
+	if not player.tool_action(_tool_art(item), "hoe" if use == "hoe" else "water"):
+		player.show_tool(_item_icon(item))
 	if use == "hoe":
 		sfx("step", 0.7)
 		if on_field and not farm.has(tile):
