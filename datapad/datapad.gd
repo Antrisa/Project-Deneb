@@ -111,6 +111,17 @@ var _return_page := "HUD"
 var commands: Array = []
 var hits: Array = []
 var extra_textures: Dictionary = {}
+# Echo Landing: text is drawn with a real font at the screen's own pixel size, so it stays sharp. The pack's
+# bitmap fonts were smoothed at 7 to 9 pixels tall and looked fuzzy once enlarged; only the pixel-perfect
+# "micro" font is still drawn from its bitmap. Sizes and baselines (UI pixels) match each bitmap font's capital
+# height and baseline, and each glyph is centred in the bitmap font's advance, so every layout measurement
+# (_width, _wrap_lines) still holds.
+const TEXT_SIZE := {"label": 11.2, "body": 12.6, "strong": 14.0, "mid": 18.2, "title": 25.2, "clock": 21.0}
+const TEXT_BASE := {"label": 12, "body": 14, "strong": 15, "mid": 20, "title": 27, "clock": 20}
+const TEXT_BOLD := ["strong", "title", "clock"]
+var _px := 1.0                 # screen pixels per UI pixel; the off-screen picture is drawn at this size
+var _font: Font
+var _font_bold: Font
 const EMOTES := ["surprise","question","love","joy","sad","frustrated","hello","ready","no","wait","help","follow","cute"]
 var _system_parent := "HUD"
 
@@ -127,6 +138,11 @@ func _ready() -> void:
 	add_child(_target)
 	_target.add_child(_raster)
 	_raster.draw.connect(_paint_native)
+	_font = ThemeDB.fallback_font
+	var bold := FontVariation.new()
+	bold.base_font = _font
+	bold.variation_embolden = 0.6
+	_font_bold = bold
 	var composite := CanvasItemMaterial.new()
 	composite.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA
 	material = composite
@@ -224,9 +240,13 @@ func refresh() -> void:
 	var first := Vector2i(extent.position.floor())
 	var last := Vector2i(extent.end.ceil())
 	_bounds = Rect2i(first, (last - first).max(Vector2i.ONE))
-	if _target.size != _bounds.size:
-		_target.size = _bounds.size
-	_raster.position = -Vector2(_bounds.position)
+	# Echo Landing: compose at the screen's pixel size (art still enlarged with hard edges), so text is sharp.
+	_px = maxf(1.0, (get_viewport_transform() * get_global_transform() * _layout).get_scale().x)
+	var native := Vector2i((Vector2(_bounds.size) * _px).ceil())
+	if _target.size != native:
+		_target.size = native
+	_raster.scale = Vector2(_px, _px)
+	_raster.position = -Vector2(_bounds.position) * _px
 	commands.clear()
 	hits.clear()
 	if page in ["HUD","Dialogue","Pause","Emotes"]:
@@ -332,14 +352,28 @@ func _paint_native() -> void:
 				var x: int=c[1]
 				var value: String=c[3]
 				var f: Dictionary=Art.FONTS[c[4]]
-				var atlas: Texture2D=Art.TEXTURES["f_"+c[4]]
 				var color:=Color(c[5])
-				for i in value.length():
-					var idx:=clampi(value.unicode_at(i)-32,0,94)
-					if idx!=0:
-						var area:=Rect2((idx%16)*f.cw,floori(idx/16.0)*f.ch,f.cw,f.ch)
-						_raster.draw_texture_rect_region(atlas,Rect2(x,c[2],f.cw,f.ch),area,color)
-					x+=int(f.advance[idx])
+				if TEXT_SIZE.has(c[4]) and _font != null:
+					var font: Font = _font_bold if c[4] in TEXT_BOLD else _font
+					var font_size: int = maxi(1, roundi(float(TEXT_SIZE[c[4]]) * _px))
+					var base_y: float = roundf((float(c[2]) + float(TEXT_BASE[c[4]])) * _px)
+					_raster.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0 / _px, 1.0 / _px))
+					for i in value.length():
+						var idx:=clampi(value.unicode_at(i)-32,0,94)
+						var advance: int = int(f.advance[idx])
+						if idx!=0:
+							var w: float = font.get_char_size(value.unicode_at(i), font_size).x
+							_raster.draw_char(font, Vector2(roundf(x * _px + (advance * _px - w) / 2.0), base_y), value[i], font_size, color)
+						x+=advance
+					_raster.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+				else:
+					var atlas: Texture2D=Art.TEXTURES["f_"+c[4]]
+					for i in value.length():
+						var idx:=clampi(value.unicode_at(i)-32,0,94)
+						if idx!=0:
+							var area:=Rect2((idx%16)*f.cw,floori(idx/16.0)*f.ch,f.cw,f.ch)
+							_raster.draw_texture_rect_region(atlas,Rect2(x,c[2],f.cw,f.ch),area,color)
+						x+=int(f.advance[idx])
 
 func _period() -> String:
 	if minutes < 360 or minutes >= 1200: return "night"

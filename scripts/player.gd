@@ -410,6 +410,11 @@ func _draw() -> void:
 	if not sitting or _sprite == null:return
 	var lower := floorf((1.0-sit_blend)*3.0)
 	draw_set_transform(Vector2(0,-lower))
+	if _dir == 1:
+		# Seen from behind: only the head and shoulders show above the seat back.
+		_seat_piece(Rect2(0,0,16,15),Rect2(-8,-29,16,15))
+		draw_set_transform(Vector2.ZERO)
+		return
 	_seat_piece(Rect2(0,0,16,21),Rect2(-8,-29,16,21))
 	if _dir == 0:
 		# Knees project forward and outward; shins hang from the cushion.

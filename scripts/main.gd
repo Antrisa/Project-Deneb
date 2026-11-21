@@ -1103,7 +1103,11 @@ func _interact(t: Dictionary) -> void:
 		seat_return = player.position
 		seated = true
 		player.frozen = true
-		player.position = t["pos"] + Vector2(0, -2)
+		# The 20 Nov benches are drawn lower and smaller than the old ones, so their sitters sit 8 units
+		# lower, with the hips on the cushion and the feet near the floor (checked against the art, not in Godot).
+		var name_l: String = str(t.name).to_lower()
+		var lower_seat: float = 8.0 if ("bench" in name_l or "pew" in name_l) else 0.0
+		player.position = t["pos"] + Vector2(0, -2 + lower_seat)
 		player._dir = 1 if "[N]" in t.name else 3 if "[E]" in t.name or "left" in t.name else 2 if "[W]" in t.name or "right" in t.name else 0
 		player.set_sitting(true,player._dir)
 		_toast("Seated — interact or move to stand")

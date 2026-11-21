@@ -143,7 +143,7 @@ def rebuild(g):
            # Promenade Art Pack 5: back views, shop pieces, street furniture, garden and games extras
            'terminal_n':(1,2,1),'mailbox_n':(1,2,1),'books_n':(2,2,1),'medical_n':(2,3,1),'workbench_n':(3,2,1),
            'market_counter_n':(3,2,1),'waiting_seat_n':(3,2,1),'waiting_seat_e':(1,3,2),'waiting_seat_w':(1,3,2),
-           'lamp_post':(1,2,1),'tree_tub':(2,2,1),'bollard_light':(1,1,1),'bin':(1,1,1),'drinking_fountain':(1,2,1),
+           'lamp_post':(1,2,1),'tree_tub':(1,2,1),'bollard_light':(1,1,1),'bin':(1,1,1),'drinking_fountain':(1,2,1),
            'signpost':(1,2,1),'banner_pole':(1,2,1),'kiosk':(3,3,2),'planter_long':(4,2,1),'play_piece':(3,2,1),
            'garden_tools':(2,2,1),'bird_bath':(1,2,1),'scoreboard':(2,3,1),'arcade':(1,3,1),'bar_table':(3,2,1),
            'garden_arch':(3,3,1)}
