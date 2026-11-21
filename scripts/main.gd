@@ -344,11 +344,12 @@ func _add_keys(action: String, keys: Array) -> void:
 
 # Screen size. The game is drawn at 640x360 and only ever scaled by whole numbers, so every art pixel is the
 # same size on screen: 1080p is exactly 3x (3 screen pixels per art pixel), 1440p 4x, 4K 6x, 720p 2x.
-# It starts in EXCLUSIVE fullscreen. Borderless fullscreen is not used: on Windows it deliberately makes the
-# window a pixel off the screen's size, which can knock the whole-number scaling off (a smaller scale, or a
-# half-pixel offset) and leave the picture soft (Zachary, 20 Nov: "everything looks fuzzy"). The project starts
-# in a window and switches here, because Godot 4.6 can't go back to a window if it launched straight into
-# exclusive fullscreen. Alt+Enter switches to a window sized to the largest whole multiple that fits the
+# It starts in EXCLUSIVE fullscreen (project.godot, window/size/mode=4). Borderless fullscreen is not used: on
+# Windows it deliberately makes the window a pixel off the screen's size, which can knock the whole-number
+# scaling off (a smaller scale, or a half-pixel offset) and leave the picture soft (Zachary, 20 Nov: "everything
+# looks fuzzy"). The project must not start windowed: Godot 4.4+ then runs it inside the editor's Game tab at
+# 1280x720 (21 Nov: the intro played small). Godot 4.6 can't leave exclusive fullscreen for a window when the
+# window size setting equals the monitor's (godotengine/godot#120283); ours is 1280x720, which avoids that. Alt+Enter switches to a window sized to the largest whole multiple that fits the
 # desktop, so windowed play stays sharp too. F8 checks all this on the player's own screen (_display_check).
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ENTER and event.alt_pressed:
@@ -364,8 +365,9 @@ func _toggle_fullscreen() -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
 
 
+# The project setting already starts it fullscreen; this only catches a start in a window (e.g. the setting reset).
 func _start_fullscreen() -> void:
-	if not _embedded():
+	if not _embedded() and DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
 
 
