@@ -9,8 +9,8 @@ suggests. Every home has:
   - one open room in the middle: the kitchen, the dining table and the family area;
   - a washroom.
 Who lives where:
-  aptB    Residences B           Bram, Zaas, a spare room and Bram's stock room (Freya and Job moved to the
-                                 East Complex, 20 Nov)
+  aptB    Residences B           Bram, two guest rooms and Bram's stock room (Freya, Job and Zaas moved to
+                                 the East Complex, 20 Nov)
   aptA    Residences A           Jasper, Evarra
   aptDoc  Family residences      Maren and Owen, Pip, Owen's study, Maren's home clinic
   aptSec  Security residences    Garrick and Saffi, Kit
@@ -204,7 +204,7 @@ def build(g):
     hm.room('Spare room', 13, 21, 'top', 'j', 19, '', 'spare room')
     hm.room('Washroom', 23, 29, 'top', 't', 26, '', 'washroom')
     hm.room("Bram's stock room", 3, 12, 'bottom', 's', 8, 'Bram', 'stock room')
-    hm.room("Zaas's room", 20, 29, 'bottom', 'a', 24, 'Zaas')
+    hm.room('Guest room', 20, 29, 'bottom', 'a', 24, '', 'guest room')
     hm.open_plan(14, 16, (3, 17, 14, 21), (16, 12, 29, 21))
     hm.bed('bed', 4, 5.5, "Bram's bed", ['Bram'])
     hm.put('wardrobe', 7, 4.5, 'Wardrobe'); hm.put('books', 11, 4.5, "Bram's ledgers", 'look')
@@ -214,9 +214,8 @@ def build(g):
     for fx in (5, 9): hm.put('storage_shelf', fx, 25.5, "Bram's stock shelves", 'look')
     hm.put('cargo', 4.5, 29.5, 'Salvage crate', 'look'); hm.put('barrel_stack', 8, 29.5, 'Barrels of who-knows-what', 'look')
     hm.put('cargo', 11.5, 29.5, 'Salvage crate', 'look')
-    hm.bed('bed', 29, 25.5, "Zaas's bed", ['Zaas'])
-    hm.put('telescope', 21, 25.5, "Zaas's telescope", 'look'); hm.put('star_chart', 27, 25.5, "Zaas's ocean charts", 'look')
-    hm.put('water_tank', 21, 29.5, 'Fish tank', 'look'); hm.put('wardrobe', 28.5, 29.5, 'Wardrobe')
+    hm.put('bed', 29, 25.5, 'Guest bed', 'look'); hm.put('wardrobe', 28.5, 29.5, 'Empty wardrobe')
+    hm.put('plants', 22, 29.5, 'Plant'); hm.put('armchair', 21.5, 25.5, 'Armchair', 'seat')
     hm.put('shower', 24, 5.5, 'Shower'); hm.put('toilet', 27.5, 4.5, 'Toilet'); hm.put('bath_sink', 29.5, 4.5, 'Washbasin')
     hm.put('laundry_basket', 29.5, 8.5, 'Laundry basket')
     hm.put('kitchenette', 5, 14.5, 'Kitchenette', 'inspect'); hm.put('fridge', 8, 14.5, 'Fridge')

@@ -26,10 +26,11 @@ CX, CY = 56, 46
 HOME_ANGLES = [20, 40, 140, 160, 200, 220, 320, 340]
 # Who lives in which home (Zachary, 20 Nov). Artie, Stu and Ana arrive later in the story; their homes are
 # ready for them. Home 4 and homes 6 to 8 are still empty.
-EAST_RESIDENTS = {1: 'Artie', 2: 'Stu', 3: 'Ana', 4: 'Freya', 5: 'Tikka|Sesska', 6: 'Job'}
+EAST_RESIDENTS = {1: 'Artie', 2: 'Stu', 3: 'Ana', 4: 'Freya', 5: 'Tikka|Sesska', 6: 'Job', 7: 'Zaas'}
 # Freya and Job moved out of Residences B (Zachary, 20 Nov). Job's home is a family house outside, but inside it
-# has the medium layout: a big living room with a home gym where the study would be.
-EAST_KIND = {6: 'couple'}
+# has the medium layout: a big living room with a home gym where the study would be. Zaas moved out too, to
+# Home 7 (same idea: the medium layout, with an ocean corner where the study would be).
+EAST_KIND = {6: 'couple', 7: 'couple'}
 # things of their own, placed in the living room and the bedroom: (prop, x, y, title)
 EAST_THINGS = {
     'Artie': [('star_chart', 16.5, 4.5, "Artie's knot board"), ('books', 25, 10, "Artie's library books")],
@@ -235,6 +236,9 @@ def make_home(g, key, title, kind, mirror, who=''):
         if who == 'Job':                                            # a home gym in the study corner
             put('weight_bench', 16.5, 5.5, "Job's weights", 'look'); put('punching_bag', 13, 5.5, 'Punching bag')
             put('cargo', 19, 8.5, 'Box of geodes', 'look')
+        elif who == 'Zaas':                                         # his ocean corner
+            put('water_tank', 13.5, 5.5, 'Fish tank', 'look'); put('star_chart', 16.5, 5.5, "Zaas's ocean charts", 'look')
+            put('telescope', 19, 5.5, "Zaas's telescope", 'look')
         else:
             put('curator_desk', 16.5, 5.5, 'Desk'); put('books', 13.5, 5.5, 'Bookshelf')
         put('sofa', 14.5, 13, 'Sofa', 'seat', 'Sit'); put('cafe_table', 14.5, 16.5, 'Coffee table'); put('armchair', 18.5, 16, 'Armchair', 'seat', 'Sit')

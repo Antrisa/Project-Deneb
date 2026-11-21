@@ -519,6 +519,7 @@ const LOOKS = {
 	"Post boxes": ["Three post boxes: Quill's, labelled neatly, Ix'ali's, dented, and Tar'Besh's, which has a small bell on it."],
 	"Residents' notice screen": ["QUIET HOURS AFTER 22:00. - Q.", "Underneath: Sparring is quiet. Mostly. - I."],
 	"Spare bed": ["Freya's old room, made up fresh for whoever needs it next."],
+	"Guest bed": ["Zaas's old room. He left a towel folded on the end of the bed, just in case."],
 	"Sparring mat": ["A worn mat. The scuffs on it show exactly where Ix'ali plants her feet."],
 	"Freya's tool cart": ["Freya's tool cart, every drawer labelled, none of the tools in the right drawer."]
 }
