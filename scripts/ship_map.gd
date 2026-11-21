@@ -48,21 +48,18 @@ func _ready() -> void:
 	font = view.get_theme_default_font()
 	if font == null:
 		font = ThemeDB.fallback_font
-	# The rest of the rings, for show. Each zone leans toward its own kinds of stop.
+	# The rest of the rings, for show (greyed out on the first flight).
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 21
-	var lean := {0: ["patrol", "patrol", "trade", "distress", "fight", "salvage"],
-		1: ["shrine", "shrine", "trade", "salvage", "fight", "distress"],
-		2: ["fight", "fight", "fight", "market", "salvage", "distress"],
-		3: ["convoy", "convoy", "trade", "distress", "fight", "salvage"]}
+	# Mostly ordinary beacons, some distress signals, a few stores, and the odd special sector.
+	var mix: Array = ["beacon", "beacon", "beacon", "beacon", "beacon", "beacon", "distress", "distress", "store", "special"]
 	for ring in range(1, RING.size()):
 		var n: int = ShipData.RING_STOPS[ring]
 		var turn: float = rng.randf() * 360.0 / n
 		for k in range(n):
 			var ang: float = turn + k * 360.0 / n + rng.randf_range(-6.0, 6.0)
 			var r: float = RING[ring] + rng.randf_range(-2.5, 2.5)
-			var kinds: Array = ["salvage", "trade", "salvage", "distress"] if ring == 1 else lean[_zone_index(ang)]
-			dots.append([CENTER + Vector2(cos(deg_to_rad(ang)), sin(deg_to_rad(ang))) * r, kinds[rng.randi() % kinds.size()]])
+			dots.append([CENTER + Vector2(cos(deg_to_rad(ang)), sin(deg_to_rad(ang))) * r, mix[rng.randi() % mix.size()]])
 
 
 func _zone_index(ang: float) -> int:
@@ -218,7 +215,7 @@ func _draw_view() -> void:
 			var s: Dictionary = route[i]
 			var kind: Dictionary = ShipData.STOP_KINDS[s["kind"]]
 			var here: Vector2 = stop_pos(i)
-			var rad: float = 5.0 if str(s["kind"]) == "boss" else 4.0
+			var rad: float = 5.0 if str(s["kind"]) == "special" else 4.0
 			view.draw_circle(here, rad, kind["color"] if i > at else Color(kind["color"]).darkened(0.4))
 			view.draw_arc(here, rad, 0.0, TAU, 16, WHITE, 1.0)
 			if i == next_index() and moving == 0.0:
@@ -252,12 +249,12 @@ func _draw_panel() -> void:
 		_text(Vector2(202, 76), str(kind["label"]), kind["color"], 6)
 		view.draw_multiline_string(font, Vector2(202, 86), str(s["about"]), HORIZONTAL_ALIGNMENT_LEFT, 110, 6, 5, DIM)
 	# the key
-	var keys: Array = ["salvage", "distress", "fight", "trade", "patrol", "shrine", "convoy", "market"]
+	var keys: Array = ["beacon", "distress", "store", "special"]
 	for k in range(keys.size()):
 		var kind2: Dictionary = ShipData.STOP_KINDS[keys[k]]
-		var pos := Vector2(204 + (k % 2) * 56, 118 + floori(k / 2.0) * 7)
+		var pos := Vector2(204 + (k % 2) * 56, 124 + floori(k / 2.0) * 8)
 		view.draw_circle(pos, 2.0, kind2["color"])
-		_text(pos + Vector2(4, 2), str(kind2["label"]), DIM, 5)
+		_text(pos + Vector2(4, 2), str(kind2["label"]), DIM, 6)
 	var jr := _jump_rect()
 	var ready: bool = can_jump()
 	view.draw_rect(jr, Color("4664a0") if ready else Color("323646"))

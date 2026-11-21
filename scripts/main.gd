@@ -1541,28 +1541,32 @@ func _head_them_off() -> void:
 		"[happy] Thank you. I've plotted a course to get ahead of them. It's on your jump map.",
 		"The Landing is in the middle. The rings go out into the neutral zone, and each zone leans toward someone: Terrans north, Zaa'sh east, the Collective west.",
 		"[angry] The south is the Rabble's Reach. Pirate country.",
-		"Each jump takes you to the next stop and uses one fuel cell. Some stops are salvage, some are calls for help, some are traders, and some are pirates.",
-		"Normally you'd pick your own way. Today, follow my course. Click the next stop, or press E, to jump.",
+		"Each jump takes you to the next stop and uses one fuel cell.",
+		"A plain beacon could be anything: salvage, travellers, pirates. You find out when you get there.",
+		"Distress signals are someone asking for help. Whether that goes well depends on what you choose.",
+		"Stores sell repairs and fuel. Special sectors are... special. You'll know one when you see it.",
+		"I've scanned ahead today, so you know what's waiting. Normally you won't, and you'd pick your own way.",
+		"Follow my course. Click the next stop, or press E, to jump.",
 	])
 
 
 func _arrive(i: int) -> void:
 	fuel = maxi(0, fuel - 1)
 	var stop: Dictionary = ShipData.FIRST_FLIGHT[i]
-	match str(stop["kind"]):
-		"salvage":
+	match str(stop["event"]):
+		"ice_field":
 			_say("Sensors", ["Wreckage, frozen into a drift of ice. An old freighter's cargo pod, still sealed.",
 				"Cut it free?"], Callable(self, "_salvage_take"), "Cut it free", Callable(self, "_salvage_leave"), "Leave it")
-		"distress":
+		"patient_wren":
 			_say("Freighter captain", [
 				"[sad] Collective freighter Patient Wren, drive dead, three aboard. The Rabble shot us up on their way past.",
 				"They were heading for some moon station. Can you spare anything? A spark for the drive would do it.",
 			], Callable(self, "_distress_help"), "Send the drone over", Callable(self, "_distress_leave"), "Leave them")
-		"fight":
+		"picket":
 			_stop_fight(stop)
-		"trade":
+		"moogli_trader":
 			_stop_trade()
-		"boss":
+		"ivan":
 			_stop_ivan(stop)
 
 

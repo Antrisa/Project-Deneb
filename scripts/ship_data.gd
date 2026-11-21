@@ -100,30 +100,32 @@ const ZONES := [
 	{"name": "Collective influence", "from": 135.0, "to": 225.0, "color": Color("1c4030"), "text": Color("6edc8c")},
 ]
 const RING_STOPS := [0, 4, 8, 12, 16, 20]      # how many stops each ring has (ring 0 is the Landing)
+# The kinds of stop on the map (Zachary, 21 Nov), as in FTL:
+#   beacon   - an ordinary stop: any random event or a fight. You don't know which until you jump.
+#              What turns up leans toward the zone's owner (Terran patrols, Zaa'sh pilgrims, Collective convoys, pirates).
+#   distress - a labelled distress signal: a special event whose outcome can be good or bad depending on your choice.
+#   store    - a trader: repairs, fuel, and later parts and weapons.
+#   special  - a special sector: the Rabble's Nest, a wandering merchant, story stops such as Ivan.
 const STOP_KINDS := {
-	"salvage": {"label": "Salvage", "color": Color("6edc78")},
-	"distress": {"label": "Distress call", "color": Color("fadc5a")},
-	"fight": {"label": "Pirates", "color": Color("e65046")},
-	"trade": {"label": "Trader", "color": Color("c8a0ff")},
-	"patrol": {"label": "Terran patrol", "color": Color("6eaaff")},
-	"shrine": {"label": "Zaa'sh shrine", "color": Color("f0aa5a")},
-	"convoy": {"label": "Refugee convoy", "color": Color("6edcc8")},
-	"market": {"label": "Pirate market", "color": Color("c83c8c")},
-	"boss": {"label": "The Rabble", "color": Color("ff8c3c")},
+	"beacon": {"label": "Beacon", "color": Color("d2d6e4")},
+	"distress": {"label": "Distress signal", "color": Color("fadc5a")},
+	"store": {"label": "Store", "color": Color("c8a0ff")},
+	"special": {"label": "Special", "color": Color("ff8c3c")},
 }
 
 # The first flight (Zachary, 21 Nov): the route is locked. It heads off the Rabble and stops once at each kind
-# of stop on the way, as a tutorial for exploring and fighting. Ring and angle place each stop on the map.
+# of stop on the way, as a tutorial for exploring and fighting. S.A.R.A. has scanned ahead, so the beacons say
+# what they hold. Ring and angle place each stop on the map; "event" is what main.gd runs there.
 const FIRST_FLIGHT := [
-	{"kind": "salvage", "name": "Ice field", "ring": 1, "angle": 100.0,
+	{"kind": "beacon", "event": "ice_field", "name": "Ice field", "ring": 1, "angle": 100.0,
 		"about": "Wreckage frozen into a drift of ice. Something might still be worth cutting free."},
-	{"kind": "distress", "name": "Drifting freighter", "ring": 2, "angle": 15.0,
+	{"kind": "distress", "event": "patient_wren", "name": "Drifting freighter", "ring": 2, "angle": 15.0,
 		"about": "A distress call on a Collective band. Scorch marks on the hull."},
-	{"kind": "fight", "name": "Rabble picket", "ring": 3, "angle": 55.0, "enemy": "rabble_cutter",
+	{"kind": "beacon", "event": "picket", "name": "Rabble picket", "ring": 3, "angle": 55.0, "enemy": "rabble_cutter",
 		"about": "A Rabble Cutter scouting ahead of the others."},
-	{"kind": "trade", "name": "Moogli trader", "ring": 2, "angle": 125.0,
+	{"kind": "store", "event": "moogli_trader", "name": "Moogli trader", "ring": 2, "angle": 125.0,
 		"about": "A trader's skiff, keeping out of the way. Repairs and fuel, for a price."},
-	{"kind": "boss", "name": "Ivan's flagship", "ring": 3, "angle": 95.0, "enemy": "ivan_flagship",
+	{"kind": "special", "event": "ivan", "name": "Ivan's flagship", "ring": 3, "angle": 95.0, "enemy": "ivan_flagship",
 		"about": "The Rabble's main force, on its way to the Landing. Ivan leads it himself."},
 ]
 const FIRST_FLIGHT_FUEL := 6          # you set off with at least this much
