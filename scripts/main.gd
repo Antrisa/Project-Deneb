@@ -1548,9 +1548,12 @@ func _use_tool() -> void:
 			vein = _nearest_of_kind("ore")
 		if vein != null:
 			_start_cut(vein)
-		else:
-			sfx("deny")
-			_toast("Stand next to an ore vein to use the laser")
+		elif swing_cd <= 0.0:
+			# Nothing in reach: the laser still fires, like a pickaxe swung at the ground (and costs the same).
+			swing_cd = 0.4
+			player.show_tool(_item_icon(item))
+			sfx("zap", 0.7, -6.0)
+			energy = maxi(0, energy - CUT_ENERGY)
 	elif use == "weapon":
 		if swing_cd > 0.0:
 			return
@@ -2736,44 +2739,37 @@ func crop_stage(t: Dictionary) -> int:
 	return mini(int(c["stages"]) - 1, int(t["age"]) * int(c["stages"]) / days)
 
 
+# Like Stardew, the hoe and the can always swing (and cost their energy), whatever they hit; only a dug field
+# tile changes. Seeds go in only where they can grow, and otherwise nothing happens. (Zachary, 21 Nov: "just let
+# the action play".) The swing is the tool held out for now; proper hoe and watering animations come later.
 func _farm_use(use: String, item: String) -> void:
 	var tile: Vector2i = farm_target()
-	if not farm_field().has_point(tile):
-		sfx("deny")
-		_toast("Use it on your field in the Agri dome" if current_area != "agri" else "That isn't the field")
+	var on_field: bool = farm_field().has_point(tile)
+	if use == "plant":
+		if on_field and farm.has(tile) and str(farm[tile]["crop"]) == "":
+			farm[tile]["crop"] = str(ItemData.ITEMS[item].get("crop", ""))
+			farm[tile]["age"] = 0
+			_give(item, -1)
+			sfx("click", 0.8)
+			if farm_view != null: farm_view.queue_redraw()
 		return
+	if swing_cd > 0.0:
+		return
+	swing_cd = 0.4
+	if not _farm_energy(): return
+	player.show_tool(_item_icon(item))
 	if use == "hoe":
-		if farm.has(tile):
-			_toast("Already dug")
-			return
-		if not _farm_energy(): return
-		farm[tile] = {"crop": "", "age": 0, "watered": -1}
 		sfx("step", 0.7)
+		if on_field and not farm.has(tile):
+			farm[tile] = {"crop": "", "age": 0, "watered": -1}
 	elif use == "water":
-		if not farm.has(tile):
-			_toast("Dig it with the hoe first")
-			return
-		if int(farm[tile]["watered"]) == day:
-			_toast("Already watered today")
-			return
-		if not _farm_energy(): return
-		farm[tile]["watered"] = day
 		sfx("blip", 0.6)
 		var splash := preload("res://scripts/watering_effect.gd").new()
 		splash.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 4)
 		actors.add_child(splash)
 		get_tree().create_timer(0.6).timeout.connect(splash.queue_free)
-	elif use == "plant":
-		if not farm.has(tile):
-			_toast("Dig it with the hoe first")
-			return
-		if str(farm[tile]["crop"]) != "":
-			_toast("Something is already growing there")
-			return
-		farm[tile]["crop"] = str(ItemData.ITEMS[item].get("crop", ""))
-		farm[tile]["age"] = 0
-		_give(item, -1)
-		sfx("click", 0.8)
+		if on_field and farm.has(tile):
+			farm[tile]["watered"] = day
 	if farm_view != null: farm_view.queue_redraw()
 
 
