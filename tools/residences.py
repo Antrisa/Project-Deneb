@@ -9,12 +9,14 @@ suggests. Every home has:
   - one open room in the middle: the kitchen, the dining table and the family area;
   - a washroom.
 Who lives where:
-  aptB    Residences B           Bram, Freya, Job, Zaas
+  aptB    Residences B           Bram, Zaas, a spare room and Bram's stock room (Freya and Job moved to the
+                                 East Complex, 20 Nov)
   aptA    Residences A           Jasper, Evarra
   aptDoc  Family residences      Maren and Owen, Pip, Owen's study, Maren's home clinic
   aptSec  Security residences    Garrick and Saffi, Kit
   aptMoog Moogli residences      Tobbin and Merrow, Nub
-  aptEmpty Residences C          Quill, Ix'ali, Tar'Besh, and a little Zaa'sh shrine
+  aptEmpty Residences C          a hall with three flats off it, each its own map: flatQuill, flatIxali,
+                                 flatTarBesh (Tar'Besh's has a little Zaa'sh shrine)
 Each room is decorated for whoever sleeps in it, and each resident's night stop is beside their own bed
 (HOME_SPOTS, used by SCHEDULES_RAW in tools/build.py).
 Drawn in the promenade style; floors and walls baked by tools/bake_floor.py."""
@@ -25,7 +27,7 @@ from spaceport import fill
 
 WALKABLE = '.shafkoteuj'
 SIZES.update({'textiles': (3, 2, 1), 'clothes': (3, 2, 1), 'medical': (2, 3, 1), 'hologame': (2, 2, 1),
-              'chess': (2, 2, 1), 'play_piece': (3, 2, 1)})
+              'chess': (2, 2, 1), 'play_piece': (3, 2, 1), 'mailbox': (1, 2, 1), 'bench_s': (2, 2, 1)})
 
 DECK = ('hotel/warm_deck_mix', None)
 KITCHEN = ('hotel/kitchen_ceramic_mix', None)
@@ -79,11 +81,16 @@ class Home:
     def room(self, label, x0, x1, row, ch, door_x, owner='', what='bedroom'):
         """A room along the top or bottom, with a sliding door into the open room."""
         y0, y1, wall = (3, 10, 11) if row == 'top' else (23, 30, 22)
+        self.rect_room(label, x0, y0, x1, y1, ch, (door_x, wall), owner, what)
+
+    def rect_room(self, label, x0, y0, x1, y1, ch, door, owner='', what='bedroom', door_ch='o'):
+        """Any rectangular room, with a sliding door in a wall running east-west at door (x, y)."""
         self.carve(x0, y0, x1, y1, ch)
-        self.F[wall][door_x] = 'o'
-        self.doors.add((door_x, wall))
-        self.inner.append([self.key, door_x, wall, 1, 1, 'S', owner, what])
-        self.r.keep_clear(door_x, wall - 2, door_x, wall + 2)
+        dx, dy = door
+        self.F[dy][dx] = door_ch
+        self.doors.add((dx, dy))
+        self.inner.append([self.key, dx, dy, 1, 1, 'S', owner, what])
+        self.r.keep_clear(dx, dy - 2, dx, dy + 2)
         self.zones.append([label, x0, y0, x1, y1])
 
     def open_plan(self, kitchen_x1, kitchen_y1, dining, family):
@@ -116,15 +123,23 @@ class Home:
         """A daytime stop at home (HOME_SPOTS[label]): Saffi sweeping, Kit playing in his room."""
         self.spots[label] = (self.key,) + free_spot(self.r, fx, fy, self.taken, self.doors)
 
-    def finish(self):
+    def finish(self, hall=None, hall_door=None):
+        """hall: for a flat, the hall map it opens off and the door there (a door each way, like the East
+        Complex homes). Otherwise the home opens straight onto the promenade."""
         g, r = self.g, self.r
         r.t.zones += self.zones
-        # the way out: concourse.rebuild points it at the promenade door; the promenade door lands you here
-        r.t.warps.append([self.door[0], self.door[1], 'main', 0, 0])
-        bx, by, ch, _, _ = g['DOORS'][self.key]
-        old = g['m']
-        old.warps = [w for w in old.warps if w[2] != self.key]
-        old.warp(ch, [(bx, by)], self.key, self.door[0], self.door[1] - 1)
+        if hall is None:
+            # the way out: concourse.rebuild points it at the promenade door; the promenade door lands you here
+            r.t.warps.append([self.door[0], self.door[1], 'main', 0, 0])
+            bx, by, ch, _, _ = g['DOORS'][self.key]
+            old = g['m']
+            old.warps = [w for w in old.warps if w[2] != self.key]
+            old.warp(ch, [(bx, by)], self.key, self.door[0], self.door[1] - 1)
+        else:
+            from survey import door_pair
+            door_pair(g.setdefault('RES_ENTRANCES', []), {hall.key: hall.r.t.warps, self.key: r.t.warps},
+                      hall.key, hall_door, 'S', self.key, self.door, 'N', self.title, hall.title)
+            g['MAP_PARENT'][self.key] = [hall.key, hall_door[0], hall_door[1] + 1]
         g.setdefault('INNER_DOORS', []).extend(self.inner)
         import bake_floor
         bake_floor.AREA_FLOORS[self.key] = self.floors
@@ -154,6 +169,30 @@ class Home:
             assert d in seen, ('door cut off', self.key, d)
 
 
+class Hall(Home):
+    """A shared entrance hall behind a promenade door, with a door in its north wall to each flat. Each flat
+    is a map of its own (Zachary, 20 Nov: all homes are their own map). Hall: y 5..8; front door at y 9."""
+    def __init__(self, g, key, title, W, door_x):
+        H = 12
+        self.g, self.key, self.title, self.W, self.H, self.bottom = g, key, title, W, H, False
+        self.r = Room(g, key, title, W, H)
+        self.F = self.r.F
+        fill(self.F, 1, 1, W - 2, H - 2, '#')
+        self.door = (door_x, H - 3)
+        self.floors = {'o': DECK}
+        self.zones, self.inner, self.spots, self.taken, self.doors, self.notes = [['Hall', 3, 5, W - 4, 8]], [], {}, set(), set(), []
+        self.carve(3, 5, W - 4, 8, 'o')
+        self.F[H - 3][door_x] = 'o'
+        self.r.keep_clear(door_x - 1, 7, door_x + 1, H - 3)
+
+    def flat_door(self, x):
+        """A door in the hall's north wall, to a flat."""
+        self.F[4][x] = 'o'
+        self.doors.add((x, 4))
+        self.r.keep_clear(x, 5, x, 6)
+        return (x, 4)
+
+
 def build(g):
     saved = survey.WALKABLE
     survey.WALKABLE = WALKABLE
@@ -162,20 +201,19 @@ def build(g):
     hm = Home(g, 'aptB', 'Residences B', 33, True, 16, {
         'h': (CARPET, ('7a6a3a', .25)), 'j': (NAVY, None), 's': (SLATE, None), 'a': (NAVY, ('2a8a90', .35))})
     hm.room("Bram's room", 3, 11, 'top', 'h', 9, 'Bram')
-    hm.room("Freya's room", 13, 21, 'top', 'j', 19, 'Freya')
+    hm.room('Spare room', 13, 21, 'top', 'j', 19, '', 'spare room')
     hm.room('Washroom', 23, 29, 'top', 't', 26, '', 'washroom')
-    hm.room("Job's room", 3, 12, 'bottom', 's', 8, 'Job')
+    hm.room("Bram's stock room", 3, 12, 'bottom', 's', 8, 'Bram', 'stock room')
     hm.room("Zaas's room", 20, 29, 'bottom', 'a', 24, 'Zaas')
     hm.open_plan(14, 16, (3, 17, 14, 21), (16, 12, 29, 21))
     hm.bed('bed', 4, 5.5, "Bram's bed", ['Bram'])
     hm.put('wardrobe', 7, 4.5, 'Wardrobe'); hm.put('books', 11, 4.5, "Bram's ledgers", 'look')
     hm.put('footlocker', 4, 8.5, "Bram's strongbox", 'look'); hm.put('cargo', 7, 8.5, 'Salvage crate', 'look')
-    hm.bed('bed', 14, 5.5, "Freya's bed", ['Freya'])
-    hm.put('workbench', 17.5, 4.5, "Freya's bench", 'look'); hm.put('tool_cart', 21, 4.5, 'Tool cart')
-    hm.put('wardrobe', 14, 8.5, 'Wardrobe'); hm.put('star_chart', 17, 8.5, 'Ship schematics', 'look')
-    hm.bed('bed', 4, 25.5, "Job's bed", ['Job'])
-    hm.put('wardrobe', 12, 25.5, 'Wardrobe'); hm.put('gym_rack', 5.5, 29.5, "Job's weights", 'look')
-    hm.put('cargo', 11, 29.5, 'Box of geodes', 'look')
+    hm.put('bed', 14, 5.5, 'Spare bed', 'look'); hm.put('wardrobe', 18, 4.5, 'Empty wardrobe')
+    hm.put('plants', 17.5, 8.5, 'Plant')
+    for fx in (5, 9): hm.put('storage_shelf', fx, 25.5, "Bram's stock shelves", 'look')
+    hm.put('cargo', 4.5, 29.5, 'Salvage crate', 'look'); hm.put('barrel_stack', 8, 29.5, 'Barrels of who-knows-what', 'look')
+    hm.put('cargo', 11.5, 29.5, 'Salvage crate', 'look')
     hm.bed('bed', 29, 25.5, "Zaas's bed", ['Zaas'])
     hm.put('telescope', 21, 25.5, "Zaas's telescope", 'look'); hm.put('star_chart', 27, 25.5, "Zaas's ocean charts", 'look')
     hm.put('water_tank', 21, 29.5, 'Fish tank', 'look'); hm.put('wardrobe', 28.5, 29.5, 'Wardrobe')
@@ -293,33 +331,64 @@ def build(g):
     hm.put('workbench', 30, 22.5, "Tobbin's home bench", 'look'); hm.put('tree_tub', 20.5, 22.5, 'Potted tree')
     hm.finish()
 
-    # ============================================================ Residences C: Quill, Ix'ali, Tar'Besh
-    hm = Home(g, 'aptEmpty', 'Residences C', 33, True, 16, {
-        'j': (SLATE, ('3a8a8a', .3)), 'h': (CARPET, ('5a3a7a', .3)), 'a': (NAVY, ('6f5a9a', .3)), 's': (MINERAL, ('6f5a9a', .32))})
-    hm.room("Quill's room", 3, 11, 'top', 'j', 9, 'Quill')
-    hm.room("Ix'ali's room", 13, 21, 'top', 'h', 19, "Ix'ali")
-    hm.room('Washroom', 23, 29, 'top', 't', 26, '', 'washroom')
-    hm.room("Tar'Besh's room", 3, 12, 'bottom', 'a', 8, "Tar'Besh")
-    hm.room('Shrine', 20, 29, 'bottom', 's', 24, '', 'shrine')
-    hm.open_plan(12, 16, (3, 17, 14, 21), (16, 12, 29, 21))
-    hm.bed('bed', 4, 5.5, "Quill's bed", ['Quill'])
-    hm.put('wardrobe', 7, 4.5, 'Wardrobe'); hm.put('books', 10, 4.5, "Quill's medical journals", 'look')
-    hm.put('curator_desk', 5, 8.5, "Quill's desk", 'look'); hm.put('fern', 8.5, 8.5, 'Pressed ferns', 'look')
-    hm.bed('bed', 14, 5.5, "Ix'ali's bed", ["Ix'ali"])
-    hm.put('case_wreck', 17, 4.5, "Ix'ali's human weapons", 'look'); hm.put('punching_bag', 21.5, 4.5, 'Practice dummy', 'look')
-    hm.put('wardrobe', 14, 8.5, 'Wardrobe'); hm.put('gym_rack', 18, 8.5, 'Practice blades', 'look')
-    hm.bed('bed', 4, 25.5, "Tar'Besh's bed", ["Tar'Besh"])
-    hm.put('books', 6, 24.5, "Tar'Besh's books", 'look'); hm.put('wardrobe', 12, 25.5, 'Wardrobe')
-    hm.put('plants', 5, 29.5, "Tar'Besh's prayer garden", 'look'); hm.put('curator_desk', 10.5, 29.5, "Tar'Besh's writing desk", 'look')
-    for fx in (21.5, 28.5): hm.put('holy_banner', fx, 25.5, 'Sky-Weaver banner', 'look')
-    for fx in (23, 26.5): hm.put('prayer_mat', fx, 27.5, 'Prayer mat', 'inspect')
-    for fx in (22, 27.5): hm.put('brazier', fx, 29.5, 'Violet brazier', 'inspect')
-    hm.put('shower', 24, 5.5, 'Shower'); hm.put('toilet', 27.5, 4.5, 'Toilet'); hm.put('bath_sink', 29.5, 4.5, 'Washbasin')
+    # ============================================================ Residences C: a hall, and a flat each for Quill,
+    # Ix'ali and Tar'Besh behind its own door, each its own map and sized for its owner (Zachary, 20 Nov).
+    hall = Hall(g, 'aptEmpty', 'Residences C', 31, 15)
+    doors = {who: hall.flat_door(x) for who, x in (('Quill', 7), ("Ix'ali", 15), ("Tar'Besh", 23))}
+    hall.put('mailbox', 4.5, 6.5, 'Post boxes', 'look'); hall.put('bench_s', 11, 6.5, 'Hall bench [S]', 'seat')
+    hall.put('tree_tub', 19.5, 6.5, 'Potted tree'); hall.put('terminal', 27.5, 6.5, "Residents' notice screen", 'look')
+    hall.finish()
+
+    # Quill: small and tidy, with a study corner
+    hm = Home(g, 'flatQuill', "Quill's flat", 27, False, 13, {'j': (SLATE, ('3a8a8a', .3)), 's': (CARPET, ('2a6a6a', .3))})
+    hm.room("Quill's room", 3, 14, 'top', 's', 9, 'Quill')
+    hm.room('Washroom', 16, 23, 'top', 't', 19, '', 'washroom')
+    hm.open_plan(9, 15, (3, 16, 10, 23), (11, 12, 23, 23))
+    hm.bed('bed', 4, 5.5, "Quill's bed", ['Quill']); hm.put('wardrobe', 7, 4.5, 'Wardrobe')
+    hm.put('books', 13, 4.5, "Quill's medical journals", 'look'); hm.put('fern', 12.5, 8.5, 'Pressed ferns', 'look')
+    hm.put('shower', 17, 5.5, 'Shower'); hm.put('toilet', 21.5, 4.5, 'Toilet'); hm.put('bath_sink', 23.5, 4.5, 'Washbasin')
     hm.put('kitchenette', 5, 14.5, 'Kitchenette', 'inspect'); hm.put('fridge', 8, 14.5, 'Fridge')
-    hm.put('table', 12.5, 18.5, 'Dining table', 'seat')
-    hm.put('books', 22, 13.5, 'Shared bookshelf', 'look'); hm.put('cafe_table', 22, 15.5, 'Coffee table')
-    hm.put('sofa', 22.5, 18.5, 'Sofa', 'seat'); hm.put('armchair', 26.5, 17.5, 'Armchair', 'seat')
-    hm.put('chess', 28.5, 20.5, 'Chess set', 'look'); hm.put('tree_tub', 3.5, 20.5, 'Potted tree')
-    hm.finish()
+    hm.put('cafe_table', 5, 19.5, 'Little table', 'seat')
+    hm.put('curator_desk', 19.5, 14.5, "Quill's desk", 'look'); hm.put('books', 23, 13.5, 'Bookshelf')
+    hm.put('armchair', 19, 18.5, 'Reading chair', 'seat'); hm.put('plants', 22, 22.5, 'Plant')
+    hm.finish(hall, doors['Quill'])
+
+    # Ix'ali: a practice room for her blades
+    hm = Home(g, 'flatIxali', "Ix'ali's flat", 31, False, 15, {
+        'f': (DECK[0], ('5a3a7a', .18)), 'h': (CARPET, ('5a3a7a', .3)), 'e': (MINERAL, None)})
+    hm.room("Ix'ali's room", 3, 13, 'top', 'h', 9, "Ix'ali")
+    hm.room('Practice room', 15, 21, 'top', 'e', 18, "Ix'ali", 'practice room')
+    hm.room('Washroom', 23, 27, 'top', 't', 25, '', 'washroom')
+    hm.open_plan(9, 15, (3, 16, 12, 23), (13, 12, 27, 23))
+    hm.bed('bed', 4, 5.5, "Ix'ali's bed", ["Ix'ali"]); hm.put('wardrobe', 7, 4.5, 'Wardrobe')
+    hm.put('case_wreck', 11, 4.5, "Ix'ali's human weapons", 'look')
+    hm.put('punching_bag', 16.5, 4.5, 'Practice dummy', 'look'); hm.put('gym_rack', 20, 4.5, 'Practice blades', 'look')
+    hm.put('prayer_mat', 17, 8.5, 'Sparring mat', 'look')
+    hm.put('shower', 24, 5.5, 'Shower'); hm.put('toilet', 26.5, 4.5, 'Toilet'); hm.put('bath_sink', 27.5, 8.5, 'Washbasin')
+    hm.put('kitchenette', 5, 14.5, 'Kitchenette', 'inspect'); hm.put('fridge', 8, 14.5, 'Fridge')
+    hm.put('table', 6.5, 19.5, 'Dining table', 'seat')
+    hm.put('sofa', 21.5, 17.5, 'Sofa', 'seat'); hm.put('cafe_table', 21, 20.5, 'Coffee table')
+    hm.put('armchair', 25.5, 18.5, 'Armchair', 'seat'); hm.put('tree_tub', 27.5, 22.5, 'Potted tree')
+    hm.finish(hall, doors["Ix'ali"])
+
+    # Tar'Besh: books, his writing desk and a small Zaa'sh shrine
+    hm = Home(g, 'flatTarBesh', "Tar'Besh's flat", 31, False, 15, {
+        'a': (NAVY, ('6f5a9a', .3)), 's': (MINERAL, ('6f5a9a', .32))})
+    hm.room("Tar'Besh's room", 3, 13, 'top', 'a', 9, "Tar'Besh")
+    hm.room('Shrine', 15, 21, 'top', 's', 18, '', 'shrine')
+    hm.room('Washroom', 23, 27, 'top', 't', 25, '', 'washroom')
+    hm.open_plan(9, 15, (3, 16, 12, 23), (13, 12, 27, 23))
+    hm.bed('bed', 4, 5.5, "Tar'Besh's bed", ["Tar'Besh"]); hm.put('wardrobe', 7, 4.5, 'Wardrobe')
+    hm.put('books', 11, 4.5, "Tar'Besh's books", 'look'); hm.put('plants', 11, 8.5, "Tar'Besh's prayer garden", 'look')
+    for fx in (15.5, 21.5): hm.put('holy_banner', fx, 5.5, 'Sky-Weaver banner', 'look')
+    hm.put('prayer_mat', 18, 6.5, 'Prayer mat', 'inspect')
+    for fx in (16, 20.5): hm.put('brazier', fx, 8.5, 'Violet brazier', 'inspect')
+    hm.put('shower', 24, 5.5, 'Shower'); hm.put('toilet', 26.5, 4.5, 'Toilet'); hm.put('bath_sink', 27.5, 8.5, 'Washbasin')
+    hm.put('kitchenette', 5, 14.5, 'Kitchenette', 'inspect'); hm.put('fridge', 8, 14.5, 'Fridge')
+    hm.put('cafe_table', 5, 19.5, 'Tea table', 'seat')
+    hm.put('curator_desk', 21.5, 14.5, "Tar'Besh's writing desk", 'look'); hm.put('books', 26, 13.5, 'Bookshelf')
+    hm.put('chess', 21, 19.5, 'Chess set', 'look'); hm.put('armchair', 25, 19.5, 'Armchair', 'seat')
+    hm.put('tree_tub', 3.5, 22.5, 'Potted tree')
+    hm.finish(hall, doors["Tar'Besh"])
 
     survey.WALKABLE = saved

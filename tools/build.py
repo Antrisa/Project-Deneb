@@ -2736,6 +2736,7 @@ ENTRANCES += SURVEY_ENTRANCES     # doors between the Survey Level's three maps 
 ENTRANCES += ENG_ENTRANCES
 ENTRANCES += SPACEPORT_ENTRANCES
 ENTRANCES += EAST_ENTRANCES        # Engineering to the shuttle bay (tools/engineering.py)
+ENTRANCES += RES_ENTRANCES         # Residences C's hall to its flats (tools/residences.py)
 
 # ---------------------------------------------------------------- checks
 occupied = {(p[1], p[2], p[3]) for p in PEOPLE} | {(n[1], n[2], n[3]) for n in NODES}

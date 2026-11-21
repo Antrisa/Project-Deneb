@@ -26,12 +26,16 @@ CX, CY = 56, 46
 HOME_ANGLES = [20, 40, 140, 160, 200, 220, 320, 340]
 # Who lives in which home (Zachary, 20 Nov). Artie, Stu and Ana arrive later in the story; their homes are
 # ready for them. Home 4 and homes 6 to 8 are still empty.
-EAST_RESIDENTS = {1: 'Artie', 2: 'Stu', 3: 'Ana', 5: 'Tikka|Sesska'}
+EAST_RESIDENTS = {1: 'Artie', 2: 'Stu', 3: 'Ana', 4: 'Freya', 5: 'Tikka|Sesska', 6: 'Job'}
+# Freya and Job moved out of Residences B (Zachary, 20 Nov). Job's home is a family house outside, but inside it
+# has the medium layout: a big living room with a home gym where the study would be.
+EAST_KIND = {6: 'couple'}
 # things of their own, placed in the living room and the bedroom: (prop, x, y, title)
 EAST_THINGS = {
     'Artie': [('star_chart', 16.5, 4.5, "Artie's knot board"), ('books', 25, 10, "Artie's library books")],
     'Stu': [('cargo', 16.5, 4.5, 'The hydroponics crate'), ('luggage_cart', 25, 10, "Stu's luggage cart")],
     'Ana': [('star_chart', 16.5, 4.5, "Ana's flight charts"), ('console', 25, 10, "Ana's nav console")],
+    'Freya': [('workbench', 16, 4.5, "Freya's bench"), ('tool_cart', 16.5, 14.5, "Freya's tool cart"), ('star_chart', 25, 10, 'Ship schematics')],
 }
 
 
@@ -156,6 +160,7 @@ def build(g):
     entries, warps = [], {'east': e.t.warps}
     for n, door, facing, kind in homes:
         key = 'home%d' % n
+        kind = EAST_KIND.get(n, kind)
         hm, mirror = make_home(g, key, 'Home %d' % n, kind, n % 2 == 0, EAST_RESIDENTS.get(n, ''))
         slate = kind == 'single' and mirror
         deck = ('residential/slate_deck_mix' if slate else 'hotel/warm_deck_mix', None)
@@ -226,10 +231,16 @@ def make_home(g, key, title, kind, mirror, who=''):
         inner = [(21, 9, 1, 3, 'bedroom'), (21, 17, 1, 2, 'bathroom')]
         door = (X(11), 22); tile(11, 22, 'o')
         put('kitchenette', 6, 6, 'Kitchenette', 'inspect', 'Inspect'); put('fridge', 9.5, 5.5, 'Fridge')
-        put('table', 7, 12.5, 'Dining table', 'seat', 'Sit'); put('curator_desk', 16.5, 5.5, 'Desk'); put('books', 13.5, 5.5, 'Bookshelf')
+        put('table', 7, 12.5, 'Dining table', 'seat', 'Sit')
+        if who == 'Job':                                            # a home gym in the study corner
+            put('weight_bench', 16.5, 5.5, "Job's weights", 'look'); put('punching_bag', 13, 5.5, 'Punching bag')
+            put('cargo', 19, 8.5, 'Box of geodes', 'look')
+        else:
+            put('curator_desk', 16.5, 5.5, 'Desk'); put('books', 13.5, 5.5, 'Bookshelf')
         put('sofa', 14.5, 13, 'Sofa', 'seat', 'Sit'); put('cafe_table', 14.5, 16.5, 'Coffee table'); put('armchair', 18.5, 16, 'Armchair', 'seat', 'Sit')
         put('plants', 5, 20, 'Plant'); put('tree_tub', 18.5, 20, 'Potted tree')
-        put('bed_double', 25.5, 7.5, 'Double bed'); put('wardrobe', 29.5, 5.5, 'Wardrobe'); put('footlocker', 28.5, 12, 'Chest')
+        bed = put('bed_double', 25.5, 7.5, "%s's bed" % who.replace('|', ' and ') if who else 'Double bed', 'look' if who else None)
+        put('wardrobe', 29.5, 5.5, 'Wardrobe'); put('footlocker', 28.5, 12, 'Chest')
         put('shower', 24, 19.5, 'Shower'); put('toilet', 27, 18.5, 'Toilet'); put('bath_sink', 29.5, 20.5, 'Washbasin')
         zones = [['Living room', 3, 3, 20, 21], ['Bedroom', 22, 3, 30, 13], ['Bathroom', 22, 15, 30, 21]]
     else:
@@ -265,7 +276,7 @@ def make_home(g, key, title, kind, mirror, who=''):
     # night stops beside the bed for whoever lives here (HOME_SPOTS, used by the schedules in tools/build.py)
     if who and bed:
         from residences import free_spot
-        bw, bh, _ = SIZES['bed_double' if kind == 'family' else 'bed']
+        bw, bh, _ = SIZES['bed' if kind == 'single' else 'bed_double']
         doors = {(X(x), yy) for x, y, w_, h_, _ in inner for yy in range(y, y + h_)}
         sides = [(bed[0] + bw + .5, bed[1] + bh - .5), (bed[0] - .5, bed[1] + bh - .5)]
         taken = set()

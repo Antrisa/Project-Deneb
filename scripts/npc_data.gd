@@ -513,5 +513,12 @@ const LOOKS = {
 	"Tikka's tinkering bench": ["Tikka's bench at home: a drone with its insides out and a mug of tea gone cold."],
 	"Vzz'ket's bedroll": ["A thin bedroll on the bare rock, facing the cavern gate. Vzz'ket says he sleeps with one eye open. He has more than two."],
 	"Vzz'ket's kit chest": ["Spare blades, a whetstone, rations and a very old photograph, face down."],
-	"Camp stove": ["A little camp stove, still warm. Something is stewing in a dented pot."]
+	"Camp stove": ["A little camp stove, still warm. Something is stewing in a dented pot."],
+	"Barrels of who-knows-what": ["Sealed barrels with Bram's labels scratched off and relabelled 'LATER'."],
+	"Bram's stock shelves": ["Overflow from Bram's shop: rope, fuses, tins and a lot of single boots."],
+	"Post boxes": ["Three post boxes: Quill's, labelled neatly, Ix'ali's, dented, and Tar'Besh's, which has a small bell on it."],
+	"Residents' notice screen": ["QUIET HOURS AFTER 22:00. - Q.", "Underneath: Sparring is quiet. Mostly. - I."],
+	"Spare bed": ["Freya's old room, made up fresh for whoever needs it next."],
+	"Sparring mat": ["A worn mat. The scuffs on it show exactly where Ix'ali plants her feet."],
+	"Freya's tool cart": ["Freya's tool cart, every drawer labelled, none of the tools in the right drawer."]
 }
