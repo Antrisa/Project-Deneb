@@ -18,10 +18,10 @@ var panel: Texture2D = preload("res://art/lunar/material_2.png")
 var metal: Texture2D = preload("res://art/lunar/material_6.png")
 # Painted doors (Art Pack 5): a frame, and leaves that slide into the frame's jambs. Drawn at half size.
 var art := {}
-func _art(name: String) -> Texture2D:
-	if not art.has(name):
-		art[name] = load("res://art/lunar/%s.png" % name) if ResourceLoader.exists("res://art/lunar/%s.png" % name) else null
-	return art[name]
+func _art(art_name: String) -> Texture2D:
+	if not art.has(art_name):
+		art[art_name] = load("res://art/lunar/%s.png" % art_name) if ResourceLoader.exists("res://art/lunar/%s.png" % art_name) else null
+	return art[art_name]
 # Opening of each painted frame, in the frame picture's own pixels: x from, x to, y from (to the bottom).
 const APERTURE := {"door_s_frame": [26, 66, 40], "lift_frame": [34, 88, 36]}
 func setup(e: Array, facade: Array = []) -> void:

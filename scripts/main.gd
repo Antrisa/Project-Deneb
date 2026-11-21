@@ -665,8 +665,8 @@ func _go_to(area_name: String, tile: Vector2i, announce: bool = true) -> void:
 	_play_music(track)
 	if announce:
 		var data: Dictionary = MapData.AREAS[area_name]
-		var title: String = data["title"]
-		_toast(title)
+		var area_title: String = data["title"]
+		_toast(area_title)
 		sfx("warp")
 
 
@@ -794,16 +794,16 @@ func _add_glows() -> void:
 # The station dims its lights in the evening and overnight.
 func _light_color() -> Color:
 	var h: float = minutes / 60.0
-	var day := Color(1.0, 1.0, 1.0)
+	var day_tint := Color(1.0, 1.0, 1.0)
 	var dusk := Color(1.0, 0.86, 0.74)
 	var night := Color(0.56, 0.62, 0.86)
-	var c: Color = day
+	var c: Color = day_tint
 	if h < 7.0:
-		c = night.lerp(day, clampf(h - 6.0, 0.0, 1.0))
+		c = night.lerp(day_tint, clampf(h - 6.0, 0.0, 1.0))
 	elif h < 17.0:
-		c = day
+		c = day_tint
 	elif h < 19.5:
-		c = day.lerp(dusk, (h - 17.0) / 2.5)
+		c = day_tint.lerp(dusk, (h - 17.0) / 2.5)
 	else:
 		c = dusk.lerp(night, clampf((h - 19.5) / 2.5, 0.0, 1.0))
 	if current_area == "mine":
@@ -829,8 +829,8 @@ func _zone_name() -> String:
 		if tile.x >= int(z[1]) and tile.x <= int(z[3]) and tile.y >= int(z[2]) and tile.y <= int(z[4]):
 			var zone: String = z[0]
 			return zone
-	var title: String = data["title"]
-	return title
+	var area_title: String = data["title"]
+	return area_title
 
 
 # ---------------------------------------------------------------- people and things
@@ -3109,7 +3109,7 @@ func _enter_portal(t: Dictionary) -> void:
 	travelling = false
 	player.frozen = false
 
-func _inspection(title: String) -> String:
+func _inspection(thing_title: String) -> String:
 	var descriptions := {
 		"Water-recycling fountain":"Reclaimed water rises through the illuminated column. The south plinth holds the community board and calendar.",
 		"Dining table":"A shared table, mugs and a small hydroponic plant. Right-click a chair nearby to sit.",
@@ -3126,7 +3126,7 @@ func _inspection(title: String) -> String:
 		"Residential mail terminal":"A private delivery box with an unread-message indicator. Its owner has decorated the doorstep.",
 		"Resident garden":"Someone has carefully tended this little garden outside their home."
 	}
-	return descriptions.get(title,"A well-used piece of the community promenade.")
+	return descriptions.get(thing_title,"A well-used piece of the community promenade.")
 
 func _activity_near(pos: Vector2,radius: float,activities: Array) -> Array[String]:
 	var names: Array[String]=[]

@@ -680,13 +680,13 @@ func _relic_page() -> void:
 	_txt(332,196,"REQUIRED MATERIAL","micro",MUTED)
 	_right(699,196,"DELIVERED / NEEDED","micro",MUTED)
 	for i in bundle.items.size():
-		var material:Array=bundle.items[i]
-		var key:=str(selected.name)+"/"+str(bundle.name)+"/"+str(material[0])
-		var required:=int(material[1])
+		var mat:Array=bundle.items[i]
+		var key:=str(selected.name)+"/"+str(bundle.name)+"/"+str(mat[0])
+		var required:=int(mat[1])
 		var supplied:=clampi(int(relic_progress.get(key,0)),0,required)
 		var y:int=213+i*23
 		_rect(332,y+19,367,1,RULE)
-		_txt(332,y,material[0],"body")
+		_txt(332,y,mat[0],"body")
 		_rect(587,y+6,49,4,"#d6d3c5")
 		_rect(587,y+6,roundi(49.0*supplied/maxi(1,required)),4,"#64836f")
 		_right(699,y,"%d / %d"%[supplied,required],"label",TEAL if supplied==required else INK)
@@ -756,33 +756,33 @@ func _recipe_indices() -> Array:
 	return result
 
 func _craft() -> void:
-	var visible:=_recipe_indices()
+	var shown:=_recipe_indices()
 	_tab_titles("Crafting","Blueprint",351)
 	var x:=69
 	for group in ["All","Pocket","Ready"]:
 		var width:=_width(group,"label")+25
 		_btn("recipe_filter/"+group,x,138,width,21,group,recipe_filter==group)
 		x+=width+4
-	if visible.is_empty():
+	if shown.is_empty():
 		_txt(69,180,"No matching recipes","body",MUTED)
 		return
-	if recipe_index not in visible:
-		recipe_index=visible[0]
+	if recipe_index not in shown:
+		recipe_index=shown[0]
 		material_page=0
-	var cursor:=visible.find(recipe_index)
+	var cursor:=shown.find(recipe_index)
 	var first:=floori(cursor/4.0)*4
-	_pager("recipes_pages",69,348,visible.size(),floori(first/4.0),252)
-	for p in range(first,mini(first+4,visible.size())):
-		var idx:int=visible[p]
+	_pager("recipes_pages",69,348,shown.size(),floori(first/4.0),252)
+	for p in range(first,mini(first+4,shown.size())):
+		var idx:int=shown[p]
 		var recipe:Array=recipes[idx]
-		var y:=166+(p-first)*43
-		_rect(69,y,253,39,"#eddbc7" if idx==recipe_index else "#edece3")
-		_bevel(69,y,253,39,"#fffdf7","#d1c6b3")
-		if idx==recipe_index:_rect(69,y,3,39,ORANGE)
-		_img(recipe[0],77,y+4,30,30)
-		_txt(113,y+2,catalog[recipe[0]][0],"strong")
-		_txt(114,y+22,str(recipe[4]).to_upper(),"micro",MUTED)
-		_hit("recipe/"+str(idx),69,y,253,39)
+		var row_y:=166+(p-first)*43
+		_rect(69,row_y,253,39,"#eddbc7" if idx==recipe_index else "#edece3")
+		_bevel(69,row_y,253,39,"#fffdf7","#d1c6b3")
+		if idx==recipe_index:_rect(69,row_y,3,39,ORANGE)
+		_img(recipe[0],77,row_y+4,30,30)
+		_txt(113,row_y+2,catalog[recipe[0]][0],"strong")
+		_txt(114,row_y+22,str(recipe[4]).to_upper(),"micro",MUTED)
+		_hit("recipe/"+str(idx),69,row_y,253,39)
 	var r:Array=recipes[recipe_index]
 	_img("blueprint",351,145,77,67)
 	_img(r[0],366,155,48,48)
@@ -1200,8 +1200,8 @@ func _activate(id: String) -> void:
 		"bag":
 			bag_page+=1 if arg=="next" else -1
 			_ensure_item()
-			var visible:=_items()
-			if bag_page*24<visible.size(): item_selection=visible[bag_page*24]
+			var shown:=_items()
+			if bag_page*24<shown.size(): item_selection=shown[bag_page*24]
 		"equip":
 			if catalog.has(item_selection) and int(item_counts.get(item_selection,0))>0:
 				hotbar[active_slot]=item_selection
@@ -1214,10 +1214,10 @@ func _activate(id: String) -> void:
 			material_page=0
 		"recipes_pages":
 			material_page=0
-			var visible:=_recipe_indices()
-			if not visible.is_empty():
-				var first:=floori(visible.find(recipe_index)/4.0)*4
-				recipe_index=visible[clampi(first+(4 if arg=="next" else -4),0,visible.size()-1)]
+			var shown:=_recipe_indices()
+			if not shown.is_empty():
+				var first:=floori(shown.find(recipe_index)/4.0)*4
+				recipe_index=shown[clampi(first+(4 if arg=="next" else -4),0,shown.size()-1)]
 		"jobs_pages":job_index=clampi((floori(job_index/4.0)+(1 if arg=="next" else -1))*4,0,jobs.size()-1)
 		"crew_pages":
 			gift_page=0
