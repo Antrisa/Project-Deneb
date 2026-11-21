@@ -1,6 +1,10 @@
 extends CanvasLayer
-# The title screen: the painted title art with the Play / Co-op / Settings / Quit buttons from the 20 Nov UI
-# pack (title/menu_buttons.tscn, Echo_Landing_Complete_UI.zip). The buttons lay themselves out in screen
+# The title screen: the animated opening from Echo_Landing_Title_Screen.zip (20 Nov) with the Play / Co-op /
+# Settings / Quit buttons from the UI pack (title/menu_buttons.tscn, Echo_Landing_Complete_UI.zip).
+# The opening (26 s) plays once, then the station loop (120 s) repeats; the theme starts on the first frame
+# and loops on its own. The ECHO LANDING title fades in from 20.5 to 24.7 s with its three echo bars pulsing,
+# as in the pack's index.html. The buttons fade in with it. Any key or click during the opening skips to the
+# loop; M mutes the theme. Godot plays only Ogg Theora, so the pack's .mp4 clips were converted to .ogv. The buttons lay themselves out in screen
 # pixels like the datapad (2x at 1080p, 3x at 1440p), five percent in from the left (ui/pixel_grid.gd).
 #
 # Settings switches fullscreen and sets the master volume (kept in user://title_settings.cfg, as in the pack's
@@ -21,6 +25,18 @@ var _fields: VBoxContainer
 var _page := ""
 var _prefs := ConfigFile.new()
 
+const INTRO := "res://title/intro/"
+const DESIGN := Vector2(960, 540)          # the clips' canvas; the title sits at (557, 41) on it
+const TITLE_AT := Vector2(557, 41)
+const OPENING_SECONDS := 26.0
+var _scene: Control
+var _opening: VideoStreamPlayer
+var _loop: VideoStreamPlayer
+var _theme: AudioStreamPlayer
+var _title_layers: Array[TextureRect] = []
+var _time := 0.0                           # seconds since the opening started (the loop counts on from 26)
+var _skipped := false
+
 
 func _ready() -> void:
 	layer = 90
@@ -30,19 +46,7 @@ func _ready() -> void:
 	_root.theme = load("res://title/menu_panel_theme.tres")
 	add_child(_root)
 
-	# The painted backdrop, trimmed to 16:9 the way the pack's own title scene trims it.
-	var art := AtlasTexture.new()
-	art.atlas = load("res://art/ui/title_art.png")
-	art.region = Rect2(16, 12, 1332, 749)
-	art.filter_clip = true
-	var back := TextureRect.new()
-	back.texture = art
-	back.set_anchors_preset(Control.PRESET_FULL_RECT)
-	back.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	back.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	back.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(back)
+	_build_intro()
 
 	_menu = load("res://title/menu_buttons.tscn").instantiate()
 	_root.add_child(_menu)
@@ -68,6 +72,101 @@ func _ready() -> void:
 			_set_fullscreen(bool(_prefs.get_value("display", "fullscreen")))
 
 
+func _build_intro() -> void:
+	var black := ColorRect.new()
+	black.color = Color("070717")
+	black.set_anchors_preset(Control.PRESET_FULL_RECT)
+	black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(black)
+	_scene = Control.new()
+	_scene.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_scene.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_scene.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_root.add_child(_scene)
+	_opening = _video("opening.ogv", false)
+	_loop = _video("station_loop.ogv", true)
+	_loop.visible = false
+	for layer_name in ["title", "echo_bar_1", "echo_bar_2", "echo_bar_3"]:
+		var path: String = INTRO + layer_name + ".png"
+		if not ResourceLoader.exists(path):
+			continue
+		var layer := TextureRect.new()
+		layer.texture = load(path)
+		layer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		layer.stretch_mode = TextureRect.STRETCH_SCALE
+		layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		layer.modulate.a = 0.0
+		_scene.add_child(layer)
+		_title_layers.append(layer)
+	_scene.resized.connect(_place_intro)
+	_place_intro.call_deferred()
+	_theme = AudioStreamPlayer.new()
+	if ResourceLoader.exists(INTRO + "theme.mp3"):
+		var song: AudioStream = load(INTRO + "theme.mp3")
+		if song is AudioStreamMP3:
+			song.loop = true
+		_theme.stream = song
+	add_child(_theme)
+	if _opening != null:
+		_opening.finished.connect(_to_loop)
+		_opening.play()
+	else:
+		_to_loop()
+	_theme.play()
+
+
+func _video(file: String, looping: bool) -> VideoStreamPlayer:
+	if not ResourceLoader.exists(INTRO + file):
+		return null
+	var player := VideoStreamPlayer.new()
+	player.stream = load(INTRO + file)
+	player.expand = true
+	player.loop = looping
+	player.set_anchors_preset(Control.PRESET_FULL_RECT)
+	player.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_scene.add_child(player)
+	return player
+
+
+# The title and echo bars keep their place on the 960x540 canvas the clips were made on.
+func _place_intro() -> void:
+	var k: float = _scene.size.x / DESIGN.x
+	for layer in _title_layers:
+		layer.position = TITLE_AT * k
+		layer.size = layer.texture.get_size() * k
+
+
+func _to_loop() -> void:
+	if _opening != null:
+		_opening.stop()
+		_opening.visible = false
+	if _time < OPENING_SECONDS:
+		_time = OPENING_SECONDS
+	if _loop != null:
+		_loop.visible = true
+		_loop.play()
+
+
+func _process(delta: float) -> void:
+	if not open:
+		return
+	_time += delta
+	# The station's own music waits until play starts.
+	if world != null and world.music != null:
+		world.music.stream_paused = true
+	var k: float = clampf((_time - 20.5) / 4.2, 0.0, 1.0)
+	var alpha: float = k * k * k * (10.0 + k * (-15.0 + 6.0 * k))
+	var phase: float = fposmod(_time - 20.5, 4.0)
+	for i in _title_layers.size():
+		if i == 0:
+			_title_layers[i].modulate.a = alpha
+		else:
+			var v: float = clampf((phase - 0.05 - (i - 1) * 0.87) / 1.48, 0.0, 1.0)
+			_title_layers[i].modulate.a = alpha * (0.22 + 0.78 * pow(sin(PI * v), 2.0))
+	if _menu != null:
+		_menu.modulate.a = alpha if _page == "" else 1.0
+
+
 # Keys that are not the interface's own (arrows, Tab and Enter already move and press): W and S move,
 # E presses. main.gd passes them here while the title is open.
 func handle_input(event: InputEvent) -> void:
@@ -88,14 +187,37 @@ func handle_input(event: InputEvent) -> void:
 
 # Escape (or the controller's east button) closes a Settings, Co-op or Quit panel.
 func _input(event: InputEvent) -> void:
-	if open and _page != "" and event.is_action_pressed("ui_cancel"):
+	if not open:
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_M:
+		_theme.stream_paused = not _theme.stream_paused
+		get_viewport().set_input_as_handled()
+		return
+	# Until the title has faded in, a key or click skips the opening instead of pressing a button.
+	if _time < 24.7 and ((event is InputEventKey and event.pressed and not event.echo) or (event is InputEventMouseButton and event.pressed)):
+		get_viewport().set_input_as_handled()
+		_skip()
+		return
+	if _page != "" and event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_back()
+
+
+func _skip() -> void:
+	if _skipped:
+		return
+	_skipped = true
+	_time = maxf(_time, 24.7)
+	if _opening != null and _opening.is_playing():
+		_to_loop()
 
 
 func _play() -> void:
 	open = false
 	visible = false
+	_theme.stop()
+	if world != null and world.music != null:
+		world.music.stream_paused = false
 	play_requested.emit()
 	queue_free()
 
