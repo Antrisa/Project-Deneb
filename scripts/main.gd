@@ -204,6 +204,7 @@ var board_done_day := 0            # the day the player last finished one
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color("0b1026"))
+	_start_fullscreen()
 	_setup_input()
 	_setup_sounds()
 	tiles_tex = load("res://art/tiles.png")
@@ -336,19 +337,58 @@ func _add_keys(action: String, keys: Array) -> void:
 
 # Screen size. The game is drawn at 640x360 and only ever scaled by whole numbers, so every art pixel is the
 # same size on screen: 1080p is exactly 3x (3 screen pixels per art pixel), 1440p 4x, 4K 6x, 720p 2x.
-# It starts in borderless fullscreen, which fills those screens with no bars. Alt+Enter switches to a window
-# sized to the largest whole multiple that fits the desktop, so windowed play stays sharp too.
+# It starts in EXCLUSIVE fullscreen. Borderless fullscreen is not used: on Windows it deliberately makes the
+# window a pixel off the screen's size, which can knock the whole-number scaling off (a smaller scale, or a
+# half-pixel offset) and leave the picture soft (Zachary, 20 Nov: "everything looks fuzzy"). The project starts
+# in a window and switches here, because Godot 4.6 can't go back to a window if it launched straight into
+# exclusive fullscreen. Alt+Enter switches to a window sized to the largest whole multiple that fits the
+# desktop, so windowed play stays sharp too. F8 checks all this on the player's own screen (_display_check).
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ENTER and event.alt_pressed:
 		_toggle_fullscreen()
 		get_viewport().set_input_as_handled()
 
 func _toggle_fullscreen() -> void:
+	if _embedded(): return
 	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN or DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 		_size_window()
 	else:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
+
+
+func _start_fullscreen() -> void:
+	if not _embedded():
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
+
+
+# True when the game is running inside the editor's Game tab (Godot 4.4+), where the editor owns the window.
+func _embedded() -> bool:
+	return Engine.has_method("is_embedded_in_editor") and bool(Engine.call("is_embedded_in_editor"))
+
+
+# F8: how the game is really being drawn on this screen, and a full-size screenshot to compare. Sharp means:
+# a whole-number scale, one art pixel a whole number of screen pixels, and no half-pixel offset.
+func _display_check() -> void:
+	var screen_i: int = DisplayServer.window_get_current_screen()
+	var screen: Vector2i = DisplayServer.screen_get_size(screen_i)
+	var win: Vector2i = DisplayServer.window_get_size()
+	var to_screen: Transform2D = get_viewport().get_screen_transform()
+	var stretch: float = to_screen.get_scale().x
+	var art_px: float = stretch * CAMERA_ZOOM * ART
+	var mode_names := {0: "windowed", 1: "minimized", 2: "maximized", 3: "borderless fullscreen", 4: "exclusive fullscreen"}
+	var mode_name: String = mode_names.get(DisplayServer.window_get_mode(), "?")
+	if _embedded(): mode_name += ", inside the editor"
+	var sharp: bool = is_equal_approx(art_px, roundf(art_px)) \
+		and is_equal_approx(to_screen.origin.x, roundf(to_screen.origin.x)) and is_equal_approx(to_screen.origin.y, roundf(to_screen.origin.y))
+	var shot := "user://display_check.png"
+	get_viewport().get_texture().get_image().save_png(shot)
+	var line := "Display check: screen %dx%d (OS scale %.2f), window %dx%d, %s. Game scale %.3fx, offset (%.2f, %.2f): one art pixel = %.3f screen pixels. %s Screenshot: %s" % [
+		screen.x, screen.y, DisplayServer.screen_get_scale(screen_i), win.x, win.y, mode_name, stretch,
+		to_screen.origin.x, to_screen.origin.y, art_px, "SHARP." if sharp else "NOT WHOLE PIXELS: this is the blur.",
+		ProjectSettings.globalize_path(shot)]
+	print(line)
+	_toast("%s - %.2f screen px per art pixel. Details in the output log." % ["Sharp" if sharp else "Not whole pixels", art_px])
 
 func _size_window() -> void:
 	var screen: int = DisplayServer.window_get_current_screen()
@@ -380,6 +420,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		review_stop = (review_stop+1)%10
 		_go_to("main",[Vector2i(115,100),Vector2i(106,80),Vector2i(122,110),Vector2i(54,81),Vector2i(139,91),Vector2i(150,64),Vector2i(150,126),Vector2i(80,126),Vector2i(115,23),Vector2i(115,167)][review_stop])
 		_snap_residents()
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F8:
+		_display_check()
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10:
 		overview = not overview

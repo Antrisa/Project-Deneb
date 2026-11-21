@@ -313,7 +313,7 @@ func _set_fullscreen(enabled: bool) -> void:
 	if world != null and world.has_method("_toggle_fullscreen"):
 		world._toggle_fullscreen()
 	else:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED)
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED)
 
 
 func _set_volume(volume: float) -> void:
