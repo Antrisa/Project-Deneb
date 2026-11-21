@@ -348,6 +348,66 @@ const PEOPLE = {
 			"[angry] Do not call it 'just a spear'. It has a balance point. It has a history. It has a name, which I will not tell you.",
 		],
 	},
+	# Wave 1 and 2 arrivals (21 Nov). Their lines are Claude placeholders for Zachary to replace. Artie and Stu
+	# have no walk sheets yet; main.gd STAND_IN_ART borrows another resident's until they are drawn.
+	"Artie": {
+		"id": "artie",
+		"pitch": 1.0,
+		"first": [
+			"[surprised] Whoa. Okay. You're the one who towed me in? Arthur Vance. Artie. Thank you. I think.",
+			"Last thing I remember is a lake in Minnesota and a cold-sleep trial that was supposed to last a month.",
+			"[sad] They tell me it's been centuries. Nobody's sure how many. That's a lot of missed birthdays.",
+		],
+		"repeat": [
+			"The stars are all in the wrong places. I keep looking for the Big Dipper anyway.",
+			"[happy] Maren says I can walk as far as the lounge now. Baby steps. Literally.",
+			"Do they still have canoes? Anywhere? Asking for me.",
+			"[sad] I keep waking up expecting snow.",
+		],
+	},
+	"Stu": {
+		"id": "stu",
+		"pitch": 1.5,
+		"first": [
+			"[surprised] Ah! Don't shoot! I'm not cargo! Well. I was cargo. Briefly. By choice.",
+			"Stu. Stowaway Stu, people call me, which is fair. I came in on the transport, in a hydroponics crate.",
+			"[happy] Is it true there's going to be a hotel here? Hotels need someone to carry the bags. I carry bags beautifully.",
+		],
+		"repeat": [
+			"[happy] I've counted the luggage carts. There's one. We're going to need more luggage carts.",
+			"Sara says I'm provisionally welcome. I'm going to frame that.",
+			"The crate smelled of lettuce. I still smell of lettuce. Nobody has said so. Thank you all.",
+			"[love] A lobby! With a desk! Do you know what I could do with a desk?",
+		],
+	},
+	"Tally": {
+		"id": "tally",
+		"pitch": 1.6,
+		"first": [
+			"[happy] Tally, of the Post and Privateer Dispatch. Mail, cargo, and the odd bounty. Four hands, no waiting.",
+			"The lanes are open again now the Rabble have lost their head. Somebody has to carry the post.",
+			"I'll be posting contracts soon. Capture jobs, mostly: bring the ship back with the hull still on.",
+		],
+		"repeat": [
+			"Two sacks of letters for one small station. Somebody out there misses you lot.",
+			"[angry] What's left of the Rabble hit a mail skiff last week. Bad for business, worse for the post.",
+			"Courier's rule: never ask what's in the parcel. Bounty hunter's rule: always ask. I've done both jobs.",
+		],
+	},
+	"Ana": {
+		"id": "ana",
+		"pitch": 1.15,
+		"first": [
+			"[angry] Don't look at me like that. I know whose sister I am.",
+			"Ana. I navigated for the Rabble since I was fourteen. My brother's people turned their guns on me for missing his last fight.",
+			"[sad] You pulled me out anyway. I haven't decided what that makes you yet.",
+		],
+		"repeat": [
+			"Garrick watches me like I'm about to steal the station. Fair enough.",
+			"[sad] Ivan was always going to go down with something. I just thought it would be later.",
+			"Your ship pulls left on a hard burn. Tell Freya. Or don't. I'm not your navigator.",
+		],
+	},
 }
 
 # Things you can look at. Name must match the name in tools/build.py THINGS.

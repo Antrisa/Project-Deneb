@@ -139,7 +139,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	drone_selected = false
 
 	foe_id = str(fight["enemy"])
-	foe = ShipData.ENEMIES[foe_id]
+	foe = ShipData.enemy(foe_id)
 	e_hull_max = int(foe["hull"])
 	e_hull = e_hull_max
 	e_sys = _make_systems(foe["systems"])
@@ -276,6 +276,12 @@ func _tick(delta: float) -> void:
 			"[angry] Enough. Every coil to the cannon!",
 		])
 		world._say_then(Callable(self, "_after_overcharge"))
+	# A story break (Ana's fight): the battle stops at this much hull and main.gd carries the story on.
+	if foe.has("break_at") and e_hull <= int(ceil(e_hull_max * float(foe["break_at"]))):
+		result = "break"
+		result_text = "Their guns go quiet..."
+		end_timer = 1.0
+		return
 	_tutorial_hints()
 
 
@@ -783,7 +789,7 @@ func _draw_view() -> void:
 		_text_c(160, 45, "PAUSED - Space to resume", Color("1e180a"))
 	if result != "" and result != "done":
 		view.draw_rect(Rect2(70, 76, 180, 16), Color(0.05, 0.06, 0.12, 0.92))
-		_text_c(160, 87, result_text, GOOD if result == "won" else (GOLD if result == "fled" else BAD), 9)
+		_text_c(160, 87, result_text, GOOD if result == "won" else (BAD if result == "lost" else GOLD), 9)
 
 
 func _draw_player(off: Vector2) -> void:

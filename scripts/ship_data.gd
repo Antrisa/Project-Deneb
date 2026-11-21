@@ -84,11 +84,60 @@ const ENEMIES := {
 	},
 }
 
+# Ana's fight (second flight, Zachary 21 Nov). At half hull ("break_at") the battle stops: her own crew, Ivan's
+# loyalists, turn on her, and main.gd starts the fight against their gunship.
+const ANA_SHIPS := {
+	"ana_corsair": {
+		"name": "Ana's corsair", "size": Vector2(118, 88), "hull": 12, "crew": 4,
+		"weapons": ["rabble_laser", "heavy_laser"],
+		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
+		"shape": [Vector2(0, 44), Vector2(22, 26), Vector2(54, 18), Vector2(100, 22), Vector2(118, 34), Vector2(118, 54),
+				Vector2(100, 66), Vector2(54, 70), Vector2(22, 62)],
+		"fins": [[Vector2(60, 19), Vector2(78, 2), Vector2(88, 21)], [Vector2(60, 69), Vector2(78, 86), Vector2(88, 67)]],
+		"hull_color": Color("2e3e48"), "trim": Color("c84646"),
+		"break_at": 0.5,
+		"rooms": [
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "rect": Rect2(10, 35, 22, 18)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "rect": Rect2(32, 24, 26, 20)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "rect": Rect2(32, 44, 26, 20)},
+			{"id": "crew", "label": "Crew", "sys": "", "rect": Rect2(58, 22, 28, 22)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "rect": Rect2(58, 44, 28, 22)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "rect": Rect2(86, 26, 26, 36)},
+		],
+	},
+	"loyalist_gunship": {
+		"name": "Loyalist gunship", "size": Vector2(120, 92), "hull": 8, "crew": 3,
+		"weapons": ["rabble_laser", "rabble_laser"],
+		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
+		"shape": [Vector2(0, 46), Vector2(18, 24), Vector2(44, 14), Vector2(92, 10), Vector2(116, 24), Vector2(120, 46),
+				Vector2(116, 68), Vector2(92, 82), Vector2(44, 78), Vector2(18, 68)],
+		"fins": [[Vector2(46, 16), Vector2(36, 0), Vector2(60, 14)], [Vector2(46, 76), Vector2(36, 92), Vector2(60, 78)]],
+		"hull_color": Color("4a3a3a"), "trim": Color("c89a3c"),
+		"rooms": [
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "rect": Rect2(8, 37, 22, 18)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "rect": Rect2(30, 25, 26, 21)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "rect": Rect2(30, 46, 26, 21)},
+			{"id": "crew", "label": "Crew", "sys": "", "rect": Rect2(56, 23, 30, 23)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "rect": Rect2(56, 46, 30, 23)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "rect": Rect2(86, 29, 26, 34)},
+		],
+	},
+}
+
+
 # What a won fight pays: [credits, {item: count}].
 const REWARDS := {
 	"rabble_cutter": [40, {"hull_plate": 1}],
 	"ivan_flagship": [150, {"hull_plate": 2, "coil_wire": 2}],
+	"loyalist_gunship": [60, {"coil_wire": 1}],
 }
+
+
+# Every enemy ship, whatever table it is in.
+static func enemy(id: String) -> Dictionary:
+	if ENEMIES.has(id):
+		return ENEMIES[id]
+	return ANA_SHIPS.get(id, {})
 
 # ---------------------------------------------------------------- the jump map (scripts/ship_map.gd)
 # A big circle round the Landing: five rings, split into four zones of control. All of it is the neutral zone.

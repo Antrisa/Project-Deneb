@@ -214,7 +214,8 @@ def build(g):
     for fx in (5, 9): hm.put('storage_shelf', fx, 25.5, "Bram's stock shelves", 'look')
     hm.put('cargo', 4.5, 29.5, 'Salvage crate', 'look'); hm.put('barrel_stack', 8, 29.5, 'Barrels of who-knows-what', 'look')
     hm.put('cargo', 11.5, 29.5, 'Salvage crate', 'look')
-    hm.put('bed', 29, 25.5, 'Guest bed', 'look'); hm.put('wardrobe', 28.5, 29.5, 'Empty wardrobe')
+    # Tally sleeps in the guest room for now (Claude placeholder, 21 Nov) until his home is decided
+    hm.bed('bed', 29, 25.5, 'Guest bed', ['Tally']); hm.put('wardrobe', 28.5, 29.5, 'Empty wardrobe')
     hm.put('plants', 22, 29.5, 'Plant'); hm.put('armchair', 21.5, 25.5, 'Armchair', 'seat')
     hm.put('shower', 24, 5.5, 'Shower'); hm.put('toilet', 27.5, 4.5, 'Toilet'); hm.put('bath_sink', 29.5, 4.5, 'Washbasin')
     hm.put('laundry_basket', 29.5, 8.5, 'Laundry basket')

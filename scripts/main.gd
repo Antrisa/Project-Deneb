@@ -111,6 +111,9 @@ var flights := 0
 var artie_found_day := -1
 var fuel := 6
 var said_goodbye := false          # the send-off at launch has played
+var ana_found_day := -1            # the day you pulled Ana out of her ship (the Wave 2 arrival counts from it)
+# Residents with no walk sheet yet borrow someone else's until theirs is drawn (art/npc_<id>.png).
+const STAND_IN_ART := {"artie": "owen", "stu": "tobbin"}
 var garden_watered_day := -1
 var garden_busy := false
 # Farming (21 Nov), one tile at a time like Stardew. tile -> {"crop": id or "", "age": watered days grown,
@@ -916,7 +919,10 @@ func _add_resident(who: String, entries: Array) -> void:
 	var act_path: String = "res://art/npc_%s_act.png" % id
 	if ResourceLoader.exists(act_path):
 		act_tex = load(act_path)
-	r.setup(self, who, load("res://art/npc_%s.png" % id), entries, t, act_tex)
+	var walk_id: String = id
+	if not ResourceLoader.exists("res://art/npc_%s.png" % id):
+		walk_id = str(STAND_IN_ART.get(id, "owen"))
+	r.setup(self, who, load("res://art/npc_%s.png" % walk_id), entries, t, act_tex)
 	r.visible = false
 	actors.add_child(r)
 	residents.append(r)
@@ -939,13 +945,55 @@ func _emote(who: String, id: StringName, seconds: float = 1.4) -> void:
 
 
 func _snap_residents() -> void:
-	# Visitors (MapData.VISITOR_DAYS) are only here on their days of the week.
+	# Visitors (MapData.VISITOR_DAYS) are only here on their days of the week. The newcomers are not here at
+	# all until they arrive, and some of their first days follow MapData.SCHEDULES_ALT (the Medbay, the terminal).
 	var weekday: int = (day - 1) % 7
 	for r in residents:
+		var gone := not _arrived(r.who)
 		if MapData.VISITOR_DAYS.has(r.who):
 			var days: Array = MapData.VISITOR_DAYS[r.who]
-			r.away = not (days.has(weekday) or days.has(float(weekday)))
+			gone = gone or not (days.has(weekday) or days.has(float(weekday)))
+		r.away = gone
+		if MapData.SCHEDULES_ALT.has(r.who):
+			r.schedule = MapData.SCHEDULES_ALT[r.who] if _first_days(r.who) else MapData.SCHEDULES[r.who]
 		r.snap(minutes)
+
+
+# Wave 1 arrives after Ivan (artie_found_day = D): Artie wakes in the Medbay on D+1, the first visitor transport
+# brings Stu on D+2, Tally comes on D+4. Wave 2 is Ana, the day after you pull her out of her ship.
+func _arrived(who: String) -> bool:
+	match who:
+		"Artie": return artie_found_day >= 0 and day >= artie_found_day + 1
+		"Stu": return artie_found_day >= 0 and day >= artie_found_day + 2
+		"Tally": return artie_found_day >= 0 and day >= artie_found_day + 4
+		"Ana": return ana_found_day >= 0 and day >= ana_found_day + 1
+	return true
+
+
+# True on the days a newcomer follows their SCHEDULES_ALT: Artie and Ana in the Medbay, Stu at the terminal.
+func _first_days(who: String) -> bool:
+	match who:
+		"Artie": return day <= artie_found_day + 2
+		"Ana": return day <= ana_found_day + 2
+		"Stu": return day == artie_found_day + 2
+	return false
+
+
+# S.A.R.A.'s news in the morning, when someone new turns up.
+func _morning_news() -> void:
+	var news := ""
+	if artie_found_day >= 0:
+		match day - artie_found_day:
+			1: news = "S.A.R.A.: the man from the stasis pod is awake. He's in the Medbay."
+			2: news = "S.A.R.A.: the first visitor transport docked at the terminal overnight. Our first visitors in years."
+			3: news = "S.A.R.A.: Artie is well enough to leave the Medbay. He has moved into East Home 1."
+			4: news = "S.A.R.A.: a courier asked for a berth. Tally, of the Post and Privateer Dispatch."
+	if ana_found_day >= 0:
+		match day - ana_found_day:
+			1: news = "S.A.R.A.: Ana is awake in the Medbay. Garrick has posted himself by the door."
+			3: news = "S.A.R.A.: Ana has moved into East Home 3. Garrick is not happy about it."
+	if news != "":
+		_toast(news)
 
 
 # Someone who stays in one place. One person can appear in several places
@@ -1487,6 +1535,8 @@ func _launch_console() -> void:
 	elif flights == 0:
 		_say("Launch control", ["The Rabble are still out there, and the Landing is still in their way.", "Take her out again?"],
 			Callable(self, "_lift_off"), "Launch")
+	elif flights == 1:
+		_say("Launch control", ["The board shows your ship in green.", "Take her out?"], Callable(self, "_second_flight"), "Launch")
 	else:
 		_say("Launch control", ["The board shows your ship in green.", "(Ship runs into the neutral zone come in the next update.)"])
 
@@ -1796,6 +1846,102 @@ func _ship_lost() -> void:
 		"[sad] Easy. Freya and Tikka towed your ship in on the station tug. You've been out for three hours.",
 		"[angry] %d credits went on getting you both back. The ship is in the bay, and she's in a bad way." % lost,
 		"Freya will want a word before you fly again.",
+	])
+	_save_game()
+
+
+# ---------------------------------------------------------------- the second flight: Ana (21 Nov)
+# Whenever you fly out a second time, Ana, Ivan's sister, drops out of fold on top of you. At half hull her own
+# crew, Ivan's loyalists, turn on her (the battle's "break_at"); you fight their gunship while her ship drifts,
+# then pull her out. She wakes in the Medbay the next day (Wave 2) and moves into East Home 3 two days later.
+# Losing either fight wakes you in the Medbay as usual, and the next launch tries again.
+
+func _second_flight() -> void:
+	sfx("warp")
+	battle.start({"enemy": "ana_corsair", "story": true}, Callable(self, "_after_ana"), ship_hull)
+	_say("Sara", [
+		"You're clear of the crater. Where are we headed today?",
+		"[surprised] Wait. Something just dropped out of fold right on top of you. Rabble colours.",
+	])
+	_say_then(Callable(self, "_ana_hail"))
+
+
+func _ana_hail() -> void:
+	_say("Ana", [
+		"[angry] You're the one who put my brother in the ground. Or in the dark, anyway. There's no ground out here.",
+		"I'm not here to talk.",
+	])
+	_say_then(Callable(self, "_hold_battle"))
+
+
+func _after_ana(result: String, hull_left: int) -> void:
+	ship_hull = hull_left
+	if result == "lost":
+		_ship_lost()
+		return
+	_say("Sensors", ["Her guns go quiet. Then her turrets swing round, inward, toward her own bridge."])
+	_say_then(Callable(self, "_ana_betrayed"))
+
+
+func _ana_betrayed() -> void:
+	_say("Ana", ["[shocked] What are you doing? Stand down. That's an order!"])
+	_say_then(Callable(self, "_loyalists_speak"))
+
+
+func _loyalists_speak() -> void:
+	_say("Loyalist", [
+		"[angry] You weren't there when he needed you. You don't give orders any more.",
+		"And you, Terran. You're next.",
+	])
+	_say_then(Callable(self, "_loyalist_fight"))
+
+
+func _loyalist_fight() -> void:
+	battle.start({"enemy": "loyalist_gunship", "story": true}, Callable(self, "_after_loyalists"), ship_hull)
+	_say("Sara", [
+		"[surprised] A gunship just undocked from her. They've shot out her engines and they're coming for you.",
+		"Ana's ship is adrift. Deal with them first.",
+	])
+	_say_then(Callable(self, "_hold_battle"))
+
+
+func _after_loyalists(result: String, hull_left: int) -> void:
+	ship_hull = hull_left
+	if result != "won":
+		_ship_lost()
+		return
+	_flight_reward("loyalist_gunship")
+	flights = 2
+	ana_found_day = day
+	_say("Sensors", [
+		"The gunship breaks apart. Ana's corsair tumbles slowly, venting air, her bridge dark.",
+		"One life sign aboard, and it's fading.",
+	])
+	_say_then(Callable(self, "_ana_rescue"))
+
+
+func _ana_rescue() -> void:
+	_say("Sara", [
+		"[sad] It's your choice. But I would go.",
+		"You match her spin. The drone cuts through her airlock, and you pull her out by the collar of her flight jacket.",
+		"She rides home curled in the duct behind your seat, still holding a pistol she never raises.",
+	])
+	_say_then(Callable(self, "_ana_aboard"))
+
+
+func _ana_aboard() -> void:
+	_say("Ana", ["[sad] ...Why?"])
+	_say_then(Callable(self, "_land_after_second_flight"))
+
+
+func _land_after_second_flight() -> void:
+	battle.close()
+	ship_map.close()
+	minutes = minf(minutes + 180.0, DAY_END - 1.0)
+	_snap_residents()
+	_say("Garrick", [
+		"[angry] Ivan's sister. In our Medbay. On my station.",
+		"...Fine. Maren says she stays until she can walk. I'll be standing by the door.",
 	])
 	_save_game()
 
@@ -2845,6 +2991,7 @@ func _next_day() -> void:
 	_snap_residents()
 	_save_game()
 	_toast("Day %d  (saved)" % day)
+	_morning_news()
 
 
 # ---------------------------------------------------------------- saving
@@ -2883,6 +3030,7 @@ func _save_game() -> void:
 	cfg.set_value("ship", "artie_found_day", artie_found_day)
 	cfg.set_value("ship", "fuel", fuel)
 	cfg.set_value("ship", "said_goodbye", said_goodbye)
+	cfg.set_value("ship", "ana_found_day", ana_found_day)
 	cfg.save(SAVE_PATH)
 
 
@@ -2934,6 +3082,7 @@ func _load_game() -> void:
 	artie_found_day = int(cfg.get_value("ship", "artie_found_day", -1))
 	fuel = int(cfg.get_value("ship", "fuel", 6))
 	said_goodbye = bool(cfg.get_value("ship", "said_goodbye", false))
+	ana_found_day = int(cfg.get_value("ship", "ana_found_day", -1))
 	if farm_view != null: farm_view.sync_crops()
 	var saved_locks = cfg.get_value("access", "doors", {})
 	if saved_locks is Dictionary:

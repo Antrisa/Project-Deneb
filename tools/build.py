@@ -2569,6 +2569,16 @@ SCHEDULES_RAW = {
                  ("23:00", *HOME_SPOTS["Tar'Besh"], 26, "d", "idle")],
     "Vzz'ket": [("06:00", "mine", 8, 27, 26, "r", "idle"), ("17:15", "main", 130, 70, 26, "d", "eat"), ("19:00", "mine", 8, 27, 26, "r", "idle"),
                 ("22:00", "main", 86, 70, 26, "d", "idle"), ("23:30", *HOME_SPOTS["Vzz'ket"], 26, "r", "idle")],
+    # Wave 1 and 2 arrivals (21 Nov). Claude placeholders until Zachary maps their routes: a day spot, dinner, home.
+    # main.gd hides each of them until they arrive (artie_found_day, ana_found_day).
+    "Artie": [("07:30", "lounge", 37, 13, 26, "u", "work"), ("17:35", "main", 126, 72, 26, "u", "eat"),
+              ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle")],
+    "Stu": [("07:00", "hotel", 60, 37, 26, "d", "work"), ("17:35", "main", 136, 72, 26, "u", "eat"),
+            ("19:30", *HOME_SPOTS["Stu"], 26, "d", "idle")],
+    "Tally": [("07:30", "west", 53, 28, 26, "u", "work"), ("17:35", "main", 141, 72, 26, "u", "eat"),
+              ("20:00", *HOME_SPOTS["Tally"], 26, "d", "idle")],
+    "Ana": [("07:00", "bay", 40, 16, 26, "u", "work"), ("17:35", "main", 140, 72, 26, "u", "eat"),
+            ("20:30", *HOME_SPOTS["Ana"], 26, "d", "idle")],
 }
 # What each resident is doing at each stop of their schedule, in the same order as SCHEDULES_RAW.
 # Each different (action, facing) pair is one row of their action sheet art/npc_<id>_act.png, in order of first use.
@@ -2620,8 +2630,26 @@ for who, rows in SCHEDULES_RAW.items():
     SCHEDULES[who] = out
 
 
+# Days that run differently (21 Nov): main.gd swaps these in. Artie and Ana spend their first days in the
+# Medbay, by the beds either side of where you wake; Stu spends his arrival day at the terminal, where the
+# transport docked, before going home.
+SCHEDULES_ALT_RAW = {
+    "Artie": [("00:00", "main", 136, 51, 26, "u", "idle")],
+    "Ana": [("00:00", "main", 140, 51, 26, "u", "idle")],
+    "Stu": [("00:00", "west", 31, 38, 26, "d", "idle"), ("19:30", *HOME_SPOTS["Stu"], 26, "d", "idle")],
+}
+SCHEDULES_ALT = {}
+for who, rows in SCHEDULES_ALT_RAW.items():
+    out = []
+    for hm, a, x, y, r, face_, act in rows:
+        a, x, y = moved(a, x, y)
+        out.append([int(hm[:2]) * 60 + int(hm[3:]), a, x, y, r, face_, act, -1])
+    SCHEDULES_ALT[who] = out
+
+
 # Beds are two tiles long: wherever there is room, the foot ("B") goes on the tile below the head ("b").
 _keep_clear = {(e[1], e[2], e[3]) for rows_ in SCHEDULES.values() for e in rows_} | {(p[1], p[2], p[3]) for p in PEOPLE} | {tuple(START)}
+_keep_clear |= {(e[1], e[2], e[3]) for rows_ in SCHEDULES_ALT.values() for e in rows_}
 _keep_clear |= {(wp[2], wp[3], wp[4]) for ar_ in A.values() for wp in ar_.warps}
 for k_, ar_ in A.items():
     for y in range(ar_.h - 1):
@@ -2979,6 +3007,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const MAP_TITLES = " + json.dumps(MAP_TITLES) + "\n")
     f.write("const MAP_MARKS = " + json.dumps(MAP_MARKS) + "\n")
     f.write("const SCHEDULES = {\n" + "".join("\t" + json.dumps(k) + ": " + json.dumps(v) + ",\n" for k, v in SCHEDULES.items()) + "}\n")
+    f.write("const SCHEDULES_ALT = " + json.dumps(SCHEDULES_ALT) + "\n")
     f.write("const THINGS = " + json.dumps(THINGS) + "\n")
     f.write("const AREAS = {\n")
     for k, d in areas.items():
