@@ -1853,7 +1853,7 @@ save_wav("deny", tone(170, 130, 0.14, 0.45, "square", 2.0))
 
 # ================================================================ item icons, hearts, weapon swing (for the menus and hotbar)
 # Order here must match "icon" in scripts/item_data.gd.
-IT = Img(16 * 23, 16)
+IT = Img(16 * 31, 16)
 
 
 def icon(i):
@@ -1921,6 +1921,24 @@ for n, (c, hi) in enumerate([((232, 186, 70), (255, 236, 150)), ((150, 172, 200)
     i.r(2, 8, 13, 12, c).r(3, 6, 12, 8, hi).r(2, 12, 13, 12, dk(c)).r(12, 8, 13, 12, dk(c)).done()
 i = icon(22)    # Harbinger scale
 i.ps([(x, y) for y in range(3, 14) for x in range(8 - (y - 3) // 2, 9 + (y - 3) // 2) if y < 13], (74, 38, 70)).ps([(8, 4), (8, 6), (7, 8), (9, 8), (8, 10)], (200, 110, 190)).done()
+# Farming (21 Nov): placeholder icons until the painted ones (see the farm art instructions).
+i = icon(23)    # hoe
+for k in range(9):
+    i.ps([(4 + k, 13 - k)], (150, 110, 70))
+i.r(10, 2, 14, 3, (170, 178, 190)).r(12, 4, 14, 5, (120, 128, 142)).done()
+i = icon(24)    # watering can
+i.r(3, 7, 10, 13, (90, 150, 190)).r(3, 7, 10, 7, (150, 200, 230)).r(11, 8, 13, 9, (90, 150, 190)).r(13, 6, 14, 7, (90, 150, 190)).r(5, 4, 8, 5, (60, 110, 150)).done()
+for n, (seed, mark) in enumerate([((170, 120, 190), (120, 80, 150)), ((230, 210, 150), (190, 160, 90)), ((230, 90, 80), (90, 160, 80))]):
+    i = icon(25 + n)   # seed packets: potato, wheat, tomato
+    i.r(3, 3, 12, 13, (222, 212, 186)).r(3, 3, 12, 4, (246, 240, 220)).r(11, 4, 12, 13, (180, 170, 146)).r(5, 6, 10, 11, seed).ps([(6, 8), (8, 7), (9, 10)], mark).done()
+i = icon(28)    # crater potato
+i.r(4, 6, 12, 12, (140, 96, 150)).r(5, 5, 10, 5, (170, 126, 180)).r(11, 8, 12, 12, (100, 66, 110)).ps([(6, 8), (9, 10), (7, 11)], (90, 56, 100)).done()
+i = icon(29)    # moon wheat
+for x in (5, 8, 11):
+    i.r(x, 6, x, 14, (200, 180, 110)).r(x - 1, 2, x + 1, 6, (236, 220, 150))
+i.done()
+i = icon(30)    # star tomato
+i.r(4, 6, 12, 13, (214, 64, 60)).r(5, 5, 11, 5, (240, 110, 100)).r(11, 8, 12, 13, (160, 40, 40)).ps([(7, 3), (8, 3), (6, 4), (9, 4), (8, 2)], (80, 160, 80)).done()
 IT.save(art("items.png"))
 
 
@@ -2929,6 +2947,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const ROOF_PROPS = " + json.dumps(ROOF_PROPS) + "\n")
     f.write("const ROOF_LIGHTS = " + json.dumps(ROOF_LIGHTS) + "\n")
     # Areas drawn in the promenade style (scripts/lunar_ground.gd), by title, and their props and extras.
+    f.write("const FARM_FIELDS = " + json.dumps(globals().get("FARM_FIELDS", {})) + "    # map -> [x, y, w, h] of its field, in tiles\n")
     f.write("const LUNAR_AREAS = " + json.dumps({"Community Concourse": "main", "Survey Level": "top", "Observation Lounge": "lounge", "Museum": "museum", "Precursor Sanctum": "sanctum", "Engineering Level": "eng", "Shuttle Bay": "bay", "Spaceport District": "west", "Agri Complex": "agri", "Hotel": "hotel", "East Complex": "east"} | LUNAR_EXTRA) + "\n")
     f.write("const AREA_PROPS = " + json.dumps(AREA_PROPS) + "\n")
     f.write("const AREA_ROOF_PROPS = " + json.dumps(AREA_ROOF_PROPS) + "\n")

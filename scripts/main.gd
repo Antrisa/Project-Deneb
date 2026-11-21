@@ -59,7 +59,8 @@ const REPAIRS := [
 const SLOT_COUNT := 24             # inventory slots; the first 8 are the hotbar
 
 const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1, "quartz": 12, "gold_ore": 40, "titanium_ore": 25,
-		"carbon": 6, "steel_bar": 30, "gold_bar": 90, "titanium_bar": 60}      # what Bram pays
+		"carbon": 6, "steel_bar": 30, "gold_bar": 90, "titanium_bar": 60,
+		"crater_potato": 18, "moon_wheat": 10, "star_tomato": 30}      # what Bram pays
 const MAX_HP := 10
 const WEAPON_DAMAGE := 2
 const TUNNEL_GOAL := 6             # creatures Job asks you to clear out of the north tunnels
@@ -100,6 +101,11 @@ var player
 var community_game: CanvasLayer
 var garden_watered_day := -1
 var garden_busy := false
+# Farming (21 Nov), one tile at a time like Stardew. tile -> {"crop": id or "", "age": watered days grown,
+# "watered": the day it was last watered}. A tile in here is dug; take it out and it is plain field again.
+var farm := {}
+var farm_view: Node2D               # scripts/agri_terrain.gd, which draws the field
+var seeds_taken_day := -1
 var travelling := false
 var portals := {}
 var door_locks := {}
@@ -226,6 +232,7 @@ func _ready() -> void:
 			var terrain := preload("res://scripts/agri_terrain.gd").new()
 			terrain.setup(self, data["floor"])
 			node.add_child(terrain)
+			farm_view = terrain
 		elif area_name == "mess":
 			var dining_view := MessWindow.new()
 			dining_view.setup(self, data["floor"][0].length())
@@ -482,7 +489,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			ui.show_menu(4)
 			sfx("click")
 	elif event.is_action_pressed("interact"):
-		_interact_nearest()
+		if not _try_harvest():
+			_interact_nearest()
 	elif event.is_action_pressed("use"):
 		_use_tool()
 	else:
@@ -1118,6 +1126,10 @@ func _interact(t: Dictionary) -> void:
 		_enter_portal(t)
 	elif kind == "garden":
 		_water_garden(t)
+	elif kind == "farm_tools":
+		_take_farm_tools()
+	elif kind == "seeds":
+		_take_seeds()
 	elif kind == "game":
 		var company := _activity_near(t.pos,48.0,["chess","hologame"])
 		if not company.is_empty():
@@ -1549,6 +1561,8 @@ func _use_tool() -> void:
 		_swing_hits(item)
 	elif use == "eat":
 		_eat(item)
+	elif use in ["hoe", "water", "plant"]:
+		_farm_use(use, item)
 
 
 func _item_icon(item: String) -> int:
@@ -2347,6 +2361,7 @@ func journal() -> Array:
 
 
 func _next_day() -> void:
+	_grow_crops()
 	day += 1
 	minutes = float(DAY_START)
 	job_active = false
@@ -2394,6 +2409,8 @@ func _save_game() -> void:
 		cfg.set_value(section, "friendship", st["friendship"])
 		cfg.set_value(section, "next", st["next"])
 	cfg.set_value("access", "garden_watered_day", garden_watered_day)
+	cfg.set_value("farm", "tiles", farm)
+	cfg.set_value("farm", "seeds_taken_day", seeds_taken_day)
 	cfg.set_value("access", "doors", door_locks)
 	cfg.save(SAVE_PATH)
 
@@ -2437,6 +2454,11 @@ func _load_game() -> void:
 		st["next"] = int(cfg.get_value(section, "next", 0))
 
 	garden_watered_day = int(cfg.get_value("access", "garden_watered_day", -1))
+	var saved_farm = cfg.get_value("farm", "tiles", {})
+	if saved_farm is Dictionary:
+		farm = saved_farm
+	seeds_taken_day = int(cfg.get_value("farm", "seeds_taken_day", -1))
+	if farm_view != null: farm_view.queue_redraw()
 	var saved_locks = cfg.get_value("access", "doors", {})
 	if saved_locks is Dictionary:
 		for key in saved_locks:
@@ -2643,6 +2665,9 @@ func _activity_dialogue(who: String) -> String:
 	return ""
 
 func _water_garden(t: Dictionary) -> void:
+	if current_area == "agri":
+		_irrigate(t)
+		return
 	if garden_watered_day==day:
 		_toast("The garden has enough water for today")
 		return
@@ -2658,6 +2683,175 @@ func _water_garden(t: Dictionary) -> void:
 	garden_busy=false
 	player.frozen=false
 	_toast("Crop beds watered" if current_area == "agri" else "Flowers watered — the reservoir will recirculate the excess")
+
+
+# ---------------------------------------------------------------- farming (21 Nov)
+# Stardew-style, one tile at a time on the field in the Agri dome (MapData.FARM_FIELDS): dig a tile with the hoe,
+# plant seeds on it, water it, and each night a watered crop grows a day. Press E on a ripe crop to pick it.
+# One tile is one character wide. The crops are placeholders until the economy chat's crop list.
+const FARM_ENERGY := 2              # energy per dig or watering, as in Stardew
+const SEED_HANDFUL := 5             # what the seed rack gives of each kind, once a day (until shops open)
+const CROPS := {
+	"crater_potato": {"days": 4, "stages": 4, "regrow": 0, "item": "crater_potato"},
+	"moon_wheat": {"days": 3, "stages": 3, "regrow": 0, "item": "moon_wheat"},
+	"star_tomato": {"days": 6, "stages": 4, "regrow": 3, "item": "star_tomato"},
+}
+
+
+func farm_field() -> Rect2i:
+	var f: Array = MapData.FARM_FIELDS.get(current_area, [])
+	if f.size() != 4: return Rect2i()
+	return Rect2i(int(f[0]), int(f[1]), int(f[2]), int(f[3]))
+
+
+# The tile a farm tool works on: the one under the mouse if it touches yours, otherwise the one you face.
+func farm_target() -> Vector2i:
+	var here: Vector2i = _player_tile()
+	var m: Vector2 = player.get_global_mouse_position()
+	var under := Vector2i(floori(m.x / TILE), floori(m.y / TILE))
+	if under != here and absi(under.x - here.x) <= 1 and absi(under.y - here.y) <= 1:
+		return under
+	var f: Vector2 = player.facing()
+	return here + Vector2i(roundi(f.x), roundi(f.y))
+
+
+# For the field drawing: the tile to outline, or (-1, -1) when no farm tool is in hand.
+func farm_cursor() -> Vector2i:
+	if not _selected_use() in ["hoe", "water", "plant"] or not farm_field().has_point(farm_target()):
+		return Vector2i(-1, -1)
+	return farm_target()
+
+
+func crop_stage(t: Dictionary) -> int:
+	var c: Dictionary = CROPS.get(str(t.get("crop", "")), {})
+	if c.is_empty(): return -1
+	var days: int = int(c["days"])
+	if int(t["age"]) >= days: return int(c["stages"])          # ripe
+	return mini(int(c["stages"]) - 1, int(t["age"]) * int(c["stages"]) / days)
+
+
+func _farm_use(use: String, item: String) -> void:
+	var tile: Vector2i = farm_target()
+	if not farm_field().has_point(tile):
+		sfx("deny")
+		_toast("Use it on your field in the Agri dome" if current_area != "agri" else "That isn't the field")
+		return
+	if use == "hoe":
+		if farm.has(tile):
+			_toast("Already dug")
+			return
+		if not _farm_energy(): return
+		farm[tile] = {"crop": "", "age": 0, "watered": -1}
+		sfx("step", 0.7)
+	elif use == "water":
+		if not farm.has(tile):
+			_toast("Dig it with the hoe first")
+			return
+		if int(farm[tile]["watered"]) == day:
+			_toast("Already watered today")
+			return
+		if not _farm_energy(): return
+		farm[tile]["watered"] = day
+		sfx("blip", 0.6)
+		var splash := preload("res://scripts/watering_effect.gd").new()
+		splash.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 4)
+		actors.add_child(splash)
+		get_tree().create_timer(0.6).timeout.connect(splash.queue_free)
+	elif use == "plant":
+		if not farm.has(tile):
+			_toast("Dig it with the hoe first")
+			return
+		if str(farm[tile]["crop"]) != "":
+			_toast("Something is already growing there")
+			return
+		farm[tile]["crop"] = str(ItemData.ITEMS[item].get("crop", ""))
+		farm[tile]["age"] = 0
+		_give(item, -1)
+		sfx("click", 0.8)
+	if farm_view != null: farm_view.queue_redraw()
+
+
+func _farm_energy() -> bool:
+	if energy < FARM_ENERGY:
+		sfx("deny")
+		_toast("Too tired. Eat something, or sleep.")
+		return false
+	energy -= FARM_ENERGY
+	return true
+
+
+# E on a ripe crop in front of you (or under the mouse, next to you) picks it.
+func _try_harvest() -> bool:
+	if not farm_field().has_point(farm_target()): return false
+	var tile: Vector2i = farm_target()
+	if not farm.has(tile) or crop_stage(farm[tile]) < 0: return false
+	var t: Dictionary = farm[tile]
+	var c: Dictionary = CROPS[str(t["crop"])]
+	if int(t["age"]) < int(c["days"]):
+		_toast("Not ready yet: %d more watered day%s" % [int(c["days"]) - int(t["age"]), "" if int(c["days"]) - int(t["age"]) == 1 else "s"])
+		return true
+	var got: String = str(c["item"])
+	_give(got, 1)
+	sfx("coin", 1.2)
+	_toast("+1 %s" % _item_name(got))
+	if int(c["regrow"]) > 0:
+		t["age"] = int(c["days"]) - int(c["regrow"])   # fruits again after a few more watered days
+	else:
+		t["crop"] = ""
+		t["age"] = 0
+	if farm_view != null: farm_view.queue_redraw()
+	return true
+
+
+# Overnight: a crop watered today grows a day.
+func _grow_crops() -> void:
+	for tile in farm:
+		var t: Dictionary = farm[tile]
+		if str(t["crop"]) != "" and int(t["watered"]) == day:
+			t["age"] = int(t["age"]) + 1
+
+
+# The irrigation valve in the Agri dome waters every dug tile at once.
+func _irrigate(t: Dictionary) -> void:
+	if farm.is_empty():
+		_toast("Nothing dug to water yet. Take a hoe from the shed.")
+		return
+	garden_busy = true
+	player.frozen = true
+	var effect := preload("res://scripts/watering_effect.gd").new()
+	effect.position = t.pos + Vector2(0, -12)
+	actors.add_child(effect)
+	_toast("Opening the irrigation valve…")
+	await get_tree().create_timer(1.4).timeout
+	effect.queue_free()
+	for tile in farm:
+		farm[tile]["watered"] = day
+	garden_busy = false
+	player.frozen = false
+	if farm_view != null: farm_view.queue_redraw()
+	_toast("Every dug tile is watered")
+
+
+func _take_farm_tools() -> void:
+	if _count("hoe") > 0 and _count("watering_can") > 0:
+		_toast("You already have a hoe and a watering can")
+		return
+	if _count("hoe") == 0: _give("hoe", 1)
+	if _count("watering_can") == 0: _give("watering_can", 1)
+	sfx("quest")
+	_toast("You take a hoe and a watering can. Evarra won't miss them.")
+
+
+# Until the shops open, the seed rack gives a handful of each seed once a day, so farming can be tried out.
+func _take_seeds() -> void:
+	if seeds_taken_day == day:
+		_toast("You've had today's seeds. The rack refills overnight.")
+		return
+	seeds_taken_day = day
+	for seed_id in ["crater_potato_seeds", "moon_wheat_seeds", "star_tomato_seeds"]:
+		_give(seed_id, SEED_HANDFUL)
+	sfx("quest")
+	_toast("+%d each: crater potato, moon wheat and star tomato seeds" % SEED_HANDFUL)
 
 
 # ---------------------------------------------------------------- the Caverns

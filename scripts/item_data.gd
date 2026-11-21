@@ -1,7 +1,9 @@
 extends RefCounted
 # Everything the player can carry, and what can be crafted.
 # "icon" is the position of the picture in art/items.png (made by tools/build.py).
-# "use" says what pressing Space does with it selected: "mine", "weapon", "eat", or nothing.
+# "use" says what pressing Space does with it selected: "mine", "weapon", "eat", "hoe", "water", "plant",
+# or nothing. Farming (21 Nov): the crops are placeholders until the economy chat's crop list; "crop" on a seed
+# names what it grows (CROPS in scripts/main.gd).
 
 const ITEMS = {
 	"laser": {"name": "Mining laser", "icon": 0, "use": "mine",
@@ -50,6 +52,22 @@ const ITEMS = {
 			"desc": "A plate from the Harbinger's hide, still warm. Tar'Besh would give a great deal to see it."},
 	"medpack": {"name": "Medpack", "icon": 12, "use": "eat", "heal": 10,
 			"desc": "From Maren in the medbay. Select it and press Space to mend every heart."},
+	"hoe": {"name": "Hoe", "icon": 23, "use": "hoe",
+			"desc": "Evarra's spare. Select it and press Space on the field in the Agri dome to dig a tile for planting."},
+	"watering_can": {"name": "Watering can", "icon": 24, "use": "water",
+			"desc": "Select it and press Space on a dug tile to water it. Crops only grow on days they were watered."},
+	"crater_potato_seeds": {"name": "Crater potato seeds", "icon": 25, "use": "plant", "crop": "crater_potato",
+			"desc": "Plant on a dug tile. Ready in 4 watered days."},
+	"moon_wheat_seeds": {"name": "Moon wheat seeds", "icon": 26, "use": "plant", "crop": "moon_wheat",
+			"desc": "Plant on a dug tile. Ready in 3 watered days."},
+	"star_tomato_seeds": {"name": "Star tomato seeds", "icon": 27, "use": "plant", "crop": "star_tomato",
+			"desc": "Plant on a dug tile. Ready in 6 watered days, then fruits again every 3."},
+	"crater_potato": {"name": "Crater potato", "icon": 28, "use": "eat", "energy": 15, "heal": 1,
+			"desc": "Lumpy, purple-skinned and filling. Bram buys them."},
+	"moon_wheat": {"name": "Moon wheat", "icon": 29, "use": "",
+			"desc": "Pale wheat that grows fast under the dome lights. Bram buys it; one day it will be flour."},
+	"star_tomato": {"name": "Star tomato", "icon": 30, "use": "eat", "energy": 20, "heal": 1,
+			"desc": "A five-pointed tomato, sweet and sharp. Bram pays well for them."},
 }
 
 # What a furnace makes from each ore you can hold.

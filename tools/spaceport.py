@@ -139,11 +139,16 @@ def build(g):
     a.t.zones += [['Agri dome', 36, 4, 74, 42], ['Storage shed', 47, 45, 63, 59], ['Your workshop', 11, 51, 37, 77],
                   ['Hot springs & fish ponds', 71, 49, 101, 79], ['Glass link', 1, 1, 108, 88]]
     a.keep_clear(53, 60, 57, 88); a.keep_clear(36, 62, 74, 66); a.keep_clear(53, 38, 57, 47)
+    # Your field (21 Nov): 10 x 12 tiles in the west of the dome, farmed one tile at a time like Stardew (till,
+    # plant, water, harvest; scripts/main.gd and scripts/agri_terrain.gd). One tile is one character wide.
+    # Its x, y, w, h start on even tiles, so the soil art's 2 x 2-tile frame pieces line up round it.
+    field = (40, 14, 10, 12)
+    g.setdefault('FARM_FIELDS', {})['agri'] = list(field)
+    a.keep_clear(field[0] - 1, field[1] - 1, field[0] + field[2], field[1] + field[3])
+    a.t.zones.insert(0, ['Your field', field[0], field[1], field[0] + field[2] - 1, field[1] + field[3] - 1])
     P, N = a.prop, a.near
     # the agri dome: the west corner still grows; the rest is dead planters, rubble and broken glass
-    for ang in (165, 195, 215):
-        x, y = 55 + 11 * math.cos(math.radians(ang)), 23 + 11 * math.sin(math.radians(ang))
-        N('hydroponics', x, y, 'Your crop beds', 'garden', 'Water')
+    N('hydroponics', 45, 29.5, 'Irrigation valve', 'garden', 'Water')     # waters every tilled tile at once
     N('planter_long', 43, 31.5, 'Herb bed', 'inspect', 'Inspect')
     for ang in range(250, 520, 30):
         x, y = 55 + 12 * math.cos(math.radians(ang)), 23 + 12 * math.sin(math.radians(ang))
@@ -152,8 +157,8 @@ def build(g):
     for fx, fy in ((53, 14), (62, 18), (68, 28), (59, 27)): N('glass_shards', fx, fy, 'Broken glass', None)
     a.thing('look', 'Broken agri dome', 'Look', 58, 22, 60)
     # the storage shed
-    N('shipping_bin', 52, 48, 'Shipping crate', 'look', 'Look'); N('seed_rack', 58.5, 48, 'Seed rack', 'look', 'Look')
-    N('garden_tools', 61, 52, 'Garden tools', None); N('storage_shelf', 50, 56.5, 'Shed shelving', None)
+    N('shipping_bin', 52, 48, 'Shipping crate', 'look', 'Look'); N('seed_rack', 58.5, 48, 'Seed rack', 'seeds', 'Take seeds')
+    N('garden_tools', 61, 52, 'Garden tools', 'farm_tools', 'Take'); N('storage_shelf', 50, 56.5, 'Shed shelving', None)
     N('barrel_stack', 61, 57, 'Feed barrels', None); N('cargo', 58, 56.5, 'Crates', None)
     # your workshop
     N('workbench', 19.5, 58.5, 'Workbench', 'look', 'Look'); N('workbench', 27.5, 58.5, 'Workbench', None)
