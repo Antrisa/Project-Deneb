@@ -241,7 +241,7 @@ def build(g):
     BN('fuel_tank', 32, 33.5, 'Fuel tank'); BN('fuel_tank', 15, 28.5, 'Fuel tank')
     BN('cargo', 33, 26.5, 'Crates', None)
     # launch control booth
-    BN('launch_console', 8.5, 28.5, 'Launch control', 'look', 'Look'); BN('waiting_seat', 8.5, 32.5, 'Booth seats', None)
+    BN('launch_console', 8.5, 28.5, 'Launch control', 'launch', 'Launch'); BN('waiting_seat', 8.5, 32.5, 'Booth seats', None)
     # the Shipwright's Suite: locked; a few of Freya's father's things inside
     BP('lab_door', 35, 28, "Shipwright's Suite", 'look', 'Look', door=True)
     BN('workbench', 41.5, 27.5, "Old shipwright's bench", None); BN('star_chart', 44, 31.5, 'Hull blueprints', None)

@@ -16,6 +16,7 @@ const NineFrame = preload("res://scripts/nine_frame.gd")
 
 var active := false
 var voice_pitch := 1.0        # set by main.gd before start(): each resident talks at their own pitch
+var on_done: Callable = Callable()   # optional: called when the lines run out (set after start(); main.gd _say_then)
 
 var _lines: Array = []
 var _index := 0
@@ -91,6 +92,7 @@ func _make_label(pos: Vector2, size: Vector2, color: Color) -> Label:
 
 func start(speaker: String, lines: Array, on_yes: Callable = Callable(), yes_text: String = "", portrait: Texture2D = null,
 		on_no: Callable = Callable(), no_text: String = "Not now") -> void:
+	on_done = Callable()
 	# With a portrait, the text moves right to make room for it.
 	var left := 6.0
 	if portrait != null:
@@ -134,6 +136,10 @@ func advance() -> void:
 			var cb: Callable = _on_yes
 			_on_yes = Callable()
 			cb.call()
+		elif on_done.is_valid():
+			var done: Callable = on_done
+			on_done = Callable()
+			done.call()
 	else:
 		_show_line()
 
