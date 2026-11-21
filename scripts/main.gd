@@ -27,6 +27,9 @@ const EnemyScript = preload("res://scripts/enemy.gd")
 const DialogueScript = preload("res://scripts/dialogue_box.gd")
 const BattleScript = preload("res://scripts/ship_battle.gd")
 const MapScript = preload("res://scripts/ship_map.gd")
+const EventScript = preload("res://scripts/ship_event.gd")
+const StoreScript = preload("res://scripts/ship_store.gd")
+const SpaceEvents = preload("res://scripts/space_events.gd")
 const ShipData = preload("res://scripts/ship_data.gd")
 const MakerScript = preload("res://scripts/player_maker.gd")
 const MessWindow = preload("res://scripts/mess_window.gd")
@@ -104,12 +107,17 @@ var player
 var community_game: CanvasLayer
 var battle                         # the space battle screen (scripts/ship_battle.gd)
 var ship_map                       # the jump map (scripts/ship_map.gd)
+var ship_event                     # arriving at a stop: the backdrop and the event window (scripts/ship_event.gd)
+var ship_store                     # the store window (scripts/ship_store.gd)
 # The ship after Act 1 (21 Nov): hull carried between fights and repaired by Freya, how many times you have
 # flown, and the day Artie's pod came home (the Wave 1 arrivals count from it; slice 2).
 var ship_hull := 12
 var flights := 0
 var artie_found_day := -1
 var fuel := 6
+var missiles := 0
+var drone_parts := 0
+var ship_weapons: Array = ["burst_laser", ""]    # what's fitted in each weapon slot ("" = empty)
 var said_goodbye := false          # the send-off at launch has played
 var ana_found_day := -1            # the day you pulled Ana out of her ship (the Wave 2 arrival counts from it)
 # Residents with no walk sheet yet borrow someone else's until theirs is drawn (art/npc_<id>.png).
@@ -312,6 +320,12 @@ func _ready() -> void:
 	battle = BattleScript.new()
 	battle.world = self
 	add_child(battle)
+	ship_event = EventScript.new()
+	ship_event.world = self
+	add_child(ship_event)
+	ship_store = StoreScript.new()
+	ship_store.world = self
+	add_child(ship_store)
 	station_calendar = CalendarScript.new()
 	add_child(station_calendar)
 	_load_game()
@@ -438,6 +452,24 @@ func _unhandled_input(event: InputEvent) -> void:
 	if datapad != null and datapad.blocking():
 		return                     # a datapad page is open; it takes its own keys
 	if travelling or garden_busy: return
+	if ship_store != null and ship_store.open:
+		if dialogue.active:
+			if event.is_action_pressed("interact") or event.is_action_pressed("use"):
+				dialogue.advance()
+		else:
+			ship_store.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
+	if ship_event != null and ship_event.open:
+		if dialogue.active:
+			if event.is_action_pressed("interact") or event.is_action_pressed("use"):
+				dialogue.advance()
+			elif event.is_action_pressed("cancel"):
+				dialogue.cancel()
+		else:
+			ship_event.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
 	if battle != null and battle.open:
 		if dialogue.active:
 			if event.is_action_pressed("interact") or event.is_action_pressed("use"):
@@ -1505,10 +1537,6 @@ func _look_at_ship() -> void:
 
 const HULL_REPAIR_PRICE := 10      # Freya's price per hull point
 const SHIP_LOSS_SHARE := 10        # percent of your credits lost when the ship is beaten (capped at 150)
-const TRADER_PATCH := 4            # hull points the Moogli trader patches...
-const TRADER_PATCH_PRICE := 30     # ...for this many credits
-const TRADER_FUEL := 2             # fuel cells the trader sells...
-const TRADER_FUEL_PRICE := 12      # ...for this many credits
 
 
 # F7 (editor and debug builds only): skip to a repaired ship, standing at launch control in the Shuttle Bay,
@@ -1615,56 +1643,115 @@ func _head_them_off() -> void:
 	])
 
 
+# The ship arrives at a stop (Zachary, 21 Nov: like FTL, the ship jumps there and a window comes up).
 func _arrive(i: int) -> void:
 	fuel = maxi(0, fuel - 1)
 	var stop: Dictionary = ShipData.FIRST_FLIGHT[i]
+	ship_map.visible = false
+	ship_event.show_backdrop(stop)
 	match str(stop["event"]):
 		"ice_field":
-			_say("Sensors", ["Wreckage, frozen into a drift of ice. An old freighter's cargo pod, still sealed.",
-				"Cut it free?"], Callable(self, "_salvage_take"), "Cut it free", Callable(self, "_salvage_leave"), "Leave it")
+			ship_event.open_event(SpaceEvents.EVENTS["ice_field"], Callable(self, "_after_ice_field"))
 		"patient_wren":
-			_say("Freighter captain", [
-				"[sad] Collective freighter Patient Wren, drive dead, three aboard. The Rabble shot us up on their way past.",
-				"They were heading for some moon station. Can you spare anything? A spark for the drive would do it.",
-			], Callable(self, "_distress_help"), "Send the drone over", Callable(self, "_distress_leave"), "Leave them")
+			ship_event.open_event(SpaceEvents.EVENTS["patient_wren"], Callable(self, "_after_patient_wren"))
 		"picket":
+			ship_event.close()
 			_stop_fight(stop)
 		"moogli_trader":
-			_stop_trade()
+			ship_store.open_store(ShipData.STORES["moogli_trader"], Callable(self, "_after_trader"))
 		"ivan":
+			ship_event.close()
 			_stop_ivan(stop)
 
 
-func _salvage_take() -> void:
-	_give("hull_plate", 1)
-	_money(15, "Salvage")
-	_toast("Salvage: 15 credits, 1 hull plate")
-	sfx("coin")
-	_say("Sara", ["[happy] That's salvage: whatever's out there that nobody's coming back for. Bram will be jealous.",
-		"Next stop when you're ready."])
+# Back to the jump map after a stop.
+func _back_to_map() -> void:
+	ship_event.close()
+	ship_store.close()
+	ship_map.visible = true
 
 
-func _salvage_leave() -> void:
-	_say("Sara", ["Fair enough. Salvage stops are always a choice. Next stop when you're ready."])
+func _after_ice_field(_fight: String) -> void:
+	_back_to_map()
+	_say("Sara", ["[happy] That's how stops go: you see what's there, you choose, and you find out what it gets you.",
+		"Plain beacons hide anything from salvage to pirates. Next stop when you're ready."])
 
 
-func _distress_help() -> void:
-	fuel += 2
-	_money(30, "Paid by the Patient Wren")
-	_toast("The Patient Wren pays you: 30 credits, 2 fuel cells")
-	sfx("coin")
-	_say("Freighter captain", ["[happy] She's turning over! Take these fuel cells, and our thanks. Watch yourself: there were a lot of them."])
-	_say_then(Callable(self, "_distress_after"))
-
-
-func _distress_after() -> void:
-	_say("Sara", ["Distress calls are like that: someone needs something, and what you do about it is up to you.",
+func _after_patient_wren(_fight: String) -> void:
+	_back_to_map()
+	_say("Sara", ["Distress signals are like that: someone needs something, and what you do about it is up to you.",
 		"Sometimes it's a trap. Not this time. Next stop: the Rabble's picket ship."])
 
 
-func _distress_leave() -> void:
-	_say("Sara", ["[sad] We can't help everyone. I'll log their position in case someone else passes.",
-		"Next stop: the Rabble's picket ship."])
+func _after_trader() -> void:
+	_back_to_map()
+	_say("Sara", ["Stores sell repairs, fuel and weapons, and buy back what you don't need.",
+		"Ivan is just ahead. This is it."])
+
+
+# Can the player take an event choice that needs something? ("" needs nothing.)
+func space_need_met(needs: String) -> bool:
+	var n: String = needs.strip_edges()
+	if n == "":
+		return true
+	if n == "drone":
+		return true                      # the starter ship always carries its repair drone
+	if n == "missiles":
+		return missiles > 0
+	if n.ends_with(" Scrip"):
+		return credits >= int(n.trim_suffix(" Scrip"))
+	if n.begins_with("item: "):
+		return int(items.get(n.trim_prefix("item: ").strip_edges(), 0)) > 0
+	return false
+
+
+# Applies an event outcome's effects (written as in the event template). Returns what the window shows:
+# {"gains": [[text, colour], ...], "fight": enemy id or ""}.
+func apply_space_effects(effects: Array) -> Dictionary:
+	var gains: Array = []
+	var fight := ""
+	var good := Color("5adc6e")
+	var bad := Color("e6463c")
+	var note := Color("fadc5a")
+	for e in effects:
+		var t: String = str(e).strip_edges()
+		var parts: PackedStringArray = t.split(" ", false)
+		if t == "nothing" or t == "":
+			continue
+		elif t.begins_with("item: "):
+			var spec: String = t.trim_prefix("item: ").strip_edges()
+			var n := 1
+			var x: int = spec.rfind(" x")
+			if x > 0:
+				n = int(spec.substr(x + 2))
+				spec = spec.substr(0, x)
+			_give(spec, n)
+			var item_name: String = str(ItemData.ITEMS[spec]["name"]) if ItemData.ITEMS.has(spec) else spec
+			gains.append(["+%d %s" % [n, item_name], good])
+		elif t.begins_with("fight: "):
+			fight = t.trim_prefix("fight: ").strip_edges()
+			gains.append(["They attack!", bad])
+		elif t.begins_with("relic: "):
+			gains.append(["Relic: %s (for Tar'Besh's museum, later)" % t.trim_prefix("relic: "), note])
+		elif t.begins_with("reveal: "):
+			gains.append(["Marked on your map: %s (later)" % t.trim_prefix("reveal: "), note])
+		elif parts.size() >= 2 and (parts[0].begins_with("+") or parts[0].begins_with("-")):
+			var amount: int = int(parts[0])
+			var what: String = " ".join(parts.slice(1)).to_lower()
+			if what.begins_with("scrip"):
+				_money(amount, "Out in the zone")
+			elif what.begins_with("fuel"):
+				fuel = maxi(0, fuel + amount)
+			elif what.begins_with("hull"):
+				ship_hull = clampi(ship_hull + amount, 0, int(ShipData.STARTER["hull"]))
+			elif what.begins_with("missile"):
+				missiles = maxi(0, missiles + amount)
+			elif what.begins_with("drone part"):
+				drone_parts = maxi(0, drone_parts + amount)
+			gains.append(["%s%d %s" % ["+" if amount >= 0 else "", amount, " ".join(parts.slice(1))], good if amount >= 0 else bad])
+	if gains.is_empty():
+		gains.append(["Nothing gained, nothing lost.", Color("969cb0")])
+	return {"gains": gains, "fight": fight}
 
 
 func _stop_fight(stop: Dictionary) -> void:
@@ -1710,60 +1797,6 @@ func _after_picket(result: String, hull_left: int) -> void:
 		"[happy] One down. Their main force is still coming, and Ivan is with it.",
 		"There's a Moogli trader keeping out of the way on your course. If you're hurt, stop and patch up.",
 	])
-
-
-func _stop_trade() -> void:
-	_say("Moogli trader", [
-		"[happy] A customer! Out here! The Rabble have been very bad for business.",
-	])
-	_say_then(Callable(self, "_trade_repair_offer"))
-
-
-func _trade_repair_offer() -> void:
-	if ship_hull >= int(ShipData.STARTER["hull"]):
-		_trade_fuel_offer()
-		return
-	_say("Moogli trader", ["Your hull looks chewed. I can patch %d points for %d credits. Yes?" % [TRADER_PATCH, TRADER_PATCH_PRICE]],
-		Callable(self, "_trade_repair"), "Patch (%d cr)" % TRADER_PATCH_PRICE, Callable(self, "_trade_fuel_offer"), "No thanks")
-
-
-func _trade_repair() -> void:
-	if credits < TRADER_PATCH_PRICE:
-		sfx("deny")
-		_say("Moogli trader", ["[sad] No credits, no patch. I am a trader, not a charity. Well. Mostly not."])
-		_say_then(Callable(self, "_trade_fuel_offer"))
-		return
-	_money(-TRADER_PATCH_PRICE, "Ship repairs")
-	ship_hull = mini(int(ShipData.STARTER["hull"]), ship_hull + TRADER_PATCH)
-	sfx("coin")
-	_trade_fuel_offer()
-
-
-func _trade_fuel_offer() -> void:
-	_say("Moogli trader", ["Fuel? %d cells for %d credits." % [TRADER_FUEL, TRADER_FUEL_PRICE]],
-		Callable(self, "_trade_fuel"), "Buy (%d cr)" % TRADER_FUEL_PRICE, Callable(self, "_trade_bye"), "No thanks")
-
-
-func _trade_fuel() -> void:
-	if credits < TRADER_FUEL_PRICE:
-		sfx("deny")
-		_say("Moogli trader", ["[sad] Short again. Come back richer."])
-		_say_then(Callable(self, "_trade_bye"))
-		return
-	_money(-TRADER_FUEL_PRICE, "Fuel")
-	fuel += TRADER_FUEL
-	sfx("coin")
-	_trade_bye()
-
-
-func _trade_bye() -> void:
-	_say("Moogli trader", ["[happy] Good luck with the Rabble. If you win, tell everyone where you shopped."])
-	_say_then(Callable(self, "_trade_sara"))
-
-
-func _trade_sara() -> void:
-	_say("Sara", ["Traders sell what you need out here: repairs, fuel, and later parts and weapons.",
-		"Ivan is just ahead. This is it."])
 
 
 func _stop_ivan(stop: Dictionary) -> void:
@@ -1816,6 +1849,8 @@ func _pod_found() -> void:
 func _land_after_first_flight() -> void:
 	battle.close()
 	ship_map.close()
+	ship_event.close()
+	ship_store.close()
 	minutes = minf(minutes + 180.0, DAY_END - 1.0)
 	_snap_residents()
 	var lines: Array = [
@@ -1832,6 +1867,8 @@ func _land_after_first_flight() -> void:
 func _ship_lost() -> void:
 	battle.close()
 	ship_map.close()
+	ship_event.close()
+	ship_store.close()
 	ship_hull = 0
 	var lost: int = mini(credits * SHIP_LOSS_SHARE / 100, 150)
 	_money(-(lost), "Lost when your ship was beaten")
@@ -2802,10 +2839,10 @@ func _toast(msg: String) -> void:
 
 
 func _process(delta: float) -> void:
-	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (datapad != null and datapad.blocking())
+	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (datapad != null and datapad.blocking())
 	if datapad != null:
 		# The datapad leaves the keys alone while one of the game's own windows is open.
-		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (station_calendar != null and station_calendar.open) or travelling or garden_busy)
+		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or travelling or garden_busy)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	_animate()
@@ -3029,6 +3066,9 @@ func _save_game() -> void:
 	cfg.set_value("ship", "flights", flights)
 	cfg.set_value("ship", "artie_found_day", artie_found_day)
 	cfg.set_value("ship", "fuel", fuel)
+	cfg.set_value("ship", "missiles", missiles)
+	cfg.set_value("ship", "drone_parts", drone_parts)
+	cfg.set_value("ship", "weapons", ship_weapons)
 	cfg.set_value("ship", "said_goodbye", said_goodbye)
 	cfg.set_value("ship", "ana_found_day", ana_found_day)
 	cfg.save(SAVE_PATH)
@@ -3081,6 +3121,11 @@ func _load_game() -> void:
 	flights = int(cfg.get_value("ship", "flights", 0))
 	artie_found_day = int(cfg.get_value("ship", "artie_found_day", -1))
 	fuel = int(cfg.get_value("ship", "fuel", 6))
+	missiles = int(cfg.get_value("ship", "missiles", 0))
+	drone_parts = int(cfg.get_value("ship", "drone_parts", 0))
+	var saved_weapons = cfg.get_value("ship", "weapons", ["burst_laser", ""])
+	if saved_weapons is Array and saved_weapons.size() == ShipData.STARTER["weapons"].size():
+		ship_weapons = saved_weapons
 	said_goodbye = bool(cfg.get_value("ship", "said_goodbye", false))
 	ana_found_day = int(cfg.get_value("ship", "ana_found_day", -1))
 	if farm_view != null: farm_view.sync_crops()

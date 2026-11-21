@@ -18,11 +18,22 @@ const SHOT_TIME := 0.7             # seconds a shot takes to cross the gap
 const DRONE_BOOST := {"shields": "shields recharge 25% faster", "weapons": "weapons charge 15% faster", "engines": "+5% evasion"}
 
 const WEAPONS := {
-	"burst_laser": {"name": "Burst laser", "shots": 2, "damage": 1, "charge": 9.0, "power": 2, "color": Color("ff6a5a")},
-	"rabble_laser": {"name": "Rabble laser", "shots": 1, "damage": 1, "charge": 11.0, "power": 1, "color": Color("7dff8a")},
-	"heavy_laser": {"name": "Heavy laser", "shots": 1, "damage": 2, "charge": 14.0, "power": 1, "color": Color("b6ff5a")},
+	"burst_laser": {"name": "Burst laser", "type": "laser", "shots": 2, "damage": 1, "charge": 9.0, "power": 2, "color": Color("ff6a5a"),
+		"price": 70, "about": "Two quick shots. The first strips a shield layer; the second gets through."},
+	"rabble_laser": {"name": "Rabble laser", "type": "laser", "shots": 1, "damage": 1, "charge": 11.0, "power": 1, "color": Color("7dff8a"),
+		"price": 35, "about": "Cheap, light, and everywhere the Rabble go. Better in pairs."},
+	"heavy_laser": {"name": "Heavy laser", "type": "laser", "shots": 1, "damage": 2, "charge": 14.0, "power": 1, "color": Color("b6ff5a"),
+		"price": 90, "about": "One slow, hard-hitting shot. Best once their shields are down."},
 	# Ivan's overcharged gun (phase 2). Needs no power; a hit on his weapons room drains its charge.
-	"ivan_cannon": {"name": "Overcharged cannon", "shots": 1, "damage": 3, "charge": 16.0, "power": 0, "color": Color("ffd34a")},
+	"ivan_cannon": {"name": "Overcharged cannon", "type": "special", "shots": 1, "damage": 3, "charge": 16.0, "power": 0, "color": Color("ffd34a"),
+		"price": 0, "about": "Ivan's. Not for sale."},
+}
+
+# Stores (Zachary, 21 Nov: a trading window like FTL's). Prices are first guesses: fuel, missiles and drone
+# parts each, hull repair per point. Weapons sell back for half.
+const STORES := {
+	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser"],
+		"fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8},
 }
 
 # The repaired fighter from the Shuttle Bay (art/lunar/player_ship.png, frame 4 of 4, 168x96).

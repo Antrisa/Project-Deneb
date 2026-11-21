@@ -73,8 +73,18 @@ var e_sys := {}
 var e_layers := 0
 var e_shield_timer := 0.0
 var e_weapons: Array = []
-var e_crew := 0
-var e_repair := 0.0
+var e_crew := 0                  # how many of their crew are still standing
+# Enemy crew (21 Nov): each has a station (cockpit, weapons, shields, engines; extras wait in the crew room),
+# walks off to repair damaged rooms and back, and is hurt by hits on the room they're in.
+# Each: {"home": station room, "room": room they're in ("" while walking), "target": room they're going to,
+#        "pos": Vector2 in the enemy picture's pixels, "hp": float, "task": "station" or "repair"}
+var e_crew_list: Array = []
+var e_room_repair := {}          # room id -> seconds of repair work done on it
+const CREW_SPEED := 22.0         # picture pixels a second
+const CREW_HP := 100.0
+const CREW_HIT := 15.0           # health lost per point of damage when a shot hits their room
+const STATIONS := ["pilot", "weapons", "shields", "engines"]
+const CREW_SPOTS := [Vector2(0, 0), Vector2(-7, -5), Vector2(7, 5), Vector2(-7, 5), Vector2(7, -5), Vector2(0, 6)]
 var overcharged := false
 
 var shots: Array = []            # shots in flight
@@ -129,7 +139,8 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	sys = _make_systems(me["systems"])
 	layers = _max_layers()
 	weapons.clear()
-	for wid in me["weapons"]:
+	var fitted: Array = world.ship_weapons if world.ship_weapons.size() == me["weapons"].size() else me["weapons"]
+	for wid in fitted:
 		weapons.append({"id": str(wid), "charge": 0.0, "target": "", "on": str(wid) != ""})
 	drone_room = "drones"
 	drone_pos = me["hub"]
@@ -148,8 +159,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	for wid in foe["weapons"]:
 		# Enemies start part-charged so the first shots don't all land together.
 		e_weapons.append({"id": str(wid), "charge": randf_range(1.0, 4.0), "target": "", "on": true})
-	e_crew = int(foe["crew"])
-	e_repair = 0.0
+	_make_enemy_crew()
 	overcharged = false
 	var art_path := "res://art/ships/%s.png" % foe_id
 	enemy_tex = load(art_path) if ResourceLoader.exists(art_path) else null
@@ -244,7 +254,7 @@ func _tick(delta: float) -> void:
 	if e_layers > e_top: e_layers = e_top
 	if e_layers < e_top:
 		e_shield_timer += delta
-		if e_shield_timer >= ShipData.SHIELD_RECHARGE:
+		if e_shield_timer >= ShipData.SHIELD_RECHARGE * (0.9 if _manned("shields") else 1.0):
 			e_shield_timer = 0.0
 			e_layers += 1
 	else:
@@ -254,7 +264,7 @@ func _tick(delta: float) -> void:
 	_charge_weapons(e_weapons, e_sys, delta, false)
 	_move_shots(delta, true)
 	_move_drone(delta)
-	_enemy_repairs(delta)
+	_enemy_crew(delta)
 
 	# oxygen: only you are aboard, and without life support the air runs thin
 	if _eff(sys, "life") <= 0:
@@ -299,7 +309,11 @@ func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool)
 		var powered: bool = bool(w["on"]) and cost <= budget
 		if powered:
 			budget -= cost
-			var speed: float = 1.15 if mine and _boosting("weapons") else 1.0
+			var speed: float = 1.0
+			if mine and _boosting("weapons"):
+				speed = 1.15
+			elif not mine and _manned("weapons"):
+				speed = 1.1
 			w["charge"] = minf(float(data["charge"]), float(w["charge"]) + delta * speed)
 		else:
 			w["charge"] = maxf(0.0, float(w["charge"]) - delta * 2.0)
@@ -417,7 +431,7 @@ func _fire(w: Dictionary, at_player: bool) -> void:
 	var target: String = str(w["target"])
 	var from: Vector2 = _room_center(not at_player, "weapons")
 	var to: Vector2 = _room_center(at_player, target)
-	var dodge: int = _my_evasion() if at_player else _evasion(e_sys)
+	var dodge: int = _my_evasion() if at_player else _enemy_evasion()
 	for i in range(int(data["shots"])):
 		shots.append({"from": from, "to": to + Vector2(randf_range(-3, 3), randf_range(-3, 3)),
 			"t": -0.3 * i, "dmg": int(data["damage"]), "at_player": at_player, "room": target,
@@ -477,8 +491,7 @@ func _land(s: Dictionary) -> void:
 		if e_sys.has(sname2):
 			e_sys[sname2]["damage"] = mini(int(e_sys[sname2]["max"]), int(e_sys[sname2]["damage"]) + dmg)
 			_clip_power(e_sys)
-		if room_id == "crew" and e_crew > 1:
-			e_crew -= 1
+		_hurt_crew(room_id, dmg, where)
 		if sname2 == "weapons" and overcharged:
 			for w in e_weapons:
 				if str(w["id"]) == "ivan_cannon" and float(w["charge"]) > 0.0:
@@ -552,21 +565,139 @@ func _move_drone(delta: float) -> void:
 				_pop(PLAYER_POS + drone_pos + Vector2(0, -14), "Boosting", GOLD)
 
 
-func _enemy_repairs(delta: float) -> void:
-	if e_crew <= 0:
-		return
-	var any := false
+# ---------------------------------------------------------------- enemy crew
+
+func _sys_room(sname: String) -> String:
+	for room in foe["rooms"]:
+		if str(room["sys"]) == sname:
+			return str(room["id"])
+	return ""
+
+
+func _spare_room() -> String:
+	var r: String = _sys_room("")
+	return r if r != "" else str(foe["rooms"][0]["id"])
+
+
+# Where crew member i stands in a room: the middle, spread out a little, kept inside the room.
+func _crew_spot(room_id: String, i: int) -> Vector2:
+	var r: Rect2 = _room(foe["rooms"], room_id).get("rect", Rect2(40, 40, 10, 10))
+	var p: Vector2 = r.get_center() + CREW_SPOTS[i % CREW_SPOTS.size()]
+	return Vector2(clampf(p.x, r.position.x + 4, r.end.x - 4), clampf(p.y, r.position.y + 4, r.end.y - 4))
+
+
+func _make_enemy_crew() -> void:
+	e_crew_list.clear()
+	e_room_repair.clear()
+	for i in range(int(foe["crew"])):
+		var home: String = ""
+		if i < STATIONS.size():
+			home = _sys_room(STATIONS[i])
+		if home == "":
+			home = _spare_room()
+		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i), "hp": CREW_HP, "task": "station"})
+	e_crew = e_crew_list.size()
+
+
+# True when someone is standing at that system's station (manning it gives a small bonus, and nobody in the
+# cockpit means no evasion).
+func _manned(sname: String) -> bool:
+	var rid: String = _sys_room(sname)
+	if rid == "":
+		return false
+	for c in e_crew_list:
+		if float(c["hp"]) > 0.0 and str(c["task"]) == "station" and str(c["room"]) == rid and str(c["home"]) == rid:
+			return true
+	return false
+
+
+func _enemy_evasion() -> int:
+	var eng: int = _eff(e_sys, "engines")
+	if eng <= 0 or _eff(e_sys, "pilot") <= 0 or not _manned("pilot"):
+		return 0
+	return 5 * eng + 5 + (5 if _manned("engines") else 0)
+
+
+func _enemy_crew(delta: float) -> void:
+	# Send someone to each damaged room nobody is already seeing to. Never the pilot; spare hands first,
+	# then whoever is nearest.
 	for sname in REPAIR_ORDER:
-		if e_sys.has(sname) and int(e_sys[sname]["damage"]) > 0:
-			any = true
-			e_repair += delta
-			if e_repair >= ShipData.ENEMY_REPAIR_TIME:
-				e_repair = 0.0
-				e_sys[sname]["damage"] = int(e_sys[sname]["damage"]) - 1
-				e_sys[sname]["power"] = int(e_sys[sname]["max"]) - int(e_sys[sname]["damage"])
-			break
-	if not any:
-		e_repair = 0.0
+		if not e_sys.has(sname) or int(e_sys[sname]["damage"]) <= 0:
+			continue
+		var rid: String = _sys_room(sname)
+		if rid == "":
+			continue
+		var covered := false
+		for c in e_crew_list:
+			if float(c["hp"]) > 0.0 and str(c["task"]) == "repair" and str(c["target"]) == rid:
+				covered = true
+		if covered:
+			continue
+		var best := -1
+		var best_score := INF
+		var to: Vector2 = _crew_spot(rid, 0)
+		for i in range(e_crew_list.size()):
+			var c2: Dictionary = e_crew_list[i]
+			if float(c2["hp"]) <= 0.0 or str(c2["task"]) != "station" or str(c2["home"]) == _sys_room("pilot"):
+				continue
+			var spare: bool = str(_room(foe["rooms"], str(c2["home"])).get("sys", "")) == ""
+			var score: float = (c2["pos"] as Vector2).distance_to(to) - (1000.0 if spare else 0.0)
+			if score < best_score:
+				best_score = score
+				best = i
+		if best >= 0:
+			e_crew_list[best]["task"] = "repair"
+			e_crew_list[best]["target"] = rid
+	# Walk, and work.
+	var working := {}
+	for i in range(e_crew_list.size()):
+		var c3: Dictionary = e_crew_list[i]
+		if float(c3["hp"]) <= 0.0:
+			continue
+		if str(c3["task"]) == "repair":
+			var tsys: String = str(_room(foe["rooms"], str(c3["target"])).get("sys", ""))
+			if not e_sys.has(tsys) or int(e_sys[tsys]["damage"]) <= 0:
+				c3["task"] = "station"
+				c3["target"] = c3["home"]
+		var goal: Vector2 = _crew_spot(str(c3["target"]), i)
+		var at: Vector2 = c3["pos"]
+		var step: float = CREW_SPEED * delta
+		if at.distance_to(goal) > step:
+			c3["pos"] = at + (goal - at).normalized() * step
+			c3["room"] = ""
+		else:
+			c3["pos"] = goal
+			c3["room"] = c3["target"]
+			if str(c3["task"]) == "repair":
+				working[c3["room"]] = int(working.get(c3["room"], 0)) + 1
+	for rid2 in working:
+		var sname2: String = str(_room(foe["rooms"], str(rid2)).get("sys", ""))
+		if not e_sys.has(sname2):
+			continue
+		e_room_repair[rid2] = float(e_room_repair.get(rid2, 0.0)) + delta * int(working[rid2])
+		if float(e_room_repair[rid2]) >= ShipData.ENEMY_REPAIR_TIME:
+			e_room_repair[rid2] = 0.0
+			e_sys[sname2]["damage"] = maxi(0, int(e_sys[sname2]["damage"]) - 1)
+			e_sys[sname2]["power"] = int(e_sys[sname2]["max"]) - int(e_sys[sname2]["damage"])
+
+
+# A hit on an enemy room hurts whoever is standing in it. When the last of them goes down, the fight is won.
+func _hurt_crew(room_id: String, dmg: int, where: Vector2) -> void:
+	for c in e_crew_list:
+		if float(c["hp"]) > 0.0 and str(c["room"]) == room_id:
+			c["hp"] = maxf(0.0, float(c["hp"]) - CREW_HIT * dmg)
+			if float(c["hp"]) <= 0.0:
+				_pop(where + Vector2(0, 10), "Crew down", Color("ffbeaa"))
+	var standing := 0
+	for c2 in e_crew_list:
+		if float(c2["hp"]) > 0.0:
+			standing += 1
+	e_crew = standing
+	if e_crew == 0 and e_hull > 0 and result == "":
+		result = "won"
+		result_text = "Their crew is down"
+		end_timer = 2.0
+		world.sfx("quest")
 
 
 func _tutorial_hints() -> void:
@@ -890,11 +1021,18 @@ func _draw_enemy() -> void:
 				view.draw_rect(Rect2(rr.position + Vector2(2 + i * 4, rr.size.y - 4), Vector2(3, 2)), GOOD if on else BAD)
 		if selected >= 0 and rr.has_point(hover):
 			view.draw_rect(rr, BAD, false, 1.0)
-	# crew dots in the crew room
-	var crew_room: Rect2 = _room(foe["rooms"], "crew").get("rect", Rect2())
-	for i in range(e_crew):
-		var cpos: Vector2 = base + crew_room.position + Vector2(6 + (i % 3) * 8, 12 + floori(i / 3.0) * 8)
-		view.draw_circle(cpos, 3.0, Color("e65a50"))
+	# their crew: red at stations, orange when repairing, a health bar once hurt
+	for c in e_crew_list:
+		var cpos: Vector2 = base + (c["pos"] as Vector2)
+		if float(c["hp"]) <= 0.0:
+			view.draw_line(cpos + Vector2(-2, -2), cpos + Vector2(2, 2), Color("5a4a48"), 1.0)
+			view.draw_line(cpos + Vector2(-2, 2), cpos + Vector2(2, -2), Color("5a4a48"), 1.0)
+			continue
+		view.draw_circle(cpos, 3.0, Color("f0a040") if str(c["task"]) == "repair" else Color("e65a50"))
+		view.draw_arc(cpos, 3.0, 0.0, TAU, 12, Color("201010"), 1.0)
+		if float(c["hp"]) < CREW_HP:
+			view.draw_rect(Rect2(cpos + Vector2(-4, -6), Vector2(8, 1)), Color("3c2020"))
+			view.draw_rect(Rect2(cpos + Vector2(-4, -6), Vector2(8.0 * float(c["hp"]) / CREW_HP, 1)), GOOD)
 	# where your weapons are aimed
 	for i in range(weapons.size()):
 		var tid: String = str(weapons[i]["target"])
@@ -959,7 +1097,7 @@ func _draw_top() -> void:
 	for i in range(_layers_of(e_sys)):
 		var c2 := Vector2(226 + i * 10, 26)
 		view.draw_circle(c2, 3.5, SHIELD_BLUE if i < e_layers else Color("283c5a"))
-	_text(Vector2(250, 29), "Evasion %d%%  Crew %d" % [_evasion(e_sys), e_crew], DIM, 6)
+	_text(Vector2(250, 29), "Evasion %d%%  Crew %d" % [_enemy_evasion(), e_crew], DIM, 6)
 	if overcharged:
 		for w in e_weapons:
 			if str(w["id"]) == "ivan_cannon":
