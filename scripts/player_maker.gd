@@ -7,7 +7,8 @@ extends RefCounted
 # red = the layer's main colour (hair, top, bottom or skin), green = skin, blue = eyes.
 # This follows the same rules as the customizer tool that came with the art, so the two match.
 
-const LAYERS := ["bottoms", "tops", "faces", "hair"]          # drawn in this order
+const LAYERS := ["bottoms", "faces", "tops", "hair"]          # drawn in this order
+# The shirt goes over the head-and-neck layer (as in player_eating/), so the collar hides the base of the neck.
 const PRIMARY := {"hair": "hairColor", "tops": "topColor", "bottoms": "bottomColor", "faces": "skinColor"}
 const DIVISOR := [140.0, 185.0, 150.0]                          # brightness that counts as "full colour": main, skin, eyes
 
