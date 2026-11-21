@@ -448,10 +448,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("new_game"):
-		# F9: wipe the save and start again.
-		var empty := ConfigFile.new()
-		empty.save(SAVE_PATH)
-		get_tree().reload_current_scene()
+		_new_game()                # F9
 		return
 	var click := event as InputEventMouseButton
 	if click != null:
@@ -2167,6 +2164,13 @@ func _build_ui() -> void:
 		creator.world = self
 		creator.maker = maker
 		top_layer.add_child(creator)
+
+
+# Wipe the save and start again, on the character screen (F9, or Settings > New game on the title screen).
+func _new_game() -> void:
+	var empty := ConfigFile.new()
+	empty.save(SAVE_PATH)
+	get_tree().reload_current_scene()
 
 
 func _open_wardrobe() -> void:

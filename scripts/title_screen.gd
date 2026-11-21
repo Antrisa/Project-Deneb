@@ -274,8 +274,22 @@ func _open_settings() -> void:
 	volume.value_changed.connect(_volume_changed)
 	_fields.add_child(volume)
 	_label("In game, Alt+Enter also switches fullscreen and M turns the music on or off.").autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_button("New game...", _open_new_game)
 	_button("Back", _back)
 	display.grab_focus()
+
+
+# Settings > New game: erase the save and start over on the character screen (21 Nov, for testing the creator).
+func _open_new_game() -> void:
+	_begin("Settings", "Start a new game?")
+	_label("This erases your save: the day, your items and credits, friendships, the farm and your look. You'll make a new character.").autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_button("Cancel", _open_settings).grab_focus()
+	_button("Erase and start over", _erase_and_restart)
+
+
+func _erase_and_restart() -> void:
+	if world != null and world.has_method("_new_game"):
+		world._new_game()
 
 
 func _open_coop() -> void:
