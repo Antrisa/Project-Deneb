@@ -20,9 +20,19 @@ SIZES.update({
     'fruit_tree': (2, 3, 1), 'park_tree': (2, 3, 1), 'treadmill': (2, 2, 1), 'weight_bench': (3, 2, 1), 'punching_bag': (1, 2, 1),
     'court_hoop': (2, 3, 1), 'washer': (2, 2, 1), 'laundry_basket': (1, 1, 1), 'scoreboard': (2, 3, 1), 'flowers': (4, 2, 2),
     'bird_bath': (1, 2, 1), 'bench_e': (1, 3, 2), 'bench_w': (1, 3, 2), 'suit_locker_broken': (2, 3, 1), 'shower': (2, 3, 1), 'toilet': (1, 2, 1), 'bath_sink': (1, 2, 1), 'bed_double': (3, 3, 2), 'bunk_bed': (2, 3, 2),
+    'textiles': (3, 2, 1), 'clothes': (3, 2, 1),
 })
 CX, CY = 56, 46
 HOME_ANGLES = [20, 40, 140, 160, 200, 220, 320, 340]
+# Who lives in which home (Zachary, 20 Nov). Artie, Stu and Ana arrive later in the story; their homes are
+# ready for them. Home 4 and homes 6 to 8 are still empty.
+EAST_RESIDENTS = {1: 'Artie', 2: 'Stu', 3: 'Ana', 5: 'Tikka|Sesska'}
+# things of their own, placed in the living room and the bedroom: (prop, x, y, title)
+EAST_THINGS = {
+    'Artie': [('star_chart', 16.5, 4.5, "Artie's knot board"), ('books', 25, 10, "Artie's library books")],
+    'Stu': [('cargo', 16.5, 4.5, 'The hydroponics crate'), ('luggage_cart', 25, 10, "Stu's luggage cart")],
+    'Ana': [('star_chart', 16.5, 4.5, "Ana's flight charts"), ('console', 25, 10, "Ana's nav console")],
+}
 
 
 def build(g):
@@ -146,7 +156,7 @@ def build(g):
     entries, warps = [], {'east': e.t.warps}
     for n, door, facing, kind in homes:
         key = 'home%d' % n
-        hm, mirror = make_home(g, key, 'Home %d' % n, kind, n % 2 == 0)
+        hm, mirror = make_home(g, key, 'Home %d' % n, kind, n % 2 == 0, EAST_RESIDENTS.get(n, ''))
         slate = kind == 'single' and mirror
         deck = ('residential/slate_deck_mix' if slate else 'hotel/warm_deck_mix', None)
         navy = ('hotel/navy_mix', None)
@@ -172,10 +182,11 @@ def build(g):
     g.setdefault('EXTRA_THINGS', []).extend(e.things)
 
 
-def make_home(g, key, title, kind, mirror):
+def make_home(g, key, title, kind, mirror, who=''):
     """One home's own map. single: living room with a kitchenette corner, bedroom, bathroom. couple: bigger,
     a double bed and a small study. family: kitchen and dining, living room, a main bedroom, a children's room
-    and a bathroom. Even-numbered homes are mirrored, and the floors change from home to home."""
+    and a bathroom. Even-numbered homes are mirrored, and the floors change from home to home. who: whoever
+    lives there ('A|B' for a couple); their bedroom locks until you are friends, and their things go in."""
     W, Hh = {'single': (30, 24), 'couple': (34, 26), 'family': (42, 30)}[kind]
     hm = Room(g, key, title, W, Hh)
     H = hm.F
@@ -187,6 +198,7 @@ def make_home(g, key, title, kind, mirror):
         chamfer_room(H, a, y0, b, y1, ch, k)
     def tile(x, y, ch): H[y][X(x)] = ch
     def put(name, fx, fy, t, kd=None, hint='Look'): return hm.near(name, FX(fx), fy, t, kd, hint)
+    bed = None
     if kind == 'single':
         room(3, 3, 17, 19, 'o'); room(19, 3, 26, 12, 'h'); room(19, 14, 26, 19, 't', 1)
         for y in range(3, 8):
@@ -199,7 +211,9 @@ def make_home(g, key, title, kind, mirror):
         put('table', 6.5, 10.5, 'Dining table', 'seat', 'Sit'); put('sofa', 13, 7.5, 'Sofa', 'seat', 'Sit')
         put('cafe_table', 13, 11, 'Coffee table'); put('armchair', 15.5, 14.5, 'Armchair', 'seat', 'Sit')
         put('books', 5, 17, 'Bookshelf'); put('plants', 14.5, 18.5, 'Plant')
-        put('bed', 21, 6.5, 'Bed'); put('wardrobe', 25, 5.5, 'Wardrobe'); put('footlocker', 21, 10.5, 'Chest')
+        bed = put('bed', 21, 6.5, "%s's bed" % who if who else 'Bed', 'look' if who else None)
+        put('wardrobe', 25, 5.5, 'Wardrobe'); put('footlocker', 21, 10.5, 'Chest')
+        for name, fx, fy, t in EAST_THINGS.get(who, []): put(name, fx, fy, t, 'look')
         put('shower', 21, 17.5, 'Shower'); put('toilet', 24, 16.5, 'Toilet'); put('bath_sink', 25.5, 18.5, 'Washbasin')
         hm.keep_clear(X(8) if not mirror else X(12), 16, X(12) if not mirror else X(8), 20)
         zones = [['Living room', 3, 3, 17, 19], ['Bedroom', 19, 3, 26, 12], ['Bathroom', 19, 14, 26, 19]]
@@ -222,22 +236,39 @@ def make_home(g, key, title, kind, mirror):
         room(3, 3, 22, 14, 'k'); room(3, 16, 22, 26, 'o'); room(24, 3, 38, 12, 'h'); room(24, 14, 38, 20, 'j'); room(24, 22, 38, 26, 't', 1)
         for x in (11, 12, 13): tile(x, 15, 'o')
         for y in (7, 8, 17, 18, 24): tile(23, y, 'o' if y > 14 else 'k')
-        inner = [(23, 7, 1, 2, 'bedroom'), (23, 17, 1, 2, 'bedroom'), (23, 24, 1, 1, 'bathroom')]
+        inner = [(23, 7, 1, 2, 'bedroom'), (23, 17, 1, 2, 'sewing room' if who == 'Tikka|Sesska' else 'bedroom'), (23, 24, 1, 1, 'bathroom')]
         door = (X(13), 27); tile(13, 27, 'o')
         put('kitchenette', 6, 5.5, 'Kitchenette', 'inspect', 'Inspect'); put('kitchenette', 11, 5.5, 'Stove'); put('fridge', 15, 5.5, 'Fridge')
         put('table', 9, 10.5, 'Family table', 'seat', 'Sit'); put('table', 15, 10.5, 'Family table', 'seat', 'Sit'); put('plants', 20.5, 6, 'Plant')
         put('sofa', 8, 19.5, 'Sofa', 'seat', 'Sit'); put('sofa', 16, 19.5, 'Sofa', 'seat', 'Sit'); put('cafe_table', 12, 22.5, 'Coffee table')
         put('books', 5, 25, 'Bookshelf'); put('tree_tub', 20.5, 25, 'Potted tree')
-        put('bed_double', 28.5, 7, "Parents' bed"); put('wardrobe', 36.5, 5.5, 'Wardrobe')
-        put('bunk_bed', 27, 18, "Children's bunk"); put('bunk_bed', 31, 18, "Children's bunk"); put('footlocker', 36, 19, 'Toy chest')
+        couple = who.replace('|', ' and ')
+        bed = put('bed_double', 28.5, 7, "%s's bed" % couple if who else "Parents' bed", 'look' if who else None)
+        put('wardrobe', 36.5, 5.5, 'Wardrobe')
+        if who == 'Tikka|Sesska':                                   # no children: Sesska's sewing room, Tikka's bench
+            put('textiles', 28.5, 17.5, "Sesska's home loom", 'look'); put('clothes', 33.5, 17.5, 'Bolts of bug silk', 'look')
+            put('footlocker', 36, 19.5, 'Thread chest', 'look'); put('workbench', 19.5, 24.5, "Tikka's tinkering bench", 'look')
+        else:
+            put('bunk_bed', 27, 18, "Children's bunk"); put('bunk_bed', 31, 18, "Children's bunk"); put('footlocker', 36, 19, 'Toy chest')
         put('shower', 26, 25, 'Shower'); put('toilet', 30, 24.5, 'Toilet'); put('bath_sink', 33, 24.5, 'Washbasin')
-        zones = [['Kitchen', 3, 3, 22, 14], ['Living room', 3, 16, 22, 26], ['Bedroom', 24, 3, 38, 12], ["Children's room", 24, 14, 38, 20], ['Bathroom', 24, 22, 38, 26]]
-    hm.thing('look', 'Empty home', 'Look', door[0], door[1] - 4, 50)
+        zones = [['Kitchen', 3, 3, 22, 14], ['Living room', 3, 16, 22, 26], ['Bedroom', 24, 3, 38, 12],
+                 ["Sesska's sewing room" if who == 'Tikka|Sesska' else "Children's room", 24, 14, 38, 20], ['Bathroom', 24, 22, 38, 26]]
+    if not who: hm.thing('look', 'Empty home', 'Look', door[0], door[1] - 4, 50)
     hm.t.zones += [[t, min(X(a), X(c)), b, max(X(a), X(c)), d] for t, a, b, c, d in zones]
     hm.door = door
     # Doors between rooms (Zachary, 17 Nov): they slide open as you come near. A bedroom door locks when its
     # owner has one and you are not yet friends with them (see BEDROOM_HEARTS in main.gd).
     for x, y, w_, h_, what in inner:
         xs = sorted((X(x), X(x + w_ - 1)))
-        g.setdefault('INNER_DOORS', []).append([key, xs[0], y, xs[1] - xs[0] + 1, h_, 'E' if h_ > w_ else 'S', '', what])
+        g.setdefault('INNER_DOORS', []).append([key, xs[0], y, xs[1] - xs[0] + 1, h_, 'E' if h_ > w_ else 'S',
+                                                 who if what == 'bedroom' and (x, y) == inner[0][:2] else '', what])
+    # night stops beside the bed for whoever lives here (HOME_SPOTS, used by the schedules in tools/build.py)
+    if who and bed:
+        from residences import free_spot
+        bw, bh, _ = SIZES['bed_double' if kind == 'family' else 'bed']
+        doors = {(X(x), yy) for x, y, w_, h_, _ in inner for yy in range(y, y + h_)}
+        sides = [(bed[0] + bw + .5, bed[1] + bh - .5), (bed[0] - .5, bed[1] + bh - .5)]
+        taken = set()
+        for name, (sx, sy) in zip(who.split('|'), sides):
+            g.setdefault('HOME_SPOTS', {})[name] = (key,) + free_spot(hm, sx, sy, taken, doors)
     return hm, mirror

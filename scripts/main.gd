@@ -2792,20 +2792,31 @@ func _harbinger_slain() -> void:
 
 
 # Doors between rooms: open for whoever is near, shut again behind them. A bedroom with an owner stays
-# locked to the player until they have BEDROOM_HEARTS hearts with that owner.
+# locked to the player until they have BEDROOM_HEARTS hearts with that owner. A couple's room ("Maren|Owen")
+# opens once you are friends with either of them; an owner who has not arrived on the station yet locks nothing.
+func _bedroom_locked(owners: String) -> bool:
+	if owners == "": return false
+	var known := false
+	for who in owners.split("|"):
+		if not persons.has(who): continue
+		known = true
+		if int(persons[who]["friendship"]) >= BEDROOM_HEARTS * FRIEND_PER_HEART: return false
+	return known
+
 func _update_inner_doors(delta: float) -> void:
 	for d in inner_doors:
 		if d.area != current_area: continue
 		var c: Vector2 = d.center()
 		var reach: float = 22.0 + maxf(d.size_px.x, d.size_px.y) * 0.5
-		d.locked = d.room_owner != "" and persons.has(d.room_owner) and int(persons[d.room_owner]["friendship"]) < BEDROOM_HEARTS * FRIEND_PER_HEART
+		d.locked = _bedroom_locked(d.room_owner)
 		var player_near: bool = player.position.distance_to(c) < reach
 		var want: bool = player_near and not d.locked
 		for r in residents:
 			if r.area == current_area and r.position.distance_to(c) < reach: want = true
 		if player_near and d.locked and not d.has_meta("warned"):
 			d.set_meta("warned", true)
-			_toast("%s's room — locked. Get to know %s better first." % [d.room_owner, d.room_owner])
+			var names: String = d.room_owner.replace("|", " and ")
+			_toast("%s's room — locked. Get to know %s better first." % [names, "them" if "|" in d.room_owner else names])
 			sfx("deny")
 		elif not player_near and d.has_meta("warned"):
 			d.remove_meta("warned")

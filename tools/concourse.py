@@ -98,7 +98,7 @@ def rebuild(g):
            ('furn',"Tobbin's workshop",102,122,'N',9,7,'shop'),('armoury','Armoury',128,122,'N',9,7,'shop')]
     homes=[('aptB','Residences B',97,48,'S',9,7,'home'),('aptA','Residences A',133,48,'S',9,7,'home'),
            ('aptDoc','Family residences',164,83,'W',7,9,'home'),('aptSec','Security residences',66,107,'E',7,9,'home'),
-           ('aptEmpty','Empty flats',133,142,'N',9,7,'home'),('aptMoog','Moogli residences',97,142,'N',9,7,'home')]
+           ('aptEmpty','Residences C',133,142,'N',9,7,'home'),('aptMoog','Moogli residences',97,142,'N',9,7,'home')]
     offsets={'S':(0,1),'N':(0,-1),'W':(-1,0),'E':(1,0)}
     for key,title,x,y,facing,w,h,kind in shops+homes:
         ix,iy=offsets[facing]

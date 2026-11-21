@@ -130,6 +130,12 @@ def build(g):
     m.thing('cav_gate', 'Cavern gate', 'Go down into the Caverns', 4.5, 26, 40)
     N('work_light', 4, 22, 'Work light', None); N('work_light', 4, 31, 'Work light', None)
     N('hazard_sign', 7.5, 22.5, 'Sign: caverns closed', None)
+    # Vzz'ket's camp beside the gate he guards (Zachary, 20 Nov): he sleeps here, on his bedroll
+    from residences import free_spot
+    mat = N('prayer_mat', 6.5, 30.5, "Vzz'ket's bedroll", 'look', 'Look')
+    N('brazier', 8.5, 30.5, 'Camp stove', 'look', 'Look'); N('footlocker', 6, 21.5, "Vzz'ket's kit chest", 'look', 'Look')
+    N('cargo', 3.5, 29.5, 'Ration crates', None)
+    g.setdefault('HOME_SPOTS', {})["Vzz'ket"] = ('mine',) + free_spot(m, mat[0] + 1, mat[1] + .5, set(), set())
     # the conveyor from the hopper out to Engineering, painted into the floor along the loading spot's north side
     g.setdefault('FLOOR_EXTRAS', {})['mine'] = {'belts': [[(63.5, 8.5), (67.9, 8.5)]]}
 

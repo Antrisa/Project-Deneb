@@ -2388,18 +2388,7 @@ def windows(ar, xs):
     ar.setf("w", [(x - ar.off[0], 0) for x in xs])
 
 
-ar = interior("aptB", "Apartments B", 14, 48, 23, 57, ",", 18)
-inside(ar, "b", [(15, 49), (22, 49)]); inside(ar, "o", [(21, 54)]); inside(ar, "p", [(15, 56)]); windows(ar, [17, 18])
-ar = interior("aptA", "Apartments A", 23, 48, 32, 57, ",", 27)
-inside(ar, "b", [(24, 49), (31, 49)]); inside(ar, "t", [(29, 55)]); inside(ar, "p", [(31, 56)]); windows(ar, [26, 27])
-ar = interior("aptDoc", "Doctor's family", 155, 48, 165, 57, ",", 160)
-inside(ar, "b", [(156, 49), (160, 49), (164, 49)]); inside(ar, "o", [(157, 55)]); inside(ar, "t", [(162, 51)]); inside(ar, "p", [(164, 56)]); windows(ar, [158, 162])
-ar = interior("aptMoog", "Moogli family", 40, 63, 50, 72, ",", 45)
-inside(ar, "b", [(41, 64), (43, 64), (47, 64)]); inside(ar, "o", [(48, 70)]); inside(ar, "t", [(44, 68)]); inside(ar, "p", [(41, 71), (49, 64)])
-ar = interior("aptSec", "Security family", 156, 63, 166, 72, ",", 161)
-inside(ar, "b", [(158, 64), (160, 64), (164, 64)]); inside(ar, "o", [(163, 70)]); inside(ar, "t", [(159, 68)]); inside(ar, "p", [(157, 71)])
-ar = interior("aptEmpty", "Empty flats", 0, 0, 12, 9, ",", 6)
-inside(ar, "x", [(3, 3), (9, 6)]); inside(ar, "e", [(8, 2), (2, 7)]); inside(ar, "b", [(1, 1)])
+# the homes (aptA, aptB, aptDoc, aptMoog, aptSec, aptEmpty) are maps of their own now: see tools/residences.py
 # furniture workshop: benches and half-built pieces
 ar = interior("furn", "Furniture workshop", 32, 48, 40, 57, "f", 36)
 inside(ar, "P", [(34, 51), (35, 51), (38, 54)]); inside(ar, "c", [(38, 50)]); inside(ar, "t", [(33, 55)]); inside(ar, "o", [(38, 56)])
@@ -2418,6 +2407,7 @@ inside(ar, "c", [(30, 70), (31, 70), (30, 71), (31, 71)]); inside(ar, "P", [(35,
 ar = interior("bar", "Rusk's bar", 52, 66, 64, 78, ".", 58)
 inside(ar, "C", row(72, range(55, 61))); inside(ar, "h", [(56, 73), (58, 73), (60, 73)]); inside(ar, "S", [(53, 67), (54, 67)])
 inside(ar, "x", [(57, 75), (61, 74)]); inside(ar, "e", [(55, 76)])
+inside(ar, "b", [(63, 67)])     # Rusk's cot in the back corner, until the bar is redesigned with a room for him (Zachary, 20 Nov)
 # library
 ar = interior("library", "Library", 116, 40, 132, 54, ",", 124)
 inside(ar, "S", row(41, range(117, 132)) + row(45, [120, 121, 122, 126, 127, 128]) + row(49, [120, 121, 122, 126, 127, 128]))
@@ -2445,7 +2435,7 @@ for ty in (71, 76):
 inside(ar, "p", [(117, 64), (117, 81), (145, 81)])
 
 # Where the old rooms were on the old main level, for anyone moving old coordinates across:
-OLD_ROOMS = {k: A[k].off for k in ("aptA", "aptB", "aptDoc", "aptMoog", "aptSec", "furn", "common", "bram", "fab", "bar", "library", "medbay", "weaver", "armoury", "mess")}
+OLD_ROOMS = {k: A[k].off for k in ("furn", "common", "bram", "fab", "bar", "library", "medbay", "weaver", "armoury", "mess")}
 
 
 def moved(a, x, y):
@@ -2491,6 +2481,10 @@ caves.build(globals())
 import caverns
 caverns.build(globals())
 
+# ---------------------------------------------------------------- the homes off the promenade: see tools/residences.py
+import residences
+residences.build(globals())
+
 # ---------------------------------------------------------------- who and what is where
 START = ["hotel", 68, 48]
 # NOTE: spots on the main level below (MEDBAY, PEOPLE, SCHEDULES_RAW, THINGS) are still written
@@ -2504,6 +2498,7 @@ PEOPLE = [
 PEOPLE = [[p[0]] + list(moved(p[1], p[2], p[3])) + [p[4]] for p in PEOPLE]
 
 # Daily schedules: "HH:MM", area, tile x, tile y, talk radius (36 = behind a counter).
+# Night stops are beside each resident's own bed: HOME_SPOTS (tools/residences.py, tools/east.py, tools/caves.py).
 # Before their first time of the day, a resident is at their last entry (where they spent the night).
 # Each entry: time they set off, area, tile x, tile y, talk radius (36 = behind a counter),
 # the way they face once there (d, u, l, r) and what they do there (work, eat, idle).
@@ -2513,51 +2508,51 @@ PEOPLE = [[p[0]] + list(moved(p[1], p[2], p[3])) + [p[4]] for p in PEOPLE]
 VISITOR_DAYS = {"Ooma": [2, 5]}
 
 SCHEDULES_RAW = {
-    "Rusk": [("07:00", "main", 57, 71, 36, "d", "work"), ("17:35", "main", 121, 70, 26, "d", "eat"), ("18:50", "main", 57, 71, 36, "d", "work")],
+    "Rusk": [("07:00", "main", 57, 71, 36, "d", "work"), ("17:35", "main", 121, 70, 26, "d", "eat"), ("18:50", "main", 57, 71, 36, "d", "work"), ("23:30", "main", 62, 68, 26, "d", "idle")],
     "Ooma": [("06:00", "main", 100, 76, 26, "u", "work")],
     "Tobbin": [("07:00", "main", 36, 53, 26, "d", "work"), ("17:35", "main", 120, 72, 26, "u", "eat"), ("19:15", "main", 48, 49, 26, "d", "idle"),
-               ("21:30", "main", 43, 67, 26, "d", "idle")],
+               ("21:30", *HOME_SPOTS["Tobbin"], 26, "d", "idle")],
     "Merrow": [("06:30", "main", 90, 54, 26, "d", "work"), ("10:30", "east", 62, 19, 26, "u", "work"), ("14:00", "main", 96, 60, 26, "l", "work"),
-               ("17:35", "main", 121, 72, 26, "u", "eat"), ("19:15", "main", 46, 68, 26, "d", "idle")],
+               ("17:35", "main", 121, 72, 26, "u", "eat"), ("19:15", *HOME_SPOTS["Merrow"], 26, "d", "idle")],
     "Nub": [("08:00", "main", 123, 49, 26, "u", "work"), ("12:30", "main", 96, 57, 26, "d", "idle"), ("17:35", "main", 125, 72, 26, "u", "eat"),
-            ("19:15", "main", 47, 67, 26, "d", "idle")],
+            ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle")],
     "Garrick": [("07:00", "main", 151, 68, 36, "u", "work"), ("12:00", "main", 90, 40, 26, "d", "work"), ("14:00", "main", 151, 68, 36, "u", "work"),
-                ("17:35", "main", 130, 72, 26, "u", "eat"), ("19:15", "main", 62, 74, 26, "l", "idle"), ("21:30", "main", 158, 66, 26, "d", "idle")],
-    "Saffi": [("07:00", "main", 161, 68, 26, "d", "work"), ("10:00", "main", 80, 75, 26, "d", "idle"), ("12:30", "main", 99, 58, 26, "l", "idle"),
-              ("15:00", "main", 161, 68, 26, "d", "work"), ("17:35", "main", 131, 72, 26, "u", "eat"), ("19:15", "main", 160, 66, 26, "d", "idle")],
-    "Kit": [("08:00", "main", 127, 50, 26, "u", "work"), ("12:30", "main", 98, 57, 26, "d", "idle"), ("15:00", "main", 162, 69, 26, "d", "idle"),
-            ("17:35", "main", 135, 72, 26, "u", "eat"), ("19:15", "main", 164, 66, 26, "d", "idle")],
+                ("17:35", "main", 130, 72, 26, "u", "eat"), ("19:15", "main", 62, 74, 26, "l", "idle"), ("21:30", *HOME_SPOTS["Garrick"], 26, "d", "idle")],
+    "Saffi": [("07:00", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work"), ("10:00", "main", 80, 75, 26, "d", "idle"), ("12:30", "main", 99, 58, 26, "l", "idle"),
+              ("15:00", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work"), ("17:35", "main", 131, 72, 26, "u", "eat"), ("19:15", *HOME_SPOTS["Saffi"], 26, "d", "idle")],
+    "Kit": [("08:00", "main", 127, 50, 26, "u", "work"), ("12:30", "main", 98, 57, 26, "d", "idle"), ("15:00", *HOME_SPOTS["Kit playing"], 26, "d", "idle"),
+            ("17:35", "main", 135, 72, 26, "u", "eat"), ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle")],
     "Ix'ali": [("06:30", "main", 153, 70, 26, "d", "work"), ("17:35", "main", 126, 70, 26, "d", "eat"), ("19:15", "mine", 11, 28, 26, "l", "work"),
-               ("22:00", "main", 153, 70, 26, "d", "idle")],
+               ("22:00", *HOME_SPOTS["Ix'ali"], 26, "d", "idle")],
     "Maren": [("06:30", "main", 141, 52, 26, "d", "work"), ("17:35", "main", 135, 75, 26, "d", "eat"), ("19:15", "main", 141, 52, 26, "d", "work"),
-              ("21:30", "main", 157, 51, 26, "d", "idle")],
+              ("21:30", *HOME_SPOTS["Maren"], 26, "d", "idle")],
     "Quill": [("06:00", "main", 136, 53, 26, "d", "work"), ("17:35", "main", 141, 75, 26, "d", "eat"), ("19:15", "main", 124, 50, 26, "u", "idle"),
-              ("22:00", "main", 136, 53, 26, "d", "idle")],
+              ("22:00", *HOME_SPOTS["Quill"], 26, "d", "idle")],
     "Owen": [("07:00", "main", 124, 48, 26, "u", "work"), ("17:35", "main", 136, 75, 26, "d", "eat"), ("19:15", "main", 84, 56, 26, "d", "idle"),
-             ("21:30", "main", 163, 53, 26, "d", "idle")],
+             ("21:30", *HOME_SPOTS["Owen"], 26, "d", "idle")],
     "Pip": [("07:30", "main", 125, 49, 26, "u", "work"), ("12:30", "main", 97, 57, 26, "d", "idle"), ("15:00", "main", 138, 54, 26, "u", "idle"),
-            ("17:35", "main", 140, 75, 26, "d", "eat"), ("19:15", "main", 93, 67, 26, "d", "idle"), ("20:30", "main", 160, 51, 26, "d", "idle")],
+            ("17:35", "main", 140, 75, 26, "d", "eat"), ("19:15", "main", 93, 67, 26, "d", "idle"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle")],
     "Sesska": [("06:00", "main", 149, 52, 36, "d", "work"), ("17:30", "main", 136, 70, 26, "d", "eat"), ("19:15", "main", 36, 68, 26, "l", "idle"),
-               ("21:30", "eng", 45, 67, 26, "l", "idle")],
+               ("21:30", *HOME_SPOTS["Sesska"], 26, "l", "idle")],
     "Jasper": [("06:00", "main", 137, 67, 36, "d", "work"), ("14:30", "main", 47, 48, 26, "d", "idle"), ("16:30", "main", 137, 67, 36, "d", "work"),
-               ("21:30", "main", 26, 52, 26, "d", "idle")],
+               ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle")],
     "Evarra": [("06:00", "main", 142, 67, 36, "d", "work"), ("09:30", "east", 48, 17, 26, "u", "work"), ("13:00", "main", 142, 67, 36, "d", "work"),
-               ("20:30", "main", 29, 52, 26, "d", "idle")],
+               ("20:30", *HOME_SPOTS["Evarra"], 26, "d", "idle")],
     "Bram": [("07:00", "main", 26, 68, 36, "l", "work"), ("17:35", "main", 125, 70, 26, "d", "eat"), ("19:15", "main", 56, 73, 26, "u", "idle"),
-             ("22:00", "main", 17, 52, 26, "d", "idle")],
+             ("22:00", *HOME_SPOTS["Bram"], 26, "d", "idle")],
     "Tikka": [("06:00", "eng", 53, 11, 26, "u", "work"), ("17:30", "main", 135, 70, 26, "d", "eat"), ("19:15", "main", 34, 68, 26, "d", "work"),
-              ("21:30", "eng", 90, 11, 26, "r", "idle")],
+              ("21:30", *HOME_SPOTS["Tikka"], 26, "r", "idle")],
     "Freya": [("06:00", "bay", 9, 12, 26, "u", "work"), ("11:00", "bay", 23, 19, 26, "u", "work"), ("12:30", "main", 140, 70, 26, "d", "eat"),
               ("13:30", "bay", 23, 19, 26, "u", "work"), ("16:30", "eng", 75, 19, 26, "u", "work"), ("17:30", "main", 140, 70, 26, "d", "eat"),
-              ("19:15", "main", 58, 73, 26, "u", "idle"), ("21:30", "main", 20, 52, 26, "d", "idle")],
+              ("19:15", "main", 58, 73, 26, "u", "idle"), ("21:30", *HOME_SPOTS["Freya"], 26, "d", "idle")],
     "Job": [("06:30", "mine", 55, 22, 26, "u", "work"), ("12:00", "main", 120, 70, 26, "d", "eat"), ("13:30", "mine", 55, 22, 26, "u", "work"),
-            ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 60, 73, 26, "u", "idle"), ("22:00", "main", 18, 54, 26, "d", "idle")],
+            ("17:15", "main", 120, 70, 26, "d", "eat"), ("19:15", "main", 60, 73, 26, "u", "idle"), ("22:00", *HOME_SPOTS["Job"], 26, "d", "idle")],
     "Zaas": [("07:00", "mine", 9, 40, 26, "u", "work"), ("12:15", "main", 126, 75, 26, "d", "eat"), ("13:45", "mine", 9, 40, 26, "u", "work"),
-             ("17:05", "main", 126, 75, 26, "d", "eat"), ("19:15", "lounge", 37, 9, 26, "u", "idle"), ("23:00", "main", 16, 54, 26, "d", "idle")],
+             ("17:05", "main", 126, 75, 26, "d", "eat"), ("19:15", "lounge", 37, 9, 26, "u", "idle"), ("23:00", *HOME_SPOTS["Zaas"], 26, "d", "idle")],
     "Tar'Besh": [("06:00", "museum", 55, 28, 26, "u", "work"), ("17:35", "main", 131, 75, 26, "d", "eat"), ("19:15", "lounge", 24, 14, 26, "u", "idle"),
-                 ("23:00", "museum", 45, 44, 26, "d", "idle")],
+                 ("23:00", *HOME_SPOTS["Tar'Besh"], 26, "d", "idle")],
     "Vzz'ket": [("06:00", "mine", 8, 27, 26, "r", "idle"), ("17:15", "main", 130, 70, 26, "d", "eat"), ("19:00", "mine", 8, 27, 26, "r", "idle"),
-                ("22:00", "main", 86, 70, 26, "d", "idle"), ("23:30", "mine", 8, 27, 26, "r", "idle")],
+                ("22:00", "main", 86, 70, 26, "d", "idle"), ("23:30", *HOME_SPOTS["Vzz'ket"], 26, "r", "idle")],
 }
 # What each resident is doing at each stop of their schedule, in the same order as SCHEDULES_RAW.
 # Each different (action, facing) pair is one row of their action sheet art/npc_<id>_act.png, in order of first use.
@@ -2567,7 +2562,7 @@ ACTIONS = {
     'Owen': ['shelve', 'eat', 'bench', 'rest'],
     'Pip': ['study', 'play', 'wave', 'eat', 'play', 'rest'],
     'Sesska': ['weave', 'eat', 'chat', 'rest'],
-    'Rusk': ['wipe', 'eat', 'pour'],
+    'Rusk': ['wipe', 'eat', 'pour', None],          # None: his sheet has no rest row yet
     'Ooma': ['beckon'],
     'Tobbin': ['build', 'eat', 'sketch', 'rest'],
     'Merrow': ['valve_d', 'tend', 'valve_l', 'eat', 'rest'],
@@ -2597,7 +2592,7 @@ for who, rows in SCHEDULES_RAW.items():
         a, x, y = moved(a, x, y)
         assert face_ in "dulr" and act in ("work", "eat", "idle"), (who, face_, act)
         row = -1
-        if keys:
+        if keys and keys[n]:            # None: no action at this stop (they just stand there)
             label = keys[n] + " " + face_
             if label not in sheet_rows:
                 sheet_rows.append(label)
@@ -2709,8 +2704,6 @@ def hash_seed(*parts):
     return sum((i + 1) * ord(c) for i, c in enumerate("|".join(str(p) for p in parts)))
 
 
-for key_ in ("aptA", "aptB", "aptDoc", "aptMoog", "aptSec", "aptEmpty"):
-    furnish(key_, ["Wardrobe", "Dresser", "Side table with a lamp", "Armchair", "Rug+"])
 furnish("common", ["Wide table+", "Armchair", "Armchair", "Vending machine", "Rug+", "Side table with a lamp"])
 furnish("mess", ["Wide table+", "Wide table+", "Vending machine", "Recycling bin"])
 furnish("library", ["Desk+", "Armchair", "Side table with a lamp", "Rug+"])

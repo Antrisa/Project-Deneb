@@ -243,9 +243,9 @@ def build(g):
     museum.near('flowers', 33.0, 7.5, 'Museum flower bed', 'inspect', 'Inspect'); museum.near('flowers', 33.0, 36.0, 'Museum flower bed', 'inspect', 'Inspect')
     museum.near('curator_desk', 55.5, 26.5, "Tar'Besh's desk"); museum.near('books', 58.0, 26.5, 'Museum catalogue')
     museum.near('holy_banner', 5.0, 18.5, 'Sanctum banner'); museum.near('holy_banner', 5.0, 26.0, 'Sanctum banner')
-    museum.prop('bed', 41, 41, "Tar'Besh's bed", None); museum.prop('wardrobe', 48, 41, "Tar'Besh's wardrobe", None)
+    museum.prop('bed', 41, 41, 'Day bed', None); museum.prop('wardrobe', 48, 41, 'Curator\'s wardrobe', None)   # he sleeps at home now (Residences C)
     museum.near('books', 42, 46.5, "Tar'Besh's books"); museum.near('plants', 48.5, 46.5, 'Prayer garden', 'inspect', 'Inspect')
-    museum.t.zones += [["Tar'Besh's museum", X0, Y0, X1, Y1], ["Tar'Besh's quarters", 41, 41, 50, 46]] + \
+    museum.t.zones += [["Tar'Besh's museum", X0, Y0, X1, Y1], ["Curator's rest room", 41, 41, 50, 46]] + \
         [[gname, cols[0] - 1, rows[0] - 3, cols[-1] + 2, rows[1] + 1] for gname, cols, rows in galleries]
 
     # ================================================================== sanctum: the Precursor Sanctum
