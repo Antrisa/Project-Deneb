@@ -471,6 +471,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F8:
 		_display_check()
 		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F7 and OS.is_debug_build():
+		_debug_ship_ready()
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10:
 		overview = not overview
 		player._cam.zoom = Vector2.ONE * (0.08 if overview else 1.0) * CAMERA_ZOOM
@@ -1458,6 +1461,18 @@ const TRADER_PATCH := 4            # hull points the Moogli trader patches...
 const TRADER_PATCH_PRICE := 30     # ...for this many credits
 const TRADER_FUEL := 2             # fuel cells the trader sells...
 const TRADER_FUEL_PRICE := 12      # ...for this many credits
+
+
+# F7 (editor and debug builds only): skip to a repaired ship, standing at launch control in the Shuttle Bay,
+# to test the first flight. Residents' goodbyes still play when you talk to them.
+func _debug_ship_ready() -> void:
+	repair_stage = REPAIRS.size()
+	wreck_sprite.frame = repair_stage
+	ship_hull = int(ShipData.STARTER["hull"])
+	fuel = maxi(fuel, ShipData.FIRST_FLIGHT_FUEL)
+	_go_to("bay", Vector2i(8, 29))
+	_snap_residents()
+	_toast("Debug: ship repaired. Launch control is right here (E).")
 
 
 func _launch_console() -> void:
