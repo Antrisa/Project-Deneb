@@ -81,8 +81,12 @@ func _draw() -> void:
 	if frame < 0:
 		return
 	_draw_field()
-	for patch in HERB_PATCHES:
-		_draw_cell(patch, 8)
+	# The herb patches: the farm's field dirt and grass border when that art exists, else the old soil art.
+	if art_field != null:
+		_draw_undug(Rect2i(HERB_PATCHES[0] * 2, Vector2i(HERB_PATCHES.size() * 2, 2)))
+	else:
+		for patch in HERB_PATCHES:
+			_draw_cell(patch, 8)
 	_draw_water(pond_cells, Color.WHITE)
 	_draw_water(spring_cells, SPRING_TINT)
 
@@ -93,14 +97,7 @@ func _draw_field() -> void:
 		return
 	# Undug ground: the new field art per tile, or the old 2 x 2-tile soil pieces with their grass border.
 	if art_field != null:
-		for y in range(field.position.y, field.end.y):
-			for x in range(field.position.x, field.end.x):
-				var v := _variant(x, y)
-				draw_texture_rect_region(art_field, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2(v * 24, 0, 24, 24))
-				var inside := (1 if y > field.position.y else 0) + (2 if x < field.end.x - 1 else 0) \
-					+ (4 if y < field.end.y - 1 else 0) + (8 if x > field.position.x else 0)
-				if art_border != null and inside != 15:
-					draw_texture_rect_region(art_border, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2((inside % 4) * 24, (inside / 4) * 24, 24, 24))
+		_draw_undug(field)
 	else:
 		var c0: Vector2i = field.position / 2
 		var cells: Vector2i = field.size / 2
@@ -123,6 +120,17 @@ func _draw_field() -> void:
 			_draw_crop(tile, str(station.farm[tile]["crop"]), stage)
 	if cursor.x >= 0:
 		draw_rect(Rect2(cursor * TILE, Vector2.ONE * TILE).grow(-ART * 0.5), Color(1, 1, 1, 0.75), false, ART)
+
+# Undug dirt over a rectangle of tiles, with the grass border round its edge (art/farm/field_border.png).
+func _draw_undug(r: Rect2i) -> void:
+	for y in range(r.position.y, r.end.y):
+		for x in range(r.position.x, r.end.x):
+			var v := _variant(x, y)
+			draw_texture_rect_region(art_field, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2(v * 24, 0, 24, 24))
+			var inside := (1 if y > r.position.y else 0) + (2 if x < r.end.x - 1 else 0) \
+				+ (4 if y < r.end.y - 1 else 0) + (8 if x > r.position.x else 0)
+			if art_border != null and inside != 15:
+				draw_texture_rect_region(art_border, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2((inside % 4) * 24, (inside / 4) * 24, 24, 24))
 
 # Which piece of the old soil art a 2 x 2-tile cell of the field takes: its grass frame round the edge, plain
 # dirt inside (-1).
