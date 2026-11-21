@@ -406,7 +406,6 @@ const LOOKS = {
 	"Abandoned shop": ["A shop front, shuttered. The sign has been painted over twice in two different alphabets."],
 	"Half-built chair": ["Steel legs, a plastic seat, and a pencil note: 'IMAGINE THIS IN OAK.'"],
 	"Weapon racks": ["Spears, blades, two dented helmets and a clipboard. Everything has a tag. Everything is signed for."],
-	"Bar shelves": ["Bottles in six alphabets. Half are empty and kept for the look of the thing."],
 	"Airlock": ["The outer door is sealed and the light above it is red.", "Sara: The pad is in hard vacuum. When you have a suit that holds air, I will open it. Not before."],
 	"Customs gate": ["A customs gate for a port that has never had a visitor. The stamp pad is still wet. Sara keeps it that way."],
 	"Old drill hall": ["A parade floor the garrison never marched on. It is the biggest empty room on the Landing.", "A hotel could use a room like this."],
@@ -521,5 +520,19 @@ const LOOKS = {
 	"Spare bed": ["Freya's old room, made up fresh for whoever needs it next."],
 	"Guest bed": ["Zaas's old room. He left a towel folded on the end of the bed, just in case."],
 	"Sparring mat": ["A worn mat. The scuffs on it show exactly where Ix'ali plants her feet."],
-	"Freya's tool cart": ["Freya's tool cart, every drawer labelled, none of the tools in the right drawer."]
+	"Freya's tool cart": ["Freya's tool cart, every drawer labelled, none of the tools in the right drawer."],
+	# Rusk's bar (tools/bar.py), 21 Nov. Claude's placeholder lines.
+	"Bottle shelves": ["Bottles in six alphabets. Half are empty and kept for the look of the thing."],
+	"Rusk's taps": ["Four taps, four kegs. One is labelled 'DO NOT' in Rusk's handwriting. Nobody knows what it is."],
+	"Drinks board": ["Today's drinks. Something fast, something slow, something that 'puts hair on your scales'."],
+	"Holo-darts": ["A dartboard made of light. Garrick holds the record. Kit says he cheats."],
+	"Card table": ["A game of station poker, abandoned mid-hand. Somebody was bluffing."],
+	"Open-mic board": ["FRIDAY: OPEN MIC & STORY NIGHT. Under it, in claw marks: 'Vzz'ket goes first.'"],
+	"Rusk's mug sign": ["A brass mug on a bracket, polished every morning. It was over the door of his first bar, forty years ago."],
+	"Rusk's bed": ["A low fox's bed, a nest of blankets more than a bed. It smells faintly of cedar and spilled ale."],
+	"Rusk's tall-tale ledgers": ["Forty years of stories heard across the bar, written down and dated. Some have 'TRUE?' in the margin."],
+	"Rusk's sea chest": ["An old spacer's chest with stickers from a dozen ports. Locked, of course."],
+	"Kegs": ["Kegs of Rusk's brews, chalk-marked by date."],
+	"Supply shelves": ["Glasses, coasters, napkins, and a box marked 'BAR FIGHT SPARES'."],
+	"Crates of glasses": ["Spare glasses, packed in straw from the Agri dome."]
 }
