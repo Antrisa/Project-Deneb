@@ -23,7 +23,7 @@ WALKABLE = '.pfhuAasmoiktei'
 SIZES.update({
     'kiosk': (3, 3, 2), 'seed_rack': (2, 2, 1), 'garden_tools': (2, 2, 1), 'hydroponics': (3, 2, 1), 'planter_long': (4, 2, 1),
     'tree_tub': (1, 2, 1), 'lamp_post': (1, 2, 1), 'waiting_seat_w': (1, 3, 2), 'waiting_seat_e': (1, 3, 2), 'market_counter': (3, 2, 1),
-    'view_bench': (3, 2, 1),
+    'view_bench': (2, 2, 1),
     'customs_desk': (3, 2, 1), 'stanchion': (1, 1, 1), 'departures_board': (4, 2, 1), 'beacon_mast': (3, 4, 2),
     'planter_dead': (3, 2, 1), 'rubble': (2, 1, 1), 'glass_shards': (2, 1, 0), 'shipping_bin': (2, 2, 1), 'steam_vent': (1, 1, 1),
     'bunk_bed': (2, 3, 2), 'armchair': (2, 2, 1), 'footlocker': (2, 1, 1), 'gym_rack': (3, 2, 1),

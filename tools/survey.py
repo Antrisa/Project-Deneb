@@ -23,7 +23,7 @@ SIZES = {
     'case_empty': (2, 2, 1), 'crystal_pedestal_empty': (2, 3, 1), 'precursor_mural': (3, 3, 1), 'test_rig': (2, 3, 1),
     'spectrometer': (2, 2, 1), 'brazier': (1, 2, 1), 'holy_banner': (1, 3, 1), 'prayer_mat': (2, 1, 0),
     'cafe_table': (2, 2, 1), 'chair_e': (1, 2, 0), 'chair_w': (1, 2, 0), 'flowers': (4, 2, 2),
-    'wardrobe': (2, 3, 1), 'telescope': (2, 3, 1), 'bench_n': (3, 2, 1), 'bench_e': (1, 3, 2), 'bench_w': (1, 3, 2),
+    'wardrobe': (2, 3, 1), 'telescope': (2, 3, 1), 'bench_n': (2, 2, 1), 'bench_e': (1, 3, 2), 'bench_w': (1, 3, 2),
     'plants': (3, 2, 1), 'books': (2, 2, 1), 'cargo': (2, 2, 1), 'terminal': (1, 2, 1),
 }
 

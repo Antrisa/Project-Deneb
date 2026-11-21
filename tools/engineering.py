@@ -19,7 +19,7 @@ SIZES.update({
     'pipe_rack': (3, 2, 1), 'locker': (2, 3, 1), 'tool_cart': (2, 2, 1), 'welding_rig': (2, 3, 1), 'fuel_tank': (2, 3, 1),
     'parts_rack': (3, 3, 1), 'launch_console': (3, 2, 1), 'air_scrubber': (2, 3, 1), 'mag_clamp': (1, 1, 0),
     'workbench': (3, 2, 1), 'table': (3, 2, 1), 'trolley': (2, 2, 1), 'water_tank': (2, 2, 1), 'bollard_light': (1, 1, 1),
-    'bin': (1, 1, 1), 'drinking_fountain': (1, 2, 1), 'lamp_post': (1, 2, 1), 'bench_s': (3, 2, 1), 'chair_n': (1, 2, 0),
+    'bin': (1, 1, 1), 'drinking_fountain': (1, 2, 1), 'lamp_post': (1, 2, 1), 'bench_s': (2, 2, 1), 'chair_n': (1, 2, 0),
     'chair_s': (1, 2, 0), 'waiting_seat': (3, 2, 1), 'signpost': (1, 2, 1),
     'coolant_tank': (3, 4, 2), 'kitchenette': (4, 3, 1),
     'ore_pile': (3, 2, 1), 'hopper': (3, 4, 2), 'ingot_stack': (2, 2, 1), 'slag_bin': (2, 2, 1), 'sorting_machine': (4, 3, 2),

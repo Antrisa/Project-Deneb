@@ -133,7 +133,7 @@ def rebuild(g):
     # ------------------------------------------------------------------ props, placed by rule
     # Every kind of prop has one size and one solid depth: (width, height, solid rows from the bottom).
     # x,y is the top-left tile of that footprint; the picture stands on its bottom edge, centred.
-    SIZES={'bench':(3,2,1),'bench_s':(3,2,1),'bench_n':(3,2,1),'bench_e':(1,3,2),'bench_w':(1,3,2),
+    SIZES={'bench':(3,2,1),'bench_s':(2,2,1),'bench_n':(2,2,1),'bench_e':(1,3,2),'bench_w':(1,3,2),
            'waiting_seat':(3,2,1),'table':(3,2,1),'cafe_table':(2,2,1),'chess':(2,2,1),'hologame':(2,2,1),
            'chair_e':(1,2,0),'chair_w':(1,2,0),'chair_s':(1,2,0),'chair_n':(1,2,0),
            'flowers':(4,2,2),'plants':(3,2,1),'hydroponics':(3,2,1),'water_tank':(2,2,1),'books':(2,2,1),
