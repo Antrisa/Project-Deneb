@@ -72,3 +72,39 @@ def layer(size):
 def stamp(base, top):
     base.alpha_composite(top)
     return base
+
+
+def mask_of(size, draw):
+    """A mask (L image) from a drawing function given an RGBA layer."""
+    m = layer(size)
+    draw(m)
+    return m.getchannel("A").point(lambda v: 255 if v > 0 else 0)
+
+
+def paint_shaded(im, m, lite, mid, shade=None, split=None):
+    """Fill a mask with a top-lit two-tone (lite above the split line, mid below), shade along the bottom edge."""
+    w, h = im.size
+    mp = m.load()
+    ys = [y for y in range(h) for x in range(w) if mp[x, y]]
+    if not ys:
+        return
+    cy = split if split is not None else (min(ys) + max(ys)) / 2
+    px = im.load()
+    L, M = hexc(lite), hexc(mid)
+    S = hexc(shade) if shade else None
+    for y in range(h):
+        for x in range(w):
+            if mp[x, y]:
+                px[x, y] = L if y < cy else M
+                if S and (y + 1 >= h or not mp[x, y + 1] or (y + 2 < h and not mp[x, y + 2])):
+                    px[x, y] = S
+
+
+def shape(im, pts, lite, mid, shade=None, split=None):
+    m = mask_of(im.size, lambda L: poly(L, pts, (255, 255, 255, 255)))
+    paint_shaded(im, m, lite, mid, shade, split)
+
+
+def oval(im, box, lite, mid, shade=None, split=None):
+    m = mask_of(im.size, lambda L: ellipse(L, *box, (255, 255, 255, 255)))
+    paint_shaded(im, m, lite, mid, shade, split)
