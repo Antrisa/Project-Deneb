@@ -76,8 +76,6 @@ const WEAPONS := {
 # parts each, hull repair per point. Weapons sell back for half.
 const STORES := {
 	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser", "missile_launcher", "cutting_beam", "heavy_beam",
-		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
-		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)], [Vector2i(1, 2), Vector2i(1, 3)]],
 			"twin_missile", "ion_blast", "toxin_dart", "fire_beam", "flak_cannon", "chain_laser"],
 		"fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8},
 }
@@ -356,6 +354,8 @@ const CULTURE_SHIPS := {
 		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(4, 1), Vector2i(5, 1)]],
 	},
 	"moogli_trader": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)], [Vector2i(1, 2), Vector2i(1, 3)]],
 		"name": "Moogli trader", "size": Vector2(144, 96), "hull": 8, "crew": 3,
 		"art": "res://art/ships/moogli_trader/hull.png", "interior": "res://art/ships/moogli_trader/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser"],
