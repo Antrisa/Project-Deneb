@@ -268,6 +268,8 @@ def rebuild(g):
         if key=='mess':
             for u,v in [(-5,3),(3,3),(-5,8),(-2,12)]:
                 tx,ty=local('table',door,u,v,'Dining table')
+                # the chairs are their own pictures, in the table's outer columns (Zachary, 21 Nov)
+                props.append(['chair_e',tx,ty,1,2,'Dining chair [E]']);props.append(['chair_w',tx+2,ty,1,2,'Dining chair [W]'])
                 thing('seat','Dining chair left','Sit',tx,ty+1,22);thing('seat','Dining chair right','Sit',tx+2,ty+1,22)
         elif key=='common':
             local('waiting_seat',door,-5,3,'Community sofa','seat','Sit');local('waiting_seat',door,3,3,'Community sofa','seat','Sit')

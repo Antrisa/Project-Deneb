@@ -13,7 +13,7 @@ const NO_SHADOW := ["prayer_mat", "rubble", "glass_shards", "steam_vent", "mag_c
 # Leafy pieces lean a pixel in a slow breeze from the air vents.
 const SWAY := ["plants", "flowers", "tree_tub", "park_tree", "fruit_tree", "planter_long", "potted_plant"]
 # Where the light sits in the picture, as a share of its height up from the bottom (default: the middle).
-const GLOW_AT := {"lamp_post": 0.9, "bollard_light": 0.78, "brazier": 0.82, "fireplace": 0.35,
+const GLOW_AT := {"lamp_post": 0.9, "bollard_light": 0.78, "brazier": 0.82, "fireplace": 0.28,
 	"bedside_lamp": 0.8, "arc_smelter": 0.3}
 
 static var _shadows := {}

@@ -200,6 +200,9 @@ var area_sprites: Array = []       # [sprite, area name] for everyone and everyt
 var anim_props: Array = []         # [sprite, frames, phase] for machinery with a looping strip in art/lunar/anim/
 const PROP_ANIM_FPS := 8.0
 var prop_glows: Array = []         # glow sprites on lamps and machines (scripts/prop_fx.gd), brighter at night
+var seasonal_props: Array = []     # [sprite, prop name] for props with art/lunar/<name>_summer.png etc. (trees)
+var prop_season := ""              # the season their pictures show now
+var museum_cases := {}             # "x:y" (tiles) -> the glass case sprite there, so exhibits can be put inside
 var warps := {}                    # area name -> {Vector2i tile: [area, x, y]}
 var blocked := {}                  # area name -> {Vector2i tile: true} (tiles people stand on)
 var persons := {}                  # person name -> their state (friendship, lines, portrait)
@@ -2829,6 +2832,8 @@ func _process(delta: float) -> void:
 		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or travelling or garden_busy)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
+	if not seasonal_props.is_empty():
+		_apply_prop_season()
 	var glow_a: float = PropFx.glow_strength(tint.color)
 	for g in prop_glows:
 		g.modulate.a = glow_a
@@ -3181,6 +3186,11 @@ func _spawn_concourse() -> void:
 	for area_name in MapData.AREA_PROPS:
 		for p in MapData.AREA_PROPS[area_name]:
 			_spawn_prop(p,area_name)
+	# What the museum's cases hold (Tar'Besh's own pieces to start with); donations add more with show_exhibit().
+	for i in MapData.MUSEUM_SLOTS.size():
+		var slot: Array = MapData.MUSEUM_SLOTS[i]
+		if slot.size() > 4 and str(slot[4]) != "":
+			show_exhibit(i, str(slot[4]))
 	for area_name in MapData.AREA_ROOF_PROPS:
 		for p in MapData.AREA_ROOF_PROPS[area_name]:
 			var roof_sprite := Sprite2D.new()
@@ -3217,7 +3227,7 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 	sprite.offset = Vector2(0,-sprite.texture.get_height())
 	# Centred on its tiles and standing on its bottom edge.
 	sprite.position = Vector2(p[1]*16+(p[3]*16-fw*ART)*0.5,(p[2]+p[4])*16)
-	if p[0] == "game_chair" or p[0].begins_with("chair_") or p[0].begins_with("bench_"):
+	if p[0] == "game_chair" or p[0] == "bar_stool" or p[0].begins_with("chair_") or p[0].begins_with("bench_"):
 		# The back of a chair sorts behind its occupant without moving the artwork.
 		sprite.position.y -= 12
 		sprite.offset.y += 24
@@ -3228,10 +3238,56 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 		var water := ShaderMaterial.new()
 		water.shader = load("res://shaders/fountain_water.gdshader" if p[0] == "fountain" else "res://shaders/mess_lights.gdshader")
 		sprite.material = water
+	if area_name == "museum" and p[0] == "case_empty":
+		museum_cases["%d:%d" % [int(p[1]), int(p[2])]] = sprite
+	# Props drawn for each season (park trees: green, teal, orange, bare with snow) swap pictures as the year turns.
+	if ResourceLoader.exists("res://art/lunar/%s_winter.png" % p[0]):
+		seasonal_props.append([sprite, p[0]])
+		prop_season = ""
 	# Ground shadow, lamp glow and leaf sway (cozy art pass).
 	var glow: Sprite2D = PropFx.decorate(sprite, p[0], fw, sprite.texture.get_height())
 	if glow != null:
 		prop_glows.append(glow)
+
+# Spring uses the plain picture; summer, autumn and winter use <name>_<season>.png when it exists.
+func _apply_prop_season() -> void:
+	var season: String = str(BridgeScript.season_date(day)[0]).to_lower()
+	if season == prop_season:
+		return
+	prop_season = season
+	for e in seasonal_props:
+		var sp: Sprite2D = e[0]
+		if not is_instance_valid(sp):
+			continue
+		var path := "res://art/lunar/%s.png" % e[1]
+		if season != "spring" and ResourceLoader.exists("res://art/lunar/%s_%s.png" % [e[1], season]):
+			path = "res://art/lunar/%s_%s.png" % [e[1], season]
+		sp.texture = load(path)
+		sp.offset.y = -sp.texture.get_height()
+
+# Puts a picture (art/museum/<picture>.png, 24x24) on the cushion inside museum case number `slot`
+# (an index into MapData.MUSEUM_SLOTS). The case's glass is see-through, so the exhibit is drawn behind it.
+# For donations: call this when the player gives Tar'Besh something, and save which slot holds what.
+func show_exhibit(slot: int, picture: String) -> void:
+	if slot < 0 or slot >= MapData.MUSEUM_SLOTS.size():
+		return
+	var at: Array = MapData.MUSEUM_SLOTS[slot]
+	var case_sprite: Sprite2D = museum_cases.get("%d:%d" % [int(at[0]), int(at[1])])
+	var path := "res://art/museum/%s.png" % picture
+	if case_sprite == null or not ResourceLoader.exists(path):
+		return
+	var old_item := case_sprite.get_node_or_null("Exhibit")
+	if old_item != null:
+		old_item.queue_free()
+	var item := Sprite2D.new()
+	item.name = "Exhibit"
+	item.texture = load(path)
+	item.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	item.centered = true
+	# The case picture is 46 x 58 art pixels and its cushion top is 25 pixels above its bottom edge.
+	item.position = Vector2(case_sprite.texture.get_width() * 0.5 - 2, case_sprite.offset.y + case_sprite.texture.get_height() - 25 - 12)
+	item.show_behind_parent = true
+	case_sprite.add_child(item)
 
 func _animate_props() -> void:
 	# Each machine loops at 8 frames a second from its own random start, so twins don't pulse together.

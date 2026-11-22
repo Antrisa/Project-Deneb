@@ -27,15 +27,15 @@ SIZES = {
     'plants': (3, 2, 1), 'books': (2, 2, 1), 'cargo': (2, 2, 1), 'terminal': (1, 2, 1),
 }
 
-EXHIBITS = [  # case art, title, what the label says
-    ('case_fossil', 'Fossil of a cave crawler', ["A fossil from the moon's own caverns: something with too many legs, a very long time ago."]),
-    ('case_relic', "Zaa'sh prayer bell", ["A Zaa'sh temple bell, cast in the shape of a Sky-Weaver's wing.", "Tar'Besh rings it once a year."]),
-    ('case_shard', 'Precursor glass shard', ["A splinter of something that grew rather than being made.", "It is warm to the touch, through the glass."]),
-    ('case_wreck', 'Hull plate from the first crash', ["Scorched plating from the refugee transport that crash-landed here.", "Every settler signed the back of it."]),
-    ('case_relic', 'Terran signal codebook', ["A listening-post codebook, every page stamped TOP SECRET.", "S.A.R.A. says most of it was guesswork."]),
-    ('case_fossil', 'Moogli trade weights', ["Brass weights from three different Moogli trading houses. None of them agree."]),
-    ('case_shard', 'Star map on bone', ["An ancient star chart scratched on bone. One of the stars on it no longer exists."]),
-    ('case_wreck', 'Pirate cutlass', ["Taken from a Chernobog raider.", "The label adds, firmly: not for sale."]),
+EXHIBITS = [  # the exhibit's picture (art/museum/<name>.png, shown inside a plain glass case), title, label
+    ('crawler_fossil', 'Fossil of a cave crawler', ["A fossil from the moon's own caverns: something with too many legs, a very long time ago."]),
+    ('prayer_bell', "Zaa'sh prayer bell", ["A Zaa'sh temple bell, cast in the shape of a Sky-Weaver's wing.", "Tar'Besh rings it once a year."]),
+    ('glass_shard', 'Precursor glass shard', ["A splinter of something that grew rather than being made.", "It is warm to the touch, through the glass."]),
+    ('hull_plate', 'Hull plate from the first crash', ["Scorched plating from the refugee transport that crash-landed here.", "Every settler signed the back of it."]),
+    ('signal_codebook', 'Terran signal codebook', ["A listening-post codebook, every page stamped TOP SECRET.", "S.A.R.A. says most of it was guesswork."]),
+    ('trade_weights', 'Moogli trade weights', ["Brass weights from three different Moogli trading houses. None of them agree."]),
+    ('bone_star_map', 'Star map on bone', ["An ancient star chart scratched on bone. One of the stars on it no longer exists."]),
+    ('pirate_cutlass', 'Pirate cutlass', ["Taken from a Chernobog raider.", "The label adds, firmly: not for sale."]),
 ]
 
 
@@ -72,6 +72,14 @@ class Room:
         for yy in range(y + h - solid, y + h):
             for xx in range(x, x + w):
                 self.obj[yy][xx] = 'x'
+        if name in SEAT_SETS and kind == 'seat':
+            # A table and its chairs are separate pictures, so either can be moved on its own
+            # (Zachary, 21 Nov): a chair in each outer column of the table's tiles, each a seat of its own.
+            chair_e, chair_w, label = SEAT_SETS[name]
+            for cx, d, pic in ((x, 'E', chair_e), (x + w - 1, 'W', chair_w)):
+                self.props.append([pic, cx, y, 1, h, '%s [%s]' % (label, d)])
+                self.thing('seat', '%s [%s]' % (label, d), 'Sit', cx, y + h - 1)
+            return x, y
         if kind:
             self.thing(kind, title, hint, x + (w - 1) / 2, y + h - 1)
         return x, y
@@ -96,6 +104,10 @@ class Room:
         print('    ' + ''.join(str((x // 10) % 10) for x in range(self.W))); print('    ' + ''.join(str(x % 10) for x in range(self.W)))
         for y in range(self.H):
             print('%3d ' % y + ''.join('X' if self.obj[y][x] == 'x' else ('+' if (x, y) in self.clear and self.F[y][x] != '#' else self.F[y][x]) for x in range(self.W)))
+
+
+# Tables that come with their own chairs: the picture for the west and east columns, and the seat label.
+SEAT_SETS = {'table': ('chair_e', 'chair_w', 'Dining chair'), 'bar_table': ('bar_stool', 'bar_stool', 'Bar stool')}
 
 
 def disc(cx, cy, x, y):
@@ -231,13 +243,15 @@ def build(g):
         for ri, base in enumerate(rows):
             for ci, cx_ in enumerate(cols):
                 filled = ri == 0 and ci in (1, 2)                  # two of Tar'Besh's pieces in each gallery
+                # Every case is the same plain glass case; what is in it is drawn inside by the game
+                # (art/museum/<name>.png), so a donation can fill an empty case later (Zachary, 21 Nov).
                 if filled:
-                    art_, title, _ = EXHIBITS[n]; n += 1
+                    icon_, title, _ = EXHIBITS[n]; n += 1
                 else:
-                    art_, title = 'case_empty', 'Empty display'
-                spot = museum.near(art_, cx_ + 1, base + .5, title)
+                    icon_, title = '', 'Empty display'
+                spot = museum.near('case_empty', cx_ + 1, base + .5, title)
                 assert spot, ('museum case', gname, cx_, base)
-                slots.append([spot[0], spot[1], gname, title if filled else ''])
+                slots.append([spot[0], spot[1], gname, title if filled else '', icon_])
     for gx, gy in ((23.5, 8.5), (42.5, 8.5), (23.5, 34.5), (42.5, 34.5)):
         museum.near('terminal', gx, gy, 'Audio guide')
     museum.near('flowers', 33.0, 7.5, 'Museum flower bed', 'inspect', 'Inspect'); museum.near('flowers', 33.0, 36.0, 'Museum flower bed', 'inspect', 'Inspect')
@@ -302,6 +316,6 @@ def build(g):
         g.setdefault('EXTRA_THINGS', []).extend(room.things)
     g.setdefault('FLOOR_EXTRAS', {})['top'] = {'data_lines': data_lines, 'dais': [CX, 19.8]}
     g['SURVEY_ENTRANCES'] = entries
-    g['MUSEUM_SLOTS'] = slots                  # for donations later: [x, y, gallery, what is in it ('' = empty)]
+    g['MUSEUM_SLOTS'] = slots                  # [x, y, gallery, what is in it ('' = empty), its picture in art/museum/]
     g['SANCTUM_CRADLES'] = crystals
     return core.t
