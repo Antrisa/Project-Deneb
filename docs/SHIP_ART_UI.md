@@ -151,6 +151,9 @@ room, where crew stand on station and boost the system (shields recharge faster,
 the cockpit add evasion). Oxygen and crew rooms are bare deck. A console never sits where a door is: the cockpit's goes on its front wall,
 the others on a top wall, else bottom, left or right, in the first cell with a door-free outside wall there; crew stand
 in the middle of that cell (`kit2x.console_at()` and `ShipBattle._console_at()` keep in step).
+**Doors: only as many as the layout needs** (Zachary, 21 Nov: "you dont need to have so many doors"). Every room
+must be reachable, but most rooms don't need a door on every shared wall. The cutter is a compact block, so its eight
+doors are fine; bigger ships should use fewer, more like FTL's corridors and chokepoints.
 
 **For the rest:** each ship gets FTL-simple rooms and doors the same way, and the battle screen uses its
 `art_scale` (2 for these): the picture is fitted on its art pixels, while rooms, crew and the drone stay in 24-px cell
