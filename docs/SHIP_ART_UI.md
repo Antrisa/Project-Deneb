@@ -748,7 +748,15 @@ Ideas with residents behind them:
 - **Medbay:** a room you install where crew heal (a green cross on each cell's floor).
 - The covered fighter's crew deck is now its pods room and its hold its medbay. Enemies with pods board you the
   same way. Knock out every enemy crew member and the ship is yours: a capture.
-- Not built in battle yet: it comes with the covered fighter and hired crew.
+- **In battle now (22 Nov), tried with F6** in editor or debug builds: the covered fighter with you, Freya and two
+  hired hands against a Rabble cutter that boards back; each press flips the tether on or off. Click a crew member
+  (on either ship, or their name in the Crew panel), then a room, to send them there. At home they repair, put out
+  fires, heal in the medbay and man stations (shields, weapons, engines, and the cockpit for evasion); over there
+  they knock a bar off the room's system every 4 seconds while nobody stops them. Anyone sharing a room with the
+  other side fights. Their defenders come one for each of your boarders; their boarders wreck your systems room
+  by room. The LAUNCH and RECALL tabs sit at the right of the Crew panel.
+- **Getting other ships (Zachary, 22 Nov):** in the normal game, through Freya's quest (the covered fighter) and
+  Tally's capture contracts.
 
 ---
 

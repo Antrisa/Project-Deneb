@@ -514,6 +514,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F7 and OS.is_debug_build():
 		_debug_ship_ready()
 		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F6 and OS.is_debug_build():
+		_debug_boarding()
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10:
 		overview = not overview
 		player._cam.zoom = Vector2.ONE * (0.08 if overview else 1.0) * CAMERA_ZOOM
@@ -1552,6 +1555,29 @@ func _debug_ship_ready() -> void:
 	_go_to("bay", Vector2i(8, 29))
 	_snap_residents()
 	_toast("Debug: ship repaired. Launch control is right here (E).")
+
+
+# F6 (editor and debug builds only): the boarding test (Zachary, 22 Nov). The covered fighter with Freya and two
+# hired hands against a Rabble cutter that boards back. Each press flips the emergency tether on or off. In the
+# real game other ships come from Freya's quest and Tally's capture contracts.
+var debug_tether := false
+
+
+func _debug_boarding() -> void:
+	if battle == null or battle.open:
+		return
+	debug_tether = not debug_tether
+	battle.start({"enemy": "rabble_cutter", "story": false, "player_ship": "covered_fighter", "tether": debug_tether,
+		"foe_pods": true, "crew": [
+			{"name": "Freya", "kind": "freya", "named": true, "room": "pods"},
+			{"name": "Dax", "kind": "human", "room": "pods"},
+			{"name": "Rook", "kind": "zaash", "room": "weapons"},
+		]}, Callable(self, "_after_debug_boarding"), 99)
+	_toast("Debug: boarding test, tether %s (F6 again flips it)" % ("on" if debug_tether else "off"))
+
+
+func _after_debug_boarding(_result: String, _hull_left: int) -> void:
+	battle.close()
 
 
 func _launch_console() -> void:

@@ -168,6 +168,31 @@ const CREW_SPEED := 22.0         # picture pixels a second
 const CREW_HP := 100.0
 const CREW_HIT := 15.0           # health lost per point of damage when a shot hits their room
 const STATIONS := ["pilot", "weapons", "shields", "engines", "cannon"]
+# Your crew and boarding (Zachary, 22 Nov; claude/echo-landing-boarding.md). Only when the fight gives you a ship with
+# a crew ("player_ship" and "crew" in the fight); the starter flies with just you and the drone.
+var crew_mode := false
+var my_crew: Array = []          # {"name", "kind", "named", "you", "hp", "ship" ("me", "foe" or "pod"), "room", "last",
+                                 #  "target", "pos", "path", "path_to", "walking", "face", "brawl", "foe_x", "work", "gone"}
+var crew_sel := -1               # the crew member picked, waiting for a room to go to
+var bar_sys: Array = REACTOR_SYS # the system bar's columns
+var pod_charge := 0.0            # the boarding pod room recharging
+var pod_aim := false             # LAUNCH clicked: waiting for a room on their ship
+var tether := false              # the emergency tether upgrade
+var e_pods := false              # they have boarding pods too
+var e_pod_charge := 0.0
+var pods_flying: Array = []      # {"mine", "t", "from" (ship px on the launching ship), "room", "crew"}
+var lost_words: Array = []       # who you lost, for the end of the fight
+var pod_tex: Texture2D
+var pod_rabble_tex: Texture2D
+var tabs_tex: Texture2D
+const POD_TIME := 16.0           # the pod room recharges this long (a second bar makes it half as fast again)
+const E_POD_TIME := 24.0         # how often their pod comes, while none of their boarders are aboard
+const POD_FLIGHT := 1.3
+const FIGHT_DPS := 9.0           # health a second, one on one
+const SABOTAGE_TIME := 4.0       # boarders knock a bar off the room's system this often while nobody stops them
+const REPAIR_TIME := 4.0         # your crew repair a bar this often
+const HEAL_RATE := 6.0           # health a second in a working medbay, per bar
+const TETHER_HP := 12.0          # the tether brings them home on this much health
 # System icons, FTL-style (Zachary, 21 Nov): art/ui/ship/icons_systems.png, 32 x 32 each in this order
 # (tools/dev/ship_art/icons2x.py). They mark each system's room (16 x 16 cell pixels, in the middle) and sit under
 # its power bars on the system bar: green powered, grey off, red damaged.
@@ -205,6 +230,9 @@ func _ready() -> void:
 	fx_fire = _load_tex("res://art/ships/fx/fire.png")
 	fx_smoke = _load_tex("res://art/ships/fx/smoke.png")
 	fx_hit = _load_tex("res://art/ships/fx/hit.png")
+	pod_tex = _load_tex("res://art/ships/shots/pod.png")
+	pod_rabble_tex = _load_tex("res://art/ships/shots/pod_rabble.png")
+	tabs_tex = _load_tex("res://art/ui/ship/pod_tabs.png")
 	for kind in ["player", "human", "freya", "ana", "rabble_pirate", "terran_marine", "zaash", "arachnay", "moogli", "ervani", "vuultam", "scyldar"]:
 		var ct: Texture2D = _load_tex("res://art/ships/crew/%s.png" % kind)
 		if ct != null:
@@ -241,7 +269,19 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	suit_air = SUIT_AIR
 	blasts.clear()
 	tutorial_said = {}
-	me_ship = ShipData.build(ShipData.STARTER)
+	# your ship: the starter, or another from the fight (boarding test, F6; later Freya's quest and Tally's captures)
+	crew_mode = fight.has("crew") and fight.has("player_ship")
+	var on_starter: bool = str(fight.get("player_ship", "")) != "covered_fighter"
+	var my_def: Dictionary = ShipData.STARTER if on_starter else ShipData.COVERED_FIGHTER
+	me_ship = ShipData.build(my_def)
+	ship_tex = _load_tex(str(my_def.get("art", "")))
+	interior_tex = _load_tex(str(my_def.get("interior", "")))
+	if on_starter:
+		broken_tex = _load_tex(str(my_def.get("interior", "")).replace("interior.png", "interior_broken.png"))
+		my_chips = _pieces(str(my_def["art"]).replace("hull.png", "chip_%d.png"), my_def)
+	else:
+		broken_tex = null
+		my_chips = []
 	_fill_air(me_ship, my_air)
 	var me: Dictionary = me_ship
 	hull_max = int(me["hull"])
@@ -249,6 +289,10 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	reactor = int(me["reactor"])
 	uplink = bool(fight.get("uplink", false))
 	sys = _make_systems(me["systems"])
+	bar_sys = []
+	for key in REACTOR_SYS + ["pods", "medbay"]:
+		if sys.has(key):
+			bar_sys.append(key)
 	layers = _max_layers()
 	weapons.clear()
 	var fitted: Array = world.ship_weapons if world.ship_weapons.size() == me["weapons"].size() else me["weapons"]
@@ -256,7 +300,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 		weapons.append({"id": str(wid), "charge": 0.0, "target": "", "on": str(wid) != ""})
 	drone_room = "drones"
 	drone_last = "drones"
-	drone_pos = me["hub"]
+	drone_pos = me.get("hub", Vector2.ZERO)
 	drone_path = []
 	drone_goal = ""
 	drone_work = 0.0
@@ -274,6 +318,15 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 		e_weapons.append({"id": str(wid), "charge": randf_range(1.0, 4.0), "target": "", "on": true})
 	_fill_air(foe, foe_air)
 	_make_enemy_crew()
+	_make_my_crew()
+	crew_sel = -1
+	pod_charge = 0.0
+	pod_aim = false
+	tether = bool(fight.get("tether", false))
+	e_pods = crew_mode and (bool(fight.get("foe_pods", false)) or bool(foe.get("pods", false)))
+	e_pod_charge = 0.0
+	pods_flying.clear()
+	lost_words.clear()
 	overcharged = false
 	enemy_tex = _load_tex(str(foe.get("art", "")))
 	enemy_inside = _load_tex(str(foe.get("interior", "")))
@@ -360,7 +413,8 @@ func _finish() -> void:
 func _win() -> void:
 	if result != "": return
 	result = "won"
-	result_text = "%s destroyed" % str(foe["name"])
+	_end_boarding(true)
+	result_text = "%s destroyed" % str(foe["name"]) + _lost_line()
 	end_timer = 2.2
 	shake = 0.6
 	if e_hull <= 0 and not foe_gibs.is_empty():
@@ -372,7 +426,8 @@ func _win() -> void:
 func _lose(why: String) -> void:
 	if result != "": return
 	result = "lost"
-	result_text = why
+	_end_boarding(true)
+	result_text = why + _lost_line()
 	end_timer = JUMP_AT + 1.2
 	lose_t = 0.0
 	shake = 1.4
@@ -462,7 +517,11 @@ func _tick(delta: float) -> void:
 	_move_shots(delta, true)
 	_move_beams(delta)
 	_move_drone(delta)
+	_move_pods(delta)
+	_tick_fights(delta)
 	_enemy_crew(delta)
+	_my_crew_tick(delta)
+	_boarders_tick(delta)
 	_tick_doors(me_ship, delta)
 	_tick_doors(foe, delta)
 
@@ -599,12 +658,23 @@ func _evasion(systems: Dictionary) -> int:
 
 # Your evasion: the engines, the cockpit, and the drone if it is boosting the engines.
 func _my_evasion() -> int:
+	if crew_mode and not _boosting("pilot"):
+		return 0                     # nobody in the cockpit
 	var base: int = _evasion(sys)
 	return base + 5 if base > 0 and _boosting("engines") else base
 
 
 # True when the drone has arrived in an undamaged bay holding that system.
 func _boosting(sname: String) -> bool:
+	if crew_mode:
+		# someone of yours at that system's station, and the system not damaged
+		if not sys.has(sname) or int(sys[sname]["damage"]) > 0:
+			return false
+		for c in my_crew:
+			if _standing(c) and str(c["ship"]) == "me" and not bool(c["walking"]) and str(c["room"]) != "":
+				if str(_room(me_ship["rooms"], str(c["room"])).get("sys", "")) == sname:
+					return true
+		return false
 	if drone_path.size() > 0 or drone_room == "":
 		return false
 	var room: Dictionary = _room(me_ship["rooms"], drone_room)
@@ -613,7 +683,7 @@ func _boosting(sname: String) -> bool:
 
 func spare_power() -> int:
 	var used := 0
-	for key in REACTOR_SYS:
+	for key in bar_sys:
 		if sys.has(key):
 			used += int(sys[key]["power"])
 	return reactor - used
@@ -767,6 +837,7 @@ func _damage(at_player: bool, room_id: String, dmg: int, where: Vector2) -> void
 		if sys.has(sname):
 			sys[sname]["damage"] = mini(int(sys[sname]["max"]), int(sys[sname]["damage"]) + dmg)
 			_clip_power(sys)
+		_hurt_aboard(room_id, dmg, where)
 		_pop(where, "-%d" % dmg, BAD)
 		shake = 0.25
 		world.sfx("hurt")
@@ -874,9 +945,13 @@ func _tick_hazards(delta: float) -> void:
 			var workers := 0
 			if at_player:
 				workers = 1 if drone_room == rid and drone_path.is_empty() else 0
+				for c in my_crew:
+					if _standing(c) and str(c["ship"]) == "me" and str(c["room"]) == rid:
+						workers += 1
+						c["hp"] = maxf(0.0, float(c["hp"]) - FIRE_CREW * delta)
 			else:
 				for c in e_crew_list:
-					if float(c["hp"]) > 0.0 and str(c["room"]) == rid:
+					if float(c["hp"]) > 0.0 and str(c["room"]) == rid and str(c.get("ship", "foe")) == "foe":
 						workers += 1
 						c["hp"] = maxf(0.0, float(c["hp"]) - FIRE_CREW * delta)
 			var air: Dictionary = my_air if at_player else foe_air
@@ -902,13 +977,15 @@ func _tick_hazards(delta: float) -> void:
 		var gas: Dictionary = foe_gas[rid]
 		gas["t"] = float(gas["t"]) - delta
 		for c in e_crew_list:
-			if float(c["hp"]) > 0.0 and str(c["room"]) == rid:
+			if float(c["hp"]) > 0.0 and str(c["room"]) == rid and str(c.get("ship", "foe")) == "foe":
 				c["hp"] = maxf(0.0, float(c["hp"]) - GAS_CREW * delta)
 		if float(gas["t"]) <= 0.0:
 			foe_gas.erase(rid)
 	var choking := false
 	for c in e_crew_list:
 		var here: String = str(c["room"]) if str(c["room"]) != "" else str(c["last"])
+		if str(c.get("ship", "foe")) != "foe":
+			continue
 		if float(c["hp"]) > 0.0 and float(foe_air.get(here, 1.0)) < AIR_THIN:
 			c["hp"] = maxf(0.0, float(c["hp"]) - AIR_CHOKE * delta)
 			choking = true
@@ -987,7 +1064,7 @@ func _breathe(delta: float) -> void:
 	for rid in my_air:
 		total += float(my_air[rid])
 	oxygen = 100.0 * total / maxf(1.0, float(my_air.size()))
-	if float(my_air.get("cockpit", 1.0)) < AIR_THIN:
+	if _your_air() < AIR_THIN:
 		suit_air -= delta
 		if suit_air <= 0.0:
 			suit_air = 0.0
@@ -1111,6 +1188,8 @@ func _tick_doors(ship: Dictionary, delta: float) -> void:
 
 
 func _move_drone(delta: float) -> void:
+	if not sys.has("drones"):
+		return
 	var slow: float = 0.5 if int(sys["drones"]["damage"]) > 0 else 1.0
 	if drone_path.size() > 0:
 		var next: Dictionary = drone_path[0]
@@ -1167,11 +1246,11 @@ func _crew_spot(room_id: String, i: int, on_station: bool = false) -> Vector2:
 
 # In front of a room's console, in ship-picture pixels: the cell the console is in, a little toward the console
 # (the crew are half a cell tall since 22 Nov, so from the middle they'd stand off it).
-func _station_spot(room: Dictionary) -> Vector2:
+func _station_spot(room: Dictionary, ship: Dictionary = {}) -> Vector2:
 	if not room.has("cells"):
 		var r: Rect2 = room["rect"]
 		return r.get_center()
-	var at: Array = _console_at(foe, room)
+	var at: Array = _console_at(foe if ship.is_empty() else ship, room)
 	var cell: Vector2i = at[0]
 	var side: Vector2i = at[1]
 	return (Vector2(cell) + Vector2(0.5, 0.5) + Vector2(side) * 0.2) * ShipData.CELL
@@ -1214,7 +1293,7 @@ func _make_enemy_crew() -> void:
 			home = _spare_room()
 		var kinds: Variant = CREW_KIND.get(foe_id, "rabble_pirate")
 		var kind: String = str(kinds[i % (kinds as Array).size()]) if kinds is Array else str(kinds)
-		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i, true), "hp": CREW_HP, "task": "station",
+		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i, true), "hp": CREW_HP, "task": "station", "ship": "foe", "work": 0.0,
 			"kind": kind, "face": Vector2.DOWN, "walking": false,
 			"last": home, "path": [], "path_to": home})
 	e_crew = e_crew_list.size()
@@ -1227,7 +1306,7 @@ func _manned(sname: String) -> bool:
 	if rid == "":
 		return false
 	for c in e_crew_list:
-		if float(c["hp"]) > 0.0 and str(c["task"]) == "station" and str(c["room"]) == rid and str(c["home"]) == rid:
+		if float(c["hp"]) > 0.0 and str(c["task"]) == "station" and str(c["room"]) == rid and str(c["home"]) == rid and str(c.get("ship", "foe")) == "foe":
 			return true
 	return false
 
@@ -1240,6 +1319,31 @@ func _enemy_evasion() -> int:
 
 
 func _enemy_crew(delta: float) -> void:
+	# Your boarders: send one of theirs for each of yours to the room they're in (never the pilot); they go back to
+	# their stations once it's clear.
+	var intruded: Dictionary = _intruded()
+	for rid_b in intruded:
+		var have := 0
+		for c in e_crew_list:
+			if float(c["hp"]) > 0.0 and str(c.get("ship", "foe")) == "foe" and str(c["task"]) == "fight" and str(c["target"]) == str(rid_b):
+				have += 1
+		while have < int(intruded[rid_b]):
+			var pick := -1
+			var pick_d := INF
+			var to_b: Vector2 = _crew_spot(str(rid_b), 0)
+			for i in range(e_crew_list.size()):
+				var cb: Dictionary = e_crew_list[i]
+				if float(cb["hp"]) <= 0.0 or str(cb.get("ship", "foe")) != "foe" or str(cb["task"]) == "fight" or str(cb["home"]) == _sys_room("pilot"):
+					continue
+				var db: float = (cb["pos"] as Vector2).distance_to(to_b)
+				if db < pick_d:
+					pick_d = db
+					pick = i
+			if pick < 0:
+				break
+			e_crew_list[pick]["task"] = "fight"
+			e_crew_list[pick]["target"] = str(rid_b)
+			have += 1
 	# Send someone to each damaged room nobody is already seeing to. Never the pilot; spare hands first,
 	# then whoever is nearest.
 	for sname in REPAIR_ORDER:
@@ -1259,7 +1363,7 @@ func _enemy_crew(delta: float) -> void:
 		var to: Vector2 = _crew_spot(rid, 0)
 		for i in range(e_crew_list.size()):
 			var c2: Dictionary = e_crew_list[i]
-			if float(c2["hp"]) <= 0.0 or str(c2["task"]) != "station" or str(c2["home"]) == _sys_room("pilot"):
+			if float(c2["hp"]) <= 0.0 or str(c2["task"]) != "station" or str(c2["home"]) == _sys_room("pilot") or str(c2.get("ship", "foe")) != "foe":
 				continue
 			var spare: bool = str(_room(foe["rooms"], str(c2["home"])).get("sys", "")) == ""
 			var score: float = (c2["pos"] as Vector2).distance_to(to) - (1000.0 if spare else 0.0)
@@ -1298,7 +1402,7 @@ func _enemy_crew(delta: float) -> void:
 		var to_f: Vector2 = _crew_spot(str(rid_f), 0)
 		for i in range(e_crew_list.size()):
 			var cf: Dictionary = e_crew_list[i]
-			if float(cf["hp"]) <= 0.0 or str(cf["task"]) != "station" or str(cf["home"]) == _sys_room("pilot"):
+			if float(cf["hp"]) <= 0.0 or str(cf["task"]) != "station" or str(cf["home"]) == _sys_room("pilot") or str(cf.get("ship", "foe")) != "foe":
 				continue
 			var dd: float = (cf["pos"] as Vector2).distance_to(to_f)
 			if dd < best_d:
@@ -1311,8 +1415,11 @@ func _enemy_crew(delta: float) -> void:
 	var working := {}
 	for i in range(e_crew_list.size()):
 		var c3: Dictionary = e_crew_list[i]
-		if float(c3["hp"]) <= 0.0:
+		if float(c3["hp"]) <= 0.0 or str(c3.get("ship", "foe")) != "foe":
 			continue
+		if str(c3["task"]) == "fight" and not intruded.has(str(c3["target"])):
+			c3["task"] = "station"
+			c3["target"] = c3["home"]
 		if str(c3["task"]) == "repair":
 			var tsys: String = str(_room(foe["rooms"], str(c3["target"])).get("sys", ""))
 			if (not e_sys.has(tsys) or int(e_sys[tsys]["damage"]) <= 0) and not foe_fires.has(str(c3["target"])):
@@ -1353,7 +1460,7 @@ func _enemy_crew(delta: float) -> void:
 			c3["pos"] = goal
 			c3["room"] = c3["target"]
 			c3["last"] = c3["target"]
-			if str(c3["task"]) == "repair":
+			if str(c3["task"]) == "repair" and not bool(c3.get("brawl", false)):
 				working[c3["room"]] = int(working.get(c3["room"], 0)) + 1
 	for rid2 in working:
 		var sname2: String = str(_room(foe["rooms"], str(rid2)).get("sys", ""))
@@ -1369,15 +1476,18 @@ func _enemy_crew(delta: float) -> void:
 # True when one of their crew is in that room or on the way to it.
 func _crew_bound(rid: String) -> bool:
 	for c in e_crew_list:
-		if float(c["hp"]) > 0.0 and (str(c["room"]) == rid or str(c["target"]) == rid):
+		if float(c["hp"]) > 0.0 and str(c.get("ship", "foe")) == "foe" and (str(c["room"]) == rid or str(c["target"]) == rid):
 			return true
 	return false
 
 
 # A hit on an enemy room hurts whoever is standing in it. When the last of them goes down, the fight is won.
 func _hurt_crew(room_id: String, dmg: int, where: Vector2) -> void:
+	for mc in my_crew:
+		if _standing(mc) and str(mc["ship"]) == "foe" and str(mc["room"]) == room_id:
+			mc["hp"] = maxf(0.0, float(mc["hp"]) - CREW_HIT * dmg)        # your boarders get caught in it too
 	for c in e_crew_list:
-		if float(c["hp"]) > 0.0 and str(c["room"]) == room_id:
+		if float(c["hp"]) > 0.0 and str(c["room"]) == room_id and str(c.get("ship", "foe")) == "foe":
 			c["hp"] = maxf(0.0, float(c["hp"]) - CREW_HIT * dmg)
 			if float(c["hp"]) <= 0.0:
 				_pop(where + Vector2(0, 10), "Crew down", Color("ffbeaa"))
@@ -1393,7 +1503,8 @@ func _count_crew(_where: Vector2) -> void:
 	e_crew = standing
 	if e_crew == 0 and e_hull > 0 and result == "":
 		result = "won"
-		result_text = "Their crew is down"
+		_end_boarding(false)
+		result_text = "Their crew is down" + _lost_line()
 		end_timer = 2.0
 		world.sfx("quest")
 
@@ -1459,6 +1570,8 @@ func handle_input(event: InputEvent) -> void:
 		KEY_ESCAPE, KEY_Q:
 			selected = -1
 			drone_selected = false
+			crew_sel = -1
+			pod_aim = false
 		KEY_D, KEY_TAB:
 			_select_drone()
 		KEY_V:
@@ -1475,6 +1588,8 @@ func _toggle_pause() -> void:
 
 
 func _select_drone() -> void:
+	if not sys.has("drones"):
+		return
 	drone_selected = not drone_selected
 	selected = -1
 	world.sfx("click", 1.4)
@@ -1491,6 +1606,8 @@ func _pick_weapon(i: int) -> void:
 		_add_power("weapons")
 	selected = i if selected != i else -1
 	drone_selected = false
+	crew_sel = -1
+	pod_aim = false
 	world.sfx("click")
 
 
@@ -1518,7 +1635,7 @@ func _click(id: String, p: Vector2, button: int) -> void:
 		world.sfx("click")
 		return
 	if id.begins_with("sys/"):
-		var key: String = REACTOR_SYS[int(id.get_slice("/", 1))]
+		var key: String = bar_sys[int(id.get_slice("/", 1))]
 		if left:
 			_add_power(key)
 		else:
@@ -1534,8 +1651,10 @@ func _click(id: String, p: Vector2, button: int) -> void:
 			if selected == i:
 				selected = -1
 		return
+	if crew_mode and _crew_click(id, p, left):
+		return
 	# the drone: click it (on the ship or in the Aboard list) to select it
-	if left and (id == "drone" or _drone_rect().has_point(p)):
+	if sys.has("drones") and left and (id == "drone" or _drone_rect().has_point(p)):
 		_select_drone()
 		return
 	# your doors: click one to shut it or open it again
@@ -1546,8 +1665,11 @@ func _click(id: String, p: Vector2, button: int) -> void:
 			if bool(d.get("airlock", false)):
 				_pop(p + Vector2(0, -10), "Venting" if bool(d["open"]) else "Airlock shut", Color("dfe8ff"))
 			return
+	# crew mode: a picked crew member goes to the room clicked, on whichever ship they're on
+	if crew_mode and crew_sel >= 0 and _order_click(p):
+		return
 	# a bay on your ship: with the drone selected, send it there (left or right click, as with crew in FTL)
-	for room in me_ship["rooms"]:
+	for room in (me_ship["rooms"] if not crew_mode else []):
 		if (my_xf * (room["rect"] as Rect2)).has_point(p):
 			if bool(room.get("crew", false)):
 				if drone_selected:
@@ -1562,6 +1684,8 @@ func _click(id: String, p: Vector2, button: int) -> void:
 	if right:
 		selected = -1
 		drone_selected = false
+		crew_sel = -1
+		pod_aim = false
 		return
 	# a room on their ship: aim
 	if selected >= 0:
@@ -1576,9 +1700,699 @@ func _click(id: String, p: Vector2, button: int) -> void:
 				return
 
 
+# ---------------------------------------------------------------- your crew and boarding
+
+# Zachary, 22 Nov (claude/echo-landing-boarding.md): crew you order room to room, FTL-style; a boarding pod that
+# flies like a missile that always hits and puts your crew in the room you pick; RECALL brings them home once the
+# pod room has recharged; the emergency tether brings back a boarder who goes down over there; a medbay heals.
+# Freya and Ana go home to the station's Medbay (cross with you) when they go down; hired crew die.
+
+func _standing(c: Dictionary) -> bool:
+	return not bool(c.get("gone", false)) and float(c["hp"]) > 0.0
+
+
+func _ship_of(side: String) -> Dictionary:
+	return me_ship if side == "me" else foe
+
+
+func _make_my_crew() -> void:
+	my_crew.clear()
+	if not crew_mode:
+		return
+	var list: Array = [{"name": "You", "kind": "player", "named": true, "you": true, "room": "cockpit"}]
+	list.append_array(fight.get("crew", []))
+	for d in list:
+		var rid: String = str(d.get("room", _pods_room()))
+		if _room(me_ship["rooms"], rid).is_empty():
+			rid = str(me_ship["rooms"][0]["id"])
+		my_crew.append({"name": str(d.get("name", "Crew")), "kind": str(d.get("kind", "human")),
+			"named": bool(d.get("named", false)), "you": bool(d.get("you", false)), "hp": CREW_HP, "ship": "me",
+			"room": rid, "last": rid, "target": rid, "path": [], "path_to": rid, "walking": false,
+			"face": Vector2.DOWN, "brawl": false, "foe_x": 0.0, "work": 0.0, "gone": false, "pos": Vector2.ZERO})
+	for i in range(my_crew.size()):
+		my_crew[i]["pos"] = _my_spot(my_crew[i], i)
+
+
+# Your boarding pods room, or "" if the ship has none.
+func _pods_room() -> String:
+	for room in me_ship.get("rooms", []):
+		if str(room["sys"]) == "pods":
+			return str(room["id"])
+	return ""
+
+
+# Where someone stands in a room: at the console when they're the first of their side there in a station room,
+# otherwise spread round the middle.
+func _spot_on(ship: Dictionary, room_id: String, i: int, on_station: bool) -> Vector2:
+	var room: Dictionary = _room(ship["rooms"], room_id)
+	var r: Rect2 = room.get("rect", Rect2(40, 40, 10, 10))
+	if on_station and str(room.get("sys", "")) in STATIONS:
+		return _station_spot(room, ship)
+	var p: Vector2 = r.get_center() + CREW_SPOTS[i % CREW_SPOTS.size()]
+	return Vector2(clampf(p.x, r.position.x + 4, r.end.x - 4), clampf(p.y, r.position.y + 4, r.end.y - 4))
+
+
+func _my_spot(c: Dictionary, i: int) -> Vector2:
+	var first := true
+	for j in range(i):
+		var o: Dictionary = my_crew[j]
+		if _standing(o) and str(o["ship"]) == str(c["ship"]) and str(o["target"]) == str(c["target"]):
+			first = false
+			break
+	return _spot_on(_ship_of(str(c["ship"])), str(c["target"]), i + (0 if first else 1), first)
+
+
+# One person walking to their target room on the ship they're on, room to room through the doors.
+func _walk(c: Dictionary, ship: Dictionary, goal: Vector2, delta: float) -> void:
+	if str(c["path_to"]) != str(c["target"]):
+		c["path_to"] = c["target"]
+		var steps: Array = []
+		for st in ShipData.route(ship, str(c["last"]), str(c["target"])):
+			steps.append({"pos": st["door"]["at"], "room": str(st["room"]), "door": st["door"]})
+		c["path"] = steps
+	var at: Vector2 = c["pos"]
+	var step: float = CREW_SPEED * delta
+	var path: Array = c["path"]
+	if path.size() > 0:
+		var wp: Dictionary = path[0]
+		var to: Vector2 = wp["pos"]
+		if at.distance_to(to) <= step:
+			c["pos"] = to
+			c["last"] = wp["room"]
+			_door_pass(wp["door"])
+			path.pop_front()
+		else:
+			c["pos"] = at + (to - at).normalized() * step
+		if at.distance_to(to) > 0.01:
+			c["face"] = (to - at).normalized()
+		c["walking"] = true
+		c["room"] = ""
+	elif at.distance_to(goal) > step:
+		c["pos"] = at + (goal - at).normalized() * step
+		c["face"] = (goal - at).normalized()
+		c["walking"] = true
+		c["room"] = ""
+	else:
+		c["walking"] = false
+		c["pos"] = goal
+		c["room"] = c["target"]
+		c["last"] = c["target"]
+
+
+# The air where you are (your suit takes over below AIR_THIN).
+func _your_air() -> float:
+	if crew_mode:
+		for c in my_crew:
+			if bool(c["you"]) and _standing(c):
+				if str(c["ship"]) == "pod":
+					return 1.0
+				var here: String = str(c["room"]) if str(c["room"]) != "" else str(c["last"])
+				return float((my_air if str(c["ship"]) == "me" else foe_air).get(here, 1.0))
+	return float(my_air.get("cockpit", 1.0))
+
+
+# Rooms on their ship with your boarders in them (or walking out of them): room id -> how many.
+func _intruded() -> Dictionary:
+	var out := {}
+	for c in my_crew:
+		if _standing(c) and str(c["ship"]) == "foe":
+			var here: String = str(c["room"]) if str(c["room"]) != "" else str(c["last"])
+			out[here] = int(out.get(here, 0)) + 1
+	return out
+
+
+# A hit on your room hurts whoever is in it: your crew, and their boarders.
+func _hurt_aboard(room_id: String, dmg: int, where: Vector2) -> void:
+	var theirs := false
+	for c in my_crew:
+		if _standing(c) and str(c["ship"]) == "me" and str(c["room"]) == room_id:
+			c["hp"] = maxf(0.0, float(c["hp"]) - CREW_HIT * dmg)
+	for e in e_crew_list:
+		if float(e["hp"]) > 0.0 and str(e.get("ship", "foe")) == "me" and str(e["room"]) == room_id:
+			e["hp"] = maxf(0.0, float(e["hp"]) - CREW_HIT * dmg)
+			theirs = true
+	if theirs:
+		_count_crew(where)
+
+
+# Fights: anyone sharing a room with someone from the other side, both standing still, trades blows with them.
+func _tick_fights(delta: float) -> void:
+	for c in my_crew:
+		c["brawl"] = false
+	for e in e_crew_list:
+		e["brawl"] = false
+	if not crew_mode:
+		return
+	var downed := false
+	for c in my_crew:
+		if not _standing(c) or bool(c["walking"]) or str(c["ship"]) == "pod":
+			continue
+		for e in e_crew_list:
+			if float(e["hp"]) > 0.0 and not bool(e.get("walking", false)) and str(e.get("ship", "foe")) == str(c["ship"]) and str(e["room"]) == str(c["room"]):
+				e["hp"] = maxf(0.0, float(e["hp"]) - FIGHT_DPS * delta)
+				c["brawl"] = true
+				c["foe_x"] = (e["pos"] as Vector2).x
+				downed = downed or float(e["hp"]) <= 0.0
+				break
+	for e in e_crew_list:
+		if float(e["hp"]) <= 0.0 or bool(e.get("walking", false)) or str(e.get("ship", "foe")) == "pod":
+			continue
+		for c in my_crew:
+			if _standing(c) and not bool(c["walking"]) and str(c["ship"]) == str(e.get("ship", "foe")) and str(c["room"]) == str(e["room"]):
+				c["hp"] = maxf(0.0, float(c["hp"]) - FIGHT_DPS * delta)
+				e["brawl"] = true
+				e["foe_x"] = (c["pos"] as Vector2).x
+				break
+	if downed:
+		for e in e_crew_list:
+			if float(e["hp"]) <= 0.0 and not bool(e.get("down_said", false)):
+				e["down_said"] = true
+				var on_me: bool = str(e.get("ship", "foe")) == "me"
+				_pop(_on_page(on_me, e["pos"]) + Vector2(0, -10), "Down", Color("ffbeaa"))
+		_count_crew(_on_page(false, (foe["size"] as Vector2) / 2.0))
+
+
+# Your crew: walk where you sent them; at home they repair the room, put out its fire (in _tick_hazards), heal in
+# the medbay and man the stations (_boosting); over there they wreck the room's system while nobody stops them.
+func _my_crew_tick(delta: float) -> void:
+	if not crew_mode:
+		return
+	if result == "" and _eff(sys, "pods") > 0 and pod_charge < POD_TIME:
+		pod_charge = minf(POD_TIME, pod_charge + delta * (1.0 + 0.5 * (_eff(sys, "pods") - 1)))
+	for i in range(my_crew.size()):
+		var c: Dictionary = my_crew[i]
+		if bool(c["gone"]):
+			continue
+		if float(c["hp"]) <= 0.0:
+			_my_crew_down(c)
+			continue
+		if str(c["ship"]) == "pod":
+			continue
+		var on_me: bool = str(c["ship"]) == "me"
+		_walk(c, _ship_of(str(c["ship"])), _my_spot(c, i), delta)
+		var here: String = str(c["room"]) if str(c["room"]) != "" else str(c["last"])
+		if not bool(c["you"]) and float((my_air if on_me else foe_air).get(here, 1.0)) < AIR_THIN:
+			c["hp"] = maxf(0.0, float(c["hp"]) - AIR_CHOKE * delta)
+		if not on_me and foe_fires.has(here):
+			c["hp"] = maxf(0.0, float(c["hp"]) - FIRE_CREW * delta)
+		if bool(c["walking"]) or str(c["room"]) == "" or bool(c["brawl"]):
+			c["work"] = 0.0
+			continue
+		var rid: String = str(c["room"])
+		if on_me:
+			var sname: String = str(_room(me_ship["rooms"], rid).get("sys", ""))
+			if my_fires.has(rid):
+				continue
+			if sys.has(sname) and int(sys[sname]["damage"]) > 0:
+				c["work"] = float(c["work"]) + delta
+				if float(c["work"]) >= REPAIR_TIME:
+					c["work"] = 0.0
+					sys[sname]["damage"] = int(sys[sname]["damage"]) - 1
+					_pop(_on_page(true, c["pos"]) + Vector2(0, -10), "Fixed", GOOD)
+					world.sfx("click", 1.6, -4.0)
+			elif sname == "medbay" and _eff(sys, "medbay") > 0 and float(c["hp"]) < CREW_HP:
+				c["hp"] = minf(CREW_HP, float(c["hp"]) + HEAL_RATE * _eff(sys, "medbay") * delta)
+				c["work"] = 0.0
+			else:
+				c["work"] = 0.0
+		else:
+			var sname2: String = str(_room(foe["rooms"], rid).get("sys", ""))
+			if e_sys.has(sname2) and int(e_sys[sname2]["damage"]) < int(e_sys[sname2]["max"]):
+				c["work"] = float(c["work"]) + delta
+				if float(c["work"]) >= SABOTAGE_TIME:
+					c["work"] = 0.0
+					e_sys[sname2]["damage"] = int(e_sys[sname2]["damage"]) + 1
+					_clip_power(e_sys)
+					_pop(_on_page(false, c["pos"]) + Vector2(0, -10), "Sabotage", GOLD)
+					world.sfx("hit", 1.3, -6.0)
+			else:
+				c["work"] = 0.0
+
+
+# Someone of yours goes down. Over there with the tether: back in your pod room on a little health. You: the fight
+# is lost. Freya and Ana: out of the run, they'll wake in the station's Medbay. Hired crew: gone.
+func _my_crew_down(c: Dictionary) -> void:
+	if str(c["ship"]) == "foe" and tether:
+		_bring_home(c)
+		c["hp"] = TETHER_HP
+		_pop(_on_page(true, c["pos"]) + Vector2(0, -12), "Tethered back", GOLD)
+		world.sfx("warp", 1.4, -6.0)
+		return
+	if bool(c["you"]):
+		c["gone"] = true
+		_lose("You're knocked out")
+		return
+	_lose_person(c)
+
+
+func _lose_person(c: Dictionary) -> void:
+	var where: Vector2 = _on_page(str(c["ship"]) != "foe", c["pos"])
+	c["gone"] = true
+	c["hp"] = 0.0
+	var words: String = ("%s is out: back to the station's Medbay" if bool(c["named"]) else "%s didn't make it") % str(c["name"])
+	lost_words.append(words)
+	_pop(where + Vector2(0, -12), words, BAD)
+	if crew_sel >= 0 and is_same(my_crew[crew_sel], c):
+		crew_sel = -1
+
+
+func _bring_home(c: Dictionary) -> void:
+	var pr: String = _pods_room()
+	if pr == "":
+		pr = str(me_ship["rooms"][0]["id"])
+	c["ship"] = "me"
+	c["room"] = pr
+	c["last"] = pr
+	c["target"] = pr
+	c["path_to"] = pr
+	c["path"] = []
+	c["walking"] = false
+	c["work"] = 0.0
+	c["pos"] = _spot_on(me_ship, pr, my_crew.find(c) + 1, false)
+
+
+# The fight is over while some of yours are over there: they come home, unless their ship blew up (or you jumped
+# away) without the tether to pull them out.
+func _end_boarding(lost_ship: bool) -> void:
+	for c in my_crew:
+		if not _standing(c) or str(c["ship"]) == "me":
+			continue
+		if not lost_ship:
+			_bring_home(c)
+		elif tether:
+			_bring_home(c)
+			c["hp"] = minf(float(c["hp"]), TETHER_HP)
+		elif bool(c["you"]):
+			_bring_home(c)                 # you're the one flying: you're home either way
+		else:
+			_lose_person(c)
+	pods_flying = pods_flying.filter(func(pd): return not bool(pd["mine"]))
+
+
+func _lost_line() -> String:
+	return "" if lost_words.is_empty() else ". " + "; ".join(lost_words)
+
+
+func _can_launch() -> bool:
+	if result != "" or _eff(sys, "pods") <= 0 or pod_charge < POD_TIME:
+		return false
+	var pr: String = _pods_room()
+	for c in my_crew:
+		if _standing(c) and str(c["ship"]) == "me" and str(c["room"]) == pr:
+			return true
+	return false
+
+
+func _can_recall() -> bool:
+	if result != "" or _eff(sys, "pods") <= 0 or pod_charge < POD_TIME:
+		return false
+	for c in my_crew:
+		if _standing(c) and str(c["ship"]) == "foe":
+			return true
+	return false
+
+
+func _launch_pod(target: String) -> void:
+	var pr: String = _pods_room()
+	var team: Array = []
+	for c in my_crew:
+		if _standing(c) and str(c["ship"]) == "me" and str(c["room"]) == pr:
+			team.append(c)
+	if team.is_empty():
+		return
+	for c in team:
+		c["ship"] = "pod"
+		c["brawl"] = false
+	pods_flying.append({"mine": true, "t": 0.0, "from": _room_center(true, pr), "room": target, "crew": team})
+	pod_charge = 0.0
+	world.sfx("zap", 0.6, -2.0)
+
+
+func _recall() -> void:
+	for c in my_crew:
+		if _standing(c) and str(c["ship"]) == "foe":
+			_bring_home(c)
+	pod_charge = 0.0
+	_pop(_on_page(true, _room_center(true, _pods_room())) + Vector2(0, -12), "Recalled", GOOD)
+	world.sfx("warp", 1.2, -6.0)
+
+
+# Their pod: two of their crew (never the pilot) fly over to one of your system rooms, whenever none of their
+# boarders are aboard.
+func _enemy_launch() -> void:
+	var team: Array = []
+	for e in e_crew_list:
+		if team.size() >= 2:
+			break
+		if float(e["hp"]) > 40.0 and str(e.get("ship", "foe")) == "foe" and str(e["task"]) == "station" \
+				and not bool(e.get("walking", false)) and str(e["home"]) != _sys_room("pilot"):
+			team.append(e)
+	var rooms: Array = []
+	for room in me_ship["rooms"]:
+		if sys.has(str(room["sys"])):
+			rooms.append(str(room["id"]))
+	if team.is_empty() or rooms.is_empty():
+		return
+	var to: String = rooms[randi() % rooms.size()]
+	var from: Vector2 = team[0]["pos"]
+	for e in team:
+		e["ship"] = "pod"
+		e["brawl"] = false
+	pods_flying.append({"mine": false, "t": 0.0, "from": from, "room": to, "crew": team})
+	_pop(_on_page(false, from) + Vector2(0, -12), "Boarding pod!", BAD)
+	world.sfx("zap", 0.5, -2.0)
+
+
+func _move_pods(delta: float) -> void:
+	var left: Array = []
+	for pd in pods_flying:
+		pd["t"] = float(pd["t"]) + delta / POD_FLIGHT
+		if float(pd["t"]) < 1.0:
+			left.append(pd)
+			continue
+		var mine: bool = pd["mine"]
+		var side: String = "foe" if mine else "me"
+		var ship: Dictionary = _ship_of(side)
+		var rid: String = str(pd["room"])
+		var n := 1
+		for c in pd["crew"]:
+			c["ship"] = side
+			c["room"] = rid
+			c["last"] = rid
+			c["target"] = rid
+			c["path_to"] = rid
+			c["path"] = []
+			c["walking"] = false
+			c["work"] = 0.0
+			c["pos"] = _spot_on(ship, rid, n, false)
+			n += 1
+		var where: Vector2 = _on_page(not mine, _room_center(not mine, rid))
+		blasts.append({"pos": where, "t": 0.0, "k": _ship_scale(not mine)})
+		_pop(where + Vector2(0, -14), "Boarded!" if mine else "Boarders!", GOLD if mine else BAD)
+		world.sfx("hit", 0.8)
+	pods_flying = left
+
+
+# Their boarders on your ship: wreck the system in the room they're in, then go on to the next working one; they
+# fight anyone of yours they meet (_tick_fights). Their pod comes again once they're all down.
+func _boarders_tick(delta: float) -> void:
+	if not crew_mode:
+		return
+	if e_pods and result == "":
+		var aboard := false
+		for e in e_crew_list:
+			if float(e["hp"]) > 0.0 and str(e.get("ship", "foe")) != "foe":
+				aboard = true
+		if not aboard:
+			e_pod_charge += delta
+			if e_pod_charge >= E_POD_TIME:
+				e_pod_charge = 0.0
+				_enemy_launch()
+	var hurt := false
+	for i in range(e_crew_list.size()):
+		var e: Dictionary = e_crew_list[i]
+		if float(e["hp"]) <= 0.0 or str(e.get("ship", "foe")) != "me":
+			continue
+		_walk(e, me_ship, _spot_on(me_ship, str(e["target"]), i + 1, false), delta)
+		var here: String = str(e["room"]) if str(e["room"]) != "" else str(e["last"])
+		if float(my_air.get(here, 1.0)) < AIR_THIN:
+			e["hp"] = maxf(0.0, float(e["hp"]) - AIR_CHOKE * delta)
+			hurt = true
+		if my_fires.has(here):
+			e["hp"] = maxf(0.0, float(e["hp"]) - FIRE_CREW * delta)
+			hurt = true
+		if bool(e["walking"]) or str(e["room"]) == "" or bool(e.get("brawl", false)):
+			continue
+		var sname: String = str(_room(me_ship["rooms"], str(e["room"])).get("sys", ""))
+		if sys.has(sname) and int(sys[sname]["damage"]) < int(sys[sname]["max"]):
+			e["work"] = float(e.get("work", 0.0)) + delta
+			if float(e["work"]) >= SABOTAGE_TIME:
+				e["work"] = 0.0
+				sys[sname]["damage"] = int(sys[sname]["damage"]) + 1
+				_clip_power(sys)
+				_pop(_on_page(true, e["pos"]) + Vector2(0, -10), "Sabotage!", BAD)
+				world.sfx("hurt", 1.2, -6.0)
+		else:
+			var next: String = _boarder_target(e)
+			if next != "" and next != str(e["target"]):
+				e["target"] = next
+	if hurt:
+		_count_crew(_on_page(true, (me_ship["size"] as Vector2) / 2.0))
+
+
+# The nearest room of yours with a system still working, or the cockpit.
+func _boarder_target(e: Dictionary) -> String:
+	var best := ""
+	var best_d := INF
+	for room in me_ship["rooms"]:
+		var sname: String = str(room["sys"])
+		if not sys.has(sname) or int(sys[sname]["damage"]) >= int(sys[sname]["max"]):
+			continue
+		var d: float = (room["rect"] as Rect2).get_center().distance_to(e["pos"])
+		if d < best_d:
+			best_d = d
+			best = str(room["id"])
+	if best == "" and not _room(me_ship["rooms"], "cockpit").is_empty():
+		best = "cockpit"
+	return best
+
+
+# Clicks for your crew: a name in the crew panel or a crew member on either ship picks them; the pod tabs launch
+# and recall; with LAUNCH clicked, a room on their ship is where the pod goes. True when the click was used.
+func _crew_click(id: String, p: Vector2, left: bool) -> bool:
+	if id.begins_with("crew/"):
+		if left:
+			_pick_crew(int(id.get_slice("/", 1)))
+		return true
+	if id == "pod/launch":
+		if _can_launch():
+			pod_aim = true
+			selected = -1
+			crew_sel = -1
+			world.sfx("click")
+		else:
+			world.sfx("deny")
+			_pop(p + Vector2(0, -10), _launch_why(), DIM)
+		return true
+	if id == "pod/recall":
+		if _can_recall():
+			_recall()
+		else:
+			world.sfx("deny")
+		return true
+	if pod_aim and left:
+		for room in foe["rooms"]:
+			if (foe_xf * (room["rect"] as Rect2)).has_point(p):
+				pod_aim = false
+				_launch_pod(str(room["id"]))
+				return true
+	if left:
+		var who: int = _crew_at(p)
+		if who >= 0:
+			_pick_crew(who)
+			return true
+	return false
+
+
+func _launch_why() -> String:
+	if _eff(sys, "pods") <= 0:
+		return "The pods need power"
+	if pod_charge < POD_TIME:
+		return "Still recharging"
+	return "Put crew in the pod room first"
+
+
+func _pick_crew(i: int) -> void:
+	if i < 0 or i >= my_crew.size() or not _standing(my_crew[i]) or str(my_crew[i]["ship"]) == "pod":
+		return
+	crew_sel = i if crew_sel != i else -1
+	selected = -1
+	pod_aim = false
+	drone_selected = false
+	world.sfx("click", 1.4)
+
+
+# The crew member drawn under the pointer, or -1.
+func _crew_at(p: Vector2) -> int:
+	for i in range(my_crew.size()):
+		var c: Dictionary = my_crew[i]
+		if not _standing(c) or str(c["ship"]) == "pod":
+			continue
+		var mine: bool = str(c["ship"]) == "me"
+		var at: Vector2 = _on_page(mine, c["pos"])
+		if at.distance_to(p + Vector2(0, 3.0 * _ship_scale(mine))) <= 7.0 * _ship_scale(mine):
+			return i
+	return -1
+
+
+# With a crew member picked, a click on a room of the ship they're on sends them there.
+func _order_click(p: Vector2) -> bool:
+	var c: Dictionary = my_crew[crew_sel]
+	var mine: bool = str(c["ship"]) == "me"
+	var ship: Dictionary = _ship_of(str(c["ship"]))
+	var xf: Transform2D = my_xf if mine else foe_xf
+	for room in ship["rooms"]:
+		if (xf * (room["rect"] as Rect2)).has_point(p):
+			c["target"] = str(room["id"])
+			c["work"] = 0.0
+			crew_sel = -1
+			world.sfx("click", 1.2)
+			return true
+	return false
+
+
+# Pose for anyone not on their own ship's crew routine (yours, boarders, anyone fighting).
+func _pose_of(c: Dictionary, ship: Dictionary, fires: Dictionary) -> Array:
+	var t: float = Time.get_ticks_msec() / 1000.0 + float(c.get("hp", 0.0)) * 0.01
+	if float(c["hp"]) <= 0.0:
+		return ["down", 0, false]
+	if bool(c.get("walking", false)):
+		var f: Vector2 = c.get("face", Vector2.DOWN)
+		var step: int = int(t * 8.0) % 4
+		if absf(f.x) > absf(f.y):
+			return ["walk_right", step, f.x < 0.0]
+		return ["walk_down" if f.y >= 0.0 else "walk_up", step, false]
+	if bool(c.get("brawl", false)):
+		return ["fight", int(t * 6.0) % 4, float(c.get("foe_x", 0.0)) < (c["pos"] as Vector2).x]
+	var room: Dictionary = _room(ship["rooms"], str(c["room"]))
+	if fires.has(str(c["room"])) and is_same(ship, me_ship):
+		var mid: Vector2 = (room.get("rect", Rect2()) as Rect2).get_center()
+		return ["extinguish", int(t * 8.0) % 4, mid.x < (c["pos"] as Vector2).x - 1.0]
+	if float(c.get("work", 0.0)) > 0.0:
+		return ["repair", int(t * 6.0) % 4, false]
+	if room.has("cells") and str(room.get("sys", "")) in STATIONS:
+		var at: Array = _console_at(ship, room)
+		var spot: Vector2 = _station_spot(room, ship)
+		if (c["pos"] as Vector2).distance_to(spot) < 1.0:
+			return _work_pose(at[1], t)
+	return ["idle", int(t * 1.5) % 2, false]
+
+
+# People on one ship's picture: yours (green ring when picked) and, on your ship, their boarders.
+func _paint_people(on_me: bool, xf: Transform2D, k: float) -> void:
+	var side: String = "me" if on_me else "foe"
+	var ship: Dictionary = _ship_of(side)
+	var fires: Dictionary = my_fires if on_me else foe_fires
+	if on_me:
+		for e in e_crew_list:
+			if str(e.get("ship", "foe")) == "me":
+				_paint_person(ship, xf, k, e, str(e.get("kind", "rabble_pirate")), false, BAD, fires)
+	for i in range(my_crew.size()):
+		var c: Dictionary = my_crew[i]
+		if bool(c["gone"]) or str(c["ship"]) != side:
+			continue
+		_paint_person(ship, xf, k, c, str(c["kind"]), i == crew_sel, GOOD, fires)
+
+
+func _paint_person(ship: Dictionary, xf: Transform2D, k: float, c: Dictionary, kind: String, picked: bool, tone: Color, fires: Dictionary) -> void:
+	var s := screen
+	var cpos: Vector2 = xf * (c["pos"] as Vector2)
+	if picked:
+		s.ring(cpos + Vector2(0, 2.0 * k), 6.0 * k, GOOD)
+	if not _paint_crew(ship, xf, kind, c["pos"], _pose_of(c, ship, fires)):
+		s.circle(cpos, 3.0 * k, tone)
+		s.ring(cpos, 3.0 * k, Color("201010"))
+	var hp: float = float(c["hp"])
+	if hp > 0.0 and hp < CREW_HP:
+		var hp_bar := Rect2(cpos + Vector2(-4, -8) * k, Vector2(8.0 * k, maxf(1.0, k)))
+		s.rect(hp_bar, Color("3c2020"))
+		s.rect(Rect2(hp_bar.position, Vector2(hp_bar.size.x * hp / CREW_HP, hp_bar.size.y)), GOOD if hp > 35.0 else BAD)
+
+
+# Boarding pods in flight: out of one window and in at the other's near edge, nose first, thruster flickering.
+func _paint_pods() -> void:
+	for pd in pods_flying:
+		var mine: bool = pd["mine"]
+		var t: float = clampf(float(pd["t"]), 0.0, 1.0)
+		var a: Vector2 = _on_page(mine, pd["from"])
+		var b: Vector2 = _on_page(not mine, _room_center(not mine, str(pd["room"])))
+		var out_x: float = (MY_WIN.end.x - 3.0) if mine else (FOE_WIN.position.x + 3.0)
+		var in_x: float = (FOE_WIN.position.x + 3.0) if mine else (MY_WIN.end.x - 3.0)
+		var leave := Vector2(out_x, a.y)
+		var enter := Vector2(in_x, lerpf(b.y, a.y, 0.25))
+		var first: float = a.distance_to(leave)
+		var split: float = first / maxf(1.0, first + enter.distance_to(b))
+		var head: Vector2
+		var dir: Vector2
+		if t < split:
+			head = a.lerp(leave, t / maxf(0.001, split))
+			dir = (leave - a).normalized()
+		else:
+			head = enter.lerp(b, (t - split) / maxf(0.001, 1.0 - split))
+			dir = (b - enter).normalized()
+		var tex: Texture2D = pod_tex if mine else pod_rabble_tex
+		var sc: float = _ship_scale(mine) / 2.0
+		if tex == null:
+			screen.circle(head, 4.0, GOOD if mine else BAD)
+			continue
+		var frame: int = int(Time.get_ticks_msec() / 70) % 2
+		var flip: float = -1.0 if dir.x < 0.0 else 1.0
+		var m := Transform2D(dir.angle(), Vector2(sc, sc * flip), 0.0, head) * Transform2D(0.0, Vector2(-44, -11))
+		screen.texture_xf(tex, m, Rect2(frame * 58, 0, 58, 22))
+
+
+# The crew panel (instead of "Aboard"): each crew member with their health and what they're doing (click to pick
+# them), and the pod tabs, FTL-style: LAUNCH (green, away) and RECALL (yellow, back), greyed while recharging.
+func _paint_crew_panel() -> void:
+	var s := screen
+	var r := Rect2(565, 297, 150, 83)
+	s.panel(r, "mark", "Crew")
+	var y := 322.0
+	var shown := 0
+	for i in range(my_crew.size()):
+		var c: Dictionary = my_crew[i]
+		if bool(c["gone"]) or shown >= 4:
+			continue
+		shown += 1
+		var row := Rect2(570, y - 1, 108, 12)
+		if i == crew_sel:
+			s.rect(row, Color("dcebd0"))
+		elif s.hovering(row):
+			s.outline(row, ORANGE)
+		s.text_fit(573, y, 50, str(c["name"]), "micro", INK)
+		var bar := Rect2(624, y + 3, 22, 4)
+		s.rect(bar, ShipScreen.PIP_OFF)
+		s.rect(Rect2(bar.position, Vector2(bar.size.x * clampf(float(c["hp"]) / CREW_HP, 0.0, 1.0), bar.size.y)), GOOD if float(c["hp"]) > 35.0 else BAD)
+		var note := "HOME"
+		if str(c["ship"]) == "pod":
+			note = "IN POD"
+		elif str(c["ship"]) == "foe":
+			note = "ABOARD"
+		elif bool(c["walking"]):
+			note = "MOVING"
+		elif bool(c["brawl"]):
+			note = "FIGHTING"
+		s.text_right(677, y, note, "micro", MUTED)
+		s.hit("crew/%d" % i, row)
+		y += 13.0
+	if _pods_room() == "":
+		return
+	var ready: bool = pod_charge >= POD_TIME and _eff(sys, "pods") > 0
+	var tabs := [["pod/launch", 0 if _can_launch() else 1, Rect2(683, 318, 27, 25)],
+		["pod/recall", 2 if _can_recall() else 3, Rect2(683, 346, 27, 25)]]
+	for tb in tabs:
+		var box: Rect2 = tb[2]
+		if tabs_tex != null:
+			s.texture(tabs_tex, box, Rect2(int(tb[1]) * 54, 0, 54, 50))
+		else:
+			s.frame(box, Color("f8f6ef"))
+			s.text_center(box.get_center().x, box.position.y + 8, "OUT" if str(tb[0]) == "pod/launch" else "BACK", "micro", INK)
+		if pod_aim and str(tb[0]) == "pod/launch":
+			s.outline(box.grow(1.0), GOOD, 2.0)
+		elif s.hovering(box):
+			s.outline(box, ORANGE)
+		s.hit(str(tb[0]), box)
+	if not ready:
+		var bar2 := Rect2(683, 373, 27, 3)
+		s.rect(bar2, ShipScreen.PIP_OFF)
+		s.rect(Rect2(bar2.position, Vector2(bar2.size.x * pod_charge / POD_TIME, bar2.size.y)), Color("6f9fb4"))
+
+
 # ---------------------------------------------------------------- layout (page pixels)
 
-func _sys_rect(i: int) -> Rect2: return Rect2(87 + i * 42, 322, 33, 56)
+func _sys_rect(i: int) -> Rect2:
+	var step: float = 42.0 if bar_sys.size() <= 4 else floorf(168.0 / bar_sys.size())
+	return Rect2(87 + i * step, 322, minf(33.0, step - 4.0), 56)
 func _drone_card_rect() -> Rect2: return Rect2(569, 341, 142, 20)
 
 
@@ -1602,6 +2416,7 @@ func _paint() -> void:
 	_paint_my_window()
 	_paint_foe_window()
 	_paint_shots()
+	_paint_pods()
 	_paint_beams()
 	_paint_blasts()
 	for p in pops:
@@ -1631,7 +2446,7 @@ func _paint_strip() -> void:
 		s.circle(c, 4.5, lit if i < layers else ShipScreen.PIP_OFF)
 		s.ring(c, 4.5, Color("3f6a78"))
 	var ev_x: float = maxf(270.0, 234.0 + top * 12.0)
-	var on_suit: bool = suit_air < SUIT_AIR - 0.01 and float(my_air.get("cockpit", 1.0)) < AIR_THIN
+	var on_suit: bool = suit_air < SUIT_AIR - 0.01 and _your_air() < AIR_THIN
 	var air_words: String = ("SUIT AIR %ds" % int(ceil(suit_air))) if on_suit else ("OXYGEN %d%%" % int(oxygen))
 	s.text(ev_x, 59, "EVASION %d%%   %s" % [_my_evasion(), air_words], "micro", MUTED if oxygen > 40.0 and not on_suit else ShipScreen.PIP_RED)
 	s.text(440, 59, "FOLD DRIVE", "micro", MUTED)
@@ -1692,10 +2507,18 @@ func _paint_my_window() -> void:
 				s.rect(bar, GOOD if i < bars - dmg else BAD)
 		if drone_selected and not crew_room and result == "" and rr.has_point(s.mouse):
 			s.outline(rr.grow(-1.0), GOOD, maxf(1.0, k * 0.5))
+		if crew_sel >= 0 and str(my_crew[crew_sel]["ship"]) == "me" and result == "" and rr.has_point(s.mouse):
+			s.outline(rr.grow(-1.0), GOOD, maxf(1.0, k * 0.5))
 	_paint_hazards(true, xf, k)
 	_paint_shield(true, xf, size, k, layers)
 	_paint_doors(me_ship, xf, k, true)
 	_paint_guns(me, weapons, xf)
+	if crew_mode:
+		_paint_people(true, xf, k)
+		if lose_t >= 0.0:
+			_paint_my_damage(xf, size, k)
+		_paint_paused_tag()
+		return
 	# you, in the cockpit
 	var cockpit_room: Dictionary = _room(me["rooms"], "cockpit")
 	var cockpit: Rect2 = cockpit_room["rect"]
@@ -1718,10 +2541,14 @@ func _paint_my_window() -> void:
 		s.rect(Rect2(dp + Vector2(-5, -7) * k, Vector2(10.0 * k * drone_work / ShipData.DRONE_REPAIR_TIME, maxf(1.0, k))), GOOD)
 	if lose_t >= 0.0:
 		_paint_my_damage(xf, size, k)
+	_paint_paused_tag()
+
+
+func _paint_paused_tag() -> void:
 	if paused and result == "" and not world.dialogue.active:
 		var tag := Rect2(MY_WIN.get_center().x - 30, MY_WIN.position.y + 4, 60, 14)
-		s.rect(tag, Color("f2c94c"))
-		s.text_center(tag.get_center().x, tag.position.y, "PAUSED", "micro", INK)
+		screen.rect(tag, Color("f2c94c"))
+		screen.text_center(tag.get_center().x, tag.position.y, "PAUSED", "micro", INK)
 
 
 # The guns on their mounts, pointing at the nose (shapes until the weapon art exists). Drawn in ship-picture pixels
@@ -1769,8 +2596,10 @@ func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
 		screen.rect(xf * Rect2(m + Vector2(9, -1) * f, Vector2(2, 2) * f), data["color"])
 
 
-# Which frame a crew member shows: [row name, frame, mirrored].
+# Which frame a crew member shows: [row name, frame, mirrored]. Theirs on their ship; _pose_of for anyone else.
 func _crew_pose(c: Dictionary) -> Array:
+	if str(c.get("ship", "foe")) != "foe" or bool(c.get("brawl", false)):
+		return _pose_of(c, _ship_of(str(c.get("ship", "foe"))), my_fires if str(c.get("ship", "foe")) == "me" else foe_fires)
 	var t: float = Time.get_ticks_msec() / 1000.0 + float(c.get("hp", 0.0)) * 0.01
 	if float(c["hp"]) <= 0.0:
 		return ["down", 0, false]
@@ -1781,8 +2610,6 @@ func _crew_pose(c: Dictionary) -> Array:
 			return ["walk_right", step, f.x < 0.0]
 		return ["walk_down" if f.y >= 0.0 else "walk_up", step, false]
 	var room: Dictionary = _room(foe["rooms"], str(c["room"]))
-	if str(c["task"]) == "fight":
-		return ["fight", int(t * 6.0) % 4, float(c.get("foe_x", 0.0)) < (c["pos"] as Vector2).x]
 	if str(c["task"]) == "repair" and foe_fires.has(str(c["room"])):
 		# spraying the fire, toward the middle of the room
 		var mid: Vector2 = (room.get("rect", Rect2()) as Rect2).get_center()
@@ -2005,12 +2832,19 @@ func _paint_enemy() -> void:
 				s.rect(bar, GOOD if i < bars - dmg else BAD)
 		if selected >= 0 and rr.has_point(s.mouse):
 			s.outline(rr, BAD)
+		if (pod_aim or (crew_sel >= 0 and str(my_crew[crew_sel]["ship"]) == "foe")) and rr.has_point(s.mouse):
+			s.outline(rr, GOOD)
 	_paint_hazards(false, xf, k)
 	_paint_shield(false, xf, size, k, e_layers)
 	_paint_doors(foe, xf, k, false)
 	_paint_guns(foe, e_weapons, xf)
+	# your boarders on their ship
+	if crew_mode:
+		_paint_people(false, xf, k)
 	# their crew: red at stations, orange when repairing, a health bar once hurt
 	for c in e_crew_list:
+		if str(c.get("ship", "foe")) != "foe":
+			continue
 		var cpos: Vector2 = xf * (c["pos"] as Vector2)
 		var cr: float = 3.0 * k
 		if float(c["hp"]) <= 0.0:
@@ -2324,10 +3158,11 @@ func _paint_reactor() -> void:
 	for i in range(reactor):
 		var unit := Rect2(62, 368 - i * 6, 13, 4)
 		s.rect(unit, ShipScreen.PIP_ON if i < spare else ShipScreen.PIP_OFF)
-	for k in range(REACTOR_SYS.size()):
-		var key: String = REACTOR_SYS[k]
+	for k in range(bar_sys.size()):
+		var key: String = bar_sys[k]
 		var box := _sys_rect(k)
 		var x: float = box.position.x + 5
+		var bw: float = box.size.x - 10.0
 		var st: Dictionary = sys[key]
 		var top: int = int(st["max"])
 		var step: float = 8.0 if top <= 4 else floorf(32.0 / top)
@@ -2337,20 +3172,20 @@ func _paint_reactor() -> void:
 				col = ShipScreen.PIP_RED
 			elif i < int(st["power"]):
 				col = ShipScreen.PIP_ON
-			var bar := Rect2(x, 354 - i * step, 23, step - 2.0)
+			var bar := Rect2(x, 354 - i * step, bw, step - 2.0)
 			s.rect(bar, col)
 			s.outline(bar, Color("4d5a4e") if col == ShipScreen.PIP_ON else Color("bdb4a5"))
 		if _boosting(key):
-			s.rect(Rect2(x + 9, 326, 5, 5), DRONE)
-			s.outline(Rect2(x + 9, 326, 5, 5), Color("5a4512"))
+			s.rect(Rect2(x + bw / 2.0 - 2.5, 326, 5, 5), DRONE)
+			s.outline(Rect2(x + bw / 2.0 - 2.5, 326, 5, 5), Color("5a4512"))
 		var icon_i: int = ROOM_ICONS.find(key)
 		if room_icons != null and icon_i >= 0:
 			var tint: Color = ICON_HIT if int(st["damage"]) > 0 else (ICON_POWERED if int(st["power"]) > 0 else ICON_OK)
 			if float(st.get("ion", 0.0)) > 0.0:
 				tint = ICON_ION
-			s.texture(room_icons, Rect2(x + 3.5, 360, 16, 16), Rect2(icon_i * 32, 0, 32, 32), tint)
+			s.texture(room_icons, Rect2(x + bw / 2.0 - 8.0, 360, 16, 16), Rect2(icon_i * 32, 0, 32, 32), tint)
 		else:
-			s.text_center(x + 11.5, 364, str(SYS_LABEL[key]), "micro", MUTED)
+			s.text_center(x + bw / 2.0, 364, str(SYS_LABEL.get(key, key)), "micro", MUTED)
 		if s.hovering(box):
 			s.outline(box, ORANGE)
 		s.hit("sys/%d" % k, box)
@@ -2436,6 +3271,9 @@ func _paint_weapons() -> void:
 
 
 func _paint_aboard() -> void:
+	if crew_mode:
+		_paint_crew_panel()
+		return
 	var s := screen
 	var r := Rect2(565, 297, 150, 83)
 	s.panel(r, "mark", "Aboard")
@@ -2470,7 +3308,7 @@ func _paint_aboard() -> void:
 
 func _paint_status() -> void:
 	var s := screen
-	var line := "1-2 weapons   D drone   V autofire   Space pause"
+	var line := ("1-3 weapons   click crew, then a room   V autofire   Space pause" if crew_mode else "1-2 weapons   D drone   V autofire   Space pause")
 	if not bool(fight.get("story", false)):
 		line += "   J jump"
 	var col := INK
@@ -2480,6 +3318,10 @@ func _paint_status() -> void:
 		line = ""
 	elif paused:
 		line = "Paused. You can still give orders; Space or Resume carries on."
+	elif pod_aim:
+		line = "Click a room on their ship to send the boarding pod."
+	elif crew_sel >= 0:
+		line = "Click a room to send %s there. Right click or Esc to cancel." % str(my_crew[crew_sel]["name"])
 	elif drone_selected:
 		line = "Click a bay on your ship to send the drone there."
 	elif selected >= 0:
