@@ -213,6 +213,19 @@ units. At 1080p a 2x ship shows at 1 screen pixel per art pixel, so it looks the
 
 ## 2. Crew art (in battle)
 
+**Done (22 Nov, Claude):** `tools/dev/ship_art/crew2x.py` draws twelve crew sheets in `art/ships/crew/<kind>.png`,
+FTL-style mini people drawn on a 24-px grid and doubled: 48 × 48 frames, 4 across, 9 rows (walk down, up, right;
+idle; at a console facing up, right, down; repairing with a wrench and sparks; knocked out). Kinds: `player` (you,
+in a white space suit with an orange stripe, a teal visor and a backpack, so no customisation is needed), `human`,
+`freya` (goggles), `ana` (her jacket), `rabble_pirate` (red bandanas), `terran_marine` (white armour, blue visor),
+`zaash` (bone crest), `arachnay` (four arms, red eyes), `moogli` (round, frog eyes), `ervani` (fox ears, muzzle and
+tail), `vuultam` (leaves), `scyldar` (a fin). In battle each crew member walks facing the way they go, works their
+console facing its wall, repairs and fights fires with the repair pose, and lies down when knocked out; you stand
+at your cockpit console. Rabble ships and Rabble repaints are crewed by `rabble_pirate`, Terran patrols by
+`terran_marine`, each culture ship by its own people, and the Collective freighter by a mix. The plan below is the
+original brief.
+
+
 Inside ships, crew are small **top-down** sprites, one per cell, like FTL's. They are separate from the 24 × 48 station sprites.
 
 ### 2.1 A crew sheet: `art/ships/crew/<id>.png` (96 × 216)

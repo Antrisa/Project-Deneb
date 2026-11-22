@@ -46,6 +46,15 @@ var weapon_texes := {}
 var missile_tex: Texture2D
 var beams: Array = []            # {"at_player", "from", "a", "b" (target picture px), "t", "dmg", "color", "hit", "rooms"}
 const BEAM_TIME := 0.9
+# Crew sprites, FTL-style (Zachary, 21 Nov: "mini people sprites like ftl and player in a space suit"):
+# art/ships/crew/<kind>.png, 48 x 48 frames (tools/dev/ship_art/crew2x.py), rows: walk down, up, right (left is right
+# mirrored), idle, at a console facing up, right, down, repairing, knocked out. Who crews which ship:
+var crew_texes := {}
+const CREW_KIND := {"terran_patrol": "terran_marine", "zaash_skiff": "zaash", "vuultam_garden": "vuultam",
+	"moogli_trader": "moogli", "ervani_courier": "ervani", "scyldar_lantern": "scyldar", "arachnay_weaver": "arachnay",
+	"collective_freighter": ["vuultam", "moogli", "ervani", "scyldar", "arachnay"]}
+const CREW_ROW := {"walk_down": 0, "walk_up": 1, "walk_right": 2, "idle": 3, "work_up": 4, "work_right": 5, "work_down": 6,
+	"repair": 7, "down": 8}
 # Hazards from the rare weapons: rooms on fire and rooms full of gas, by room id: {"t": seconds left, "acc"}.
 var my_fires := {}
 var foe_fires := {}
@@ -167,6 +176,10 @@ func _ready() -> void:
 	me_ship = ShipData.build(ShipData.STARTER)
 	room_icons = _load_tex("res://art/ui/ship/icons_systems.png")
 	missile_tex = _load_tex("res://art/ships/shots/missile.png")
+	for kind in ["player", "human", "freya", "ana", "rabble_pirate", "terran_marine", "zaash", "arachnay", "moogli", "ervani", "vuultam", "scyldar"]:
+		var ct: Texture2D = _load_tex("res://art/ships/crew/%s.png" % kind)
+		if ct != null:
+			crew_texes[kind] = ct
 	for wid in ShipData.WEAPONS:
 		var tex: Texture2D = _load_tex("res://art/ships/weapons/%s.png" % wid)
 		if tex != null:
@@ -1031,7 +1044,10 @@ func _make_enemy_crew() -> void:
 			home = _sys_room(STATIONS[i])
 		if home == "":
 			home = _spare_room()
+		var kinds: Variant = CREW_KIND.get(foe_id, "rabble_pirate")
+		var kind: String = str(kinds[i % (kinds as Array).size()]) if kinds is Array else str(kinds)
 		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i, true), "hp": CREW_HP, "task": "station",
+			"kind": kind, "face": Vector2.DOWN, "walking": false,
 			"last": home, "path": [], "path_to": home})
 	e_crew = e_crew_list.size()
 
@@ -1139,11 +1155,17 @@ func _enemy_crew(delta: float) -> void:
 				path.pop_front()
 			else:
 				c3["pos"] = at + (to - at).normalized() * step
+			if at.distance_to(to) > 0.01:
+				c3["face"] = (to - at).normalized()
+			c3["walking"] = true
 			c3["room"] = ""
 		elif at.distance_to(goal) > step:
 			c3["pos"] = at + (goal - at).normalized() * step
+			c3["face"] = (goal - at).normalized()
+			c3["walking"] = true
 			c3["room"] = ""
 		else:
+			c3["walking"] = false
 			c3["pos"] = goal
 			c3["room"] = c3["target"]
 			c3["last"] = c3["target"]
@@ -1470,10 +1492,15 @@ func _paint_my_window() -> void:
 	_paint_doors(me_ship, xf, k, true)
 	_paint_guns(me, weapons, xf)
 	# you, in the cockpit
-	var cockpit: Rect2 = _room(me["rooms"], "cockpit")["rect"]
-	var you: Vector2 = xf * (cockpit.get_center() + Vector2(-2, 0))      # in the seat, under the canopy
-	s.circle(you, 5.0 * k, YOU)
-	s.ring(you, 5.0 * k, Color("201e28"))
+	var cockpit_room: Dictionary = _room(me["rooms"], "cockpit")
+	var cockpit: Rect2 = cockpit_room["rect"]
+	var seat: Array = _console_at(me, cockpit_room)
+	var you_at: Vector2 = (Vector2(seat[0]) + Vector2(0.5, 0.5)) * ShipData.CELL
+	var t_ms: float = Time.get_ticks_msec() / 1000.0
+	if not _paint_crew(me, xf, "player", you_at, _work_pose(seat[1], t_ms)):
+		var you: Vector2 = xf * (cockpit.get_center() + Vector2(-2, 0))      # in the seat, under the canopy
+		s.circle(you, 5.0 * k, YOU)
+		s.ring(you, 5.0 * k, Color("201e28"))
 	# the drone
 	var dp: Vector2 = xf * drone_pos
 	var dh: float = 3.0 * k
@@ -1535,6 +1562,51 @@ func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
 		screen.rect(xf * Rect2(m + Vector2(-5, -2) * f, Vector2(6, 4) * f), Color("5d5868"))
 		screen.rect(xf * Rect2(m + Vector2(1, -1) * f, Vector2(10, 2) * f), Color("6e6a7c"))
 		screen.rect(xf * Rect2(m + Vector2(9, -1) * f, Vector2(2, 2) * f), data["color"])
+
+
+# Which frame a crew member shows: [row name, frame, mirrored].
+func _crew_pose(c: Dictionary) -> Array:
+	var t: float = Time.get_ticks_msec() / 1000.0 + float(c.get("hp", 0.0)) * 0.01
+	if float(c["hp"]) <= 0.0:
+		return ["down", 0, false]
+	if bool(c.get("walking", false)):
+		var f: Vector2 = c.get("face", Vector2.DOWN)
+		var step: int = int(t * 8.0) % 4
+		if absf(f.x) > absf(f.y):
+			return ["walk_right", step, f.x < 0.0]
+		return ["walk_down" if f.y >= 0.0 else "walk_up", step, false]
+	var room: Dictionary = _room(foe["rooms"], str(c["room"]))
+	if str(c["task"]) == "repair":
+		return ["repair", int(t * 6.0) % 4, false]
+	if str(c["room"]) == str(c["home"]) and str(room.get("sys", "")) in STATIONS and room.has("cells"):
+		return _work_pose(_console_at(foe, room)[1], t)
+	return ["idle", int(t * 1.5) % 2, false]
+
+
+# Working a console on the given side of the cell: [row, frame, mirrored].
+func _work_pose(side: Vector2i, t: float) -> Array:
+	var f: int = int(t * 3.0) % 2
+	if side == Vector2i(0, -1):
+		return ["work_up", f, false]
+	if side == Vector2i(0, 1):
+		return ["work_down", f, false]
+	return ["work_right", f, side == Vector2i(-1, 0)]
+
+
+# One crew sprite standing at pos (ship-picture px) on a ship drawn through xf. False if there's no sprite for them.
+func _paint_crew(ship: Dictionary, xf: Transform2D, kind: String, pos: Vector2, pose: Array) -> bool:
+	var tex: Texture2D = crew_texes.get(kind)
+	if tex == null:
+		return false
+	var a: float = float(ship.get("art_scale", 1))
+	var row: int = int(CREW_ROW[pose[0]])
+	var src := Rect2(int(pose[1]) * 48, row * 48, 48, 48)
+	# the figure's middle (its waist) at pos; in art pixels the frame is 48 x 48 and the figure's waist is at (24, 28)
+	var m: Transform2D = _art_xf(ship, xf) * Transform2D(0.0, pos * a - Vector2(24, 28))
+	if bool(pose[2]):
+		m = m * Transform2D(Vector2(-1, 0), Vector2(0, 1), Vector2(48, 0))
+	screen.texture_xf(tex, m, src)
+	return true
 
 
 # A system room's marking in the middle of the room: grey while working, red while damaged. False when the room
@@ -1686,11 +1758,13 @@ func _paint_enemy() -> void:
 		var cpos: Vector2 = xf * (c["pos"] as Vector2)
 		var cr: float = 3.0 * k
 		if float(c["hp"]) <= 0.0:
-			s.line(cpos + Vector2(-cr, -cr), cpos + Vector2(cr, cr), Color("5a4a48"), 1.0)
-			s.line(cpos + Vector2(-cr, cr), cpos + Vector2(cr, -cr), Color("5a4a48"), 1.0)
+			if not _paint_crew(foe, xf, str(c.get("kind", "rabble_pirate")), c["pos"], ["down", 0, false]):
+				s.line(cpos + Vector2(-cr, -cr), cpos + Vector2(cr, cr), Color("5a4a48"), 1.0)
+				s.line(cpos + Vector2(-cr, cr), cpos + Vector2(cr, -cr), Color("5a4a48"), 1.0)
 			continue
-		s.circle(cpos, cr, Color("f0a040") if str(c["task"]) == "repair" else Color("e65a50"))
-		s.ring(cpos, cr, Color("201010"))
+		if not _paint_crew(foe, xf, str(c.get("kind", "rabble_pirate")), c["pos"], _crew_pose(c)):
+			s.circle(cpos, cr, Color("f0a040") if str(c["task"]) == "repair" else Color("e65a50"))
+			s.ring(cpos, cr, Color("201010"))
 		if float(c["hp"]) < CREW_HP:
 			var hp_bar := Rect2(cpos + Vector2(-4, -6) * k, Vector2(8.0 * k, maxf(1.0, k)))
 			s.rect(hp_bar, Color("3c2020"))
