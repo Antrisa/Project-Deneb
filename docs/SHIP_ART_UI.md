@@ -182,6 +182,16 @@ until crews come). The pirate stronghold and the Nest are in `ENEMIES` (rooms in
 turret rings, no engines so no evasion; `bases2x.py --install .`). Install art with
 `python3 -I tools/dev/ship_art/fleet2x.py --install .` or `story2x.py --install . <ids>`.
 
+**Breaking up** (Zachary, 21 Nov: "add animation for ship destruction like FTL it breaks into pieces, with some ship
+innards attached, for player destruction an emergency jump back to the station with some bits breaking off"):
+`tools/dev/ship_art/gibs2x.py` cuts every installed ship into 3 to 5 pieces (`gib_N.png`, `gib_rabble_N.png` for
+repaints; each the hull's size, holding only its piece). Along each torn edge the piece shows the cut-away's deck
+and walls, a charred rim, sparks, and pipes and cables hanging out. An enemy blown apart flashes with blasts, then
+splits; the pieces drift out from the middle, turn and fade (a ship won by downing its crew stays whole). When
+you're beaten, three bits break off your fighter (`chip_N.png`, leaving `interior_broken.png`), the fold drive
+glows as it charges, and the ship stretches into a streak and is gone in a flash: "Emergency jump: heading home".
+The fold jump streaks away the same way. Re-run `gibs2x.py .` after changing any ship's art.
+
 **How the art is fitted:** the battle screen uses each ship's
 `art_scale` (2 for these): the picture is fitted on its art pixels, while rooms, crew and the drone stay in 24-px cell
 units. At 1080p a 2x ship shows at 1 screen pixel per art pixel, so it looks the same size as a 1x ship did at 2x.

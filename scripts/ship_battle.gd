@@ -55,6 +55,17 @@ var ship_tex: Texture2D
 var interior_tex: Texture2D          # your ship's cut-away
 var enemy_tex: Texture2D
 var enemy_inside: Texture2D      # their cut-away, when the art has one
+# Breaking up, FTL-style (Zachary, 21 Nov): an enemy blown apart splits into pieces with its insides showing
+# (art/ships/<id>/gib_N.png, tools/dev/ship_art/gibs2x.py) that drift apart and spin; when you're beaten, bits break
+# off your fighter (chip_N.png, interior_broken.png) and it makes an emergency jump home. The fold jump streaks too.
+var foe_gibs: Array = []         # {"tex", "c": its middle in art px, "dir", "spin"}
+var my_chips: Array = []
+var broken_tex: Texture2D
+var break_t := -1.0              # seconds since the enemy broke up (-1: it hasn't)
+var lose_t := -1.0               # seconds since your ship was beaten
+var jump_t := -1.0               # seconds since your ship started its jump (emergency or fold)
+const BREAK_FLASH := 0.45        # the ship flashes with blasts this long before it splits
+const JUMP_AT := 2.1             # when beaten: bits break off, the drive charges, then this many seconds in it jumps
 var my_xf := Transform2D.IDENTITY    # your ship picture -> page
 var foe_xf := Transform2D.IDENTITY   # theirs
 
@@ -130,6 +141,8 @@ func _ready() -> void:
 		interior_tex = load(inside)
 	me_ship = ShipData.build(ShipData.STARTER)
 	room_icons = _load_tex("res://art/ui/ship/icons_systems.png")
+	broken_tex = _load_tex(str(ShipData.STARTER.get("interior", "")).replace("interior.png", "interior_broken.png"))
+	my_chips = _pieces(str(ShipData.STARTER["art"]).replace("hull.png", "chip_%d.png"), ShipData.STARTER)
 
 
 # ---------------------------------------------------------------- starting and ending
@@ -181,6 +194,11 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	overcharged = false
 	enemy_tex = _load_tex(str(foe.get("art", "")))
 	enemy_inside = _load_tex(str(foe.get("interior", "")))
+	var art: String = str(foe.get("art", ""))
+	foe_gibs = _pieces(art.get_basename().replace("hull", "gib") + "_%d.png", foe) if art != "" else []
+	break_t = -1.0
+	lose_t = -1.0
+	jump_t = -1.0
 	_fit_ships()
 	open = true
 	visible = true
@@ -262,6 +280,9 @@ func _win() -> void:
 	result_text = "%s destroyed" % str(foe["name"])
 	end_timer = 2.2
 	shake = 0.6
+	if e_hull <= 0 and not foe_gibs.is_empty():
+		break_t = 0.0                # it breaks apart (a ship won by downing its crew stays whole)
+		end_timer = 3.0
 	world.sfx("die", 0.6)
 
 
@@ -269,7 +290,9 @@ func _lose(why: String) -> void:
 	if result != "": return
 	result = "lost"
 	result_text = why
-	end_timer = 2.0
+	end_timer = JUMP_AT + 1.2
+	lose_t = 0.0
+	shake = 1.4
 	world.sfx("die")
 
 
@@ -277,7 +300,8 @@ func _jump() -> void:
 	if result != "" or fold < 100.0 or bool(fight.get("story", false)): return
 	result = "fled"
 	result_text = "Fold jump: heading home"
-	end_timer = 1.0
+	end_timer = 1.2
+	jump_t = 0.0
 	world.sfx("warp")
 
 
@@ -297,6 +321,15 @@ func _process(delta: float) -> void:
 		return
 	if result != "":
 		end_timer -= delta
+		if break_t >= 0.0:
+			break_t += delta
+		if lose_t >= 0.0:
+			lose_t += delta
+			if lose_t >= JUMP_AT and jump_t < 0.0:
+				jump_t = 0.0
+				world.sfx("warp")
+		if jump_t >= 0.0:
+			jump_t += delta
 		_move_shots(delta, false)
 		if end_timer <= 0.0:
 			_finish()
@@ -1097,6 +1130,9 @@ func _paint_my_window() -> void:
 	var me: Dictionary = me_ship
 	var size: Vector2 = me["size"]
 	var k: float = _ship_scale(true)
+	if jump_t >= 0.0:
+		_paint_jump(size, k)
+		return
 	var off := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * (2.0 if shake > 0.0 else 0.0)
 	var xf := Transform2D(0.0, Vector2(k, k), 0.0, my_xf.origin + off)
 	if layers > 0:
@@ -1106,8 +1142,9 @@ func _paint_my_window() -> void:
 			s.ellipse(mid, size * k / 2.0 + Vector2(12, 12), Color(Color("78f0ff"), 0.7), 1.0)
 	# The cut-away when there is one; otherwise the hull with the rooms drawn over it.
 	var inside: bool = interior_tex != null
+	var bits_gone: bool = lose_t >= 0.3 and broken_tex != null
 	if inside:
-		s.texture(interior_tex, Rect2(xf.origin, size * k))
+		s.texture(broken_tex if bits_gone else interior_tex, Rect2(xf.origin, size * k))
 	elif ship_tex != null:
 		var fw: float = ship_tex.get_width() / float(me["frames"])
 		s.texture(ship_tex, Rect2(xf.origin, size * k), Rect2(fw * int(me["frame"]), 0, fw, ship_tex.get_height()))
@@ -1152,6 +1189,8 @@ func _paint_my_window() -> void:
 	s.outline(body, Color("282018"))
 	if drone_room != "" and drone_work > 0.0:
 		s.rect(Rect2(dp + Vector2(-5, -7) * k, Vector2(10.0 * k * drone_work / ShipData.DRONE_REPAIR_TIME, maxf(1.0, k))), GOOD)
+	if lose_t >= 0.0:
+		_paint_my_damage(xf, size, k)
 	if paused and result == "" and not world.dialogue.active:
 		var tag := Rect2(MY_WIN.get_center().x - 30, MY_WIN.position.y + 4, 60, 14)
 		s.rect(tag, Color("f2c94c"))
@@ -1258,10 +1297,14 @@ func _paint_foe_window() -> void:
 				s.rect(Rect2(x0, y0 + 38, 150, 3), Color("3c2a1e"))
 				s.rect(Rect2(x0, y0 + 38, 150.0 * float(w["charge"]) / full, 3), GOLD)
 	var destroyed: bool = e_hull <= 0
-	if not (destroyed and (end_timer < 1.6 or result == "done")):
-		_paint_enemy()
-	if destroyed and result != "done":
-		_paint_blast()
+	if break_t >= 0.0:
+		if result != "done":
+			_paint_break_up()
+	else:
+		if not (destroyed and (end_timer < 1.6 or result == "done")):
+			_paint_enemy()
+		if destroyed and result != "done":
+			_paint_blast()
 
 
 func _paint_enemy() -> void:
@@ -1340,6 +1383,117 @@ func _paint_enemy() -> void:
 		s.line(at + Vector2(-r - 3, 0), at + Vector2(r + 3, 0), BAD, 1.0)
 		s.line(at + Vector2(0, -r - 3), at + Vector2(0, r + 3), BAD, 1.0)
 		s.text(at.x + r + 1, at.y - r - 10, str(i + 1), "micro", BAD)
+
+
+# A ship's pieces (gib_N.png or chip_N.png, numbered from 1): each with where its middle is in the picture, the way
+# it flies (out from the ship's middle) and how fast it turns.
+func _pieces(pattern: String, ship: Dictionary) -> Array:
+	var out: Array = []
+	var a: float = float(ship.get("art_scale", 1))
+	var mid: Vector2 = (ship["size"] as Vector2) * a / 2.0
+	for i in range(1, 9):
+		var tex: Texture2D = _load_tex(pattern % i)
+		if tex == null:
+			break
+		var used: Rect2i = tex.get_image().get_used_rect()
+		var c: Vector2 = Vector2(used.position) + Vector2(used.size) / 2.0
+		var dir: Vector2 = (c - mid).normalized() if c.distance_to(mid) > 1.0 else Vector2.UP
+		out.append({"tex": tex, "c": c, "dir": dir.rotated(randf_range(-0.35, 0.35)),
+			"speed": randf_range(14.0, 26.0), "spin": randf_range(-0.9, 0.9)})
+	return out
+
+
+# Art pixels -> page for a ship drawn through xf (which works in 24-px cell units).
+func _art_xf(ship: Dictionary, xf: Transform2D) -> Transform2D:
+	var a: float = float(ship.get("art_scale", 1))
+	return xf * Transform2D(0.0, Vector2(1.0 / a, 1.0 / a), 0.0, Vector2.ZERO)
+
+
+# One piece of a ship, moved d page pixels and turned by ang about its own middle.
+func _paint_piece(piece: Dictionary, art_xf: Transform2D, d: Vector2, ang: float, col: Color) -> void:
+	var c: Vector2 = piece["c"]
+	var m: Transform2D = Transform2D(0.0, d) * art_xf * Transform2D(0.0, c) * Transform2D(ang, Vector2.ZERO) * Transform2D(0.0, -c)
+	screen.texture_xf(piece["tex"], m, Rect2(), col)
+
+
+# A blast: an orange ball that swells and fades over life seconds.
+func _puff(at: Vector2, t: float, life: float, size: float) -> void:
+	if t < 0.0 or t > life:
+		return
+	var u: float = t / life
+	screen.circle(at, size * (0.4 + u), Color(1.0, 0.85 - 0.5 * u, 0.35, 0.9 * (1.0 - u)))
+	screen.circle(at, size * (0.2 + 0.5 * u), Color(1.0, 0.97, 0.8, 0.9 * (1.0 - u) * (1.0 - u)))
+
+
+# The enemy breaking up: it flashes with blasts, then splits into its pieces, which drift apart, turn and fade.
+func _paint_break_up() -> void:
+	var k: float = _ship_scale(false)
+	var size: Vector2 = foe["size"]
+	var art_xf: Transform2D = _art_xf(foe, foe_xf)
+	if break_t < BREAK_FLASH:
+		if enemy_inside != null:
+			screen.texture(enemy_inside, _ship_rect(foe_xf, size))
+		for i in range(5):
+			var p: Vector2 = foe_xf * (size * Vector2(0.2 + 0.15 * i, 0.3 + 0.4 * float(i % 2)))
+			_puff(p, break_t - i * 0.07, 0.4, 6.0 * k)
+		return
+	var t: float = break_t - BREAK_FLASH
+	var fade: float = clampf(1.0 - (t - 1.7) / 0.8, 0.0, 1.0)
+	for piece in foe_gibs:
+		var d: Vector2 = (art_xf.basis_xform(piece["dir"]) as Vector2).normalized() * float(piece["speed"]) * t * k * 0.8
+		_paint_piece(piece, art_xf, d, float(piece["spin"]) * t, Color(1, 1, 1, fade))
+	# blasts where it tore apart, and a ring of debris
+	var mid: Vector2 = foe_xf * (size / 2.0)
+	_puff(mid, t, 0.6, 16.0 * k)
+	for i in range(foe_gibs.size()):
+		var piece: Dictionary = foe_gibs[i]
+		var at: Vector2 = art_xf * (piece["c"] as Vector2)
+		_puff(mid.lerp(at, 0.5), t - 0.08 * i, 0.5, 7.0 * k)
+	for i in range(12):
+		var a: float = i * TAU / 12.0 + 0.3
+		var r: float = (20.0 + 50.0 * t) * k
+		screen.rect(Rect2(mid + Vector2(cos(a), sin(a)) * r, Vector2(2, 2) * k), Color(0.62, 0.55, 0.5, maxf(0.0, 1.0 - t * 0.7)))
+
+
+# Beaten: bits break off your fighter (with blasts where they tore), and the drive charges for the jump.
+func _paint_my_damage(xf: Transform2D, size: Vector2, k: float) -> void:
+	var art_xf: Transform2D = _art_xf(me_ship, xf)
+	var t: float = lose_t - 0.3
+	for i in range(my_chips.size()):
+		var piece: Dictionary = my_chips[i]
+		var at: Vector2 = art_xf * (piece["c"] as Vector2)
+		_puff(at, t - 0.15 * i, 0.5, 5.0 * k)
+		if t > 0.15 * i:
+			var tt: float = t - 0.15 * i
+			var d: Vector2 = (piece["dir"] as Vector2) * (float(piece["speed"]) + 20.0) * tt * k * 0.5
+			_paint_piece(piece, art_xf, d, float(piece["spin"]) * 3.0 * tt, Color(1, 1, 1, clampf(1.0 - tt / 1.6, 0.0, 1.0)))
+	if lose_t > 1.3:
+		# the fold drive spooling up: a blue glow round the ship
+		var u: float = clampf((lose_t - 1.3) / (JUMP_AT - 1.3), 0.0, 1.0)
+		var mid: Vector2 = xf * (size / 2.0)
+		screen.ellipse(mid, size * k / 2.0 + Vector2(4, 4) * (1.0 + u * 2.0), Color(0.55, 0.85, 1.0, 0.3 + 0.6 * u), 1.0 + u * 2.0)
+
+
+# The jump: the ship stretches into a streak and is gone in a flash, leaving a fading line.
+func _paint_jump(size: Vector2, k: float) -> void:
+	var u: float = clampf(jump_t / 0.45, 0.0, 1.0)
+	var start := Rect2(my_xf.origin, size * k)
+	var tex: Texture2D = ship_tex if ship_tex != null else interior_tex
+	if u < 1.0 and tex != null:
+		var dx: float = u * u * 260.0
+		var stretch: float = 1.0 + u * 2.5
+		for j in range(3, -1, -1):
+			var lag: float = float(j) * 0.12
+			var x: float = maxf(0.0, dx - lag * 260.0 * u)
+			var r := Rect2(start.position + Vector2(x, size.y * k * u * 0.15), Vector2(start.size.x * stretch, start.size.y * (1.0 - u * 0.3)))
+			screen.texture(tex, r, Rect2(), Color(0.75, 0.9, 1.0, (1.0 - u) * (1.0 - j * 0.22)))
+	var mid: Vector2 = start.get_center()
+	var flash: float = clampf(1.0 - absf(jump_t - 0.4) / 0.25, 0.0, 1.0)
+	if flash > 0.0:
+		screen.circle(mid + Vector2(120, 0) * u, 18.0 * k * flash, Color(1, 1, 1, flash))
+	var fade: float = clampf(1.0 - (jump_t - 0.4) / 0.7, 0.0, 1.0)
+	if jump_t > 0.2 and fade > 0.0:
+		screen.rect(Rect2(mid.x, mid.y - 1, MY_WIN.end.x - 8 - mid.x, 2), Color(0.75, 0.92, 1.0, fade))
 
 
 func _paint_blast() -> void:
@@ -1543,4 +1697,5 @@ func _paint_status() -> void:
 			tone = Color("3f7a4c")
 		elif result == "lost":
 			tone = Color("a43a2a")
-		s.text_center(box.get_center().x, box.position.y + 9, result_text, "strong", tone)
+		var words: String = "Emergency jump: heading home" if result == "lost" and jump_t >= 0.0 else result_text
+		s.text_center(box.get_center().x, box.position.y + 9, words, "strong", tone)

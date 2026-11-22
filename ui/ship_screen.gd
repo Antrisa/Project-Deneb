@@ -214,6 +214,13 @@ func texture(tex: Texture2D, dest: Rect2, src: Rect2 = Rect2(), col: Color = Col
 		cmds.append(["tx", tex, dest, src, col])
 
 
+# A picture drawn through a transform (picture pixels -> page), so it can turn and flip: pieces of a ship breaking
+# up. src: the part of the picture (all of it when empty).
+func texture_xf(tex: Texture2D, xf: Transform2D, src: Rect2 = Rect2(), col: Color = Color.WHITE) -> void:
+	if tex != null:
+		cmds.append(["txx", tex, xf, src if src.size != Vector2.ZERO else Rect2(Vector2.ZERO, tex.get_size()), col])
+
+
 # One of the datapad's own pictures (datapad/art), tinted.
 func img(id: String, r: Rect2, col: Color = Color.WHITE) -> void:
 	if Art.TEXTURES.has(id):
@@ -387,6 +394,11 @@ func _paint_native() -> void:
 					_raster.draw_texture_rect(c[1], c[2], false, c[4])
 				else:
 					_raster.draw_texture_rect_region(c[1], c[2], src, c[4])
+			"txx":
+				var area: Rect2 = c[3]
+				_raster.draw_set_transform_matrix(c[2])
+				_raster.draw_texture_rect_region(c[1], Rect2(Vector2.ZERO, area.size), area, c[4])
+				_raster.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 			"t": _paint_text(c[1], c[2], c[3], c[4], c[5])
 
 
