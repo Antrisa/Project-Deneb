@@ -65,7 +65,7 @@ const CREW_KIND := {"terran_patrol": "terran_marine", "zaash_skiff": "zaash", "v
 	"moogli_trader": "moogli", "ervani_courier": "ervani", "scyldar_lantern": "scyldar", "arachnay_weaver": "arachnay",
 	"collective_freighter": ["vuultam", "moogli", "ervani", "scyldar", "arachnay"]}
 const CREW_ROW := {"walk_down": 0, "walk_up": 1, "walk_right": 2, "idle": 3, "work_up": 4, "work_right": 5, "work_down": 6,
-	"repair": 7, "down": 8, "fight": 9, "extinguish": 10}
+	"repair": 7, "down": 8, "fight": 9, "extinguish": 10, "shoot": 11}
 # Hazards from the rare weapons: rooms on fire and rooms full of gas, by room id: {"t": seconds left, "acc"}.
 var my_fires := {}
 var foe_fires := {}
@@ -331,7 +331,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	_make_enemy_crew()
 	_make_my_crew()
 	crew_sel = -1
-	pod_charge = 0.0
+	pod_charge = POD_TIME            # fights start with the pod room charged (Zachary, 22 Nov)
 	pod_aim = false
 	tether = bool(fight.get("tether", false))
 	e_pods = crew_mode and (bool(fight.get("foe_pods", false)) or bool(foe.get("pods", false)))
@@ -1306,9 +1306,11 @@ func _make_enemy_crew() -> void:
 			home = _spare_room()
 		var kinds: Variant = CREW_KIND.get(foe_id, "rabble_pirate")
 		var kind: String = str(kinds[i % (kinds as Array).size()]) if kinds is Array else str(kinds)
-		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i, true), "hp": CREW_HP, "task": "station", "ship": "foe", "work": 0.0,
+		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i, true), "hp": CREW_HP, "task": "station", "ship": "foe", "work": 0.0, "cell": Vector2i(-1, -1), "cells": [],
 			"kind": kind, "face": Vector2.DOWN, "walking": false,
 			"last": home, "path": [], "path_to": home})
+	for c in e_crew_list:
+		_place_in(c, foe, "foe", str(c["home"]), true)
 	e_crew = e_crew_list.size()
 
 
@@ -1438,41 +1440,10 @@ func _enemy_crew(delta: float) -> void:
 			if (not e_sys.has(tsys) or int(e_sys[tsys]["damage"]) <= 0) and not foe_fires.has(str(c3["target"])):
 				c3["task"] = "station"
 				c3["target"] = c3["home"]
-		# Through the doors when the ship has them (ShipData.route), from the room they're in now.
-		if str(c3["path_to"]) != str(c3["target"]):
-			c3["path_to"] = c3["target"]
-			var steps: Array = []
-			for st in ShipData.route(foe, str(c3["last"]), str(c3["target"])):
-				steps.append({"pos": st["door"]["at"], "room": str(st["room"]), "door": st["door"]})
-			c3["path"] = steps
-		var goal: Vector2 = _crew_spot(str(c3["target"]), i, str(c3["task"]) == "station" and str(c3["target"]) == str(c3["home"]))
-		var at: Vector2 = c3["pos"]
-		var step: float = CREW_SPEED * delta
-		var path: Array = c3["path"]
-		if path.size() > 0:
-			var wp: Dictionary = path[0]
-			var to: Vector2 = wp["pos"]
-			if at.distance_to(to) <= step:
-				c3["pos"] = to
-				c3["last"] = wp["room"]
-				_door_pass(wp["door"])
-				path.pop_front()
-			else:
-				c3["pos"] = at + (to - at).normalized() * step
-			if at.distance_to(to) > 0.01:
-				c3["face"] = (to - at).normalized()
-			c3["walking"] = true
-			c3["room"] = ""
-		elif at.distance_to(goal) > step:
-			c3["pos"] = at + (goal - at).normalized() * step
-			c3["face"] = (goal - at).normalized()
-			c3["walking"] = true
-			c3["room"] = ""
-		else:
-			c3["walking"] = false
-			c3["pos"] = goal
-			c3["room"] = c3["target"]
-			c3["last"] = c3["target"]
+		# Cell to cell through the doors (Zachary, 22 Nov: crew move tile to tile), to a free cell of the room;
+		# at their home station, the console's cell.
+		_move_person(c3, foe, "foe", delta, str(c3["task"]) == "station" and str(c3["target"]) == str(c3["home"]))
+		if not bool(c3["walking"]) and str(c3["room"]) == str(c3["target"]):
 			if str(c3["task"]) == "repair" and not bool(c3.get("brawl", false)):
 				working[c3["room"]] = int(working.get(c3["room"], 0)) + 1
 	for rid2 in working:
@@ -1747,9 +1718,10 @@ func _make_my_crew() -> void:
 		my_crew.append({"name": str(d.get("name", "Crew")), "kind": str(d.get("kind", "human")),
 			"named": bool(d.get("named", false)), "you": bool(d.get("you", false)), "hp": CREW_HP, "ship": "me",
 			"room": rid, "last": rid, "target": rid, "path": [], "path_to": rid, "walking": false,
-			"face": Vector2.DOWN, "brawl": false, "foe_x": 0.0, "work": 0.0, "gone": false, "pos": Vector2.ZERO})
-	for i in range(my_crew.size()):
-		my_crew[i]["pos"] = _my_spot(my_crew[i], i)
+			"face": Vector2.DOWN, "brawl": false, "foe_x": 0.0, "work": 0.0, "gone": false, "pos": Vector2.ZERO,
+			"cell": Vector2i(-1, -1), "cells": []})
+	for c in my_crew:
+		_place_in(c, me_ship, "me", str(c["room"]), true)
 
 
 # Your boarding pods room, or "" if the ship has none.
@@ -1779,6 +1751,166 @@ func _my_spot(c: Dictionary, i: int) -> Vector2:
 			first = false
 			break
 	return _spot_on(_ship_of(str(c["ship"])), str(c["target"]), i + (0 if first else 1), first)
+
+
+# ---- cells (Zachary, 22 Nov: "crew should move tile to tile, we already have the grid squares there"): everyone
+# stands in the middle of a room cell, one to a cell where there's room, and walks cell to cell, through doors
+# between rooms. "cell" is where they are (or last stood), "cells" the cells still to walk, "goal_cell" the one
+# they're heading for.
+
+func _cell_center(cell: Vector2i) -> Vector2:
+	return (Vector2(cell) + Vector2(0.5, 0.5)) * ShipData.CELL
+
+
+func _room_cells(room: Dictionary) -> Array:
+	var out: Array = []
+	if room.has("cells"):
+		var r: Rect2i = room["cells"]
+		for y in range(r.position.y, r.end.y):
+			for x in range(r.position.x, r.end.x):
+				out.append(Vector2i(x, y))
+	return out
+
+
+# Everyone standing on one side's ship ("me" or "foe"), theirs and yours.
+func _people_on(side: String) -> Array:
+	var out: Array = []
+	for c in my_crew:
+		if _standing(c) and str(c["ship"]) == side:
+			out.append(c)
+	for e in e_crew_list:
+		if float(e["hp"]) > 0.0 and str(e.get("ship", "foe")) == side:
+			out.append(e)
+	return out
+
+
+# A free cell in the room for this person: the console's cell when they're going to man the station and nobody has
+# it, otherwise the first cell nobody is standing in or heading for. A full room squeezes them into its first cell.
+func _pick_cell(side: String, ship: Dictionary, rid: String, who: Dictionary, station: bool) -> Vector2i:
+	var room: Dictionary = _room(ship["rooms"], rid)
+	var cells: Array = _room_cells(room)
+	if cells.is_empty():
+		return Vector2i(-1, -1)
+	var taken := {}
+	for p in _people_on(side):
+		if not is_same(p, who):
+			taken[p.get("goal_cell", p.get("cell", Vector2i(-1, -1)))] = true
+	var desk := Vector2i(-1, -1)
+	if str(room.get("sys", "")) in STATIONS:
+		desk = _console_at(ship, room)[0]
+	if station and desk.x >= 0 and not taken.has(desk):
+		return desk
+	for cell in cells:                   # leave the console's cell for whoever mans it
+		if not taken.has(cell) and cell != desk:
+			return cell
+	if desk.x >= 0 and not taken.has(desk):
+		return desk
+	return cells[0]
+
+
+# The cells to walk from one cell to another: within a room to any neighbouring cell, between rooms only through a
+# door. Empty when they're the same cell or there's no way.
+func _cell_path(ship: Dictionary, from: Vector2i, to: Vector2i) -> Array:
+	if from == to or from.x < 0:
+		return []
+	var came := {from: from}
+	var queue: Array = [from]
+	while queue.size() > 0:
+		var here: Vector2i = queue.pop_front()
+		if here == to:
+			break
+		var here_room: String = ShipData._room_at_cell(ship["rooms"], here)
+		for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n: Vector2i = here + dir
+			if came.has(n):
+				continue
+			var n_room: String = ShipData._room_at_cell(ship["rooms"], n)
+			if n_room == "":
+				continue
+			if n_room != here_room and not _has_door(ship, here, n):
+				continue
+			came[n] = here
+			queue.append(n)
+	if not came.has(to):
+		return []
+	var path: Array = []
+	var at: Vector2i = to
+	while at != from:
+		path.push_front(at)
+		at = came[at]
+	return path
+
+
+# The door between two neighbouring cells, or {}.
+func _door_between(ship: Dictionary, a: Vector2i, b: Vector2i) -> Dictionary:
+	var across: bool = a.y == b.y
+	var at := Vector2(maxi(a.x, b.x) * ShipData.CELL, (a.y + 0.5) * ShipData.CELL) if across else Vector2((a.x + 0.5) * ShipData.CELL, maxi(a.y, b.y) * ShipData.CELL)
+	for d in ship.get("door_list", []):
+		if (d["at"] as Vector2).distance_to(at) < 0.5:
+			return d
+	return {}
+
+
+# Someone appears standing in a room (the start of a fight, or a pod landing, or coming home).
+func _place_in(c: Dictionary, ship: Dictionary, side: String, rid: String, station: bool) -> void:
+	var cell: Vector2i = _pick_cell(side, ship, rid, c, station)
+	c["room"] = rid
+	c["last"] = rid
+	c["target"] = rid
+	c["path_to"] = rid
+	c["path"] = []
+	c["cells"] = []
+	c["walking"] = false
+	c["cell"] = cell
+	c["goal_cell"] = cell
+	c["pos"] = _cell_center(cell) if cell.x >= 0 else (_room(ship["rooms"], rid).get("rect", Rect2()) as Rect2).get_center()
+
+
+# Walk someone cell by cell to a free cell of their target room. Sets "walking", and "room" once they're there.
+func _move_person(c: Dictionary, ship: Dictionary, side: String, delta: float, station: bool) -> void:
+	if c.get("cell", Vector2i(-1, -1)).x < 0:
+		_walk(c, ship, _spot_on(ship, str(c["target"]), 0, station), delta)      # a ship without cells
+		return
+	if str(c["path_to"]) != str(c["target"]):
+		c["path_to"] = c["target"]
+		var goal: Vector2i = _pick_cell(side, ship, str(c["target"]), c, station)
+		c["goal_cell"] = goal
+		c["cells"] = _cell_path(ship, c["cell"], goal)
+	var at: Vector2 = c["pos"]
+	var step: float = CREW_SPEED * delta
+	var path: Array = c["cells"]
+	if path.is_empty():
+		var here: Vector2 = _cell_center(c["cell"])
+		if at.distance_to(here) > step:
+			c["pos"] = at + (here - at).normalized() * step
+			c["face"] = (here - at).normalized()
+			c["walking"] = true
+			c["room"] = ""
+		else:
+			c["pos"] = here
+			c["walking"] = false
+			c["room"] = ShipData._room_at_cell(ship["rooms"], c["cell"])
+			c["last"] = c["room"]
+		return
+	var next: Vector2i = path[0]
+	var to: Vector2 = _cell_center(next)
+	var room_now: String = ShipData._room_at_cell(ship["rooms"], c["cell"])
+	var room_next: String = ShipData._room_at_cell(ship["rooms"], next)
+	if room_now != room_next:
+		var door: Dictionary = _door_between(ship, c["cell"], next)
+		if not door.is_empty():
+			_door_pass(door)
+	if at.distance_to(to) <= step:
+		c["pos"] = to
+		c["cell"] = next
+		c["last"] = room_next
+		path.pop_front()
+	else:
+		c["pos"] = at + (to - at).normalized() * step
+	if at.distance_to(to) > 0.01:
+		c["face"] = (to - at).normalized()
+	c["walking"] = true
+	c["room"] = ""
 
 
 # One person walking to their target room on the ship they're on, room to room through the doors.
@@ -1871,6 +2003,7 @@ func _tick_fights(delta: float) -> void:
 				e["hp"] = maxf(0.0, float(e["hp"]) - FIGHT_DPS * delta)
 				c["brawl"] = true
 				c["foe_x"] = (e["pos"] as Vector2).x
+				c["foe_pos"] = e["pos"]
 				downed = downed or float(e["hp"]) <= 0.0
 				break
 	for e in e_crew_list:
@@ -1881,6 +2014,7 @@ func _tick_fights(delta: float) -> void:
 				c["hp"] = maxf(0.0, float(c["hp"]) - FIGHT_DPS * delta)
 				e["brawl"] = true
 				e["foe_x"] = (c["pos"] as Vector2).x
+				e["foe_pos"] = c["pos"]
 				break
 	if downed:
 		for e in e_crew_list:
@@ -1908,7 +2042,7 @@ func _my_crew_tick(delta: float) -> void:
 		if str(c["ship"]) == "pod":
 			continue
 		var on_me: bool = str(c["ship"]) == "me"
-		_walk(c, _ship_of(str(c["ship"])), _my_spot(c, i), delta)
+		_move_person(c, _ship_of(str(c["ship"])), str(c["ship"]), delta, on_me)
 		var here: String = str(c["room"]) if str(c["room"]) != "" else str(c["last"])
 		if not bool(c["you"]) and float((my_air if on_me else foe_air).get(here, 1.0)) < AIR_THIN:
 			c["hp"] = maxf(0.0, float(c["hp"]) - AIR_CHOKE * delta)
@@ -1987,7 +2121,7 @@ func _bring_home(c: Dictionary) -> void:
 	c["path"] = []
 	c["walking"] = false
 	c["work"] = 0.0
-	c["pos"] = _spot_on(me_ship, pr, my_crew.find(c) + 1, false)
+	_place_in(c, me_ship, "me", pr, false)
 
 
 # The fight is over while some of yours are over there: they come home, unless their ship blew up (or you jumped
@@ -2103,7 +2237,7 @@ func _move_pods(delta: float) -> void:
 			c["path"] = []
 			c["walking"] = false
 			c["work"] = 0.0
-			c["pos"] = _spot_on(ship, rid, n, false)
+			_place_in(c, ship, side, rid, false)
 			n += 1
 		var where: Vector2 = _on_page(not mine, _room_center(not mine, rid))
 		blasts.append({"pos": where, "t": 0.0, "k": _ship_scale(not mine)})
@@ -2132,7 +2266,7 @@ func _boarders_tick(delta: float) -> void:
 		var e: Dictionary = e_crew_list[i]
 		if float(e["hp"]) <= 0.0 or str(e.get("ship", "foe")) != "me":
 			continue
-		_walk(e, me_ship, _spot_on(me_ship, str(e["target"]), i + 1, false), delta)
+		_move_person(e, me_ship, "me", delta, false)
 		var here: String = str(e["room"]) if str(e["room"]) != "" else str(e["last"])
 		if float(my_air.get(here, 1.0)) < AIR_THIN:
 			e["hp"] = maxf(0.0, float(e["hp"]) - AIR_CHOKE * delta)
@@ -2272,17 +2406,24 @@ func _pose_of(c: Dictionary, ship: Dictionary, fires: Dictionary) -> Array:
 			return ["walk_right", step, f.x < 0.0]
 		return ["walk_down" if f.y >= 0.0 else "walk_up", step, false]
 	if bool(c.get("brawl", false)):
-		return ["fight", int(t * 6.0) % 4, float(c.get("foe_x", 0.0)) < (c["pos"] as Vector2).x]
+		# a shoot-out: the little blaster, at whoever they're fighting (Zachary, 22 Nov)
+		return ["shoot", int(t * 5.0) % 4, float(c.get("foe_x", 0.0)) < (c["pos"] as Vector2).x]
 	var room: Dictionary = _room(ship["rooms"], str(c["room"]))
-	if fires.has(str(c["room"])) and is_same(ship, me_ship):
+	var at_home: bool = (is_same(ship, me_ship) and my_crew.has(c)) or (is_same(ship, foe) and not my_crew.has(c))
+	if fires.has(str(c["room"])) and at_home:
 		var mid: Vector2 = (room.get("rect", Rect2()) as Rect2).get_center()
 		return ["extinguish", int(t * 8.0) % 4, mid.x < (c["pos"] as Vector2).x - 1.0]
 	if float(c.get("work", 0.0)) > 0.0:
+		if not at_home:
+			# boarders smashing the room's system: punching, toward the console if there is one
+			var side := Vector2i(1, 0)
+			if room.has("cells") and str(room.get("sys", "")) in STATIONS:
+				side = _console_at(ship, room)[1]
+			return ["fight", int(t * 6.0) % 4, side == Vector2i(-1, 0)]
 		return ["repair", int(t * 6.0) % 4, false]
-	if room.has("cells") and str(room.get("sys", "")) in STATIONS:
+	if at_home and room.has("cells") and str(room.get("sys", "")) in STATIONS:
 		var at: Array = _console_at(ship, room)
-		var spot: Vector2 = _station_spot(room, ship)
-		if (c["pos"] as Vector2).distance_to(spot) < 1.0:
+		if c.get("cell", Vector2i(-1, -1)) == at[0]:
 			return _work_pose(at[1], t)
 	return ["idle", int(t * 1.5) % 2, false]
 
@@ -2311,11 +2452,30 @@ func _paint_person(ship: Dictionary, xf: Transform2D, k: float, c: Dictionary, k
 	if not _paint_crew(ship, xf, kind, c["pos"], _pose_of(c, ship, fires)):
 		s.circle(cpos, 3.0 * k, tone)
 		s.ring(cpos, 3.0 * k, Color("201010"))
+	_paint_bolt(c, xf, k)
 	var hp: float = float(c["hp"])
 	if hp > 0.0 and hp < CREW_HP:
 		var hp_bar := Rect2(cpos + Vector2(-4, -8) * k, Vector2(8.0 * k, maxf(1.0, k)))
 		s.rect(hp_bar, Color("3c2020"))
 		s.rect(Rect2(hp_bar.position, Vector2(hp_bar.size.x * hp / CREW_HP, hp_bar.size.y)), GOOD if hp > 35.0 else BAD)
+
+
+# In a shoot-out, laser bolts from the little blaster to whoever they're fighting, a few a second.
+func _paint_bolt(c: Dictionary, xf: Transform2D, k: float) -> void:
+	if not bool(c.get("brawl", false)) or not c.has("foe_pos") or float(c["hp"]) <= 0.0:
+		return
+	var ms: float = Time.get_ticks_msec() / 1000.0
+	var ph: float = fmod(ms * 2.5 + float(c.get("foe_x", 0.0)) * 0.037, 1.0)
+	if ph >= 0.4:
+		return
+	var from: Vector2 = (c["pos"] as Vector2) + Vector2(0, -1)
+	var to: Vector2 = (c["foe_pos"] as Vector2) + Vector2(0, -1)
+	if from.distance_to(to) < 2.0:
+		return
+	var dir: Vector2 = (to - from).normalized()
+	var head: Vector2 = from.lerp(to, ph / 0.4)
+	screen.line(xf * (head - dir * 4.0), xf * head, Color("ff5a4a"), maxf(1.0, k * 0.9))
+	screen.line(xf * (head - dir * 2.0), xf * head, Color("ffe6d2"), maxf(1.0, k * 0.45))
 
 
 # Boarding pods in flight: out of one window and in at the other's near edge, nose first, thruster flickering.
@@ -2661,7 +2821,8 @@ func _crew_pose(c: Dictionary) -> Array:
 		return ["extinguish", int(t * 8.0) % 4, mid.x < (c["pos"] as Vector2).x - 1.0]
 	if str(c["task"]) == "repair":
 		return ["repair", int(t * 6.0) % 4, false]
-	if str(c["room"]) == str(c["home"]) and str(room.get("sys", "")) in STATIONS and room.has("cells"):
+	if str(c["room"]) == str(c["home"]) and str(room.get("sys", "")) in STATIONS and room.has("cells") \
+			and c.get("cell", Vector2i(-1, -1)) == _console_at(foe, room)[0]:
 		return _work_pose(_console_at(foe, room)[1], t)
 	return ["idle", int(t * 1.5) % 2, false]
 
@@ -2900,6 +3061,7 @@ func _paint_enemy() -> void:
 		if not _paint_crew(foe, xf, str(c.get("kind", "rabble_pirate")), c["pos"], _crew_pose(c)):
 			s.circle(cpos, cr, Color("f0a040") if str(c["task"]) == "repair" else Color("e65a50"))
 			s.ring(cpos, cr, Color("201010"))
+		_paint_bolt(c, xf, k)
 		if float(c["hp"]) < CREW_HP:
 			var hp_bar := Rect2(cpos + Vector2(-4, -6) * k, Vector2(8.0 * k, maxf(1.0, k)))
 			s.rect(hp_bar, Color("3c2020"))

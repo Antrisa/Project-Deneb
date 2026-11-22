@@ -3,7 +3,7 @@ and player in a space suit so we don't gotta worry about customization."
 
 Each sheet is art/ships/crew/<id>.png: 48 x 48 frames, 4 across, 11 rows. The figure is drawn on a 24-px grid at the
 ships' own pixel size (Zachary, 22 Nov: smaller), so it stands about half a room cell tall in the middle of its frame,
-its waist at (24, 28).
+its waist at (24, 28). Row 11 (22 Nov): shooting a little blaster, facing right; frame 1 is the shot leaving.
 
   row 0  walk down   4      row 4  typing at a console, up     4      row 8   knocked out                    1
   row 1  walk up     4      row 5  typing at a console, right  4      row 9   fighting (fists up, punching)  4
@@ -201,6 +201,18 @@ def figure(c, who, facing, step=0, arms="swing", work=0):
             c.rect(16 + jab, top + 7, 17 + jab, top + 8, skin)
             if jab:
                 c.px(19 + jab, top + 6, hexc("#fff6ea")); c.px(19 + jab, top + 9, hexc("#fff6ea"))
+        elif arms == "blaster":                                            # a little blaster, both hands
+            kick = -1 if work % 4 == 2 else 0                              # recoil on the frame after the flash
+            gun, dark = hexc("#4a4c58"), hexc("#2a2a34")
+            c.rect(13, top + 9, 16 + kick, top + 9, shade(suit, 0.75))
+            c.rect(14, top + 8, 17 + kick, top + 8, suit)
+            c.px(18 + kick, top + 8, skin)
+            c.rect(18 + kick, top + 7, 21 + kick, top + 7, gun)
+            c.rect(19 + kick, top + 8, 19 + kick, top + 9, dark, lit=False)
+            c.px(22 + kick, top + 7, hexc("#ff5a4a"))                       # the emitter
+            if work % 4 == 1:                                              # the shot leaving
+                for (dx, dy) in ((1, 0), (2, 0), (1, -1), (1, 1)):
+                    c.px(22 + dx, top + 7 + dy, hexc("#fff2b0") if dx == 1 else hexc("#ff8a5a"))
         elif arms == "spray":                                              # an extinguisher held out in front
             red, dark = hexc("#d8403a"), hexc("#7a1e1e")
             c.rect(14, top + 8, 16, top + 9, suit)
@@ -362,6 +374,8 @@ def frame(who, pose, i):
         figure(c, who, "right", 0, arms="fist", work=i)
     elif pose == "extinguish":
         figure(c, who, "right", 0, arms="spray", work=i)
+    elif pose == "shoot":
+        figure(c, who, "right", 0, arms="blaster", work=i)
     elif pose == "down":
         figure(c, who, "down", 0)
         c.a = np.rot90(c.a, 1).copy()                        # lying on their side
@@ -370,7 +384,7 @@ def frame(who, pose, i):
 
 
 ROWS = [("walk_down", 4), ("walk_up", 4), ("walk_right", 4), ("idle", 2), ("work_up", 4), ("work_right", 4),
-        ("work_down", 4), ("repair", 4), ("down", 1), ("fight", 4), ("extinguish", 4)]
+        ("work_down", 4), ("repair", 4), ("down", 1), ("fight", 4), ("extinguish", 4), ("shoot", 4)]
 
 
 # Zachary, 22 Nov: the crew were too big for the rooms. They're now drawn at the ships' own pixel size, not doubled:

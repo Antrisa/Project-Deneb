@@ -218,7 +218,7 @@ FTL-style mini people drawn on a 24-px grid at the ships' own pixel size (Zachar
 they're no longer doubled; about half a room cell tall, standing a little toward their console): 48 × 48 frames
 with the 24 × 24 figure in the middle and its waist at (24, 28), 4 across, 11 rows (walk down, up, right;
 idle; typing at a console facing up, right, down, 4 frames with the hands taking turns on the keys; repairing with a
-wrench and sparks; knocked out; fighting, fists up with a jab and a hook; putting out a fire with an extinguisher). Kinds: `player` (you,
+wrench and sparks; knocked out; fighting, fists up with a jab and a hook (used for boarders smashing a system); putting out a fire with an extinguisher; shooting a little blaster, row 11, for crew fights, with laser bolts drawn by the game). Crew stand in the middle of room cells, one to a cell, and walk cell to cell through the doors (22 Nov); the console's cell is kept for whoever mans it. Kinds: `player` (you,
 in a dark grey and orange space suit with a teal visor and a backpack, so no customisation is needed), `human`,
 `freya` (as her NPC: long blonde ponytail, goggles up, dark tank top with brown overall straps, boots), `ana` (as
 her NPC: dark hair with a red streak, black jacket over a white shirt), `rabble_pirate` (red bandanas),
