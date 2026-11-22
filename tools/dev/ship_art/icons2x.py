@@ -4,7 +4,7 @@ grid with a dark outline, doubled, so they read like FTL's. The same icons mark 
 
 One sheet, art/ui/ship/icons_systems.png: 32 x 32 icons side by side (16 x 16 pixelled, doubled). White with a
 dark outline so the game can tint them. Order (ShipBattle.ROOM_ICONS must match):
-shields, engines, weapons, life, pilot, drones, cannon, medbay, crew, doors, sensors (a ping with three
+shields, engines, weapons, life, pilot, drones, cannon, medbay, crew, doors, sensors, pods (a ping with three
 arcs, like the ones beside ECHO in the title art).
 
 Run from the repo root:  python3 -I tools/dev/ship_art/icons2x.py .
@@ -176,6 +176,21 @@ XXX..XX..XX.XX
 ......XXX.XXX.
 """,
 }
+# Boarding pods (22 Nov): a capsule nosing right, fins at the back, a porthole. Last, so the others keep their places.
+ICONS["pods"] = """
+..............
+.XX...........
+.XXX.XXXXX....
+..XXXXXXXXXX..
+..XXXXX..XXXX.
+.XXXXX....XXXX
+.XXXXX....XXXX
+..XXXXX..XXXX.
+..XXXXXXXXXX..
+.XXX.XXXXX....
+.XX...........
+..............
+"""
 ORDER = list(ICONS)
 
 

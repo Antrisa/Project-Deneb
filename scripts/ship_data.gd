@@ -125,14 +125,16 @@ const COVERED_FIGHTER := {
 	"hull": 16, "reactor": 8, "drones": 0, "door_level": 1,
 	"weapons": ["burst_laser", "", ""],
 	"mounts": [Vector2(172, 37), Vector2(172, 82.5), Vector2(106, 12), Vector2(106, 107.5)],
-	"systems": {"shields": [2, 2], "engines": [2, 1], "weapons": [3, 2], "life": [1, 1], "pilot": [1, 1]},
+	# boarding pods and a medbay (Zachary, 22 Nov; claude/echo-landing-boarding.md); not used in battle until boarding
+	"systems": {"shields": [2, 2], "engines": [2, 1], "weapons": [3, 2], "life": [1, 1], "pilot": [1, 1],
+		"pods": [2, 1], "medbay": [1, 1]},
 	"rooms": [
-		{"id": "crew", "label": "Crew deck", "sys": "", "cells": Rect2i(3, 2, 2, 1), "crew": true},
+		{"id": "pods", "label": "Boarding pods", "sys": "pods", "cells": Rect2i(3, 2, 2, 1), "crew": true},
 		{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 2, 1, 1), "crew": true},
 		{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 2, 1, 1), "crew": true},
 		{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 1, 2, 1), "crew": true},
 		{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 3, 2, 1), "crew": true},
-		{"id": "hold", "label": "Hold", "sys": "", "cells": Rect2i(5, 2, 1, 1), "crew": true},
+		{"id": "medbay", "label": "Medbay", "sys": "medbay", "cells": Rect2i(5, 2, 1, 1), "crew": true},
 		{"id": "cockpit", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(6, 2, 2, 1), "crew": true},
 	],
 	"doors": [

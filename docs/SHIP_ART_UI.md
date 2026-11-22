@@ -711,7 +711,8 @@ Ideas with residents behind them:
 
 #### Health
 - Crew have 100 health.
-- At 0 they are **knocked out, not killed**. They wake in the Medbay at the station after the run, as decided for this cozy game.
+- At 0: **Freya and Ana** (named crew) leave the run and wake in the station's Medbay, a bit angry with you;
+  **hired crew die** (Zachary, 22 Nov; replaces "knocked out, not killed").
 
 #### Hiring
 - At Tally's Post & Privateer Dispatch once he arrives, and sometimes in stores and events.
@@ -734,10 +735,20 @@ Ideas with residents behind them:
 - Each design says what an enemy aims for first, such as your shields or weapons.
 - Smarter enemies switch targets to finish off a damaged system.
 
-**Boarding (later):**
-- The teleporter sends crew to an enemy room. They fight the crew there, then damage the system.
-- Knock out every enemy crew member and the ship is yours: a capture.
-- Enemies with teleporters can board you the same way.
+**Boarding (decided 22 Nov; full rules in `claude/echo-landing-boarding.md`):**
+- **Boarding pods** instead of a teleporter: a room you install (2 crew on small ships, 3–4 on bigger), one
+  launch hatch per crew place. LAUNCH on the system bar, then click an enemy room: the pod flies across like a
+  missile that always hits, and your crew appear in that room and fight. RECALL brings them back once the room has
+  recharged. Tabs: `art/ui/ship/pod_tabs.png`; pods: `art/ships/shots/pod.png`, `pod_rabble.png`
+  (`tools/dev/ship_art/pods2x.py`); icon `pods` (last in `icons_systems.png`).
+- **Emergency tether** (an upgrade): a boarder who goes down over there reappears in your pod room at very low
+  health.
+- **Crew who go down:** Freya and Ana leave the run and wake in the station's Medbay, a bit angry with you; hired
+  crew die.
+- **Medbay:** a room you install where crew heal (a green cross on each cell's floor).
+- The covered fighter's crew deck is now its pods room and its hold its medbay. Enemies with pods board you the
+  same way. Knock out every enemy crew member and the ship is yours: a capture.
+- Not built in battle yet: it comes with the covered fighter and hired crew.
 
 ---
 

@@ -171,7 +171,7 @@ const STATIONS := ["pilot", "weapons", "shields", "engines", "cannon"]
 # System icons, FTL-style (Zachary, 21 Nov): art/ui/ship/icons_systems.png, 32 x 32 each in this order
 # (tools/dev/ship_art/icons2x.py). They mark each system's room (16 x 16 cell pixels, in the middle) and sit under
 # its power bars on the system bar: green powered, grey off, red damaged.
-const ROOM_ICONS := ["shields", "engines", "weapons", "life", "pilot", "drones", "cannon", "medbay", "crew", "doors", "sensors"]
+const ROOM_ICONS := ["shields", "engines", "weapons", "life", "pilot", "drones", "cannon", "medbay", "crew", "doors", "sensors", "pods"]
 const ICON_POWERED := Color("78d46a")
 const ICON_ION := Color("5ac8ff")
 const ICON_OK := Color("8a8590")
