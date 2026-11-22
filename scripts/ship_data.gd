@@ -82,6 +82,9 @@ const ENEMIES := {
 		"name": "Rabble Cutter", "size": Vector2(144, 96), "hull": 8, "crew": 3,
 		"art": "res://art/ships/rabble_cutter/hull.png", "interior": "res://art/ships/rabble_cutter/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "rabble_laser"],
+		# Hardpoints on the gun platforms at the front (Zachary, 21 Nov), in the order guns fill them: top front,
+		# bottom front, top back, bottom back. Whatever guns the ship spawns with go on the first ones.
+		"mounts": [Vector2(120, 17), Vector2(120, 78.5), Vector2(106, 15.5), Vector2(106, 80)],
 		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},

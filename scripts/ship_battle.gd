@@ -491,10 +491,10 @@ func _fire(w: Dictionary, at_player: bool) -> void:
 	var data: Dictionary = ShipData.WEAPONS[w["id"]]
 	var target: String = str(w["target"])
 	var from: Vector2 = _room_center(not at_player, "weapons")
-	# Your shots leave from the gun on that weapon's mount (on the starter, the wings).
-	var slot: int = weapons.find(w)
-	var mounts: Array = me_ship.get("mounts", [])
-	if not at_player and slot >= 0 and slot < mounts.size():
+	# Shots leave from the gun on that weapon's mount (the starter's wings, the cutter's gun platforms).
+	var slot: int = (e_weapons if at_player else weapons).find(w)
+	var mounts: Array = (foe if at_player else me_ship).get("mounts", [])
+	if slot >= 0 and slot < mounts.size():
 		from = mounts[slot]
 	var to: Vector2 = _room_center(at_player, target)
 	var dodge: int = _my_evasion() if at_player else _enemy_evasion()
@@ -1123,14 +1123,7 @@ func _paint_my_window() -> void:
 		if drone_selected and not crew_room and result == "" and rr.has_point(s.mouse):
 			s.outline(rr.grow(-1.0), GOOD, maxf(1.0, k * 0.5))
 	_paint_doors(me_ship, xf, k, true)
-	# the guns on their mounts (shapes until the weapon art exists)
-	var mounts: Array = me.get("mounts", [])
-	for i in range(mini(mounts.size(), weapons.size())):
-		if str(weapons[i]["id"]) == "":
-			continue
-		var m: Vector2 = xf * (mounts[i] as Vector2)
-		s.rect(Rect2(m + Vector2(-4, -1.5) * k, Vector2(14, 3) * k), Color("5d5868"))
-		s.rect(Rect2(m + Vector2(8, -1) * k, Vector2(3, 2) * k), ShipData.WEAPONS[weapons[i]["id"]]["color"])
+	_paint_guns(me, weapons, xf)
 	# you, in the cockpit
 	var cockpit: Rect2 = _room(me["rooms"], "cockpit")["rect"]
 	var you: Vector2 = xf * (cockpit.get_center() + Vector2(-2, 0))      # in the seat, under the canopy
@@ -1150,6 +1143,19 @@ func _paint_my_window() -> void:
 		var tag := Rect2(MY_WIN.get_center().x - 30, MY_WIN.position.y + 4, 60, 14)
 		s.rect(tag, Color("f2c94c"))
 		s.text_center(tag.get_center().x, tag.position.y, "PAUSED", "micro", INK)
+
+
+# The guns on their mounts, pointing at the nose (shapes until the weapon art exists). Drawn in ship-picture pixels
+# through the ship's transform, so an enemy's guns are mirrored with it and point at you.
+func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
+	var mounts: Array = ship.get("mounts", [])
+	for i in range(mini(mounts.size(), list.size())):
+		if str(list[i]["id"]) == "":
+			continue
+		var m: Vector2 = mounts[i]
+		screen.rect(xf * Rect2(m + Vector2(-4, -1.5), Vector2(14, 3)), Color("5d5868"))
+		screen.rect(xf * Rect2(m + Vector2(-4, -1.5), Vector2(14, 1)), Color("7a7488"))
+		screen.rect(xf * Rect2(m + Vector2(8, -1), Vector2(3, 2)), ShipData.WEAPONS[list[i]["id"]]["color"])
 
 
 # A room's name in a small dark tag in its top-left corner (cut to the room's width).
@@ -1278,6 +1284,7 @@ func _paint_enemy() -> void:
 		if selected >= 0 and rr.has_point(s.mouse):
 			s.outline(rr, BAD)
 	_paint_doors(foe, xf, k, false)
+	_paint_guns(foe, e_weapons, xf)
 	# their crew: red at stations, orange when repairing, a health bar once hurt
 	for c in e_crew_list:
 		var cpos: Vector2 = xf * (c["pos"] as Vector2)
