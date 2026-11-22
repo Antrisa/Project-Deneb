@@ -45,6 +45,12 @@ var hover_id := ""
 var cmds: Array = []
 var hits: Array = []                    # [id, Rect2]
 
+# Fill mode (Zachary, 22 Nov: "we need all the space we can get"): the page grows to fill the window at a whole
+# number of screen pixels per page pixel, instead of a 768 x 432 page with bars round it. page is its size then.
+var fill := false
+var page := DESIGN
+var _off := Vector2.ZERO                # shift(): everything drawn and every hit area moves by this
+
 var _layout := Transform2D.IDENTITY
 var _bounds := Rect2i(0, 0, 768, 432)
 var _px := 1.0
@@ -87,7 +93,17 @@ func px() -> float:
 func redraw() -> void:
 	if not is_node_ready() or not is_inside_tree():
 		return
-	_layout = PixelGrid.layout(self)
+	if fill:
+		var device := PixelGrid.to_pixels(self)
+		var available := size * device.get_scale().abs()
+		var fit := minf(available.x / DESIGN.x, available.y / DESIGN.y)
+		var step := floorf(fit + 0.00001) if fit >= 1.99999 else maxf(fit, 0.01)
+		page = (available / step).floor()
+		var start := (device.origin + (available - page * step) * 0.5).round()
+		_layout = device.affine_inverse() * Transform2D(0.0, Vector2.ONE * step, 0.0, start)
+	else:
+		page = DESIGN
+		_layout = PixelGrid.layout(self)
 	var extent := _layout.affine_inverse() * Rect2(Vector2.ZERO, size)
 	var first := Vector2i(extent.position.floor())
 	var last := Vector2i(extent.end.ceil())
@@ -100,6 +116,7 @@ func redraw() -> void:
 	_raster.position = -Vector2(_bounds.position) * _px
 	cmds.clear()
 	hits.clear()
+	_off = Vector2.ZERO
 	if paint.is_valid():
 		paint.call()
 	_raster.queue_redraw()
@@ -135,11 +152,17 @@ func hit_at(p: Vector2) -> String:
 
 
 func hit(id: String, r: Rect2) -> void:
-	hits.append([id, r])
+	hits.append([id, Rect2(r.position + _off, r.size)])
 
 
 func hovering(r: Rect2) -> bool:
-	return r.has_point(mouse)
+	return Rect2(r.position + _off, r.size).has_point(mouse)
+
+
+# Move everything drawn after this (and its hit areas) by o page pixels, until the next shift(); shift(Vector2.ZERO)
+# puts it back. Lets a screen lay out a block of its page as designed and then place the block anywhere.
+func shift(o: Vector2) -> void:
+	_off = o
 
 
 # Snap a page position to the screen's pixel grid, so pixel art drawn there lines up with screen pixels.
@@ -172,7 +195,7 @@ func fit_into(picture: Vector2, area: Rect2, margin: float = 0.0, most: float = 
 
 func rect(r: Rect2, col: Color) -> void:
 	if r.size.x > 0.0 and r.size.y > 0.0:
-		cmds.append(["r", r, col])
+		cmds.append(["r", Rect2(r.position + _off, r.size), col])
 
 
 func outline(r: Rect2, col: Color, thick: float = 1.0) -> void:
@@ -183,42 +206,51 @@ func outline(r: Rect2, col: Color, thick: float = 1.0) -> void:
 
 
 func line(a: Vector2, b: Vector2, col: Color, thick: float = 1.0) -> void:
-	cmds.append(["l", a, b, col, thick])
+	cmds.append(["l", a + _off, b + _off, col, thick])
 
 
 func circle(c: Vector2, radius: float, col: Color) -> void:
-	cmds.append(["c", c, radius, col])
+	cmds.append(["c", c + _off, radius, col])
 
 
 func ring(c: Vector2, radius: float, col: Color, thick: float = 1.0) -> void:
-	cmds.append(["a", c, radius, col, thick])
+	cmds.append(["a", c + _off, radius, col, thick])
 
 
 func ellipse(c: Vector2, radii: Vector2, col: Color, thick: float = 1.0) -> void:
-	cmds.append(["e", c, radii, col, thick])
+	cmds.append(["e", c + _off, radii, col, thick])
 
 
 func polygon(points: PackedVector2Array, col: Color) -> void:
 	if points.size() >= 3:
-		cmds.append(["p", points, col])
+		cmds.append(["p", _moved(points), col])
 
 
 func polyline(points: PackedVector2Array, col: Color, thick: float = 1.0) -> void:
 	if points.size() >= 2:
-		cmds.append(["pl", points, col, thick])
+		cmds.append(["pl", _moved(points), col, thick])
+
+
+func _moved(points: PackedVector2Array) -> PackedVector2Array:
+	if _off == Vector2.ZERO:
+		return points
+	var out := PackedVector2Array()
+	for v in points:
+		out.append(v + _off)
+	return out
 
 
 # A texture, or part of one (src), drawn into a page rectangle.
 func texture(tex: Texture2D, dest: Rect2, src: Rect2 = Rect2(), col: Color = Color.WHITE) -> void:
 	if tex != null:
-		cmds.append(["tx", tex, dest, src, col])
+		cmds.append(["tx", tex, Rect2(dest.position + _off, dest.size), src, col])
 
 
 # A picture drawn through a transform (picture pixels -> page), so it can turn and flip: pieces of a ship breaking
 # up. src: the part of the picture (all of it when empty).
 func texture_xf(tex: Texture2D, xf: Transform2D, src: Rect2 = Rect2(), col: Color = Color.WHITE) -> void:
 	if tex != null:
-		cmds.append(["txx", tex, xf, src if src.size != Vector2.ZERO else Rect2(Vector2.ZERO, tex.get_size()), col])
+		cmds.append(["txx", tex, Transform2D(0.0, _off) * xf, src if src.size != Vector2.ZERO else Rect2(Vector2.ZERO, tex.get_size()), col])
 
 
 # One of the datapad's own pictures (datapad/art), tinted.
@@ -228,7 +260,7 @@ func img(id: String, r: Rect2, col: Color = Color.WHITE) -> void:
 
 
 func text(x: float, y: float, s: String, font: String = "label", col: Color = INK) -> void:
-	cmds.append(["t", int(x), int(y), s, font, col])
+	cmds.append(["t", int(x + _off.x), int(y + _off.y), s, font, col])
 
 
 func text_right(right: float, y: float, s: String, font: String = "label", col: Color = INK) -> void:
@@ -297,6 +329,26 @@ func case(tag: String, tag_color: Color = Color("62816e")) -> void:
 	if tag != "":
 		rect(Rect2(602, 35, 4, 4), tag_color)
 		text(612, 30, tag.to_upper(), "micro", INK)
+
+
+# The case in fill mode: the same paper and rim as the datapad housing, drawn to fit the whole page, with the title
+# row (TERRAN | FIELD DATAPAD ... tag) along its top.
+func case_fill(tag: String, tag_color: Color = Color("62816e")) -> void:
+	rect(Rect2(_bounds), SPACE)
+	var r := Rect2(Vector2(3, 3), page - Vector2(6, 6))
+	rect(Rect2(r.position + Vector2(2, 2), r.size), Color(0, 0, 0, 0.35))
+	rect(r, Color("c2643a"))
+	rect(r.grow(-2.0), Color("f4f1e8"))
+	outline(r.grow(-2.0), Color("e9b68c"))
+	outline(r.grow(-5.0), Color("dcd6c8"))
+	img("i_mark", Rect2(14, 9, 15, 15), OCHRE)
+	text(34, 8, "TERRAN", "strong", INK)
+	rect(Rect2(99, 13, 1, 12), Color("9d927c"))
+	text(107, 12, "FIELD DATAPAD", "micro", MUTED)
+	if tag != "":
+		var w: float = width(tag.to_upper(), "micro")
+		rect(Rect2(page.x - 22 - w, 17, 4, 4), tag_color)
+		text(page.x - 14 - w, 12, tag.to_upper(), "micro", INK)
 
 
 # A raised paper frame (the panels, cards and buttons are all built on this).

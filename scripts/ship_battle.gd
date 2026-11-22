@@ -18,9 +18,19 @@ const ShipData = preload("res://scripts/ship_data.gd")
 const ShipScreen = preload("res://ui/ship_screen.gd")
 
 # Page layout (768 x 432 page; see ui/ship_screen.gd).
-const MY_WIN := Rect2(53, 75, 388, 218)      # your ship's window
-const FOE_WIN := Rect2(447, 75, 268, 218)    # theirs
+# The page fills the window (ShipScreen.fill; Zachary, 22 Nov: "we need all the space we can get for co op later"),
+# so the two ship windows and the panels are laid out from its size each frame (_layout_page). The panels and the
+# readings row are drawn as designed on the old 768 x 432 page and moved into place with screen.shift().
+var MY_WIN := Rect2(53, 75, 388, 218)        # your ship's window
+var FOE_WIN := Rect2(447, 75, 268, 218)      # theirs
 const FOE_HEAD := 44.0                       # the top of their window: name, hull, shields
+const EDGE := 12.0                           # the page's margin inside the case
+var shift_left := Vector2.ZERO               # the reactor and weapons panels, and the status line
+var shift_right := Vector2.ZERO              # the crew panel
+var shift_pause := Vector2.ZERO              # the Pause button
+var shift_strip_l := Vector2.ZERO            # hull, shields, evasion, oxygen
+var shift_strip_r := Vector2.ZERO            # fold drive, Jump, Auto
+var wide := 0.0                              # how much wider the weapons panel is than designed
 const SHIELD_ROOM := 12.0                    # space kept round a ship for its shield bubble
 const MOST_SCALE := 2.0                      # small ships are enlarged to fit, but no more than this
 const REACTOR_SYS := ["shields", "engines", "weapons", "life"]
@@ -217,6 +227,7 @@ func _ready() -> void:
 	visible = false
 	screen = ShipScreen.new()
 	add_child(screen)
+	screen.fill = true
 	screen.paint = Callable(self, "_paint")
 	screen.on_click = Callable(self, "_click")
 	if ResourceLoader.exists(ShipData.STARTER["art"]):
@@ -461,6 +472,8 @@ func _process(delta: float) -> void:
 	blasts = blasts.filter(func(b): return float(b["t"]) < BLAST_FRAME * 6.0)
 	if world.dialogue.active:
 		return
+	if world.datapad != null and world.datapad.blocking():
+		return                       # the station menu is open over the fight
 	if result == "done":
 		return
 	if result != "":
@@ -1568,10 +1581,16 @@ func handle_input(event: InputEvent) -> void:
 		KEY_1, KEY_2, KEY_3:
 			_pick_weapon(key.physical_keycode - KEY_1)
 		KEY_ESCAPE, KEY_Q:
+			# Escape with nothing picked opens the station menu (settings, quit), pausing the fight
+			var picked: bool = selected >= 0 or drone_selected or crew_sel >= 0 or pod_aim
 			selected = -1
 			drone_selected = false
 			crew_sel = -1
 			pod_aim = false
+			if key.physical_keycode == KEY_ESCAPE and not picked and world.datapad != null:
+				if result == "":
+					paused = true
+				world.datapad.open_page("Pause")
 		KEY_D, KEY_TAB:
 			_select_drone()
 		KEY_V:
@@ -2398,7 +2417,7 @@ func _drone_card_rect() -> Rect2: return Rect2(569, 341, 142, 20)
 
 func _weapon_rect(i: int) -> Rect2:
 	var n: int = maxi(1, weapons.size())
-	var w: float = floorf((284.0 - (n - 1) * 6.0) / n)
+	var w: float = floorf((284.0 + wide - (n - 1) * 6.0) / n)
 	return Rect2(270 + i * (w + 6.0), 323, w, 51)
 
 
@@ -2409,9 +2428,29 @@ func _drone_rect() -> Rect2:
 
 # ---------------------------------------------------------------- drawing
 
+# The page as big as the window: the readings row along the top, the two ship windows filling the middle (yours
+# a little wider), the panels along the bottom.
+func _layout_page() -> void:
+	var pg: Vector2 = screen.page
+	var dy: float = pg.y - 418.0                 # the panels' designed top (297) lands at pg.y - 121
+	shift_left = Vector2(EDGE - 53.0, dy)
+	shift_right = Vector2(pg.x - EDGE - 715.0, dy)
+	shift_pause = Vector2(pg.x - EDGE - 2.0 - 707.0, dy)
+	shift_strip_l = Vector2(EDGE + 6.0 - 58.0, -29.0)
+	shift_strip_r = Vector2(pg.x - EDGE - 4.0 - 712.0, -29.0)
+	wide = shift_right.x - shift_left.x
+	var top: float = 46.0
+	var bottom: float = 297.0 + dy - 5.0
+	var total: float = pg.x - EDGE * 2.0
+	var mine_w: float = roundf((total - 6.0) * 0.59)
+	MY_WIN = Rect2(EDGE, top, mine_w, bottom - top)
+	FOE_WIN = Rect2(EDGE + mine_w + 6.0, top, total - mine_w - 6.0, bottom - top)
+
+
 func _paint() -> void:
+	_layout_page()
 	_fit_ships()
-	screen.case("In combat", ShipScreen.PIP_RED)
+	screen.case_fill("In combat", ShipScreen.PIP_RED)
 	_paint_strip()
 	_paint_my_window()
 	_paint_foe_window()
@@ -2424,15 +2463,19 @@ func _paint() -> void:
 		c.a = 1.0 - float(p["t"]) / 1.2
 		var at: Vector2 = p["pos"]
 		screen.text_center(at.x, at.y - float(p["t"]) * 12.0 - 8.0, str(p["text"]), "label", c)
+	screen.shift(shift_left)
 	_paint_reactor()
 	_paint_weapons()
+	screen.shift(shift_right)
 	_paint_aboard()
+	screen.shift(Vector2.ZERO)
 	_paint_status()
 
 
 # Your ship's readings, along the top of the case.
 func _paint_strip() -> void:
 	var s := screen
+	s.shift(shift_strip_l)
 	s.text(58, 59, "HULL", "micro", MUTED)
 	var step: float = minf(7.0, floorf(84.0 / maxf(1.0, float(hull_max))))
 	var low: bool = hull * 3 <= hull_max
@@ -2449,6 +2492,7 @@ func _paint_strip() -> void:
 	var on_suit: bool = suit_air < SUIT_AIR - 0.01 and _your_air() < AIR_THIN
 	var air_words: String = ("SUIT AIR %ds" % int(ceil(suit_air))) if on_suit else ("OXYGEN %d%%" % int(oxygen))
 	s.text(ev_x, 59, "EVASION %d%%   %s" % [_my_evasion(), air_words], "micro", MUTED if oxygen > 40.0 and not on_suit else ShipScreen.PIP_RED)
+	s.shift(shift_strip_r)
 	s.text(440, 59, "FOLD DRIVE", "micro", MUTED)
 	var story: bool = bool(fight.get("story", false))
 	if story:
@@ -2459,6 +2503,7 @@ func _paint_strip() -> void:
 	var can_jump: bool = fold >= 100.0 and not story and result == ""
 	s.button("jump", Rect2(610, 55, 48, 16), "Jump", can_jump, "micro", can_jump)
 	s.button("auto", Rect2(664, 55, 48, 16), "Auto", autofire, "micro")
+	s.shift(Vector2.ZERO)
 
 
 func _paint_my_window() -> void:
@@ -2792,9 +2837,9 @@ func _paint_enemy() -> void:
 	var size: Vector2 = foe["size"]
 	var inside: bool = enemy_inside != null
 	if inside:
-		s.texture(enemy_inside, _ship_rect(xf, size))
+		s.texture_xf(enemy_inside, _art_xf(foe, xf))
 	elif enemy_tex != null:
-		s.texture(enemy_tex, _ship_rect(xf, size))
+		s.texture_xf(enemy_tex, _art_xf(foe, xf))
 	else:
 		for fin in foe.get("fins", []):
 			var pts := PackedVector2Array()
@@ -3002,7 +3047,7 @@ func _paint_break_up() -> void:
 	var art_xf: Transform2D = _art_xf(foe, foe_xf)
 	if break_t < BREAK_FLASH:
 		if enemy_inside != null:
-			screen.texture(enemy_inside, _ship_rect(foe_xf, size))
+			screen.texture_xf(enemy_inside, _art_xf(foe, foe_xf))
 		for i in range(5):
 			var p: Vector2 = foe_xf * (size * Vector2(0.2 + 0.15 * i, 0.3 + 0.4 * float(i % 2)))
 			_puff(p, break_t - i * 0.07, 0.4, 6.0 * k)
@@ -3210,7 +3255,7 @@ func _powered_weapons() -> Array:
 func _paint_weapons() -> void:
 	var s := screen
 	var powered: Array = _powered_weapons()
-	var r := Rect2(264, 297, 296, 83)
+	var r := Rect2(264, 297, 296 + wide, 83)
 	s.panel(r, "blaster", "Weapons")
 	if autofire:
 		s.text_right(r.end.x - 8, r.position.y + 7, "AUTOFIRE ON", "micro", OCHRE)
@@ -3326,10 +3371,14 @@ func _paint_status() -> void:
 		line = "Click a bay on your ship to send the drone there."
 	elif selected >= 0:
 		line = "Click a room on their ship to aim the %s." % str(ShipData.WEAPONS[weapons[selected]["id"]]["name"])
+	s.shift(shift_left)
 	s.status(line, col)
+	s.shift(Vector2.ZERO)
+	s.shift(shift_pause)
 	s.solid_button("pause", Rect2(625, 388, 82, 22), "Resume" if paused else "Pause", result == "")
+	s.shift(Vector2.ZERO)
 	if result != "" and result != "done":
-		var box := Rect2(234, 166, 300, 34)
+		var box := Rect2(roundf(screen.page.x / 2.0 - 150.0), roundf(MY_WIN.get_center().y - 17.0), 300, 34)
 		s.frame(box, Color("f8f7f1"))
 		var tone := OCHRE
 		if result == "won":
