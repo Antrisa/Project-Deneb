@@ -196,10 +196,7 @@ def ana_corsair():
         p.paint(p._line(line if top else mirror(line, H), width=2), "gold")
         for (a, b) in (((110, 94), (92, 30)), ((140, 94), (120, 46))):
             p.engrave([a, b] if top else mirror([a, b], H))
-    # small guns under the wings
-    for y in (40, H - 1 - 40):
-        p.tube(p.mask(rect=(116, y - 2, 170, y + 2)), "metal", "x", bands=(5, 4, 3, 2, 1))
-        p.tube(p.mask(rect=(168, y - 3, 174, y + 3)), "gunmetal", "x", bands=(4, 3, 2, 1))
+    # (her guns are the game's: they attach where ShipData's mounts say, FTL-style)
     # two big engine nacelles
     for (y0, y1) in ((62, 104), (136, 178)):
         p.tube(p.mask(rect=(26, y0, 136, y1)), "gunmetal", "x", bands=(5, 5, 4, 4, 3, 3, 3, 2, 2, 1))
@@ -377,6 +374,20 @@ INSIDES = {
          "pilot": (7, 2, 1, 2, "pilot")},
         [((1, 1), (1, 2)), ((1, 3), (1, 4)), ((2, 2), (3, 2)), ((2, 3), (3, 3)), ((4, 2), (5, 2)),
          ((4, 3), (5, 3)), ((6, 1), (6, 2)), ((6, 3), (6, 4)), ((6, 2), (7, 2))],
+    ),
+    # Ana's corsair, 7 x 5: a corridor down the needle (crew, shields, weapons, the chart room under the star dome,
+    # the cockpit under the canopy), engines in the top nacelle and oxygen in the bottom one.
+    "ana_corsair": (
+        {"engines": (1, 1, 2, 1, "engines"), "crew": (1, 2, 1, 1, ""), "life": (1, 3, 2, 1, "life"),
+         "shields": (2, 2, 1, 1, "shields"), "weapons": (3, 2, 1, 1, "weapons"), "chart": (4, 2, 1, 1, ""),
+         "pilot": (5, 2, 1, 1, "pilot")},
+        [((1, 1), (1, 2)), ((1, 2), (1, 3)), ((1, 2), (2, 2)), ((2, 2), (3, 2)), ((3, 2), (4, 2)), ((4, 2), (5, 2))],
+    ),
+    # The loyalist gunship, 5 x 4: like the cutter, fewer doors.
+    "loyalist_gunship": (
+        {"engines": (1, 1, 1, 2, "engines"), "weapons": (2, 1, 1, 1, "weapons"), "shields": (2, 2, 1, 1, "shields"),
+         "crew": (3, 1, 1, 1, ""), "life": (3, 2, 1, 1, "life"), "pilot": (4, 1, 1, 2, "pilot")},
+        [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)), ((3, 1), (3, 2)), ((3, 1), (4, 1))],
     ),
 }
 

@@ -136,39 +136,46 @@ const ENEMIES := {
 # Ana's fight (second flight, Zachary 21 Nov). At half hull ("break_at") the battle stops: her own crew, Ivan's
 # loyalists, turn on her, and main.gd starts the fight against their gunship.
 const ANA_SHIPS := {
+	# Both at double resolution (art_scale 2). Art and rooms: tools/dev/ship_art/story2x.py (INSIDES there must
+	# match these rooms and doors). Guns attach at "mounts" on the hull's sides, front pair first.
 	"ana_corsair": {
-		"name": "Ana's corsair", "size": Vector2(118, 88), "hull": 12, "crew": 4,
+		"name": "Ana's corsair", "size": Vector2(168, 120), "hull": 12, "crew": 4,
+		"art": "res://art/ships/ana_corsair/hull.png", "interior": "res://art/ships/ana_corsair/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "heavy_laser"],
+		"mounts": [Vector2(125, 43), Vector2(125, 76.5), Vector2(75, 20), Vector2(75, 99.5)],
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
-		"shape": [Vector2(0, 44), Vector2(22, 26), Vector2(54, 18), Vector2(100, 22), Vector2(118, 34), Vector2(118, 54),
-				Vector2(100, 66), Vector2(54, 70), Vector2(22, 62)],
-		"fins": [[Vector2(60, 19), Vector2(78, 2), Vector2(88, 21)], [Vector2(60, 69), Vector2(78, 86), Vector2(88, 67)]],
-		"hull_color": Color("2e3e48"), "trim": Color("c84646"),
 		"break_at": 0.5,
 		"rooms": [
-			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "rect": Rect2(10, 35, 22, 18)},
-			{"id": "weapons", "label": "Weapons", "sys": "weapons", "rect": Rect2(32, 24, 26, 20)},
-			{"id": "shields", "label": "Shields", "sys": "shields", "rect": Rect2(32, 44, 26, 20)},
-			{"id": "crew", "label": "Crew", "sys": "", "rect": Rect2(58, 22, 28, 22)},
-			{"id": "life", "label": "Oxygen", "sys": "life", "rect": Rect2(58, 44, 28, 22)},
-			{"id": "engines", "label": "Engines", "sys": "engines", "rect": Rect2(86, 26, 26, 36)},
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(1, 2, 1, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 2, 1)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(1, 3, 2, 1)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(2, 2, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 2, 1, 1)},
+			{"id": "chart", "label": "Charts", "sys": "", "cells": Rect2i(4, 2, 1, 1)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(5, 2, 1, 1)},
+		],
+		"doors": [
+			[Vector2i(1, 1), Vector2i(1, 2)], [Vector2i(1, 2), Vector2i(1, 3)], [Vector2i(1, 2), Vector2i(2, 2)],
+			[Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(4, 2), Vector2i(5, 2)],
 		],
 	},
 	"loyalist_gunship": {
-		"name": "Loyalist gunship", "size": Vector2(120, 92), "hull": 8, "crew": 3,
+		"name": "Loyalist gunship", "size": Vector2(120, 96), "hull": 8, "crew": 3,
+		"art": "res://art/ships/loyalist_gunship/hull.png", "interior": "res://art/ships/loyalist_gunship/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "rabble_laser"],
+		"mounts": [Vector2(102, 26), Vector2(102, 69.5), Vector2(88, 10), Vector2(88, 85.5)],
 		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
-		"shape": [Vector2(0, 46), Vector2(18, 24), Vector2(44, 14), Vector2(92, 10), Vector2(116, 24), Vector2(120, 46),
-				Vector2(116, 68), Vector2(92, 82), Vector2(44, 78), Vector2(18, 68)],
-		"fins": [[Vector2(46, 16), Vector2(36, 0), Vector2(60, 14)], [Vector2(46, 76), Vector2(36, 92), Vector2(60, 78)]],
-		"hull_color": Color("4a3a3a"), "trim": Color("c89a3c"),
 		"rooms": [
-			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "rect": Rect2(8, 37, 22, 18)},
-			{"id": "weapons", "label": "Weapons", "sys": "weapons", "rect": Rect2(30, 25, 26, 21)},
-			{"id": "shields", "label": "Shields", "sys": "shields", "rect": Rect2(30, 46, 26, 21)},
-			{"id": "crew", "label": "Crew", "sys": "", "rect": Rect2(56, 23, 30, 23)},
-			{"id": "life", "label": "Oxygen", "sys": "life", "rect": Rect2(56, 46, 30, 23)},
-			{"id": "engines", "label": "Engines", "sys": "engines", "rect": Rect2(86, 29, 26, 34)},
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(3, 1, 1, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(2, 1, 1, 1)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(2, 2, 1, 1)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(3, 2, 1, 1)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(4, 1, 1, 2)},
+		],
+		"doors": [
+			[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)],
+			[Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)],
 		],
 	},
 }
