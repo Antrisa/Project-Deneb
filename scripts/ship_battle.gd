@@ -1069,7 +1069,7 @@ func _paint_my_window() -> void:
 		s.rect(Rect2(m + Vector2(8, -1) * k, Vector2(3, 2) * k), ShipData.WEAPONS[weapons[i]["id"]]["color"])
 	# you, in the cockpit
 	var cockpit: Rect2 = _room(me["rooms"], "cockpit")["rect"]
-	var you: Vector2 = xf * (cockpit.get_center() + Vector2(-4, 0))      # in the seat, under the canopy
+	var you: Vector2 = xf * (cockpit.get_center() + Vector2(-2, 0))      # in the seat, under the canopy
 	s.circle(you, 5.0 * k, YOU)
 	s.ring(you, 5.0 * k, Color("201e28"))
 	# the drone

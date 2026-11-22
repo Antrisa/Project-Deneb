@@ -93,24 +93,21 @@ Nothing here is final until you say so. Anything marked **(Claude)** is a sugges
 
 **Weapon mounts:** the design (file 5) says which cell and which edge each weapon sits on. Draw a small hardpoint there in `hull.png` and `interior.png`; the weapon picture goes on top.
 
-### 1.3 The starter fighter (needed first)
-`templates/starter_fighter_layout_x5.png` shows the existing ship on the grid, with Claude's proposed rooms:
+### 1.3 The starter fighter (done, 21 Nov)
+Redrawn by Claude after the intro movie and approved by Zachary: plane wings with an orange band, twin engine pods
+out behind, a teal canopy, crisp pixel art with shading and depth. Drawn by `tools/dev/ship_art/starter.py`
+(`pixkit.py` does the shading), which writes `art/ships/starter/hull.png`, `interior.png` and the Shuttle Bay's
+four repair stages in `art/lunar/player_ship.png`.
 
 ```
-. W W W W . .      W  Weapons bay, the top pod (sealed)
-. L D S S C .      L  Life support (sealed)
-. L D S S C .      D  Drone bay (sealed), where the repair drone lives
-. E E E E . .      S  Shields (sealed)
-                   C  Cockpit: the only room you can reach
-                   E  Engine bay, the bottom pod (sealed)
+. E W S C C .      E  Engines (feeding the pods)       S  Shields
+. E D O C C .      W  Weapons (the gun breech)         O  Oxygen
+                   D  Drone bay (the drone's pad)      C  Cockpit, 2 x 2 under the long canopy
 ```
 
-- **`art/ships/starter/interior.png`** (168 × 96): the cut-away on this layout. `templates/starter_fighter_grid_overlay.png` is the ship with the grid over it to paint on.
-  - The sealed bays look like machinery bays: tight, cabled, with a duct hatch where the drone gets in. Nobody stands in them.
-  - Show the drone's ducts as thin hatched lines between the bays and the drone bay.
-  - The cockpit has a seat and a console.
-- **`hull.png`:** the existing `art/lunar/player_ship.png`, frame 4. Its four repair stages stay for the Shuttle Bay.
-- If the hull needs reshaping so the rooms sit cleanly on the grid, redraw all four repair stages to match.
+- A single-seat fighter (Zachary): behind the cockpit are sealed machinery bays the player can't enter; the repair
+  drone gets into them through small hatches. Other ships are walkable all through.
+- Guns sit near the wing tips; the thrusters glow at the back of the pods.
 
 ### 1.4 Ships needed
 Sizes are Claude suggestions. Design each one with the template in file 5.

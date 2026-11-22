@@ -43,30 +43,31 @@ const STORES := {
 		"fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8},
 }
 
-# The starter fighter, redrawn after the intro movie (Zachary, 21 Nov: "regular plane wings and the thrusters go
-# back behind the ship"). 7 x 4 cells (168 x 96). Art by tools/dev/ship_art/starter.py: art/ships/starter/hull.png
-# outside, interior.png the cut-away; art/lunar/player_ship.png is its four repair stages for the Shuttle Bay.
-# Only you fit in the cockpit; the repair drone goes room to room through the doors.
+# The starter fighter, redrawn after the intro movie and approved by Zachary (21 Nov): plane wings, engine pods out
+# behind, a 2 x 2 cockpit under a long canopy. 7 x 4 cells (168 x 96). Art by tools/dev/ship_art/starter.py:
+# art/ships/starter/hull.png outside, interior.png the cut-away; art/lunar/player_ship.png is its four repair stages
+# for the Shuttle Bay. A single-seat fighter: behind the cockpit are sealed bays only the repair drone gets into,
+# through small hatches (the "doors" below). Other ships are walkable all through.
 const STARTER := {
 	"name": "Your fighter",
 	"art": "res://art/ships/starter/hull.png", "frames": 1, "frame": 0, "size": Vector2(168, 96),
 	"interior": "res://art/ships/starter/interior.png",
 	"hull": 12, "reactor": 6, "drones": 1, "door_level": 1,
 	"weapons": ["burst_laser", ""],          # "" is an empty slot; bigger ships have more slots
-	"mounts": [Vector2(83, 9), Vector2(83, 86)],   # where each weapon slot's gun sits, on the wings
+	"mounts": [Vector2(80, 9), Vector2(80, 86)],   # where each weapon slot's gun sits, near the wing tips
 	"systems": {"shields": [2, 2], "engines": [2, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1], "drones": [1, 1]},
 	"rooms": [
 		{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
-		{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(2, 1, 2, 1)},
+		{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(2, 1, 1, 1)},
 		{"id": "drones", "label": "Drone bay", "sys": "drones", "cells": Rect2i(2, 2, 1, 1)},
+		{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 1, 1, 1)},
 		{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(3, 2, 1, 1)},
-		{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(4, 1, 1, 2)},
-		{"id": "cockpit", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(5, 1, 1, 2), "crew": true},
+		{"id": "cockpit", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(4, 1, 2, 2), "crew": true},
 	],
 	"doors": [
 		[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(2, 2)],
-		[Vector2i(3, 1), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(3, 2), Vector2i(4, 2)],
-		[Vector2i(4, 1), Vector2i(5, 1)],
+		[Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(3, 2)],
+		[Vector2i(3, 1), Vector2i(4, 1)],
 	],
 	"hub": Vector2(60, 60),                 # the drone's home: the middle of the drone bay
 }

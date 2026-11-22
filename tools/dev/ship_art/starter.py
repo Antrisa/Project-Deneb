@@ -1,159 +1,165 @@
-"""The starter fighter, redrawn after the intro movie (Claude, 21 Nov 2026): plane wings with an orange band, a teal
-bubble canopy near the nose, twin engine pods sticking out behind, cream hull with orange chevrons. Top-down, nose
-right, 7 x 4 cells (168 x 96). Zachary: Claude draws the ships, he touches them up.
+"""The starter fighter (Claude, 21 Nov 2026; approved by Zachary). After the intro movie: plane wings with an orange
+band, twin engine pods out behind, a teal canopy. Crisp pixel art with shading and depth (tools/dev/ship_art/pixkit.py).
+Zachary: shorter at the back, a longer cockpit; behind the cockpit is out of reach for the player (a single-seat
+fighter): the repair drone looks after the bays. Other ships are walkable all through.
 
 Run from the repo root with -I:  python3 -I tools/dev/ship_art/starter.py .
-Writes art/ships/starter/hull.png (with thruster glow), art/ships/starter/interior.png (the cut-away; the game
-draws the doors) and art/lunar/player_ship.png (4 repair stages for the Shuttle Bay, wrecked to repaired)."""
+Writes art/ships/starter/hull.png (thrusters lit), art/ships/starter/interior.png (the cut-away; the game draws the
+hatches) and art/lunar/player_ship.png (4 repair stages for the Shuttle Bay, wrecked to repaired, engines off).
+Rooms and hatches here must match ShipData.STARTER in scripts/ship_data.gd."""
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ship_kit import *
+from pixkit import Pix
+import numpy as np
+from scipy import ndimage
+from PIL import Image
 
-ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
-W, H = 7 * CELL, 4 * CELL      # 168 x 96
-P = {
-    "lite": "#f5ebde", "mid": "#e2d4c7", "shade": "#c6b8ae", "dark": "#a99b94",
-    "pod": "#958e95", "pod_lite": "#aaa3aa", "pod_dark": "#7a7480",
-    "orange": "#fb7412", "orange_dk": "#c4560e",
-    "teal": "#2a9aa6", "teal_lite": "#86dde0", "teal_dk": "#1b5f6b",
-    "vent": "#3a3848", "glow": "#ffb04a", "glow_hot": "#fff0c0",
-}
-
-# ---- silhouette pieces (picture pixels)
-# Zachary, 21 Nov: "in the art its got like regular plane wings and the thrusters go back behind the ship".
-BODY = [(24, 22), (140, 22), (152, 30), (167, 45), (167, 50), (152, 65), (140, 73), (24, 73)]
-WING_TOP = [(58, 23), (114, 23), (84, 2), (80, 0), (60, 0), (54, 2)]
-WING_BOT = mirror_y(WING_TOP, H)
-POD_TOP = (0, 26, 56, 45)      # the engine pods sit on the body's back corners and stick out behind it
-POD_BOT = (0, 50, 56, 69)
-
-def hull():
-    im = canvas(7, 4)
-    # wings: the upper one catches the light, the lower one is in shade
-    poly(im, WING_TOP, P["lite"])
-    poly(im, WING_BOT, P["mid"])
-    FLAP = [(58, 23), (70, 23), (64, 3), (56, 3)]
-    poly(im, FLAP, P["mid"]); poly(im, mirror_y(FLAP, H), P["shade"])
-    BAND = [(84, 23), (96, 23), (76, 1), (70, 1)]
-    poly(im, BAND, P["orange"]); poly(im, mirror_y(BAND, H), P["orange_dk"])
-    # weapon hardpoints near the wing tips, pointing forward (the game draws the weapon over them)
-    for y in (9, H - 1 - 9):
-        rect(im, 74, y - 2, 92, y + 2, P["pod_dark"])
-        rect(im, 76, y - 1, 90, y + 1, P["pod"])
-    # the body: lit top half, shaded bottom half
-    poly(im, BODY, P["mid"])
-    poly(im, [(24, 22), (140, 22), (152, 30), (167, 45), (167, 47), (24, 47)], P["lite"])
-    # orange chevrons across the back
-    for x in (60, 80):
-        poly(im, [(x, 23), (x + 8, 23), (x + 17, 47), (x + 9, 47)], P["orange"])
-        poly(im, [(x + 9, 48), (x + 17, 48), (x + 8, 72), (x, 72)], P["orange_dk"])
-    # panel lines and the dark vent grid on the spine
-    line(im, [(50, 23), (50, 72)], P["shade"])
-    line(im, [(112, 26), (112, 69)], P["shade"])
-    for i in range(4):
-        for j in range(2):
-            rect(im, 98 + i * 4, 34 + j * 5, 100 + i * 4, 36 + j * 5, P["vent"])
-    # twin engine pods, out behind the body
-    for (x0, y0, x1, y1), lite in ((POD_TOP, True), (POD_BOT, False)):
-        rect(im, x0 + 3, y0, x1, y1, P["pod_lite"] if lite else P["pod"])
-        rect(im, x0 + 3, y0 + (y1 - y0) // 2 + 1, x1, y1, P["pod"] if lite else P["pod_dark"])
-        rect(im, x0, y0 + 2, x0 + 5, y1 - 2, P["pod_dark"])        # the exhaust bell
-        rect(im, x0 + 12, y0, x0 + 13, y1, P["pod_dark"])
-        rect(im, x0 + 30, y0, x0 + 31, y1, P["pod_dark"])
-        rect(im, x0 + 14, y0 + 3, x0 + 28, y0 + 5, P["orange"] if lite else P["orange_dk"])
-    # canopy: a teal bubble near the nose
-    ellipse(im, 116, 34, 150, 61, P["teal_dk"])
-    ellipse(im, 118, 35, 149, 59, P["teal"])
-    ellipse(im, 122, 37, 136, 45, P["teal_lite"])
-    rect(im, 124, 38, 127, 39, "#e8fbfb")
-    # nose tip
-    poly(im, [(160, 41), (167, 45), (167, 50), (160, 54)], P["orange"])
-    return outline(im)
-
-def glow(im, frame=0):
-    """Thruster glow at the pod backs (drawn outside the hull, to the left)."""
-    g = layer(im.size)
-    for (x0, y0, x1, y1) in (POD_TOP, POD_BOT):
-        cy = (y0 + y1) // 2
-        rect(g, x0 + 1, cy - 5, x0 + 4, cy + 5, P["glow"])
-        rect(g, x0 + 1, cy - 2, x0 + 3, cy + 2, P["glow_hot"])
-    return g
-
-# ---- interior: FTL-style rooms on the grid (cells: col, row)
+W, H = 168, 96
+def my(pts): return [(x, H - 1 - y) for x, y in pts]
+BODY = [(22, 22), (126, 22), (146, 28), (166, 44), (166, 51), (146, 67), (126, 73), (22, 73)]
+WING = [(38, 24), (90, 24), (66, 3), (62, 1), (44, 1), (36, 4)]
+BAND = [(62, 24), (74, 24), (58, 2), (52, 2)]
+PODS = ((25, 45), (50, 70))
+POD_X = (10, 46)
+# rooms (cells): the drone's bays in columns 1-3, the cockpit 2 x 2 under a long canopy
 ROOMS = {
-    "engines": {"cells": [(1, 1), (1, 2)], "label": "Engines", "sys": "engines"},
-    "weapons": {"cells": [(2, 1), (3, 1)], "label": "Weapons", "sys": "weapons"},
-    "drones": {"cells": [(2, 2)], "label": "Drone bay", "sys": "drones"},
-    "life": {"cells": [(3, 2)], "label": "Oxygen", "sys": "life"},
-    "shields": {"cells": [(4, 1), (4, 2)], "label": "Shields", "sys": "shields"},
-    "cockpit": {"cells": [(5, 1), (5, 2)], "label": "Cockpit", "sys": "pilot"},
+    "engines": (1, 1, 1, 2), "weapons": (2, 1, 1, 1), "drones": (2, 2, 1, 1),
+    "shields": (3, 1, 1, 1), "life": (3, 2, 1, 1), "cockpit": (4, 1, 2, 2),
 }
-# doors between neighbouring cells of different rooms: ((col, row), (col, row))
-DOORS = [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (2, 2)), ((3, 1), (3, 2)), ((3, 1), (4, 1)), ((3, 2), (4, 2)), ((4, 1), (5, 1))]
-FLOOR = {"cockpit": "#d9d2c4", "default": "#8f8b9c"}
+HATCHES = [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)), ((3, 1), (3, 2)), ((3, 1), (4, 1))]
 
-def room_of(cell):
-    for rid, r in ROOMS.items():
-        if cell in r["cells"]:
-            return rid
-    return None
+def hull(lit=True):
+    p = Pix(W, H)
+    p.bevel(p.mask(polygon=WING), "hull", width=2, face=4, shade_lower=False)
+    p.bevel(p.mask(polygon=my(WING)), "hull", width=2, face=3, edge_light=4, shade_lower=False)
+    for pts in (BAND, my(BAND)):
+        p.paint(p.mask(polygon=pts), "orange")
+    p.engrave([(46, 24), (42, 4)]); p.engrave([(46, 71), (42, 91)])
+    p.bevel(p.mask(polygon=BODY), "hull", width=3, face=3, edge_light=5)
+    p.bevel(p.mask(polygon=[(40, 29), (118, 29), (132, 36), (132, 59), (118, 66), (40, 66)]), "hull", width=2, face=4)
+    for x in (52, 70):
+        p.paint(p.mask(polygon=[(x, 22), (x + 7, 22), (x + 15, 47), (x + 8, 47)]), "orange")
+        p.paint(p.mask(polygon=[(x + 8, 48), (x + 15, 48), (x + 7, 73), (x, 73)]), "orange")
+    p.paint(p.mask(polygon=[(156, 38), (166, 44), (166, 51), (156, 57)]), "orange")
+    p.engrave([(40, 25), (40, 70)]); p.engrave([(94, 25), (94, 70)]); p.engrave([(150, 31), (150, 64)])
+    p.engrave_rect(25, 51, 37, 63)
+    for i in range(3):
+        p.slot(84, 32 + i * 4, 92, 33 + i * 4)
+        p.slot(84, 55 + i * 4, 92, 56 + i * 4)
+    for x in range(44, 92, 8):
+        p.rivet(x, 26); p.rivet(x, 69)
+    for y in (31, 40, 55, 64):
+        p.rivet(97, y)
+    for (y0, y1) in PODS:
+        p.tube(p.mask(rect=(POD_X[0], y0, POD_X[1], y1)), "metal", "x")
+        p.paint(p.mask(rect=(20, y0, 24, y1)), "orange")
+        for x in (16, 30, 40):
+            p.engrave([(x, y0 + 1), (x, y1 - 1)])
+        p.slot(32, y0 + 4, 36, y0 + 5)
+        p.tube(p.mask(rect=(POD_X[0], y0 + 2, POD_X[0] + 4, y1 - 2)), "dark", "x", shadow=False)
+    # a long canopy over the cockpit
+    p.bevel(p.mask(ellipse=(98, 31, 152, 64)), "metal", width=2, face=3, shade_lower=False)
+    p.dome(p.mask(ellipse=(101, 34, 149, 61)), "glass")
+    p.engrave([(125, 35), (125, 60)], highlight=False)          # the canopy's middle strut
+    for y in (9, H - 1 - 9):
+        p.tube(p.mask(rect=(54, y - 2, 78, y + 2)), "metal", "x", bands=(5, 4, 3, 2, 1))
+        p.tube(p.mask(rect=(78, y - 1, 81, y + 1)), "dark", "x", shadow=False)
+    for (y0, y1) in PODS:
+        if not lit:
+            break
+        cy = (y0 + y1) / 2
+        g = p.mask(ellipse=(3, cy - 7, 14, cy + 7)) & (np.mgrid[0:H, 0:W][1] < POD_X[0] + 1)
+        p.glow(g, "glow", 2)
+        p.glow(p.mask(ellipse=(5, cy - 4, 12, cy + 4)) & g, "glow", 3)
+        p.glow(p.mask(ellipse=(7, cy - 2, 12, cy + 2)) & g, "glow", 4)
+    p.glow(p.mask(rect=(46, 2, 48, 3)), "glow_green", 3)
+    p.glow(p.mask(rect=(46, H - 4, 48, H - 3)), "glow_red", 3)
+    return p
 
-def interior(base):
-    im = base.copy()
-    d = layer(im.size)
-    for rid, r in ROOMS.items():
-        for (c, rr) in r["cells"]:
-            x0, y0 = c * CELL, rr * CELL
-            rect(d, x0, y0, x0 + 23, y0 + 23, FLOOR.get(rid, FLOOR["default"]))
-            # floor plates
-            for k in (6, 12, 18):
-                line(d, [(x0, y0 + k), (x0 + 23, y0 + k)], (0, 0, 0, 18) if rid == "cockpit" else (255, 255, 255, 18))
-    # walls on every cell edge between different rooms, and round the outside of the rooms
-    wall = (38, 37, 53, 255)
-    for rid, r in ROOMS.items():
-        for (c, rr) in r["cells"]:
-            x0, y0 = c * CELL, rr * CELL
-            for (dc, dr, edge) in ((1, 0, "e"), (-1, 0, "w"), (0, 1, "s"), (0, -1, "n")):
-                if room_of((c + dc, rr + dr)) == rid:
-                    continue
-                if edge == "e": rect(d, x0 + 22, y0, x0 + 23, y0 + 23, wall)
-                if edge == "w": rect(d, x0, y0, x0 + 1, y0 + 23, wall)
-                if edge == "s": rect(d, x0, y0 + 22, x0 + 23, y0 + 23, wall)
-                if edge == "n": rect(d, x0, y0, x0 + 23, y0 + 1, wall)
-    # doors: a gap in the wall where each door sits; the game draws the door itself (open, closed or locked)
-    for (a, b) in DOORS:
+def interior(p):
+    block = np.zeros((H, W), bool)
+    for (cx, cy, cw, ch) in ROOMS.values():
+        block[cy * 24:(cy + ch) * 24, cx * 24:(cx + cw) * 24] = True
+    frame = ndimage.binary_dilation(block, iterations=3) & ~block & (p.tone >= 0)
+    p.mat[frame] = "wall"; p.tone[frame] = 3
+    p.tone[frame & ~ndimage.binary_erosion(frame | block, iterations=1)] = 1
+    for rid, (cx, cy, cw, ch) in ROOMS.items():
+        x0, y0, x1, y1 = cx * 24, cy * 24, (cx + cw) * 24 - 1, (cy + ch) * 24 - 1
+        m = p.mask(rect=(x0, y0, x1, y1))
+        p.lines[m] = False
+        if rid == "cockpit":
+            p.mat[m] = "cockpit_deck"; p.tone[m] = 4
+            for k in range(cw):
+                for j in range(ch):
+                    tx, ty = x0 + k * 24, y0 + j * 24
+                    p.set_tone(p.mask(rect=(tx, ty, tx + 23, ty)), 5)
+                    p.set_tone(p.mask(rect=(tx, ty + 23, tx + 23, ty + 23)), 3)
+                    p.set_tone(p.mask(rect=(tx + 23, ty, tx + 23, ty + 23)), 3)
+        else:
+            # a cramped machinery bay: dark grating floor
+            p.mat[m] = "bay"; p.tone[m] = 3
+            for yy in range(y0 + 2, y1, 3):
+                p.set_tone(p.mask(rect=(x0, yy, x1, yy)), 2)
+    # walls between rooms, 2 px; the bulkhead in front of the cockpit is thicker
+    wall = np.zeros((H, W), bool)
+    def room_at(cell):
+        for rid, (cx, cy, cw, ch) in ROOMS.items():
+            if cx <= cell[0] < cx + cw and cy <= cell[1] < cy + ch:
+                return rid
+        return ""
+    for rid, (cx, cy, cw, ch) in ROOMS.items():
+        for x in range(cx, cx + cw):
+            for y in range(cy, cy + ch):
+                x0, y0 = x * 24, y * 24
+                if room_at((x + 1, y)) != rid: wall[y0:y0 + 24, x0 + 22:x0 + 24] = True
+                if room_at((x - 1, y)) != rid: wall[y0:y0 + 24, x0:x0 + 2] = True
+                if room_at((x, y + 1)) != rid: wall[y0 + 22:y0 + 24, x0:x0 + 24] = True
+                if room_at((x, y - 1)) != rid: wall[y0:y0 + 2, x0:x0 + 24] = True
+    wall[24:72, 94:98] = True
+    for (a, b) in HATCHES:
         (c1, r1), (c2, r2) = a, b
         if r1 == r2:
-            x = max(c1, c2) * CELL
-            y = r1 * CELL + 7
-            rect(d, x - 2, y, x + 1, y + 9, FLOOR["default"])
+            x = max(c1, c2) * 24; y = r1 * 24 + 7
+            wall[y:y + 10, x - 2:x + 2] = False
         else:
-            y = max(r1, r2) * CELL
-            x = c1 * CELL + 7
-            rect(d, x, y - 2, x + 9, y + 1, FLOOR["default"])
-    # what's in each room
-    cx = lambda c: c * CELL
-    # engines: one engine core per pod
-    for yy in (CELL + 6, 2 * CELL + 6):
-        rect(d, cx(1) + 3, yy, cx(1) + 20, yy + 11, "#5d5868"); rect(d, cx(1) + 5, yy + 2, cx(1) + 18, yy + 9, "#7a7488"); rect(d, cx(1) + 7, yy + 4, cx(1) + 16, yy + 7, P["glow"])
-    # weapons: a gun rack with two charging cells
-    rect(d, cx(2) + 6, CELL + 5, cx(3) + 17, CELL + 10, "#5d5868")
-    rect(d, cx(2) + 9, CELL + 6, cx(2) + 14, CELL + 9, "#e6463c"); rect(d, cx(3) + 9, CELL + 6, cx(3) + 14, CELL + 9, "#e6463c")
-    # drone bay: charging pad
-    ellipse(d, cx(2) + 5, 2 * CELL + 5, cx(2) + 18, 2 * CELL + 18, "#5d5868"); ellipse(d, cx(2) + 8, 2 * CELL + 8, cx(2) + 15, 2 * CELL + 15, "#f2c94c")
-    # oxygen: a tank
-    ellipse(d, cx(3) + 6, 2 * CELL + 5, cx(3) + 17, 2 * CELL + 16, "#5d5868"); ellipse(d, cx(3) + 8, 2 * CELL + 7, cx(3) + 15, 2 * CELL + 14, "#7fc8e8")
-    # shields: generator
-    ellipse(d, cx(4) + 4, CELL + 14, cx(4) + 19, CELL + 33, "#5d5868"); ellipse(d, cx(4) + 7, CELL + 18, cx(4) + 16, CELL + 29, "#5ab4ff")
-    # cockpit: a seat facing the nose, a console, under the canopy
-    rect(d, cx(5) + 4, CELL + 18, cx(5) + 12, CELL + 29, "#6a5e58"); rect(d, cx(5) + 16, CELL + 14, cx(5) + 19, CELL + 33, "#3a3848")
-    rect(d, cx(5) + 17, CELL + 17, cx(5) + 18, CELL + 30, P["teal_lite"])
-    im.alpha_composite(d)
-    return im
+            y = max(r1, r2) * 24; x = c1 * 24 + 7
+            wall[y - 2:y + 2, x:x + 10] = False
+    wall &= p.tone >= 0
+    p.mat[wall] = "wall"; p.tone[wall] = 1
+    def machine(x0, y0, x1, y1, mat="console", light=None, lmat="glow"):
+        p.bevel(p.mask(rect=(x0, y0, x1, y1)), mat, width=1, face=3, shade_lower=False)
+        if light:
+            p.glow(p.mask(rect=light), lmat, 3)
+    # engines: two engine cores feeding the pods
+    for yy in (27, 51):
+        machine(27, yy, 44, yy + 17, "metal", (30, yy + 6, 41, yy + 10), "glow")
+        p.engrave([(35, yy + 1), (35, yy + 5)])
+    # weapons: the guns' breech and a power coupling
+    machine(51, 27, 68, 36, "console", (54, 29, 56, 30), "glow_red"); p.glow(p.mask(rect=(62, 29, 64, 30)), "glow_red", 3)
+    machine(54, 39, 65, 44, "pipe")
+    # drone bay: the drone's charging pad
+    p.bevel(p.mask(ellipse=(52, 52, 67, 67)), "console", width=1, face=3, shade_lower=False)
+    p.paint(p.mask(ellipse=(55, 55, 64, 64)), "yellow")
+    # shields: a generator coil
+    p.bevel(p.mask(ellipse=(76, 27, 91, 42)), "metal", width=1, face=3, shade_lower=False)
+    p.dome(p.mask(ellipse=(79, 30, 88, 39)), "blue")
+    # oxygen: a tank and pipes
+    p.tube(p.mask(rect=(76, 52, 91, 66)), "blue", "x")
+    p.engrave([(76, 59), (91, 59)])
+    machine(73, 67, 92, 68, "pipe")
+    # the cockpit: one seat facing the nose, a console under the canopy
+    machine(136, 29, 141, 66, "console", (137, 33, 138, 62), "glow_teal")
+    p.bevel(p.mask(rect=(112, 39, 123, 56)), "red", width=1, face=3, shade_lower=False)
+    p.bevel(p.mask(rect=(124, 42, 128, 53)), "console", width=1, face=3, shade_lower=False)
+    return p
 
-def scorch(im, spots, seed):
-    """Dark burn marks on the hull (opaque pixels only)."""
+# ---------------------------------------------------------------- the Shuttle Bay's repair stages
+
+OUTLINE = (38, 37, 53, 255)
+
+
+def _scorch(im, spots, seed):
     import random
     rng = random.Random(seed)
     px = im.load()
@@ -164,84 +170,72 @@ def scorch(im, spots, seed):
                     continue
                 dd = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5 + rng.uniform(-1.2, 1.2)
                 if dd < r * 0.55:
-                    px[x, y] = hexc("#262535")
+                    px[x, y] = (38, 37, 53, 255)
                 elif dd < r:
-                    px[x, y] = hexc("#5a4a48")
+                    px[x, y] = (90, 74, 72, 255)
                 elif dd < r + 2:
                     c = px[x, y]
                     px[x, y] = (int(c[0] * 0.75), int(c[1] * 0.72), int(c[2] * 0.72), 255)
 
-def erase(im, pts):
-    """Cut a piece off (wreck stages)."""
-    m = layer(im.size)
-    poly(m, pts, (255, 255, 255, 255))
+
+def _primer(im, mask_pts):
+    """Panels replaced but not painted yet: grey primer that keeps the shading."""
+    from PIL import ImageDraw
+    m = Image.new("L", im.size, 0)
+    ImageDraw.Draw(m).polygon(mask_pts, fill=255)
     px, mp = im.load(), m.load()
     for y in range(im.height):
         for x in range(im.width):
-            if mp[x, y][3]:
-                px[x, y] = (0, 0, 0, 0)
-
-def tidy_cut(im):
-    """After a cut, drop outline pixels left floating where the piece was (outline() then redraws the edge)."""
-    px = im.load()
-    for y in range(im.height):
-        for x in range(im.width):
-            if px[x, y][:3] != OUTLINE[:3] or px[x, y][3] == 0:
-                continue
-            keep = False
-            for dy in (-1, 0, 1):
-                for dx in (-1, 0, 1):
-                    nx, ny = x + dx, y + dy
-                    if 0 <= nx < im.width and 0 <= ny < im.height and px[nx, ny][3] and px[nx, ny][:3] != OUTLINE[:3]:
-                        keep = True
-            if not keep:
-                px[x, y] = (0, 0, 0, 0)
-
-def primer(im, pts, col="#a7a2a6"):
-    """Repainted panels still in grey primer (repair stages)."""
-    m = layer(im.size)
-    poly(m, pts, (255, 255, 255, 255))
-    px, mp = im.load(), m.load()
-    base = hexc(col)
-    for y in range(im.height):
-        for x in range(im.width):
-            if mp[x, y][3] and px[x, y][3]:
+            if mp[x, y] and px[x, y][3] and px[x, y][:3] != OUTLINE[:3]:
                 c = px[x, y]
-                if c[:3] != OUTLINE[:3]:
-                    shade = (c[0] + c[1] + c[2]) / 3 / 255
-                    px[x, y] = (int(base[0] * (0.7 + 0.35 * shade)), int(base[1] * (0.7 + 0.35 * shade)), int(base[2] * (0.7 + 0.35 * shade)), 255)
+                lum = (c[0] + c[1] + c[2]) / 765
+                g = int(110 + 90 * lum)
+                px[x, y] = (g, g - 4, g + 6, 255)
+
+
+def _cut(im, pts):
+    """Cut a piece off, then redraw the outline along the cut."""
+    from PIL import ImageDraw
+    m = Image.new("L", im.size, 0)
+    ImageDraw.Draw(m).polygon(pts, fill=255)
+    a = np.array(im)
+    cut = np.array(m) > 0
+    a[cut] = 0
+    solid = (a[:, :, 3] > 0) & ~np.all(a[:, :, :3] == OUTLINE[:3], axis=2)
+    keep = ndimage.binary_dilation(solid, structure=np.ones((3, 3)))
+    a[~keep] = 0
+    ring = ndimage.binary_dilation(a[:, :, 3] > 0, structure=[[0, 1, 0], [1, 1, 1], [0, 1, 0]]) & (a[:, :, 3] == 0)
+    a[ring] = OUTLINE
+    return Image.fromarray(a, "RGBA").copy()
+
 
 def stages():
-    """The Shuttle Bay's four repair stages: wrecked, patched, nearly there, repaired."""
-    clean = hull()
+    clean = hull(lit=False).render()
     s3 = clean.copy()
     s2 = clean.copy()
-    primer(s2, mirror_y(WING_TOP, H))                       # a new lower wing, not painted yet
-    scorch(s2, [(40, 32, 3)], 2)
+    _primer(s2, [tuple(p) for p in my(WING)])                   # a new lower wing, not painted yet
+    _scorch(s2, [(34, 33, 3)], 2)
     s1 = clean.copy()
-    primer(s1, mirror_y(WING_TOP, H))
-    primer(s1, [(0, 50), (56, 50), (56, 70), (0, 70)])       # the lower pod rebuilt in primer
-    scorch(s1, [(40, 32, 4), (88, 40, 3), (130, 60, 3)], 3)
-    s0 = clean.copy()
-    erase(s0, [(58, 75), (114, 75), (88, 95), (52, 95)])     # the lower wing snapped off at the root
-    erase(s0, [(0, 50), (24, 50), (24, 70), (0, 70)])         # the lower pod's back end is gone
-    tidy_cut(s0)
-    s0 = outline(s0)
-    scorch(s0, [(40, 32, 5), (70, 58, 6), (96, 36, 4), (128, 56, 4), (150, 46, 3), (30, 60, 4)], 4)
-    px = s0.load()                                            # a crack across the canopy
-    for (x, y) in [(124, 41), (125, 42), (126, 43), (127, 44), (128, 45), (129, 46), (130, 47), (131, 48), (132, 49), (128, 42), (130, 41)]:
-        px[x, y] = hexc("#d8f4f4")
+    _primer(s1, [tuple(p) for p in my(WING)])
+    _primer(s1, [(10, 50), (46, 50), (46, 70), (10, 70)])       # the lower pod rebuilt
+    _scorch(s1, [(34, 33, 4), (78, 40, 3), (112, 60, 3)], 3)
+    s0 = _cut(clean.copy(), [(38, 75), (92, 75), (70, 95), (34, 95)])     # the lower wing snapped off
+    s0 = _cut(s0, [(0, 49), (24, 49), (24, 71), (0, 71)])                 # the lower pod's back end gone
+    _scorch(s0, [(34, 33, 5), (62, 58, 6), (86, 36, 4), (112, 56, 4), (150, 46, 3), (30, 60, 4)], 4)
+    px = s0.load()
+    for (x, y) in [(110, 40), (111, 41), (112, 42), (113, 43), (114, 44), (115, 45), (116, 46), (117, 47), (114, 41), (116, 40)]:
+        px[x, y] = (216, 244, 244, 255)                          # a crack across the canopy
     sheet = Image.new("RGBA", (W * 4, H), (0, 0, 0, 0))
-    for i, st in enumerate((s0, s1, s2, s3)):
-        sheet.alpha_composite(st, (i * W, 0))
+    for k, st in enumerate((s0, s1, s2, s3)):
+        sheet.alpha_composite(st, (k * W, 0))
     return sheet
 
+
 if __name__ == "__main__":
-    h = hull()
-    full = layer(h.size); full.alpha_composite(h); full.alpha_composite(glow(h))
-    out = ROOT / "art/ships/starter"
+    root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
+    out = root / "art/ships/starter"
     out.mkdir(parents=True, exist_ok=True)
-    full.save(out / "hull.png")
-    interior(full).save(out / "interior.png")
-    stages().save(ROOT / "art/lunar/player_ship.png")
-    print("ok", h.size)
+    hull().render().save(out / "hull.png")
+    interior(hull()).render().save(out / "interior.png")
+    stages().save(root / "art/lunar/player_ship.png")
+    print("ok")
