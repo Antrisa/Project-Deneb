@@ -569,6 +569,16 @@ Description: <one line for the store>
 | `rabble_laser` | laser | 1 | 11 | 1 | 1 | Rabble |
 | `heavy_laser` | laser | 1 | 14 | 1 | 2 | Ivan, Ana |
 | `ivan_cannon` | special | 0 | 16 | 1 | 3 | Ivan's second phase; a hit on his weapons room drains it |
+| `missile_launcher` | missile | 1 | 12 | 1 | 2 | Straight through shields; uses one of your missiles a shot (enemies have their own). Terran patrols carry one |
+| `cutting_beam` | beam | 1 | 12 | 1 | 1 | Cuts a 40-px line across rooms; any shield stops it. Zaa'sh skiffs carry one |
+| `heavy_beam` | beam | 3 | 16 | 1 | 2 | Cuts a 56-px line; each shield layer takes 1 off. Beams never knock shields down |
+
+**Weapon art (21 Nov, Claude):** `tools/dev/ship_art/weapons2x.py` draws every gun as a six-frame strip in
+`art/ships/weapons/<id>.png` (idle, charging 1 and 2, ready glowing, firing with recoil and a muzzle flash, firing 2;
+48 × 16 art px a frame, Ivan's cannon 80 × 24), the missile in `art/ships/shots/missile.png`, and 48 × 48 store
+pictures in `art/ships/store/<id>.png`. The battle draws each gun on its mount in the frame that matches its
+charge, mirrored with enemy ships; lasers fly as glowing bolts, missiles as the sprite nose-first, and beams as a
+hot line from the gun with the cut glowing on the rooms it crosses. All of them are for sale at the Moogli trader.
 
 ### 6.2 Systems
 **Main systems** take reactor power, one bar at a time. **Subsystems** don't: they work, or they don't, and their bars come from upgrades.

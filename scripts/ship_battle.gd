@@ -39,6 +39,15 @@ const SHIELD_BLUE := Color("5ab4ff")
 # The shield bubble, FTL-style (Zachary, 21 Nov: "instead of a blue line an actual bubble"): see-through blue with a
 # faint hex pattern that thickens toward the edge and a bright rim, over the ship; a ripple where a shot is blocked.
 var shield_texes := {}          # bubble pictures by size, made once
+# Weapons (Zachary, 21 Nov: lasers, missiles and beams): each gun drawn on its mount from art/ships/weapons/<id>.png,
+# six frames (idle, charging 1 and 2, ready, firing 1 and 2; tools/dev/ship_art/weapons2x.py), missiles from
+# art/ships/shots/missile.png, and beams cutting a line across rooms.
+var weapon_texes := {}
+var missile_tex: Texture2D
+var beams: Array = []            # {"at_player", "from", "a", "b" (target picture px), "t", "dmg", "color", "hit", "rooms"}
+const BEAM_TIME := 0.9
+const GUN_FRAME := {"small": Vector2(48, 16), "big": Vector2(80, 24)}
+const GUN_MOUNT := {"small": Vector2(4, 8), "big": Vector2(6, 12)}
 var shield_hits: Array = []      # {"mine", "pos" (page), "t"}
 const YOU := Color("ffc878")
 const DRONE := Color("f2c94c")
@@ -145,6 +154,11 @@ func _ready() -> void:
 		interior_tex = load(inside)
 	me_ship = ShipData.build(ShipData.STARTER)
 	room_icons = _load_tex("res://art/ui/ship/icons_systems.png")
+	missile_tex = _load_tex("res://art/ships/shots/missile.png")
+	for wid in ShipData.WEAPONS:
+		var tex: Texture2D = _load_tex("res://art/ships/weapons/%s.png" % wid)
+		if tex != null:
+			weapon_texes[wid] = tex
 	broken_tex = _load_tex(str(ShipData.STARTER.get("interior", "")).replace("interior.png", "interior_broken.png"))
 	my_chips = _pieces(str(ShipData.STARTER["art"]).replace("hull.png", "chip_%d.png"), ShipData.STARTER)
 
@@ -159,6 +173,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	result_text = ""
 	paused = false
 	shots.clear()
+	beams.clear()
 	shield_hits.clear()
 	pops.clear()
 	selected = -1
@@ -370,7 +385,10 @@ func _tick(delta: float) -> void:
 
 	_charge_weapons(weapons, sys, delta, true)
 	_charge_weapons(e_weapons, e_sys, delta, false)
+	for w in weapons + e_weapons:
+		w["fired"] = maxf(0.0, float(w.get("fired", 0.0)) - delta)
 	_move_shots(delta, true)
+	_move_beams(delta)
 	_move_drone(delta)
 	_enemy_crew(delta)
 	_tick_doors(me_ship, delta)
@@ -435,6 +453,8 @@ func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool)
 		if mine:
 			if str(w["target"]) == "":
 				continue
+			if int(data.get("ammo", 0)) > 0 and int(world.missiles) < int(data["ammo"]):
+				continue                 # charged, but no missiles left to fire
 			_fire(w, false)
 			if not autofire:
 				w["target"] = ""
@@ -551,10 +571,22 @@ func _fire(w: Dictionary, at_player: bool) -> void:
 		from = mounts[slot]
 	var to: Vector2 = _room_center(at_player, target)
 	var dodge: int = _my_evasion() if at_player else _enemy_evasion()
+	var kind: String = str(data.get("type", "laser"))
+	w["fired"] = 0.3
+	if not at_player and int(data.get("ammo", 0)) > 0:
+		world.missiles = maxi(0, int(world.missiles) - int(data["ammo"]))
+	if kind == "beam":
+		# a cut across the target room, tilted a little from up-and-down
+		var dir := Vector2.DOWN.rotated(randf_range(-0.6, 0.6))
+		var half: float = float(data.get("length", 40.0)) / 2.0
+		beams.append({"at_player": at_player, "from": from, "a": to - dir * half, "b": to + dir * half, "t": -0.15,
+			"dmg": int(data["damage"]), "color": data["color"], "hit": randf() * 100.0 >= dodge, "rooms": {}, "said": false})
+		world.sfx("zap", 0.6, -2.0)
+		return
 	# from and to are ship-picture pixels: from on the firing ship, to on the target.
 	for i in range(int(data["shots"])):
 		shots.append({"from": from, "to": to + Vector2(randf_range(-3, 3), randf_range(-3, 3)),
-			"t": -0.3 * i, "dmg": int(data["damage"]), "at_player": at_player, "room": target,
+			"t": -0.3 * i, "dmg": int(data["damage"]), "at_player": at_player, "room": target, "kind": kind,
 			"hit": randf() * 100.0 >= dodge, "color": data["color"], "heavy": int(data["damage"]) >= 3})
 	world.sfx("zap", 1.2 if not at_player else 0.8, -4.0)
 
@@ -578,21 +610,27 @@ func _land(s: Dictionary) -> void:
 	if not bool(s["hit"]):
 		_pop(where, "Miss", DIM)
 		return
-	if at_player and layers > 0:
+	var missile: bool = str(s.get("kind", "")) == "missile"
+	if at_player and layers > 0 and not missile:
 		layers -= 1
 		shield_timer = 0.0
 		_pop(where + Vector2(-10, 0), "Blocked", SHIELD_BLUE)
 		shield_hits.append({"mine": true, "pos": _shield_edge(true, where), "t": 0.0})
 		world.sfx("click", 0.6)
 		return
-	if not at_player and e_layers > 0:
+	if not at_player and e_layers > 0 and not missile:
 		e_layers -= 1
 		e_shield_timer = 0.0
 		_pop(where + Vector2(10, 0), "Blocked", SHIELD_BLUE)
 		shield_hits.append({"mine": false, "pos": _shield_edge(false, where), "t": 0.0})
 		return
-	var dmg: int = s["dmg"]
-	var room_id: String = s["room"]
+	_damage(at_player, str(s["room"]), int(s["dmg"]), where)
+
+
+# A hit on a room: hull, the room's system, its crew. at_player: the hit is on you.
+func _damage(at_player: bool, room_id: String, dmg: int, where: Vector2) -> void:
+	if result != "" or dmg <= 0:
+		return
 	if at_player:
 		hull -= dmg
 		var room: Dictionary = _room(me_ship["rooms"], room_id)
@@ -624,6 +662,39 @@ func _land(s: Dictionary) -> void:
 		if e_hull <= 0:
 			e_hull = 0
 			_win()
+
+
+# Beams sweep their line; each room the line crosses takes the damage once, less one per shield layer (shields
+# aren't knocked down). A dodged beam misses altogether.
+func _move_beams(delta: float) -> void:
+	var left: Array = []
+	for bm in beams:
+		bm["t"] = float(bm["t"]) + delta / BEAM_TIME
+		var t: float = float(bm["t"])
+		if t >= 0.0 and t <= 1.0 and result == "":
+			var at_player: bool = bm["at_player"]
+			var p: Vector2 = (bm["a"] as Vector2).lerp(bm["b"], t)
+			var where: Vector2 = _on_page(at_player, p)
+			if not bool(bm["hit"]):
+				if not bool(bm["said"]):
+					_pop(where, "Miss", DIM)
+					bm["said"] = true
+			else:
+				for room in (me_ship if at_player else foe)["rooms"]:
+					var rid: String = str(room["id"])
+					if (room["rect"] as Rect2).has_point(p) and not (bm["rooms"] as Dictionary).has(rid):
+						bm["rooms"][rid] = true
+						var dmg: int = int(bm["dmg"]) - (layers if at_player else e_layers)
+						if dmg <= 0:
+							if not bool(bm["said"]):
+								_pop(where, "Blocked", SHIELD_BLUE)
+								shield_hits.append({"mine": at_player, "pos": _shield_edge(at_player, where), "t": 0.0})
+								bm["said"] = true
+						else:
+							_damage(at_player, rid, dmg, where)
+		if t < 1.25:
+			left.append(bm)
+	beams = left
 
 
 func _pop(pos: Vector2, text: String, color: Color) -> void:
@@ -1091,6 +1162,7 @@ func _paint() -> void:
 	_paint_my_window()
 	_paint_foe_window()
 	_paint_shots()
+	_paint_beams()
 	for p in pops:
 		var c: Color = p["color"]
 		c.a = 1.0 - float(p["t"]) / 1.2
@@ -1207,16 +1279,41 @@ func _paint_my_window() -> void:
 # through the ship's transform, so an enemy's guns are mirrored with it and point at you.
 func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
 	var mounts: Array = ship.get("mounts", [])
+	var art_xf: Transform2D = _art_xf(ship, xf)
+	var a: float = float(ship.get("art_scale", 1))
+	var mine: bool = is_same(ship, me_ship)
+	var powered: Array = _powered_weapons() if mine else []
 	for i in range(mini(mounts.size(), list.size())):
-		if str(list[i]["id"]) == "":
+		var w: Dictionary = list[i]
+		if str(w["id"]) == "":
 			continue
 		var m: Vector2 = mounts[i]
-		var data: Dictionary = ShipData.WEAPONS[list[i]["id"]]
-		var f: float = 1.7 if int(data["damage"]) >= 3 else 1.0          # big guns (Ivan's cannon) drawn bigger
-		# a bracket against the hull, the gun body, its barrel and a lit tip
+		var data: Dictionary = ShipData.WEAPONS[w["id"]]
+		var tex: Texture2D = weapon_texes.get(str(w["id"]))
+		if tex != null:
+			var big: String = "big" if int(data["damage"]) >= 3 else "small"
+			var fsize: Vector2 = GUN_FRAME[big]
+			var c: float = float(w["charge"]) / float(data["charge"])
+			var frame := 0
+			var fired: float = float(w.get("fired", 0.0))
+			if fired > 0.15:
+				frame = 4
+			elif fired > 0.0:
+				frame = 5
+			elif mine and (not bool(w["on"]) or not bool(powered[i])):
+				frame = 0
+			elif c >= 1.0:
+				frame = 3
+			elif c >= 0.5:
+				frame = 2
+			elif c > 0.05:
+				frame = 1
+			var at: Transform2D = art_xf * Transform2D(0.0, m * a - (GUN_MOUNT[big] as Vector2))
+			screen.texture_xf(tex, at, Rect2(frame * fsize.x, 0, fsize.x, fsize.y))
+			continue
+		var f: float = 1.7 if int(data["damage"]) >= 3 else 1.0
 		screen.rect(xf * Rect2(m + Vector2(-6, -3) * f, Vector2(8, 6) * f), Color("3a3644"))
 		screen.rect(xf * Rect2(m + Vector2(-5, -2) * f, Vector2(6, 4) * f), Color("5d5868"))
-		screen.rect(xf * Rect2(m + Vector2(-5, -2) * f, Vector2(6, 1) * f), Color("8a8498"))
 		screen.rect(xf * Rect2(m + Vector2(1, -1) * f, Vector2(10, 2) * f), Color("6e6a7c"))
 		screen.rect(xf * Rect2(m + Vector2(9, -1) * f, Vector2(2, 2) * f), data["color"])
 
@@ -1624,7 +1721,47 @@ func _paint_shots() -> void:
 			head = enter.lerp(b, (t - split) / maxf(0.001, 1.0 - split))
 			dir = (b - enter).normalized()
 			tail = minf(tail, head.distance_to(enter))
-		screen.line(head - dir * tail, head, sh["color"], 3.0 if heavy else 2.0)
+		var col: Color = sh["color"]
+		if str(sh.get("kind", "")) == "missile" and missile_tex != null:
+			# the missile sprite, nose along its path, flame flickering
+			var frame: int = int(Time.get_ticks_msec() / 60) % 3
+			var m: Transform2D = Transform2D(dir.angle(), head) * Transform2D(0.0, Vector2(-14, -4))
+			screen.texture_xf(missile_tex, m, Rect2(frame * 16, 0, 16, 8))
+			continue
+		# a laser bolt: a soft glow with a bright core
+		screen.line(head - dir * (tail + 2.0), head + dir, Color(col, 0.45), 5.0 if heavy else 4.0)
+		screen.line(head - dir * tail, head, col, 3.0 if heavy else 2.0)
+		screen.line(head - dir * tail * 0.6, head, Color(1, 1, 1, 0.9), 1.0)
+
+
+# Beams: from the gun, out of its window, in at the near edge of the target's, to the point cutting across the
+# rooms; the cut it leaves glows and fades.
+func _paint_beams() -> void:
+	for bm in beams:
+		var t: float = float(bm["t"])
+		if t < 0.0:
+			continue
+		var at_player: bool = bm["at_player"]
+		var col: Color = bm["color"]
+		var tt: float = clampf(t, 0.0, 1.0)
+		var fade: float = clampf((1.25 - t) / 0.25, 0.0, 1.0) if t > 1.0 else 1.0
+		var p: Vector2 = _on_page(at_player, (bm["a"] as Vector2).lerp(bm["b"], tt))
+		var a0: Vector2 = _on_page(at_player, bm["a"])
+		# the scar
+		screen.line(a0, p, Color(col, 0.5 * fade), 3.0)
+		screen.line(a0, p, Color(1, 0.95, 0.85, 0.7 * fade), 1.0)
+		if t > 1.0:
+			continue
+		var g0: Vector2 = _on_page(not at_player, bm["from"])
+		var out_x: float = (FOE_WIN.position.x + 3.0) if at_player else (MY_WIN.end.x - 3.0)
+		var in_x: float = (MY_WIN.end.x - 3.0) if at_player else (FOE_WIN.position.x + 3.0)
+		var wob: float = sin(Time.get_ticks_msec() / 30.0) * 0.5 + 0.5
+		for seg in [[g0, Vector2(out_x, g0.y)], [Vector2(in_x, p.y), p]]:
+			screen.line(seg[0], seg[1], Color(col, 0.35 + 0.15 * wob), 6.0)
+			screen.line(seg[0], seg[1], col, 3.0)
+			screen.line(seg[0], seg[1], Color(1, 1, 1, 0.9), 1.0)
+		if bool(bm["hit"]):
+			screen.circle(p, 3.0 + 2.0 * wob, Color(1, 0.9, 0.6, 0.9))
 
 
 func _paint_reactor() -> void:
@@ -1689,6 +1826,11 @@ func _paint_weapons() -> void:
 	s.panel(r, "blaster", "Weapons")
 	if autofire:
 		s.text_right(r.end.x - 8, r.position.y + 7, "AUTOFIRE ON", "micro", OCHRE)
+	else:
+		for w in weapons:
+			if str(w["id"]) != "" and int(ShipData.WEAPONS[w["id"]].get("ammo", 0)) > 0:
+				s.text_right(r.end.x - 8, r.position.y + 7, "MISSILES %d" % int(world.missiles), "micro", MUTED)
+				break
 	for i in range(weapons.size()):
 		var card := _weapon_rect(i)
 		var w: Dictionary = weapons[i]
@@ -1720,6 +1862,8 @@ func _paint_weapons() -> void:
 				note = "AIM: CLICK A ROOM"
 			elif str(w["target"]) != "":
 				note = "AIMED"
+			if int(data.get("ammo", 0)) > 0 and int(world.missiles) < int(data["ammo"]):
+				note = "NO MISSILES LEFT"
 		s.text_fit(card.position.x + 6, card.position.y + 33, card.size.x - 12, note, "micro", OCHRE if charged and on else MUTED)
 		if s.hovering(card) and selected != i:
 			s.outline(card, ORANGE)

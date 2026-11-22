@@ -137,7 +137,7 @@ func _act(action: String, arg) -> void:
 			price = int(stock.get("missiles", 12))
 			if _pay(price, "Store"):
 				world.missiles += 1
-				status = "One missile. You have %d. (Missile weapons come later.)" % int(world.missiles)
+				status = "One missile. You have %d. Missile launchers use one a shot." % int(world.missiles)
 		"parts":
 			price = int(stock.get("drone_parts", 10))
 			if _pay(price, "Store"):

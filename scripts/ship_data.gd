@@ -31,6 +31,15 @@ const WEAPONS := {
 		"price": 35, "about": "Cheap, light, and everywhere the Rabble go. Better in pairs."},
 	"heavy_laser": {"name": "Heavy laser", "type": "laser", "shots": 1, "damage": 2, "charge": 14.0, "power": 1, "color": Color("b6ff5a"),
 		"price": 90, "about": "One slow, hard-hitting shot. Best once their shields are down."},
+	# Missiles (Zachary, 21 Nov: lasers, missiles and beams): straight through shields, but each shot uses one of
+	# your missiles (enemies have their own). Beams: a slow line cut across rooms; every room on the line takes the
+	# damage, less one for each shield layer, and beams don't knock shields down. "length": the cut, in cell px.
+	"missile_launcher": {"name": "Missile launcher", "type": "missile", "shots": 1, "damage": 2, "charge": 12.0, "power": 1,
+		"color": Color("ffb04a"), "ammo": 1, "price": 65, "about": "Goes straight through shields. Uses one missile a shot."},
+	"cutting_beam": {"name": "Cutting beam", "type": "beam", "shots": 1, "damage": 1, "charge": 12.0, "power": 1, "length": 40.0,
+		"color": Color("ff5a5a"), "price": 50, "about": "Cuts a line across their rooms. Any shield stops it, so knock them down first."},
+	"heavy_beam": {"name": "Heavy beam", "type": "beam", "shots": 1, "damage": 2, "charge": 16.0, "power": 3, "length": 56.0,
+		"color": Color("ffd34a"), "price": 110, "about": "A long, hot cut across rooms. Each shield layer takes 1 off its damage."},
 	# Ivan's overcharged gun (phase 2). Needs no power; a hit on his weapons room drains its charge.
 	"ivan_cannon": {"name": "Overcharged cannon", "type": "special", "shots": 1, "damage": 3, "charge": 16.0, "power": 0, "color": Color("ffd34a"),
 		"price": 0, "about": "Ivan's. Not for sale."},
@@ -39,7 +48,7 @@ const WEAPONS := {
 # Stores (Zachary, 21 Nov: a trading window like FTL's). Prices are first guesses: fuel, missiles and drone
 # parts each, hull repair per point. Weapons sell back for half.
 const STORES := {
-	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser"],
+	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser", "missile_launcher", "cutting_beam", "heavy_beam"],
 		"fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8},
 }
 
@@ -248,7 +257,7 @@ const CULTURE_SHIPS := {
 	"terran_patrol": {
 		"name": "Terran patrol", "size": Vector2(168, 96), "hull": 10, "crew": 4,
 		"art": "res://art/ships/terran_patrol/hull.png", "interior": "res://art/ships/terran_patrol/interior.png", "art_scale": 2,
-		"weapons": ["burst_laser", "heavy_laser"],
+		"weapons": ["burst_laser", "missile_launcher"],
 		"mounts": [Vector2(144, 22), Vector2(144, 73.5), Vector2(107, 5), Vector2(107, 90.5)],
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [3, 3], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
@@ -264,7 +273,7 @@ const CULTURE_SHIPS := {
 	"zaash_skiff": {
 		"name": "Zaa'sh skiff", "size": Vector2(144, 96), "hull": 9, "crew": 3,
 		"art": "res://art/ships/zaash_skiff/hull.png", "interior": "res://art/ships/zaash_skiff/interior.png", "art_scale": 2,
-		"weapons": ["heavy_laser"],
+		"weapons": ["heavy_laser", "cutting_beam"],
 		"mounts": [Vector2(110, 25), Vector2(110, 70.5), Vector2(75, 18), Vector2(75, 77.5)],
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
