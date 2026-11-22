@@ -1192,8 +1192,25 @@ func _paint_reactor() -> void:
 		s.hit("sys/%d" % k, box)
 
 
+# Which of your weapons the weapons system has power for, in slot order (as _charge_weapons spends it).
+func _powered_weapons() -> Array:
+	var budget: int = _eff(sys, "weapons")
+	var out: Array = []
+	for w in weapons:
+		var ok := false
+		if str(w["id"]) != "" and bool(w["on"]):
+			var cost: int = int(ShipData.WEAPONS[w["id"]]["power"])
+			if cost <= budget:
+				budget -= cost
+				ok = true
+		out.append(ok)
+	return out
+
+
+# Each card shows the weapon's power use (Zachary, 21 Nov): one pip per bar it needs, lit while it has them.
 func _paint_weapons() -> void:
 	var s := screen
+	var powered: Array = _powered_weapons()
 	var r := Rect2(264, 297, 296, 83)
 	s.panel(r, "blaster", "Weapons")
 	if autofire:
@@ -1212,14 +1229,20 @@ func _paint_weapons() -> void:
 		s.frame(card, Color("f8f6ef") if on else Color("e6e4de"))
 		if selected == i:
 			s.outline(card, ORANGE, 2.0)
-		s.text_fit(card.position.x + 6, card.position.y + 4, card.size.x - 12, "%d  %s" % [i + 1, str(data["name"])], "label", INK if on else MUTED)
+		var cost: int = int(data["power"])
+		var pips_w: float = cost * 7.0 + 12.0
+		s.text_fit(card.position.x + 6, card.position.y + 4, card.size.x - 18 - pips_w, "%d  %s" % [i + 1, str(data["name"])], "label", INK if on else MUTED)
+		s.img("i_bolt", Rect2(card.end.x - 6 - pips_w, card.position.y + 8, 9, 9), OCHRE if bool(powered[i]) else MUTED)
+		s.pips(card.end.x - 6 - cost * 7.0 + 2, card.position.y + 8, cost, cost if bool(powered[i]) else 0, 5.0, 9.0, 2.0)
 		var bar := Rect2(card.position.x + 6, card.position.y + 25, card.size.x - 12, 5)
 		s.rect(bar, ShipScreen.PIP_OFF)
 		s.rect(Rect2(bar.position, Vector2(bar.size.x * float(w["charge"]) / float(data["charge"]), bar.size.y)), ORANGE if charged else Color("6f9fb4"))
 		var note := "OFF - CLICK TO POWER"
 		if on:
 			note = "READY - CLICK TO AIM" if charged else "CHARGING"
-			if selected == i:
+			if not bool(powered[i]):
+				note = "NEEDS %d POWER" % cost
+			elif selected == i:
 				note = "AIM: CLICK A ROOM"
 			elif str(w["target"]) != "":
 				note = "AIMED"

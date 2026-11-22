@@ -254,7 +254,11 @@ func _paint_slot(k: int, slot: Array, r: Rect2) -> void:
 		s.outline(Rect2(pic.position + Vector2(2, 18), Vector2(32, 12)), Color("3a3e48"))
 		s.rect(Rect2(pic.position + Vector2(34, 21), Vector2(12, 6)), ShipData.WEAPONS[wid]["color"])
 	s.text_fit(r.position.x + 6, r.position.y + 74, r.size.x - 12, str(ShipData.WEAPONS[wid]["name"]), "label", INK)
-	s.text(r.position.x + 6, r.position.y + 92, "%s%d SCRIP" % ["+" if selling else "", int(slot[1])], "micro", OCHRE)
+	s.text(r.position.x + 6, r.position.y + 90, "%s%d SCRIP" % ["+" if selling else "", int(slot[1])], "micro", OCHRE)
+	var cost: int = int(ShipData.WEAPONS[wid]["power"])
+	var px0: float = r.end.x - 6 - cost * 7.0 + 2
+	s.img("i_bolt", Rect2(px0 - 12, r.position.y + 94, 9, 9), OCHRE)
+	s.pips(px0, r.position.y + 94, cost, cost, 5.0, 9.0, 2.0)
 	if s.hovering(r) and not mine:
 		s.outline(r, ORANGE)
 	s.hit("slot/%d" % k, r)
