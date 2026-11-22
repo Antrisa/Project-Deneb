@@ -26,7 +26,7 @@ const MOST_SCALE := 2.0                      # small ships are enlarged to fit, 
 const REACTOR_SYS := ["shields", "engines", "weapons", "life"]
 const SYS_LABEL := {"shields": "SHD", "engines": "ENG", "weapons": "WPN", "life": "O2"}
 const SYS_NAME := {"shields": "Shields", "engines": "Engines", "weapons": "Weapons", "life": "Oxygen"}
-const REPAIR_ORDER := ["shields", "weapons", "pilot", "engines", "life", "drones"]
+const REPAIR_ORDER := ["shields", "weapons", "cannon", "pilot", "engines", "life", "drones"]
 const INK := Color("373b36")          # as ui/ship_screen.gd
 const MUTED := Color("595e55")          # as ui/ship_screen.gd
 const OCHRE := Color("a45736")          # as ui/ship_screen.gd
@@ -98,7 +98,13 @@ var e_room_repair := {}          # room id -> seconds of repair work done on it
 const CREW_SPEED := 22.0         # picture pixels a second
 const CREW_HP := 100.0
 const CREW_HIT := 15.0           # health lost per point of damage when a shot hits their room
-const STATIONS := ["pilot", "weapons", "shields", "engines"]
+const STATIONS := ["pilot", "weapons", "shields", "engines", "cannon"]
+# Room markings, FTL-style (Zachary, 21 Nov): art/ui/ship/icons_systems.png, 32 x 32 each in this order
+# (tools/dev/ship_art/icons2x.py), drawn 16 x 16 cell pixels big in the middle of a system's room.
+const ROOM_ICONS := ["shields", "engines", "weapons", "life", "pilot", "drones", "cannon", "medbay", "crew"]
+const ICON_OK := Color("8a8590")
+const ICON_HIT := Color("e0503c")
+var room_icons: Texture2D
 const CREW_SPOTS := [Vector2(0, 0), Vector2(-7, -5), Vector2(7, 5), Vector2(-7, 5), Vector2(7, -5), Vector2(0, 6)]
 var overcharged := false
 
@@ -121,6 +127,7 @@ func _ready() -> void:
 	if inside != "" and ResourceLoader.exists(inside):
 		interior_tex = load(inside)
 	me_ship = ShipData.build(ShipData.STARTER)
+	room_icons = _load_tex("res://art/ui/ship/icons_systems.png")
 
 
 # ---------------------------------------------------------------- starting and ending
@@ -356,7 +363,7 @@ func _tick(delta: float) -> void:
 
 
 func _after_overcharge() -> void:
-	_pop(_on_page(false, Vector2((foe["size"] as Vector2).x / 2.0, 0)), "Hit his weapons to drain the cannon", GOLD)
+	_pop(_on_page(false, Vector2((foe["size"] as Vector2).x / 2.0, 0)), "Hit his cannon room to drain the cannon" if e_sys.has("cannon") else "Hit his weapons to drain the cannon", GOLD)
 
 
 func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool) -> void:
@@ -374,6 +381,9 @@ func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool)
 				speed = 1.15
 			elif not mine and _manned("weapons"):
 				speed = 1.1
+			# Ivan's cannon runs off its own room: crewed it charges faster, damaged it can't charge at all
+			if not mine and e_sys.has("cannon") and str(w["id"]) == "ivan_cannon":
+				speed = 0.0 if _eff(e_sys, "cannon") <= 0 else (1.1 if _manned("cannon") else 1.0)
 			w["charge"] = minf(float(data["charge"]), float(w["charge"]) + delta * speed)
 		else:
 			w["charge"] = maxf(0.0, float(w["charge"]) - delta * 2.0)
@@ -559,7 +569,7 @@ func _land(s: Dictionary) -> void:
 			e_sys[sname2]["damage"] = mini(int(e_sys[sname2]["max"]), int(e_sys[sname2]["damage"]) + dmg)
 			_clip_power(e_sys)
 		_hurt_crew(room_id, dmg, where)
-		if sname2 == "weapons" and overcharged:
+		if sname2 == ("cannon" if e_sys.has("cannon") else "weapons") and overcharged:
 			for w in e_weapons:
 				if str(w["id"]) == "ivan_cannon" and float(w["charge"]) > 0.0:
 					w["charge"] = 0.0
@@ -1114,7 +1124,8 @@ func _paint_my_window() -> void:
 				fill = fill.lerp(Color("a0463c"), 0.65)
 			s.rect(rr, fill)
 			s.outline(rr, Color("282834"))
-		_room_tag(rr, str(room["label"]), k)
+		if not _room_icon(rr, sname, k, dmg > 0):
+			_room_tag(rr, str(room["label"]), k)
 		if sys.has(sname) and sname != "pilot":
 			var bars: int = int(sys[sname]["max"])
 			for i in range(bars):
@@ -1161,6 +1172,17 @@ func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
 		screen.rect(xf * Rect2(m + Vector2(-5, -2) * f, Vector2(6, 1) * f), Color("8a8498"))
 		screen.rect(xf * Rect2(m + Vector2(1, -1) * f, Vector2(10, 2) * f), Color("6e6a7c"))
 		screen.rect(xf * Rect2(m + Vector2(9, -1) * f, Vector2(2, 2) * f), data["color"])
+
+
+# A system room's marking in the middle of the room: grey while working, red while damaged. False when the room
+# has no marking (crew decks, holds), so the caller can give it a name tag instead.
+func _room_icon(rr: Rect2, sname: String, k: float, hurt: bool) -> bool:
+	var i: int = ROOM_ICONS.find(sname)
+	if i < 0 or room_icons == null:
+		return false
+	var size := Vector2(16.0, 16.0) * k
+	screen.texture(room_icons, Rect2(screen.snap(rr.get_center() - size / 2.0), size), Rect2(i * 32, 0, 32, 32), ICON_HIT if hurt else ICON_OK)
+	return true
 
 
 # A room's name in a small dark tag in its top-left corner (cut to the room's width).
@@ -1272,7 +1294,8 @@ func _paint_enemy() -> void:
 		if inside:
 			if dmg > 0:
 				s.rect(rr.grow(-2.0 * k), Color(0.86, 0.22, 0.16, 0.38))
-			_room_tag(rr, str(room["label"]), k)
+			if not _room_icon(rr, sname, k, dmg > 0):
+				_room_tag(rr, str(room["label"]), k)
 		else:
 			var fill := Color(0.69, 0.59, 0.53, 0.92)
 			if dmg > 0:

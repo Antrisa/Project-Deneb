@@ -368,11 +368,12 @@ def covered_fighter():
 # cells. Must match scripts/ship_data.gd. Doors only where the layout needs them (Zachary, 21 Nov).
 INSIDES = {
     # Ivan's flagship, 9 x 6: engines at the back with oxygen and the brig beside them, shields and weapons in the
-    # middle, the crew deck with cargo holds above and below, the bridge in the nose.
+    # middle, the crew deck with the cannon room above it (Zachary: a room for the special weapon, like FTL)
+    # and a hold below, the bridge in the nose.
     "ivan_flagship": (
         {"life": (1, 1, 2, 1, "life"), "engines": (1, 2, 2, 2, "engines"), "brig": (1, 4, 2, 1, ""),
          "shields": (3, 1, 2, 2, "shields"), "weapons": (3, 3, 2, 2, "weapons"),
-         "hold_top": (5, 1, 2, 1, ""), "crew": (5, 2, 2, 2, ""), "hold_bottom": (5, 4, 2, 1, ""),
+         "cannon": (5, 1, 2, 1, "cannon"), "crew": (5, 2, 2, 2, ""), "hold_bottom": (5, 4, 2, 1, ""),
          "pilot": (7, 2, 1, 2, "pilot")},
         [((1, 1), (1, 2)), ((1, 3), (1, 4)), ((2, 2), (3, 2)), ((2, 3), (3, 3)), ((4, 2), (5, 2)),
          ((4, 3), (5, 3)), ((6, 1), (6, 2)), ((6, 3), (6, 4)), ((6, 2), (7, 2))],

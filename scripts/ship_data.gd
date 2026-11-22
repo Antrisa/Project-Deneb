@@ -110,7 +110,9 @@ const ENEMIES := {
 		"art": "res://art/ships/ivan_flagship/hull.png", "interior": "res://art/ships/ivan_flagship/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "heavy_laser"],
 		"mounts": [Vector2(176, 27), Vector2(176, 116.5), Vector2(204, 72), Vector2(158, 18), Vector2(158, 125.5)],
-		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
+		# "cannon": the room for his special weapon (Zachary, 21 Nov, like FTL's special weapon rooms). Crewed, the
+		# cannon charges faster; damaged, it can't charge, and a hit there drains it.
+		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1], "cannon": [1, 1]},
 		"overcharge_at": 0.5,              # at half hull he brings out the cannon
 		"rooms": [
 			{"id": "crew", "label": "Crew deck", "sys": "", "cells": Rect2i(5, 2, 2, 2)},
@@ -119,7 +121,7 @@ const ENEMIES := {
 			{"id": "brig", "label": "Brig", "sys": "", "cells": Rect2i(1, 4, 2, 1)},
 			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 1, 2, 2)},
 			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 3, 2, 2)},
-			{"id": "hold_top", "label": "Hold", "sys": "", "cells": Rect2i(5, 1, 2, 1)},
+			{"id": "cannon", "label": "Cannon", "sys": "cannon", "cells": Rect2i(5, 1, 2, 1)},
 			{"id": "hold_bottom", "label": "Hold", "sys": "", "cells": Rect2i(5, 4, 2, 1)},
 			{"id": "pilot", "label": "Bridge", "sys": "pilot", "cells": Rect2i(7, 2, 1, 2)},
 		],

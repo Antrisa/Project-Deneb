@@ -276,8 +276,8 @@ def interior(p, rooms, doors, cell=CELL, wall_mat="wall"):
 # Other rooms are bare deck. A console sits on one cell's wall, never where a door is (Zachary: "you cant have a
 # console infront of a door"), and the crew member stands in the middle of that cell. Keep console_at() in step
 # with ShipBattle._console_at().
-STATION_SYSTEMS = ("pilot", "weapons", "shields", "engines")
-SCREEN_GLOW = {"pilot": "glow_teal", "weapons": "glow_red", "shields": "glow_blue", "engines": "glow"}
+STATION_SYSTEMS = ("pilot", "weapons", "shields", "engines", "cannon")
+SCREEN_GLOW = {"pilot": "glow_teal", "weapons": "glow_red", "shields": "glow_blue", "engines": "glow", "cannon": "glow_yellow"}
 SIDES = {"top": (0, -1), "bottom": (0, 1), "left": (-1, 0), "right": (1, 0)}
 
 

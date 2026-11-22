@@ -151,6 +151,17 @@ room, where crew stand on station and boost the system (shields recharge faster,
 the cockpit add evasion). Oxygen and crew rooms are bare deck. A console never sits where a door is: the cockpit's goes on its front wall,
 the others on a top wall, else bottom, left or right, in the first cell with a door-free outside wall there; crew stand
 in the middle of that cell (`kit2x.console_at()` and `ShipBattle._console_at()` keep in step).
+**Special weapon rooms** (Zachary, 21 Nov, like FTL): a ship with a special weapon has a room and console for it.
+Ivan's flagship has a Cannon room (above the crew deck): crewed, the overcharged cannon charges faster; damaged, it
+can't charge, and a hit there drains it.
+
+**Room markings** (Zachary, 21 Nov: "the room identity markings as another asset to put on room like FTL"):
+`art/ui/ship/icons_systems.png`, 32 × 32 icons drawn by `tools/dev/ship_art/icons2x.py` in this order: shields,
+engines, weapons, oxygen, cockpit, drones, cannon, medbay, crew. White with a dark outline; the game draws each one
+16 × 16 cell pixels big in the middle of its system's room, grey while working and red while damaged. Rooms with no
+system (crew decks, holds, the brig) get a small name tag instead. To redraw them by hand, keep the sheet's order
+and size.
+
 **Doors: only as many as the layout needs** (Zachary, 21 Nov: "you dont need to have so many doors"). Every room
 must be reachable, but most rooms don't need a door on every shared wall. The cutter is a compact block, so its eight
 doors are fine; bigger ships should use fewer, more like FTL's corridors and chokepoints.
