@@ -8,7 +8,10 @@ extends SubViewport
 # show_time(t): t is seconds since the opening started. The approach runs from 0 to 26 s; from then on the
 # station loop repeats every 120 s, with everything (clouds, orbit, sun, stars) closing on the loop.
 # Layers, back to front: sky with stars and cloud light; lightning and shooting stars; sun; planet; moon base;
-# its lamps and the drifting rocks; fighter; sparks from its damaged wing.
+# its lamps and the drifting rocks; the knocked-off wing; fighter; sparks.
+# Easter egg (Zachary, 21 Nov): click the fighter and it sparks where you touched it and jolts; the third click
+# knocks its intact wing off, and the wing tumbles away while the new cut edge sparks. title_screen.gd calls
+# poke(); the wing's pixels are title/scene/fighter_wing.png (tools/dev/title_wing_mask.py).
 
 const CANVAS := Vector2i(960, 540)
 const INTRO := 26.0
@@ -47,6 +50,14 @@ const ROCKS := [[103.0, 120.0, 4.0, 2.2, 3.0], [463.0, 60.0, 22.0, 2.6, 4.0], [2
 const ENGINE_PULSES := [-25.5, -22.9, -18.0, -12.1, -8.7, -4.2, 3.1, 11.0, 20.4, 31.7, 44.2, 53.8, 67.4, 81.3, 91.8, 106.8, 116.1]
 const SPARK_BURSTS := [-24.2, -21.0, -16.1, -9.7, -3.8, 4.8, 14.6, 27.2, 43.7, 60.1, 77.0, 89.6, 105.0, 114.3]
 const CLOUD_STARTS := [5.0, 27.0, 51.0, 77.0, 98.0, 109.0]
+# The easter egg. Points on the fighter are in fighter.png pixels; SPRITE_TO_MODEL turns them into scene.cpp's
+# 260x174 fighter space. Middle and root of the intact wing from tools/dev/title_wing_mask.py.
+const SPRITE_TO_MODEL := Vector2(260.0 / 72.0, 174.0 / 49.0)
+const DAMAGED_TIP := Vector2(50.01, 35.36)
+const WING_MIDDLE := Vector2(15.85, 13.09)
+const WING_ROOT := Vector2(23.2, 16.7)
+const POKES_TO_BREAK := 3
+const CUT_BURSTS := [1.9, 9.3, 17.0, 24.6, 33.1, 41.0, 50.2, 58.7, 66.3, 75.8, 84.0, 93.5, 101.2, 110.6]
 
 var _sky: ShaderMaterial
 var _fx_sky: ShaderMaterial
@@ -56,6 +67,22 @@ var _moon: ShaderMaterial
 var _fx_moon: ShaderMaterial
 var _fighter: ShaderMaterial
 var _fx_sparks: ShaderMaterial
+var _wing_piece: ShaderMaterial
+var _wing_layer: ColorRect
+var _last_layer: ColorRect
+var _ship_image: Image
+var _wing_image: Image
+var _now := 0.0                          # the time last shown
+var _pose_centre := Vector2.ZERO         # the fighter as last drawn, for clicks
+var _pose_scale := 1.0
+var _pose_rot := Vector2(1.0, 0.0)       # cos, sin
+var _poked := 0
+var _pokes: Array = []                   # recent clicks: time, point (fighter space), push direction, push
+var _wing_off := -1.0                    # when the wing came off; -1 while it's on
+var _wing_start := Vector2.ZERO
+var _wing_dir := Vector2.ZERO
+var _wing_angle := 0.0
+var _wing_scale := 0.535
 var _radius := 369.0                     # half the planet's width
 # Soft dots, lines and glows for one prims layer, filled each frame (see shaders/title/prims.gdshader).
 var _shape := PackedColorArray()
@@ -85,8 +112,19 @@ func _ready() -> void:
 		_radius = world.get_width() * 0.5
 	_moon = _layer("moon", {"moon_tex": "moon_base"})
 	_fx_moon = _layer("prims", {})
-	_fighter = _layer("fighter", {"ship_tex": "fighter"})
+	_wing_piece = _layer("fighter", {"ship_tex": "fighter", "wing_tex": "fighter_wing"})
+	_wing_piece.set_shader_parameter("part", 2)
+	_wing_layer = _last_layer
+	_wing_layer.visible = false
+	_fighter = _layer("fighter", {"ship_tex": "fighter", "wing_tex": "fighter_wing"})
+	_fighter.set_shader_parameter("part", 0)
 	_fx_sparks = _layer("prims", {})
+	var ship: Texture2D = _fighter.get_shader_parameter("ship_tex")
+	var wing: Texture2D = _fighter.get_shader_parameter("wing_tex")
+	if ship != null:
+		_ship_image = ship.get_image()
+	if wing != null:
+		_wing_image = wing.get_image()
 	show_time(0.0)
 
 
@@ -97,14 +135,18 @@ func _layer(shader_name: String, textures: Dictionary) -> ShaderMaterial:
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var material := ShaderMaterial.new()
 	material.shader = load(SHADERS + shader_name + ".gdshader")
-	for uniform_name in textures:
-		material.set_shader_parameter(uniform_name, load(ART + str(textures[uniform_name]) + ".png"))
+	for uniform_name: String in textures:
+		var path := ART + str(textures[uniform_name]) + ".png"
+		if ResourceLoader.exists(path):
+			material.set_shader_parameter(uniform_name, load(path))
 	rect.material = material
 	add_child(rect)
+	_last_layer = rect
 	return material
 
 
 func show_time(time: float) -> void:
+	_now = time
 	var t := time
 	if t >= INTRO + LOOP:
 		t = INTRO + fposmod(t - INTRO, LOOP)
@@ -345,32 +387,156 @@ func _set_fighter(u: float, t: float, p: float) -> void:
 			lerpf(267.0, 328.0, p) + 6.2 * sin(3.0 * a - 0.85) + (1.0 - p) * 2.6 * sin(t * 0.4 + 0.6))
 	var scale := lerpf(1.0, 0.535, p)
 	var angle := (lerpf(-7.0, 6.0, p) + 4.9 * sin(a * 2.0 + 0.1) + (1.0 - p) * 3.1 * sin(t * 0.36)) * 0.0174532925
+	# A click shoves the ship: a quick wobble away from where it was touched.
+	for poke_entry: Array in _pokes:
+		var since := _now - float(poke_entry[0])
+		if since >= 0.0 and since < 1.5:
+			var wobble := exp(-4.5 * since) * sin(16.0 * since)
+			var push: Vector2 = poke_entry[2]
+			centre += push * float(poke_entry[3]) * wobble
+			angle += 0.018 * float(poke_entry[3]) * wobble
 	var c := cos(angle)
 	var s := sin(angle)
+	_pose_centre = centre
+	_pose_scale = scale
+	_pose_rot = Vector2(c, s)
 	var f := _engine_light(u)
+	var ambient := lerpf(0.49, 1.0, smoothstep(4.4, 11.8, t))
 	_fighter.set_shader_parameter("centre", centre)
 	_fighter.set_shader_parameter("scale", scale)
 	_fighter.set_shader_parameter("rot", Vector2(c, s))
 	_fighter.set_shader_parameter("engines", Vector2(f, _engine_light(u - 0.23) * (0.83 + 0.09 * sin(a * 3.0 + 1.6))))
-	_fighter.set_shader_parameter("ambient", lerpf(0.49, 1.0, smoothstep(4.4, 11.8, t)))
+	_fighter.set_shader_parameter("ambient", ambient)
 	_fighter.set_shader_parameter("plume_len", 12.0 + 28.0 * f)
 	_fighter.set_shader_parameter("sway", sin(TAU * u / 6.0) * 1.15 + sin(TAU * u / 2.5) * 0.48)
-	# Sparks from the cut edge of the damaged wing.
+	_fighter.set_shader_parameter("part", 1 if _wing_off >= 0.0 else 0)
+	_set_wing_piece(ambient)
 	_prims_begin()
-	var tip_local := Vector2((50.01 * 260.0 / 72.0 - 130.0) * scale, (35.36 * 174.0 / 49.0 - 87.0) * scale)
-	var tip := centre + Vector2(c * tip_local.x + s * tip_local.y, -s * tip_local.x + c * tip_local.y)
+	# Sparks from the cut edge of the damaged wing.
+	var tip := _to_canvas(DAMAGED_TIP * SPRITE_TO_MODEL)
 	for i in SPARK_BURSTS.size():
-		var dt := u - float(SPARK_BURSTS[i])
-		if dt < 0.0 or dt > 1.6:
-			continue
-		for n in 5:
-			var age := dt - n * 0.049
-			var life := 0.58 + 0.12 * float((i + n) % 5)
-			if age <= 0.0 or age >= life:
-				continue
-			var dx := -15.0 + float((i * 5 + n * 11) % 32)
-			var dy := 11.0 + float((n * 7 + i * 3) % 22)
-			var k := age / life
-			var at := tip + Vector2(dx * age * scale, (dy * age + 1.5 * age * age) * scale)
-			_line(at, at - Vector2(dx, dy) * 0.039 * scale, 0.52 + 0.34 * scale, Color8(252, int(lerpf(205.0, 111.0, k)), int(lerpf(139.0, 66.0, k))), sin(PI * pow(k, 0.68)) * 0.94)
+		_burst(tip, u - float(SPARK_BURSTS[i]), i, scale)
+	# The easter egg's sparks: a spray where each click landed, and the damaged wing shaken loose a little.
+	for poke_entry: Array in _pokes:
+		var since := _now - float(poke_entry[0])
+		var pick := int(poke_entry[4])
+		_spray(_to_canvas(poke_entry[1]), since, pick, 9, 1.0)
+		_burst(tip, since, 20 + pick, scale)
+	if _wing_off >= 0.0:
+		var root := _to_canvas(WING_ROOT * SPRITE_TO_MODEL)
+		_spray(root, _now - _wing_off, 3, 16, 1.4)
+		for i in CUT_BURSTS.size():
+			_burst(root, u - float(CUT_BURSTS[i]), i + 7, scale)
 	_prims_end(_fx_sparks)
+
+
+# One burst of sparks from a cut edge (scene.cpp's wing sparks); `since` is the time since it started.
+func _burst(tip: Vector2, since: float, i: int, scale: float) -> void:
+	if since < 0.0 or since > 1.6:
+		return
+	for n in 5:
+		var age := since - n * 0.049
+		var life := 0.58 + 0.12 * float((i + n) % 5)
+		if age <= 0.0 or age >= life:
+			continue
+		var dx := -15.0 + float((i * 5 + n * 11) % 32)
+		var dy := 11.0 + float((n * 7 + i * 3) % 22)
+		var k := age / life
+		var at := tip + Vector2(dx * age * scale, (dy * age + 1.5 * age * age) * scale)
+		_line(at, at - Vector2(dx, dy) * 0.039 * scale, 0.52 + 0.34 * scale, Color8(252, int(lerpf(205.0, 111.0, k)), int(lerpf(139.0, 66.0, k))), sin(PI * pow(k, 0.68)) * 0.94)
+
+
+# A flash and hot sparks flying out all round from a point, for the easter egg.
+func _spray(origin: Vector2, since: float, pick: int, count: int, reach: float) -> void:
+	if since < 0.0 or since > 1.3:
+		return
+	if since < 0.2:
+		var fade := 1.0 - since / 0.2
+		_glow(origin, Vector2(9.0, 9.0) * reach, Color8(255, 226, 160), 0.85 * fade)
+		_glow(origin, Vector2(4.0, 4.0) * reach, Color8(255, 250, 230), fade)
+	for n: int in count:
+		var age := since - n * 0.01
+		var life := 0.45 + 0.08 * float((n + pick) % 4)
+		if age <= 0.0 or age >= life:
+			continue
+		var heading := TAU * (float(n) + 0.37 * float(pick % 7)) / float(count)
+		var speed := (38.0 + 8.0 * float((n * 7 + pick) % 5)) * reach
+		var dir := Vector2(cos(heading), sin(heading))
+		var k := age / life
+		var at := origin + dir * speed * age + Vector2(0.0, 12.0 * age * age)
+		_line(at, at - dir * speed * 0.06, 0.8, Color8(255, int(lerpf(245.0, 140.0, k)), int(lerpf(205.0, 60.0, k))), sin(PI * pow(k, 0.5)) * 0.97)
+
+
+# The knocked-off wing drifts away from the ship, tumbling, until it leaves the picture.
+func _set_wing_piece(ambient: float) -> void:
+	if _wing_off < 0.0:
+		_wing_layer.visible = false
+		return
+	var since := _now - _wing_off
+	var at := _wing_start + _wing_dir * (12.0 * (1.0 - exp(-3.0 * since)) + 16.0 * since)
+	var turn := _wing_angle - 0.5 * (1.0 - exp(-2.0 * since)) - 0.4 * since
+	var c := cos(turn)
+	var s := sin(turn)
+	var d := (WING_MIDDLE * SPRITE_TO_MODEL - Vector2(130.0, 87.0)) * _wing_scale
+	_wing_layer.visible = Rect2(-200.0, -200.0, CANVAS.x + 400.0, CANVAS.y + 400.0).has_point(at)
+	_wing_piece.set_shader_parameter("centre", at - Vector2(c * d.x + s * d.y, -s * d.x + c * d.y))
+	_wing_piece.set_shader_parameter("scale", _wing_scale)
+	_wing_piece.set_shader_parameter("rot", Vector2(c, s))
+	_wing_piece.set_shader_parameter("engines", Vector2.ZERO)
+	_wing_piece.set_shader_parameter("ambient", ambient)
+	_wing_piece.set_shader_parameter("plume_len", 0.0)
+	_wing_piece.set_shader_parameter("sway", 0.0)
+
+
+# A point in the fighter's 260x174 space, on the canvas, as the ship was last drawn.
+func _to_canvas(point: Vector2) -> Vector2:
+	var d := (point - Vector2(130.0, 87.0)) * _pose_scale
+	return _pose_centre + Vector2(_pose_rot.x * d.x + _pose_rot.y * d.y, -_pose_rot.y * d.x + _pose_rot.x * d.y)
+
+
+func _to_fighter(at: Vector2) -> Vector2:
+	var o := (at - _pose_centre) / _pose_scale
+	return Vector2(130.0 + _pose_rot.x * o.x - _pose_rot.y * o.y, 87.0 + _pose_rot.y * o.x + _pose_rot.x * o.y)
+
+
+# title_screen.gd: a click at this point of the 960x540 canvas. True when it hit the ship, which then sparks;
+# the third hit knocks the wing off.
+func poke(at: Vector2) -> bool:
+	if _ship_image == null or not _hits_ship(at):
+		return false
+	var recent: Array = []
+	for poke_entry: Array in _pokes:
+		if _now - float(poke_entry[0]) < 2.0:
+			recent.append(poke_entry)
+	_pokes = recent
+	_poked += 1
+	var push := (_pose_centre - at).normalized()
+	var strength := 2.2
+	if _poked == POKES_TO_BREAK and _wing_off < 0.0 and _wing_image != null:
+		strength = 4.5
+		_wing_off = _now
+		_wing_scale = _pose_scale
+		_wing_angle = atan2(_pose_rot.y, _pose_rot.x)
+		_wing_start = _to_canvas(WING_MIDDLE * SPRITE_TO_MODEL)
+		_wing_dir = (_wing_start - _to_canvas(WING_ROOT * SPRITE_TO_MODEL)).normalized()
+	_pokes.append([_now, _to_fighter(at), push, strength, _poked])
+	return true
+
+
+# Within a pixel of the ship's own pixels (not the wing once it's gone).
+func _hits_ship(at: Vector2) -> bool:
+	var m := _to_fighter(at)
+	var px := int(floor((m.x + 0.5) / SPRITE_TO_MODEL.x))
+	var py := int(floor((m.y + 0.5) / SPRITE_TO_MODEL.y))
+	for dy: int in [-1, 0, 1]:
+		for dx: int in [-1, 0, 1]:
+			var x := px + dx
+			var y := py + dy
+			if x < 0 or y < 0 or x >= _ship_image.get_width() or y >= _ship_image.get_height():
+				continue
+			if _ship_image.get_pixel(x, y).a < 0.5:
+				continue
+			if _wing_off >= 0.0 and _wing_image != null and _wing_image.get_pixel(x, y).a >= 0.5:
+				continue
+			return true
+	return false

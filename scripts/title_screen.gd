@@ -53,6 +53,7 @@ func _ready() -> void:
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	_root.theme = load("res://title/menu_panel_theme.tres")
+	_root.gui_input.connect(_on_click)
 	add_child(_root)
 
 	_build_intro()
@@ -255,6 +256,17 @@ func _input(event: InputEvent) -> void:
 	if _page != "" and event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_back()
+
+
+# Easter egg: clicking the fighter once the title is up makes it spark; the third click knocks a wing off
+# (scripts/title_scene.gd poke). Clicks on the buttons never get here.
+func _on_click(event: InputEvent) -> void:
+	if _live == null or _page != "" or _time < 24.7:
+		return
+	var click := event as InputEventMouseButton
+	if click != null and click.pressed and click.button_index == MOUSE_BUTTON_LEFT and _root.size.x > 0.0:
+		if _live.poke(click.position / _root.size * DESIGN):
+			_root.accept_event()
 
 
 func _skip() -> void:

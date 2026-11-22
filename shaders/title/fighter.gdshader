@@ -1,8 +1,11 @@
 // Title scene: the Needle fighter (scene.cpp fighter). The 72x49 sprite is drawn turned and scaled, with
-// flickering engine plumes behind it and glowing nozzles.
+// flickering engine plumes behind it and glowing nozzles. Easter egg: `part` draws the whole ship (0), the ship
+// without its intact wing (1) or that wing alone (2) once it has come off (scripts/title_scene.gd).
 shader_type canvas_item;
 
 uniform sampler2D ship_tex : filter_nearest;
+uniform sampler2D wing_tex : filter_nearest;   // fighter_wing.png: the intact wing's pixels
+uniform int part;
 uniform vec2 centre;
 uniform float scale;
 uniform vec2 rot;          // cos, sin of the fighter's angle
@@ -51,7 +54,7 @@ void fragment() {
 		float su = 130.0 + rot.x * ox - rot.y * oy;
 		float sv = 87.0 + rot.y * ox + rot.x * oy;
 		vec2 nozzles[2] = vec2[2](vec2(13.66 * 260.0 / 72.0, 29.18 * 174.0 / 49.0), vec2(21.48 * 260.0 / 72.0, 35.08 * 174.0 / 49.0));
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 2 && part != 2; i++) {
 			float du = su - nozzles[i].x;
 			float dv = sv - nozzles[i].y;
 			float along = -0.879 * du + 0.477 * dv;
@@ -69,7 +72,12 @@ void fragment() {
 		}
 		vec2 tsize = vec2(textureSize(ship_tex, 0));
 		if (su >= 0.0 && su < 260.0 && sv >= 0.0 && sv < 174.0) {
-			vec4 tex = sprite_pixel(ship_tex, vec2((su + 0.5) * tsize.x / 260.0 - 0.5, (sv + 0.5) * tsize.y / 174.0 - 0.5), scale * 260.0 / tsize.x);
+			vec2 q = vec2((su + 0.5) * tsize.x / 260.0 - 0.5, (sv + 0.5) * tsize.y / 174.0 - 0.5);
+			vec4 tex = sprite_pixel(ship_tex, q, scale * 260.0 / tsize.x);
+			if (part != 0) {
+				float wing = sprite_pixel(wing_tex, q, scale * 260.0 / tsize.x).a;
+				tex.a *= part == 1 ? 1.0 - wing : wing;
+			}
 			if (tex.a >= 1.5 / 255.0) {
 				vec3 k = tex.rgb * 255.0;
 				float cool = clamp((k.g - k.r + 10.0) * 0.02, 0.0, 1.0) * clamp((105.0 - sv) * 0.02, 0.0, 1.0);
