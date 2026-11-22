@@ -1,5 +1,6 @@
 """Rabble cutter at double resolution: 48 px per cell, 6 x 4 cells = 288 x 192."""
 import sys, random
+from pathlib import Path
 sys.path.insert(0, __import__("os").path.dirname(__import__("os").path.abspath(__file__)))
 import numpy as np
 from pixkit import Pix
@@ -149,7 +150,25 @@ def cutter():
     p.paint(p.mask(rect=(176, 95, 190, 96)), "metal"); p.glow(p.mask(rect=(174, 94, 176, 97)), "glow_red", 2)
     return p
 
-if __name__ == "__main__":
+# Rooms and doors: must match ShipData.ENEMIES["rabble_cutter"] in scripts/ship_data.gd (cells of 24 game px,
+# 48 art px). Engines at the back, the cockpit under the red bubble, turrets over the weapons and oxygen rooms.
+ROOMS = {
+    "engines": (1, 1, 1, 2, "engines"), "crew": (2, 1, 1, 1, "crew"), "shields": (2, 2, 1, 1, "shields"),
+    "weapons": (3, 1, 1, 1, "weapons"), "life": (3, 2, 1, 1, "life"), "pilot": (4, 1, 1, 2, "pilot"),
+}
+DOORS = [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)),
+         ((3, 1), (3, 2)), ((3, 1), (4, 1)), ((3, 2), (4, 2))]
+
+
+if __name__ == "__main__" and len(sys.argv) > 1:
+    from kit2x import interior
+    root = Path(sys.argv[1])
+    out = root / "art/ships/rabble_cutter"
+    out.mkdir(parents=True, exist_ok=True)
+    cutter().render().save(out / "hull.png")
+    interior(cutter(), ROOMS, DOORS).render().save(out / "interior.png")
+    print("ok")
+elif __name__ == "__main__":
     from PIL import Image
     im = cutter().render()
     im.save("/home/claude/work/ships/one/rabble_cutter_2x.png")

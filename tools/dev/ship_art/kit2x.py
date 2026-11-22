@@ -211,3 +211,99 @@ def sheet(items, path, scale=2, cols=2, pad=16, bg=(20, 24, 36, 255), label=True
         out.alpha_composite(im.resize((im.width * scale, im.height * scale), Image.NEAREST), (x, y))
     out.save(path)
     return out
+
+
+# ---------------------------------------------------------------- cut-away interiors, FTL-simple
+
+def interior(p, rooms, doors, cell=CELL, wall_mat="wall"):
+    """Cut the rooms into a hull picture: a dark frame round the rooms, deck floors, 4-px walls on the cell edges
+    with door gaps (the game draws the doors), and one machine per system. Keeps in step with the game: rooms are
+    {id: (col, row, w, h, sys)}, doors are ((c1, r1), (c2, r2)); a door gap is 7..17 of every 24 cell px, scaled."""
+    from scipy import ndimage as nd
+    k = cell / 24.0
+    H, W = p.h, p.w
+    block = np.zeros((H, W), bool)
+    for (cx, cy, cw, ch, _) in rooms.values():
+        block[cy * cell:(cy + ch) * cell, cx * cell:(cx + cw) * cell] = True
+    frame = nd.binary_dilation(block, iterations=int(3 * k)) & ~block
+    p.mat[frame] = wall_mat; p.tone[frame] = 3
+    p.tone[frame & ~nd.binary_erosion(frame | block, iterations=1)] = 1
+    p.lines[block] = False
+    for rid, (cx, cy, cw, ch, sysname) in rooms.items():
+        x0, y0, x1, y1 = cx * cell, cy * cell, (cx + cw) * cell - 1, (cy + ch) * cell - 1
+        m = p.mask(rect=(x0, y0, x1, y1))
+        p.mat[m] = "deck"; p.tone[m] = 3
+        # floor tiles: a light top edge and a dark bottom edge per half cell
+        step = cell // 2
+        for tx in range(x0, x1, step):
+            for ty in range(y0, y1, step):
+                p.set_tone(p.mask(rect=(tx, ty, tx + step - 1, ty)), 4)
+                p.set_tone(p.mask(rect=(tx, ty + step - 1, tx + step - 1, ty + step - 1)), 2)
+                p.set_tone(p.mask(rect=(tx + step - 1, ty, tx + step - 1, ty + step - 1)), 2)
+    def room_at(c):
+        for rid, (cx, cy, cw, ch, _) in rooms.items():
+            if cx <= c[0] < cx + cw and cy <= c[1] < cy + ch:
+                return rid
+        return ""
+    wall = np.zeros((H, W), bool)
+    t = int(2 * k)
+    for rid, (cx, cy, cw, ch, _) in rooms.items():
+        for x in range(cx, cx + cw):
+            for y in range(cy, cy + ch):
+                x0, y0 = x * cell, y * cell
+                if room_at((x + 1, y)) != rid: wall[y0:y0 + cell, x0 + cell - t:x0 + cell] = True
+                if room_at((x - 1, y)) != rid: wall[y0:y0 + cell, x0:x0 + t] = True
+                if room_at((x, y + 1)) != rid: wall[y0 + cell - t:y0 + cell, x0:x0 + cell] = True
+                if room_at((x, y - 1)) != rid: wall[y0:y0 + t, x0:x0 + cell] = True
+    g0, g1 = int(7 * k), int(17 * k)
+    for (a, b) in doors:
+        (c1, r1), (c2, r2) = a, b
+        if r1 == r2:
+            x = max(c1, c2) * cell; y = r1 * cell
+            wall[y + g0:y + g1, x - t:x + t] = False
+        else:
+            y = max(r1, r2) * cell; x = c1 * cell
+            wall[y - t:y + t, x + g0:x + g1] = False
+    wall &= p.tone >= 0
+    p.mat[wall] = wall_mat; p.tone[wall] = 1
+    for rid, (cx, cy, cw, ch, sysname) in rooms.items():
+        machine(p, sysname, cx * cell, cy * cell, cw * cell, ch * cell, k)
+    return p
+
+
+def machine(p, sysname, x, y, w, h, k):
+    """The system's console or machine against the room's back wall (the left side; the cockpit's at the front)."""
+    t = int(2 * k) + 2
+    def box(x0, y0, x1, y1, mat="console"):
+        p.bevel(p.mask(rect=(x0, y0, x1, y1)), mat, width=1, face=3, shade_lower=False)
+    cy = y + h // 2
+    if sysname == "engines":
+        for yy in range(y + t + 2, y + h - t - 20, 24):
+            box(x + t + 2, yy, x + t + 22, yy + 18, "metal")
+            p.glow(p.mask(rect=(x + t + 6, yy + 6, x + t + 18, yy + 11)), "glow", 3)
+    elif sysname == "weapons":
+        box(x + t + 2, y + t + 2, x + t + 14, y + h - t - 3, "console")
+        for yy in range(y + t + 6, y + h - t - 6, 8):
+            p.glow(p.mask(rect=(x + t + 5, yy, x + t + 10, yy + 2)), "glow_red", 3)
+        box(x + w // 2 - 6, y + t + 2, x + w // 2 + 6, y + t + 10, "pipe")
+    elif sysname == "shields":
+        p.bevel(p.mask(ellipse=(x + w // 2 - 14, cy - 14, x + w // 2 + 14, cy + 14)), "metal", width=2, face=3, shade_lower=False)
+        p.dome(p.mask(ellipse=(x + w // 2 - 9, cy - 9, x + w // 2 + 9, cy + 9)), "blue")
+    elif sysname == "life":
+        p.tube(p.mask(rect=(x + t + 2, cy - 12, x + w - t - 3, cy + 10)), "blue", "x")
+        p.engrave([(x + t + 2, cy - 1), (x + w - t - 3, cy - 1)])
+        box(x + t + 2, y + h - t - 8, x + w - t - 3, y + h - t - 4, "pipe")
+    elif sysname == "pilot":
+        box(x + w - t - 12, y + t + 2, x + w - t - 3, y + h - t - 3, "console")
+        p.glow(p.mask(rect=(x + w - t - 10, y + t + 8, x + w - t - 7, y + h - t - 9)), "glow_teal", 3)
+        for sy in ([cy - 4] if h <= 48 else [y + h // 4 - 4, y + 3 * h // 4 - 4]):
+            box(x + w - t - 34, sy - 8, x + w - t - 20, sy + 12, "red")
+    elif sysname == "drones":
+        p.bevel(p.mask(ellipse=(x + w // 2 - 15, cy - 15, x + w // 2 + 15, cy + 15)), "console", width=1, face=3, shade_lower=False)
+        p.paint(p.mask(ellipse=(x + w // 2 - 9, cy - 9, x + w // 2 + 9, cy + 9)), "yellow")
+    elif sysname in ("", "crew"):
+        # bunks along the top wall, a locker
+        for bx in range(x + t + 4, x + w - t - 20, 22):
+            box(bx, y + t + 2, bx + 18, y + t + 12, "cloth")
+            box(bx + 1, y + t + 3, bx + 5, y + t + 11, "white")
+        box(x + w - t - 10, y + h - t - 20, x + w - t - 3, y + h - t - 3, "metal")

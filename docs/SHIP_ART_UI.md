@@ -142,7 +142,12 @@ Zachary: "lets double the pixels", then "lets do all the ships before we add to 
 
 Run any of them from the repo root: `python3 -I tools/dev/ship_art/fleet2x.py <out dir>`.
 
-**Before they go in the game:** each ship gets FTL-simple rooms and doors, and the battle screen gets a per-ship
+**In the game (21 Nov):** the battle screen takes a per-ship `"art_scale"` (2 for these) and `"art"`/`"interior"`
+paths; ships with art are mirrored to face you. The **Rabble cutter** is the first one in: 6 × 4 cells with six rooms
+(engines, crew, shields, weapons, oxygen, a 1 × 2 cockpit) and eight doors, cut away by `kit2x.interior()`; its
+`ROOMS` and `DOORS` in `rabble_cutter_2x.py` must match `ShipData.ENEMIES["rabble_cutter"]`.
+
+**For the rest:** each ship gets FTL-simple rooms and doors the same way, and the battle screen uses its
 `art_scale` (2 for these): the picture is fitted on its art pixels, while rooms, crew and the drone stay in 24-px cell
 units. At 1080p a 2x ship shows at 1 screen pixel per art pixel, so it looks the same size as a 1x ship did at 2x.
 

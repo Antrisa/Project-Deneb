@@ -74,21 +74,27 @@ const STARTER := {
 
 # Enemy ships. "shape" is the outline drawn until real art exists (art/ships/<id>.png, facing left).
 const ENEMIES := {
+	# Drawn at double resolution (Zachary, 21 Nov: "lets double the pixels"): 48 art px per cell, so "art_scale" 2.
+	# "size" and every room stay in 24-px cells; the battle fits the picture on its own pixels. Art and its rooms:
+	# tools/dev/ship_art/rabble_cutter_2x.py (ROOMS and DOORS there must match these). Art faces right; the battle
+	# mirrors ships with art so they face you.
 	"rabble_cutter": {
-		"name": "Rabble Cutter", "size": Vector2(120, 92), "hull": 8, "crew": 3,
+		"name": "Rabble Cutter", "size": Vector2(144, 96), "hull": 8, "crew": 3,
+		"art": "res://art/ships/rabble_cutter/hull.png", "interior": "res://art/ships/rabble_cutter/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "rabble_laser"],
 		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
-		"shape": [Vector2(0, 46), Vector2(18, 24), Vector2(44, 14), Vector2(92, 10), Vector2(116, 24), Vector2(120, 46),
-				Vector2(116, 68), Vector2(92, 82), Vector2(44, 78), Vector2(18, 68)],
-		"fins": [[Vector2(46, 16), Vector2(36, 0), Vector2(60, 14)], [Vector2(46, 76), Vector2(36, 92), Vector2(60, 78)]],
-		"hull_color": Color("60463e"), "trim": Color("962828"),
 		"rooms": [
-			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "rect": Rect2(8, 37, 22, 18)},
-			{"id": "weapons", "label": "Weapons", "sys": "weapons", "rect": Rect2(30, 25, 26, 21)},
-			{"id": "shields", "label": "Shields", "sys": "shields", "rect": Rect2(30, 46, 26, 21)},
-			{"id": "crew", "label": "Crew", "sys": "", "rect": Rect2(56, 23, 30, 23)},
-			{"id": "life", "label": "Oxygen", "sys": "life", "rect": Rect2(56, 46, 30, 23)},
-			{"id": "engines", "label": "Engines", "sys": "engines", "rect": Rect2(86, 29, 26, 34)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(2, 1, 1, 1)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(2, 2, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 1, 1, 1)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(3, 2, 1, 1)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(4, 1, 1, 2)},
+		],
+		"doors": [
+			[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(2, 2)],
+			[Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(3, 2)],
+			[Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(3, 2), Vector2i(4, 2)],
 		],
 	},
 	"ivan_flagship": {

@@ -54,6 +54,7 @@ var me_ship: Dictionary = {}         # your ship, built for battle (ShipData.bui
 var ship_tex: Texture2D
 var interior_tex: Texture2D          # your ship's cut-away
 var enemy_tex: Texture2D
+var enemy_inside: Texture2D      # their cut-away, when the art has one
 var my_xf := Transform2D.IDENTITY    # your ship picture -> page
 var foe_xf := Transform2D.IDENTITY   # theirs
 
@@ -169,8 +170,8 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 		e_weapons.append({"id": str(wid), "charge": randf_range(1.0, 4.0), "target": "", "on": true})
 	_make_enemy_crew()
 	overcharged = false
-	var art_path := "res://art/ships/%s.png" % foe_id
-	enemy_tex = load(art_path) if ResourceLoader.exists(art_path) else null
+	enemy_tex = _load_tex(str(foe.get("art", "")))
+	enemy_inside = _load_tex(str(foe.get("interior", "")))
 	_fit_ships()
 	open = true
 	visible = true
@@ -184,10 +185,34 @@ func close() -> void:
 
 
 # Each ship fitted to its own window (the enemy's below the band with its name and hull).
+# Ships drawn at double resolution ("art_scale" 2) are fitted on their art pixels, so each art pixel is a whole
+# number of screen pixels; rooms, crew and doors stay in 24-px cell units through the same transform. Enemies with
+# art are mirrored to face you (art faces right), so the transform's x scale is negative for them.
 func _fit_ships() -> void:
-	my_xf = screen.fit_into(me_ship["size"], _my_area(), SHIELD_ROOM, MOST_SCALE)
+	my_xf = _fit(me_ship, _my_area(), false)
 	if not foe.is_empty():
-		foe_xf = screen.fit_into(foe["size"], _foe_area(), SHIELD_ROOM, MOST_SCALE)
+		foe_xf = _fit(foe, _foe_area(), foe.has("art"))
+
+
+func _fit(ship: Dictionary, area: Rect2, mirror: bool) -> Transform2D:
+	var a: float = float(ship.get("art_scale", 1))
+	var size: Vector2 = ship["size"]
+	var xf: Transform2D = screen.fit_into(size * a, area, SHIELD_ROOM, MOST_SCALE / a)
+	var k: float = xf.get_scale().y * a
+	if mirror:
+		return Transform2D(Vector2(-k, 0), Vector2(0, k), xf.origin + Vector2(size.x * k, 0))
+	return Transform2D(Vector2(k, 0), Vector2(0, k), xf.origin)
+
+
+func _load_tex(path: String) -> Texture2D:
+	if path != "" and ResourceLoader.exists(path):
+		return load(path)
+	return null
+
+
+# Where a ship's picture goes on the page; its width is negative when the ship is mirrored, which flips it.
+func _ship_rect(xf: Transform2D, size: Vector2) -> Rect2:
+	return Rect2(xf.origin, Vector2(size.x * xf.x.x, size.y * xf.y.y))
 
 
 func _my_area() -> Rect2:
@@ -204,7 +229,7 @@ func _on_page(at_player: bool, p: Vector2) -> Vector2:
 
 
 func _ship_scale(at_player: bool) -> float:
-	return (my_xf if at_player else foe_xf).get_scale().x
+	return absf((my_xf if at_player else foe_xf).y.y)
 
 func _make_systems(table: Dictionary) -> Dictionary:
 	var out := {}
@@ -1106,7 +1131,7 @@ func _room_tag(rr: Rect2, label: String, k: float) -> void:
 # A door's slab, on the page. Doors sit in the gap the interior art leaves in the wall: 10 x 4 picture pixels.
 func _door_rect(d: Dictionary, xf: Transform2D) -> Rect2:
 	var at: Vector2 = xf * (d["at"] as Vector2)
-	var k: float = xf.get_scale().x
+	var k: float = absf(xf.y.y)
 	var half := Vector2(2.0, 5.0) * k if bool(d["across"]) else Vector2(5.0, 2.0) * k
 	return Rect2(at - half, half * 2.0)
 
@@ -1172,37 +1197,44 @@ func _paint_enemy() -> void:
 	var size: Vector2 = foe["size"]
 	if e_layers > 0:
 		s.ellipse(xf * (size / 2.0), size * k / 2.0 + Vector2(10, 10), Color(SHIELD_BLUE, 0.8), 1.0)
-	if enemy_tex != null:
-		# Ship art faces right (docs/SHIP_ART_UI.md); an enemy is mirrored to face you. A negative width flips it.
-		s.texture(enemy_tex, Rect2(xf.origin + Vector2(size.x * k, 0), Vector2(-size.x * k, size.y * k)))
+	var inside: bool = enemy_inside != null
+	if inside:
+		s.texture(enemy_inside, _ship_rect(xf, size))
+	elif enemy_tex != null:
+		s.texture(enemy_tex, _ship_rect(xf, size))
 	else:
-		for fin in foe["fins"]:
+		for fin in foe.get("fins", []):
 			var pts := PackedVector2Array()
 			for v in fin:
 				pts.append(xf * (v as Vector2))
-			s.polygon(pts, Color(foe["hull_color"]).lightened(0.15))
+			s.polygon(pts, Color(foe.get("hull_color", Color("60463e"))).lightened(0.15))
 		var shape := PackedVector2Array()
-		for v in foe["shape"]:
+		for v in foe.get("shape", [Vector2.ZERO, Vector2(size.x, 0), size, Vector2(0, size.y)]):
 			shape.append(xf * (v as Vector2))
-		s.polygon(shape, foe["hull_color"])
+		s.polygon(shape, foe.get("hull_color", Color("60463e")))
 		shape.append(shape[0])
 		s.polyline(shape, Color("241818"), 1.0)
-		s.line(xf * Vector2(30, size.y / 2.0), xf * Vector2(size.x - 10, size.y / 2.0), foe["trim"], 2.0)
+		s.line(xf * Vector2(30, size.y / 2.0), xf * Vector2(size.x - 10, size.y / 2.0), foe.get("trim", Color("962828")), 2.0)
 	for room in foe["rooms"]:
 		var rr: Rect2 = xf * (room["rect"] as Rect2)
 		var sname: String = room["sys"]
 		var dmg: int = int(e_sys[sname]["damage"]) if e_sys.has(sname) else 0
-		var fill := Color(0.69, 0.59, 0.53, 0.92)
-		if dmg > 0:
-			fill = fill.lerp(Color("a0463c"), 0.6)
-		s.rect(rr, fill)
-		s.outline(rr, Color("32221e"))
-		if rr.size.y >= 18.0:
-			s.text_fit(rr.position.x + 3, rr.position.y + 2, rr.size.x - 5, str(room["label"]), "micro", Color("281814"))
+		if inside:
+			if dmg > 0:
+				s.rect(rr.grow(-2.0 * k), Color(0.86, 0.22, 0.16, 0.38))
+			_room_tag(rr, str(room["label"]), k)
+		else:
+			var fill := Color(0.69, 0.59, 0.53, 0.92)
+			if dmg > 0:
+				fill = fill.lerp(Color("a0463c"), 0.6)
+			s.rect(rr, fill)
+			s.outline(rr, Color("32221e"))
+			if rr.size.y >= 18.0:
+				s.text_fit(rr.position.x + 3, rr.position.y + 2, rr.size.x - 5, str(room["label"]), "micro", Color("281814"))
 		if e_sys.has(sname) and sname != "pilot":
 			var bars: int = int(e_sys[sname]["max"])
 			for i in range(bars):
-				var bar := Rect2(rr.position + Vector2(3.0 + i * 4.0 * k, rr.size.y - 3.0 - 2.0 * k), Vector2(3.0 * k, 2.0 * k))
+				var bar := Rect2(rr.position + Vector2(3.0 * k + i * 4.0 * k, rr.size.y - 3.0 * k - 2.0 * k), Vector2(3.0 * k, 2.0 * k))
 				s.rect(bar, GOOD if i < bars - dmg else BAD)
 		if selected >= 0 and rr.has_point(s.mouse):
 			s.outline(rr, BAD)
