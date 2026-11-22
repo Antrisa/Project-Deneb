@@ -29,7 +29,7 @@ var shift_left := Vector2.ZERO               # the reactor and weapons panels, a
 var shift_right := Vector2.ZERO              # the crew panel
 var shift_pause := Vector2.ZERO              # the Pause button
 var shift_strip_l := Vector2.ZERO            # hull, shields, evasion, oxygen
-var shift_strip_r := Vector2.ZERO            # fold drive, Jump, Auto
+var shift_strip_r := Vector2.ZERO            # fold drive, Jump
 var wide := 0.0                              # how much wider the weapons panel is than designed
 const SHIELD_ROOM := 12.0                    # space kept round a ship for its shield bubble
 const MOST_SCALE := 2.0                      # small ships are enlarged to fit, but no more than this
@@ -2658,11 +2658,10 @@ func _paint_strip() -> void:
 	if story:
 		s.text(496, 59, "NOT ON THIS FLIGHT", "micro", MUTED)
 	else:
-		s.rect(Rect2(496, 61, 106, 5), ShipScreen.PIP_OFF)
-		s.rect(Rect2(496, 61, 106.0 * fold / 100.0, 5), ORANGE)
+		s.rect(Rect2(496, 61, 160, 5), ShipScreen.PIP_OFF)
+		s.rect(Rect2(496, 61, 160.0 * fold / 100.0, 5), ORANGE)
 	var can_jump: bool = fold >= 100.0 and not story and result == ""
-	s.button("jump", Rect2(610, 55, 48, 16), "Jump", can_jump, "micro", can_jump)
-	s.button("auto", Rect2(664, 55, 48, 16), "Auto", autofire, "micro")
+	s.button("jump", Rect2(664, 55, 48, 16), "Jump", can_jump, "micro", can_jump)
 	s.shift(Vector2.ZERO)
 
 
@@ -3419,13 +3418,13 @@ func _paint_weapons() -> void:
 	var powered: Array = _powered_weapons()
 	var r := Rect2(264, 297, 296 + wide, 83)
 	s.panel(r, "blaster", "Weapons")
-	if autofire:
-		s.text_right(r.end.x - 8, r.position.y + 7, "AUTOFIRE ON", "micro", OCHRE)
-	else:
-		for w in weapons:
-			if str(w["id"]) != "" and int(ShipData.WEAPONS[w["id"]].get("ammo", 0)) > 0:
-				s.text_right(r.end.x - 8, r.position.y + 7, "MISSILES %d" % int(world.missiles), "micro", MUTED)
-				break
+	# Autofire (V): each charged weapon fires on its own at the room it was last aimed at (Zachary, 22 Nov: a
+	# button for it here, by the weapons, as in FTL)
+	s.button("auto", Rect2(r.end.x - 66, r.position.y + 4, 58, 15), "Autofire", autofire, "micro")
+	for w in weapons:
+		if str(w["id"]) != "" and int(ShipData.WEAPONS[w["id"]].get("ammo", 0)) > 0:
+			s.text_right(r.end.x - 74, r.position.y + 7, "MISSILES %d" % int(world.missiles), "micro", MUTED)
+			break
 	for i in range(weapons.size()):
 		var card := _weapon_rect(i)
 		var w: Dictionary = weapons[i]
