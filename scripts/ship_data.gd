@@ -76,6 +76,8 @@ const WEAPONS := {
 # parts each, hull repair per point. Weapons sell back for half.
 const STORES := {
 	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser", "missile_launcher", "cutting_beam", "heavy_beam",
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)], [Vector2i(1, 2), Vector2i(1, 3)]],
 			"twin_missile", "ion_blast", "toxin_dart", "fire_beam", "flak_cannon", "chain_laser"],
 		"fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8},
 }
@@ -86,6 +88,8 @@ const STORES := {
 # for the Shuttle Bay. A single-seat fighter: behind the cockpit are sealed bays only the repair drone gets into,
 # through small hatches (the "doors" below). Other ships are walkable all through.
 const STARTER := {
+	# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+	"airlocks": [[Vector2i(3, 2), Vector2i(3, 3)]],
 	"name": "Your fighter",
 	"art": "res://art/ships/starter/hull.png", "frames": 1, "frame": 0, "size": Vector2(168, 96),
 	"interior": "res://art/ships/starter/interior.png", "art_scale": 2,    # double resolution: story2x.py
@@ -113,6 +117,8 @@ const STARTER := {
 # all through, for a crew. Art and rooms: tools/dev/ship_art/story2x.py. Not wired in yet: the battle still
 # assumes the starter (one pilot and the repair drone); crew of your own come with this ship. Stats are first guesses.
 const COVERED_FIGHTER := {
+	# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+	"airlocks": [[Vector2i(2, 2), Vector2i(2, 1)], [Vector2i(2, 2), Vector2i(2, 3)]],
 	"name": "Covered fighter",
 	"art": "res://art/ships/covered_fighter/hull.png", "frames": 1, "frame": 0, "size": Vector2(216, 120),
 	"interior": "res://art/ships/covered_fighter/interior.png", "art_scale": 2,
@@ -142,6 +148,8 @@ const ENEMIES := {
 	# tools/dev/ship_art/rabble_cutter_2x.py (ROOMS and DOORS there must match these). Art faces right; the battle
 	# mirrors ships with art so they face you.
 	"rabble_cutter": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)]],
 		"name": "Rabble Cutter", "size": Vector2(144, 96), "hull": 8, "crew": 3,
 		"art": "res://art/ships/rabble_cutter/hull.png", "interior": "res://art/ships/rabble_cutter/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "rabble_laser"],
@@ -169,6 +177,8 @@ const ENEMIES := {
 	# fill them: top front, bottom front, then the nose for the overcharged cannon he adds at half hull, then the
 	# back pair.
 	"ivan_flagship": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)], [Vector2i(2, 4), Vector2i(2, 5)]],
 		"name": "Ivan's flagship", "size": Vector2(216, 144), "hull": 14, "crew": 5,
 		"art": "res://art/ships/ivan_flagship/hull.png", "interior": "res://art/ships/ivan_flagship/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "heavy_laser"],
@@ -197,6 +207,8 @@ const ENEMIES := {
 	# Pirate bases at double resolution (art and rooms: tools/dev/ship_art/bases2x.py INSIDES, which these must match).
 	# Asteroids don't dodge: no engines, so no evasion. Their guns sit on the turret rings. Stats are first guesses.
 	"pirate_stronghold": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(4, 2), Vector2i(4, 1)]],
 		"name": "Pirate stronghold", "size": Vector2(192, 144), "hull": 16, "crew": 4,
 		"art": "res://art/ships/pirate_stronghold/hull.png", "interior": "res://art/ships/pirate_stronghold/interior.png", "art_scale": 2,
 		"weapons": ["heavy_laser", "rabble_laser"],
@@ -212,6 +224,8 @@ const ENEMIES := {
 		"doors": [[Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(3, 3), Vector2i(4, 3)], [Vector2i(4, 2), Vector2i(5, 2)], [Vector2i(4, 3), Vector2i(5, 3)]],
 	},
 	"rabble_nest": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(4, 2), Vector2i(4, 1)], [Vector2i(3, 3), Vector2i(3, 4)]],
 		"name": "The Nest", "size": Vector2(240, 144), "hull": 24, "crew": 6,
 		"art": "res://art/ships/rabble_nest/hull.png", "interior": "res://art/ships/rabble_nest/interior.png", "art_scale": 2,
 		"weapons": ["heavy_laser", "heavy_laser", "rabble_laser"],
@@ -236,6 +250,8 @@ const ANA_SHIPS := {
 	# Both at double resolution (art_scale 2). Art and rooms: tools/dev/ship_art/story2x.py (INSIDES there must
 	# match these rooms and doors). Guns attach at "mounts" on the hull's sides, front pair first.
 	"ana_corsair": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)], [Vector2i(2, 3), Vector2i(2, 4)]],
 		"name": "Ana's corsair", "size": Vector2(168, 120), "hull": 12, "crew": 4,
 		"art": "res://art/ships/ana_corsair/hull.png", "interior": "res://art/ships/ana_corsair/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "heavy_laser"],
@@ -257,6 +273,8 @@ const ANA_SHIPS := {
 		],
 	},
 	"loyalist_gunship": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(3, 1), Vector2i(3, 0)]],
 		"name": "Loyalist gunship", "size": Vector2(120, 96), "hull": 8, "crew": 3,
 		"art": "res://art/ships/loyalist_gunship/hull.png", "interior": "res://art/ships/loyalist_gunship/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "rabble_laser"],
@@ -283,6 +301,8 @@ const ANA_SHIPS := {
 # tune. Each also comes Rabble-repainted: enemy("<id>_rabble") flies it as a pirate (hull_rabble.png art).
 const CULTURE_SHIPS := {
 	"terran_patrol": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(3, 1), Vector2i(3, 0)]],
 		"name": "Terran patrol", "size": Vector2(168, 96), "hull": 10, "crew": 4,
 		"art": "res://art/ships/terran_patrol/hull.png", "interior": "res://art/ships/terran_patrol/interior.png", "art_scale": 2,
 		"weapons": ["burst_laser", "missile_launcher"],
@@ -299,6 +319,8 @@ const CULTURE_SHIPS := {
 		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(3, 2)], [Vector2i(4, 1), Vector2i(5, 1)]],
 	},
 	"zaash_skiff": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 2), Vector2i(2, 3)]],
 		"name": "Zaa'sh skiff", "size": Vector2(144, 96), "hull": 9, "crew": 3,
 		"art": "res://art/ships/zaash_skiff/hull.png", "interior": "res://art/ships/zaash_skiff/interior.png", "art_scale": 2,
 		"weapons": ["heavy_laser", "cutting_beam"],
@@ -315,6 +337,8 @@ const CULTURE_SHIPS := {
 		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)]],
 	},
 	"vuultam_garden": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)]],
 		"name": "Vuultam garden ship", "size": Vector2(168, 96), "hull": 10, "crew": 3,
 		"art": "res://art/ships/vuultam_garden/hull.png", "interior": "res://art/ships/vuultam_garden/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser"],
@@ -347,6 +371,8 @@ const CULTURE_SHIPS := {
 		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(4, 1), Vector2i(5, 1)]],
 	},
 	"ervani_courier": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)]],
 		"name": "Ervani courier", "size": Vector2(144, 96), "hull": 7, "crew": 3,
 		"art": "res://art/ships/ervani_courier/hull.png", "interior": "res://art/ships/ervani_courier/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "rabble_laser"],
@@ -363,6 +389,8 @@ const CULTURE_SHIPS := {
 		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)]],
 	},
 	"scyldar_lantern": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)], [Vector2i(1, 2), Vector2i(1, 3)]],
 		"name": "Scyldar lantern ship", "size": Vector2(168, 96), "hull": 10, "crew": 3,
 		"art": "res://art/ships/scyldar_lantern/hull.png", "interior": "res://art/ships/scyldar_lantern/interior.png", "art_scale": 2,
 		"weapons": ["heavy_laser"],
@@ -380,6 +408,8 @@ const CULTURE_SHIPS := {
 		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(4, 1), Vector2i(5, 1)]],
 	},
 	"arachnay_weaver": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)], [Vector2i(1, 2), Vector2i(1, 3)]],
 		"name": "Arachnay weaver", "size": Vector2(144, 96), "hull": 9, "crew": 4,
 		"art": "res://art/ships/arachnay_weaver/hull.png", "interior": "res://art/ships/arachnay_weaver/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "heavy_laser"],
@@ -397,6 +427,8 @@ const CULTURE_SHIPS := {
 		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(4, 1), Vector2i(5, 1)]],
 	},
 	"collective_freighter": {
+		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
+		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)], [Vector2i(1, 3), Vector2i(1, 4)]],
 		"name": "Collective freighter", "size": Vector2(192, 120), "hull": 12, "crew": 4,
 		"art": "res://art/ships/collective_freighter/hull.png", "interior": "res://art/ships/collective_freighter/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser"],
@@ -459,12 +491,17 @@ static func build(def: Dictionary) -> Dictionary:
 			var c: Rect2i = room["cells"]
 			room["rect"] = Rect2(Vector2(c.position) * CELL, Vector2(c.size) * CELL)
 	var doors: Array = []
-	for pair in ship.get("doors", []):
+	for pair in ship.get("doors", []) + ship.get("airlocks", []):
 		var a: Vector2i = pair[0]
 		var b: Vector2i = pair[1]
 		var across: bool = a.y == b.y
 		var at := Vector2(maxi(a.x, b.x) * CELL, (a.y + 0.5) * CELL) if across else Vector2((a.x + 0.5) * CELL, maxi(a.y, b.y) * CELL)
-		doors.append({"a": _room_at_cell(rooms, a), "b": _room_at_cell(rooms, b), "at": at, "across": across,
+		var ra: String = _room_at_cell(rooms, a)
+		var rb: String = _room_at_cell(rooms, b)
+		if ra == "":                 # an airlock: the room always on side a, space ("") on side b
+			ra = rb
+			rb = ""
+		doors.append({"a": ra, "b": rb, "at": at, "across": across, "airlock": rb == "",
 			"open": false, "locked": false, "pass": 0.0})
 	ship["door_list"] = doors
 	return ship

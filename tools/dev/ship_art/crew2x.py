@@ -2,12 +2,13 @@
 and player in a space suit so we don't gotta worry about customization."
 
 Each sheet is art/ships/crew/<id>.png: 48 x 48 frames (drawn on a 24-px grid and doubled, so they're chunky like
-FTL's crew), 4 across, 9 rows. The figure stands in the middle of its frame; one crew member fills one room cell.
+FTL's crew), 4 across, 11 rows. The figure stands in the middle of its frame; one crew member fills one room cell.
 
-  row 0  walk down   4      row 3  idle (facing down)   2      row 6  at a console, facing down  2
-  row 1  walk up     4      row 4  at a console, up      2      row 7  repairing (tool, sparks)   4
-  row 2  walk right  4      row 5  at a console, right   2      row 8  knocked out                1
-  (left is right, mirrored)
+  row 0  walk down   4      row 4  typing at a console, up     4      row 8   knocked out                    1
+  row 1  walk up     4      row 5  typing at a console, right  4      row 9   fighting (fists up, punching)  4
+  row 2  walk right  4      row 6  typing at a console, down   4      row 10  putting out a fire (spraying)  4
+  row 3  idle        2      row 7  repairing (tool, sparks)    4
+  (left is right, mirrored; fighting and spraying face right)
 
 Run from the repo root:  python3 -I tools/dev/ship_art/crew2x.py .
 """
@@ -181,18 +182,46 @@ def figure(c, who, facing, step=0, arms="swing", work=0):
         c.rect(x, y0, x, y1, col)
         c.px(x, y1 + 1, skin if not w.get("helmet") else shade(suit, 0.9))
     swing = {0: 0, 1: 1, 2: 0, 3: -1}[step] if arms == "swing" else 0
+    # typing: the hands take turns pressing keys (frames 1 and 3), like FTL's crew at their stations
+    press_l = 1 if work % 4 == 1 else 0
+    press_r = 1 if work % 4 == 3 else 0
     if facing == "right":
         if arms == "up":
-            c.rect(14, top + 8, 16, top + 8, suit)
-            c.px(17, top + 8 - (work % 2), skin)
+            c.rect(13, top + 9, 15, top + 9, shade(suit, 0.75))           # the far arm, behind
+            c.px(16 + press_r, top + 9 + press_r, shade(skin, 0.85))
+            c.rect(14, top + 8, 16, top + 8, suit)                          # the near arm
+            c.px(17, top + 8 + press_l, skin)
+        elif arms == "fist":                                               # guard up; frame 1 jabs, frame 3 hooks
+            jab = 3 if work % 4 == 1 else 0
+            hook = 2 if work % 4 == 3 else 0
+            c.rect(13, top + 9, 15 + hook, top + 9, shade(suit, 0.75))
+            c.rect(16 + hook, top + 8, 16 + hook, top + 9, shade(skin, 0.85))
+            c.rect(14, top + 8, 15 + jab, top + 8, suit)
+            c.rect(16 + jab, top + 7, 17 + jab, top + 8, skin)
+            if jab:
+                c.px(19 + jab, top + 6, hexc("#fff6ea")); c.px(19 + jab, top + 9, hexc("#fff6ea"))
+        elif arms == "spray":                                              # an extinguisher held out in front
+            red, dark = hexc("#d8403a"), hexc("#7a1e1e")
+            c.rect(14, top + 8, 16, top + 9, suit)
+            c.rect(15, top + 9, 17, top + 13, red)
+            c.rect(15, top + 9, 17, top + 9, dark, lit=False)
+            c.rect(18, top + 9, 19, top + 9, hexc("#2a2a34"), lit=False)    # the nozzle
+            foam = (hexc("#eef6ff"), hexc("#b8d8f0"))
+            for dx in range(0, 6):                                          # a cone of foam, puffing
+                for dy in range(-(dx // 2) - 1, dx // 2 + 2):
+                    if (dx * 7 + dy * 3 + work * 5) % 4 != 0 and abs(dy) <= dx // 2 + (1 if dx > 2 else 0):
+                        c.px(20 + dx, top + 9 + dy, foam[(dx + dy + work) % 2])
         else:
             arm(12 + swing, top + 8, top + 11, shade(suit, 0.9))
     elif arms == "up":                                    # reaching to a console in front (up) or below (down)
-        dy = -(work % 2)
-        if facing == "up":
-            arm(7, top + 5 + dy, top + 8, suit); arm(16, top + 5 - dy - 1, top + 8, suit)
+        if facing == "up":                                  # hands reaching up past the shoulders to the keys
+            hand = skin if not w.get("helmet") else shade(suit, 0.9)
+            for x, out_, pr in ((7, 6, press_l), (16, 17, press_r)):
+                c.rect(x, top + 7, x, top + 9, suit)
+                c.rect(out_, top + 5 - pr, out_, top + 7, suit)
+                c.px(out_, top + 4 - pr, hand)
         else:
-            arm(7, top + 9, top + 12 + dy, suit); arm(16, top + 9, top + 12 - dy - 1, suit)
+            arm(7, top + 9, top + 12 + press_l, suit); arm(16, top + 9, top + 12 + press_r, suit)
     elif arms == "tool":
         arm(7, top + 8, top + 11, suit)
         c.rect(16, top + 9, 17, top + 10, suit)
@@ -328,6 +357,10 @@ def frame(who, pose, i):
         figure(c, who, "down", 0, arms="up", work=i)
     elif pose == "repair":
         figure(c, who, "down", 0, arms="tool", work=i)
+    elif pose == "fight":
+        figure(c, who, "right", 0, arms="fist", work=i)
+    elif pose == "extinguish":
+        figure(c, who, "right", 0, arms="spray", work=i)
     elif pose == "down":
         figure(c, who, "down", 0)
         c.a = np.rot90(c.a, 1).copy()                        # lying on their side
@@ -335,8 +368,8 @@ def frame(who, pose, i):
     return c.image()
 
 
-ROWS = [("walk_down", 4), ("walk_up", 4), ("walk_right", 4), ("idle", 2), ("work_up", 2), ("work_right", 2),
-        ("work_down", 2), ("repair", 4), ("down", 1)]
+ROWS = [("walk_down", 4), ("walk_up", 4), ("walk_right", 4), ("idle", 2), ("work_up", 4), ("work_right", 4),
+        ("work_down", 4), ("repair", 4), ("down", 1), ("fight", 4), ("extinguish", 4)]
 
 
 def sheet(who):

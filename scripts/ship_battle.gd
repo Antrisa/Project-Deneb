@@ -48,13 +48,14 @@ var beams: Array = []            # {"at_player", "from", "a", "b" (target pictur
 const BEAM_TIME := 0.9
 # Crew sprites, FTL-style (Zachary, 21 Nov: "mini people sprites like ftl and player in a space suit"):
 # art/ships/crew/<kind>.png, 48 x 48 frames (tools/dev/ship_art/crew2x.py), rows: walk down, up, right (left is right
-# mirrored), idle, at a console facing up, right, down, repairing, knocked out. Who crews which ship:
+# mirrored), idle, typing at a console facing up, right, down, repairing, knocked out, fighting, putting out a fire.
+# Who crews which ship:
 var crew_texes := {}
 const CREW_KIND := {"terran_patrol": "terran_marine", "zaash_skiff": "zaash", "vuultam_garden": "vuultam",
 	"moogli_trader": "moogli", "ervani_courier": "ervani", "scyldar_lantern": "scyldar", "arachnay_weaver": "arachnay",
 	"collective_freighter": ["vuultam", "moogli", "ervani", "scyldar", "arachnay"]}
 const CREW_ROW := {"walk_down": 0, "walk_up": 1, "walk_right": 2, "idle": 3, "work_up": 4, "work_right": 5, "work_down": 6,
-	"repair": 7, "down": 8}
+	"repair": 7, "down": 8, "fight": 9, "extinguish": 10}
 # Hazards from the rare weapons: rooms on fire and rooms full of gas, by room id: {"t": seconds left, "acc"}.
 var my_fires := {}
 var foe_fires := {}
@@ -66,6 +67,29 @@ const FIRE_HURT := 3.0           # seconds of burning for each bar of damage to 
 const FIRE_CREW := 6.0           # crew health lost a second in a burning room
 const GAS_CREW := 12.0           # ... and in a gassed one
 const SHIELD_JAM := 4.0
+# Air, room by room (Zachary, 22 Nov: "every ship need 1 or 2 airlocks to vent air for fires"), 0..1 by room id.
+# Life support fills every room; open doors even it out; an open airlock (a striped hatch to space) empties its room.
+# Fire eats air and dies fast without it; crew choke in thin air. You have your suit: when the cockpit runs out, it
+# holds SUIT_AIR seconds.
+var my_air := {}
+var foe_air := {}
+var suit_air := 25.0
+const SUIT_AIR := 25.0
+const AIR_REFILL := 0.04         # a second, for each bar of life support
+const AIR_LEAK := 0.012          # a second, in every room, with life support down
+const AIR_VENT := 0.35           # a second, out through an open airlock
+const AIR_MIX := 1.5             # how fast two rooms with an open door between them even out
+const AIR_BURN := 0.03           # a fire eats this much a second
+const AIR_THIN := 0.15           # below this, crew choke ...
+const AIR_CHOKE := 5.0           # ... losing this much health a second
+const FIRE_SPREAD := 8.0         # a fire with air to burn reaches the next room this often (open doors; shut ones 1 in 3)
+# Effects (tools/dev/ship_art/fx2x.py): fire and smoke loop over burning rooms, 48 x 48 a cell, 4 frames; a hit is a
+# 6-frame blast where a shot lands.
+var fx_fire: Texture2D
+var fx_smoke: Texture2D
+var fx_hit: Texture2D
+var blasts: Array = []           # {"pos" (page), "t", "k"}
+const BLAST_FRAME := 0.07
 const GUN_FRAME := {"small": Vector2(64, 24), "big": Vector2(96, 32)}
 const GUN_MOUNT := {"small": Vector2(6, 12), "big": Vector2(8, 16)}
 var shield_hits: Array = []      # {"mine", "pos" (page), "t"}
@@ -159,6 +183,7 @@ var shots: Array = []            # shots in flight, in ship-picture pixels: {"fr
 var pops: Array = []             # floating words, in page pixels: {"pos", "text", "t", "color"}
 var shake := 0.0
 var tutorial_said := {}
+static var fire_hint_said := false   # Sara explains fire and airlocks the first time your ship burns (once a session)
 
 
 func _ready() -> void:
@@ -176,6 +201,9 @@ func _ready() -> void:
 	me_ship = ShipData.build(ShipData.STARTER)
 	room_icons = _load_tex("res://art/ui/ship/icons_systems.png")
 	missile_tex = _load_tex("res://art/ships/shots/missile.png")
+	fx_fire = _load_tex("res://art/ships/fx/fire.png")
+	fx_smoke = _load_tex("res://art/ships/fx/smoke.png")
+	fx_hit = _load_tex("res://art/ships/fx/hit.png")
 	for kind in ["player", "human", "freya", "ana", "rabble_pirate", "terran_marine", "zaash", "arachnay", "moogli", "ervani", "vuultam", "scyldar"]:
 		var ct: Texture2D = _load_tex("res://art/ships/crew/%s.png" % kind)
 		if ct != null:
@@ -209,8 +237,11 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	selected = -1
 	fold = 0.0
 	oxygen = 100.0
+	suit_air = SUIT_AIR
+	blasts.clear()
 	tutorial_said = {}
 	me_ship = ShipData.build(ShipData.STARTER)
+	_fill_air(me_ship, my_air)
 	var me: Dictionary = me_ship
 	hull_max = int(me["hull"])
 	hull = clampi(hull_now, 1, hull_max)
@@ -240,6 +271,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	for wid in foe["weapons"]:
 		# Enemies start part-charged so the first shots don't all land together.
 		e_weapons.append({"id": str(wid), "charge": randf_range(1.0, 4.0), "target": "", "on": true})
+	_fill_air(foe, foe_air)
 	_make_enemy_crew()
 	overcharged = false
 	enemy_tex = _load_tex(str(foe.get("art", "")))
@@ -368,6 +400,9 @@ func _process(delta: float) -> void:
 	for h in shield_hits:
 		h["t"] = float(h["t"]) + delta
 	shield_hits = shield_hits.filter(func(h): return float(h["t"]) < 0.5)
+	for b in blasts:
+		b["t"] = float(b["t"]) + delta
+	blasts = blasts.filter(func(b): return float(b["t"]) < BLAST_FRAME * 6.0)
 	if world.dialogue.active:
 		return
 	if result == "done":
@@ -430,14 +465,11 @@ func _tick(delta: float) -> void:
 	_tick_doors(me_ship, delta)
 	_tick_doors(foe, delta)
 
-	# oxygen: only you are aboard, and without life support the air runs thin
-	if _eff(sys, "life") <= 0:
-		oxygen -= 1.5 * delta
-		if oxygen <= 0.0:
-			oxygen = 0.0
-			_lose("You black out as the air runs out")
-	else:
-		oxygen = minf(100.0, oxygen + 3.0 * delta)
+	_tick_air(true, delta)
+	_tick_air(false, delta)
+	_breathe(delta)
+	if result != "":
+		return
 
 	if not bool(fight.get("story", false)) and _eff(sys, "pilot") > 0:
 		fold = minf(100.0, fold + delta * 0.6 * (1 + _eff(sys, "engines")))
@@ -726,6 +758,7 @@ func _land(s: Dictionary) -> void:
 func _damage(at_player: bool, room_id: String, dmg: int, where: Vector2) -> void:
 	if result != "" or dmg <= 0:
 		return
+	blasts.append({"pos": where, "t": 0.0, "k": _ship_scale(at_player)})
 	if at_player:
 		hull -= dmg
 		var room: Dictionary = _room(me_ship["rooms"], room_id)
@@ -845,8 +878,16 @@ func _tick_hazards(delta: float) -> void:
 					if float(c["hp"]) > 0.0 and str(c["room"]) == rid:
 						workers += 1
 						c["hp"] = maxf(0.0, float(c["hp"]) - FIRE_CREW * delta)
-			f["t"] = float(f["t"]) - delta * (1.0 + 3.0 * workers)
+			var air: Dictionary = my_air if at_player else foe_air
+			var breath: float = float(air.get(rid, 1.0))
+			# with almost no air left a fire chokes out five times as fast (venting the room)
+			f["t"] = float(f["t"]) - delta * (1.0 + 3.0 * workers) * (5.0 if breath < 0.12 else 1.0)
 			f["acc"] = float(f["acc"]) + delta
+			f["spread"] = float(f.get("spread", 0.0)) + delta
+			if float(f["spread"]) >= FIRE_SPREAD:
+				f["spread"] = 0.0
+				if breath > 0.4:
+					_spread_fire(at_player, ship, rid)
 			var sname: String = str(_room(ship["rooms"], rid).get("sys", ""))
 			if float(f["acc"]) >= FIRE_HURT:
 				f["acc"] = 0.0
@@ -864,19 +905,113 @@ func _tick_hazards(delta: float) -> void:
 				c["hp"] = maxf(0.0, float(c["hp"]) - GAS_CREW * delta)
 		if float(gas["t"]) <= 0.0:
 			foe_gas.erase(rid)
-	if not foe_fires.is_empty() or not foe_gas.is_empty():
+	var choking := false
+	for c in e_crew_list:
+		var here: String = str(c["room"]) if str(c["room"]) != "" else str(c["last"])
+		if float(c["hp"]) > 0.0 and float(foe_air.get(here, 1.0)) < AIR_THIN:
+			c["hp"] = maxf(0.0, float(c["hp"]) - AIR_CHOKE * delta)
+			choking = true
+	if choking or not foe_fires.is_empty() or not foe_gas.is_empty():
 		_count_crew(_on_page(false, (foe["size"] as Vector2) / 2.0))
 
 
-# Fires and gas, drawn over a ship's rooms: flickering flames, a green haze.
+# A fire reaches into a room next door: through an open door, or a shut one now and then. Not through airlocks.
+func _spread_fire(at_player: bool, ship: Dictionary, rid: String) -> void:
+	var fires: Dictionary = my_fires if at_player else foe_fires
+	var air: Dictionary = my_air if at_player else foe_air
+	var ways: Array = []
+	for d in ship.get("door_list", []):
+		if bool(d.get("airlock", false)):
+			continue
+		var other: String = str(d["b"]) if str(d["a"]) == rid else (str(d["a"]) if str(d["b"]) == rid else "")
+		if other == "" or fires.has(other) or float(air.get(other, 1.0)) < 0.3:
+			continue
+		if bool(d["open"]) or float(d["pass"]) > 0.0 or randf() < 0.33:
+			ways.append(other)
+	if ways.is_empty():
+		return
+	var to: String = ways[randi() % ways.size()]
+	_set_fire(at_player, to, _on_page(at_player, _room_center(at_player, to)))
+
+
+func _fill_air(ship: Dictionary, air: Dictionary) -> void:
+	air.clear()
+	for room in ship.get("rooms", []):
+		air[str(room["id"])] = 1.0
+
+
+# The ship's airlock out of that room, or {} if it has none.
+func _airlock_of(ship: Dictionary, rid: String) -> Dictionary:
+	for d in ship.get("door_list", []):
+		if bool(d.get("airlock", false)) and str(d["a"]) == rid:
+			return d
+	return {}
+
+
+# Life support fills the rooms (a ship with no oxygen system has scrubbers worth one bar); without it every room
+# leaks. Fires eat air. Open doors even two rooms out; an open airlock empties its room into space.
+func _tick_air(at_player: bool, delta: float) -> void:
+	var ship: Dictionary = me_ship if at_player else foe
+	var air: Dictionary = my_air if at_player else foe_air
+	var systems: Dictionary = sys if at_player else e_sys
+	var life: int = _eff(systems, "life") if systems.has("life") else 1
+	for rid in air:
+		if life > 0:
+			air[rid] = minf(1.0, float(air[rid]) + AIR_REFILL * life * delta)
+		else:
+			air[rid] = maxf(0.0, float(air[rid]) - AIR_LEAK * delta)
+	for rid in (my_fires if at_player else foe_fires):
+		if air.has(rid):
+			air[rid] = maxf(0.0, float(air[rid]) - AIR_BURN * delta)
+	var mix: float = minf(0.5, AIR_MIX * delta)
+	for d in ship.get("door_list", []):
+		if not bool(d["open"]) and float(d["pass"]) <= 0.0:
+			continue
+		var a: String = str(d["a"])
+		if not air.has(a):
+			continue
+		if bool(d.get("airlock", false)):
+			air[a] = maxf(0.0, float(air[a]) - AIR_VENT * delta)
+		elif air.has(str(d["b"])):
+			var b: String = str(d["b"])
+			var flow: float = (float(air[a]) - float(air[b])) * mix
+			air[a] = float(air[a]) - flow
+			air[b] = float(air[b]) + flow
+
+
+# You, in the cockpit: when its air runs thin you're on your suit's tank, which fills again once the air is back.
+# The readout along the top is the whole ship's air.
+func _breathe(delta: float) -> void:
+	var total := 0.0
+	for rid in my_air:
+		total += float(my_air[rid])
+	oxygen = 100.0 * total / maxf(1.0, float(my_air.size()))
+	if float(my_air.get("cockpit", 1.0)) < AIR_THIN:
+		suit_air -= delta
+		if suit_air <= 0.0:
+			suit_air = 0.0
+			_lose("Your suit runs out of air")
+	else:
+		suit_air = minf(SUIT_AIR, suit_air + 2.0 * delta)
+
+
+# Air, fires, smoke and gas, drawn over a ship's rooms: thin air turns a room red (FTL's warning), fires burn in
+# every cell of the room with smoke rising (art/ships/fx), a system knocked right out smokes too, gas is a green haze.
 func _paint_hazards(at_player: bool, xf: Transform2D, k: float) -> void:
 	var ship: Dictionary = me_ship if at_player else foe
 	var ms: float = Time.get_ticks_msec() / 1000.0
 	var systems: Dictionary = sys if at_player else e_sys
+	var air: Dictionary = my_air if at_player else foe_air
+	var fires: Dictionary = my_fires if at_player else foe_fires
+	var cell: float = float(ShipData.CELL)
 	for room in ship["rooms"]:
 		var rr: Rect2 = xf * (room["rect"] as Rect2)
 		var rid: String = str(room["id"])
 		var sname: String = str(room["sys"])
+		var breath: float = float(air.get(rid, 1.0))
+		if breath < 0.75:
+			var thin: float = (0.75 - breath) / 0.75
+			screen.rect(rr.grow(-2.0 * k), Color(0.95, 0.2, 0.32, 0.12 + 0.3 * thin + (0.08 * sin(ms * 6.0) if breath < AIR_THIN else 0.0)))
 		if systems.has(sname) and float(systems[sname].get("ion", 0.0)) > 0.0:
 			screen.rect(rr.grow(-2.0 * k), Color(0.35, 0.75, 1.0, 0.28 + 0.1 * sin(ms * 12.0)))
 		if (foe_gas if not at_player else {}).has(rid):
@@ -885,15 +1020,40 @@ func _paint_hazards(at_player: bool, xf: Transform2D, k: float) -> void:
 				var bx: float = rr.position.x + rr.size.x * fmod(0.2 + i * 0.23 + ms * 0.05, 1.0)
 				var by: float = rr.end.y - fmod(ms * 8.0 + i * 7.0, rr.size.y)
 				screen.circle(Vector2(bx, by), 1.5 * k, Color(0.75, 1.0, 0.55, 0.7))
-		if (my_fires if at_player else foe_fires).has(rid):
-			screen.rect(rr.grow(-2.0 * k), Color(1.0, 0.45, 0.15, 0.22))
-			for i in range(5):
-				var fx: float = rr.position.x + rr.size.x * (0.15 + 0.17 * i)
-				var flick: float = 0.6 + 0.4 * sin(ms * 14.0 + i * 1.7)
-				var fy: float = rr.end.y - 4.0 * k
-				var h: float = 7.0 * k * flick
-				screen.polygon(PackedVector2Array([Vector2(fx - 2.5 * k, fy), Vector2(fx, fy - h), Vector2(fx + 2.5 * k, fy)]), Color(1.0, 0.55, 0.15, 0.9))
-				screen.polygon(PackedVector2Array([Vector2(fx - 1.2 * k, fy), Vector2(fx, fy - h * 0.55), Vector2(fx + 1.2 * k, fy)]), Color(1.0, 0.92, 0.5, 0.95))
+		var r_logical: Rect2 = room["rect"]
+		var cols: int = maxi(1, int(round(r_logical.size.x / cell)))
+		var rows: int = maxi(1, int(round(r_logical.size.y / cell)))
+		var burning: bool = fires.has(rid)
+		if burning:
+			screen.rect(rr.grow(-2.0 * k), Color(1.0, 0.45, 0.15, 0.18))
+			for cy in range(rows):
+				for cx in range(cols):
+					var cr: Rect2 = xf * Rect2(r_logical.position + Vector2(cx, cy) * cell, Vector2(cell, cell))
+					if fx_fire != null:
+						var fi: int = (int(ms * 9.0) + cx * 3 + cy * 2) % 4
+						screen.texture(fx_fire, cr, Rect2(fi * 48, 0, 48, 48))
+					else:
+						for i in range(3):
+							var fx: float = cr.position.x + cr.size.x * (0.25 + 0.25 * i)
+							var h: float = 7.0 * k * (0.6 + 0.4 * sin(ms * 14.0 + i * 1.7 + cx))
+							var fy: float = cr.end.y - 3.0 * k
+							screen.polygon(PackedVector2Array([Vector2(fx - 2.5 * k, fy), Vector2(fx, fy - h), Vector2(fx + 2.5 * k, fy)]), Color(1.0, 0.55, 0.15, 0.9))
+		var knocked_out: bool = systems.has(sname) and int(systems[sname]["max"]) > 0 and int(systems[sname]["damage"]) >= int(systems[sname]["max"])
+		if (burning or knocked_out) and fx_smoke != null:
+			var top_cell: Rect2 = xf * Rect2(r_logical.position + Vector2((cols - 1) * 0.5 * cell, 0), Vector2(cell, cell))
+			var si: int = int(ms * 5.0 + rid.length()) % 4
+			screen.texture(fx_smoke, top_cell.grow(2.0 * k), Rect2(si * 48, 0, 48, 48), Color(1, 1, 1, 0.9 if burning else 0.55))
+
+
+# Blasts where shots land on a hull.
+func _paint_blasts() -> void:
+	if fx_hit == null:
+		return
+	for b in blasts:
+		var f: int = mini(5, int(float(b["t"]) / BLAST_FRAME))
+		var size: float = 30.0 * float(b["k"])
+		var at: Vector2 = b["pos"]
+		screen.texture(fx_hit, Rect2(at - Vector2(size, size) / 2.0, Vector2(size, size)), Rect2(f * 48, 0, 48, 48))
 
 
 func _pop(pos: Vector2, text: String, color: Color) -> void:
@@ -1078,7 +1238,7 @@ func _enemy_crew(delta: float) -> void:
 		if not e_sys.has(sname) or int(e_sys[sname]["damage"]) <= 0:
 			continue
 		var rid: String = _sys_room(sname)
-		if rid == "":
+		if rid == "" or bool(_airlock_of(foe, rid).get("vented", false)):
 			continue
 		var covered := false
 		for c in e_crew_list:
@@ -1101,8 +1261,24 @@ func _enemy_crew(delta: float) -> void:
 		if best >= 0:
 			e_crew_list[best]["task"] = "repair"
 			e_crew_list[best]["target"] = rid
-	# Fires: someone goes to put out each one nobody is seeing to (never the pilot).
+	# Venting: a fire in a room with an airlock and nobody in it or on the way gets its airlock opened, and the fire
+	# chokes out; the airlock shuts again once the fire is out.
+	for d in foe.get("door_list", []):
+		if not bool(d.get("airlock", false)):
+			continue
+		var vr: String = str(d["a"])
+		var want: bool = foe_fires.has(vr) and not _crew_bound(vr)
+		if want and not bool(d["open"]):
+			d["open"] = true
+			d["vented"] = true
+			_pop(_on_page(false, _room_center(false, vr)) + Vector2(0, -12), "Venting", Color("dfe8ff"))
+		elif not want and bool(d.get("vented", false)) and not foe_fires.has(vr):
+			d["open"] = false
+			d["vented"] = false
+	# Fires: someone goes to put out each one nobody is seeing to (never the pilot), unless it's being vented.
 	for rid_f in foe_fires.keys():
+		if bool(_airlock_of(foe, str(rid_f)).get("vented", false)):
+			continue
 		var covered_f := false
 		for c in e_crew_list:
 			if float(c["hp"]) > 0.0 and str(c["task"]) == "repair" and str(c["target"]) == str(rid_f):
@@ -1182,6 +1358,14 @@ func _enemy_crew(delta: float) -> void:
 			e_sys[sname2]["power"] = int(e_sys[sname2]["max"]) - int(e_sys[sname2]["damage"])
 
 
+# True when one of their crew is in that room or on the way to it.
+func _crew_bound(rid: String) -> bool:
+	for c in e_crew_list:
+		if float(c["hp"]) > 0.0 and (str(c["room"]) == rid or str(c["target"]) == rid):
+			return true
+	return false
+
+
 # A hit on an enemy room hurts whoever is standing in it. When the last of them goes down, the fight is won.
 func _hurt_crew(room_id: String, dmg: int, where: Vector2) -> void:
 	for c in e_crew_list:
@@ -1214,6 +1398,14 @@ func _room_words(room: Dictionary) -> String:
 
 
 func _tutorial_hints() -> void:
+	if not my_fires.is_empty() and not fire_hint_said:
+		fire_hint_said = true
+		paused = true
+		world._say("Sara", [
+			"Fire aboard! It eats the air and wrecks the room's system.",
+			"Send the drone in to put it out, or click the striped airlock on that room to vent it. No air, no fire. Shut it again after.",
+		])
+		return
 	if not bool(fight.get("tutorial", false)):
 		return
 	var any_target := false
@@ -1343,6 +1535,8 @@ func _click(id: String, p: Vector2, button: int) -> void:
 		if _door_rect(d, my_xf).grow(3.0).has_point(p):
 			d["open"] = not bool(d["open"])
 			world.sfx("click", 0.8 if bool(d["open"]) else 1.1, -4.0)
+			if bool(d.get("airlock", false)):
+				_pop(p + Vector2(0, -10), "Venting" if bool(d["open"]) else "Airlock shut", Color("dfe8ff"))
 			return
 	# a bay on your ship: with the drone selected, send it there (left or right click, as with crew in FTL)
 	for room in me_ship["rooms"]:
@@ -1401,6 +1595,7 @@ func _paint() -> void:
 	_paint_foe_window()
 	_paint_shots()
 	_paint_beams()
+	_paint_blasts()
 	for p in pops:
 		var c: Color = p["color"]
 		c.a = 1.0 - float(p["t"]) / 1.2
@@ -1428,7 +1623,9 @@ func _paint_strip() -> void:
 		s.circle(c, 4.5, lit if i < layers else ShipScreen.PIP_OFF)
 		s.ring(c, 4.5, Color("3f6a78"))
 	var ev_x: float = maxf(270.0, 234.0 + top * 12.0)
-	s.text(ev_x, 59, "EVASION %d%%   OXYGEN %d%%" % [_my_evasion(), int(oxygen)], "micro", MUTED if oxygen > 40.0 else ShipScreen.PIP_RED)
+	var on_suit: bool = suit_air < SUIT_AIR - 0.01 and float(my_air.get("cockpit", 1.0)) < AIR_THIN
+	var air_words: String = ("SUIT AIR %ds" % int(ceil(suit_air))) if on_suit else ("OXYGEN %d%%" % int(oxygen))
+	s.text(ev_x, 59, "EVASION %d%%   %s" % [_my_evasion(), air_words], "micro", MUTED if oxygen > 40.0 and not on_suit else ShipScreen.PIP_RED)
 	s.text(440, 59, "FOLD DRIVE", "micro", MUTED)
 	var story: bool = bool(fight.get("story", false))
 	if story:
@@ -1576,6 +1773,12 @@ func _crew_pose(c: Dictionary) -> Array:
 			return ["walk_right", step, f.x < 0.0]
 		return ["walk_down" if f.y >= 0.0 else "walk_up", step, false]
 	var room: Dictionary = _room(foe["rooms"], str(c["room"]))
+	if str(c["task"]) == "fight":
+		return ["fight", int(t * 6.0) % 4, float(c.get("foe_x", 0.0)) < (c["pos"] as Vector2).x]
+	if str(c["task"]) == "repair" and foe_fires.has(str(c["room"])):
+		# spraying the fire, toward the middle of the room
+		var mid: Vector2 = (room.get("rect", Rect2()) as Rect2).get_center()
+		return ["extinguish", int(t * 8.0) % 4, mid.x < (c["pos"] as Vector2).x - 1.0]
 	if str(c["task"]) == "repair":
 		return ["repair", int(t * 6.0) % 4, false]
 	if str(c["room"]) == str(c["home"]) and str(room.get("sys", "")) in STATIONS and room.has("cells"):
@@ -1583,9 +1786,9 @@ func _crew_pose(c: Dictionary) -> Array:
 	return ["idle", int(t * 1.5) % 2, false]
 
 
-# Working a console on the given side of the cell: [row, frame, mirrored].
+# Typing at a console on the given side of the cell: [row, frame, mirrored]. The hands take turns on the keys.
 func _work_pose(side: Vector2i, t: float) -> Array:
-	var f: int = int(t * 3.0) % 2
+	var f: int = int(t * 6.0) % 4
 	if side == Vector2i(0, -1):
 		return ["work_up", f, false]
 	if side == Vector2i(0, 1):
@@ -1646,13 +1849,18 @@ func _door_rect(d: Dictionary, xf: Transform2D) -> Rect2:
 
 # Doors (Zachary, 21 Nov): open (just the frame's ends), shut (an orange slab), or locked (red, door_level 2+).
 # Someone walking through holds a door open for a moment. Your own doors light up under the pointer.
+# Airlocks (22 Nov) are striped yellow and black; open, the room's air streams out of them into space.
 func _paint_doors(ship: Dictionary, xf: Transform2D, k: float, mine: bool) -> void:
 	var s := screen
 	var locks: bool = int(ship.get("door_level", 1)) >= 2
+	var air: Dictionary = my_air if mine else foe_air
+	var ms: float = Time.get_ticks_msec() / 1000.0
 	for d in ship.get("door_list", []):
 		var slab := _door_rect(d, xf)
 		var is_open: bool = bool(d["open"]) or float(d["pass"]) > 0.0
-		if is_open:
+		if bool(d.get("airlock", false)):
+			_paint_airlock(ship, d, slab, xf, k, is_open, float(air.get(str(d["a"]), 0.0)), ms)
+		elif is_open:
 			var e: float = maxf(1.0, k)
 			if bool(d["across"]):
 				s.rect(Rect2(slab.position, Vector2(slab.size.x, e)), DOOR)
@@ -1665,6 +1873,46 @@ func _paint_doors(ship: Dictionary, xf: Transform2D, k: float, mine: bool) -> vo
 			s.rect(slab.grow(-maxf(1.0, k * 0.5)), Color("ffa096") if locks else Color("ffd08a"))
 		if mine and result == "" and slab.grow(3.0).has_point(s.mouse):
 			s.outline(slab.grow(2.0), Color("fff6ea"))
+
+
+const HAZARD_Y := Color("f2c94c")
+const HAZARD_K := Color("24222c")
+
+
+func _paint_airlock(ship: Dictionary, d: Dictionary, slab: Rect2, xf: Transform2D, k: float, is_open: bool, breath: float, ms: float) -> void:
+	var s := screen
+	var long_x: bool = slab.size.x >= slab.size.y
+	var length: float = slab.size.x if long_x else slab.size.y
+	var e: float = maxf(1.0, k)
+	if is_open:
+		# just the striped ends of the frame
+		if long_x:
+			s.rect(Rect2(slab.position, Vector2(2.0 * e, slab.size.y)), HAZARD_Y)
+			s.rect(Rect2(Vector2(slab.end.x - 2.0 * e, slab.position.y), Vector2(2.0 * e, slab.size.y)), HAZARD_Y)
+		else:
+			s.rect(Rect2(slab.position, Vector2(slab.size.x, 2.0 * e)), HAZARD_Y)
+			s.rect(Rect2(Vector2(slab.position.x, slab.end.y - 2.0 * e), Vector2(slab.size.x, 2.0 * e)), HAZARD_Y)
+		# air streaming out, away from the room, while there's any left to lose
+		if breath > 0.03:
+			var room_c: Vector2 = xf * (_room(ship["rooms"], str(d["a"])).get("rect", Rect2(d["at"], Vector2.ZERO)) as Rect2).get_center()
+			var out: Vector2 = (slab.get_center() - room_c).normalized()
+			var side := Vector2(-out.y, out.x)
+			for i in range(5):
+				var t: float = fmod(ms * 1.6 + i * 0.21, 1.0)
+				var p: Vector2 = slab.get_center() + out * (t * 16.0 * k) + side * ((i - 2) * 1.6 * k + sin(ms * 7.0 + i) * k)
+				s.rect(Rect2(p - Vector2(e, e) * 0.5, Vector2(e, e)), Color(0.9, 0.96, 1.0, (1.0 - t) * minf(1.0, breath * 2.0)))
+		return
+	s.rect(slab, HAZARD_K)
+	var n: int = maxi(3, int(length / (2.0 * e)))
+	var seg: float = length / n
+	for i in range(n):
+		if i % 2 == 0:
+			if long_x:
+				s.rect(Rect2(slab.position + Vector2(i * seg, 0), Vector2(seg, slab.size.y)), HAZARD_Y)
+			else:
+				s.rect(Rect2(slab.position + Vector2(0, i * seg), Vector2(slab.size.x, seg)), HAZARD_Y)
+
+
 
 
 # Their window: the band with their name, hull, shields, evasion and crew, then the ship.

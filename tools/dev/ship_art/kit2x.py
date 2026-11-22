@@ -215,13 +215,16 @@ def sheet(items, path, scale=2, cols=2, pad=16, bg=(20, 24, 36, 255), label=True
 
 # ---------------------------------------------------------------- cut-away interiors, FTL-simple
 
-def interior(p, rooms, doors, cell=CELL, wall_mat="wall", bays=()):
+def interior(p, rooms, doors, cell=CELL, wall_mat="wall", bays=(), airlocks=None):
     """Cut the rooms into a hull picture: a dark frame round the rooms, deck floors, 4-px walls on the cell edges
     with door gaps (the game draws the doors), and one machine per system. Keeps in step with the game: rooms are
     {id: (col, row, w, h, sys)}, doors are ((c1, r1), (c2, r2)); a door gap is 7..17 of every 24 cell px, scaled."""
     from scipy import ndimage as nd
     k = cell / 24.0
     H, W = p.h, p.w
+    if airlocks is None:
+        airlocks = pick_airlocks(rooms, doors)
+    doors = list(doors) + list(airlocks)
     block = np.zeros((H, W), bool)
     for (cx, cy, cw, ch, _) in rooms.values():
         block[cy * cell:(cy + ch) * cell, cx * cell:(cx + cw) * cell] = True
@@ -272,6 +275,20 @@ def interior(p, rooms, doors, cell=CELL, wall_mat="wall", bays=()):
             wall[y - t:y + t, x + g0:x + g1] = False
     wall &= p.tone >= 0
     p.mat[wall] = wall_mat; p.tone[wall] = 1
+    fr = int(3 * k)
+    for (a_, b_) in airlocks:
+        (c1, r1), (c2, r2) = a_, b_
+        x0 = c1 * cell
+        y = max(r1, r2) * cell
+        outward = -1 if r2 < r1 else 1
+        y_out0, y_out1 = (y - fr - t, y - 1) if outward < 0 else (y, y + fr + t - 1)
+        collar = p.mask(rect=(x0 + g0 - 4, y_out0, x0 + g1 + 3, y_out1)) & (p.tone >= 0)
+        p.mat[collar] = "yellow"; p.tone[collar] = 3
+        yy, xx = np.mgrid[0:H, 0:W]
+        stripe = collar & (((xx + yy) // 3) % 2 == 0)
+        p.mat[stripe] = "dark"; p.tone[stripe] = 1
+        gap = p.mask(rect=(x0 + g0, y_out0, x0 + g1 - 1, y_out1)) & (p.tone >= 0)
+        p.mat[gap] = "dark"; p.tone[gap] = 0
     for room in rooms.values():
         machine(p, room, rooms, doors, cell, k)
     return p
@@ -303,6 +320,41 @@ def console_at(room, rooms, doors):
                     continue
                 return (x, y), side
     return (cx, cy), "top"
+
+
+# Airlocks (Zachary, 22 Nov: "every ship need 1 or 2 airlocks to vent air for fires"): doors in an outside wall,
+# to space. One for a ship of six rooms or fewer, two for bigger ones (one on top, one underneath). Never in the
+# cockpit, never on a console's wall. Written into each ship's game data as "airlocks" (the game treats them as
+# doors whose far side is space); this picks them the same way every time.
+def pick_airlocks(rooms, doors, n=None):
+    occupied = {}
+    for rid, (cx, cy, cw, ch, sysn) in rooms.items():
+        for x in range(cx, cx + cw):
+            for y in range(cy, cy + ch):
+                occupied[(x, y)] = rid
+    consoles = set()
+    for rid, room in rooms.items():
+        if room[4] in STATION_SYSTEMS:
+            cell, side = console_at(room, rooms, doors)
+            consoles.add((cell, side))
+    if n is None:
+        n = 1 if len(rooms) <= 6 else 2
+    order = {"life": 0, "engines": 1, "": 2, "crew": 2, "weapons": 3, "shields": 3, "drones": 4, "cannon": 4}
+    picks = []
+    for side, (dx, dy) in (("top", (0, -1)), ("bottom", (0, 1))):
+        best = None
+        for (x, y), rid in sorted(occupied.items()):
+            room = rooms[rid]
+            if room[4] == "pilot" or (x + dx, y + dy) in occupied or ((x, y), side) in consoles:
+                continue
+            score = (order.get(room[4] if rid not in ("crew",) else "crew", 2), abs(x - 2))
+            if best is None or score < best[0]:
+                best = (score, ((x, y), (x + dx, y + dy)))
+        if best:
+            picks.append(best[1])
+        if len(picks) >= n:
+            break
+    return picks[:n]
 
 
 def machine(p, room, rooms, doors, cell, k):

@@ -214,16 +214,17 @@ units. At 1080p a 2x ship shows at 1 screen pixel per art pixel, so it looks the
 ## 2. Crew art (in battle)
 
 **Done (22 Nov, Claude):** `tools/dev/ship_art/crew2x.py` draws twelve crew sheets in `art/ships/crew/<kind>.png`,
-FTL-style mini people drawn on a 24-px grid and doubled: 48 × 48 frames, 4 across, 9 rows (walk down, up, right;
-idle; at a console facing up, right, down; repairing with a wrench and sparks; knocked out). Kinds: `player` (you,
+FTL-style mini people drawn on a 24-px grid and doubled: 48 × 48 frames, 4 across, 11 rows (walk down, up, right;
+idle; typing at a console facing up, right, down, 4 frames with the hands taking turns on the keys; repairing with a
+wrench and sparks; knocked out; fighting, fists up with a jab and a hook; putting out a fire with an extinguisher). Kinds: `player` (you,
 in a dark grey and orange space suit with a teal visor and a backpack, so no customisation is needed), `human`,
 `freya` (as her NPC: long blonde ponytail, goggles up, dark tank top with brown overall straps, boots), `ana` (as
 her NPC: dark hair with a red streak, black jacket over a white shirt), `rabble_pirate` (red bandanas),
 `terran_marine` (white armour, blue visor), `zaash` (green, bone crest), `arachnay` (four arms, red eyes, a
 person's top half on spider legs), `moogli` (green, round, frog eyes), `ervani` (fox ears, muzzle and tail),
 `vuultam` (dark green hair with leaves), `scyldar` (a fin). In battle each crew member walks facing the way they go, works their
-console facing its wall, repairs and fights fires with the repair pose, and lies down when knocked out; you stand
-at your cockpit console. Rabble ships and Rabble repaints are crewed by `rabble_pirate`, Terran patrols by
+console facing its wall, repairs with the wrench, sprays a burning room with the extinguisher, and lies down when
+knocked out; you stand at your cockpit console. The fighting row is ready for boarding, which isn't in the game yet. Rabble ships and Rabble repaints are crewed by `rabble_pirate`, Terran patrols by
 `terran_marine`, each culture ship by its own people, and the Collective freighter by a mix. The plan below is the
 original brief.
 
@@ -635,11 +636,26 @@ hot line from the gun with the cut glowing on the rooms it crosses. All of them 
 | **S.A.R.A. uplink** | special | No room. +1 shield layer while you're near the Landing (ring 1). Story fights use it **(now)**. |
 
 #### Rooms and hazards (Claude)
-- **Damage:** a hit on a room knocks bars off its system (shown red) until someone repairs it **(now)**.
-- **Fire:**
-  - spreads to neighbouring cells, burns oxygen, hurts crew and damages the system;
-  - crew put it out;
-  - opening an airlock door lets the air out, and the fire with it.
+- **Damage:** a hit on a room knocks bars off its system (shown red) until someone repairs it **(now)**. A blast
+  (`art/ships/fx/hit.png`, 6 frames) goes off where the shot lands.
+- **Air (now, 22 Nov):** every room has its own air, 0 to 1. Life support fills every room (0.04 a second for each
+  bar; a ship without an oxygen system has scrubbers worth one bar); with it down, every room leaks 0.012 a second.
+  An open door evens out the two rooms either side. Rooms with thin air turn red; below 0.15 crew choke (5 health a
+  second). The OXYGEN readout is the whole ship's air; when the cockpit runs out you're on your suit, which holds 25
+  seconds (the readout says SUIT AIR), then "Your suit runs out of air".
+- **Airlocks (now, 22 Nov):** every ship has 1 airlock (6 rooms or fewer) or 2 (one on top, one underneath): a
+  yellow-and-black striped hatch in an outside wall (`kit2x.pick_airlocks`; the ship's `"airlocks"` in
+  `ship_data.gd`). Click one of yours to open it: the room's air streams out into space (0.35 a second). Never in the
+  cockpit, never on a console's wall. Enemies vent a burning room with an airlock when none of their crew are in it
+  or on the way, and shut it once the fire is out.
+- **Fire (now):**
+  - burns in every cell of the room with smoke rising (`art/ships/fx/fire.png`, `smoke.png`, 4 frames each);
+  - eats air (0.03 a second), hurts crew, and knocks a bar off the room's system every 3 seconds;
+  - with air above 0.4 it reaches the next room every 8 seconds: through an open door, or a shut one 1 time in 3,
+    never through an airlock;
+  - crew put it out (spraying it), your drone puts it out, and below 0.12 air it chokes out five times as fast;
+  - the first time your ship burns, S.A.R.A. explains the drone and the airlocks.
+- A system knocked right out (every bar red) smokes too.
 - **Breach:** a hole that lets the air out of the room until someone patches it.
 - **Ion:** locks the room's system for a few seconds (blue).
 
