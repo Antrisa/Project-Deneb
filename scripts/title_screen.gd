@@ -4,7 +4,9 @@ extends CanvasLayer
 # The opening (26 s) plays once, then the station loop (120 s) repeats; the theme starts on the first frame
 # and loops on its own. The ECHO LANDING title fades in from 20.5 to 24.7 s with its three echo bars pulsing,
 # as in the pack's index.html. The buttons fade in with it. Any key or click during the opening skips to the
-# loop; M mutes the theme. Godot plays only Ogg Theora, so the pack's .mp4 clips were converted to .ogv. The buttons lay themselves out in screen
+# loop; M mutes the theme. Godot plays only Ogg Theora, so the pack's .mp4 clips were converted to .ogv
+# (tools/dev/encode_intro.sh: best quality, a keyframe every 5 s; the first conversion's keyframe every 12 frames
+# made the picture fizz). The buttons lay themselves out in screen
 # pixels like the datapad (2x at 1080p, 3x at 1440p), five percent in from the left (ui/pixel_grid.gd).
 #
 # Settings switches fullscreen and sets the master volume (kept in user://title_settings.cfg, as in the pack's
@@ -29,6 +31,9 @@ const INTRO := "res://title/intro/"
 const DESIGN := Vector2(960, 540)          # the clips' canvas; the title sits at (557, 41) on it
 const TITLE_AT := Vector2(557, 41)
 const OPENING_SECONDS := 26.0
+# The clips and title art are 960x540: 2x on a 1080p screen but 2.67x on 1440p, where nearest-neighbour makes
+# uneven pixels that shimmer as the picture moves. They are drawn through shaders/sharp_scale.gdshader instead.
+var _sharp: ShaderMaterial
 var _scene: Control
 var _opening: VideoStreamPlayer
 var _loop: VideoStreamPlayer
@@ -82,6 +87,8 @@ func _build_intro() -> void:
 	_scene.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_scene.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_scene.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_sharp = ShaderMaterial.new()
+	_sharp.shader = load("res://shaders/sharp_scale.gdshader")
 	_root.add_child(_scene)
 	_opening = _video("opening.ogv", false)
 	_loop = _video("station_loop.ogv", true)
@@ -95,6 +102,8 @@ func _build_intro() -> void:
 		layer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		layer.stretch_mode = TextureRect.STRETCH_SCALE
 		layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		layer.material = _sharp
+		layer.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		layer.modulate.a = 0.0
 		_scene.add_child(layer)
 		_title_layers.append(layer)
@@ -122,6 +131,8 @@ func _video(file: String, looping: bool) -> VideoStreamPlayer:
 	player.stream = load(INTRO + file)
 	player.expand = true
 	player.loop = looping
+	player.material = _sharp
+	player.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR    # the shader keeps it sharp
 	player.set_anchors_preset(Control.PRESET_FULL_RECT)
 	player.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_scene.add_child(player)
