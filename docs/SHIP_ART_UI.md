@@ -32,10 +32,10 @@ Nothing here is final until you say so. Anything marked **(Claude)** is a sugges
 ## Order of work (Claude's suggestion)
 1. The starter fighter's cut-away interior, and the repair drone (`1_SHIP_ART.md` section 3, `2_CREW_ART.md` section 3).
 2. The four story ships: the Rabble Cutter, Ivan's flagship, Ana's corsair and the loyalist gunship. Each needs a hull and an interior.
-3. The battle UI kit: panel, buttons, power bars, system icons and resource icons (`4_SHIP_UI.md`).
+3. ~~The battle UI kit~~: not needed now; the ship screens use the datapad's parts (section 4).
 4. Weapons, shots, hits, fire and explosions (`3_WEAPONS_AND_EFFECTS.md`).
 5. Crew sprites: a human crew member and a Rabble pirate first.
-6. The event window and the store window.
+6. ~~The event window and the store window~~: built in the datapad style; only store pictures (section 3.5) are wanted.
 7. Backdrops for the four zones.
 8. Your new ship, weapon and system designs, written with the templates in files 5 and 6.
 
@@ -76,9 +76,9 @@ Nothing here is final until you say so. Anything marked **(Claude)** is a sugges
   - Enemy ships: **10 × 6 cells (240 × 144).** The Nest and other stations can be bigger; they will be shown at half size, or get a bigger window later.
 - A ship's crew, drone and room markings are scaled with it. Small ships are enlarged to 2× at most.
 - The picture's size is the grid's size: width = cells across × 24, height = cells down × 24. The hull can include cells with no room in them (noses, fins, engine pods).
-- Templates:
-  - `templates/ship_grid_player_max_12x9.png`
-  - `templates/ship_grid_enemy_max_10x8.png`
+- Templates (made before the two windows, so a row or two bigger than the new largest sizes):
+  - `templates/ship_grid_player_max_12x9.png`: use at most 8 rows;
+  - `templates/ship_grid_enemy_max_10x8.png`: use at most 6 rows;
   - the `_guide_x4` versions, which number every cell
 
 ### 1.2 The files for one ship: `art/ships/<ship id>/`
@@ -119,7 +119,7 @@ Sizes are Claude suggestions. Design each one with the template in file 5.
 |---|---|---|---|
 | `starter` | you | 7 × 4 | Interior only (section 1.3) |
 | `rabble_cutter` | Rabble raider | 5 × 4 | Small, patched, spiky. The first fight. |
-| `ivan_flagship` | Ivan (boss) | 9 × 7 | Big and ugly. A heavy gun mount for his overcharged cannon. |
+| `ivan_flagship` | Ivan (boss) | 9 × 6 | Big and ugly. A heavy gun mount for his overcharged cannon. (Was 9 × 7; 6 rows keeps it at 1×.) |
 | `ana_corsair` | Ana (boss) | 7 × 5 | Sleek and fast, a navigator's ship: big engines, small guns. |
 | `loyalist_gunship` | Ivan's loyalists | 5 × 4 | A Rabble cutter variant with more guns |
 | `covered_fighter` | you (Freya's quest) | 9 × 5 | The tarp-covered fighter in the bay (`reference/tarp_fighter_x3.png`). Your first bigger ship, with a crew deck and walkable rooms. |
@@ -128,8 +128,8 @@ Sizes are Claude suggestions. Design each one with the template in file 5.
 | `collective_freighter` | Collective convoy / distress | 8 × 5 | Patched cargo modules, green-grey, mismatched |
 | `moogli_trader` | stores | 6 × 5 | Round, cargo pods, bright colours |
 | `ooma_ship` | Ooma (special merchant) | 7 × 5 | Scyldar: sea-creature shapes, teal and coral |
-| `pirate_stronghold` | special sector | 8 × 7 | A small asteroid base with turrets. The smaller strongholds after the Nest. |
-| `rabble_nest` | the Nest (one-time raid) | 10 × 8 | The Rabble's main asteroid base, filling the enemy window |
+| `pirate_stronghold` | special sector | 8 × 6 | A small asteroid base with turrets. The smaller strongholds after the Nest. |
+| `rabble_nest` | the Nest (one-time raid) | 10 × 6, or bigger | The Rabble's main asteroid base, filling the enemy window. Bigger than 10 × 6 shows at half size unless it gets a bigger window. |
 
 ### 1.5 Style by faction (Claude)
 - **Terran:** white hull, orange or blue trim, 45-degree plates, like your fighter.
@@ -292,7 +292,7 @@ Mock-up: `battle_two_windows_x2.png` (Zachary, 21 Nov: "seperate each ship in th
 - **Bottom row:** what's happening or what to do next, and Pause / Resume.
 
 ### 4.4 Arriving at a stop, and the event window
-Layout: `templates/ui_event_window_x2.png`.
+Built (21 Nov); mock-up `datapad_event_x2.png`. The stop is shown in a scope window at the top, the event in a panel below that grows with the text.
 - **Arriving (Zachary, 21 Nov):** your ship jumps to the stop, the backdrop changes, and **a window comes up**, like FTL, instead of dialogue boxes.
 - **The window:** a title, the text, then up to four choice buttons, and an outcome strip with resource icons and numbers.
 - **Choice states:**
@@ -301,9 +301,9 @@ Layout: `templates/ui_event_window_x2.png`.
   - **grey**: needs something you don't have.
 
 ### 4.5 The store window
-Layout: `templates/ui_store_window_x2.png`.
+Built (21 Nov); mock-up `datapad_store_x2.png`. Slots are 98 × 112 page pixels, with the 48 × 48 store picture.
 - **Tabs:** Weapons, Systems, Crew, Drones & parts, Augments, and a Buy / Sell switch.
-- **Item slots:** 66 × 86, with the 48 × 48 store picture, the name and the price. Three states: normal, hover, sold out.
+- **Item slots:** the 48 × 48 store picture, the name and the price. States: normal, hover, picked, empty.
 - **Item details** on the right.
 - **Bottom:** resources (fuel, missiles, drone parts), and hull repair (repair 1, repair all).
 
@@ -316,10 +316,10 @@ Layout: `templates/ui_ship_screen_x2.png`.
 - Upgrade bar segments use `power_bar.png` plus one more frame: **bought but not powered** (outlined).
 
 ### 4.7 The jump map
-The map is drawn by the game with the zone colours (`reference/jump_map_zones.png`, `reference/jump_map_normal_run.png`). The only art it needs is the 12 × 12 stop icons (`icons_map_12.png`), and the panel and buttons from the kit.
+Built (21 Nov); mock-up `datapad_map_x2.png`. The map is drawn by the game with the zone colours in the datapad's scope, with the next stop and your ship's stores beside it. No art is needed; 12 × 12 stop icons could replace the dots later.
 
-### 4.8 Backdrops: `art/ships/backdrops/<name>.png` (640 × 360)
-Behind the battle and event screens. Keep them dark and low in contrast so ships and UI read clearly.
+### 4.8 Backdrops: `art/ships/backdrops/<name>.png` (on hold)
+The datapad screens show space in scope windows rather than full-screen backdrops, so these are on hold. If wanted later, they would go in the event window's scene (662 wide, 64 to 330 tall). Keep them dark and low in contrast.
 - `home`: the blue gas giant and the moon.
 - One per zone, each with 2 versions:
   - `terran_1`, `terran_2`: blue, tidy, distant patrol lights;
@@ -346,7 +346,7 @@ Id: <short id, lowercase, no spaces, e.g. rabble_cutter>
 Faction: Terran | Rabble | Zaa'sh | Collective | Moogli | Scyldar | other
 Used by: player | enemy | both (an enemy you can capture and fly)
 How you get it: shipyard (price) | quest | capture | not flyable
-Size: <cells across> x <cells down>        (player max 12 x 9, enemy max 10 x 8; nose pointing right)
+Size: <cells across> x <cells down>        (player max 15 x 8, enemy max 10 x 6; nose pointing right)
 
 Layout: one character per cell. "." = hull with no room. The same letter = one room
 (its cells must touch). Use any letters you like and list them under Rooms.
@@ -622,14 +622,15 @@ Tick what you want. **Built** means it's in the game now; **Agreed** means you'v
 - [x] Ivan's and Ana's story fights; S.A.R.A.'s shield uplink near home
 
 ### Agreed (planned)
-- [ ] **Arriving at a stop:** the jump, a new backdrop, then the **event window**, instead of dialogue boxes
-- [ ] **Store window** like FTL's: repairs, fuel, missiles, weapons, crew, drones and augments, to buy and sell
+- [x] **Arriving at a stop:** the jump, the stop in a scope, then the **event window**, instead of dialogue boxes
+- [x] **Store window** like FTL's: repairs, fuel, missiles, weapons, crew, drones and augments, to buy and sell
 - [ ] Normal runs: random events and distress signals (you're writing them), stores, special sectors
 - [ ] The Nest raid, then a smaller pirate stronghold each run; Ooma's ship as the special merchant
-- [ ] **Enemy crew at their stations**, walking off to repair and put out fires
+- [x] **Enemy crew at their stations**, walking off to repair (fires come later)
+- [x] **The datapad look** for every ship screen, and the battle in two windows that fit each ship
 - [ ] Bigger ships with crew decks; hired crew at Tally's; Freya and Ana as crew
 - [ ] **Boarding** and teleporters; capture contracts
-- [ ] Ship art and UI from this pack, and more ships, weapons and systems from your designs
+- [ ] Ship art from your redrawn ships and interiors, and more ships, weapons and systems from your designs
 
 ### Suggested (Claude)
 1. **Ship screen with upgrades.** Spend Scrip on system bars and reactor power between fights. This is FTL's main way of getting stronger, and a good Scrip sink.
