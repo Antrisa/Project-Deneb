@@ -21,6 +21,7 @@ const NpcData = preload("res://scripts/npc_data.gd")
 const AreaScript = preload("res://scripts/area.gd")
 const PlayerScript = preload("res://scripts/player.gd")
 const ResidentScript = preload("res://scripts/resident.gd")
+const PropFx = preload("res://scripts/prop_fx.gd")
 const ItemData = preload("res://scripts/item_data.gd")
 const UiScript = preload("res://scripts/ui.gd")
 const EnemyScript = preload("res://scripts/enemy.gd")
@@ -198,6 +199,7 @@ var smelt_pos := Vector2.ZERO      # the furnace being used
 var area_sprites: Array = []       # [sprite, area name] for everyone and everything placed in an area
 var anim_props: Array = []         # [sprite, frames, phase] for machinery with a looping strip in art/lunar/anim/
 const PROP_ANIM_FPS := 8.0
+var prop_glows: Array = []         # glow sprites on lamps and machines (scripts/prop_fx.gd), brighter at night
 var warps := {}                    # area name -> {Vector2i tile: [area, x, y]}
 var blocked := {}                  # area name -> {Vector2i tile: true} (tiles people stand on)
 var persons := {}                  # person name -> their state (friendship, lines, portrait)
@@ -2845,6 +2847,9 @@ func _process(delta: float) -> void:
 		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or travelling or garden_busy)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
+	var glow_a: float = PropFx.glow_strength(tint.color)
+	for g in prop_glows:
+		g.modulate.a = glow_a
 	_animate()
 	_update_pops(delta)
 	_animate_props()
@@ -3241,6 +3246,10 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 		var water := ShaderMaterial.new()
 		water.shader = load("res://shaders/fountain_water.gdshader" if p[0] == "fountain" else "res://shaders/mess_lights.gdshader")
 		sprite.material = water
+	# Ground shadow, lamp glow and leaf sway (cozy art pass).
+	var glow: Sprite2D = PropFx.decorate(sprite, p[0], fw, sprite.texture.get_height())
+	if glow != null:
+		prop_glows.append(glow)
 
 func _animate_props() -> void:
 	# Each machine loops at 8 frames a second from its own random start, so twins don't pulse together.

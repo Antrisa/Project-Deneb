@@ -51,6 +51,8 @@ var _eat_anim = null         # player_eating/eating.gd
 
 
 func _ready() -> void:
+	# A soft ground shadow at the feet (cozy art pass), added first so everything else draws over it.
+	add_child(preload("res://scripts/prop_fx.gd").make_shadow(18, Vector2(0, 1), Vector2.ONE * (2.0 / 3.0)))
 	_sprite = Sprite2D.new()
 	_sprite.texture = load("res://art/player.png")
 	_sprite.hframes = 4      # columns: down, up, left, right

@@ -57,6 +57,8 @@ func setup(main, person_name: String, tex: Texture2D, entries: Array, entry_thin
 	if _act_tex != null:
 		# Action frames are 1.5 times as wide as walking frames and the same height.
 		_act_rows = maxi(1, roundi(_act_tex.get_height() / frame_h))
+	# A soft ground shadow at the feet, 18 art pixels wide (cozy art pass); drawn under the sprite.
+	add_child(preload("res://scripts/prop_fx.gd").make_shadow(18, Vector2(0, -1.0 / _base_scale), Vector2.ONE * (2.0 / 3.0) / _base_scale))
 	activity_pose = preload("res://scripts/resident_activity.gd").new()
 	activity_pose.resident = self
 	activity_pose.scale = Vector2.ONE / _base_scale
