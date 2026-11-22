@@ -101,23 +101,32 @@ const ENEMIES := {
 			[Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(3, 2), Vector2i(4, 2)],
 		],
 	},
+	# Ivan's flagship at double resolution (art_scale 2), 9 x 6 cells. Art and rooms: tools/dev/ship_art/story2x.py
+	# (INSIDES there must match these rooms and doors). Mounts on the hull's sides near the front, in the order guns
+	# fill them: top front, bottom front, then the nose for the overcharged cannon he adds at half hull, then the
+	# back pair.
 	"ivan_flagship": {
-		"name": "Ivan's flagship", "size": Vector2(124, 96), "hull": 14, "crew": 5,
+		"name": "Ivan's flagship", "size": Vector2(216, 144), "hull": 14, "crew": 5,
+		"art": "res://art/ships/ivan_flagship/hull.png", "interior": "res://art/ships/ivan_flagship/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "heavy_laser"],
+		"mounts": [Vector2(176, 27), Vector2(176, 116.5), Vector2(204, 72), Vector2(158, 18), Vector2(158, 125.5)],
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
-		"shape": [Vector2(0, 48), Vector2(14, 30), Vector2(30, 12), Vector2(70, 4), Vector2(112, 10), Vector2(124, 30),
-				Vector2(124, 66), Vector2(112, 86), Vector2(70, 92), Vector2(30, 84), Vector2(14, 66)],
-		"fins": [[Vector2(34, 12), Vector2(20, 0), Vector2(56, 8)], [Vector2(34, 84), Vector2(20, 96), Vector2(56, 88)],
-				[Vector2(0, 48), Vector2(-8, 44), Vector2(-8, 52)]],
-		"hull_color": Color("3e2a34"), "trim": Color("c89a3c"),
 		"overcharge_at": 0.5,              # at half hull he brings out the cannon
 		"rooms": [
-			{"id": "pilot", "label": "Bridge", "sys": "pilot", "rect": Rect2(8, 38, 20, 20)},
-			{"id": "weapons", "label": "Weapons", "sys": "weapons", "rect": Rect2(28, 20, 30, 26)},
-			{"id": "shields", "label": "Shields", "sys": "shields", "rect": Rect2(28, 50, 30, 26)},
-			{"id": "crew", "label": "Crew", "sys": "", "rect": Rect2(58, 14, 30, 30)},
-			{"id": "life", "label": "Oxygen", "sys": "life", "rect": Rect2(58, 52, 30, 30)},
-			{"id": "engines", "label": "Engines", "sys": "engines", "rect": Rect2(88, 24, 30, 48)},
+			{"id": "crew", "label": "Crew deck", "sys": "", "cells": Rect2i(5, 2, 2, 2)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(1, 1, 2, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 2, 2, 2)},
+			{"id": "brig", "label": "Brig", "sys": "", "cells": Rect2i(1, 4, 2, 1)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 1, 2, 2)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 3, 2, 2)},
+			{"id": "hold_top", "label": "Hold", "sys": "", "cells": Rect2i(5, 1, 2, 1)},
+			{"id": "hold_bottom", "label": "Hold", "sys": "", "cells": Rect2i(5, 4, 2, 1)},
+			{"id": "pilot", "label": "Bridge", "sys": "pilot", "cells": Rect2i(7, 2, 1, 2)},
+		],
+		"doors": [
+			[Vector2i(1, 1), Vector2i(1, 2)], [Vector2i(1, 3), Vector2i(1, 4)], [Vector2i(2, 2), Vector2i(3, 2)],
+			[Vector2i(2, 3), Vector2i(3, 3)], [Vector2i(4, 2), Vector2i(5, 2)], [Vector2i(4, 3), Vector2i(5, 3)],
+			[Vector2i(6, 1), Vector2i(6, 2)], [Vector2i(6, 3), Vector2i(6, 4)], [Vector2i(6, 2), Vector2i(7, 2)],
 		],
 	},
 }

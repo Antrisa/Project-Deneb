@@ -1153,12 +1153,14 @@ func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
 		if str(list[i]["id"]) == "":
 			continue
 		var m: Vector2 = mounts[i]
+		var data: Dictionary = ShipData.WEAPONS[list[i]["id"]]
+		var f: float = 1.7 if int(data["damage"]) >= 3 else 1.0          # big guns (Ivan's cannon) drawn bigger
 		# a bracket against the hull, the gun body, its barrel and a lit tip
-		screen.rect(xf * Rect2(m + Vector2(-6, -3), Vector2(8, 6)), Color("3a3644"))
-		screen.rect(xf * Rect2(m + Vector2(-5, -2), Vector2(6, 4)), Color("5d5868"))
-		screen.rect(xf * Rect2(m + Vector2(-5, -2), Vector2(6, 1)), Color("8a8498"))
-		screen.rect(xf * Rect2(m + Vector2(1, -1), Vector2(10, 2)), Color("6e6a7c"))
-		screen.rect(xf * Rect2(m + Vector2(9, -1), Vector2(2, 2)), ShipData.WEAPONS[list[i]["id"]]["color"])
+		screen.rect(xf * Rect2(m + Vector2(-6, -3) * f, Vector2(8, 6) * f), Color("3a3644"))
+		screen.rect(xf * Rect2(m + Vector2(-5, -2) * f, Vector2(6, 4) * f), Color("5d5868"))
+		screen.rect(xf * Rect2(m + Vector2(-5, -2) * f, Vector2(6, 1) * f), Color("8a8498"))
+		screen.rect(xf * Rect2(m + Vector2(1, -1) * f, Vector2(10, 2) * f), Color("6e6a7c"))
+		screen.rect(xf * Rect2(m + Vector2(9, -1) * f, Vector2(2, 2) * f), data["color"])
 
 
 # A room's name in a small dark tag in its top-left corner (cut to the room's width).

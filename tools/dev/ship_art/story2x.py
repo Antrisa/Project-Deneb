@@ -364,6 +364,22 @@ def covered_fighter():
     return p
 
 
+# Rooms and doors for the ships in the game: {id: (col, row, w, h, system)} and ((c1, r1), (c2, r2)), in 48-px
+# cells. Must match scripts/ship_data.gd. Doors only where the layout needs them (Zachary, 21 Nov).
+INSIDES = {
+    # Ivan's flagship, 9 x 6: engines at the back with oxygen and the brig beside them, shields and weapons in the
+    # middle, the crew deck with cargo holds above and below, the bridge in the nose.
+    "ivan_flagship": (
+        {"life": (1, 1, 2, 1, "life"), "engines": (1, 2, 2, 2, "engines"), "brig": (1, 4, 2, 1, ""),
+         "shields": (3, 1, 2, 2, "shields"), "weapons": (3, 3, 2, 2, "weapons"),
+         "hold_top": (5, 1, 2, 1, ""), "crew": (5, 2, 2, 2, ""), "hold_bottom": (5, 4, 2, 1, ""),
+         "pilot": (7, 2, 1, 2, "pilot")},
+        [((1, 1), (1, 2)), ((1, 3), (1, 4)), ((2, 2), (3, 2)), ((2, 3), (3, 3)), ((4, 2), (5, 2)),
+         ((4, 3), (5, 3)), ((6, 1), (6, 2)), ((6, 3), (6, 4)), ((6, 2), (7, 2))],
+    ),
+}
+
+
 SHIPS = {
     "starter": (starter, "Starter fighter (7x4)"),
     "ivan_flagship": (ivan_flagship, "Ivan's flagship (9x6)"),
@@ -372,7 +388,19 @@ SHIPS = {
     "covered_fighter": (covered_fighter, "Covered fighter, Freya's quest (9x5)"),
 }
 
-if __name__ == "__main__":
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--install":
+    # python3 -I tools/dev/ship_art/story2x.py --install <repo root> <ship id>...: art/ships/<id>/hull.png, interior.png
+    from kit2x import interior
+    root = Path(sys.argv[2])
+    for sid in sys.argv[3:]:
+        fn = SHIPS[sid][0]
+        out = root / "art/ships" / sid
+        out.mkdir(parents=True, exist_ok=True)
+        fn().render().save(out / "hull.png")
+        rooms, doors = INSIDES[sid]
+        interior(fn(), rooms, doors).render().save(out / "interior.png")
+        print("installed", sid)
+elif __name__ == "__main__":
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/story2x")
     out.mkdir(parents=True, exist_ok=True)
     only = sys.argv[2:] or list(SHIPS)
