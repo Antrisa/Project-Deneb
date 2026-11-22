@@ -148,27 +148,8 @@ def cutter():
     p.engrave([(99, 69), (113, 69)]); p.engrave([(106, 63), (106, 75)])
     p.paint(p.mask(rect=(97, 66, 115, 67)), "strap")
     p.paint(p.mask(rect=(176, 95, 190, 96)), "metal"); p.glow(p.mask(rect=(174, 94, 176, 97)), "glow_red", 2)
-    # gun platforms bolted on at the front, top and bottom (Zachary, 21 Nov: "stick the weapons on the side maybe up
-    # front in these spaces"); two hardpoints each, where the game puts whatever guns the ship spawns with
-    for top in (True, False):
-        def f(pts):
-            return pts if top else [(x, 191 - y) for x, y in pts]
-        p.bevel(p.mask(polygon=f([(198, 22), (238, 22), (266, 42), (258, 50), (236, 40), (204, 40)])), "gunmetal",
-                width=3, face=4 if top else 3, shade_lower=False)
-        p.engrave(f([(228, 24), (228, 38)]))
-        hazard(p, p.mask(polygon=f([(244, 25), (250, 25), (262, 40), (257, 44)])), step=3)
-        for (mx, my) in MOUNTS:
-            my = my if top else 191 - my
-            p.bevel(p.mask(rect=(mx - 6, my - 5, mx + 5, my + 4)), "metal", width=1, face=4, shade_lower=False)
-            p.slot(mx - 3, my - 1, mx + 2, my)
-            for (rx, ry) in ((mx - 5, my - 4), (mx + 4, my - 4), (mx - 5, my + 3), (mx + 4, my + 3)):
-                p.rivet(rx, ry)
     return p
 
-
-# Weapon hardpoints on the top platform, art px (the bottom ones mirror them). The game's "mounts" are these over 2,
-# front ones first: top front, bottom front, top back, bottom back.
-MOUNTS = [(240, 34), (212, 31)]
 
 # Rooms and doors: must match ShipData.ENEMIES["rabble_cutter"] in scripts/ship_data.gd (cells of 24 game px,
 # 48 art px). Engines at the back, the cockpit under the red bubble, turrets over the weapons and oxygen rooms.

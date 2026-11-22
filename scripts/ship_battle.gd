@@ -1153,9 +1153,12 @@ func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
 		if str(list[i]["id"]) == "":
 			continue
 		var m: Vector2 = mounts[i]
-		screen.rect(xf * Rect2(m + Vector2(-4, -1.5), Vector2(14, 3)), Color("5d5868"))
-		screen.rect(xf * Rect2(m + Vector2(-4, -1.5), Vector2(14, 1)), Color("7a7488"))
-		screen.rect(xf * Rect2(m + Vector2(8, -1), Vector2(3, 2)), ShipData.WEAPONS[list[i]["id"]]["color"])
+		# a bracket against the hull, the gun body, its barrel and a lit tip
+		screen.rect(xf * Rect2(m + Vector2(-6, -3), Vector2(8, 6)), Color("3a3644"))
+		screen.rect(xf * Rect2(m + Vector2(-5, -2), Vector2(6, 4)), Color("5d5868"))
+		screen.rect(xf * Rect2(m + Vector2(-5, -2), Vector2(6, 1)), Color("8a8498"))
+		screen.rect(xf * Rect2(m + Vector2(1, -1), Vector2(10, 2)), Color("6e6a7c"))
+		screen.rect(xf * Rect2(m + Vector2(9, -1), Vector2(2, 2)), ShipData.WEAPONS[list[i]["id"]]["color"])
 
 
 # A room's name in a small dark tag in its top-left corner (cut to the room's width).

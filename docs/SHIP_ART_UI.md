@@ -154,11 +154,11 @@ in the middle of that cell (`kit2x.console_at()` and `ShipBattle._console_at()` 
 **Doors: only as many as the layout needs** (Zachary, 21 Nov: "you dont need to have so many doors"). Every room
 must be reachable, but most rooms don't need a door on every shared wall. The cutter is a compact block, so its eight
 doors are fine; bigger ships should use fewer, more like FTL's corridors and chokepoints.
-**Guns go on hardpoints outside the rooms** (Zachary, 21 Nov: "stick the weapons on the side maybe up front"). The
-cutter has a gun platform bolted on at the front, top and bottom, with two hardpoints each; the ship's `"mounts"` list
-them in the order guns fill them (top front, bottom front, top back, bottom back). Whatever guns a ship spawns with go
-on the first mounts, the game draws them there (mirrored with the ship, pointing at you), and their shots leave from
-them. Every ship gets hardpoints like this, enough for the most guns it can carry.
+**Guns attach to the hull's sides, FTL-style** (Zachary, 21 Nov: "in ftl the stick the weapons equiped on the side
+like attached"). The ship art doesn't change: a ship's `"mounts"` are points just outside its hull edge, near the
+front, in the order guns fill them (top front, bottom front, top back, bottom back). Whatever guns a ship spawns with
+go on the first mounts; the game draws each gun there (mirrored with the ship, pointing at you), and its shots leave
+from it. Every ship gets enough mounts for the most guns it can carry.
 
 **For the rest:** each ship gets FTL-simple rooms and doors the same way, and the battle screen uses its
 `art_scale` (2 for these): the picture is fitted on its art pixels, while rooms, crew and the drone stay in 24-px cell
