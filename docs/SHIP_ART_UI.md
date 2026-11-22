@@ -192,6 +192,11 @@ you're beaten, three bits break off your fighter (`chip_N.png`, leaving `interio
 glows as it charges, and the ship stretches into a streak and is gone in a flash: "Emergency jump: heading home".
 The fold jump streaks away the same way. Re-run `gibs2x.py .` after changing any ship's art.
 
+**Shield bubble** (Zachary, 21 Nov: "instead of a blue line an actual bubble"): drawn by the game over each ship
+while its shields are up, FTL-style: see-through blue, a faint hex pattern that shows more toward the edge, and a
+bright rim (an extra outer ring with two or more layers). A blocked shot sends a ripple out from where it met the
+bubble and makes it flare for a moment. Made once per bubble size; no art needed.
+
 **How the art is fitted:** the battle screen uses each ship's
 `art_scale` (2 for these): the picture is fitted on its art pixels, while rooms, crew and the drone stay in 24-px cell
 units. At 1080p a 2x ship shows at 1 screen pixel per art pixel, so it looks the same size as a 1x ship did at 2x.

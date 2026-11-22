@@ -36,6 +36,10 @@ const GOLD := Color("fadc5a")
 const GOOD := Color("5adc6e")
 const BAD := Color("e6463c")
 const SHIELD_BLUE := Color("5ab4ff")
+# The shield bubble, FTL-style (Zachary, 21 Nov: "instead of a blue line an actual bubble"): see-through blue with a
+# faint hex pattern that thickens toward the edge and a bright rim, over the ship; a ripple where a shot is blocked.
+var shield_texes := {}          # bubble pictures by size, made once
+var shield_hits: Array = []      # {"mine", "pos" (page), "t"}
 const YOU := Color("ffc878")
 const DRONE := Color("f2c94c")
 const DOOR := Color("fb7412")
@@ -155,6 +159,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	result_text = ""
 	paused = false
 	shots.clear()
+	shield_hits.clear()
 	pops.clear()
 	selected = -1
 	fold = 0.0
@@ -315,6 +320,9 @@ func _process(delta: float) -> void:
 	for p in pops:
 		p["t"] = float(p["t"]) + delta
 	pops = pops.filter(func(p): return float(p["t"]) < 1.2)
+	for h in shield_hits:
+		h["t"] = float(h["t"]) + delta
+	shield_hits = shield_hits.filter(func(h): return float(h["t"]) < 0.5)
 	if world.dialogue.active:
 		return
 	if result == "done":
@@ -574,12 +582,14 @@ func _land(s: Dictionary) -> void:
 		layers -= 1
 		shield_timer = 0.0
 		_pop(where + Vector2(-10, 0), "Blocked", SHIELD_BLUE)
+		shield_hits.append({"mine": true, "pos": _shield_edge(true, where), "t": 0.0})
 		world.sfx("click", 0.6)
 		return
 	if not at_player and e_layers > 0:
 		e_layers -= 1
 		e_shield_timer = 0.0
 		_pop(where + Vector2(10, 0), "Blocked", SHIELD_BLUE)
+		shield_hits.append({"mine": false, "pos": _shield_edge(false, where), "t": 0.0})
 		return
 	var dmg: int = s["dmg"]
 	var room_id: String = s["room"]
@@ -1135,11 +1145,6 @@ func _paint_my_window() -> void:
 		return
 	var off := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * (2.0 if shake > 0.0 else 0.0)
 	var xf := Transform2D(0.0, Vector2(k, k), 0.0, my_xf.origin + off)
-	if layers > 0:
-		var mid: Vector2 = xf * (size / 2.0 + Vector2(6, 0))
-		s.ellipse(mid, size * k / 2.0 + Vector2(8, 8), Color(SHIELD_BLUE, 0.55 + 0.2 * layers), 1.0)
-		if layers > 1:
-			s.ellipse(mid, size * k / 2.0 + Vector2(12, 12), Color(Color("78f0ff"), 0.7), 1.0)
 	# The cut-away when there is one; otherwise the hull with the rooms drawn over it.
 	var inside: bool = interior_tex != null
 	var bits_gone: bool = lose_t >= 0.3 and broken_tex != null
@@ -1172,6 +1177,7 @@ func _paint_my_window() -> void:
 				s.rect(bar, GOOD if i < bars - dmg else BAD)
 		if drone_selected and not crew_room and result == "" and rr.has_point(s.mouse):
 			s.outline(rr.grow(-1.0), GOOD, maxf(1.0, k * 0.5))
+	_paint_shield(true, xf, size, k, layers)
 	_paint_doors(me_ship, xf, k, true)
 	_paint_guns(me, weapons, xf)
 	# you, in the cockpit
@@ -1312,8 +1318,6 @@ func _paint_enemy() -> void:
 	var xf: Transform2D = foe_xf
 	var k: float = _ship_scale(false)
 	var size: Vector2 = foe["size"]
-	if e_layers > 0:
-		s.ellipse(xf * (size / 2.0), size * k / 2.0 + Vector2(10, 10), Color(SHIELD_BLUE, 0.8), 1.0)
 	var inside: bool = enemy_inside != null
 	if inside:
 		s.texture(enemy_inside, _ship_rect(xf, size))
@@ -1356,6 +1360,7 @@ func _paint_enemy() -> void:
 				s.rect(bar, GOOD if i < bars - dmg else BAD)
 		if selected >= 0 and rr.has_point(s.mouse):
 			s.outline(rr, BAD)
+	_paint_shield(false, xf, size, k, e_layers)
 	_paint_doors(foe, xf, k, false)
 	_paint_guns(foe, e_weapons, xf)
 	# their crew: red at stations, orange when repairing, a health bar once hurt
@@ -1383,6 +1388,89 @@ func _paint_enemy() -> void:
 		s.line(at + Vector2(-r - 3, 0), at + Vector2(r + 3, 0), BAD, 1.0)
 		s.line(at + Vector2(0, -r - 3), at + Vector2(0, r + 3), BAD, 1.0)
 		s.text(at.x + r + 1, at.y - r - 10, str(i + 1), "micro", BAD)
+
+
+# The bubble round a ship: its middle and half-size on the page.
+func _shield_shape(mine: bool) -> Array:
+	var ship: Dictionary = me_ship if mine else foe
+	var size: Vector2 = ship["size"]
+	var xf: Transform2D = my_xf if mine else foe_xf
+	var k: float = _ship_scale(mine)
+	return [xf * (size / 2.0), (size * k / 2.0 + Vector2(10, 10)).round()]
+
+
+# Where a blocked shot meets the bubble: from the middle toward the shot's target, out to the rim.
+func _shield_edge(mine: bool, where: Vector2) -> Vector2:
+	var shape: Array = _shield_shape(mine)
+	var mid: Vector2 = shape[0]
+	var r: Vector2 = shape[1]
+	var d: Vector2 = where - mid
+	# the side the shot comes from: yours from the right, theirs from the left
+	d.x = absf(d.x) * (1.0 if mine else -1.0) + (r.x * 0.6 if mine else -r.x * 0.6)
+	var a: float = atan2(d.y / r.y, d.x / r.x)
+	return mid + Vector2(cos(a) * r.x, sin(a) * r.y)
+
+
+func _paint_shield(mine: bool, xf: Transform2D, size: Vector2, k: float, up: int) -> void:
+	var shape: Array = _shield_shape(mine)
+	var mid: Vector2 = xf * (size / 2.0)
+	var r: Vector2 = shape[1]
+	var flash := 0.0
+	for h in shield_hits:
+		if bool(h["mine"]) == mine:
+			flash = maxf(flash, 1.0 - float(h["t"]) / 0.5)
+	if up > 0:
+		var tex: Texture2D = _shield_tex(Vector2i(int(r.x * 2.0), int(r.y * 2.0)))
+		screen.texture(tex, Rect2(screen.snap(mid - r), r * 2.0), Rect2(), Color(1, 1, 1, minf(1.0, 0.7 + 0.15 * up + 0.4 * flash)))
+		if up > 1:
+			screen.ellipse(mid, r + Vector2(3, 3), Color(Color("9ae8ff"), 0.55), 1.0)
+	# ripples where shots were stopped
+	for h in shield_hits:
+		if bool(h["mine"]) != mine:
+			continue
+		var t: float = float(h["t"]) / 0.5
+		var p: Vector2 = h["pos"]
+		screen.ring(p, 2.0 + 12.0 * t, Color(0.85, 0.97, 1.0, 1.0 - t))
+		screen.ring(p, 1.0 + 6.0 * t, Color(0.6, 0.88, 1.0, (1.0 - t) * 0.8))
+
+
+# The bubble's picture at one size, in page pixels: see-through in the middle, a hex pattern that shows more toward
+# the edge, and a bright rim. Made once per size.
+func _shield_tex(sz: Vector2i) -> Texture2D:
+	var key := "%dx%d" % [sz.x, sz.y]
+	if shield_texes.has(key):
+		return shield_texes[key]
+	var img := Image.create_empty(maxi(sz.x, 2), maxi(sz.y, 2), false, Image.FORMAT_RGBA8)
+	var c := Vector2(sz) / 2.0
+	var rim: float = 1.0 - 1.6 / minf(c.x, c.y)
+	var dirs: Array = [Vector2(1, 0), Vector2(0.5, 0.866), Vector2(-0.5, 0.866)]
+	var cell := 7.0
+	for y in range(sz.y):
+		for x in range(sz.x):
+			var u: float = (x + 0.5 - c.x) / c.x
+			var v: float = (y + 0.5 - c.y) / c.y
+			var r2: float = u * u + v * v
+			if r2 > 1.0:
+				continue
+			var rr: float = sqrt(r2)
+			var a: float = 0.08 + 0.32 * pow(rr, 6.0)
+			var col := Color(0.42, 0.74, 1.0)
+			var p := Vector2(x, y) - c
+			for d in dirs:
+				var t: float = p.dot(d) / cell
+				if absf(t - roundf(t)) < 0.07:
+					a += 0.16 * r2
+					col = Color(0.6, 0.86, 1.0)
+					break
+			if rr > rim:
+				a = 0.9
+				col = Color(0.75, 0.94, 1.0)
+			elif rr > rim - 0.03:
+				a = maxf(a, 0.45)
+			img.set_pixel(x, y, Color(col, minf(a, 1.0)))
+	var tex := ImageTexture.create_from_image(img)
+	shield_texes[key] = tex
+	return tex
 
 
 # A ship's pieces (gib_N.png or chip_N.png, numbered from 1): each with where its middle is in the picture, the way
