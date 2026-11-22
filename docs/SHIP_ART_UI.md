@@ -155,12 +155,13 @@ in the middle of that cell (`kit2x.console_at()` and `ShipBattle._console_at()` 
 Ivan's flagship has a Cannon room (above the crew deck): crewed, the overcharged cannon charges faster; damaged, it
 can't charge, and a hit there drains it.
 
-**Room markings** (Zachary, 21 Nov: "the room identity markings as another asset to put on room like FTL"):
-`art/ui/ship/icons_systems.png`, 32 × 32 icons drawn by `tools/dev/ship_art/icons2x.py` in this order: shields,
-engines, weapons, oxygen, cockpit, drones, cannon, medbay, crew. White with a dark outline; the game draws each one
-16 × 16 cell pixels big in the middle of its system's room, grey while working and red while damaged. Rooms with no
-system (crew decks, holds, the brig) get a small name tag instead. To redraw them by hand, keep the sheet's order
-and size.
+**System icons** (Zachary, 21 Nov: room markings "like FTL", then "i like FTLs better ... make it closer to that"):
+`art/ui/ship/icons_systems.png`, chunky solid icons pixelled on a 16-px grid with a dark outline and doubled to
+32 × 32, drawn by `tools/dev/ship_art/icons2x.py` (each icon is a little text grid there, easy to edit) in this
+order: shields, engines, weapons, oxygen, cockpit, drones, cannon, medbay, crew, doors, sensors. White, so the game
+tints them. They mark each system's room (16 × 16 cell pixels, in the middle; grey working, red damaged; rooms with
+no system get a name tag instead) and sit under each power column on the system bar (green powered, grey off, red
+damaged), like FTL. To redraw them by hand, keep the sheet's order and size.
 
 **Doors: only as many as the layout needs** (Zachary, 21 Nov: "you dont need to have so many doors"). Every room
 must be reachable, but most rooms don't need a door on every shared wall. The cutter is a compact block, so its eight

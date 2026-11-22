@@ -99,9 +99,11 @@ const CREW_SPEED := 22.0         # picture pixels a second
 const CREW_HP := 100.0
 const CREW_HIT := 15.0           # health lost per point of damage when a shot hits their room
 const STATIONS := ["pilot", "weapons", "shields", "engines", "cannon"]
-# Room markings, FTL-style (Zachary, 21 Nov): art/ui/ship/icons_systems.png, 32 x 32 each in this order
-# (tools/dev/ship_art/icons2x.py), drawn 16 x 16 cell pixels big in the middle of a system's room.
-const ROOM_ICONS := ["shields", "engines", "weapons", "life", "pilot", "drones", "cannon", "medbay", "crew"]
+# System icons, FTL-style (Zachary, 21 Nov): art/ui/ship/icons_systems.png, 32 x 32 each in this order
+# (tools/dev/ship_art/icons2x.py). They mark each system's room (16 x 16 cell pixels, in the middle) and sit under
+# its power bars on the system bar: green powered, grey off, red damaged.
+const ROOM_ICONS := ["shields", "engines", "weapons", "life", "pilot", "drones", "cannon", "medbay", "crew", "doors", "sensors"]
+const ICON_POWERED := Color("78d46a")
 const ICON_OK := Color("8a8590")
 const ICON_HIT := Color("e0503c")
 var room_icons: Texture2D
@@ -1411,7 +1413,12 @@ func _paint_reactor() -> void:
 		if _boosting(key):
 			s.rect(Rect2(x + 9, 326, 5, 5), DRONE)
 			s.outline(Rect2(x + 9, 326, 5, 5), Color("5a4512"))
-		s.text_center(x + 11.5, 364, str(SYS_LABEL[key]), "micro", MUTED)
+		var icon_i: int = ROOM_ICONS.find(key)
+		if room_icons != null and icon_i >= 0:
+			var tint: Color = ICON_HIT if int(st["damage"]) > 0 else (ICON_POWERED if int(st["power"]) > 0 else ICON_OK)
+			s.texture(room_icons, Rect2(x + 3.5, 360, 16, 16), Rect2(icon_i * 32, 0, 32, 32), tint)
+		else:
+			s.text_center(x + 11.5, 364, str(SYS_LABEL[key]), "micro", MUTED)
 		if s.hovering(box):
 			s.outline(box, ORANGE)
 		s.hit("sys/%d" % k, box)
