@@ -128,6 +128,24 @@ Sizes are Claude suggestions. Design each one with the template in file 5.
 | `pirate_stronghold` | special sector | 8 × 6 | A small asteroid base with turrets. The smaller strongholds after the Nest. |
 | `rabble_nest` | the Nest (one-time raid) | 10 × 6, or bigger | The Rabble's main asteroid base, filling the enemy window. Bigger than 10 × 6 shows at half size unless it gets a bigger window. |
 
+### 1.6 Double resolution: every ship at 48 px per cell (21 Nov, drafts)
+Zachary: "lets double the pixels", then "lets do all the ships before we add to game". Every ship is now drawn at
+**48 art pixels per cell** (twice the detail; rooms are still counted in cells). Mock-ups, not in the game yet.
+
+| Script (`tools/dev/ship_art/`) | Ships |
+|---|---|
+| `kit2x.py` | Shared helpers: plates, nozzles, turrets, windows, stencils, wear, the lineup sheet |
+| `rabble_cutter_2x.py` | Rabble cutter, 6 × 4 (approved) |
+| `fleet2x.py` | Terran patrol 7 × 4, Zaa'sh skiff 6 × 4, Vuultam garden ship 7 × 4, Moogli trader 6 × 4, Ervani courier 6 × 4, Scyldar lantern ship (Ooma) 7 × 4, Arachnay weaver 6 × 4, Collective freighter 8 × 5 |
+| `story2x.py` | Starter fighter 7 × 4 (same approved shape), Ivan's flagship 9 × 6, Ana's corsair 7 × 5, loyalist gunship 5 × 4, covered fighter 9 × 5 |
+| `bases2x.py` | Pirate stronghold 8 × 6, the Rabble Nest 10 × 6, and `piratize2x()`: a Rabble repaint of every culture ship |
+
+Run any of them from the repo root: `python3 -I tools/dev/ship_art/fleet2x.py <out dir>`.
+
+**Before they go in the game:** each ship gets FTL-simple rooms and doors, and the battle screen gets a per-ship
+`art_scale` (2 for these): the picture is fitted on its art pixels, while rooms, crew and the drone stay in 24-px cell
+units. At 1080p a 2x ship shows at 1 screen pixel per art pixel, so it looks the same size as a 1x ship did at 2x.
+
 ### 1.5 Style by faction (Claude)
 - **Terran:** white hull, orange or blue trim, 45-degree plates, like your fighter.
 - **The Rabble:** rust and gunmetal, welded patches, red stripes, spikes and trophies.
