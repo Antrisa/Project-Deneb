@@ -215,7 +215,7 @@ def sheet(items, path, scale=2, cols=2, pad=16, bg=(20, 24, 36, 255), label=True
 
 # ---------------------------------------------------------------- cut-away interiors, FTL-simple
 
-def interior(p, rooms, doors, cell=CELL, wall_mat="wall"):
+def interior(p, rooms, doors, cell=CELL, wall_mat="wall", bays=()):
     """Cut the rooms into a hull picture: a dark frame round the rooms, deck floors, 4-px walls on the cell edges
     with door gaps (the game draws the doors), and one machine per system. Keeps in step with the game: rooms are
     {id: (col, row, w, h, sys)}, doors are ((c1, r1), (c2, r2)); a door gap is 7..17 of every 24 cell px, scaled."""
@@ -232,6 +232,12 @@ def interior(p, rooms, doors, cell=CELL, wall_mat="wall"):
     for rid, (cx, cy, cw, ch, sysname) in rooms.items():
         x0, y0, x1, y1 = cx * cell, cy * cell, (cx + cw) * cell - 1, (cy + ch) * cell - 1
         m = p.mask(rect=(x0, y0, x1, y1))
+        if rid in bays:
+            # a sealed machinery bay (the starter's, where only the repair drone goes): dark grating
+            p.mat[m] = "bay"; p.tone[m] = 3
+            for yy in range(y0 + 3, y1, 4):
+                p.set_tone(p.mask(rect=(x0, yy, x1, yy)), 2)
+            continue
         p.mat[m] = "deck"; p.tone[m] = 3
         # floor tiles: a light top edge and a dark bottom edge per half cell
         step = cell // 2

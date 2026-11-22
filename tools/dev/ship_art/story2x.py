@@ -36,11 +36,9 @@ def starter():
         pts = [(78, 46), (92, 46), (84, 26), (76, 30)]
         p.engrave((pts + pts[:1]) if top else mirror(pts + pts[:1], H))
     rivet_row(p, 96, 160, 44, 8); rivet_row(p, 96, 160, 147, 8)
-    # guns near the wing tips
+    # gun housings near the wing tips (the game attaches the guns, at STARTER's mounts)
     for y in (18, H - 1 - 18):
         p.bevel(p.mask(rect=(104, y - 6, 132, y + 6)), "metal", width=2, face=4 if y < 96 else 3, shade_lower=False)
-        p.tube(p.mask(rect=(130, y - 3, 162, y + 2)), "metal", "x", bands=(5, 4, 3, 2, 1, 1))
-        p.tube(p.mask(rect=(160, y - 4, 166, y + 3)), "gunmetal", "x", bands=(4, 3, 2, 1))
         p.slot(110, y - 2, 124, y - 1)
     # the hull
     p.bevel(p.mask(polygon=BODY), "hull", width=5, face=3, edge_light=5)
@@ -307,8 +305,6 @@ def covered_fighter():
         p.engrave(f if top else mirror(f, H))
     for y in (24, H - 1 - 24):
         p.bevel(p.mask(rect=(196, y - 7, 228, y + 7)), "gunmetal", width=2, face=4 if y < 120 else 3, shade_lower=False)
-        p.tube(p.mask(rect=(226, y - 3, 266, y + 2)), "metal", "x", bands=(5, 4, 3, 2, 1, 1))
-        p.tube(p.mask(rect=(264, y - 4, 270, y + 3)), "gunmetal", "x", bands=(4, 3, 2, 1))
         light(p, 176, y - 2, "glow_green" if y < 120 else "glow_red")
     # the long fuselage with the crew deck
     body = [(54, 72), (330, 72), (370, 88), (424, 118), (424, 121), (370, 152), (330, 168), (54, 168)]
@@ -364,6 +360,14 @@ def covered_fighter():
 # Rooms and doors for the ships in the game: {id: (col, row, w, h, system)} and ((c1, r1), (c2, r2)), in 48-px
 # cells. Must match scripts/ship_data.gd. Doors only where the layout needs them (Zachary, 21 Nov).
 INSIDES = {
+    # Your fighter, 7 x 4 (ShipData.STARTER): sealed machinery bays only the repair drone gets into, through hatches,
+    # and the 2 x 2 cockpit under the canopy.
+    "starter": (
+        {"engines": (1, 1, 1, 2, "engines"), "weapons": (2, 1, 1, 1, "weapons"), "drones": (2, 2, 1, 1, "drones"),
+         "shields": (3, 1, 1, 1, "shields"), "life": (3, 2, 1, 1, "life"), "cockpit": (4, 1, 2, 2, "pilot")},
+        [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)), ((3, 1), (3, 2)),
+         ((3, 1), (4, 1))],
+    ),
     # Ivan's flagship, 9 x 6: engines at the back with oxygen and the brig beside them, shields and weapons in the
     # middle, the crew deck with the cannon room above it (Zachary: a room for the special weapon, like FTL)
     # and a hold below, the bridge in the nose.
@@ -374,6 +378,15 @@ INSIDES = {
          "pilot": (7, 2, 1, 2, "pilot")},
         [((1, 1), (1, 2)), ((1, 3), (1, 4)), ((2, 2), (3, 2)), ((2, 3), (3, 3)), ((4, 2), (5, 2)),
          ((4, 3), (5, 3)), ((6, 1), (6, 2)), ((6, 3), (6, 4)), ((6, 2), (7, 2))],
+    ),
+    # The covered fighter, 9 x 5 (yours after Freya's quest): walkable all through. A corridor of rooms down the
+    # fuselage (engines, oxygen, the crew deck, a hold, the 2 x 1 cockpit), weapons in the top wing root, shields in
+    # the bottom one.
+    "covered_fighter": (
+        {"engines": (1, 2, 1, 1, "engines"), "life": (2, 2, 1, 1, "life"), "crew": (3, 2, 2, 1, ""),
+         "weapons": (3, 1, 2, 1, "weapons"), "shields": (3, 3, 2, 1, "shields"), "hold": (5, 2, 1, 1, ""),
+         "pilot": (6, 2, 2, 1, "pilot")},
+        [((1, 2), (2, 2)), ((2, 2), (3, 2)), ((3, 2), (3, 1)), ((3, 2), (3, 3)), ((4, 2), (5, 2)), ((5, 2), (6, 2))],
     ),
     # Ana's corsair, 7 x 5: a corridor down the needle (crew, shields, weapons, the chart room under the star dome,
     # the cockpit under the canopy), engines in the top nacelle and oxygen in the bottom one.
@@ -410,7 +423,8 @@ if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--install":
         out.mkdir(parents=True, exist_ok=True)
         fn().render().save(out / "hull.png")
         rooms, doors = INSIDES[sid]
-        interior(fn(), rooms, doors).render().save(out / "interior.png")
+        bays = [r for r in rooms if r != "cockpit"] if sid == "starter" else ()
+        interior(fn(), rooms, doors, bays=bays).render().save(out / "interior.png")
         print("installed", sid)
 elif __name__ == "__main__":
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/story2x")

@@ -233,9 +233,7 @@ def stages():
 
 if __name__ == "__main__":
     root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
-    out = root / "art/ships/starter"
-    out.mkdir(parents=True, exist_ok=True)
-    hull().render().save(out / "hull.png")
-    interior(hull()).render().save(out / "interior.png")
+    # The battle's hull and cut-away are drawn at double resolution by story2x.py (--install . starter); this
+    # station-scale version only makes the Shuttle Bay's four repair stages.
     stages().save(root / "art/lunar/player_ship.png")
     print("ok")

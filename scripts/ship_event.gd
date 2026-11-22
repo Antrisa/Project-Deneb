@@ -236,10 +236,12 @@ func _paint_scene(r: Rect2) -> void:
 	var me: Dictionary = ShipData.STARTER
 	var size: Vector2 = me["size"]
 	var area := Rect2(r.position + Vector2(16, 18), Vector2(240, r.size.y - 30))
-	var xf: Transform2D = s.fit_into(size, area)
+	# fitted on the picture's own pixels (double-resolution art has "art_scale" 2), so it stays crisp
+	var a: float = float(me.get("art_scale", 1))
+	var xf: Transform2D = s.fit_into(size * a, area)
 	if ship_tex != null:
 		var fw: float = ship_tex.get_width() / float(me["frames"])
-		s.texture(ship_tex, Rect2(xf.origin, size * xf.get_scale().x), Rect2(fw * int(me["frame"]), 0, fw, ship_tex.get_height()))
+		s.texture(ship_tex, Rect2(xf.origin, size * a * xf.get_scale().x), Rect2(fw * int(me["frame"]), 0, fw, ship_tex.get_height()))
 	_paint_prop(Rect2(r.position.x + 280, r.position.y + 18, r.size.x - 296, r.size.y - 30))
 
 

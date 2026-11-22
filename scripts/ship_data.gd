@@ -51,10 +51,10 @@ const STORES := {
 const STARTER := {
 	"name": "Your fighter",
 	"art": "res://art/ships/starter/hull.png", "frames": 1, "frame": 0, "size": Vector2(168, 96),
-	"interior": "res://art/ships/starter/interior.png",
+	"interior": "res://art/ships/starter/interior.png", "art_scale": 2,    # double resolution: story2x.py
 	"hull": 12, "reactor": 6, "drones": 1, "door_level": 1,
 	"weapons": ["burst_laser", ""],          # "" is an empty slot; bigger ships have more slots
-	"mounts": [Vector2(80, 9), Vector2(80, 86)],   # where each weapon slot's gun sits, near the wing tips
+	"mounts": [Vector2(64, 9), Vector2(64, 86.5)],   # each weapon slot's gun, on the housings near the wing tips
 	"systems": {"shields": [2, 2], "engines": [2, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1], "drones": [1, 1]},
 	"rooms": [
 		{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
@@ -70,6 +70,32 @@ const STARTER := {
 		[Vector2i(3, 1), Vector2i(4, 1)],
 	],
 	"hub": Vector2(60, 60),                 # the drone's home: the middle of the drone bay
+}
+
+# Your first bigger ship, after Freya's quest (the tarp-covered fighter in the bay), at double resolution: walkable
+# all through, for a crew. Art and rooms: tools/dev/ship_art/story2x.py. Not wired in yet: the battle still
+# assumes the starter (one pilot and the repair drone); crew of your own come with this ship. Stats are first guesses.
+const COVERED_FIGHTER := {
+	"name": "Covered fighter",
+	"art": "res://art/ships/covered_fighter/hull.png", "frames": 1, "frame": 0, "size": Vector2(216, 120),
+	"interior": "res://art/ships/covered_fighter/interior.png", "art_scale": 2,
+	"hull": 16, "reactor": 8, "drones": 0, "door_level": 1,
+	"weapons": ["burst_laser", "", ""],
+	"mounts": [Vector2(172, 37), Vector2(172, 82.5), Vector2(106, 12), Vector2(106, 107.5)],
+	"systems": {"shields": [2, 2], "engines": [2, 1], "weapons": [3, 2], "life": [1, 1], "pilot": [1, 1]},
+	"rooms": [
+		{"id": "crew", "label": "Crew deck", "sys": "", "cells": Rect2i(3, 2, 2, 1), "crew": true},
+		{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 2, 1, 1), "crew": true},
+		{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 2, 1, 1), "crew": true},
+		{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 1, 2, 1), "crew": true},
+		{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 3, 2, 1), "crew": true},
+		{"id": "hold", "label": "Hold", "sys": "", "cells": Rect2i(5, 2, 1, 1), "crew": true},
+		{"id": "cockpit", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(6, 2, 2, 1), "crew": true},
+	],
+	"doors": [
+		[Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 2), Vector2i(3, 1)],
+		[Vector2i(3, 2), Vector2i(3, 3)], [Vector2i(4, 2), Vector2i(5, 2)], [Vector2i(5, 2), Vector2i(6, 2)],
+	],
 }
 
 # Enemy ships. "shape" is the outline drawn until real art exists (art/ships/<id>.png, facing left).
