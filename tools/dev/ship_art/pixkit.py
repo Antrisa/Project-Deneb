@@ -19,6 +19,28 @@ RAMPS = {
     "orange": ["#6e2a0e", "#9c3c10", "#c45414", "#ea6e1a", "#fa8a30", "#fdab58"],
     "glass": ["#123e48", "#1b5f6b", "#25808c", "#3aa2ac", "#6acdd4", "#c8f4f4"],
     "dark": ["#1a1924", "#232230", "#2e2d3b", "#393847", "#454453", "#52505f"],
+    "white": ["#5e6272", "#80869a", "#a4aaba", "#c6cbd6", "#e2e5ec", "#f6f7fa"],
+    "trim_blue": ["#16285a", "#1e3a80", "#2a52a8", "#3a6cc8", "#5a8ce0", "#8ab0f0"],
+    "bone": ["#6e5a44", "#8e7658", "#ad9472", "#c8b08c", "#dfcbaa", "#f2e6cc"],
+    "bronze": ["#4a2814", "#6e3c1c", "#925426", "#b06e32", "#cc8c44", "#e4ac62"],
+    "banner": ["#4e1414", "#701c1c", "#922626", "#b03434", "#c84a44", "#de6a5e"],
+    "seafoam": ["#1e4a40", "#2a6456", "#3a806c", "#52a088", "#74bca2", "#a0d8c0"],
+    "petal": ["#5e2448", "#82325e", "#a64a7a", "#c46a96", "#dc8eb2", "#f0b8d2"],
+    "leafglass": ["#1e4a36", "#2e6a4a", "#4a8e62", "#78b88a", "#a8dcb4", "#e0f8e6"],
+    "gold": ["#6e4a10", "#946814", "#b8881c", "#d8a82a", "#f0c640", "#fadf72"],
+    "crate_red": ["#4e1a12", "#742618", "#9a3420", "#bc4a2c", "#d6663e", "#ea8a5c"],
+    "crate_blue": ["#16284a", "#1e3a68", "#2a5088", "#3a68a8", "#5486c4", "#7ca8dc"],
+    "crate_green": ["#1c3a1a", "#2a5224", "#3a6c30", "#4e8a3e", "#6aa652", "#90c070"],
+    "crate_violet": ["#2e1a44", "#422660", "#5a387c", "#744c98", "#9068b2", "#b090cc"],
+    "strap": ["#3a2414", "#4e321c", "#664224", "#7e5430", "#966a40", "#ae8456"],
+    "russet": ["#4a1a0a", "#6e2a10", "#923a16", "#b44e1e", "#d0682c", "#e48a46"],
+    "fur": ["#7a6656", "#9a8470", "#b8a28a", "#d2bea4", "#e8d8c0", "#f8eedc"],
+    "teal": ["#123e40", "#1a5658", "#246e70", "#30888a", "#46a4a4", "#6ec4c0"],
+    "coral": ["#5e2018", "#822e22", "#a6402e", "#c45a40", "#de7856", "#f29c78"],
+    "violet": ["#2a1a48", "#3c2664", "#523682", "#6a4aa0", "#8666bc", "#a68ad4"],
+    "silver": ["#4a4a5c", "#626276", "#7c7c92", "#9898ac", "#b6b6c6", "#d4d4e0"],
+    "rust": ["#3a1e12", "#54291a", "#6e3822", "#8a4a2c", "#a4603a", "#be7a50"],
+    "gunmetal": ["#2a2c34", "#383a44", "#484b56", "#5a5d6a", "#6e717e", "#868a96"],
     "bay": ["#2c2a36", "#363442", "#423f4e", "#4e4b5a", "#5a5766", "#686574"],
     "pipe": ["#3e3a2e", "#5a5240", "#7a6e52", "#9a8a64", "#b8a678", "#d4c290"],
     "deck": ["#8a857f", "#a29d95", "#bab5ac", "#cdc8bf", "#ddd9d0", "#ebe8e0"],
@@ -35,6 +57,8 @@ EMISSIVE = {
     "glow": ["#c85a14", "#f08a2a", "#ffb04a", "#ffd27a", "#ffe8a8", "#fff6d8"],
     "glow_red": ["#a82a20", "#e6463c", "#ff6a5a", "#ff9a8a", "#ffc0b4", "#ffe4dc"],
     "glow_green": ["#2a8a2a", "#4ad84a", "#7dff8a", "#b6ffb0", "#d8ffd4", "#f0fff0"],
+    "glow_yellow": ["#b8801c", "#e8b02a", "#ffd86a", "#fff0a4", "#fff8d0", "#fffdf0"],
+    "glow_blue": ["#1e6ab0", "#3aa8ff", "#6ac4ff", "#a8e0ff", "#d4f0ff", "#f0faff"],
     "glow_teal": ["#0e7a76", "#11b3aa", "#45e1d5", "#9af4ea", "#c8fbf4", "#e8fffc"],
 }
 OUTLINE = "#262535"
@@ -52,6 +76,11 @@ class Pix:
         self.tone = np.full((h, w), -1, np.int16)
         self.mat = np.full((h, w), "", dtype=object)
         self.lines = np.zeros((h, w), bool)
+
+    def copy(self):
+        q = Pix(self.w, self.h)
+        q.tone = self.tone.copy(); q.mat = self.mat.copy(); q.lines = self.lines.copy()
+        return q
 
     # ---- masks
     def mask(self, polygon=None, ellipse=None, rect=None):
