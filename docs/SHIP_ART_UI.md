@@ -573,6 +573,24 @@ Description: <one line for the store>
 | `cutting_beam` | beam | 1 | 12 | 1 | 1 | Cuts a 40-px line across rooms; any shield stops it. Zaa'sh skiffs carry one |
 | `heavy_beam` | beam | 3 | 16 | 1 | 2 | Cuts a 56-px line; each shield layer takes 1 off. Beams never knock shields down |
 
+**Rare weapons with special effects** (Zachary, 21 Nov: "a couple more weapons with rare effects, like a load up two
+shot missile that can shoot one or load up two, poison, ION, fire beam, and some others"). Marked `"rare"` for
+special merchants and events; the Moogli trader carries them for now.
+
+| Id | Kind | Power | Charge (s) | What it does |
+|---|---|---|---|---|
+| `twin_missile` | missile | 2 | 9 a load | Loads two missiles one after the other. Aim once one is in to fire it now, or aim before and it waits to fire both. One missile each |
+| `ion_blast` | ion | 1 | 8 | No hull damage. Knocks a shield layer off and jams the shields for 4 s; with shields down, shuts the room's system off for 6 s (blue) |
+| `toxin_dart` | poison | 1 | 11 | Fills the room with gas for 6 s that hurts the crew inside (12 health a second). Shields stop it; your suit keeps it off you |
+| `fire_beam` | beam | 2 | 14 | Sets every room it cuts across on fire. Any shield stops it |
+| `flak_cannon` | flak | 2 | 13 | Three 1-damage shards scattered over the rooms round the target: strips shields |
+| `chain_laser` | laser | 2 | 12 | Two shots; each volley in a row charges 25% faster (twice at most), back to normal when unpowered |
+
+**Fire:** a burning room loses a bar of its system every 3 s and hurts the crew in it (6 a second) for 12 s, or
+less: their crew go and put it out (each one working there makes it burn out 4 times as fast), and on your ship the
+repair drone does. **Gas** just hurts the crew in the room. **Ion** shows as a blue room, and the system's icon goes
+blue on the room and the system bar.
+
 **Weapon art (21 Nov, Claude):** `tools/dev/ship_art/weapons2x.py` draws every gun as a six-frame strip in
 `art/ships/weapons/<id>.png` (idle, charging 1 and 2, ready glowing, firing with recoil and a muzzle flash, firing 2;
 48 × 16 art px a frame, Ivan's cannon 80 × 24), the missile in `art/ships/shots/missile.png`, and 48 × 48 store

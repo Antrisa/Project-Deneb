@@ -40,6 +40,33 @@ const WEAPONS := {
 		"color": Color("ff5a5a"), "price": 50, "about": "Cuts a line across their rooms. Any shield stops it, so knock them down first."},
 	"heavy_beam": {"name": "Heavy beam", "type": "beam", "shots": 1, "damage": 2, "charge": 16.0, "power": 3, "length": 56.0,
 		"color": Color("ffd34a"), "price": 110, "about": "A long, hot cut across rooms. Each shield layer takes 1 off its damage."},
+	# Rare weapons with special effects (Zachary, 21 Nov: "a couple more weapons with rare effects"). "rare": sold
+	# by special merchants (Ooma, when she comes) and found in events; the Moogli trader carries them for now.
+	# Twin missile: loads two missiles one after the other ("stages"); aim once one is loaded to fire it, or aim
+	# before and it waits for both. Ion: no hull damage; knocks off a shield layer and stops shields coming back for
+	# a moment, or with shields down shuts the room's system off for "ion" seconds. Toxin dart: fills the room with
+	# gas that hurts the crew for "gas" seconds (your suit keeps it off you). Fire beam: sets every room it cuts
+	# across on fire (fire damages the system and hurts the crew until it burns out or is put out). Flak: shards
+	# that scatter over the rooms round the target. Chain laser: each volley in a row charges "chain" faster (two
+	# steps at most; it resets when unpowered).
+	"twin_missile": {"name": "Twin missile", "type": "missile", "shots": 1, "damage": 2, "charge": 9.0, "stages": 2, "power": 2,
+		"color": Color("ffb04a"), "ammo": 1, "rare": true, "price": 130,
+		"about": "Loads two missiles. Fire one as soon as it's in, or wait and fire both."},
+	"ion_blast": {"name": "Ion blast", "type": "ion", "shots": 1, "damage": 0, "ion": 6.0, "charge": 8.0, "power": 1,
+		"color": Color("5ac8ff"), "rare": true, "price": 75,
+		"about": "No hull damage. Strips a shield layer and jams it, or shuts a system off for a few seconds."},
+	"toxin_dart": {"name": "Toxin dart", "type": "poison", "shots": 1, "damage": 0, "gas": 6.0, "charge": 11.0, "power": 1,
+		"color": Color("9cff5a"), "rare": true, "price": 80,
+		"about": "Fills a room with gas that hurts the crew inside. Shields stop it."},
+	"fire_beam": {"name": "Fire beam", "type": "beam", "shots": 1, "damage": 0, "fire": true, "charge": 14.0, "power": 2, "length": 48.0,
+		"color": Color("ff8a2a"), "rare": true, "price": 95,
+		"about": "Sets every room it cuts across on fire. Any shield stops it."},
+	"flak_cannon": {"name": "Flak cannon", "type": "flak", "shots": 3, "damage": 1, "charge": 13.0, "power": 2,
+		"color": Color("e0c8a0"), "rare": true, "price": 85,
+		"about": "Three shards that scatter over nearby rooms. Great for stripping shields."},
+	"chain_laser": {"name": "Chain laser", "type": "laser", "shots": 2, "damage": 1, "charge": 12.0, "chain": 0.25, "power": 2,
+		"color": Color("45e1d5"), "rare": true, "price": 95,
+		"about": "Two shots. Charges faster with every volley in a row."},
 	# Ivan's overcharged gun (phase 2). Needs no power; a hit on his weapons room drains its charge.
 	"ivan_cannon": {"name": "Overcharged cannon", "type": "special", "shots": 1, "damage": 3, "charge": 16.0, "power": 0, "color": Color("ffd34a"),
 		"price": 0, "about": "Ivan's. Not for sale."},
@@ -48,7 +75,8 @@ const WEAPONS := {
 # Stores (Zachary, 21 Nov: a trading window like FTL's). Prices are first guesses: fuel, missiles and drone
 # parts each, hull repair per point. Weapons sell back for half.
 const STORES := {
-	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser", "missile_launcher", "cutting_beam", "heavy_beam"],
+	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser", "missile_launcher", "cutting_beam", "heavy_beam",
+			"twin_missile", "ion_blast", "toxin_dart", "fire_beam", "flak_cannon", "chain_laser"],
 		"fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8},
 }
 

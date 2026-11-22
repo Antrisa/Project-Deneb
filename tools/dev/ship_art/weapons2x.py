@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import numpy as np
 from PIL import Image
 from pixkit import Pix
+import kit2x  # noqa: F401  (adds the olive, rope, cloth, navy and rock colour ramps)
 
 SMALL, BIG = (48, 16), (80, 24)
 GLOW = {"burst_laser": "glow_red", "rabble_laser": "glow_green", "heavy_laser": "glow_green", "missile_launcher": "glow",
@@ -147,10 +148,123 @@ def ivan_cannon(f):
     return p
 
 
+def twin_missile(f):
+    """Two tubes: the top missile loads first, then the bottom one. Frames: empty, one loading, one loaded, both
+    loaded, firing, empty again."""
+    p = Pix(*SMALL); g = "glow"
+    bracket(p)
+    loaded = {0: (0, 0), 1: (6, 0), 2: (10, 4), 3: (10, 10), 4: (-99, -99), 5: (-99, -99)}[f]
+    for y, out in ((4, loaded[0]), (11, loaded[1])):
+        if out > 0:
+            x = 16 + out
+            p.tube(p.mask(rect=(x, y - 2, x + 12, y + 1)), "white", "x", bands=(5, 4, 3, 2))
+            p.bevel(p.mask(polygon=[(x + 12, y - 2), (x + 16, y - 1), (x + 16, y), (x + 12, y + 1)]), "red", width=1, face=4, shade_lower=False)
+    p.bevel(p.mask(rect=(6, 0, 26, 15)), "gunmetal", width=2, face=4, shade_lower=False)
+    for y in (4, 11):
+        p.bevel(p.mask(rect=(22, y - 3, 28, y + 2)), "metal", width=1, face=3, shade_lower=False)
+        p.slot(24, y - 1, 27, y)
+    p.paint(p.mask(rect=(9, 7, 19, 8)), "red")
+    if f == 4:
+        for y in (4, 11):
+            p.glow(p.mask(ellipse=(27, y - 4, 38, y + 3)), g, 3)
+            p.glow(p.mask(ellipse=(28, y - 2, 33, y + 1)), g, 5)
+    return p
+
+
+def ion_blast(f):
+    p = Pix(*SMALL); r = recoil(f); g = "glow_blue"
+    bracket(p)
+    p.bevel(p.mask(rect=(6 + r, 2, 18 + r, 13)), "white", width=1, face=4, shade_lower=False)
+    p.paint(p.mask(rect=(8 + r, 2, 10 + r, 13)), "trim_blue")
+    # a coil wound round the barrel, lit blue as it charges
+    p.tube(p.mask(rect=(18 + r, 5, 34 + r, 10)), "gunmetal", "x", bands=(4, 3, 3, 2, 1))
+    for x in range(20, 32, 3):
+        if f == 0:
+            p.tube(p.mask(rect=(x + r, 3, x + 1 + r, 12)), "bronze", "x", bands=(5, 3))
+        else:
+            p.glow(p.mask(rect=(x + r, 3, x + 1 + r, 12)), g, {1: 1, 2: 2, 3: 4, 4: 5, 5: 3}[f])
+    p.bevel(p.mask(ellipse=(33 + r, 4, 39 + r, 11)), "metal", width=1, face=4, shade_lower=False)
+    tip(p, 35 + r, 6, 37 + r, 9, g, f)
+    flash(p, 39 + r, 7, g, f, 4)
+    return p
+
+
+def toxin_dart(f):
+    p = Pix(*SMALL); r = recoil(f); g = "glow_green"
+    bracket(p)
+    # a gas canister feeding a needle barrel
+    p.tube(p.mask(rect=(7, 1, 19, 14)), "green", "y", bands=(2, 3, 4, 5, 4, 3, 2))
+    p.paint(p.mask(rect=(7, 6, 19, 8)), "yellow")
+    for x in (10, 13, 16):
+        p.set_tone(p.mask(rect=(x, 6, x, 8)), 1)
+    p.tube(p.mask(rect=(19 + r, 6, 36 + r, 9)), "metal", "x", bands=(5, 3, 2, 1))
+    p.bevel(p.mask(polygon=[(36 + r, 6), (41 + r, 7), (41 + r, 8), (36 + r, 9)]), "silver", width=1, face=4, shade_lower=False)
+    if f >= 1:
+        p.glow(p.mask(rect=(22 + r, 7, 22 + min(13, f * 4) + r, 8)), g, min(5, 1 + f))
+    if f == 4:
+        p.glow(p.mask(ellipse=(41 + r, 4, 47, 11)), g, 2)
+    return p
+
+
+def fire_beam(f):
+    p = Pix(*SMALL); g = "glow"
+    bracket(p)
+    p.bevel(p.mask(rect=(6, 1, 22, 14)), "russet", width=1, face=4, shade_lower=False)
+    for x in (9, 13, 17):                       # cooling fins
+        p.bevel(p.mask(rect=(x, 0, x + 1, 15)), "gunmetal", width=1, face=3, shade_lower=False)
+    p.tube(p.mask(rect=(22, 4, 32, 11)), "gunmetal", "x", bands=(4, 3, 3, 2, 1))
+    p.bevel(p.mask(polygon=[(32, 2), (37, 4), (37, 11), (32, 13)]), "russet", width=1, face=4, shade_lower=False)
+    lens = p.mask(ellipse=(36, 4, 41, 11))
+    if f == 0:
+        p.dome(lens, "glass")
+    else:
+        p.glow(lens, g, {1: 1, 2: 2, 3: 4, 4: 5, 5: 4}[f])
+    if f in (4, 5):
+        p.glow(p.mask(rect=(41, 5, 47, 10)), g, 5 if f == 4 else 3)
+        p.glow(p.mask(rect=(41, 7, 47, 8)), "glow_yellow", 5)
+    return p
+
+
+def flak_cannon(f):
+    p = Pix(*SMALL); r = recoil(f); g = "glow"
+    bracket(p)
+    p.bevel(p.mask(rect=(6 + r, 1, 20 + r, 14)), "olive", width=2, face=4, shade_lower=False)
+    for y in (4, 7, 10):                        # shells in a feed
+        p.bevel(p.mask(rect=(9 + r, y, 16 + r, y + 1)), "bronze", width=1, face=4, shade_lower=False)
+    # a short, wide barrel that flares at the muzzle
+    p.tube(p.mask(rect=(20 + r, 3, 30 + r, 12)), "gunmetal", "x", bands=(5, 4, 3, 3, 2, 1))
+    p.bevel(p.mask(polygon=[(30 + r, 3), (35 + r, 1), (35 + r, 14), (30 + r, 12)]), "gunmetal", width=1, face=4, shade_lower=False)
+    tip(p, 33 + r, 4, 34 + r, 11, g, f)
+    if f == 4:
+        for dy in (-4, 0, 4):
+            p.glow(p.mask(ellipse=(36 + r, 5 + dy, 42 + r, 10 + dy)), g, 4)
+    elif f == 5:
+        p.glow(p.mask(ellipse=(36 + r, 5, 40 + r, 10)), g, 2)
+    return p
+
+
+def chain_laser(f):
+    """Three barrels in a ring that spin up: each frame turns them a step."""
+    p = Pix(*SMALL); g = "glow_teal"
+    bracket(p)
+    p.bevel(p.mask(rect=(6, 2, 20, 13)), "metal", width=1, face=4, shade_lower=False)
+    p.paint(p.mask(rect=(16, 2, 18, 13)), "teal")
+    turn = f % 3
+    for k in range(3):
+        y = (3, 7, 11)[(k + turn) % 3]
+        p.tube(p.mask(rect=(20, y - 1, 34, y + 1)), "gunmetal" if k else "metal", "x", bands=(5, 3, 2))
+    p.bevel(p.mask(rect=(26, 1, 28, 14)), "teal", width=1, face=4, shade_lower=False)
+    for y in (3, 7, 11):
+        tip(p, 34, y - 1, 35, y + 1, g, f)
+    flash(p, 36, 7, g, f, 4)
+    return p
+
+
 GUNS = {
     "burst_laser": burst_laser, "rabble_laser": rabble_laser, "heavy_laser": heavy_laser,
     "missile_launcher": missile_launcher, "cutting_beam": lambda f: beam(f, False), "heavy_beam": lambda f: beam(f, True),
-    "ivan_cannon": ivan_cannon,
+    "ivan_cannon": ivan_cannon, "twin_missile": twin_missile, "ion_blast": ion_blast, "toxin_dart": toxin_dart,
+    "fire_beam": fire_beam, "flak_cannon": flak_cannon, "chain_laser": chain_laser,
 }
 
 

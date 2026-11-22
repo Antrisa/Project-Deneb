@@ -46,6 +46,17 @@ var weapon_texes := {}
 var missile_tex: Texture2D
 var beams: Array = []            # {"at_player", "from", "a", "b" (target picture px), "t", "dmg", "color", "hit", "rooms"}
 const BEAM_TIME := 0.9
+# Hazards from the rare weapons: rooms on fire and rooms full of gas, by room id: {"t": seconds left, "acc"}.
+var my_fires := {}
+var foe_fires := {}
+var foe_gas := {}
+var shield_jam := 0.0            # ion on your shields: they don't come back while this runs
+var e_shield_jam := 0.0
+const FIRE_TIME := 12.0          # a fire left alone burns this long
+const FIRE_HURT := 3.0           # seconds of burning for each bar of damage to the room's system
+const FIRE_CREW := 6.0           # crew health lost a second in a burning room
+const GAS_CREW := 12.0           # ... and in a gassed one
+const SHIELD_JAM := 4.0
 const GUN_FRAME := {"small": Vector2(48, 16), "big": Vector2(80, 24)}
 const GUN_MOUNT := {"small": Vector2(4, 8), "big": Vector2(6, 12)}
 var shield_hits: Array = []      # {"mine", "pos" (page), "t"}
@@ -128,6 +139,7 @@ const STATIONS := ["pilot", "weapons", "shields", "engines", "cannon"]
 # its power bars on the system bar: green powered, grey off, red damaged.
 const ROOM_ICONS := ["shields", "engines", "weapons", "life", "pilot", "drones", "cannon", "medbay", "crew", "doors", "sensors"]
 const ICON_POWERED := Color("78d46a")
+const ICON_ION := Color("5ac8ff")
 const ICON_OK := Color("8a8590")
 const ICON_HIT := Color("e0503c")
 var room_icons: Texture2D
@@ -174,6 +186,11 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	paused = false
 	shots.clear()
 	beams.clear()
+	my_fires.clear()
+	foe_fires.clear()
+	foe_gas.clear()
+	shield_jam = 0.0
+	e_shield_jam = 0.0
 	shield_hits.clear()
 	pops.clear()
 	selected = -1
@@ -282,7 +299,7 @@ func _make_systems(table: Dictionary) -> Dictionary:
 	var out := {}
 	for key in table:
 		var pair: Array = table[key]
-		out[key] = {"max": int(pair[0]), "power": int(pair[1]), "damage": 0}
+		out[key] = {"max": int(pair[0]), "power": int(pair[1]), "damage": 0, "ion": 0.0}
 	return out
 
 
@@ -366,7 +383,13 @@ func _tick(delta: float) -> void:
 	# shields come back one layer at a time
 	var top := _max_layers()
 	if layers > top: layers = top
-	if layers < top:
+	shield_jam = maxf(0.0, shield_jam - delta)
+	e_shield_jam = maxf(0.0, e_shield_jam - delta)
+	for systems in [sys, e_sys]:
+		for key in systems:
+			systems[key]["ion"] = maxf(0.0, float(systems[key].get("ion", 0.0)) - delta)
+	_tick_hazards(delta)
+	if layers < top and shield_jam <= 0.0:
 		shield_timer += delta
 		if shield_timer >= ShipData.SHIELD_RECHARGE * (0.75 if _boosting("shields") else 1.0):
 			shield_timer = 0.0
@@ -375,7 +398,7 @@ func _tick(delta: float) -> void:
 		shield_timer = 0.0
 	var e_top := _layers_of(e_sys)
 	if e_layers > e_top: e_layers = e_top
-	if e_layers < e_top:
+	if e_layers < e_top and e_shield_jam <= 0.0:
 		e_shield_timer += delta
 		if e_shield_timer >= ShipData.SHIELD_RECHARGE * (0.9 if _manned("shields") else 1.0):
 			e_shield_timer = 0.0
@@ -435,6 +458,7 @@ func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool)
 		var data: Dictionary = ShipData.WEAPONS[w["id"]]
 		var cost: int = int(data["power"])
 		var powered: bool = bool(w["on"]) and cost <= budget
+		var full: float = _full_charge(w, data)
 		if powered:
 			budget -= cost
 			var speed: float = 1.0
@@ -445,13 +469,19 @@ func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool)
 			# Ivan's cannon runs off its own room: crewed it charges faster, damaged it can't charge at all
 			if not mine and e_sys.has("cannon") and str(w["id"]) == "ivan_cannon":
 				speed = 0.0 if _eff(e_sys, "cannon") <= 0 else (1.1 if _manned("cannon") else 1.0)
-			w["charge"] = minf(float(data["charge"]), float(w["charge"]) + delta * speed)
+			w["charge"] = minf(full, float(w["charge"]) + delta * speed)
 		else:
 			w["charge"] = maxf(0.0, float(w["charge"]) - delta * 2.0)
-		if not powered or float(w["charge"]) < float(data["charge"]):
+			w["chain_n"] = 0
+		var loaded: int = _loaded(w, data)
+		if not powered or loaded <= 0:
 			continue
+		var stages: int = int(data.get("stages", 1))
 		if mine:
 			if str(w["target"]) == "":
+				continue
+			# a twin missile aimed before anything was loaded waits for both
+			if loaded < mini(int(w.get("want", stages)), stages):
 				continue
 			if int(data.get("ammo", 0)) > 0 and int(world.missiles) < int(data["ammo"]):
 				continue                 # charged, but no missiles left to fire
@@ -459,9 +489,31 @@ func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool)
 			if not autofire:
 				w["target"] = ""
 		else:
+			if loaded < stages:
+				continue
 			w["target"] = _enemy_pick_room()
 			_fire(w, true)
 		w["charge"] = 0.0
+		w["want"] = stages
+		if data.has("chain"):
+			w["chain_n"] = mini(2, int(w.get("chain_n", 0)) + 1)
+
+
+# How much charge a weapon fires at: a twin missile holds two loads; a chain laser needs less after each volley.
+func _full_charge(w: Dictionary, data: Dictionary) -> float:
+	var c: float = float(data["charge"])
+	if data.has("stages"):
+		return c * int(data["stages"])
+	if data.has("chain"):
+		c *= 1.0 - float(data["chain"]) * int(w.get("chain_n", 0))
+	return c
+
+
+# How many shots' worth are loaded: up to "stages" for a twin missile, otherwise 1 when charged.
+func _loaded(w: Dictionary, data: Dictionary) -> int:
+	if data.has("stages"):
+		return mini(int(data["stages"]), floori(float(w["charge"]) / float(data["charge"]) + 0.0001))
+	return 1 if float(w["charge"]) >= _full_charge(w, data) - 0.0001 else 0
 
 
 func _enemy_pick_room() -> String:
@@ -479,6 +531,8 @@ func _eff(systems: Dictionary, key: String) -> int:
 	if not systems.has(key):
 		return 0
 	var s: Dictionary = systems[key]
+	if float(s.get("ion", 0.0)) > 0.0:
+		return 0                     # shut off by ion
 	return mini(int(s["power"]), int(s["max"]) - int(s["damage"]))
 
 
@@ -573,20 +627,37 @@ func _fire(w: Dictionary, at_player: bool) -> void:
 	var dodge: int = _my_evasion() if at_player else _enemy_evasion()
 	var kind: String = str(data.get("type", "laser"))
 	w["fired"] = 0.3
+	var volleys: int = maxi(1, _loaded(w, data)) if data.has("stages") else 1
 	if not at_player and int(data.get("ammo", 0)) > 0:
-		world.missiles = maxi(0, int(world.missiles) - int(data["ammo"]))
+		volleys = mini(volleys, int(world.missiles) / int(data["ammo"]))
+		world.missiles = maxi(0, int(world.missiles) - int(data["ammo"]) * volleys)
 	if kind == "beam":
 		# a cut across the target room, tilted a little from up-and-down
 		var dir := Vector2.DOWN.rotated(randf_range(-0.6, 0.6))
 		var half: float = float(data.get("length", 40.0)) / 2.0
 		beams.append({"at_player": at_player, "from": from, "a": to - dir * half, "b": to + dir * half, "t": -0.15,
-			"dmg": int(data["damage"]), "color": data["color"], "hit": randf() * 100.0 >= dodge, "rooms": {}, "said": false})
+			"dmg": int(data["damage"]), "color": data["color"], "hit": randf() * 100.0 >= dodge, "rooms": {}, "said": false,
+			"fire": bool(data.get("fire", false))})
 		world.sfx("zap", 0.6, -2.0)
 		return
 	# from and to are ship-picture pixels: from on the firing ship, to on the target.
-	for i in range(int(data["shots"])):
-		shots.append({"from": from, "to": to + Vector2(randf_range(-3, 3), randf_range(-3, 3)),
-			"t": -0.3 * i, "dmg": int(data["damage"]), "at_player": at_player, "room": target, "kind": kind,
+	var rooms: Array = (me_ship if at_player else foe)["rooms"]
+	for i in range(int(data["shots"]) * volleys):
+		var room_id: String = target
+		var aim: Vector2 = to
+		if kind == "flak":
+			# each shard lands on a room near the target
+			var near: Array = []
+			for room in rooms:
+				if (room["rect"] as Rect2).get_center().distance_to(to) <= 40.0:
+					near.append(room)
+			if not near.is_empty():
+				var pick: Dictionary = near[randi() % near.size()]
+				room_id = str(pick["id"])
+				aim = (pick["rect"] as Rect2).get_center()
+		shots.append({"from": from, "to": aim + Vector2(randf_range(-3, 3), randf_range(-3, 3)),
+			"t": -0.3 * i, "dmg": int(data["damage"]), "at_player": at_player, "room": room_id, "kind": kind,
+			"ion": float(data.get("ion", 0.0)), "gas": float(data.get("gas", 0.0)),
 			"hit": randf() * 100.0 >= dodge, "color": data["color"], "heavy": int(data["damage"]) >= 3})
 	world.sfx("zap", 1.2 if not at_player else 0.8, -4.0)
 
@@ -611,6 +682,10 @@ func _land(s: Dictionary) -> void:
 		_pop(where, "Miss", DIM)
 		return
 	var missile: bool = str(s.get("kind", "")) == "missile"
+	var kind: String = str(s.get("kind", ""))
+	if kind == "ion":
+		_ion_hit(at_player, str(s["room"]), float(s["ion"]), where)
+		return
 	if at_player and layers > 0 and not missile:
 		layers -= 1
 		shield_timer = 0.0
@@ -623,6 +698,13 @@ func _land(s: Dictionary) -> void:
 		e_shield_timer = 0.0
 		_pop(where + Vector2(10, 0), "Blocked", SHIELD_BLUE)
 		shield_hits.append({"mine": false, "pos": _shield_edge(false, where), "t": 0.0})
+		return
+	if kind == "poison":
+		if at_player:
+			_pop(where, "Gas! Your suit holds", Color("b6ff8a"))
+		else:
+			foe_gas[str(s["room"])] = {"t": float(s["gas"])}
+			_pop(where, "Gas!", Color("b6ff8a"))
 		return
 	_damage(at_player, str(s["room"]), int(s["dmg"]), where)
 
@@ -684,17 +766,121 @@ func _move_beams(delta: float) -> void:
 					var rid: String = str(room["id"])
 					if (room["rect"] as Rect2).has_point(p) and not (bm["rooms"] as Dictionary).has(rid):
 						bm["rooms"][rid] = true
-						var dmg: int = int(bm["dmg"]) - (layers if at_player else e_layers)
-						if dmg <= 0:
+						var shield: int = layers if at_player else e_layers
+						var dmg: int = int(bm["dmg"]) - shield
+						if shield >= maxi(1, int(bm["dmg"])):
 							if not bool(bm["said"]):
 								_pop(where, "Blocked", SHIELD_BLUE)
 								shield_hits.append({"mine": at_player, "pos": _shield_edge(at_player, where), "t": 0.0})
 								bm["said"] = true
 						else:
 							_damage(at_player, rid, dmg, where)
+							if bool(bm.get("fire", false)):
+								_set_fire(at_player, rid, where)
 		if t < 1.25:
 			left.append(bm)
 	beams = left
+
+
+# Ion: on shields, knocks off a layer and jams them for a moment; with shields down, shuts the room's system off.
+func _ion_hit(at_player: bool, room_id: String, secs: float, where: Vector2) -> void:
+	var ion_col := Color("8adcff")
+	if at_player and layers > 0:
+		layers -= 1
+		shield_timer = 0.0
+		shield_jam = SHIELD_JAM
+		shield_hits.append({"mine": true, "pos": _shield_edge(true, where), "t": 0.0})
+		_pop(where, "Shields jammed", ion_col)
+		return
+	if not at_player and e_layers > 0:
+		e_layers -= 1
+		e_shield_timer = 0.0
+		e_shield_jam = SHIELD_JAM
+		shield_hits.append({"mine": false, "pos": _shield_edge(false, where), "t": 0.0})
+		_pop(where, "Shields jammed", ion_col)
+		return
+	var systems: Dictionary = sys if at_player else e_sys
+	var sname: String = str(_room((me_ship if at_player else foe)["rooms"], room_id).get("sys", ""))
+	if systems.has(sname):
+		systems[sname]["ion"] = secs
+		_pop(where, "Ion! %s off" % sname.capitalize(), ion_col)
+	else:
+		_pop(where, "Ion: nothing to jam", DIM)
+
+
+func _set_fire(at_player: bool, room_id: String, where: Vector2) -> void:
+	var fires: Dictionary = my_fires if at_player else foe_fires
+	if not fires.has(room_id):
+		_pop(where + Vector2(0, -10), "Fire!", Color("ffb04a"))
+	fires[room_id] = {"t": FIRE_TIME, "acc": 0.0}
+
+
+# Fires burn: they damage the room's system a bar at a time and hurt the crew there, until they burn out or are put
+# out (their crew working in the room, or your drone in the bay, puts it out faster). Gas hurts the crew in its room.
+func _tick_hazards(delta: float) -> void:
+	for at_player in [true, false]:
+		var fires: Dictionary = my_fires if at_player else foe_fires
+		var systems: Dictionary = sys if at_player else e_sys
+		var ship: Dictionary = me_ship if at_player else foe
+		for rid in fires.keys():
+			var f: Dictionary = fires[rid]
+			var workers := 0
+			if at_player:
+				workers = 1 if drone_room == rid and drone_path.is_empty() else 0
+			else:
+				for c in e_crew_list:
+					if float(c["hp"]) > 0.0 and str(c["room"]) == rid:
+						workers += 1
+						c["hp"] = maxf(0.0, float(c["hp"]) - FIRE_CREW * delta)
+			f["t"] = float(f["t"]) - delta * (1.0 + 3.0 * workers)
+			f["acc"] = float(f["acc"]) + delta
+			var sname: String = str(_room(ship["rooms"], rid).get("sys", ""))
+			if float(f["acc"]) >= FIRE_HURT:
+				f["acc"] = 0.0
+				if systems.has(sname) and int(systems[sname]["damage"]) < int(systems[sname]["max"]):
+					systems[sname]["damage"] = int(systems[sname]["damage"]) + 1
+					_clip_power(systems)
+			if float(f["t"]) <= 0.0:
+				fires.erase(rid)
+				_pop(_on_page(at_player, _room_center(at_player, rid)), "Fire out", DIM)
+	for rid in foe_gas.keys():
+		var gas: Dictionary = foe_gas[rid]
+		gas["t"] = float(gas["t"]) - delta
+		for c in e_crew_list:
+			if float(c["hp"]) > 0.0 and str(c["room"]) == rid:
+				c["hp"] = maxf(0.0, float(c["hp"]) - GAS_CREW * delta)
+		if float(gas["t"]) <= 0.0:
+			foe_gas.erase(rid)
+	if not foe_fires.is_empty() or not foe_gas.is_empty():
+		_count_crew(_on_page(false, (foe["size"] as Vector2) / 2.0))
+
+
+# Fires and gas, drawn over a ship's rooms: flickering flames, a green haze.
+func _paint_hazards(at_player: bool, xf: Transform2D, k: float) -> void:
+	var ship: Dictionary = me_ship if at_player else foe
+	var ms: float = Time.get_ticks_msec() / 1000.0
+	var systems: Dictionary = sys if at_player else e_sys
+	for room in ship["rooms"]:
+		var rr: Rect2 = xf * (room["rect"] as Rect2)
+		var rid: String = str(room["id"])
+		var sname: String = str(room["sys"])
+		if systems.has(sname) and float(systems[sname].get("ion", 0.0)) > 0.0:
+			screen.rect(rr.grow(-2.0 * k), Color(0.35, 0.75, 1.0, 0.28 + 0.1 * sin(ms * 12.0)))
+		if (foe_gas if not at_player else {}).has(rid):
+			screen.rect(rr.grow(-2.0 * k), Color(0.55, 0.95, 0.3, 0.3))
+			for i in range(4):
+				var bx: float = rr.position.x + rr.size.x * fmod(0.2 + i * 0.23 + ms * 0.05, 1.0)
+				var by: float = rr.end.y - fmod(ms * 8.0 + i * 7.0, rr.size.y)
+				screen.circle(Vector2(bx, by), 1.5 * k, Color(0.75, 1.0, 0.55, 0.7))
+		if (my_fires if at_player else foe_fires).has(rid):
+			screen.rect(rr.grow(-2.0 * k), Color(1.0, 0.45, 0.15, 0.22))
+			for i in range(5):
+				var fx: float = rr.position.x + rr.size.x * (0.15 + 0.17 * i)
+				var flick: float = 0.6 + 0.4 * sin(ms * 14.0 + i * 1.7)
+				var fy: float = rr.end.y - 4.0 * k
+				var h: float = 7.0 * k * flick
+				screen.polygon(PackedVector2Array([Vector2(fx - 2.5 * k, fy), Vector2(fx, fy - h), Vector2(fx + 2.5 * k, fy)]), Color(1.0, 0.55, 0.15, 0.9))
+				screen.polygon(PackedVector2Array([Vector2(fx - 1.2 * k, fy), Vector2(fx, fy - h * 0.55), Vector2(fx + 1.2 * k, fy)]), Color(1.0, 0.92, 0.5, 0.95))
 
 
 func _pop(pos: Vector2, text: String, color: Color) -> void:
@@ -899,6 +1085,28 @@ func _enemy_crew(delta: float) -> void:
 		if best >= 0:
 			e_crew_list[best]["task"] = "repair"
 			e_crew_list[best]["target"] = rid
+	# Fires: someone goes to put out each one nobody is seeing to (never the pilot).
+	for rid_f in foe_fires.keys():
+		var covered_f := false
+		for c in e_crew_list:
+			if float(c["hp"]) > 0.0 and str(c["task"]) == "repair" and str(c["target"]) == str(rid_f):
+				covered_f = true
+		if covered_f:
+			continue
+		var best_f := -1
+		var best_d := INF
+		var to_f: Vector2 = _crew_spot(str(rid_f), 0)
+		for i in range(e_crew_list.size()):
+			var cf: Dictionary = e_crew_list[i]
+			if float(cf["hp"]) <= 0.0 or str(cf["task"]) != "station" or str(cf["home"]) == _sys_room("pilot"):
+				continue
+			var dd: float = (cf["pos"] as Vector2).distance_to(to_f)
+			if dd < best_d:
+				best_d = dd
+				best_f = i
+		if best_f >= 0:
+			e_crew_list[best_f]["task"] = "repair"
+			e_crew_list[best_f]["target"] = str(rid_f)
 	# Walk, and work.
 	var working := {}
 	for i in range(e_crew_list.size()):
@@ -907,7 +1115,7 @@ func _enemy_crew(delta: float) -> void:
 			continue
 		if str(c3["task"]) == "repair":
 			var tsys: String = str(_room(foe["rooms"], str(c3["target"])).get("sys", ""))
-			if not e_sys.has(tsys) or int(e_sys[tsys]["damage"]) <= 0:
+			if (not e_sys.has(tsys) or int(e_sys[tsys]["damage"]) <= 0) and not foe_fires.has(str(c3["target"])):
 				c3["task"] = "station"
 				c3["target"] = c3["home"]
 		# Through the doors when the ship has them (ShipData.route), from the room they're in now.
@@ -959,6 +1167,11 @@ func _hurt_crew(room_id: String, dmg: int, where: Vector2) -> void:
 			c["hp"] = maxf(0.0, float(c["hp"]) - CREW_HIT * dmg)
 			if float(c["hp"]) <= 0.0:
 				_pop(where + Vector2(0, 10), "Crew down", Color("ffbeaa"))
+	_count_crew(where)
+
+
+# How many of their crew are still standing; when none are, the fight is won.
+func _count_crew(_where: Vector2) -> void:
 	var standing := 0
 	for c2 in e_crew_list:
 		if float(c2["hp"]) > 0.0:
@@ -1131,6 +1344,9 @@ func _click(id: String, p: Vector2, button: int) -> void:
 		for room in foe["rooms"]:
 			if (foe_xf * (room["rect"] as Rect2)).has_point(p):
 				weapons[selected]["target"] = str(room["id"])
+				var wd: Dictionary = ShipData.WEAPONS[weapons[selected]["id"]]
+				var have: int = _loaded(weapons[selected], wd)
+				weapons[selected]["want"] = have if have >= 1 else int(wd.get("stages", 1))
 				selected = -1
 				world.sfx("click", 1.2)
 				return
@@ -1240,7 +1456,7 @@ func _paint_my_window() -> void:
 				fill = fill.lerp(Color("a0463c"), 0.65)
 			s.rect(rr, fill)
 			s.outline(rr, Color("282834"))
-		if not _room_icon(rr, sname, k, dmg > 0):
+		if not _room_icon(rr, sname, k, dmg > 0, sys.has(sname) and float(sys[sname].get("ion", 0.0)) > 0.0):
 			_room_tag(rr, str(room["label"]), k)
 		if sys.has(sname) and sname != "pilot":
 			var bars: int = int(sys[sname]["max"])
@@ -1249,6 +1465,7 @@ func _paint_my_window() -> void:
 				s.rect(bar, GOOD if i < bars - dmg else BAD)
 		if drone_selected and not crew_room and result == "" and rr.has_point(s.mouse):
 			s.outline(rr.grow(-1.0), GOOD, maxf(1.0, k * 0.5))
+	_paint_hazards(true, xf, k)
 	_paint_shield(true, xf, size, k, layers)
 	_paint_doors(me_ship, xf, k, true)
 	_paint_guns(me, weapons, xf)
@@ -1293,7 +1510,9 @@ func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
 		if tex != null:
 			var big: String = "big" if int(data["damage"]) >= 3 else "small"
 			var fsize: Vector2 = GUN_FRAME[big]
-			var c: float = float(w["charge"]) / float(data["charge"])
+			var c: float = float(w["charge"]) / _full_charge(w, data)
+			if data.has("stages"):
+				c = 0.5 * _loaded(w, data) + (0.4 if fmod(float(w["charge"]), float(data["charge"])) > 0.1 else 0.0)
 			var frame := 0
 			var fired: float = float(w.get("fired", 0.0))
 			if fired > 0.15:
@@ -1320,12 +1539,13 @@ func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
 
 # A system room's marking in the middle of the room: grey while working, red while damaged. False when the room
 # has no marking (crew decks, holds), so the caller can give it a name tag instead.
-func _room_icon(rr: Rect2, sname: String, k: float, hurt: bool) -> bool:
+func _room_icon(rr: Rect2, sname: String, k: float, hurt: bool, ion: bool = false) -> bool:
 	var i: int = ROOM_ICONS.find(sname)
 	if i < 0 or room_icons == null:
 		return false
 	var size := Vector2(16.0, 16.0) * k
-	screen.texture(room_icons, Rect2(screen.snap(rr.get_center() - size / 2.0), size), Rect2(i * 32, 0, 32, 32), ICON_HIT if hurt else ICON_OK)
+	var col: Color = ICON_ION if ion else (ICON_HIT if hurt else ICON_OK)
+	screen.texture(room_icons, Rect2(screen.snap(rr.get_center() - size / 2.0), size), Rect2(i * 32, 0, 32, 32), col)
 	return true
 
 
@@ -1440,7 +1660,7 @@ func _paint_enemy() -> void:
 		if inside:
 			if dmg > 0:
 				s.rect(rr.grow(-2.0 * k), Color(0.86, 0.22, 0.16, 0.38))
-			if not _room_icon(rr, sname, k, dmg > 0):
+			if not _room_icon(rr, sname, k, dmg > 0, e_sys.has(sname) and float(e_sys[sname].get("ion", 0.0)) > 0.0):
 				_room_tag(rr, str(room["label"]), k)
 		else:
 			var fill := Color(0.69, 0.59, 0.53, 0.92)
@@ -1457,6 +1677,7 @@ func _paint_enemy() -> void:
 				s.rect(bar, GOOD if i < bars - dmg else BAD)
 		if selected >= 0 and rr.has_point(s.mouse):
 			s.outline(rr, BAD)
+	_paint_hazards(false, xf, k)
 	_paint_shield(false, xf, size, k, e_layers)
 	_paint_doors(foe, xf, k, false)
 	_paint_guns(foe, e_weapons, xf)
@@ -1795,6 +2016,8 @@ func _paint_reactor() -> void:
 		var icon_i: int = ROOM_ICONS.find(key)
 		if room_icons != null and icon_i >= 0:
 			var tint: Color = ICON_HIT if int(st["damage"]) > 0 else (ICON_POWERED if int(st["power"]) > 0 else ICON_OK)
+			if float(st.get("ion", 0.0)) > 0.0:
+				tint = ICON_ION
 			s.texture(room_icons, Rect2(x + 3.5, 360, 16, 16), Rect2(icon_i * 32, 0, 32, 32), tint)
 		else:
 			s.text_center(x + 11.5, 364, str(SYS_LABEL[key]), "micro", MUTED)
@@ -1840,7 +2063,9 @@ func _paint_weapons() -> void:
 			s.text(card.position.x + 6, card.position.y + 33, "BUY OR SALVAGE ONE", "micro", MUTED)
 			continue
 		var data: Dictionary = ShipData.WEAPONS[w["id"]]
-		var charged: bool = float(w["charge"]) >= float(data["charge"])
+		var full: float = _full_charge(w, data)
+		var loaded: int = _loaded(w, data)
+		var charged: bool = loaded >= 1
 		var on: bool = bool(w["on"])
 		s.frame(card, Color("f8f6ef") if on else Color("e6e4de"))
 		if selected == i:
@@ -1852,7 +2077,11 @@ func _paint_weapons() -> void:
 		s.pips(card.end.x - 6 - cost * 7.0 + 2, card.position.y + 8, cost, cost if bool(powered[i]) else 0, 5.0, 9.0, 2.0)
 		var bar := Rect2(card.position.x + 6, card.position.y + 25, card.size.x - 12, 5)
 		s.rect(bar, ShipScreen.PIP_OFF)
-		s.rect(Rect2(bar.position, Vector2(bar.size.x * float(w["charge"]) / float(data["charge"]), bar.size.y)), ORANGE if charged else Color("6f9fb4"))
+		s.rect(Rect2(bar.position, Vector2(bar.size.x * float(w["charge"]) / full, bar.size.y)), ORANGE if charged else Color("6f9fb4"))
+		for k in range(1, int(data.get("stages", 1))):
+			s.rect(Rect2(bar.position.x + bar.size.x * k / float(data["stages"]) - 0.5, bar.position.y, 1, bar.size.y), INK)
+		if int(w.get("chain_n", 0)) > 0:
+			s.text_right(bar.end.x, bar.position.y - 9, "CHAIN x%d" % (int(w["chain_n"]) + 1), "micro", OCHRE)
 		var note := "OFF - CLICK TO POWER"
 		if on:
 			note = "READY - CLICK TO AIM" if charged else "CHARGING"
@@ -1862,6 +2091,12 @@ func _paint_weapons() -> void:
 				note = "AIM: CLICK A ROOM"
 			elif str(w["target"]) != "":
 				note = "AIMED"
+			if data.has("stages") and bool(powered[i]) and selected != i:
+				var stages: int = int(data["stages"])
+				if loaded >= stages:
+					note = "%d LOADED - AIM TO FIRE ALL" % stages if str(w["target"]) == "" else "FIRING %d" % stages
+				elif loaded >= 1:
+					note = "%d LOADED - AIM TO FIRE, OR WAIT" % loaded if str(w["target"]) == "" else "AIMED - WAITING FOR %d" % mini(int(w.get("want", stages)), stages)
 			if int(data.get("ammo", 0)) > 0 and int(world.missiles) < int(data["ammo"]):
 				note = "NO MISSILES LEFT"
 		s.text_fit(card.position.x + 6, card.position.y + 33, card.size.x - 12, note, "micro", OCHRE if charged and on else MUTED)
