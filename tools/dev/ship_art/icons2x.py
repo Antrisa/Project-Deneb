@@ -20,14 +20,16 @@ ICONS = {
     "shields": """
 ....XXXXXX....
 ..XXXXXXXXXX..
-.XXXX....XXXX.
-.XXX..XXXXXXX.
-XXXX..XXXXXXXX
-XXXXX....XXXXX
-XXXXXXXX..XXXX
-XXXXXXXXX..XXX
-.XXXXXXX..XXX.
-.XXXX....XXXX.
+.XX........XX.
+.X..XXXXXX..X.
+XX.XXXXXXXX.XX
+X..XXX.......X
+X..XXXXXXX...X
+X...XXXXXXX..X
+X.......XXX..X
+XX.XXXXXXXX.XX
+.X..XXXXXX..X.
+.XX........XX.
 ..XXXXXXXXXX..
 ....XXXXXX....
 """,
@@ -46,16 +48,17 @@ XX.XXXXXXXXXX.
 .....XXXXXXXX.
 """,
     "weapons": """
-.XXXXXXXXXXXXX
-.XXXXXXXXXXXXX
-.XXXXXXXXXXXXX
-.XXXXXXXXX....
-.XXXX.XXXX....
-.XXXX..XX.....
+.XXX..........
 .XXXX.........
+..XXX.........
+..XXXXXXXX.X..
+XXXXXXXXXX.XX.
+XXXXXXXXXX.XXX
+XXXXXXXXXX.XX.
+..XXXXXXXX.X..
+..XXX.........
 .XXXX.........
-.XXXXX........
-..XXXX........
+.XXX..........
 """,
     "life": """
 .XXXXX........
