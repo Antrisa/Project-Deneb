@@ -5,7 +5,7 @@ extends CanvasLayer
 # and loops on its own. The ECHO LANDING title fades in from 20.5 to 24.7 s with its three echo bars pulsing,
 # as in the pack's index.html. The buttons fade in with it. Any key or click during the opening skips to the
 # loop; M mutes the theme. Godot plays only Ogg Theora, so the pack's .mp4 clips were converted to .ogv
-# (tools/dev/encode_intro.sh: best quality, a keyframe every 5 s; the first conversion's keyframe every 12 frames
+# (tools/dev/encode_intro.sh: best quality, one keyframe per clip; the first conversion's keyframe every 12 frames
 # made the picture fizz). The buttons lay themselves out in screen
 # pixels like the datapad (2x at 1080p, 3x at 1440p), five percent in from the left (ui/pixel_grid.gd).
 #
