@@ -93,7 +93,7 @@ const STARTER := {
 	"interior": "res://art/ships/starter/interior.png", "art_scale": 2,    # double resolution: story2x.py
 	"hull": 12, "reactor": 6, "drones": 1, "door_level": 1,
 	"weapons": ["burst_laser", ""],          # "" is an empty slot; bigger ships have more slots
-	"mounts": [Vector2(64, 9), Vector2(64, 86.5)],   # each weapon slot's gun, on the housings near the wing tips
+	"mounts": [Vector2(66, 16), Vector2(66, 82)],   # each weapon slot's gun, on the housings near the wing tips
 	"systems": {"shields": [2, 2], "engines": [2, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1], "drones": [1, 1]},
 	"rooms": [
 		{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
@@ -122,7 +122,7 @@ const COVERED_FIGHTER := {
 	"interior": "res://art/ships/covered_fighter/interior.png", "art_scale": 2,
 	"hull": 16, "reactor": 8, "drones": 0, "door_level": 1,
 	"weapons": ["burst_laser", "", ""],
-	"mounts": [Vector2(172, 37), Vector2(172, 82.5), Vector2(106, 12), Vector2(106, 107.5)],
+	"mounts": [Vector2(169, 40), Vector2(170.5, 80), Vector2(108, 15.5), Vector2(108, 104.5)],
 	# boarding pods and a medbay (Zachary, 22 Nov; claude/echo-landing-boarding.md); not used in battle until boarding
 	"systems": {"shields": [2, 2], "engines": [2, 1], "weapons": [3, 2], "life": [1, 1], "pilot": [1, 1],
 		"pods": [2, 1], "medbay": [1, 1]},
@@ -156,7 +156,7 @@ const ENEMIES := {
 		# Where guns attach to the hull's sides near the front, FTL-style (Zachary, 21 Nov): just outside the hull edge,
 		# in the order guns fill them: top front, bottom front, top back, bottom back. Whatever guns the ship spawns
 		# with go on the first ones; the game draws them there.
-		"mounts": [Vector2(122, 22), Vector2(122, 73.5), Vector2(107, 15), Vector2(107, 80.5)],
+		"mounts": [Vector2(93, 15.5), Vector2(93, 80.5), Vector2(60, 14), Vector2(60, 80)],
 		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
@@ -182,7 +182,7 @@ const ENEMIES := {
 		"name": "Ivan's flagship", "size": Vector2(216, 144), "hull": 14, "crew": 5,
 		"art": "res://art/ships/ivan_flagship/hull.png", "interior": "res://art/ships/ivan_flagship/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "heavy_laser"],
-		"mounts": [Vector2(176, 27), Vector2(176, 116.5), Vector2(204, 72), Vector2(158, 18), Vector2(158, 125.5)],
+		"mounts": [Vector2(176.5, 39.5), Vector2(177.5, 104.5), Vector2(204, 72), Vector2(142.5, 15.5), Vector2(142.5, 128.5)],
 		# "cannon": the room for his special weapon (Zachary, 21 Nov, like FTL's special weapon rooms). Crewed, the
 		# cannon charges faster; damaged, it can't charge, and a hit there drains it.
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1], "cannon": [1, 1]},
@@ -212,7 +212,7 @@ const ENEMIES := {
 		"name": "Pirate stronghold", "size": Vector2(192, 144), "hull": 16, "crew": 4,
 		"art": "res://art/ships/pirate_stronghold/hull.png", "interior": "res://art/ships/pirate_stronghold/interior.png", "art_scale": 2,
 		"weapons": ["heavy_laser", "rabble_laser"],
-		"mounts": [Vector2(145, 46), Vector2(145, 100), Vector2(55, 46), Vector2(55, 100)],
+		"mounts": [Vector2(147, 41), Vector2(147, 103), Vector2(57, 40), Vector2(57, 104)],
 		"systems": {"shields": [4, 4], "weapons": [3, 3], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Barracks", "sys": "", "cells": Rect2i(4, 2, 1, 2)},
@@ -229,7 +229,7 @@ const ENEMIES := {
 		"name": "The Nest", "size": Vector2(240, 144), "hull": 24, "crew": 6,
 		"art": "res://art/ships/rabble_nest/hull.png", "interior": "res://art/ships/rabble_nest/interior.png", "art_scale": 2,
 		"weapons": ["heavy_laser", "heavy_laser", "rabble_laser"],
-		"mounts": [Vector2(150, 40), Vector2(150, 106), Vector2(65, 40), Vector2(65, 106), Vector2(30, 70)],
+		"mounts": [Vector2(152, 40), Vector2(152, 104), Vector2(67, 40), Vector2(67, 106), Vector2(30, 70)],
 		"systems": {"shields": [4, 4], "weapons": [4, 4], "life": [2, 2], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Barracks", "sys": "", "cells": Rect2i(4, 2, 1, 2)},
@@ -255,7 +255,7 @@ const ANA_SHIPS := {
 		"name": "Ana's corsair", "size": Vector2(168, 120), "hull": 12, "crew": 4,
 		"art": "res://art/ships/ana_corsair/hull.png", "interior": "res://art/ships/ana_corsair/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "heavy_laser"],
-		"mounts": [Vector2(125, 43), Vector2(125, 76.5), Vector2(75, 20), Vector2(75, 99.5)],
+		"mounts": [Vector2(84, 40), Vector2(84, 80), Vector2(51, 14), Vector2(51, 106)],
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
 		"break_at": 0.5,
 		"rooms": [
@@ -278,7 +278,7 @@ const ANA_SHIPS := {
 		"name": "Loyalist gunship", "size": Vector2(120, 96), "hull": 8, "crew": 3,
 		"art": "res://art/ships/loyalist_gunship/hull.png", "interior": "res://art/ships/loyalist_gunship/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "rabble_laser"],
-		"mounts": [Vector2(102, 26), Vector2(102, 69.5), Vector2(88, 10), Vector2(88, 85.5)],
+		"mounts": [Vector2(80.5, 14), Vector2(84.5, 80.5), Vector2(47.5, 16), Vector2(51.5, 80)],
 		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(3, 1, 1, 1)},
@@ -306,7 +306,7 @@ const CULTURE_SHIPS := {
 		"name": "Terran patrol", "size": Vector2(168, 96), "hull": 10, "crew": 4,
 		"art": "res://art/ships/terran_patrol/hull.png", "interior": "res://art/ships/terran_patrol/interior.png", "art_scale": 2,
 		"weapons": ["burst_laser", "missile_launcher"],
-		"mounts": [Vector2(144, 22), Vector2(144, 73.5), Vector2(107, 5), Vector2(107, 90.5)],
+		"mounts": [Vector2(106, 15.5), Vector2(106, 80.5), Vector2(73, 14), Vector2(73, 80)],
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [3, 3], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(3, 1, 2, 1)},
@@ -324,7 +324,7 @@ const CULTURE_SHIPS := {
 		"name": "Zaa'sh skiff", "size": Vector2(144, 96), "hull": 9, "crew": 3,
 		"art": "res://art/ships/zaash_skiff/hull.png", "interior": "res://art/ships/zaash_skiff/interior.png", "art_scale": 2,
 		"weapons": ["heavy_laser", "cutting_beam"],
-		"mounts": [Vector2(110, 25), Vector2(110, 70.5), Vector2(75, 18), Vector2(75, 77.5)],
+		"mounts": [Vector2(68, 16), Vector2(66, 81.5), Vector2(35, 16), Vector2(33, 82)],
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(3, 2, 1, 1)},
@@ -342,7 +342,7 @@ const CULTURE_SHIPS := {
 		"name": "Vuultam garden ship", "size": Vector2(168, 96), "hull": 10, "crew": 3,
 		"art": "res://art/ships/vuultam_garden/hull.png", "interior": "res://art/ships/vuultam_garden/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser"],
-		"mounts": [Vector2(135, 20), Vector2(135, 75.5), Vector2(110, 20), Vector2(110, 75.5)],
+		"mounts": [Vector2(106, 15.5), Vector2(106, 80.5), Vector2(73, 16), Vector2(73, 80)],
 		"systems": {"shields": [4, 4], "engines": [1, 1], "weapons": [1, 1], "life": [2, 2], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
@@ -359,7 +359,7 @@ const CULTURE_SHIPS := {
 		"name": "Moogli trader", "size": Vector2(144, 96), "hull": 8, "crew": 3,
 		"art": "res://art/ships/moogli_trader/hull.png", "interior": "res://art/ships/moogli_trader/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser"],
-		"mounts": [Vector2(113, 18), Vector2(113, 77.5)],
+		"mounts": [Vector2(101.5, 15.5), Vector2(101, 80.5)],
 		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [1, 1], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(2, 2, 1, 1)},
@@ -378,7 +378,7 @@ const CULTURE_SHIPS := {
 		"name": "Ervani courier", "size": Vector2(144, 96), "hull": 7, "crew": 3,
 		"art": "res://art/ships/ervani_courier/hull.png", "interior": "res://art/ships/ervani_courier/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "rabble_laser"],
-		"mounts": [Vector2(118, 23), Vector2(118, 72.5), Vector2(80, 21), Vector2(80, 74.5)],
+		"mounts": [Vector2(41, 15), Vector2(42, 80.5), Vector2(131.5, 41), Vector2(131.5, 55)],
 		"systems": {"shields": [2, 2], "engines": [3, 3], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(2, 1, 1, 1)},
@@ -396,7 +396,7 @@ const CULTURE_SHIPS := {
 		"name": "Scyldar lantern ship", "size": Vector2(168, 96), "hull": 10, "crew": 3,
 		"art": "res://art/ships/scyldar_lantern/hull.png", "interior": "res://art/ships/scyldar_lantern/interior.png", "art_scale": 2,
 		"weapons": ["heavy_laser"],
-		"mounts": [Vector2(131, 18), Vector2(131, 77.5), Vector2(90, 15), Vector2(90, 80.5)],
+		"mounts": [Vector2(107, 15.5), Vector2(107, 80.5), Vector2(74, 16), Vector2(74, 80)],
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(2, 2, 1, 1)},
@@ -415,7 +415,7 @@ const CULTURE_SHIPS := {
 		"name": "Arachnay weaver", "size": Vector2(144, 96), "hull": 9, "crew": 4,
 		"art": "res://art/ships/arachnay_weaver/hull.png", "interior": "res://art/ships/arachnay_weaver/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "heavy_laser"],
-		"mounts": [Vector2(118, 27), Vector2(118, 68.5), Vector2(80, 23), Vector2(80, 72.5)],
+		"mounts": [Vector2(110.5, 8.5), Vector2(110.5, 87.5), Vector2(77.5, 15.5), Vector2(77.5, 80.5)],
 		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(2, 2, 1, 1)},
@@ -434,7 +434,7 @@ const CULTURE_SHIPS := {
 		"name": "Collective freighter", "size": Vector2(192, 120), "hull": 12, "crew": 4,
 		"art": "res://art/ships/collective_freighter/hull.png", "interior": "res://art/ships/collective_freighter/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser"],
-		"mounts": [Vector2(176, 45), Vector2(176, 74.5), Vector2(75, 10), Vector2(75, 109.5)],
+		"mounts": [Vector2(154.5, 37.5), Vector2(154.5, 83.5), Vector2(41, 15.5), Vector2(121.5, 104.5)],
 		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [1, 1], "life": [1, 1], "pilot": [1, 1]},
 		"rooms": [
 			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(3, 3, 1, 1)},

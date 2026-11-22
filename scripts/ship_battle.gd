@@ -127,7 +127,7 @@ var enemy_inside: Texture2D      # their cut-away, when the art has one
 # the guns so their back ends tuck under it (Zachary, 22 Nov).
 var my_frame_tex: Texture2D
 var enemy_frame_tex: Texture2D
-const GUN_TUCK := 6.0            # art px a gun sits back from its mount, under the frame
+const GUN_TUCK := 0.0            # art px a gun sits back from its mount (the mounts themselves sit on the hull now)
 # Breaking up, FTL-style (Zachary, 21 Nov): an enemy blown apart splits into pieces with its insides showing
 # (art/ships/<id>/gib_N.png, tools/dev/ship_art/gibs2x.py) that drift apart and spin; when you're beaten, bits break
 # off your fighter (chip_N.png, interior_broken.png) and it makes an emergency jump home. The fold jump streaks too.
