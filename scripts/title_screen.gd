@@ -4,9 +4,10 @@ extends CanvasLayer
 # The opening (26 s) plays once, then the station loop (120 s) repeats; the theme starts on the first frame
 # and loops on its own. The ECHO LANDING title fades in from 20.5 to 24.7 s with its three echo bars pulsing,
 # as in the pack's index.html. The buttons fade in with it. Any key or click during the opening skips to the
-# loop; M mutes the theme. Godot plays only Ogg Theora, so the pack's .mp4 clips were converted to .ogv
-# (tools/dev/encode_intro.sh: best quality, one keyframe per clip; the first conversion's keyframe every 12 frames
-# made the picture fizz). The buttons lay themselves out in screen
+# loop; M mutes the theme. The picture is drawn live from the pack's lossless art by scripts/title_scene.gd (a
+# port of the pack's renderer), so the pixels stay sharp and nothing switches between clips. If that script or
+# its art (title/scene/) is missing, the pack's two clips play instead, converted to Ogg Theora because Godot plays
+# no other video (tools/dev/encode_intro.sh). The buttons lay themselves out in screen
 # pixels like the datapad (2x at 1080p, 3x at 1440p), five percent in from the left (ui/pixel_grid.gd).
 #
 # Settings switches fullscreen and sets the master volume (kept in user://title_settings.cfg, as in the pack's
@@ -28,13 +29,16 @@ var _page := ""
 var _prefs := ConfigFile.new()
 
 const INTRO := "res://title/intro/"
+const LIVE_SCRIPT := "res://scripts/title_scene.gd"
 const DESIGN := Vector2(960, 540)          # the clips' canvas; the title sits at (557, 41) on it
 const TITLE_AT := Vector2(557, 41)
 const OPENING_SECONDS := 26.0
-# The clips and title art are 960x540: 2x on a 1080p screen but 2.67x on 1440p, where nearest-neighbour makes
-# uneven pixels that shimmer as the picture moves. They are drawn through shaders/sharp_scale.gdshader instead.
+# The scene (or clips) and title art are 960x540: 2x on a 1080p screen but 2.67x on 1440p, where nearest-neighbour
+# makes uneven pixels that shimmer as the picture moves. They are drawn through shaders/sharp_scale.gdshader instead.
 var _sharp: ShaderMaterial
 var _scene: Control
+var _live                                  # scripts/title_scene.gd (a SubViewport); null when the clips play instead
+var _holding := false                      # clips: the opening's last frame stays up until the loop has drawn
 var _opening: VideoStreamPlayer
 var _loop: VideoStreamPlayer
 var _theme: AudioStreamPlayer
@@ -90,9 +94,11 @@ func _build_intro() -> void:
 	_sharp = ShaderMaterial.new()
 	_sharp.shader = load("res://shaders/sharp_scale.gdshader")
 	_root.add_child(_scene)
-	_opening = _video("opening.ogv", false)
-	_loop = _video("station_loop.ogv", true)
-	_loop.visible = false
+	if not _build_live():
+		_opening = _video("opening.ogv", false)
+		_loop = _video("station_loop.ogv", true)
+		if _loop != null:
+			_loop.visible = false
 	for layer_name in ["title", "echo_bar_1", "echo_bar_2", "echo_bar_3"]:
 		var path: String = INTRO + layer_name + ".png"
 		if not ResourceLoader.exists(path):
@@ -116,12 +122,38 @@ func _build_intro() -> void:
 			song.loop = true
 		_theme.stream = song
 	add_child(_theme)
-	if _opening != null:
+	if _live != null:
+		_live.show_time(0.0)
+	elif _opening != null:
 		_opening.finished.connect(_to_loop)
 		_opening.play()
 	else:
 		_to_loop()
 	_theme.play()
+
+
+# The scene drawn live at 960x540 and shown full screen like the clips were.
+func _build_live() -> bool:
+	if not ResourceLoader.exists(LIVE_SCRIPT):
+		return false
+	for file in ["starfield", "nebula_light", "planet", "moon_base", "fighter"]:
+		if not ResourceLoader.exists("res://title/scene/" + file + ".png"):
+			return false
+	var scene_script: GDScript = load(LIVE_SCRIPT)
+	if scene_script == null or not scene_script.can_instantiate():
+		return false
+	_live = scene_script.new()
+	add_child(_live)
+	var view := TextureRect.new()
+	view.texture = _live.get_texture()
+	view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	view.stretch_mode = TextureRect.STRETCH_SCALE
+	view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	view.material = _sharp
+	view.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR    # the shader keeps it sharp
+	_scene.add_child(view)
+	return true
 
 
 func _video(file: String, looping: bool) -> VideoStreamPlayer:
@@ -147,21 +179,32 @@ func _place_intro() -> void:
 		layer.size = layer.texture.get_size() * k
 
 
+# Clips only. The loop takes a frame or two to show its first picture, so it starts underneath the opening,
+# which keeps its last frame on top until then (switching straight over flashed black).
 func _to_loop() -> void:
-	if _opening != null:
-		_opening.stop()
-		_opening.visible = false
 	if _time < OPENING_SECONDS:
 		_time = OPENING_SECONDS
-	if _loop != null:
-		_loop.visible = true
-		_loop.play()
+	if _loop == null:
+		if _opening != null:
+			_opening.stop()
+		return
+	if _opening != null:
+		_scene.move_child(_loop, _opening.get_index())
+		_holding = true
+	_loop.visible = true
+	_loop.play()
 
 
 func _process(delta: float) -> void:
 	if not open:
 		return
 	_time += delta
+	if _live != null:
+		_live.show_time(_time)
+	elif _holding and _loop.stream_position > 0.05:
+		_holding = false
+		_opening.stop()
+		_opening.visible = false
 	# The station's own music waits until play starts.
 	if world != null and world.music != null:
 		world.music.stream_paused = true
@@ -219,7 +262,9 @@ func _skip() -> void:
 		return
 	_skipped = true
 	_time = maxf(_time, 24.7)
-	if _opening != null and _opening.is_playing():
+	if _live != null:
+		_time = maxf(_time, OPENING_SECONDS)
+	elif _opening != null and _opening.is_playing():
 		_to_loop()
 
 
