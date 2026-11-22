@@ -675,13 +675,39 @@ func _crew_spot(room_id: String, i: int, on_station: bool = false) -> Vector2:
 	return Vector2(clampf(p.x, r.position.x + 4, r.end.x - 4), clampf(p.y, r.position.y + 4, r.end.y - 4))
 
 
-# In front of a room's console, in ship-picture pixels. Matches the art (tools/dev/ship_art/kit2x.py, machine()):
-# the cockpit's console is on its front wall at the middle; the others sit on the top wall of the room's first cell.
+# In front of a room's console, in ship-picture pixels: the middle of the cell the console is in.
 func _station_spot(room: Dictionary) -> Vector2:
-	var r: Rect2 = room["rect"]
-	if str(room.get("sys", "")) == "pilot":
-		return Vector2(r.end.x - 12.0, r.get_center().y)
-	return Vector2(r.position.x + 12.0, r.position.y + 12.0)
+	if not room.has("cells"):
+		var r: Rect2 = room["rect"]
+		return r.get_center()
+	var cell: Vector2i = _console_at(foe, room)[0]
+	return (Vector2(cell) + Vector2(0.5, 0.5)) * ShipData.CELL
+
+
+# Which cell's wall holds a room's console, and which wall: [Vector2i cell, Vector2i side]. A console never sits
+# where a door is (Zachary, 21 Nov). The cockpit prefers its front (right) wall, the rest the top wall, then the
+# other walls; the first cell, row by row, whose wall there is an outside wall with no door. The art uses the same
+# rule (tools/dev/ship_art/kit2x.py, console_at()).
+func _console_at(ship: Dictionary, room: Dictionary) -> Array:
+	var c: Rect2i = room["cells"]
+	var sides: Array = [Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0)] if str(room.get("sys", "")) == "pilot" \
+			else [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
+	for side in sides:
+		for y in range(c.position.y, c.end.y):
+			for x in range(c.position.x, c.end.x):
+				var here := Vector2i(x, y)
+				var there: Vector2i = here + side
+				if c.has_point(there) or _has_door(ship, here, there):
+					continue
+				return [here, side]
+	return [c.position, Vector2i(0, -1)]
+
+
+func _has_door(ship: Dictionary, a: Vector2i, b: Vector2i) -> bool:
+	for pair in ship.get("doors", []):
+		if (pair[0] == a and pair[1] == b) or (pair[0] == b and pair[1] == a):
+			return true
+	return false
 
 
 func _make_enemy_crew() -> void:

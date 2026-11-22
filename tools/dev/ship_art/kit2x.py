@@ -266,36 +266,68 @@ def interior(p, rooms, doors, cell=CELL, wall_mat="wall"):
             wall[y - t:y + t, x + g0:x + g1] = False
     wall &= p.tone >= 0
     p.mat[wall] = wall_mat; p.tone[wall] = 1
-    for rid, (cx, cy, cw, ch, sysname) in rooms.items():
-        machine(p, sysname, cx * cell, cy * cell, cw * cell, ch * cell, k)
+    for room in rooms.values():
+        machine(p, room, rooms, doors, cell, k)
     return p
 
 
 # Rooms where crew stand at a console and boost the system (Zachary, 21 Nov: "the rooms should just have consoles
 # the people can work at"): shields recharge faster, weapons arm faster, engines and the cockpit add evasion.
-# Other rooms are bare deck. Keep in step with ShipBattle._station_spot(): the cockpit's console is on the front
-# (right) wall at the room's middle; every other console is on the top wall of the room's first cell.
+# Other rooms are bare deck. A console sits on one cell's wall, never where a door is (Zachary: "you cant have a
+# console infront of a door"), and the crew member stands in the middle of that cell. Keep console_at() in step
+# with ShipBattle._console_at().
 STATION_SYSTEMS = ("pilot", "weapons", "shields", "engines")
 SCREEN_GLOW = {"pilot": "glow_teal", "weapons": "glow_red", "shields": "glow_blue", "engines": "glow"}
+SIDES = {"top": (0, -1), "bottom": (0, 1), "left": (-1, 0), "right": (1, 0)}
 
 
-def machine(p, sysname, x, y, w, h, k):
+def console_at(room, rooms, doors):
+    """(cell, side) for a room's console: the cockpit prefers its front (right) wall, the rest the top wall, then the
+    other walls; the first room cell, row by row, whose wall there is an outside wall with no door in it."""
+    cx, cy, cw, ch, sysname = room
+    order = ("right", "top", "bottom", "left") if sysname == "pilot" else ("top", "bottom", "left", "right")
+    mine = {(x, y) for x in range(cx, cx + cw) for y in range(cy, cy + ch)}
+    door_set = {frozenset((tuple(a), tuple(b))) for a, b in doors}
+    for side in order:
+        dx, dy = SIDES[side]
+        for y in range(cy, cy + ch):
+            for x in range(cx, cx + cw):
+                n = (x + dx, y + dy)
+                if n in mine or frozenset(((x, y), n)) in door_set:
+                    continue
+                return (x, y), side
+    return (cx, cy), "top"
+
+
+def machine(p, room, rooms, doors, cell, k):
+    sysname = room[4]
     if sysname not in STATION_SYSTEMS:
         return
     g = SCREEN_GLOW[sysname]
-    if sysname == "pilot":
-        cy = y + h // 2
-        x0, x1 = x + w - int(7 * k), x + w - int(2 * k) - 1
-        y0, y1 = cy - int(8 * k), cy + int(8 * k)
-        p.bevel(p.mask(rect=(x0, y0, x1, y1)), "console", width=1, face=3, shade_lower=False)
-        p.glow(p.mask(rect=(x0 + 2, y0 + 3, x0 + 4, y1 - 3)), g, 3)
-        for yy in range(y0 + 4, y1 - 3, 5):
-            p.glow(p.mask(rect=(x1 - 3, yy, x1 - 2, yy + 1)), "glow_yellow", 3)
+    (x, y), side = console_at(room, rooms, doors)
+    x, y = x * cell, y * cell
+    a, b = int(2 * k), int(7 * k) - 1           # from the wall: 2 to 7 cell px deep
+    lo, hi = int(4 * k), int(20 * k)            # along the wall: 4 to 20
+    if side == "top":
+        r = (x + lo, y + a, x + hi, y + b)
+    elif side == "bottom":
+        r = (x + lo, y + cell - 1 - b, x + hi, y + cell - 1 - a)
+    elif side == "left":
+        r = (x + a, y + lo, x + b, y + hi)
     else:
-        cx = x + int(12 * k)
-        x0, x1 = cx - int(8 * k), cx + int(8 * k)
-        y0, y1 = y + int(2 * k), y + int(7 * k) - 1
-        p.bevel(p.mask(rect=(x0, y0, x1, y1)), "console", width=1, face=3, shade_lower=False)
-        p.glow(p.mask(rect=(x0 + 3, y1 - 4, x1 - 3, y1 - 2)), g, 3)
+        r = (x + cell - 1 - b, y + lo, x + cell - 1 - a, y + hi)
+    x0, y0, x1, y1 = r
+    p.bevel(p.mask(rect=r), "console", width=1, face=3, shade_lower=False)
+    # the screen faces into the room; small lights along the back
+    if side in ("top", "bottom"):
+        sy = (y1 - 4) if side == "top" else (y0 + 2)
+        p.glow(p.mask(rect=(x0 + 3, sy, x1 - 3, sy + 2)), g, 3)
+        ly = y0 + 2 if side == "top" else y1 - 3
         for xx in range(x0 + 4, x1 - 3, 5):
-            p.glow(p.mask(rect=(xx, y0 + 2, xx + 1, y0 + 3)), "glow_yellow", 3)
+            p.glow(p.mask(rect=(xx, ly, xx + 1, ly + 1)), "glow_yellow", 3)
+    else:
+        sx = (x1 - 4) if side == "left" else (x0 + 2)
+        p.glow(p.mask(rect=(sx, y0 + 3, sx + 2, y1 - 3)), g, 3)
+        lx = x0 + 2 if side == "left" else x1 - 3
+        for yy in range(y0 + 4, y1 - 3, 5):
+            p.glow(p.mask(rect=(lx, yy, lx + 1, yy + 1)), "glow_yellow", 3)

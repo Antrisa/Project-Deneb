@@ -148,8 +148,9 @@ paths; ships with art are mirrored to face you. The **Rabble cutter** is the fir
 `ROOMS` and `DOORS` in `rabble_cutter_2x.py` must match `ShipData.ENEMIES["rabble_cutter"]`.
 Rooms hold **consoles, not furniture** (Zachary, 21 Nov): one console in each shields, weapons, engines and cockpit
 room, where crew stand on station and boost the system (shields recharge faster, weapons arm faster, engines and
-the cockpit add evasion). Oxygen and crew rooms are bare deck. The cockpit's console is on its front wall; the others
-are on the top wall of the room's first cell (`kit2x.machine()` and `ShipBattle._station_spot()` keep in step).
+the cockpit add evasion). Oxygen and crew rooms are bare deck. A console never sits where a door is: the cockpit's goes on its front wall,
+the others on a top wall, else bottom, left or right, in the first cell with a door-free outside wall there; crew stand
+in the middle of that cell (`kit2x.console_at()` and `ShipBattle._console_at()` keep in step).
 
 **For the rest:** each ship gets FTL-simple rooms and doors the same way, and the battle screen uses its
 `art_scale` (2 for these): the picture is fitted on its art pixels, while rooms, crew and the drone stay in 24-px cell
