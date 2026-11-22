@@ -38,6 +38,7 @@ const BAD := Color("e6463c")
 const SHIELD_BLUE := Color("5ab4ff")
 const YOU := Color("ffc878")
 const DRONE := Color("f2c94c")
+const DOOR := Color("fb7412")
 
 var world                        # main.gd
 var open := false
@@ -49,7 +50,9 @@ var result_text := ""
 var end_timer := 0.0
 
 var screen: ShipScreen
+var me_ship: Dictionary = {}         # your ship, built for battle (ShipData.build): rooms, doors
 var ship_tex: Texture2D
+var interior_tex: Texture2D          # your ship's cut-away
 var enemy_tex: Texture2D
 var my_xf := Transform2D.IDENTITY    # your ship picture -> page
 var foe_xf := Transform2D.IDENTITY   # theirs
@@ -73,6 +76,7 @@ var drone_room := "drones"
 var drone_goal := ""
 var drone_work := 0.0
 var drone_selected := false      # clicked, waiting for a bay to go to
+var drone_last := "drones"       # the room the drone is in, or last walked into
 
 # the enemy
 var foe: Dictionary = {}
@@ -112,6 +116,10 @@ func _ready() -> void:
 	screen.on_click = Callable(self, "_click")
 	if ResourceLoader.exists(ShipData.STARTER["art"]):
 		ship_tex = load(ShipData.STARTER["art"])
+	var inside: String = str(ShipData.STARTER.get("interior", ""))
+	if inside != "" and ResourceLoader.exists(inside):
+		interior_tex = load(inside)
+	me_ship = ShipData.build(ShipData.STARTER)
 
 
 # ---------------------------------------------------------------- starting and ending
@@ -129,7 +137,8 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	fold = 0.0
 	oxygen = 100.0
 	tutorial_said = {}
-	var me: Dictionary = ShipData.STARTER
+	me_ship = ShipData.build(ShipData.STARTER)
+	var me: Dictionary = me_ship
 	hull_max = int(me["hull"])
 	hull = clampi(hull_now, 1, hull_max)
 	reactor = int(me["reactor"])
@@ -141,6 +150,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	for wid in fitted:
 		weapons.append({"id": str(wid), "charge": 0.0, "target": "", "on": str(wid) != ""})
 	drone_room = "drones"
+	drone_last = "drones"
 	drone_pos = me["hub"]
 	drone_path = []
 	drone_goal = ""
@@ -175,7 +185,7 @@ func close() -> void:
 
 # Each ship fitted to its own window (the enemy's below the band with its name and hull).
 func _fit_ships() -> void:
-	my_xf = screen.fit_into(ShipData.STARTER["size"], _my_area(), SHIELD_ROOM, MOST_SCALE)
+	my_xf = screen.fit_into(me_ship["size"], _my_area(), SHIELD_ROOM, MOST_SCALE)
 	if not foe.is_empty():
 		foe_xf = screen.fit_into(foe["size"], _foe_area(), SHIELD_ROOM, MOST_SCALE)
 
@@ -288,6 +298,8 @@ func _tick(delta: float) -> void:
 	_move_shots(delta, true)
 	_move_drone(delta)
 	_enemy_crew(delta)
+	_tick_doors(me_ship, delta)
+	_tick_doors(foe, delta)
 
 	# oxygen: only you are aboard, and without life support the air runs thin
 	if _eff(sys, "life") <= 0:
@@ -356,7 +368,7 @@ func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool)
 
 func _enemy_pick_room() -> String:
 	var bag: Array = []
-	for room in ShipData.STARTER["rooms"]:
+	for room in me_ship["rooms"]:
 		var weight: int = {"shields": 3, "weapons": 3, "engines": 2, "life": 1, "pilot": 1, "drones": 1}.get(room["sys"], 1)
 		for i in range(weight):
 			bag.append(room["id"])
@@ -397,7 +409,7 @@ func _my_evasion() -> int:
 func _boosting(sname: String) -> bool:
 	if drone_path.size() > 0 or drone_room == "":
 		return false
-	var room: Dictionary = _room(ShipData.STARTER["rooms"], drone_room)
+	var room: Dictionary = _room(me_ship["rooms"], drone_room)
 	return str(room.get("sys", "")) == sname and sys.has(sname) and int(sys[sname]["damage"]) == 0
 
 
@@ -444,7 +456,7 @@ func _room(rooms: Array, id: String) -> Dictionary:
 # The middle of a room, in ship-picture pixels. at_player: a room on your ship.
 func _room_center(at_player: bool, id: String) -> Vector2:
 	if at_player:
-		var r: Rect2 = _room(ShipData.STARTER["rooms"], id).get("rect", Rect2(78, 43, 0, 0))
+		var r: Rect2 = _room(me_ship["rooms"], id).get("rect", Rect2(78, 43, 0, 0))
 		return r.get_center()
 	var e: Rect2 = _room(foe["rooms"], id).get("rect", Rect2(40, 46, 0, 0))
 	return e.get_center()
@@ -454,6 +466,11 @@ func _fire(w: Dictionary, at_player: bool) -> void:
 	var data: Dictionary = ShipData.WEAPONS[w["id"]]
 	var target: String = str(w["target"])
 	var from: Vector2 = _room_center(not at_player, "weapons")
+	# Your shots leave from the gun on that weapon's mount (on the starter, the wings).
+	var slot: int = weapons.find(w)
+	var mounts: Array = me_ship.get("mounts", [])
+	if not at_player and slot >= 0 and slot < mounts.size():
+		from = mounts[slot]
 	var to: Vector2 = _room_center(at_player, target)
 	var dodge: int = _my_evasion() if at_player else _enemy_evasion()
 	# from and to are ship-picture pixels: from on the firing ship, to on the target.
@@ -498,7 +515,7 @@ func _land(s: Dictionary) -> void:
 	var room_id: String = s["room"]
 	if at_player:
 		hull -= dmg
-		var room: Dictionary = _room(ShipData.STARTER["rooms"], room_id)
+		var room: Dictionary = _room(me_ship["rooms"], room_id)
 		var sname: String = str(room.get("sys", ""))
 		if sys.has(sname):
 			sys[sname]["damage"] = mini(int(sys[sname]["max"]), int(sys[sname]["damage"]) + dmg)
@@ -539,7 +556,7 @@ func _damaged_rooms() -> Array:
 	var out: Array = []
 	for sname in REPAIR_ORDER:
 		if sys.has(sname) and int(sys[sname]["damage"]) > 0:
-			for room in ShipData.STARTER["rooms"]:
+			for room in me_ship["rooms"]:
 				if str(room["sys"]) == sname:
 					out.append(str(room["id"]))
 	return out
@@ -550,34 +567,52 @@ func send_drone(room_id: String) -> void:
 		return
 	if room_id == drone_room and drone_path.is_empty():
 		return
-	var me: Dictionary = ShipData.STARTER
+	var me: Dictionary = me_ship
 	var target: Dictionary = _room(me["rooms"], room_id)
 	if target.is_empty():
 		return
+	# Room to room through the doors (ShipData.route), from the room it's in now; then to the middle of the bay.
+	var steps: Array = ShipData.route(me, drone_last, room_id)
+	if steps.is_empty() and drone_last != room_id and not (me.get("door_list", []) as Array).is_empty():
+		return                       # no way through
 	drone_goal = room_id
 	drone_work = 0.0
 	drone_path = []
-	if drone_room != "drones":
-		drone_path.append(me["hub"])
-	var r: Rect2 = target["rect"]
-	drone_path.append(r.get_center())
+	for st in steps:
+		drone_path.append({"pos": st["door"]["at"], "room": str(st["room"]), "door": st["door"]})
+	drone_path.append({"pos": (target["rect"] as Rect2).get_center(), "room": room_id})
 	drone_room = ""
+
+
+# Crew and the drone open a door as they go through; it shuts again behind them.
+func _door_pass(door: Dictionary) -> void:
+	door["pass"] = 0.5
+
+
+func _tick_doors(ship: Dictionary, delta: float) -> void:
+	for d in ship.get("door_list", []):
+		if float(d["pass"]) > 0.0:
+			d["pass"] = maxf(0.0, float(d["pass"]) - delta)
 
 
 func _move_drone(delta: float) -> void:
 	var slow: float = 0.5 if int(sys["drones"]["damage"]) > 0 else 1.0
 	if drone_path.size() > 0:
-		var next: Vector2 = drone_path[0]
+		var next: Dictionary = drone_path[0]
+		var to: Vector2 = next["pos"]
 		var step: float = ShipData.DRONE_SPEED * slow * delta
-		if drone_pos.distance_to(next) <= step:
-			drone_pos = next
+		if drone_pos.distance_to(to) <= step:
+			drone_pos = to
+			drone_last = str(next["room"])
+			if next.has("door"):
+				_door_pass(next["door"])
 			drone_path.pop_front()
 			if drone_path.is_empty():
 				drone_room = drone_goal
 		else:
-			drone_pos += (next - drone_pos).normalized() * step
+			drone_pos += (to - drone_pos).normalized() * step
 		return
-	var here: Dictionary = _room(ShipData.STARTER["rooms"], drone_room)
+	var here: Dictionary = _room(me_ship["rooms"], drone_room)
 	var sname: String = str(here.get("sys", ""))
 	if sname != "" and sys.has(sname) and int(sys[sname]["damage"]) > 0:
 		drone_work += delta * slow
@@ -620,7 +655,8 @@ func _make_enemy_crew() -> void:
 			home = _sys_room(STATIONS[i])
 		if home == "":
 			home = _spare_room()
-		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i), "hp": CREW_HP, "task": "station"})
+		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i), "hp": CREW_HP, "task": "station",
+			"last": home, "path": [], "path_to": home})
 	e_crew = e_crew_list.size()
 
 
@@ -684,15 +720,35 @@ func _enemy_crew(delta: float) -> void:
 			if not e_sys.has(tsys) or int(e_sys[tsys]["damage"]) <= 0:
 				c3["task"] = "station"
 				c3["target"] = c3["home"]
+		# Through the doors when the ship has them (ShipData.route), from the room they're in now.
+		if str(c3["path_to"]) != str(c3["target"]):
+			c3["path_to"] = c3["target"]
+			var steps: Array = []
+			for st in ShipData.route(foe, str(c3["last"]), str(c3["target"])):
+				steps.append({"pos": st["door"]["at"], "room": str(st["room"]), "door": st["door"]})
+			c3["path"] = steps
 		var goal: Vector2 = _crew_spot(str(c3["target"]), i)
 		var at: Vector2 = c3["pos"]
 		var step: float = CREW_SPEED * delta
-		if at.distance_to(goal) > step:
+		var path: Array = c3["path"]
+		if path.size() > 0:
+			var wp: Dictionary = path[0]
+			var to: Vector2 = wp["pos"]
+			if at.distance_to(to) <= step:
+				c3["pos"] = to
+				c3["last"] = wp["room"]
+				_door_pass(wp["door"])
+				path.pop_front()
+			else:
+				c3["pos"] = at + (to - at).normalized() * step
+			c3["room"] = ""
+		elif at.distance_to(goal) > step:
 			c3["pos"] = at + (goal - at).normalized() * step
 			c3["room"] = ""
 		else:
 			c3["pos"] = goal
 			c3["room"] = c3["target"]
+			c3["last"] = c3["target"]
 			if str(c3["task"]) == "repair":
 				working[c3["room"]] = int(working.get(c3["room"], 0)) + 1
 	for rid2 in working:
@@ -725,6 +781,13 @@ func _hurt_crew(room_id: String, dmg: int, where: Vector2) -> void:
 		world.sfx("quest")
 
 
+# A room's name for S.A.R.A.'s lines: "engine room", "drone bay"...
+func _room_words(room: Dictionary) -> String:
+	var words := {"engines": "engine room", "weapons": "weapons room", "drones": "drone bay", "life": "oxygen room",
+		"shields": "shield room", "pilot": "cockpit"}
+	return str(words.get(str(room.get("sys", "")), str(room.get("label", "room")).to_lower()))
+
+
 func _tutorial_hints() -> void:
 	if not bool(fight.get("tutorial", false)):
 		return
@@ -736,10 +799,10 @@ func _tutorial_hints() -> void:
 	if not tutorial_said.has("hit") and hurt.size() > 0:
 		tutorial_said["hit"] = true
 		paused = true
-		var room: Dictionary = _room(ShipData.STARTER["rooms"], str(hurt[0]))
+		var room: Dictionary = _room(me_ship["rooms"], str(hurt[0]))
 		world._say("Sara", [
-			"Your %s has been hit. A damaged bay shows red, and its system loses bars until it's mended." % str(room["label"]),
-			"Your drone is your crew. Click the drone, then click the %s. It repairs whatever bay it's in." % str(room["label"]),
+			"Your %s has been hit. A damaged room shows red, and its system loses bars until it's mended." % _room_words(room),
+			"Your drone is your crew. Click the drone, then click the %s. It goes through the doors and repairs whatever room it's in." % _room_words(room),
 			"Press Space when you're ready.",
 		])
 	elif tutorial_said.has("hit") and not tutorial_said.has("boost") and hurt.is_empty() and drone_room != "drones" and drone_path.is_empty():
@@ -850,8 +913,14 @@ func _click(id: String, p: Vector2, button: int) -> void:
 	if left and (id == "drone" or _drone_rect().has_point(p)):
 		_select_drone()
 		return
+	# your doors: click one to shut it or open it again
+	for d in me_ship.get("door_list", []):
+		if _door_rect(d, my_xf).grow(3.0).has_point(p):
+			d["open"] = not bool(d["open"])
+			world.sfx("click", 0.8 if bool(d["open"]) else 1.1, -4.0)
+			return
 	# a bay on your ship: with the drone selected, send it there (left or right click, as with crew in FTL)
-	for room in ShipData.STARTER["rooms"]:
+	for room in me_ship["rooms"]:
 		if (my_xf * (room["rect"] as Rect2)).has_point(p):
 			if bool(room.get("crew", false)):
 				if drone_selected:
@@ -949,7 +1018,7 @@ func _paint_my_window() -> void:
 	s.text(MY_WIN.position.x + 11, MY_WIN.position.y + 7, "OWN SHIP", "micro", ShipScreen.SCOPE_TEXT)
 	if uplink:
 		s.text_right(MY_WIN.end.x - 11, MY_WIN.position.y + 7, "S.A.R.A. UPLINK", "micro", Color("78d8e6"))
-	var me: Dictionary = ShipData.STARTER
+	var me: Dictionary = me_ship
 	var size: Vector2 = me["size"]
 	var k: float = _ship_scale(true)
 	var off := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * (2.0 if shake > 0.0 else 0.0)
@@ -959,45 +1028,48 @@ func _paint_my_window() -> void:
 		s.ellipse(mid, size * k / 2.0 + Vector2(8, 8), Color(SHIELD_BLUE, 0.55 + 0.2 * layers), 1.0)
 		if layers > 1:
 			s.ellipse(mid, size * k / 2.0 + Vector2(12, 12), Color(Color("78f0ff"), 0.7), 1.0)
-	if ship_tex != null:
+	# The cut-away when there is one; otherwise the hull with the rooms drawn over it.
+	var inside: bool = interior_tex != null
+	if inside:
+		s.texture(interior_tex, Rect2(xf.origin, size * k))
+	elif ship_tex != null:
 		var fw: float = ship_tex.get_width() / float(me["frames"])
 		s.texture(ship_tex, Rect2(xf.origin, size * k), Rect2(fw * int(me["frame"]), 0, fw, ship_tex.get_height()))
-	else:
-		s.rect(Rect2(xf * Vector2(36, 20), Vector2(110, 44) * k), Color("dcd8cc"))
-	# the ducts the drone crawls through
-	var hub: Vector2 = me["hub"]
-	for room in me["rooms"]:
-		if bool(room.get("crew", false)):
-			continue
-		var c: Vector2 = (room["rect"] as Rect2).get_center()
-		var n: int = int(hub.distance_to(c) / 4.0)
-		for i in range(n + 1):
-			var q: Vector2 = xf * hub.lerp(c, float(i) / maxf(1.0, float(n)))
-			s.rect(Rect2(q - Vector2(k, k) * 0.5, Vector2(k, k)), Color(1, 0.82, 0.35, 0.35))
-	# the bays
+	# the rooms: red while damaged, a name tag, and the system's bars
 	for room in me["rooms"]:
 		var rr: Rect2 = xf * (room["rect"] as Rect2)
 		var sname: String = room["sys"]
 		var dmg: int = int(sys[sname]["damage"]) if sys.has(sname) else 0
 		var crew_room: bool = bool(room.get("crew", false))
-		var fill := Color(0.92, 0.9, 0.86, 0.95) if crew_room else Color(0.38, 0.4, 0.46, 0.88)
-		if dmg > 0:
-			fill = fill.lerp(Color("a0463c"), 0.65)
-		s.rect(rr, fill)
-		s.outline(rr, Color("282834"))
-		if rr.size.y >= 18.0:
-			s.text_fit(rr.position.x + 3, rr.position.y + 2, rr.size.x - 5, str(room["label"]), "micro",
-				Color("1e1e28") if crew_room else Color(0.92, 0.93, 0.96))
+		if inside:
+			if dmg > 0:
+				s.rect(rr.grow(-2.0 * k), Color(0.86, 0.22, 0.16, 0.38))
+		else:
+			var fill := Color(0.92, 0.9, 0.86, 0.95) if crew_room else Color(0.38, 0.4, 0.46, 0.88)
+			if dmg > 0:
+				fill = fill.lerp(Color("a0463c"), 0.65)
+			s.rect(rr, fill)
+			s.outline(rr, Color("282834"))
+		_room_tag(rr, str(room["label"]), k)
 		if sys.has(sname) and sname != "pilot":
 			var bars: int = int(sys[sname]["max"])
 			for i in range(bars):
-				var bar := Rect2(rr.position + Vector2(3.0 + i * 4.0 * k, rr.size.y - 3.0 - 2.0 * k), Vector2(3.0 * k, 2.0 * k))
+				var bar := Rect2(rr.position + Vector2(3.0 * k + i * 4.0 * k, rr.size.y - 3.0 * k - 2.0 * k), Vector2(3.0 * k, 2.0 * k))
 				s.rect(bar, GOOD if i < bars - dmg else BAD)
 		if drone_selected and not crew_room and result == "" and rr.has_point(s.mouse):
-			s.outline(rr, GOOD)
+			s.outline(rr.grow(-1.0), GOOD, maxf(1.0, k * 0.5))
+	_paint_doors(me_ship, xf, k, true)
+	# the guns on their mounts (shapes until the weapon art exists)
+	var mounts: Array = me.get("mounts", [])
+	for i in range(mini(mounts.size(), weapons.size())):
+		if str(weapons[i]["id"]) == "":
+			continue
+		var m: Vector2 = xf * (mounts[i] as Vector2)
+		s.rect(Rect2(m + Vector2(-4, -1.5) * k, Vector2(14, 3) * k), Color("5d5868"))
+		s.rect(Rect2(m + Vector2(8, -1) * k, Vector2(3, 2) * k), ShipData.WEAPONS[weapons[i]["id"]]["color"])
 	# you, in the cockpit
 	var cockpit: Rect2 = _room(me["rooms"], "cockpit")["rect"]
-	var you: Vector2 = xf * (cockpit.get_center() + Vector2(2, 2))
+	var you: Vector2 = xf * (cockpit.get_center() + Vector2(-4, 0))      # in the seat, under the canopy
 	s.circle(you, 5.0 * k, YOU)
 	s.ring(you, 5.0 * k, Color("201e28"))
 	# the drone
@@ -1014,6 +1086,52 @@ func _paint_my_window() -> void:
 		var tag := Rect2(MY_WIN.get_center().x - 30, MY_WIN.position.y + 4, 60, 14)
 		s.rect(tag, Color("f2c94c"))
 		s.text_center(tag.get_center().x, tag.position.y, "PAUSED", "micro", INK)
+
+
+# A room's name in a small dark tag in its top-left corner (cut to the room's width).
+func _room_tag(rr: Rect2, label: String, k: float) -> void:
+	if rr.size.y < 18.0:
+		return
+	var s := screen
+	var words := label.to_upper()
+	var room_w: float = rr.size.x - 4.0 * k - 2.0
+	while words.length() > 0 and s.width(words, "micro") > room_w:
+		words = words.left(words.length() - 1)
+	var w: float = s.width(words, "micro") + 4.0
+	var at := rr.position + Vector2(2.0 * k, 2.0 * k)
+	s.rect(Rect2(at, Vector2(w, 11)), Color(0.08, 0.09, 0.12, 0.78))
+	s.text(at.x + 2, at.y - 2, words, "micro", Color("fff6ea"))
+
+
+# A door's slab, on the page. Doors sit in the gap the interior art leaves in the wall: 10 x 4 picture pixels.
+func _door_rect(d: Dictionary, xf: Transform2D) -> Rect2:
+	var at: Vector2 = xf * (d["at"] as Vector2)
+	var k: float = xf.get_scale().x
+	var half := Vector2(2.0, 5.0) * k if bool(d["across"]) else Vector2(5.0, 2.0) * k
+	return Rect2(at - half, half * 2.0)
+
+
+# Doors (Zachary, 21 Nov): open (just the frame's ends), shut (an orange slab), or locked (red, door_level 2+).
+# Someone walking through holds a door open for a moment. Your own doors light up under the pointer.
+func _paint_doors(ship: Dictionary, xf: Transform2D, k: float, mine: bool) -> void:
+	var s := screen
+	var locks: bool = int(ship.get("door_level", 1)) >= 2
+	for d in ship.get("door_list", []):
+		var slab := _door_rect(d, xf)
+		var is_open: bool = bool(d["open"]) or float(d["pass"]) > 0.0
+		if is_open:
+			var e: float = maxf(1.0, k)
+			if bool(d["across"]):
+				s.rect(Rect2(slab.position, Vector2(slab.size.x, e)), DOOR)
+				s.rect(Rect2(slab.position + Vector2(0, slab.size.y - e), Vector2(slab.size.x, e)), DOOR)
+			else:
+				s.rect(Rect2(slab.position, Vector2(e, slab.size.y)), DOOR)
+				s.rect(Rect2(slab.position + Vector2(slab.size.x - e, 0), Vector2(e, slab.size.y)), DOOR)
+		else:
+			s.rect(slab, ShipScreen.PIP_RED if locks else DOOR)
+			s.rect(slab.grow(-maxf(1.0, k * 0.5)), Color("ffa096") if locks else Color("ffd08a"))
+		if mine and result == "" and slab.grow(3.0).has_point(s.mouse):
+			s.outline(slab.grow(2.0), Color("fff6ea"))
 
 
 # Their window: the band with their name, hull, shields, evasion and crew, then the ship.
@@ -1088,6 +1206,7 @@ func _paint_enemy() -> void:
 				s.rect(bar, GOOD if i < bars - dmg else BAD)
 		if selected >= 0 and rr.has_point(s.mouse):
 			s.outline(rr, BAD)
+	_paint_doors(foe, xf, k, false)
 	# their crew: red at stations, orange when repairing, a health bar once hurt
 	for c in e_crew_list:
 		var cpos: Vector2 = xf * (c["pos"] as Vector2)

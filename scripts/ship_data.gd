@@ -2,8 +2,14 @@ extends RefCounted
 # Ships, weapons and fights for the FTL-style space battles (scripts/ship_battle.gd). 21 Nov 2026.
 # Design: claude/echo-landing-ship-combat.md in the Project. Every number here is a first guess to tune in play.
 #
-# Room rectangles are in the ship picture's own pixels, from its top-left corner. "sys" is the system the room
-# holds: shields, engines, weapons, life (oxygen), pilot (cockpit), drones. A hit on a room damages its system.
+# Ships are built on a grid of 24-px cells, FTL-style (Zachary, 21 Nov). A room is a rectangle of cells
+# ("cells": Rect2i(column, row, width, height)); build() works out its picture rectangle ("rect"). Older ships
+# still give "rect" in picture pixels. "sys" is the system the room holds: shields, engines, weapons, life
+# (oxygen), pilot (cockpit), drones. A hit on a room damages its system.
+#
+# Doors (Zachary, 21 Nov: "doors to go to each room you can close and upgrade to lock"): each door joins two
+# neighbouring cells of different rooms, [Vector2i, Vector2i]. Crew and the drone open them as they pass. You can
+# click your own doors shut; "door_level" 2 or more locks shut doors (for boarders and fire, when those come).
 # "max" is how many bars a system can hold; "power" is how many it starts with. pilot and drones are subsystems:
 # they never take reactor power, they only work or not.
 
@@ -12,6 +18,7 @@ const DRONE_REPAIR_TIME := 3.0     # seconds for the repair drone to fix one bar
 const DRONE_SPEED := 70.0          # ship-picture pixels a second through the ducts
 const ENEMY_REPAIR_TIME := 7.0     # seconds for an enemy crew to fix one bar
 const SHOT_TIME := 0.7             # seconds a shot takes to cross the gap
+const CELL := 24.0                 # one room cell, in ship-picture pixels (one station tile)
 
 # The repair drone is your first crew member (Zachary, 21 Nov): you select it and send it bay to bay, the way you
 # will order crew around on bigger ships. It repairs the bay it is in. In a working bay it boosts that system.
@@ -36,23 +43,32 @@ const STORES := {
 		"fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8},
 }
 
-# The repaired fighter from the Shuttle Bay (art/lunar/player_ship.png, frame 4 of 4, 168x96).
-# Only the cockpit is reachable; the bays behind it are sealed, and the repair drone crawls between them.
+# The starter fighter, redrawn after the intro movie (Zachary, 21 Nov: "regular plane wings and the thrusters go
+# back behind the ship"). 7 x 4 cells (168 x 96). Art by tools/dev/ship_art/starter.py: art/ships/starter/hull.png
+# outside, interior.png the cut-away; art/lunar/player_ship.png is its four repair stages for the Shuttle Bay.
+# Only you fit in the cockpit; the repair drone goes room to room through the doors.
 const STARTER := {
 	"name": "Your fighter",
-	"art": "res://art/lunar/player_ship.png", "frames": 4, "frame": 3, "size": Vector2(168, 96),
-	"hull": 12, "reactor": 6, "drones": 1,
-	"weapons": ["burst_laser", ""],          # "" is an empty slot
+	"art": "res://art/ships/starter/hull.png", "frames": 1, "frame": 0, "size": Vector2(168, 96),
+	"interior": "res://art/ships/starter/interior.png",
+	"hull": 12, "reactor": 6, "drones": 1, "door_level": 1,
+	"weapons": ["burst_laser", ""],          # "" is an empty slot; bigger ships have more slots
+	"mounts": [Vector2(83, 9), Vector2(83, 86)],   # where each weapon slot's gun sits, on the wings
 	"systems": {"shields": [2, 2], "engines": [2, 1], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1], "drones": [1, 1]},
 	"rooms": [
-		{"id": "weapons", "label": "Weapons bay", "sys": "weapons", "rect": Rect2(44, 6, 66, 14)},
-		{"id": "engines", "label": "Engine bay", "sys": "engines", "rect": Rect2(44, 66, 66, 14)},
-		{"id": "life", "label": "Life support", "sys": "life", "rect": Rect2(42, 26, 24, 34)},
-		{"id": "drones", "label": "Drone bay", "sys": "drones", "rect": Rect2(66, 26, 24, 34)},
-		{"id": "shields", "label": "Shields", "sys": "shields", "rect": Rect2(90, 26, 24, 34)},
-		{"id": "cockpit", "label": "Cockpit", "sys": "pilot", "rect": Rect2(114, 30, 28, 24), "crew": true},
+		{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+		{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(2, 1, 2, 1)},
+		{"id": "drones", "label": "Drone bay", "sys": "drones", "cells": Rect2i(2, 2, 1, 1)},
+		{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(3, 2, 1, 1)},
+		{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(4, 1, 1, 2)},
+		{"id": "cockpit", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(5, 1, 1, 2), "crew": true},
 	],
-	"hub": Vector2(78, 43),                 # where the ducts meet, in the drone bay
+	"doors": [
+		[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(2, 2)],
+		[Vector2i(3, 1), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(3, 2), Vector2i(4, 2)],
+		[Vector2i(4, 1), Vector2i(5, 1)],
+	],
+	"hub": Vector2(60, 60),                 # the drone's home: the middle of the drone bay
 }
 
 # Enemy ships. "shape" is the outline drawn until real art exists (art/ships/<id>.png, facing left).
@@ -144,11 +160,73 @@ const REWARDS := {
 }
 
 
-# Every enemy ship, whatever table it is in.
+# Every enemy ship, whatever table it is in, built for battle.
 static func enemy(id: String) -> Dictionary:
 	if ENEMIES.has(id):
-		return ENEMIES[id]
-	return ANA_SHIPS.get(id, {})
+		return build(ENEMIES[id])
+	return build(ANA_SHIPS.get(id, {}))
+
+
+# A ship ready for battle: a copy of its table, with each room's picture rectangle ("rect") worked out from its
+# cells, and its doors as "door_list": {"a", "b" (the rooms either side; "" is space, for an airlock), "at" (the
+# door's middle, picture pixels), "across" (true for a door in a wall that runs up and down), "open", "locked",
+# "pass" (seconds it stays open after someone walks through)}.
+static func build(def: Dictionary) -> Dictionary:
+	var ship: Dictionary = def.duplicate(true)
+	var rooms: Array = ship.get("rooms", [])
+	for room in rooms:
+		if room.has("cells"):
+			var c: Rect2i = room["cells"]
+			room["rect"] = Rect2(Vector2(c.position) * CELL, Vector2(c.size) * CELL)
+	var doors: Array = []
+	for pair in ship.get("doors", []):
+		var a: Vector2i = pair[0]
+		var b: Vector2i = pair[1]
+		var across: bool = a.y == b.y
+		var at := Vector2(maxi(a.x, b.x) * CELL, (a.y + 0.5) * CELL) if across else Vector2((a.x + 0.5) * CELL, maxi(a.y, b.y) * CELL)
+		doors.append({"a": _room_at_cell(rooms, a), "b": _room_at_cell(rooms, b), "at": at, "across": across,
+			"open": false, "locked": false, "pass": 0.0})
+	ship["door_list"] = doors
+	return ship
+
+
+static func _room_at_cell(rooms: Array, cell: Vector2i) -> String:
+	for room in rooms:
+		if room.has("cells") and (room["cells"] as Rect2i).has_point(cell):
+			return str(room["id"])
+	return ""
+
+
+# The way from one room to another through the doors, as steps {"door", "room" (the room you are in after it)}.
+# Empty when they are the same room, when there's no way through, or when the ship has no doors.
+static func route(ship: Dictionary, from_id: String, to_id: String) -> Array:
+	if from_id == to_id or from_id == "":
+		return []
+	var came := {from_id: []}
+	var queue: Array = [from_id]
+	while queue.size() > 0:
+		var here: String = queue.pop_front()
+		if here == to_id:
+			break
+		for d in ship.get("door_list", []):
+			var other := ""
+			if str(d["a"]) == here:
+				other = str(d["b"])
+			elif str(d["b"]) == here:
+				other = str(d["a"])
+			if other == "" or came.has(other):
+				continue
+			came[other] = [here, d]
+			queue.append(other)
+	if not came.has(to_id):
+		return []
+	var steps: Array = []
+	var at: String = to_id
+	while at != from_id:
+		var link: Array = came[at]
+		steps.push_front({"door": link[1], "room": at})
+		at = str(link[0])
+	return steps
 
 # ---------------------------------------------------------------- the jump map (scripts/ship_map.gd)
 # A big circle round the Landing: five rings, split into four zones of control. All of it is the neutral zone.
