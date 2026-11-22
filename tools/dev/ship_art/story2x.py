@@ -415,7 +415,7 @@ SHIPS = {
 
 if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--install":
     # python3 -I tools/dev/ship_art/story2x.py --install <repo root> <ship id>...: art/ships/<id>/hull.png, interior.png
-    from kit2x import interior
+    from kit2x import interior, save_interior
     root = Path(sys.argv[2])
     for sid in sys.argv[3:]:
         fn = SHIPS[sid][0]
@@ -424,7 +424,7 @@ if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--install":
         fn().render().save(out / "hull.png")
         rooms, doors = INSIDES[sid]
         bays = [r for r in rooms if r != "cockpit"] if sid == "starter" else ()
-        interior(fn(), rooms, doors, bays=bays).render().save(out / "interior.png")
+        save_interior(interior(fn(), rooms, doors, bays=bays), out / "interior.png")
         print("installed", sid)
 elif __name__ == "__main__":
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/story2x")

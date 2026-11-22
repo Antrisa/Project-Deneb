@@ -215,6 +215,21 @@ def sheet(items, path, scale=2, cols=2, pad=16, bg=(20, 24, 36, 255), label=True
 
 # ---------------------------------------------------------------- cut-away interiors, FTL-simple
 
+def save_interior(p, path):
+    """Save a cut-away (interior(...)'s result) and, beside it, frame*.png: just the dark frame round its rooms, so
+    the game can draw the guns between the two and their back ends tuck under the frame (Zachary, 22 Nov: "move it
+    back a hair so it sits just under the ship interior outline")."""
+    from scipy import ndimage as nd
+    from PIL import Image
+    path = Path(path)
+    img = p.render()
+    img.save(path)
+    a = np.array(img)
+    keep = nd.binary_dilation(getattr(p, "frame_mask", np.zeros(a.shape[:2], bool)), iterations=1)
+    a[~keep, 3] = 0
+    Image.fromarray(a, "RGBA").save(path.with_name(path.name.replace("interior", "frame")))
+
+
 def interior(p, rooms, doors, cell=CELL, wall_mat="wall", bays=(), airlocks=None):
     """Cut the rooms into a hull picture: a dark frame round the rooms, deck floors, 4-px walls on the cell edges
     with door gaps (the game draws the doors), and one machine per system. Keeps in step with the game: rooms are
@@ -229,6 +244,7 @@ def interior(p, rooms, doors, cell=CELL, wall_mat="wall", bays=(), airlocks=None
     for (cx, cy, cw, ch, _) in rooms.values():
         block[cy * cell:(cy + ch) * cell, cx * cell:(cx + cw) * cell] = True
     frame = nd.binary_dilation(block, iterations=int(3 * k)) & ~block
+    p.frame_mask = frame
     p.mat[frame] = wall_mat; p.tone[frame] = 3
     p.tone[frame & ~nd.binary_erosion(frame | block, iterations=1)] = 1
     p.lines[block] = False

@@ -123,6 +123,11 @@ var ship_tex: Texture2D
 var interior_tex: Texture2D          # your ship's cut-away
 var enemy_tex: Texture2D
 var enemy_inside: Texture2D      # their cut-away, when the art has one
+# Just the dark frame round each cut-away's rooms (frame*.png beside interior*.png, kit2x.save_interior), drawn over
+# the guns so their back ends tuck under it (Zachary, 22 Nov).
+var my_frame_tex: Texture2D
+var enemy_frame_tex: Texture2D
+const GUN_TUCK := 6.0            # art px a gun sits back from its mount, under the frame
 # Breaking up, FTL-style (Zachary, 21 Nov): an enemy blown apart splits into pieces with its insides showing
 # (art/ships/<id>/gib_N.png, tools/dev/ship_art/gibs2x.py) that drift apart and spin; when you're beaten, bits break
 # off your fighter (chip_N.png, interior_broken.png) and it makes an emergency jump home. The fold jump streaks too.
@@ -287,6 +292,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	me_ship = ShipData.build(my_def)
 	ship_tex = _load_tex(str(my_def.get("art", "")))
 	interior_tex = _load_tex(str(my_def.get("interior", "")))
+	my_frame_tex = _load_tex(str(my_def.get("interior", "")).replace("interior", "frame"))
 	if on_starter:
 		broken_tex = _load_tex(str(my_def.get("interior", "")).replace("interior.png", "interior_broken.png"))
 		my_chips = _pieces(str(my_def["art"]).replace("hull.png", "chip_%d.png"), my_def)
@@ -341,6 +347,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	overcharged = false
 	enemy_tex = _load_tex(str(foe.get("art", "")))
 	enemy_inside = _load_tex(str(foe.get("interior", "")))
+	enemy_frame_tex = _load_tex(str(foe.get("interior", "")).replace("interior", "frame"))
 	var art: String = str(foe.get("art", ""))
 	foe_gibs = _pieces(art.get_basename().replace("hull", "gib") + "_%d.png", foe) if art != "" else []
 	break_t = -1.0
@@ -2714,9 +2721,11 @@ func _paint_my_window() -> void:
 		if crew_sel >= 0 and str(my_crew[crew_sel]["ship"]) == "me" and result == "" and rr.has_point(s.mouse):
 			s.outline(rr.grow(-1.0), GOOD, maxf(1.0, k * 0.5))
 	_paint_hazards(true, xf, k)
+	_paint_guns(me, weapons, xf)
+	if my_frame_tex != null and lose_t < 0.0:
+		s.texture_xf(my_frame_tex, _art_xf(me, xf))
 	_paint_shield(true, xf, size, k, layers)
 	_paint_doors(me_ship, xf, k, true)
-	_paint_guns(me, weapons, xf)
 	if crew_mode:
 		_paint_people(true, xf, k)
 		if lose_t >= 0.0:
@@ -2790,7 +2799,7 @@ func _paint_guns(ship: Dictionary, list: Array, xf: Transform2D) -> void:
 				frame = 2
 			elif c > 0.05:
 				frame = 1
-			var at: Transform2D = art_xf * Transform2D(0.0, m * a - (GUN_MOUNT[big] as Vector2))
+			var at: Transform2D = art_xf * Transform2D(0.0, m * a - (GUN_MOUNT[big] as Vector2) - Vector2(GUN_TUCK, 0))
 			screen.texture_xf(tex, at, Rect2(frame * fsize.x, 0, fsize.x, fsize.y))
 			continue
 		var f: float = 1.7 if int(data["damage"]) >= 3 else 1.0
@@ -3040,9 +3049,11 @@ func _paint_enemy() -> void:
 		if (pod_aim or (crew_sel >= 0 and str(my_crew[crew_sel]["ship"]) == "foe")) and rr.has_point(s.mouse):
 			s.outline(rr, GOOD)
 	_paint_hazards(false, xf, k)
+	_paint_guns(foe, e_weapons, xf)
+	if enemy_frame_tex != null and enemy_inside != null:
+		s.texture_xf(enemy_frame_tex, _art_xf(foe, xf))
 	_paint_shield(false, xf, size, k, e_layers)
 	_paint_doors(foe, xf, k, false)
-	_paint_guns(foe, e_weapons, xf)
 	# your boarders on their ship
 	if crew_mode:
 		_paint_people(false, xf, k)

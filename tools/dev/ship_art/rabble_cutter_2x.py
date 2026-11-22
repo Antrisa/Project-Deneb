@@ -162,12 +162,12 @@ DOORS = [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (2, 2)), ((2, 1), (3, 1)),
 
 
 if __name__ == "__main__" and len(sys.argv) > 1:
-    from kit2x import interior
+    from kit2x import interior, save_interior
     root = Path(sys.argv[1])
     out = root / "art/ships/rabble_cutter"
     out.mkdir(parents=True, exist_ok=True)
     cutter().render().save(out / "hull.png")
-    interior(cutter(), ROOMS, DOORS).render().save(out / "interior.png")
+    save_interior(interior(cutter(), ROOMS, DOORS), out / "interior.png")
     print("ok")
 elif __name__ == "__main__":
     from PIL import Image

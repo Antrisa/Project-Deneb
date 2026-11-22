@@ -307,14 +307,14 @@ def piratize2x(src, seed=1, swaps=None):
 
 if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--install":
     # python3 -I tools/dev/ship_art/bases2x.py --install <repo root>: art/ships/<id>/hull.png and interior.png
-    from kit2x import interior
+    from kit2x import interior, save_interior
     root = Path(sys.argv[2])
     for sid, fn in (("pirate_stronghold", pirate_stronghold), ("rabble_nest", rabble_nest)):
         rooms, doors, _mounts = INSIDES[sid]
         out = root / "art/ships" / sid
         out.mkdir(parents=True, exist_ok=True)
         fn().render().save(out / "hull.png")
-        interior(fn(), rooms, doors).render().save(out / "interior.png")
+        save_interior(interior(fn(), rooms, doors), out / "interior.png")
         print("installed", sid)
 elif __name__ == "__main__":
     import fleet2x

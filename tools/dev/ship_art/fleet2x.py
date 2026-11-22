@@ -645,7 +645,7 @@ SHIPS = {
 if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--install":
     # python3 -I tools/dev/ship_art/fleet2x.py --install <repo root> [ids]: art/ships/<id>/hull.png and interior.png,
     # and the Rabble repaint as hull_rabble.png and interior_rabble.png (same rooms)
-    from kit2x import interior
+    from kit2x import interior, save_interior
     from bases2x import piratize2x, PIRATE_SWAPS
     root = Path(sys.argv[2])
     for sid in sys.argv[3:] or list(INSIDES):
@@ -656,9 +656,9 @@ if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--install":
         clean = fn()
         rabble = piratize2x(clean, seed=len(sid), swaps=PIRATE_SWAPS.get(sid))
         clean.render().save(out / "hull.png")
-        interior(clean.copy(), rooms, doors).render().save(out / "interior.png")
+        save_interior(interior(clean.copy(), rooms, doors), out / "interior.png")
         rabble.render().save(out / "hull_rabble.png")
-        interior(rabble.copy(), rooms, doors).render().save(out / "interior_rabble.png")
+        save_interior(interior(rabble.copy(), rooms, doors), out / "interior_rabble.png")
         print("installed", sid)
 elif __name__ == "__main__":
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/fleet2x")
