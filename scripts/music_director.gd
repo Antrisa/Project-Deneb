@@ -1,7 +1,9 @@
 extends Node
 # Which song plays when: Zachary's soundtrack (21 Nov), files in audio/music/. Like Stardew, a song plays through,
-# there is a short rest, then the next one is chosen for where and when you are. Each place and time has a small
-# playlist; the next song is picked at random from it, never the same one twice running.
+# then there's quiet for a while (Zachary: "there can be long breaks inbetween songs"): one to three minutes on the
+# station, less where a place has its own songs, and only a few seconds on a flight. Then the next song is chosen
+# for where and when you are. Each place and time has a small playlist; the song is picked at random from it,
+# never the same one twice running.
 #   character screen                   A New Path (it carries on into the first morning)
 #   flying (launch to landing)         Next Beacon, Nebula Waltz
 #   the Mine, North Cave, caverns      Crystal Seam
@@ -19,15 +21,18 @@ extends Node
 #   the season's songs                 Spring: Moon-Green Awakening, Spring Shift. Summer: Sun Under the Dome.
 #                                      Autumn: Fall in the Landing. Winter: Frost on the Glass (and Winter in the
 #                                      Station once that file is in).
-# Going somewhere whose playlist doesn't have the current song fades over at once; a song cut short that way picks
-# up where it left off if you come back within a minute and a half (a quick visit to Bram's). Walking about the
-# station lets the song finish, so the hour changes the music gently. A new day starts a morning song.
+# Walking into a place with its own songs plays one at once (fading out whatever was on). Coming back out onto the
+# station picks up a song that visit cut short, from where it stopped, if it was within a minute and a half (a
+# quick visit to Bram's); otherwise the station stays quiet until its next song is due. Walking about the station
+# lets a song finish, so the hour changes the music gently. Waking on a new day starts a morning song.
 # main.gd owns the player (`music`, which the title screen pauses while it is open), keeps `music_on` (M), and
 # calls update() every frame.
 
 const MUSIC_DIR := "res://audio/music/"
 const BASE_DB := -6.0          # how loud the music sits under the sound effects
-const REST := 10.0             # seconds of quiet between songs
+const QUIET := Vector2(60.0, 180.0)        # seconds of quiet after a song on the station (shortest, longest)
+const PLACE_QUIET := Vector2(20.0, 45.0)   # ... where a place has its own songs (the mines, Bram's, the lounge)
+const SPACE_QUIET := Vector2(4.0, 8.0)     # ... on a flight
 const FADE := 1.2              # seconds to fade a song out when the place changes
 const RESUME_FOR := 90.0       # seconds a cut-short song remembers where it was
 
@@ -113,18 +118,29 @@ func update(delta: float) -> void:
 	var place := _place_now()
 	var day: int = int(world.day)
 	if place != _place or day != _day:
+		var first := _place == ""
+		var new_day := day != _day
 		_place = place
 		_day = day
 		var songs := playlist()
 		if not (_state == "playing" and songs.has(_song)):
-			_switch_to(_choose(songs))
+			var song := _choose(songs)
+			if first or new_day or _has_own_songs() or _resumable(song):
+				_switch_to(song)
+			else:
+				_quiet()       # back out onto the station: no new song until one is due
 	if _state == "idle":
 		_start(_choose(playlist()))
 	elif _state == "fading":
 		_timer -= delta
 		player.volume_db = _level(_song) - 40.0 * (1.0 - maxf(_timer, 0.0) / FADE)
 		if _timer <= 0.0:
-			_start(_next)
+			if _next == "":
+				player.stop()
+				_song = ""
+				_rest()
+			else:
+				_start(_next)
 	elif _state == "resting":
 		_timer -= delta
 		if _timer <= 0.0:
@@ -163,10 +179,8 @@ func playlist() -> Array:
 # A song cut short a moment ago comes back first; otherwise any but the one just heard.
 func _choose(songs: Array) -> String:
 	for song: String in songs:
-		if _resume.has(song):
-			var saved: Array = _resume[song]
-			if _clock - float(saved[1]) < RESUME_FOR:
-				return song
+		if _resumable(song):
+			return song
 	var options: Array = []
 	for song: String in songs:
 		if song != _last and song != _song:
@@ -174,6 +188,21 @@ func _choose(songs: Array) -> String:
 	if options.is_empty():
 		options = songs
 	return str(options[_rng.randi_range(0, options.size() - 1)])
+
+
+func _resumable(song: String) -> bool:
+	if not _resume.has(song):
+		return false
+	var saved: Array = _resume[song]
+	return _clock - float(saved[1]) < RESUME_FOR
+
+
+# Somewhere with its own songs (Bram's, the mines, a flight, the greenhouse by day...) rather than the station's.
+func _has_own_songs() -> bool:
+	if PLACE_SONGS.has(_place):
+		return true
+	var hour := float(world.minutes) / 60.0
+	return _place == "agri" and hour >= 6.0 and hour < 21.0
 
 
 func _place_now() -> String:
@@ -187,6 +216,31 @@ func _place_now() -> String:
 	if area == "bram" or area == "mess" or area == "top" or area == "lounge" or area == "agri":
 		return area
 	return "station"
+
+
+# Fade out whatever is playing, then be quiet for a while.
+func _quiet() -> void:
+	if _state == "playing":
+		_resume[_song] = [player.get_playback_position(), _clock]
+		_state = "fading"
+		_timer = FADE
+		_next = ""
+	elif _state == "fading":
+		_next = ""
+	else:
+		var left := _timer if _state == "resting" else 0.0
+		_rest()                # a station-length quiet, or what was left of the old one if longer
+		_timer = maxf(_timer, left)
+
+
+func _rest() -> void:
+	var span := QUIET
+	if _place == "space":
+		span = SPACE_QUIET
+	elif _has_own_songs():
+		span = PLACE_QUIET
+	_state = "resting"
+	_timer = _rng.randf_range(span.x, span.y)
 
 
 # Fade over to `song` unless it is already playing.
@@ -209,8 +263,7 @@ func _start(song: String) -> void:
 	var stream := _stream(song)
 	if stream == null:
 		_song = ""
-		_state = "resting"
-		_timer = REST
+		_rest()
 		return
 	player.stream = stream
 	player.volume_db = _level(song)
@@ -228,8 +281,8 @@ func _start(song: String) -> void:
 
 func _on_finished() -> void:
 	_resume.erase(_song)
-	_state = "resting"
-	_timer = REST
+	_song = ""
+	_rest()
 
 
 func _level(song: String) -> float:
