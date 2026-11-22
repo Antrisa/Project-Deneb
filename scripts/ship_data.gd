@@ -157,6 +157,40 @@ const ENEMIES := {
 			[Vector2i(6, 1), Vector2i(6, 2)], [Vector2i(6, 3), Vector2i(6, 4)], [Vector2i(6, 2), Vector2i(7, 2)],
 		],
 	},
+	# Pirate bases at double resolution (art and rooms: tools/dev/ship_art/bases2x.py INSIDES, which these must match).
+	# Asteroids don't dodge: no engines, so no evasion. Their guns sit on the turret rings. Stats are first guesses.
+	"pirate_stronghold": {
+		"name": "Pirate stronghold", "size": Vector2(192, 144), "hull": 16, "crew": 4,
+		"art": "res://art/ships/pirate_stronghold/hull.png", "interior": "res://art/ships/pirate_stronghold/interior.png", "art_scale": 2,
+		"weapons": ["heavy_laser", "rabble_laser"],
+		"mounts": [Vector2(145, 46), Vector2(145, 100), Vector2(55, 46), Vector2(55, 100)],
+		"systems": {"shields": [4, 4], "weapons": [3, 3], "life": [1, 1], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "crew", "label": "Barracks", "sys": "", "cells": Rect2i(4, 2, 1, 2)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 2, 1, 1)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(3, 3, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(5, 2, 1, 1)},
+			{"id": "pilot", "label": "Command", "sys": "pilot", "cells": Rect2i(5, 3, 1, 1)},
+		],
+		"doors": [[Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(3, 3), Vector2i(4, 3)], [Vector2i(4, 2), Vector2i(5, 2)], [Vector2i(4, 3), Vector2i(5, 3)]],
+	},
+	"rabble_nest": {
+		"name": "The Nest", "size": Vector2(240, 144), "hull": 24, "crew": 6,
+		"art": "res://art/ships/rabble_nest/hull.png", "interior": "res://art/ships/rabble_nest/interior.png", "art_scale": 2,
+		"weapons": ["heavy_laser", "heavy_laser", "rabble_laser"],
+		"mounts": [Vector2(150, 40), Vector2(150, 106), Vector2(65, 40), Vector2(65, 106), Vector2(30, 70)],
+		"systems": {"shields": [4, 4], "weapons": [4, 4], "life": [2, 2], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "crew", "label": "Barracks", "sys": "", "cells": Rect2i(4, 2, 1, 2)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 2, 1, 1)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(3, 3, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(5, 2, 1, 1)},
+			{"id": "pilot", "label": "Command", "sys": "pilot", "cells": Rect2i(5, 3, 1, 1)},
+			{"id": "dock", "label": "Dock", "sys": "", "cells": Rect2i(6, 2, 1, 2)},
+			{"id": "hangar", "label": "Hangar", "sys": "", "cells": Rect2i(7, 2, 2, 2)},
+		],
+		"doors": [[Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(3, 3), Vector2i(4, 3)], [Vector2i(4, 2), Vector2i(5, 2)], [Vector2i(4, 3), Vector2i(5, 3)], [Vector2i(5, 2), Vector2i(6, 2)], [Vector2i(6, 2), Vector2i(7, 2)]],
+	},
 }
 
 # Ana's fight (second flight, Zachary 21 Nov). At half hull ("break_at") the battle stops: her own crew, Ivan's

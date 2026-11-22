@@ -136,7 +136,7 @@ def pirate_stronghold():
     big_skull(p, 150, 156)
     # turrets on the corners of the wall
     for (cx, cy) in ((110, 92), (290, 92), (110, 200), (290, 200)):
-        turret(p, cx, cy, r=15, length=34)
+        turret(p, cx, cy, r=15, length=34, barrels=False)
     # a landing pad and scaffolding on the rock's edge, a mast with the flag
     pad(p, 300, 120, 352, 172)
     scaffold(p, 52, 108, 84, 180)
@@ -190,7 +190,7 @@ def rabble_nest():
     # turret nests
     for (cx, cy) in ((130, 80), (300, 80), (130, 212), (300, 212), (60, 140)):
         p.bevel(p.mask(ellipse=(cx - 22, cy - 22, cx + 22, cy + 22)), "gunmetal", width=3, face=4, shade_lower=False)
-        turret(p, cx, cy, r=15, length=36)
+        turret(p, cx, cy, r=15, length=36, barrels=False)
     # docked raiders, pipes, junk piles, masts
     for (x, y) in ((44, 66), (70, 220), (176, 234)):
         raider(p, x, y)
@@ -207,6 +207,25 @@ def rabble_nest():
         light(p, x, y, "glow_red")
     wear(p, rng, rust=16, grime=0.02, mats=("gunmetal", "metal"), scuffs=18)
     return p
+
+
+# Rooms, doors and gun mounts for the game (as fleet2x.INSIDES): the stations' rooms sit inside the fortress walls,
+# their guns go on the turret rings (front ones first). scripts/ship_data.gd ENEMIES must match.
+INSIDES = {
+    "pirate_stronghold": (
+        {"shields": (3, 2, 1, 1, "shields"), "life": (3, 3, 1, 1, "life"), "crew": (4, 2, 1, 2, ""),
+         "weapons": (5, 2, 1, 1, "weapons"), "pilot": (5, 3, 1, 1, "pilot")},
+        [((3, 2), (4, 2)), ((3, 3), (4, 3)), ((4, 2), (5, 2)), ((4, 3), (5, 3))],
+        [(145, 46), (145, 100), (55, 46), (55, 100)],
+    ),
+    "rabble_nest": (
+        {"shields": (3, 2, 1, 1, "shields"), "life": (3, 3, 1, 1, "life"), "crew": (4, 2, 1, 2, ""),
+         "weapons": (5, 2, 1, 1, "weapons"), "pilot": (5, 3, 1, 1, "pilot"), "dock": (6, 2, 1, 2, ""),
+         "hangar": (7, 2, 2, 2, "")},
+        [((3, 2), (4, 2)), ((3, 3), (4, 3)), ((4, 2), (5, 2)), ((4, 3), (5, 3)), ((5, 2), (6, 2)), ((6, 2), (7, 2))],
+        [(150, 40), (150, 106), (65, 40), (65, 106), (30, 70)],
+    ),
+}
 
 
 # ---------------------------------------------------------------- Rabble repaints of any ship
@@ -286,7 +305,18 @@ def piratize2x(src, seed=1, swaps=None):
     return p
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--install":
+    # python3 -I tools/dev/ship_art/bases2x.py --install <repo root>: art/ships/<id>/hull.png and interior.png
+    from kit2x import interior
+    root = Path(sys.argv[2])
+    for sid, fn in (("pirate_stronghold", pirate_stronghold), ("rabble_nest", rabble_nest)):
+        rooms, doors, _mounts = INSIDES[sid]
+        out = root / "art/ships" / sid
+        out.mkdir(parents=True, exist_ok=True)
+        fn().render().save(out / "hull.png")
+        interior(fn(), rooms, doors).render().save(out / "interior.png")
+        print("installed", sid)
+elif __name__ == "__main__":
     import fleet2x
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/bases2x")
     out.mkdir(parents=True, exist_ok=True)

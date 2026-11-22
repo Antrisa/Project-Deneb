@@ -111,11 +111,11 @@ def nozzle(p, x0, y0, x1, y1, glow="glow", depth=14, mat="metal"):
     thruster(p, x0, y0 + 2, y1 - 2, glow, depth)
 
 
-def turret(p, cx, cy, r=14, mat="gunmetal", barrel="metal", length=30, twin=True, light="glow_red"):
+def turret(p, cx, cy, r=14, mat="gunmetal", barrel="metal", length=30, twin=True, light="glow_red", barrels=True):
     p.bevel(p.mask(ellipse=(cx - r, cy - r, cx + r, cy + r)), mat, width=3, face=4, shade_lower=False)
     p.engrave([(cx - r + 3, cy), (cx + r - 3, cy)])
     p.dome(p.mask(ellipse=(cx - r * 0.6, cy - r * 0.6, cx + r * 0.6, cy + r * 0.6)), barrel, shadow=False)
-    for dy in ((-4, 3) if twin else (-1,)):
+    for dy in ((-4, 3) if twin else (-1,)) if barrels else ():
         p.tube(p.mask(rect=(cx + r // 2, cy + dy, cx + length, cy + dy + 2)), barrel, "x", bands=(5, 3, 2))
         p.tube(p.mask(rect=(cx + length - 4, cy + dy - 1, cx + length + 2, cy + dy + 3)), mat, "x", bands=(4, 3, 2, 1))
     if light:

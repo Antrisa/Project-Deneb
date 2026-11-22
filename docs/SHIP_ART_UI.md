@@ -175,7 +175,11 @@ from it. Every ship gets enough mounts for the most guns it can carry.
 **All the ships are in (21 Nov):** the four story enemies (`ENEMIES` and `ANA_SHIPS`, rooms in `story2x.py`
 INSIDES) and the eight culture ships (`ShipData.CULTURE_SHIPS`, generated from `fleet2x.py` INSIDES, with first-guess
 stats). Every culture ship also comes Rabble-repainted (`hull_rabble.png`, `interior_rabble.png`, same rooms):
-`ShipData.enemy("<id>_rabble")` flies it as a pirate with Rabble lasers. Install art with
+`ShipData.enemy("<id>_rabble")` flies it as a pirate with Rabble lasers.
+Your fighter's battle art is double resolution too (sealed dark bays, the cockpit; `starter.py` now only makes the
+Shuttle Bay's 1x repair stages). The covered fighter has walkable rooms (`ShipData.COVERED_FIGHTER`, not wired in
+until crews come). The pirate stronghold and the Nest are in `ENEMIES` (rooms inside the fortress walls, guns on the
+turret rings, no engines so no evasion; `bases2x.py --install .`). Install art with
 `python3 -I tools/dev/ship_art/fleet2x.py --install .` or `story2x.py --install . <ids>`.
 
 **How the art is fitted:** the battle screen uses each ship's
