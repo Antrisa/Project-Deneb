@@ -21,9 +21,9 @@ Nothing here is final until you say so. Anything marked **(Claude)** is a sugges
 
 ## Three decisions to check first (Claude)
 1. **One room cell is 24 × 24, the same as one station tile and one character wide.**
-   - Ships are drawn at the station's pixel size and shown 1:1, never scaled.
-   - The same picture works in the Shuttle Bay and in battle. The starter fighter is already exactly 7 × 4 cells (168 × 96).
-   - Because of this, a small ship looks small on the battle screen: see `templates/ui_battle_layout_x2.png`.
+   - Ships are drawn at the station's pixel size. **In battle each ship has a window of its own, and the game fits the ship to it** (Zachary, 21 Nov): as big as fits, at a whole number of screen pixels per art pixel so it stays crisp. A small ship is shown bigger; only a ship too big for its window is shrunk.
+   - The same picture works in the Shuttle Bay and in battle. The starter fighter is exactly 7 × 4 cells (168 × 96) and shows at 2× in battle.
+   - How big each size shows: section 1.1. The battle screen: section 4.3.
 2. **Every ship is drawn facing right, nose pointing right.** When a ship is an enemy, the game mirrors it so it faces left.
    - One picture serves as both an enemy and a captured ship you fly.
    - Avoid writing or numbers on hulls, because they would read backwards when mirrored.
@@ -59,9 +59,22 @@ Nothing here is final until you say so. Anything marked **(Claude)** is a sugges
 - A ship is built on a grid of **cells, each 24 × 24 pixels** (one station tile). Rooms are made of whole cells, and walls run along cell edges.
 - **Common room sizes:** 1 × 1, 2 × 1, 1 × 2 and 2 × 2 cells. Long bays like the starter fighter's weapon pod (4 × 1) are fine.
 - **One cell holds one crew member** standing still. A 2 × 2 room holds four.
-- **Largest sizes:**
-  - Player ships: **12 × 9 cells (288 × 216).**
-  - Enemy ships: **10 × 8 cells (240 × 192),** to fit the enemy window. The Nest and other stations may use the whole enemy window.
+- **How big a ship shows in battle** (21 Nov; on a 1920 × 1080 screen, where the battle page is 768 × 432 at 2 screen pixels per page pixel). The ship has 364 × 194 page pixels in your window and 244 × 150 in the enemy window, after room for its shield bubble:
+
+  | Ship size | In your window | In the enemy window |
+  |---|---|---|
+  | up to 5 × 3 cells (120 × 72) | 2× | 2× |
+  | up to 6 × 4 cells (144 × 96) | 2× | 1.5× |
+  | up to 7 × 4 cells (168 × 96), the starter | 2× | 1× |
+  | up to 10 × 5 cells (240 × 120) | 1.5× | 1× |
+  | up to 10 × 6 cells (240 × 144) | 1× | 1× |
+  | up to 15 × 8 cells (360 × 192) | 1× | 0.5× |
+  | bigger | 0.5× | 0.5× |
+
+- **Largest sizes, to stay at 1× or more:**
+  - Player ships: **15 × 8 cells (360 × 192).** (This replaces 12 × 9: a ship 9 cells tall would be shown at half size.)
+  - Enemy ships: **10 × 6 cells (240 × 144).** The Nest and other stations can be bigger; they will be shown at half size, or get a bigger window later.
+- A ship's crew, drone and room markings are scaled with it. Small ships are enlarged to 2× at most.
 - The picture's size is the grid's size: width = cells across × 24, height = cells down × 24. The hull can include cells with no room in them (noses, fins, engine pods).
 - Templates:
   - `templates/ship_grid_player_max_12x9.png`
@@ -241,15 +254,15 @@ The jump effect (stars stretching into streaks) is drawn by the game.
 
 ## 4. Ship UI
 
-All the ship screens are laid out on the game's **640 × 360** screen. UI pieces are drawn at the same pixel size as everything else and shown 1:1. **The game draws all text and numbers** in the spaces you leave. The layout guides are drawn at 2×, with every box's position and size in game pixels.
+**Decided (Zachary, 21 Nov): the ship screens use the Terran field datapad's look**, from the Space UI pack. Its parts (the housing, panel liner, icons and fonts) are the datapad's own, already in `datapad/art`, so **no new UI art is needed** for the ship screens. The pack's ships were not used; ships and interiors will be redrawn.
 
-### 4.1 Look (Claude)
-- **Option A (Claude's pick):** reuse the **datapad's Terran style** (cream panels, orange accents, dark outlines), so the ship screens match the menus.
-- **Option B:** dark navy glass panels with orange edges, more like a cockpit.
+All four screens (battle, jump map, event window, store) are drawn on one **768 × 432 page**, the same page the datapad uses, fitted to the window with whole-pixel steps (`ui/ship_screen.gd`). **The game draws all text and numbers.** Mock-ups: `datapad_map_x2.png`, `datapad_event_x2.png`, `datapad_store_x2.png` and `battle_two_windows_x2.png` in the Drive folder.
 
-Either way, everything shares one panel frame and one button style.
+### 4.1 Look
+The datapad's case with its TERRAN | FIELD DATAPAD title row; cream panels with an icon and a heading; dark green-grey scope windows (warmer grey for the enemy) with a grid, ticks and corner marks; orange accents.
 
-### 4.2 The shared kit: `art/ui/ship/`
+### 4.2 Optional later: a ship kit, `art/ui/ship/`
+Not needed now: the datapad parts cover every screen. These would only replace shapes the game draws itself (power bars, pips, icons).
 | File | Size | Notes |
 |---|---|---|
 | `panel.png` | 24 × 24, **nine-slice** | Every window and box. 8-px corners. See `templates/nine_slice_guide_x8.png`. |
@@ -270,17 +283,13 @@ Either way, everything shares one panel frame and one button style.
 | `select_ring.png` | 24 × 24 | Drawn round a selected crew member or the drone |
 
 ### 4.3 The battle screen
-Layout: `templates/ui_battle_layout_x2.png`. The current look: `reference/battle_screen_now_mockup.png`.
-- **Top left:** hull pips (up to 30), shield pips, evasion and oxygen.
-- **Top middle:** resources (fuel, missiles, drone parts, Scrip).
-- **Top right:** the fold drive charge bar; the JUMP, SHIP and pause buttons.
-- **Left:** crew cards, 72 × 26 each: the crew member's idle frame, name, health bar. Click to select.
-- **Middle:** your ship at 1:1.
-- **Right:** the enemy window, a panel with a header (name, hull, shields, crew, evasion).
-- **Bottom:**
-  - reactor and systems: a column of power bars per system, with its icon underneath;
-  - weapons: cards of 62 × 72, each with the weapon's store picture, name, charge bar and power pips;
-  - drones: cards of 56 × 72.
+Mock-up: `battle_two_windows_x2.png` (Zachary, 21 Nov: "seperate each ship in the combat screen into like two screen so we can resize the ship"). Page positions, on the 768 × 432 page:
+- **Top strip (y 55 to 71):** your hull pips, shields, evasion and oxygen; the fold drive bar; Jump and Auto(fire).
+- **Your window (53, 75, 388 × 218):** your ship, fitted to the window (section 1.1), with its shield bubble.
+- **The enemy window (447, 75, 268 × 218):** a band along the top with their name, hull, shields, evasion and crew; their ship below it, fitted the same way.
+- **Shots** leave one window and come in from the near edge of the other, as in FTL.
+- **Bottom panels (y 297 to 380):** Reactor (power bars per system; click to add, right-click to take away), Weapons (a card per slot: name, charge bar, what it's doing), Aboard (you and the drone; later the crew list).
+- **Bottom row:** what's happening or what to do next, and Pause / Resume.
 
 ### 4.4 Arriving at a stop, and the event window
 Layout: `templates/ui_event_window_x2.png`.

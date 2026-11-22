@@ -5,21 +5,18 @@ extends CanvasLayer
 # Systems, crew, drones and augments have nothing in them yet: the starter ship has no room for them.
 #
 # main.gd calls open_store(stock, cb); cb.call() when you leave. Stock is a ShipData.STORES entry.
-# Laid out on the 640 x 360 screen at 1:1 (templates/ui_store_window_x2.png in the ship art pack). It draws
-# over the stop's backdrop (scripts/ship_event.gd). Plain shapes until the UI kit and store pictures exist.
+# Drawn on the Terran field datapad (ui/ship_screen.gd); mock-up: datapad_store_x2.png in the Drive folder.
+# Store pictures, when drawn, go in art/ships/store/<weapon id>.png (48 x 48).
 
 const ShipData = preload("res://scripts/ship_data.gd")
+const ShipScreen = preload("res://ui/ship_screen.gd")
 
-const W := 640.0
-const H := 360.0
-const WIN := Rect2(80, 40, 480, 280)
 const TABS := ["Weapons", "Systems", "Crew", "Drones & parts", "Augments"]
-const WHITE := Color("ececf0")
-const DIM := Color("969cb0")
-const GOLD := Color("fadc5a")
-const LILAC := Color("c8a0ff")
-const GOOD := Color("5adc6e")
-const BAD := Color("e6463c")
+const SLOTS_SHOWN := 4
+const INK := Color("373b36")          # as ui/ship_screen.gd
+const MUTED := Color("595e55")          # as ui/ship_screen.gd
+const OCHRE := Color("a45736")          # as ui/ship_screen.gd
+const ORANGE := Color("ac5c36")          # as ui/ship_screen.gd
 
 var world                          # main.gd
 var open := false
@@ -29,25 +26,16 @@ var tab := 0
 var selling := false
 var picked := -1                   # index into the current slot list
 var status := ""
-var view: Control
-var font: Font
-var hover := Vector2(-99, -99)
-var _hits: Array = []
+var screen: ShipScreen
 
 
 func _ready() -> void:
-	layer = 9                      # added after the event layer, so it draws over the stop's backdrop
+	layer = 9                      # added after the event layer, so it draws over the stop's scene
 	visible = false
-	view = Control.new()
-	view.size = Vector2(W, H)
-	view.mouse_filter = Control.MOUSE_FILTER_STOP
-	view.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	add_child(view)
-	view.draw.connect(_draw_view)
-	view.gui_input.connect(_on_gui_input)
-	font = view.get_theme_default_font()
-	if font == null:
-		font = ThemeDB.fallback_font
+	screen = ShipScreen.new()
+	add_child(screen)
+	screen.paint = Callable(self, "_paint")
+	screen.on_click = Callable(self, "_click")
 
 
 func open_store(new_stock: Dictionary, cb: Callable) -> void:
@@ -59,6 +47,7 @@ func open_store(new_stock: Dictionary, cb: Callable) -> void:
 	status = "Welcome! Have a look around."
 	open = true
 	visible = true
+	screen.redraw()
 
 
 func close() -> void:
@@ -75,8 +64,8 @@ func _leave() -> void:
 
 
 func _process(_delta: float) -> void:
-	if open:
-		view.queue_redraw()
+	if open and visible:
+		screen.redraw()
 
 
 func handle_input(ev: InputEvent) -> void:
@@ -84,22 +73,17 @@ func handle_input(ev: InputEvent) -> void:
 		_leave()
 
 
-func _on_gui_input(ev: InputEvent) -> void:
-	var motion := ev as InputEventMouseMotion
-	if motion != null:
-		hover = motion.position
+func _click(id: String, _p: Vector2, button: int) -> void:
+	if button != MOUSE_BUTTON_LEFT:
 		return
-	var click := ev as InputEventMouseButton
-	if click == null or not click.pressed or click.button_index != MOUSE_BUTTON_LEFT:
-		return
-	view.accept_event()
 	if world.dialogue.active:
 		world.dialogue.advance()
 		return
-	for h in _hits:
-		if (h[0] as Rect2).has_point(click.position):
-			_act(str(h[1]), h[2])
-			return
+	if id == "":
+		return
+	var action: String = id.get_slice("/", 0)
+	var arg: int = int(id.get_slice("/", 1)) if id.contains("/") else 0
+	_act(action, arg)
 
 
 # ---------------------------------------------------------------- what's for sale
@@ -229,97 +213,98 @@ func _repair(all: bool) -> void:
 
 # ---------------------------------------------------------------- drawing
 
-func _text(pos: Vector2, s: String, color: Color = WHITE, size: int = 11) -> void:
-	view.draw_string(font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)
-
-
-func _text_c(r: Rect2, s: String, color: Color = WHITE, size: int = 11) -> void:
-	var w: float = font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-	_text(Vector2(r.get_center().x - w / 2.0, r.position.y + r.size.y / 2.0 + size / 2.0 - 1.0), s, color, size)
-
-
-func _button(r: Rect2, label: String, action: String, arg = 0, lit: bool = false, size: int = 10) -> void:
-	var fill := Color("3a3060") if lit else Color("262c46")
-	if r.has_point(hover):
-		fill = fill.lightened(0.15)
-	view.draw_rect(r, fill)
-	view.draw_rect(r, LILAC if lit else Color("5a6080"), false, 1.0)
-	_text_c(r, label, WHITE, size)
-	_hits.append([r, action, arg])
-
-
-func _draw_view() -> void:
-	_hits.clear()
-	view.draw_rect(WIN, Color(0.086, 0.1, 0.17, 0.97))
-	view.draw_rect(WIN, LILAC, false, 2.0)
-	_text(Vector2(WIN.position.x, WIN.position.y - 4), str(stock.get("name", "Store")), LILAC, 13)
-	var credits_line := "Scrip %d    Fuel %d    Missiles %d    Drone parts %d" % [int(world.credits), int(world.fuel), int(world.missiles), int(world.drone_parts)]
-	var cw: float = font.get_string_size(credits_line, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
-	_text(Vector2(WIN.end.x - cw, WIN.position.y - 4), credits_line, WHITE, 11)
+func _paint() -> void:
+	var s := screen
+	s.case(str(stock.get("name", "Store")))
 	for i in range(TABS.size()):
-		_button(Rect2(88 + i * 74, 48, 70, 18), str(TABS[i]), "tab", i, tab == i)
-	_button(Rect2(460, 48, 92, 18), "Selling" if selling else "Buying", "mode", 0, selling)
-	# slots
+		s.button("tab/%d" % i, Rect2(56 + i * 96, 54, 92, 24), str(TABS[i]), tab == i)
+	s.button("mode", Rect2(600, 54, 112, 24), "Selling" if selling else "Buying", selling)
 	var slots: Array = _slots()
+	for k in range(SLOTS_SHOWN):
+		var r := Rect2(56 + k * 104, 84, 98, 112)
+		if k >= slots.size():
+			s.frame(r, Color("ece9e0"), Color("d0c9bb"), Color("f4f2ec"), Color("dcd7cc"))
+			continue
+		_paint_slot(k, slots[k], r)
 	if slots.is_empty():
-		view.draw_multiline_string(font, Vector2(92, 96), _empty_text(), HORIZONTAL_ALIGNMENT_LEFT, 270, 11, 4, DIM)
-	for k in range(mini(8, slots.size())):
-		var r := Rect2(88 + (k % 4) * 70, 72 + floori(k / 4.0) * 90, 66, 86)
-		var fill := Color("2a2448") if k == picked else Color("1c2036")
-		if r.has_point(hover):
-			fill = fill.lightened(0.1)
-		view.draw_rect(r, fill)
-		view.draw_rect(r, GOLD if k == picked else Color("5a6080"), false, 1.0)
-		var wid: String = slots[k][0]
-		var pic_path := "res://art/ships/store/%s.png" % wid
-		var pic := Rect2(r.position + Vector2(9, 6), Vector2(48, 48))
-		if ResourceLoader.exists(pic_path):
-			view.draw_texture_rect(load(pic_path), pic, false)
-		else:
-			var col: Color = ShipData.WEAPONS[wid]["color"]
-			view.draw_rect(Rect2(pic.position + Vector2(6, 18), Vector2(30, 12)), Color("8a8e9c"))
-			view.draw_rect(Rect2(pic.position + Vector2(36, 21), Vector2(10, 6)), col)
-		_text(r.position + Vector2(4, 66), str(ShipData.WEAPONS[wid]["name"]), WHITE, 9)
-		_text(r.position + Vector2(4, 79), "%s%d Scrip" % ["+" if selling else "", int(slots[k][1])], GOLD, 9)
-		_hits.append([r, "slot", k])
-	# details
-	var d := Rect2(372, 72, 180, 176)
-	view.draw_rect(d, Color("141828"))
-	view.draw_rect(d, Color("5a6080"), false, 1.0)
-	if picked >= 0 and picked < slots.size():
-		var wid2: String = slots[picked][0]
-		var w: Dictionary = ShipData.WEAPONS[wid2]
-		_text(d.position + Vector2(6, 16), str(w["name"]), GOLD, 13)
-		var lines := [
-			"%s, needs %d power" % [str(w.get("type", "")).capitalize(), int(w["power"])],
-			"%d shot%s of %d damage" % [int(w["shots"]), "s" if int(w["shots"]) > 1 else "", int(w["damage"])],
-			"Charges in %.0f seconds" % float(w["charge"]),
-		]
-		for i in range(lines.size()):
-			_text(d.position + Vector2(6, 34 + i * 14), str(lines[i]), WHITE, 10)
-		view.draw_multiline_string(font, d.position + Vector2(6, 84), str(w.get("about", "")), HORIZONTAL_ALIGNMENT_LEFT, 168, 10, 5, DIM)
-		_button(Rect2(380, 222, 164, 20), ("Sell for %d" if selling else "Buy for %d") % int(slots[picked][1]), "deal", 0, true, 11)
+		var y: float = 128.0
+		for ln in s.wrap_lines(_empty_text(), 380, "label"):
+			s.text_center(262, y, ln, "label", MUTED)
+			y += 16.0
+	_paint_details(slots)
+	_paint_supplies()
+	_paint_repair()
+	s.status(status)
+	s.solid_button("leave", Rect2(625, 388, 82, 22), "Leave")
+
+
+func _paint_slot(k: int, slot: Array, r: Rect2) -> void:
+	var s := screen
+	var wid: String = slot[0]
+	var mine: bool = k == picked
+	s.frame(r, Color("f8f6ef") if mine else Color("f0ede4"), ORANGE if mine else Color("bdb4a5"))
+	if mine:
+		s.outline(r, ORANGE, 2.0)
+	var pic := Rect2(r.position + Vector2(25, 10), Vector2(48, 48))
+	var pic_path := "res://art/ships/store/%s.png" % wid
+	if ResourceLoader.exists(pic_path):
+		s.texture(load(pic_path), pic)
 	else:
-		view.draw_multiline_string(font, d.position + Vector2(6, 18), "Pick something to see it here.", HORIZONTAL_ALIGNMENT_LEFT, 168, 10, 3, DIM)
-	# resources
-	var res := Rect2(88, 256, 274, 56)
-	view.draw_rect(res, Color("141828"))
-	view.draw_rect(res, Color("5a6080"), false, 1.0)
-	var rows := [["Fuel cell", "fuel", int(stock.get("fuel", 6))], ["Missile", "missiles", int(stock.get("missiles", 12))],
-		["Drone part", "parts", int(stock.get("drone_parts", 10))]]
+		s.rect(Rect2(pic.position + Vector2(2, 18), Vector2(32, 12)), Color("8a8e9c"))
+		s.outline(Rect2(pic.position + Vector2(2, 18), Vector2(32, 12)), Color("3a3e48"))
+		s.rect(Rect2(pic.position + Vector2(34, 21), Vector2(12, 6)), ShipData.WEAPONS[wid]["color"])
+	s.text_fit(r.position.x + 6, r.position.y + 74, r.size.x - 12, str(ShipData.WEAPONS[wid]["name"]), "label", INK)
+	s.text(r.position.x + 6, r.position.y + 92, "%s%d SCRIP" % ["+" if selling else "", int(slot[1])], "micro", OCHRE)
+	if s.hovering(r) and not mine:
+		s.outline(r, ORANGE)
+	s.hit("slot/%d" % k, r)
+
+
+func _paint_details(slots: Array) -> void:
+	var s := screen
+	var r := Rect2(476, 84, 239, 200)
+	if picked < 0 or picked >= slots.size():
+		s.panel(r, "blaster", "Details")
+		s.wrap_text(486, 114, 219, "Pick something to see it here.", "label", MUTED)
+		return
+	var wid: String = slots[picked][0]
+	var w: Dictionary = ShipData.WEAPONS[wid]
+	s.panel(r, "blaster", str(w["name"]))
+	var lines := [
+		"%s, NEEDS %d POWER" % [str(w.get("type", "weapon")).to_upper(), int(w["power"])],
+		"%d SHOT%s OF %d DAMAGE" % [int(w["shots"]), "S" if int(w["shots"]) > 1 else "", int(w["damage"])],
+		"CHARGES IN %.0f SECONDS" % float(w["charge"]),
+	]
+	for i in range(lines.size()):
+		s.text(486, 112 + i * 14, str(lines[i]), "micro", INK)
+	var about: Array = s.wrap_lines(str(w.get("about", "")), 219, "label")
+	for i in range(mini(4, about.size())):
+		s.text(486, 160 + i * 16, about[i], "label", MUTED)
+	s.solid_button("deal", Rect2(486, 250, 219, 24), ("Sell for %d" if selling else "Buy for %d") % int(slots[picked][1]))
+
+
+func _paint_supplies() -> void:
+	var s := screen
+	s.panel(Rect2(56, 202, 412, 82), "bolt", "Supplies")
+	var rows := [["Fuel cell", "fuel", int(stock.get("fuel", 6)), int(world.fuel)],
+		["Missile", "missiles", int(stock.get("missiles", 12)), int(world.missiles)],
+		["Drone part", "parts", int(stock.get("drone_parts", 10)), int(world.drone_parts)]]
 	for i in range(rows.size()):
-		var y: float = res.position.y + 4 + i * 17
-		_text(Vector2(res.position.x + 6, y + 11), str(rows[i][0]), WHITE, 10)
-		_button(Rect2(res.end.x - 90, y, 84, 14), "Buy 1: %d" % int(rows[i][2]), str(rows[i][1]), 0, false, 9)
-	# hull repair
-	var rep := Rect2(372, 256, 180, 56)
-	view.draw_rect(rep, Color("141828"))
-	view.draw_rect(rep, Color("5a6080"), false, 1.0)
+		var y: float = 228.0 + i * 18.0
+		s.text(66, y, str(rows[i][0]), "label", INK)
+		s.text(170, y + 2, "YOU HAVE %d" % int(rows[i][3]), "micro", MUTED)
+		s.button(str(rows[i][1]), Rect2(360, y - 1, 100, 17), "Buy 1: %d" % int(rows[i][2]), false, "micro")
+
+
+func _paint_repair() -> void:
+	var s := screen
+	s.panel(Rect2(56, 290, 659, 92), "power", "Hull repair")
 	var full: int = int(ShipData.STARTER["hull"])
+	var hull: int = int(world.ship_hull)
 	var each: int = int(stock.get("repair", 8))
-	_text(rep.position + Vector2(6, 15), "Hull %d of %d" % [int(world.ship_hull), full], GOOD if int(world.ship_hull) >= full else BAD, 11)
-	_button(Rect2(380, 282, 78, 18), "Repair 1: %d" % each, "repair1", 0, false, 9)
-	_button(Rect2(466, 282, 80, 18), "Repair all: %d" % (each * maxi(0, full - int(world.ship_hull))), "repairall", 0, false, 9)
-	# status and leave
-	_text(Vector2(88, 336), status, DIM, 11)
-	_button(Rect2(500, 324, 60, 18), "Leave", "leave", 0, false, 11)
+	s.text(66, 320, "HULL %d / %d" % [hull, full], "micro", INK if hull >= full else Color("a43a2a"))
+	s.pips(150, 319, full, hull, 5.0, 9.0, 2.0, ShipScreen.PIP_RED if hull * 3 <= full else ShipScreen.PIP_ON)
+	var missing: int = maxi(0, full - hull)
+	s.button("repair1", Rect2(66, 340, 150, 24), "Repair 1: %d" % each, false, "label", missing > 0)
+	s.button("repairall", Rect2(224, 340, 150, 24), "Repair all: %d" % (each * missing), false, "label", missing > 0)
+	s.text(400, 320, "SCRIP %d   FUEL %d   MISSILES %d   PARTS %d" % [int(world.credits), int(world.fuel), int(world.missiles), int(world.drone_parts)], "micro", INK)

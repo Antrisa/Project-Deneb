@@ -1,33 +1,43 @@
 extends CanvasLayer
-# The FTL-style space battle (21 Nov 2026). Real time; Space pauses. Your ship on the left in cut-away, the enemy
-# on the right. Power goes from the reactor to shields, engines, weapons and life support. Pick a weapon, then an
-# enemy room, and it fires when charged. Your starter ship's bays are sealed: the repair drone is your one crew
-# member. Click it, then click a bay, and it crawls there through the ducts. It repairs the bay it is in, and in a
-# working bay it boosts that system (ShipData.DRONE_BOOST). It never moves on its own: this is the lesson for
-# ordering crew about on bigger ships.
+# The FTL-style space battle (21 Nov 2026). Real time; Space pauses. Power goes from the reactor to shields,
+# engines, weapons and life support. Pick a weapon, then an enemy room, and it fires when charged. Your starter
+# ship's bays are sealed: the repair drone is your one crew member. Click it, then click a bay, and it crawls there
+# through the ducts. It repairs the bay it is in, and in a working bay it boosts that system (ShipData.DRONE_BOOST).
+# It never moves on its own: this is the lesson for ordering crew about on bigger ships.
+#
+# The screen (Zachary, 21 Nov): the Terran field datapad (ui/ship_screen.gd), with each ship in a window of its
+# own, yours on the left and theirs on the right, so a ship of any size is fitted to its window: at a whole number
+# of screen pixels per art pixel where it fits, shrunk only when it doesn't. Shots leave one window and come in
+# from the edge of the other, as in FTL. Mock-up: battle_two_windows_x2.png in the Drive folder.
 #
 # main.gd owns the story around a fight: it calls start() with a fight, shows any dialogue (which pauses the
 # battle), and gets on_end.call(result, hull_left) with result "won", "lost" or "fled". Ships, weapons and
-# numbers are in scripts/ship_data.gd. Laid out for 320x180, drawn at 2x like the rest of the interface.
-# Until the ship art pack exists, enemy ships and effects are drawn here as simple shapes.
+# numbers are in scripts/ship_data.gd. Until the new ship art exists, enemy ships are drawn as simple shapes.
 
 const ShipData = preload("res://scripts/ship_data.gd")
+const ShipScreen = preload("res://ui/ship_screen.gd")
 
-const W := 320.0
-const H := 180.0
-const PLAYER_POS := Vector2(6, 40)       # top-left of your ship picture
-const ENEMY_POS := Vector2(192, 46)      # top-left of the enemy ship
+# Page layout (768 x 432 page; see ui/ship_screen.gd).
+const MY_WIN := Rect2(53, 75, 388, 218)      # your ship's window
+const FOE_WIN := Rect2(447, 75, 268, 218)    # theirs
+const FOE_HEAD := 44.0                       # the top of their window: name, hull, shields
+const SHIELD_ROOM := 12.0                    # space kept round a ship for its shield bubble
+const MOST_SCALE := 2.0                      # small ships are enlarged to fit, but no more than this
 const REACTOR_SYS := ["shields", "engines", "weapons", "life"]
-const SYS_LABEL := {"shields": "Shield", "engines": "Engine", "weapons": "Weapon", "life": "Oxygen"}
+const SYS_LABEL := {"shields": "SHD", "engines": "ENG", "weapons": "WPN", "life": "O2"}
+const SYS_NAME := {"shields": "Shields", "engines": "Engines", "weapons": "Weapons", "life": "Oxygen"}
 const REPAIR_ORDER := ["shields", "weapons", "pilot", "engines", "life", "drones"]
-const WHITE := Color("ececf0")
+const INK := Color("373b36")          # as ui/ship_screen.gd
+const MUTED := Color("595e55")          # as ui/ship_screen.gd
+const OCHRE := Color("a45736")          # as ui/ship_screen.gd
+const ORANGE := Color("ac5c36")          # as ui/ship_screen.gd
 const DIM := Color("969cb0")
 const GOLD := Color("fadc5a")
 const GOOD := Color("5adc6e")
 const BAD := Color("e6463c")
 const SHIELD_BLUE := Color("5ab4ff")
-const PANEL := Color(0.08, 0.09, 0.16, 0.92)
-const EDGE := Color("46506e")
+const YOU := Color("ffc878")
+const DRONE := Color("f2c94c")
 
 var world                        # main.gd
 var open := false
@@ -38,11 +48,11 @@ var result := ""                 # "" while fighting, then "won", "lost" or "fle
 var result_text := ""
 var end_timer := 0.0
 
-var view: Control
-var font: Font
-var stars: Array = []
+var screen: ShipScreen
 var ship_tex: Texture2D
 var enemy_tex: Texture2D
+var my_xf := Transform2D.IDENTITY    # your ship picture -> page
+var foe_xf := Transform2D.IDENTITY   # theirs
 
 # your ship
 var hull := 0
@@ -74,10 +84,10 @@ var e_layers := 0
 var e_shield_timer := 0.0
 var e_weapons: Array = []
 var e_crew := 0                  # how many of their crew are still standing
-# Enemy crew (21 Nov): each has a station (cockpit, weapons, shields, engines; extras wait in the crew room),
-# walks off to repair damaged rooms and back, and is hurt by hits on the room they're in.
-# Each: {"home": station room, "room": room they're in ("" while walking), "target": room they're going to,
-#        "pos": Vector2 in the enemy picture's pixels, "hp": float, "task": "station" or "repair"}
+# Their crew (Zachary, 21 Nov): each starts at a station (pilot, weapons, shields, engines; any extra in a spare
+# room) and walks off to repair a damaged room, then goes back. Manning a station helps that system a little;
+# with nobody in the cockpit they can't dodge. A hit on a room hurts whoever is in it.
+# Each: {"home", "room" (where they are; "" while walking), "target", "pos" (ship picture), "hp", "task"}.
 var e_crew_list: Array = []
 var e_room_repair := {}          # room id -> seconds of repair work done on it
 const CREW_SPEED := 22.0         # picture pixels a second
@@ -87,31 +97,19 @@ const STATIONS := ["pilot", "weapons", "shields", "engines"]
 const CREW_SPOTS := [Vector2(0, 0), Vector2(-7, -5), Vector2(7, 5), Vector2(-7, 5), Vector2(7, -5), Vector2(0, 6)]
 var overcharged := false
 
-var shots: Array = []            # shots in flight
-var pops: Array = []             # floating words: {"pos", "text", "t", "color"}
+var shots: Array = []            # shots in flight, in ship-picture pixels: {"from", "to", "t", "at_player", ...}
+var pops: Array = []             # floating words, in page pixels: {"pos", "text", "t", "color"}
 var shake := 0.0
-var hover := Vector2(-99, -99)
 var tutorial_said := {}
 
 
 func _ready() -> void:
 	layer = 9                    # under the dialogue box (10), so story lines show over the battle
-	scale = Vector2(2, 2)
 	visible = false
-	view = Control.new()
-	view.size = Vector2(W, H)
-	view.mouse_filter = Control.MOUSE_FILTER_STOP
-	view.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	add_child(view)
-	view.draw.connect(_draw_view)
-	view.gui_input.connect(_on_gui_input)
-	font = view.get_theme_default_font()
-	if font == null:
-		font = ThemeDB.fallback_font
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
-	for i in range(140):
-		stars.append([Vector2(rng.randf() * W, rng.randf() * H), rng.randf_range(0.3, 0.9)])
+	screen = ShipScreen.new()
+	add_child(screen)
+	screen.paint = Callable(self, "_paint")
+	screen.on_click = Callable(self, "_click")
 	if ResourceLoader.exists(ShipData.STARTER["art"]):
 		ship_tex = load(ShipData.STARTER["art"])
 
@@ -163,8 +161,10 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	overcharged = false
 	var art_path := "res://art/ships/%s.png" % foe_id
 	enemy_tex = load(art_path) if ResourceLoader.exists(art_path) else null
+	_fit_ships()
 	open = true
 	visible = true
+	screen.redraw()
 
 
 func close() -> void:
@@ -172,6 +172,29 @@ func close() -> void:
 	visible = false
 	on_end = Callable()
 
+
+# Each ship fitted to its own window (the enemy's below the band with its name and hull).
+func _fit_ships() -> void:
+	my_xf = screen.fit_into(ShipData.STARTER["size"], _my_area(), SHIELD_ROOM, MOST_SCALE)
+	if not foe.is_empty():
+		foe_xf = screen.fit_into(foe["size"], _foe_area(), SHIELD_ROOM, MOST_SCALE)
+
+
+func _my_area() -> Rect2:
+	return MY_WIN
+
+
+func _foe_area() -> Rect2:
+	return Rect2(FOE_WIN.position + Vector2(0, FOE_HEAD), FOE_WIN.size - Vector2(0, FOE_HEAD))
+
+
+# A point on a ship picture, on the page.
+func _on_page(at_player: bool, p: Vector2) -> Vector2:
+	return (my_xf if at_player else foe_xf) * p
+
+
+func _ship_scale(at_player: bool) -> float:
+	return (my_xf if at_player else foe_xf).get_scale().x
 
 func _make_systems(table: Dictionary) -> Dictionary:
 	var out := {}
@@ -219,7 +242,7 @@ func _jump() -> void:
 func _process(delta: float) -> void:
 	if not open:
 		return
-	view.queue_redraw()
+	screen.redraw()
 	shake = maxf(0.0, shake - delta)
 	for p in pops:
 		p["t"] = float(p["t"]) + delta
@@ -296,7 +319,7 @@ func _tick(delta: float) -> void:
 
 
 func _after_overcharge() -> void:
-	_pop(ENEMY_POS + Vector2(40, -4), "Hit his weapons to drain the cannon", GOLD)
+	_pop(_on_page(false, Vector2((foe["size"] as Vector2).x / 2.0, 0)), "Hit his weapons to drain the cannon", GOLD)
 
 
 func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool) -> void:
@@ -418,12 +441,13 @@ func _room(rooms: Array, id: String) -> Dictionary:
 	return {}
 
 
+# The middle of a room, in ship-picture pixels. at_player: a room on your ship.
 func _room_center(at_player: bool, id: String) -> Vector2:
 	if at_player:
 		var r: Rect2 = _room(ShipData.STARTER["rooms"], id).get("rect", Rect2(78, 43, 0, 0))
-		return PLAYER_POS + r.get_center()
+		return r.get_center()
 	var e: Rect2 = _room(foe["rooms"], id).get("rect", Rect2(40, 46, 0, 0))
-	return ENEMY_POS + e.get_center()
+	return e.get_center()
 
 
 func _fire(w: Dictionary, at_player: bool) -> void:
@@ -432,6 +456,7 @@ func _fire(w: Dictionary, at_player: bool) -> void:
 	var from: Vector2 = _room_center(not at_player, "weapons")
 	var to: Vector2 = _room_center(at_player, target)
 	var dodge: int = _my_evasion() if at_player else _enemy_evasion()
+	# from and to are ship-picture pixels: from on the firing ship, to on the target.
 	for i in range(int(data["shots"])):
 		shots.append({"from": from, "to": to + Vector2(randf_range(-3, 3), randf_range(-3, 3)),
 			"t": -0.3 * i, "dmg": int(data["damage"]), "at_player": at_player, "room": target,
@@ -454,7 +479,7 @@ func _land(s: Dictionary) -> void:
 	if result != "":
 		return
 	var at_player: bool = s["at_player"]
-	var where: Vector2 = s["to"]
+	var where: Vector2 = _on_page(at_player, s["to"])
 	if not bool(s["hit"]):
 		_pop(where, "Miss", DIM)
 		return
@@ -559,10 +584,10 @@ func _move_drone(delta: float) -> void:
 		if drone_work >= ShipData.DRONE_REPAIR_TIME:
 			drone_work = 0.0
 			sys[sname]["damage"] = int(sys[sname]["damage"]) - 1
-			_pop(PLAYER_POS + drone_pos + Vector2(0, -6), "Fixed", GOOD)
+			_pop(_on_page(true, drone_pos) + Vector2(0, -10), "Fixed", GOOD)
 			world.sfx("click", 1.6, -4.0)
 			if int(sys[sname]["damage"]) == 0 and ShipData.DRONE_BOOST.has(sname):
-				_pop(PLAYER_POS + drone_pos + Vector2(0, -14), "Boosting", GOLD)
+				_pop(_on_page(true, drone_pos) + Vector2(0, -22), "Boosting", GOLD)
 
 
 # ---------------------------------------------------------------- enemy crew
@@ -732,8 +757,6 @@ func _tutorial_hints() -> void:
 		tutorial_said["aim"] = true
 		paused = true
 		world._say("Sara", ["Your laser is charged. Click it, then click their Shields room."])
-
-
 # ---------------------------------------------------------------- input
 
 func handle_input(event: InputEvent) -> void:
@@ -742,9 +765,7 @@ func handle_input(event: InputEvent) -> void:
 		return
 	match key.physical_keycode:
 		KEY_SPACE, KEY_P:
-			if result == "":
-				paused = not paused
-				world.sfx("click")
+			_toggle_pause()
 		KEY_1, KEY_2, KEY_3:
 			_pick_weapon(key.physical_keycode - KEY_1)
 		KEY_ESCAPE, KEY_Q:
@@ -757,6 +778,12 @@ func handle_input(event: InputEvent) -> void:
 			world.sfx("click")
 		KEY_J:
 			_jump()
+
+
+func _toggle_pause() -> void:
+	if result == "":
+		paused = not paused
+		world.sfx("click")
 
 
 func _select_drone() -> void:
@@ -779,65 +806,56 @@ func _pick_weapon(i: int) -> void:
 	world.sfx("click")
 
 
-func _on_gui_input(event: InputEvent) -> void:
-	var motion := event as InputEventMouseMotion
-	if motion != null:
-		hover = motion.position
-		return
-	var click := event as InputEventMouseButton
-	if click == null or not click.pressed:
-		return
-	view.accept_event()
+# A click on the page (ui/ship_screen.gd). id names a button or card; anything else is found by where it landed.
+# Orders can be given while paused, as in FTL.
+func _click(id: String, p: Vector2, button: int) -> void:
 	if world.dialogue.active:
-		if click.button_index == MOUSE_BUTTON_LEFT:
+		if button == MOUSE_BUTTON_LEFT:
 			world.dialogue.advance()
 		return
 	if result != "":
 		return
-	var p: Vector2 = click.position
-	var left: bool = click.button_index == MOUSE_BUTTON_LEFT
-	var right: bool = click.button_index == MOUSE_BUTTON_RIGHT
+	var left: bool = button == MOUSE_BUTTON_LEFT
+	var right: bool = button == MOUSE_BUTTON_RIGHT
 	if not left and not right:
 		return
-	# buttons along the top
-	if _jump_rect().has_point(p):
+	if id == "jump":
 		_jump()
 		return
-	if _pause_rect().has_point(p):
-		paused = not paused
-		world.sfx("click")
+	if id == "pause":
+		_toggle_pause()
 		return
-	if _auto_rect().has_point(p):
+	if id == "auto":
 		autofire = not autofire
 		world.sfx("click")
 		return
-	# power bars
-	for i in range(REACTOR_SYS.size()):
-		if _sys_rect(i).has_point(p):
-			if left: _add_power(REACTOR_SYS[i])
-			else: _remove_power(REACTOR_SYS[i])
-			return
-	# weapon cards
-	for i in range(weapons.size()):
-		if _weapon_rect(i).has_point(p):
-			if left:
-				_pick_weapon(i)
-			elif str(weapons[i]["id"]) != "":
-				weapons[i]["target"] = ""
-				weapons[i]["on"] = false
-				if selected == i: selected = -1
-			return
+	if id.begins_with("sys/"):
+		var key: String = REACTOR_SYS[int(id.get_slice("/", 1))]
+		if left:
+			_add_power(key)
+		else:
+			_remove_power(key)
+		return
+	if id.begins_with("weapon/"):
+		var i: int = int(id.get_slice("/", 1))
+		if left:
+			_pick_weapon(i)
+		elif str(weapons[i]["id"]) != "":
+			weapons[i]["target"] = ""
+			weapons[i]["on"] = false
+			if selected == i:
+				selected = -1
+		return
 	# the drone: click it (on the ship or in the Aboard list) to select it
-	var dp: Vector2 = PLAYER_POS + drone_pos
-	if left and (Rect2(dp - Vector2(6, 6), Vector2(12, 12)).has_point(p) or _drone_card_rect().has_point(p)):
+	if left and (id == "drone" or _drone_rect().has_point(p)):
 		_select_drone()
 		return
 	# a bay on your ship: with the drone selected, send it there (left or right click, as with crew in FTL)
 	for room in ShipData.STARTER["rooms"]:
-		var r2: Rect2 = room["rect"]
-		if Rect2(PLAYER_POS + r2.position, r2.size).has_point(p):
+		if (my_xf * (room["rect"] as Rect2)).has_point(p):
 			if bool(room.get("crew", false)):
-				if drone_selected: _pop(p, "Only you fit in here", DIM)
+				if drone_selected:
+					_pop(p, "Only you fit in here", DIM)
 			elif drone_selected:
 				drone_selected = false
 				send_drone(str(room["id"]))
@@ -852,324 +870,422 @@ func _on_gui_input(event: InputEvent) -> void:
 	# a room on their ship: aim
 	if selected >= 0:
 		for room in foe["rooms"]:
-			var r: Rect2 = room["rect"]
-			if Rect2(ENEMY_POS + r.position, r.size).has_point(p):
+			if (foe_xf * (room["rect"] as Rect2)).has_point(p):
 				weapons[selected]["target"] = str(room["id"])
 				selected = -1
 				world.sfx("click", 1.2)
 				return
 
 
-# ---------------------------------------------------------------- layout
+# ---------------------------------------------------------------- layout (page pixels)
 
-func _jump_rect() -> Rect2: return Rect2(186, 4, 26, 11)
-func _pause_rect() -> Rect2: return Rect2(124, 18, 42, 11)
-func _auto_rect() -> Rect2: return Rect2(170, 18, 42, 11)
-func _sys_rect(i: int) -> Rect2: return Rect2(24 + i * 24, 142, 20, 30)
-func _weapon_rect(i: int) -> Rect2: return Rect2(124 + i * 56, 142, 52, 34)
-func _drone_card_rect() -> Rect2: return Rect2(242, 160, 74, 11)
+func _sys_rect(i: int) -> Rect2: return Rect2(87 + i * 42, 322, 33, 56)
+func _drone_card_rect() -> Rect2: return Rect2(569, 341, 142, 20)
+
+
+func _weapon_rect(i: int) -> Rect2:
+	var n: int = maxi(1, weapons.size())
+	var w: float = floorf((284.0 - (n - 1) * 6.0) / n)
+	return Rect2(270 + i * (w + 6.0), 323, w, 51)
+
+
+func _drone_rect() -> Rect2:
+	var half: float = maxf(6.0, 4.0 * _ship_scale(true))
+	return Rect2(_on_page(true, drone_pos) - Vector2(half, half), Vector2(half, half) * 2.0)
 
 
 # ---------------------------------------------------------------- drawing
 
-func _text(pos: Vector2, s: String, color: Color = WHITE, size: int = 8) -> void:
-	view.draw_string(font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)
-
-
-func _text_c(center_x: float, y: float, s: String, color: Color = WHITE, size: int = 8) -> void:
-	var w: float = font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-	_text(Vector2(center_x - w / 2.0, y), s, color, size)
-
-
-func _ellipse(center: Vector2, radii: Vector2, color: Color, width: float) -> void:
-	view.draw_set_transform(center, 0.0, Vector2(1.0, radii.y / radii.x))
-	view.draw_arc(Vector2.ZERO, radii.x, 0.0, TAU, 48, color, width)
-	view.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-
-func _draw_view() -> void:
-	var off := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * (2.0 if shake > 0.0 else 0.0)
-	# space and the gas giant
-	view.draw_rect(Rect2(0, 0, W, H), Color("0a0c1a"))
-	for s in stars:
-		view.draw_rect(Rect2(s[0], Vector2.ONE), Color(1, 1, 1, float(s[1])))
-	for i in range(8):
-		view.draw_circle(Vector2(270, -70), 120.0 - i * 3.0, Color(0.16 + i * 0.02, 0.3 + i * 0.03, 0.55 + i * 0.03))
-	_draw_player(off)
-	if not (result == "won" and end_timer < 1.6) and result != "done":
-		_draw_enemy()
-	if result == "won":
-		_draw_blast()
-	for s in shots:
-		var t: float = float(s["t"])
-		if t < 0.0:
-			continue
-		var from: Vector2 = s["from"]
-		var to: Vector2 = s["to"]
-		var at: Vector2 = from.lerp(to, t)
-		var dir: Vector2 = (to - from).normalized()
-		view.draw_line(at - dir * (9.0 if bool(s["heavy"]) else 6.0), at, s["color"], 3.0 if bool(s["heavy"]) else 2.0)
+func _paint() -> void:
+	_fit_ships()
+	screen.case("In combat", ShipScreen.PIP_RED)
+	_paint_strip()
+	_paint_my_window()
+	_paint_foe_window()
+	_paint_shots()
 	for p in pops:
 		var c: Color = p["color"]
 		c.a = 1.0 - float(p["t"]) / 1.2
-		_text_c((p["pos"] as Vector2).x, (p["pos"] as Vector2).y - float(p["t"]) * 12.0, str(p["text"]), c, 8)
-	_draw_top()
-	_draw_bottom()
-	if paused and result == "" and not world.dialogue.active:
-		view.draw_rect(Rect2(110, 36, 100, 12), Color(0.98, 0.86, 0.35, 0.95))
-		_text_c(160, 45, "PAUSED - Space to resume", Color("1e180a"))
-	if result != "" and result != "done":
-		view.draw_rect(Rect2(70, 76, 180, 16), Color(0.05, 0.06, 0.12, 0.92))
-		_text_c(160, 87, result_text, GOOD if result == "won" else (BAD if result == "lost" else GOLD), 9)
+		var at: Vector2 = p["pos"]
+		screen.text_center(at.x, at.y - float(p["t"]) * 12.0 - 8.0, str(p["text"]), "label", c)
+	_paint_reactor()
+	_paint_weapons()
+	_paint_aboard()
+	_paint_status()
 
 
-func _draw_player(off: Vector2) -> void:
+# Your ship's readings, along the top of the case.
+func _paint_strip() -> void:
+	var s := screen
+	s.text(58, 59, "HULL", "micro", MUTED)
+	var step: float = minf(7.0, floorf(84.0 / maxf(1.0, float(hull_max))))
+	var low: bool = hull * 3 <= hull_max
+	s.pips(86, 59, hull_max, hull, step - 2.0, 9.0, 2.0, ShipScreen.PIP_RED if low else ShipScreen.PIP_ON)
+	s.text(178, 59, "SHIELDS", "micro", MUTED)
+	var top: int = _max_layers()
+	for i in range(top):
+		var c := Vector2(230.5 + i * 12, 63.5)
+		var from_sara: bool = uplink and i == top - 1
+		var lit := Color("78d8e6") if from_sara else ShipScreen.SHIELD
+		s.circle(c, 4.5, lit if i < layers else ShipScreen.PIP_OFF)
+		s.ring(c, 4.5, Color("3f6a78"))
+	var ev_x: float = maxf(270.0, 234.0 + top * 12.0)
+	s.text(ev_x, 59, "EVASION %d%%   OXYGEN %d%%" % [_my_evasion(), int(oxygen)], "micro", MUTED if oxygen > 40.0 else ShipScreen.PIP_RED)
+	s.text(440, 59, "FOLD DRIVE", "micro", MUTED)
+	var story: bool = bool(fight.get("story", false))
+	if story:
+		s.text(496, 59, "NOT ON THIS FLIGHT", "micro", MUTED)
+	else:
+		s.rect(Rect2(496, 61, 106, 5), ShipScreen.PIP_OFF)
+		s.rect(Rect2(496, 61, 106.0 * fold / 100.0, 5), ORANGE)
+	var can_jump: bool = fold >= 100.0 and not story and result == ""
+	s.button("jump", Rect2(610, 55, 48, 16), "Jump", can_jump, "micro", can_jump)
+	s.button("auto", Rect2(664, 55, 48, 16), "Auto", autofire, "micro")
+
+
+func _paint_my_window() -> void:
+	var s := screen
+	s.scope(MY_WIN, 1)
+	s.text(MY_WIN.position.x + 11, MY_WIN.position.y + 7, "OWN SHIP", "micro", ShipScreen.SCOPE_TEXT)
+	if uplink:
+		s.text_right(MY_WIN.end.x - 11, MY_WIN.position.y + 7, "S.A.R.A. UPLINK", "micro", Color("78d8e6"))
 	var me: Dictionary = ShipData.STARTER
 	var size: Vector2 = me["size"]
-	var base: Vector2 = PLAYER_POS + off
-	var bubble := 0.0
+	var k: float = _ship_scale(true)
+	var off := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * (2.0 if shake > 0.0 else 0.0)
+	var xf := Transform2D(0.0, Vector2(k, k), 0.0, my_xf.origin + off)
 	if layers > 0:
-		bubble = 0.55 + 0.2 * layers
-	if bubble > 0.0:
-		_ellipse(base + size / 2.0 + Vector2(6, 0), size / 2.0 + Vector2(8, 8), Color(SHIELD_BLUE, bubble), 1.0)
+		var mid: Vector2 = xf * (size / 2.0 + Vector2(6, 0))
+		s.ellipse(mid, size * k / 2.0 + Vector2(8, 8), Color(SHIELD_BLUE, 0.55 + 0.2 * layers), 1.0)
 		if layers > 1:
-			_ellipse(base + size / 2.0 + Vector2(6, 0), size / 2.0 + Vector2(12, 12), Color(Color("78f0ff"), 0.7), 1.0)
+			s.ellipse(mid, size * k / 2.0 + Vector2(12, 12), Color(Color("78f0ff"), 0.7), 1.0)
 	if ship_tex != null:
 		var fw: float = ship_tex.get_width() / float(me["frames"])
-		view.draw_texture_rect_region(ship_tex, Rect2(base, size), Rect2(fw * int(me["frame"]), 0, fw, ship_tex.get_height()))
+		s.texture(ship_tex, Rect2(xf.origin, size * k), Rect2(fw * int(me["frame"]), 0, fw, ship_tex.get_height()))
 	else:
-		view.draw_rect(Rect2(base + Vector2(36, 20), Vector2(110, 44)), Color("dcd8cc"))
-	# ducts
+		s.rect(Rect2(xf * Vector2(36, 20), Vector2(110, 44) * k), Color("dcd8cc"))
+	# the ducts the drone crawls through
 	var hub: Vector2 = me["hub"]
 	for room in me["rooms"]:
 		if bool(room.get("crew", false)):
 			continue
 		var c: Vector2 = (room["rect"] as Rect2).get_center()
-		var d: float = hub.distance_to(c)
-		var n: int = int(d / 4.0)
+		var n: int = int(hub.distance_to(c) / 4.0)
 		for i in range(n + 1):
-			var q: Vector2 = hub.lerp(c, float(i) / maxf(1.0, float(n)))
-			view.draw_rect(Rect2(base + q - Vector2(0.5, 0.5), Vector2.ONE), Color(1, 0.82, 0.35, 0.35))
-	# rooms
+			var q: Vector2 = xf * hub.lerp(c, float(i) / maxf(1.0, float(n)))
+			s.rect(Rect2(q - Vector2(k, k) * 0.5, Vector2(k, k)), Color(1, 0.82, 0.35, 0.35))
+	# the bays
 	for room in me["rooms"]:
-		var r: Rect2 = room["rect"]
-		var rr := Rect2(base + r.position, r.size)
+		var rr: Rect2 = xf * (room["rect"] as Rect2)
 		var sname: String = room["sys"]
 		var dmg: int = int(sys[sname]["damage"]) if sys.has(sname) else 0
-		var fill := Color(0.92, 0.9, 0.86, 0.95) if bool(room.get("crew", false)) else Color(0.38, 0.4, 0.46, 0.9)
+		var crew_room: bool = bool(room.get("crew", false))
+		var fill := Color(0.92, 0.9, 0.86, 0.95) if crew_room else Color(0.38, 0.4, 0.46, 0.88)
 		if dmg > 0:
 			fill = fill.lerp(Color("a0463c"), 0.65)
-		view.draw_rect(rr, fill)
-		view.draw_rect(rr, Color("282834"), false, 1.0)
-		var label_col := Color("1e1e28") if bool(room.get("crew", false)) else Color(0.9, 0.9, 0.95, 0.9)
-		_text(rr.position + Vector2(2, 7), str(room["label"]), label_col, 6)
+		s.rect(rr, fill)
+		s.outline(rr, Color("282834"))
+		if rr.size.y >= 18.0:
+			s.text_fit(rr.position.x + 3, rr.position.y + 2, rr.size.x - 5, str(room["label"]), "micro",
+				Color("1e1e28") if crew_room else Color(0.92, 0.93, 0.96))
 		if sys.has(sname) and sname != "pilot":
-			for i in range(int(sys[sname]["max"])):
-				var on: bool = i < int(sys[sname]["max"]) - dmg
-				view.draw_rect(Rect2(rr.position + Vector2(2 + i * 4, rr.size.y - 4), Vector2(3, 2)), GOOD if on else BAD)
-		if drone_selected and rr.has_point(hover) and not bool(room.get("crew", false)) and result == "":
-			view.draw_rect(rr, GOOD, false, 1.0)
+			var bars: int = int(sys[sname]["max"])
+			for i in range(bars):
+				var bar := Rect2(rr.position + Vector2(3.0 + i * 4.0 * k, rr.size.y - 3.0 - 2.0 * k), Vector2(3.0 * k, 2.0 * k))
+				s.rect(bar, GOOD if i < bars - dmg else BAD)
+		if drone_selected and not crew_room and result == "" and rr.has_point(s.mouse):
+			s.outline(rr, GOOD)
 	# you, in the cockpit
 	var cockpit: Rect2 = _room(me["rooms"], "cockpit")["rect"]
-	var you: Vector2 = base + cockpit.get_center() + Vector2(2, 2)
-	view.draw_circle(you, 5.0, Color("ffc878"))
-	view.draw_arc(you, 5.0, 0.0, TAU, 16, Color("201e28"), 1.0)
+	var you: Vector2 = xf * (cockpit.get_center() + Vector2(2, 2))
+	s.circle(you, 5.0 * k, YOU)
+	s.ring(you, 5.0 * k, Color("201e28"))
 	# the drone
-	var dp: Vector2 = base + drone_pos
+	var dp: Vector2 = xf * drone_pos
+	var dh: float = 3.0 * k
+	var body := Rect2(dp - Vector2(dh, dh), Vector2(dh, dh) * 2.0)
 	if drone_selected:
-		view.draw_arc(dp, 6.0, 0.0, TAU, 16, GOOD, 1.0)
-	view.draw_rect(Rect2(dp - Vector2(3, 3), Vector2(6, 6)), GOLD)
-	view.draw_rect(Rect2(dp - Vector2(3, 3), Vector2(6, 6)), Color("282018"), false, 1.0)
+		s.ring(dp, dh * 2.0, GOOD)
+	s.rect(body, DRONE)
+	s.outline(body, Color("282018"))
 	if drone_room != "" and drone_work > 0.0:
-		view.draw_rect(Rect2(dp + Vector2(-5, -7), Vector2(10.0 * drone_work / ShipData.DRONE_REPAIR_TIME, 2)), GOOD)
+		s.rect(Rect2(dp + Vector2(-5, -7) * k, Vector2(10.0 * k * drone_work / ShipData.DRONE_REPAIR_TIME, maxf(1.0, k))), GOOD)
+	if paused and result == "" and not world.dialogue.active:
+		var tag := Rect2(MY_WIN.get_center().x - 30, MY_WIN.position.y + 4, 60, 14)
+		s.rect(tag, Color("f2c94c"))
+		s.text_center(tag.get_center().x, tag.position.y, "PAUSED", "micro", INK)
 
 
-func _draw_enemy() -> void:
-	var base: Vector2 = ENEMY_POS
+# Their window: the band with their name, hull, shields, evasion and crew, then the ship.
+func _paint_foe_window() -> void:
+	var s := screen
+	s.scope(FOE_WIN, 4, true)
+	var x0: float = FOE_WIN.position.x + 11
+	var y0: float = FOE_WIN.position.y
+	s.text_fit(x0, y0 + 6, 150, str(foe.get("name", "")).to_upper(), "label", Color("f0e6d0"))
+	var step: float = minf(7.0, floorf(150.0 / maxf(1.0, float(e_hull_max))))
+	s.pips(x0, y0 + 25, e_hull_max, e_hull, step - 2.0, 9.0, 2.0, Color("c9a46a"), Color("5a524c"), Color("3a2a22"), Color("6e625a"))
+	var shield_x: float = x0 + e_hull_max * step + 6.0
+	for i in range(_layers_of(e_sys)):
+		var c := Vector2(shield_x + 4.5 + i * 12, y0 + 29.5)
+		s.circle(c, 4.5, ShipScreen.SHIELD if i < e_layers else Color("5a524c"))
+		s.ring(c, 4.5, Color("3f6a78"))
+	var right: float = FOE_WIN.end.x - 11
+	s.text_right(right, y0 + 7, "HOSTILE", "micro", ShipScreen.HOSTILE_TEXT)
+	s.text_right(right, y0 + 19, "EVASION %d%%" % _enemy_evasion(), "micro", Color("c8b8a8"))
+	s.text_right(right, y0 + 31, "CREW %d" % e_crew, "micro", Color("c8b8a8"))
+	if overcharged:
+		for w in e_weapons:
+			if str(w["id"]) == "ivan_cannon":
+				var full: float = float(ShipData.WEAPONS["ivan_cannon"]["charge"])
+				s.rect(Rect2(x0, y0 + 38, 150, 3), Color("3c2a1e"))
+				s.rect(Rect2(x0, y0 + 38, 150.0 * float(w["charge"]) / full, 3), GOLD)
+	var destroyed: bool = e_hull <= 0
+	if not (destroyed and (end_timer < 1.6 or result == "done")):
+		_paint_enemy()
+	if destroyed and result != "done":
+		_paint_blast()
+
+
+func _paint_enemy() -> void:
+	var s := screen
+	var xf: Transform2D = foe_xf
+	var k: float = _ship_scale(false)
 	var size: Vector2 = foe["size"]
 	if e_layers > 0:
-		_ellipse(base + size / 2.0, size / 2.0 + Vector2(10, 10), Color(SHIELD_BLUE, 0.8), 1.0)
+		s.ellipse(xf * (size / 2.0), size * k / 2.0 + Vector2(10, 10), Color(SHIELD_BLUE, 0.8), 1.0)
 	if enemy_tex != null:
-		view.draw_texture_rect(enemy_tex, Rect2(base, size), false)
+		# Ship art faces right (docs/SHIP_ART_UI.md); an enemy is mirrored to face you. A negative width flips it.
+		s.texture(enemy_tex, Rect2(xf.origin + Vector2(size.x * k, 0), Vector2(-size.x * k, size.y * k)))
 	else:
 		for fin in foe["fins"]:
 			var pts := PackedVector2Array()
 			for v in fin:
-				pts.append(base + v)
-			view.draw_colored_polygon(pts, Color(foe["hull_color"]).lightened(0.15))
+				pts.append(xf * (v as Vector2))
+			s.polygon(pts, Color(foe["hull_color"]).lightened(0.15))
 		var shape := PackedVector2Array()
 		for v in foe["shape"]:
-			shape.append(base + v)
-		view.draw_colored_polygon(shape, foe["hull_color"])
+			shape.append(xf * (v as Vector2))
+		s.polygon(shape, foe["hull_color"])
 		shape.append(shape[0])
-		view.draw_polyline(shape, Color("241818"), 1.0)
-		view.draw_line(base + Vector2(30, size.y / 2.0), base + Vector2(size.x - 10, size.y / 2.0), foe["trim"], 2.0)
+		s.polyline(shape, Color("241818"), 1.0)
+		s.line(xf * Vector2(30, size.y / 2.0), xf * Vector2(size.x - 10, size.y / 2.0), foe["trim"], 2.0)
 	for room in foe["rooms"]:
-		var r: Rect2 = room["rect"]
-		var rr := Rect2(base + r.position, r.size)
+		var rr: Rect2 = xf * (room["rect"] as Rect2)
 		var sname: String = room["sys"]
 		var dmg: int = int(e_sys[sname]["damage"]) if e_sys.has(sname) else 0
 		var fill := Color(0.69, 0.59, 0.53, 0.92)
 		if dmg > 0:
 			fill = fill.lerp(Color("a0463c"), 0.6)
-		view.draw_rect(rr, fill)
-		view.draw_rect(rr, Color("32221e"), false, 1.0)
-		_text(rr.position + Vector2(2, 7), str(room["label"]), Color("281814"), 6)
+		s.rect(rr, fill)
+		s.outline(rr, Color("32221e"))
+		if rr.size.y >= 18.0:
+			s.text_fit(rr.position.x + 3, rr.position.y + 2, rr.size.x - 5, str(room["label"]), "micro", Color("281814"))
 		if e_sys.has(sname) and sname != "pilot":
-			for i in range(int(e_sys[sname]["max"])):
-				var on: bool = i < int(e_sys[sname]["max"]) - dmg
-				view.draw_rect(Rect2(rr.position + Vector2(2 + i * 4, rr.size.y - 4), Vector2(3, 2)), GOOD if on else BAD)
-		if selected >= 0 and rr.has_point(hover):
-			view.draw_rect(rr, BAD, false, 1.0)
+			var bars: int = int(e_sys[sname]["max"])
+			for i in range(bars):
+				var bar := Rect2(rr.position + Vector2(3.0 + i * 4.0 * k, rr.size.y - 3.0 - 2.0 * k), Vector2(3.0 * k, 2.0 * k))
+				s.rect(bar, GOOD if i < bars - dmg else BAD)
+		if selected >= 0 and rr.has_point(s.mouse):
+			s.outline(rr, BAD)
 	# their crew: red at stations, orange when repairing, a health bar once hurt
 	for c in e_crew_list:
-		var cpos: Vector2 = base + (c["pos"] as Vector2)
+		var cpos: Vector2 = xf * (c["pos"] as Vector2)
+		var cr: float = 3.0 * k
 		if float(c["hp"]) <= 0.0:
-			view.draw_line(cpos + Vector2(-2, -2), cpos + Vector2(2, 2), Color("5a4a48"), 1.0)
-			view.draw_line(cpos + Vector2(-2, 2), cpos + Vector2(2, -2), Color("5a4a48"), 1.0)
+			s.line(cpos + Vector2(-cr, -cr), cpos + Vector2(cr, cr), Color("5a4a48"), 1.0)
+			s.line(cpos + Vector2(-cr, cr), cpos + Vector2(cr, -cr), Color("5a4a48"), 1.0)
 			continue
-		view.draw_circle(cpos, 3.0, Color("f0a040") if str(c["task"]) == "repair" else Color("e65a50"))
-		view.draw_arc(cpos, 3.0, 0.0, TAU, 12, Color("201010"), 1.0)
+		s.circle(cpos, cr, Color("f0a040") if str(c["task"]) == "repair" else Color("e65a50"))
+		s.ring(cpos, cr, Color("201010"))
 		if float(c["hp"]) < CREW_HP:
-			view.draw_rect(Rect2(cpos + Vector2(-4, -6), Vector2(8, 1)), Color("3c2020"))
-			view.draw_rect(Rect2(cpos + Vector2(-4, -6), Vector2(8.0 * float(c["hp"]) / CREW_HP, 1)), GOOD)
+			var hp_bar := Rect2(cpos + Vector2(-4, -6) * k, Vector2(8.0 * k, maxf(1.0, k)))
+			s.rect(hp_bar, Color("3c2020"))
+			s.rect(Rect2(hp_bar.position, Vector2(hp_bar.size.x * float(c["hp"]) / CREW_HP, hp_bar.size.y)), GOOD)
 	# where your weapons are aimed
 	for i in range(weapons.size()):
 		var tid: String = str(weapons[i]["target"])
 		if tid == "":
 			continue
-		var c: Vector2 = _room_center(false, tid)
-		view.draw_arc(c, 6.0 + i * 2.0, 0.0, TAU, 20, BAD, 1.0)
-		view.draw_line(c + Vector2(-9, 0), c + Vector2(9, 0), BAD, 1.0)
-		view.draw_line(c + Vector2(0, -9), c + Vector2(0, 9), BAD, 1.0)
-		_text(c + Vector2(8, -6), str(i + 1), BAD, 7)
+		var at: Vector2 = xf * _room_center(false, tid)
+		var r: float = (6.0 + i * 2.0) * k
+		s.ring(at, r, BAD)
+		s.line(at + Vector2(-r - 3, 0), at + Vector2(r + 3, 0), BAD, 1.0)
+		s.line(at + Vector2(0, -r - 3), at + Vector2(0, r + 3), BAD, 1.0)
+		s.text(at.x + r + 1, at.y - r - 10, str(i + 1), "micro", BAD)
 
 
-func _draw_blast() -> void:
-	var size: Vector2 = foe["size"]
-	var c: Vector2 = ENEMY_POS + size / 2.0
+func _paint_blast() -> void:
+	var s := screen
+	var k: float = _ship_scale(false)
+	var c: Vector2 = foe_xf * ((foe["size"] as Vector2) / 2.0)
 	var t: float = clampf(1.0 - (end_timer - 0.2) / 2.0, 0.0, 1.0)
 	for i in range(4):
-		var r: float = (10.0 + i * 12.0) * t * 1.6
-		view.draw_circle(c + Vector2(i * 7 - 10, (i % 2) * 8 - 4), r * 0.6, Color(1.0, 0.7 - i * 0.12, 0.2, maxf(0.0, 0.9 - t)))
+		var r: float = (10.0 + i * 12.0) * t * 1.6 * k
+		s.circle(c + Vector2(i * 7 - 10, (i % 2) * 8 - 4) * k, r * 0.6, Color(1.0, 0.7 - i * 0.12, 0.2, maxf(0.0, 0.9 - t)))
 	for i in range(10):
 		var a: float = i * TAU / 10.0
-		view.draw_rect(Rect2(c + Vector2(cos(a), sin(a)) * 70.0 * t, Vector2(3, 2)), Color(0.6, 0.5, 0.45, maxf(0.0, 1.0 - t)))
+		s.rect(Rect2(c + Vector2(cos(a), sin(a)) * 70.0 * t * k, Vector2(3, 2) * k), Color(0.6, 0.5, 0.45, maxf(0.0, 1.0 - t)))
 
 
-func _bar(pos: Vector2, n: int, filled: int, color: Color) -> void:
-	for i in range(n):
-		view.draw_rect(Rect2(pos + Vector2(i * 5, 0), Vector2(4, 7)), color if i < filled else Color("3c3c46"))
+# Shots leave the firing ship's window and come in from the near edge of the target's, as in FTL.
+func _paint_shots() -> void:
+	for sh in shots:
+		var t: float = float(sh["t"])
+		if t < 0.0:
+			continue
+		var at_player: bool = sh["at_player"]
+		var a: Vector2 = _on_page(not at_player, sh["from"])
+		var b: Vector2 = _on_page(at_player, sh["to"])
+		var out_x: float = (FOE_WIN.position.x + 3.0) if at_player else (MY_WIN.end.x - 3.0)
+		var in_x: float = (MY_WIN.end.x - 3.0) if at_player else (FOE_WIN.position.x + 3.0)
+		var leave := Vector2(out_x, a.y)
+		var enter := Vector2(in_x, lerpf(b.y, a.y, 0.25))
+		var first: float = a.distance_to(leave)
+		var split: float = first / maxf(1.0, first + enter.distance_to(b))
+		var heavy: bool = sh["heavy"]
+		var tail: float = 12.0 if heavy else 8.0
+		var head: Vector2
+		var dir: Vector2
+		if t < split:
+			head = a.lerp(leave, t / maxf(0.001, split))
+			dir = (leave - a).normalized()
+			tail = minf(tail, head.distance_to(a))
+		else:
+			head = enter.lerp(b, (t - split) / maxf(0.001, 1.0 - split))
+			dir = (b - enter).normalized()
+			tail = minf(tail, head.distance_to(enter))
+		screen.line(head - dir * tail, head, sh["color"], 3.0 if heavy else 2.0)
 
 
-func _draw_top() -> void:
-	# yours
-	view.draw_rect(Rect2(2, 2, 116, 34), PANEL)
-	_text(Vector2(5, 10), "HULL", WHITE, 7)
-	_bar(Vector2(26, 4), hull_max, hull, BAD if hull * 3 <= hull_max else GOOD)
-	_text(Vector2(5, 21), "SHIELD", WHITE, 7)
-	for i in range(_max_layers()):
-		var c := Vector2(36 + i * 10, 18)
-		view.draw_circle(c, 3.5, SHIELD_BLUE if i < layers else Color("283c5a"))
-		view.draw_arc(c, 3.5, 0.0, TAU, 12, Color("c8e6ff"), 1.0)
-	if uplink:
-		_text(Vector2(58, 21), "S.A.R.A. uplink", Color("78f0ff"), 6)
-	_text(Vector2(5, 32), "Evasion %d%%   Oxygen %d%%" % [_my_evasion(), int(oxygen)], DIM if oxygen > 40 else BAD, 7)
-	# fold drive, pause, autofire
-	view.draw_rect(Rect2(122, 2, 94, 30), PANEL)
-	_text(Vector2(125, 10), "FOLD DRIVE", WHITE, 7)
-	view.draw_rect(Rect2(125, 12, 58, 3), Color("283046"))
-	view.draw_rect(Rect2(125, 12, 58.0 * fold / 100.0, 3), Color("78c8ff"))
-	var jr := _jump_rect()
-	var can_jump: bool = fold >= 100.0 and not bool(fight.get("story", false))
-	view.draw_rect(jr, Color("4664a0") if can_jump else Color("323646"))
-	_text_c(jr.get_center().x, jr.position.y + 8, "JUMP", WHITE if can_jump else DIM, 7)
-	var pr := _pause_rect()
-	view.draw_rect(pr, Color("323646"))
-	_text_c(pr.get_center().x, pr.position.y + 8, "Resume" if paused else "Pause", WHITE, 7)
-	var ar := _auto_rect()
-	view.draw_rect(ar, Color("3c5a3c") if autofire else Color("323646"))
-	_text_c(ar.get_center().x, ar.position.y + 8, "Autofire %s" % ("on" if autofire else "off"), WHITE, 6)
-	# theirs
-	view.draw_rect(Rect2(220, 2, 98, 36), Color(0.14, 0.08, 0.1, 0.92))
-	_text(Vector2(223, 10), str(foe["name"]), Color("ffbeaa"), 7)
-	_bar(Vector2(223, 13), e_hull_max, e_hull, GOOD)
-	for i in range(_layers_of(e_sys)):
-		var c2 := Vector2(226 + i * 10, 26)
-		view.draw_circle(c2, 3.5, SHIELD_BLUE if i < e_layers else Color("283c5a"))
-	_text(Vector2(250, 29), "Evasion %d%%  Crew %d" % [_enemy_evasion(), e_crew], DIM, 6)
-	if overcharged:
-		for w in e_weapons:
-			if str(w["id"]) == "ivan_cannon":
-				var full: float = float(ShipData.WEAPONS["ivan_cannon"]["charge"])
-				view.draw_rect(Rect2(223, 32, 92, 3), Color("3c2a1e"))
-				view.draw_rect(Rect2(223, 32, 92.0 * float(w["charge"]) / full, 3), GOLD)
-
-
-func _draw_bottom() -> void:
-	# reactor and systems
-	view.draw_rect(Rect2(2, 138, 118, 40), PANEL)
-	_text(Vector2(4, 146), "PWR", WHITE, 6)
+func _paint_reactor() -> void:
+	var s := screen
+	var r := Rect2(53, 297, 206, 83)
+	s.panel(r, "power", "Reactor")
 	var spare: int = spare_power()
+	s.text_right(r.end.x - 8, r.position.y + 7, "%d FREE / %d" % [spare, reactor], "micro", MUTED)
 	for i in range(reactor):
-		view.draw_rect(Rect2(6, 170 - i * 4, 10, 3), GOOD if i < spare else Color("2c3040"))
+		var unit := Rect2(62, 368 - i * 6, 13, 4)
+		s.rect(unit, ShipScreen.PIP_ON if i < spare else ShipScreen.PIP_OFF)
 	for k in range(REACTOR_SYS.size()):
 		var key: String = REACTOR_SYS[k]
-		var r := _sys_rect(k)
-		var s: Dictionary = sys[key]
-		for i in range(int(s["max"])):
-			var col := Color("2c3040")
-			if i >= int(s["max"]) - int(s["damage"]):
-				col = BAD
-			elif i < int(s["power"]):
-				col = GOOD
-			view.draw_rect(Rect2(r.position.x + 3, 164 - i * 5, 14, 4), col)
-		if r.has_point(hover):
-			view.draw_rect(r, Color(1, 1, 1, 0.25), false, 1.0)
-		_text_c(r.get_center().x, 176, str(SYS_LABEL[key]), WHITE, 6)
-	# weapons
-	view.draw_rect(Rect2(122, 138, 116, 40), PANEL)
+		var box := _sys_rect(k)
+		var x: float = box.position.x + 5
+		var st: Dictionary = sys[key]
+		var top: int = int(st["max"])
+		var step: float = 8.0 if top <= 4 else floorf(32.0 / top)
+		for i in range(top):
+			var col := ShipScreen.PIP_OFF
+			if i >= top - int(st["damage"]):
+				col = ShipScreen.PIP_RED
+			elif i < int(st["power"]):
+				col = ShipScreen.PIP_ON
+			var bar := Rect2(x, 354 - i * step, 23, step - 2.0)
+			s.rect(bar, col)
+			s.outline(bar, Color("4d5a4e") if col == ShipScreen.PIP_ON else Color("bdb4a5"))
+		if _boosting(key):
+			s.rect(Rect2(x + 9, 326, 5, 5), DRONE)
+			s.outline(Rect2(x + 9, 326, 5, 5), Color("5a4512"))
+		s.text_center(x + 11.5, 364, str(SYS_LABEL[key]), "micro", MUTED)
+		if s.hovering(box):
+			s.outline(box, ORANGE)
+		s.hit("sys/%d" % k, box)
+
+
+func _paint_weapons() -> void:
+	var s := screen
+	var r := Rect2(264, 297, 296, 83)
+	s.panel(r, "blaster", "Weapons")
+	if autofire:
+		s.text_right(r.end.x - 8, r.position.y + 7, "AUTOFIRE ON", "micro", OCHRE)
 	for i in range(weapons.size()):
-		var r := _weapon_rect(i)
+		var card := _weapon_rect(i)
 		var w: Dictionary = weapons[i]
 		if str(w["id"]) == "":
-			view.draw_rect(r, Color("1e2030"))
-			view.draw_rect(r, Color("3c4050"), false, 1.0)
-			_text(r.position + Vector2(3, 9), "Empty slot", DIM, 7)
-			_text(r.position + Vector2(3, 18), "buy or salvage", DIM, 6)
+			s.frame(card, Color("ece9e0"))
+			s.text(card.position.x + 6, card.position.y + 4, "%d  Empty slot" % (i + 1), "label", MUTED)
+			s.text(card.position.x + 6, card.position.y + 33, "BUY OR SALVAGE ONE", "micro", MUTED)
 			continue
 		var data: Dictionary = ShipData.WEAPONS[w["id"]]
-		var ready: bool = float(w["charge"]) >= float(data["charge"])
-		view.draw_rect(r, Color("2c3246") if bool(w["on"]) else Color("1e2030"))
-		view.draw_rect(r, GOLD if selected == i else (Color("8a90a8") if ready else Color("3c4050")), false, 1.0)
-		_text(r.position + Vector2(3, 9), "%d  %s" % [i + 1, str(data["name"])], WHITE, 7)
-		var status := "off (left-click)"
-		if bool(w["on"]):
-			status = "aim: click a room" if selected == i else ("READY" if ready else "charging")
-			if str(w["target"]) != "" and selected != i:
-				status = "aimed"
-		_text(r.position + Vector2(3, 19), status, GOLD if ready else DIM, 6)
-		view.draw_rect(Rect2(r.position + Vector2(3, 26), Vector2(46, 3)), Color("283046"))
-		view.draw_rect(Rect2(r.position + Vector2(3, 26), Vector2(46.0 * float(w["charge"]) / float(data["charge"]), 3)), GOLD if ready else Color("78c8ff"))
-	# who is aboard
-	view.draw_rect(Rect2(240, 138, 78, 40), PANEL)
-	_text(Vector2(243, 146), "ABOARD", WHITE, 6)
-	view.draw_circle(Vector2(248, 154), 3.5, Color("ffc878"))
-	_text(Vector2(254, 157), "You: pilot", WHITE, 6)
+		var charged: bool = float(w["charge"]) >= float(data["charge"])
+		var on: bool = bool(w["on"])
+		s.frame(card, Color("f8f6ef") if on else Color("e6e4de"))
+		if selected == i:
+			s.outline(card, ORANGE, 2.0)
+		s.text_fit(card.position.x + 6, card.position.y + 4, card.size.x - 12, "%d  %s" % [i + 1, str(data["name"])], "label", INK if on else MUTED)
+		var bar := Rect2(card.position.x + 6, card.position.y + 25, card.size.x - 12, 5)
+		s.rect(bar, ShipScreen.PIP_OFF)
+		s.rect(Rect2(bar.position, Vector2(bar.size.x * float(w["charge"]) / float(data["charge"]), bar.size.y)), ORANGE if charged else Color("6f9fb4"))
+		var note := "OFF - CLICK TO POWER"
+		if on:
+			note = "READY - CLICK TO AIM" if charged else "CHARGING"
+			if selected == i:
+				note = "AIM: CLICK A ROOM"
+			elif str(w["target"]) != "":
+				note = "AIMED"
+		s.text_fit(card.position.x + 6, card.position.y + 33, card.size.x - 12, note, "micro", OCHRE if charged and on else MUTED)
+		if s.hovering(card) and selected != i:
+			s.outline(card, ORANGE)
+		s.hit("weapon/%d" % i, card)
+
+
+func _paint_aboard() -> void:
+	var s := screen
+	var r := Rect2(565, 297, 150, 83)
+	s.panel(r, "mark", "Aboard")
+	s.circle(Vector2(578.5, 331.5), 4.5, YOU)
+	s.ring(Vector2(578.5, 331.5), 4.5, Color("2a2420"))
+	s.text(590, 325, "You", "label", INK)
+	s.text_right(r.end.x - 8, 328, "PILOT", "micro", MUTED)
 	var card := _drone_card_rect()
 	if drone_selected:
-		view.draw_rect(card, Color(0.35, 0.86, 0.43, 0.25))
-	view.draw_rect(Rect2(245, 162, 6, 6), GOLD)
-	var drone_note := "idle"
+		s.rect(card, Color("ecdcc4"))
+		s.outline(card, ORANGE)
+	elif s.hovering(card):
+		s.outline(card, ORANGE)
+	s.rect(Rect2(574, 347, 9, 9), DRONE)
+	s.outline(Rect2(574, 347, 9, 9), Color("5a4512"))
+	s.text(590, 344, "Drone", "label", INK)
+	var note := "IDLE"
 	if drone_selected:
-		drone_note = "pick a bay"
+		note = "PICK A BAY"
 	elif drone_path.size() > 0:
-		drone_note = "moving"
+		note = "MOVING"
 	elif drone_work > 0.0:
-		drone_note = "repairing"
+		note = "REPAIRING"
 	else:
 		for sname in ShipData.DRONE_BOOST:
 			if _boosting(sname):
-				drone_note = "boosting %s" % sname
-	_text(Vector2(254, 168), "Drone: %s" % drone_note, WHITE, 6)
-	_text(Vector2(243, 176), "Space pause  D drone", DIM, 6)
+				note = "BOOSTING %s" % str(SYS_LABEL.get(sname, sname)).to_upper()
+	s.text_right(r.end.x - 8, 347, note, "micro", MUTED)
+	s.hit("drone", card)
+	s.text(574, 366, "D DRONE   ESC CANCEL", "micro", MUTED)
+
+
+func _paint_status() -> void:
+	var s := screen
+	var line := "1-2 weapons   D drone   V autofire   Space pause"
+	if not bool(fight.get("story", false)):
+		line += "   J jump"
+	var col := INK
+	if result != "" and result != "done":
+		line = result_text
+	elif world.dialogue.active:
+		line = ""
+	elif paused:
+		line = "Paused. You can still give orders; Space or Resume carries on."
+	elif drone_selected:
+		line = "Click a bay on your ship to send the drone there."
+	elif selected >= 0:
+		line = "Click a room on their ship to aim the %s." % str(ShipData.WEAPONS[weapons[selected]["id"]]["name"])
+	s.status(line, col)
+	s.solid_button("pause", Rect2(625, 388, 82, 22), "Resume" if paused else "Pause", result == "")
+	if result != "" and result != "done":
+		var box := Rect2(234, 166, 300, 34)
+		s.frame(box, Color("f8f7f1"))
+		var tone := OCHRE
+		if result == "won":
+			tone = Color("3f7a4c")
+		elif result == "lost":
+			tone = Color("a43a2a")
+		s.text_center(box.get_center().x, box.position.y + 9, result_text, "strong", tone)
