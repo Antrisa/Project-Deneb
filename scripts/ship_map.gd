@@ -12,8 +12,11 @@ extends CanvasLayer
 const ShipData = preload("res://scripts/ship_data.gd")
 const ShipScreen = preload("res://ui/ship_screen.gd")
 
-const MAP_WIN := Rect2(53, 52, 420, 330)
-const CENTER := Vector2(263, 217)
+# The page fills the window (Zachary, 22 Nov), so the map's scope, its middle and its scale are worked out each
+# frame (_layout): the circle grows with the scope. RING radii are at zoom 1, the 420 x 330 scope of the old page.
+var MAP_WIN := Rect2(53, 52, 420, 330)
+var CENTER := Vector2(263, 217)
+var zoom := 1.0
 const RING := [0.0, 30.0, 60.0, 90.0, 120.0, 150.0]   # radius of each ring; ring 0 is the Landing
 const MOVE_TIME := 0.9
 const INK := Color("373b36")          # as ui/ship_screen.gd
@@ -41,6 +44,7 @@ func _ready() -> void:
 	visible = false
 	screen = ShipScreen.new()
 	add_child(screen)
+	screen.fill = true
 	screen.paint = Callable(self, "_paint")
 	screen.on_click = Callable(self, "_click")
 	# The rest of the rings, for show (greyed out on the first flight).
@@ -54,7 +58,7 @@ func _ready() -> void:
 		for k in range(n):
 			var ang: float = turn + k * 360.0 / n + rng.randf_range(-6.0, 6.0)
 			var r: float = RING[ring] + rng.randf_range(-4.0, 4.0)
-			dots.append([CENTER + Vector2(cos(deg_to_rad(ang)), sin(deg_to_rad(ang))) * r, mix[rng.randi() % mix.size()]])
+			dots.append([Vector2(cos(deg_to_rad(ang)), sin(deg_to_rad(ang))) * r, mix[rng.randi() % mix.size()]])
 
 
 func _zone_index(ang: float) -> int:
@@ -89,7 +93,7 @@ func stop_pos(i: int) -> Vector2:
 		return CENTER
 	var s: Dictionary = route[i]
 	var a: float = deg_to_rad(float(s["angle"]))
-	return CENTER + Vector2(cos(a), sin(a)) * float(RING[int(s["ring"])])
+	return CENTER + Vector2(cos(a), sin(a)) * float(RING[int(s["ring"])]) * zoom
 
 
 func next_index() -> int:
@@ -154,17 +158,25 @@ func _wedge(from_deg: float, to_deg: float, radius: float, color: Color) -> void
 	screen.polygon(pts, color)
 
 
+func _layout() -> void:
+	var pg: Vector2 = screen.page
+	MAP_WIN = Rect2(12, 46, pg.x - 24.0 - 241.0, pg.y - 96.0)
+	CENTER = MAP_WIN.get_center().round()
+	zoom = minf(MAP_WIN.size.x / 420.0, MAP_WIN.size.y / 330.0)
+
+
 func _paint() -> void:
 	var s := screen
-	s.case("Jump map")
+	_layout()
+	s.case_fill("Jump map")
 	s.scope(MAP_WIN, 3)
-	var outer: float = RING[RING.size() - 1] + 7.0
+	var outer: float = (RING[RING.size() - 1] + 7.0) * zoom
 	for z in ShipData.ZONES:
 		_wedge(float(z["from"]), float(z["to"]), outer, Color(z["color"], 0.72))
-	s.circle(CENTER, RING[1] + 7.0, Color("3d4946"))
+	s.circle(CENTER, (RING[1] + 7.0) * zoom, Color("3d4946"))
 	for r in RING:
 		if r > 0.0:
-			s.ring(CENTER, r, Color(0.54, 0.6, 0.55, 0.55))
+			s.ring(CENTER, r * zoom, Color(0.54, 0.6, 0.55, 0.55))
 	for z in ShipData.ZONES:
 		var mid: float = deg_to_rad((float(z["from"]) + float(z["to"])) / 2.0)
 		var rim: Vector2 = CENTER + Vector2(cos(mid), sin(mid)) * (outer - 12.0)
@@ -174,7 +186,7 @@ func _paint() -> void:
 		s.text_center(x, rim.y - 6.0, label, "micro", z["text"])
 	# the other stops: not on this route
 	for d in dots:
-		var p: Vector2 = d[0]
+		var p: Vector2 = CENTER + (d[0] as Vector2) * zoom
 		var near := false
 		for i in range(route.size()):
 			if stop_pos(i).distance_to(p) < 12.0:
@@ -220,6 +232,7 @@ func _paint() -> void:
 
 func _paint_side(n: int) -> void:
 	var s := screen
+	s.shift(Vector2(s.page.x - 12.0 - 715.0, -6.0))   # the side column, as designed, against the right edge
 	# the next stop
 	var box := Rect2(480, 52, 235, 120)
 	s.panel(box, "map", "Next stop")
@@ -273,5 +286,8 @@ func _paint_side(n: int) -> void:
 		hint = "Jumping..."
 	if title != "":
 		hint += "   Fold home: not on this flight."
+	s.shift(s.bottom_left())
 	s.status(hint)
+	s.shift(s.bottom_right())
 	s.solid_button("jump", Rect2(625, 388, 82, 22), "Jump", can)
+	s.shift(Vector2.ZERO)

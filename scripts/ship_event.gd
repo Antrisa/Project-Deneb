@@ -37,6 +37,7 @@ func _ready() -> void:
 	visible = false
 	screen = ShipScreen.new()
 	add_child(screen)
+	screen.fill = true                  # the whole window, like the battle (Zachary, 22 Nov)
 	screen.paint = Callable(self, "_paint")
 	screen.on_click = Callable(self, "_click")
 	if ResourceLoader.exists(ShipData.STARTER["art"]):
@@ -158,40 +159,51 @@ func _body() -> String:
 
 func _paint() -> void:
 	var s := screen
-	s.case(_tag())
+	s.case_fill(_tag())
+	var left: float = 12.0
+	var wide: float = s.page.x - 24.0
+	var bottom: float = s.page.y - 50.0
 	if not showing_window:
-		_paint_scene(Rect2(53, 52, 662, 330))
-		s.status("Arrived: %s." % str(stop.get("name", "a quiet patch of space")))
+		_paint_scene(Rect2(left, 46, wide, bottom - 46.0))
+		_status("Arrived: %s." % str(stop.get("name", "a quiet patch of space")))
 		return
 	# The panel grows to fit the event; the scene takes what's left above it.
-	var body: Array = s.wrap_lines(_body(), 640, "label")
+	var body: Array = s.wrap_lines(_body(), wide - 22.0, "label")
 	var below: float
 	if outcome.is_empty():
 		below = mini(4, (event.get("choices", []) as Array).size()) * ROW
 	else:
 		below = (outcome.get("gains", []) as Array).size() * LINE + 4.0
 	var height: float = 30.0 + body.size() * LINE + 8.0 + below + 4.0
-	var top: float = clampf(382.0 - height, 120.0, 260.0)
-	_paint_scene(Rect2(53, 52, 662, top - 56.0))
-	var box := Rect2(53, top, 662, 382.0 - top)
+	var top: float = clampf(bottom - height, bottom - 262.0, bottom - 122.0)
+	_paint_scene(Rect2(left, 46, wide, top - 50.0))
+	var box := Rect2(left, top, wide, bottom - top)
 	s.panel(box, "mark", str(event.get("title", "")))
 	var y: float = top + 30.0
 	for ln in body:
-		s.text(64, y, ln, "label", INK)
+		s.text(left + 11.0, y, ln, "label", INK)
 		y += LINE
 	y += 8.0
 	if outcome.is_empty():
 		var choices: Array = event.get("choices", [])
-		y = maxf(y, 382.0 - 4.0 - mini(4, choices.size()) * ROW)
+		y = maxf(y, bottom - 4.0 - mini(4, choices.size()) * ROW)
 		for i in range(mini(4, choices.size())):
-			_paint_choice(i, choices[i], Rect2(62, y + i * ROW, 644, 24))
-		s.status("Choose with a click, or keys 1 to %d." % mini(4, choices.size()))
+			_paint_choice(i, choices[i], Rect2(left + 9.0, y + i * ROW, wide - 18.0, 24))
+		_status("Choose with a click, or keys 1 to %d." % mini(4, choices.size()))
 	else:
 		for g in outcome.get("gains", []):
-			s.text(64, y, str(g[0]), "label", Color(g[1]).darkened(0.35))
+			s.text(left + 11.0, y, str(g[0]), "label", Color(g[1]).darkened(0.35))
 			y += LINE
-		s.status("Press E, or click Continue.")
+		_status("Press E, or click Continue.")
+		s.shift(s.bottom_right())
 		s.solid_button("continue", Rect2(625, 388, 82, 22), "Continue")
+		s.shift(Vector2.ZERO)
+
+
+func _status(line: String) -> void:
+	screen.shift(screen.bottom_left())
+	screen.status(line)
+	screen.shift(Vector2.ZERO)
 
 
 # A choice row. A choice that needs something you have (a weapon, the drone) is blue, as in FTL; one that needs

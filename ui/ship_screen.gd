@@ -159,6 +159,16 @@ func hovering(r: Rect2) -> bool:
 	return Rect2(r.position + _off, r.size).has_point(mouse)
 
 
+# In fill mode the status line and the button at its right end sit along the bottom of the page: shift() by these
+# before drawing them as designed (status() at x 61, a button at x 625..707, y 388).
+func bottom_left() -> Vector2:
+	return Vector2(12.0 - 53.0, page.y - 418.0)
+
+
+func bottom_right() -> Vector2:
+	return Vector2(page.x - 14.0 - 707.0, page.y - 418.0)
+
+
 # Move everything drawn after this (and its hit areas) by o page pixels, until the next shift(); shift(Vector2.ZERO)
 # puts it back. Lets a screen lay out a block of its page as designed and then place the block anywhere.
 func shift(o: Vector2) -> void:

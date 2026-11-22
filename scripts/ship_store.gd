@@ -34,6 +34,7 @@ func _ready() -> void:
 	visible = false
 	screen = ShipScreen.new()
 	add_child(screen)
+	screen.fill = true                  # the whole window, like the battle (Zachary, 22 Nov)
 	screen.paint = Callable(self, "_paint")
 	screen.on_click = Callable(self, "_click")
 
@@ -215,7 +216,8 @@ func _repair(all: bool) -> void:
 
 func _paint() -> void:
 	var s := screen
-	s.case(str(stock.get("name", "Store")))
+	s.case_fill(str(stock.get("name", "Store")))
+	s.shift(((s.page - ShipScreen.DESIGN) / 2.0).floor() + Vector2(0, -16))
 	for i in range(TABS.size()):
 		s.button("tab/%d" % i, Rect2(56 + i * 96, 54, 92, 24), str(TABS[i]), tab == i)
 	s.button("mode", Rect2(600, 54, 112, 24), "Selling" if selling else "Buying", selling)
@@ -234,8 +236,11 @@ func _paint() -> void:
 	_paint_details(slots)
 	_paint_supplies()
 	_paint_repair()
+	s.shift(s.bottom_left())
 	s.status(status)
+	s.shift(s.bottom_right())
 	s.solid_button("leave", Rect2(625, 388, 82, 22), "Leave")
+	s.shift(Vector2.ZERO)
 
 
 func _paint_slot(k: int, slot: Array, r: Rect2) -> void:
