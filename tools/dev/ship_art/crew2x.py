@@ -31,17 +31,25 @@ def shade(c, k):
 
 # Who: skin (head and hands), suit (body and arms), legs, and extras drawn on top.
 CREW = {
-    "player": dict(skin="#e8e6ee", suit="#eceae4", legs="#c9c5bd", trim="#ea6e1a", helmet=True, visor="#3aa2ac", pack=True),
+    # you: a dark grey space suit with orange (Zachary), a teal visor and a backpack
+    "player": dict(skin="#e8e6ee", suit="#4c4c56", legs="#3c3c46", trim="#ea6e1a", helmet=True, helmet_col="#5c5c66",
+                   visor="#3aa2ac", pack=True, shoulders="#ea6e1a"),
     "human": dict(skin="#d8a07a", suit="#8e8a96", legs="#4c4a58", hair="#4a3424"),
-    "freya": dict(skin="#e2b08c", suit="#5a7a9a", legs="#3c5068", hair="#c8642c", goggles=True, trim="#e8c040"),
-    "ana": dict(skin="#d29a76", suit="#2e3e58", legs="#26262e", hair="#1e1a1c", trim="#c84646", jacket=True),
+    # Freya, as her NPC: long wavy blonde hair in a ponytail, goggles up on her head, a dark tank top with brown
+    # overall straps, grey work trousers, brown boots
+    "freya": dict(skin="#f0c8a0", suit="#3c3a42", legs="#55555f", hair="#e8b440", hair_long=True, ponytail=True,
+                  goggles_up=True, straps="#7a5230", boots="#6e4a2c"),
+    # Ana, as her NPC: dark messy hair with a red streak, a black jacket over a white shirt, navy trousers
+    "ana": dict(skin="#d8a888", suit="#1e1e26", legs="#2a2e48", hair="#2a1e24", hair_long=True, streak="#a03040",
+                jacket=True, boots="#5a5a64"),
     "rabble_pirate": dict(skin="#c8906a", suit="#6e4a34", legs="#3a3036", bandana="#b03434", trim="#962828"),
     "terran_marine": dict(skin="#e2e5ec", suit="#c6cbd6", legs="#80869a", helmet=True, visor="#2a52a8", trim="#3a6cc8"),
-    "zaash": dict(skin="#dfcbaa", suit="#925426", legs="#6e3c1c", crest="#c8b08c", trim="#cc8c44"),
-    "arachnay": dict(skin="#8666bc", suit="#523682", legs="#3c2664", extra_arms=True, eyes="#ff6a5a"),
-    "moogli": dict(skin="#f0c640", suit="#d8a82a", legs="#b8881c", round=True, big_eyes=True, trim="#4e8a3e"),
+    "zaash": dict(skin="#7aa65a", suit="#925426", legs="#6e3c1c", crest="#c8b08c", trim="#cc8c44"),
+    # Arachnay: a person's top half on a spider's legs
+    "arachnay": dict(skin="#8666bc", suit="#523682", legs="#3c2664", extra_arms=True, eyes="#ff6a5a", spider=True),
+    "moogli": dict(skin="#6aa652", suit="#4e8a3e", legs="#3a6c30", round=True, big_eyes=True, trim="#d8a82a"),
     "ervani": dict(skin="#d0682c", suit="#e8d8c0", legs="#923a16", ears=True, muzzle="#f8eedc", tail=True),
-    "vuultam": dict(skin="#74bca2", suit="#3a806c", legs="#2a6456", fronds="#4e8a3e", trim="#c46a96"),
+    "vuultam": dict(skin="#74bca2", suit="#3a806c", legs="#2a6456", hair="#2e6a4a", fronds="#4e8a3e", trim="#c46a96"),
     "scyldar": dict(skin="#46a4a4", suit="#246e70", legs="#1a5658", fin="#de7856", trim="#de7856"),
 }
 
@@ -99,14 +107,38 @@ def figure(c, who, facing, step=0, arms="swing", work=0):
     bob = 1 if step in (1, 3) else 0
     top = 4 + bob
     # legs
-    if facing == "right":
+    if w.get("spider"):
+        # a round abdomen behind and four thin legs a side, stepping in turn
+        if facing != "down":
+            c.ellipse(5 if facing == "right" else 8, top + 10, 11 if facing == "right" else 15, top + 16, legs)
+            c.px(7 if facing == "right" else 11, top + 12, hexc(w["eyes"]))
+        for k in range(3):
+            lift = 1 if (k + step) % 2 else 0
+            for side in (-1, 1):
+                if facing == "right" and side == -1 and k < 1:
+                    continue
+                # each leg goes up to a knee, then down to its foot, spread wide and apart
+                x0, y0 = 11 + side * 2, top + 11 + k
+                xm, ym = 11 + side * (5 + 2 * k), top + 8 + 2 * k - lift
+                x1, y1 = 11 + side * (7 + 2 * k), top + 13 + 2 * k - lift
+                for (xa, ya, xb, yb) in ((x0, y0, xm, ym), (xm, ym, x1, y1)):
+                    n = max(abs(xb - xa), abs(yb - ya), 1)
+                    for t in range(n + 1):
+                        c.px(round(xa + (xb - xa) * t / n), round(ya + (yb - ya) * t / n), shade(legs, 0.9 + 0.1 * (k % 2)))
+    elif facing == "right":
         fwd = {0: 0, 1: 2, 2: 0, 3: -2}[step]
         c.rect(11 + fwd // 2, top + 13, 12 + fwd // 2, top + 17, legs)
         c.rect(11 - fwd // 2, top + 13, 12 - fwd // 2, top + 17, shade(legs, 0.8))
+        if "boots" in w:
+            c.rect(11 + fwd // 2, top + 17, 13 + fwd // 2, top + 17, hexc(w["boots"]), lit=False)
+            c.rect(11 - fwd // 2, top + 17, 13 - fwd // 2, top + 17, shade(hexc(w["boots"]), 0.8), lit=False)
     else:
         lift = {0: (0, 0), 1: (1, 0), 2: (0, 0), 3: (0, 1)}[step]
         c.rect(9, top + 13, 10, top + 17 - lift[0], legs)
         c.rect(13, top + 13, 14, top + 17 - lift[1], legs)
+        if "boots" in w:
+            c.rect(9, top + 17 - lift[0], 10, top + 17 - lift[0], hexc(w["boots"]), lit=False)
+            c.rect(13, top + 17 - lift[1], 14, top + 17 - lift[1], hexc(w["boots"]), lit=False)
     # a tail behind (Ervani)
     if w.get("tail") and facing != "down":
         c.ellipse(4 if facing == "right" else 10, top + 11, 9 if facing == "right" else 13, top + 16, skin)
@@ -124,7 +156,20 @@ def figure(c, who, facing, step=0, arms="swing", work=0):
         else:
             c.rect(8, top + 11, 15, top + 11, trim, lit=False)
     if w.get("jacket") and facing != "up":
-        c.rect(11, top + 7, 12, top + 10, hexc("#c8b8a0"), lit=False)        # her shirt under the jacket
+        c.rect(11, top + 7, 12, top + 12, hexc("#ecebe6"), lit=False)        # her white shirt under the jacket
+    if "straps" in w:                                                         # Freya's overall straps
+        st = hexc(w["straps"])
+        if facing == "right":
+            c.rect(11, top + 7, 11, top + 13, st, lit=False)
+        else:
+            c.rect(9, top + 7, 9, top + 12, st, lit=False); c.rect(14, top + 7, 14, top + 12, st, lit=False)
+            c.rect(9, top + 12, 14, top + 13, st, lit=False)
+    if "shoulders" in w and facing != "up":                                  # orange shoulder pads on your suit
+        sh = hexc(w["shoulders"])
+        if facing == "right":
+            c.rect(11, top + 7, 13, top + 8, sh)
+        else:
+            c.rect(8, top + 7, 9, top + 8, sh); c.rect(14, top + 7, 15, top + 8, sh)
     if w.get("pack") and facing in ("up", "right"):
         if facing == "up":
             c.rect(9, top + 7, 14, top + 12, hexc("#c4c0cc"))
@@ -172,7 +217,7 @@ def figure(c, who, facing, step=0, arms="swing", work=0):
     if rnd:
         hy0, hy1 = top + 1, top + 7
     if w.get("helmet"):
-        c.ellipse(hx0 - 1, hy0 - 1, hx1 + 1, hy1, hexc("#f6f7fa") if who == "player" else suit)
+        c.ellipse(hx0 - 1, hy0 - 1, hx1 + 1, hy1, hexc(w["helmet_col"]) if "helmet_col" in w else suit)
         visor = hexc(w["visor"])
         if facing == "down":
             c.rect(hx0 + 1, hy0 + 2, hx1 - 1, hy0 + 4, visor, lit=False)
@@ -181,18 +226,42 @@ def figure(c, who, facing, step=0, arms="swing", work=0):
             c.rect(hx0 + 3, hy0 + 2, hx1, hy0 + 4, visor, lit=False)
             c.px(hx0 + 3, hy0 + 2, hexc("#c8f4f4"))
         if trim:
-            c.px(hx0 + 1, hy0, trim)
+            if who == "player":                                   # an orange stripe over the helmet
+                c.rect((hx0 + hx1) // 2, hy0 - 1, (hx0 + hx1) // 2 + 1, hy0 + 1, trim, lit=False)
+            else:
+                c.px(hx0 + 1, hy0, trim)
         return
     c.ellipse(hx0, hy0, hx1, hy1, skin)
     eye = hexc("#1a1924")
     if "hair" in w:
         hair = hexc(w["hair"])
+        long_ = w.get("hair_long", False)
         if facing == "up":
-            c.ellipse(hx0, hy0, hx1, hy1 - 1, hair)
+            c.ellipse(hx0 - (1 if long_ else 0), hy0 - (1 if long_ else 0), hx1 + (1 if long_ else 0), hy1 + (2 if long_ else -1), hair)
+            if w.get("ponytail"):
+                c.rect((hx0 + hx1) // 2 - 1, hy1, (hx0 + hx1) // 2 + 1, hy1 + 4, hair)
         else:
-            c.rect(hx0, hy0, hx1, hy0 + 1, hair)
-            if facing == "right":
+            c.rect(hx0, hy0 - (1 if long_ else 0), hx1, hy0 + 1, hair)
+            if long_:                                                   # falling past the face to the shoulders
+                if facing == "down":
+                    c.rect(hx0 - 1, hy0, hx0, hy1 + 2, hair); c.rect(hx1, hy0, hx1 + 1, hy1 + 2, hair)
+                else:
+                    c.rect(hx0 - 1, hy0, hx0 + 2, hy1 + 2, hair)
+                    if w.get("ponytail"):
+                        c.rect(hx0 - 3, hy0 + 2, hx0 - 1, hy1 + 3, hair)
+            elif facing == "right":
                 c.rect(hx0, hy0, hx0 + 2, hy0 + 4, hair)
+        if "streak" in w and facing != "up":                            # Ana's red streak
+            c.rect(hx0 + 1, hy0 - (1 if long_ else 0), hx0 + 2, hy0 + 2, hexc(w["streak"]), lit=False)
+        if w.get("goggles_up"):                                         # Freya's goggles pushed up on her head
+            g1, g2 = hexc("#c4c0cc"), hexc("#7a5230")
+            if facing == "right":
+                c.rect(hx0 + 2, hy0 - 1, hx1, hy0 - 1, g2, lit=False); c.rect(hx1 - 2, hy0 - 2, hx1 - 1, hy0 - 1, g1, lit=False)
+            elif facing == "down":
+                c.rect(hx0, hy0, hx1, hy0, g2, lit=False)
+                c.rect(hx0 + 1, hy0 - 1, hx0 + 2, hy0, g1, lit=False); c.rect(hx1 - 2, hy0 - 1, hx1 - 1, hy0, g1, lit=False)
+            else:
+                c.rect(hx0, hy0 + 1, hx1, hy0 + 1, g2, lit=False)
     if "bandana" in w:
         c.rect(hx0, hy0, hx1, hy0 + 1, hexc(w["bandana"]))
         if facing != "down":
@@ -229,8 +298,7 @@ def figure(c, who, facing, step=0, arms="swing", work=0):
                 c.px(x, y, hexc(w["eyes"]))
         else:
             c.px(hx0 + 2, hy0 + 3, eye); c.px(hx1 - 2, hy0 + 3, eye)
-        if w.get("goggles"):
-            c.rect(hx0 + 1, hy0 + 2, hx1 - 1, hy0 + 2, hexc(w["trim"]), lit=False)
+
     elif facing == "right":
         if "eyes" in w:
             c.px(hx1 - 1, hy0 + 2, hexc(w["eyes"])); c.px(hx1, hy0 + 3, hexc(w["eyes"]))
@@ -239,8 +307,7 @@ def figure(c, who, facing, step=0, arms="swing", work=0):
             c.px(hx1, hy0 - 1, hexc("#f6f7fa")); c.px(hx1, hy0, eye)
         elif not w.get("ears"):
             c.px(hx1 - 1, hy0 + 3, eye)
-        if w.get("goggles"):
-            c.rect(hx1 - 2, hy0 + 2, hx1, hy0 + 2, hexc(w["trim"]), lit=False)
+
 
 
 def frame(who, pose, i):
