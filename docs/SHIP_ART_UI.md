@@ -593,7 +593,9 @@ blue on the room and the system bar.
 
 **Weapon art (21 Nov, Claude):** `tools/dev/ship_art/weapons2x.py` draws every gun as a six-frame strip in
 `art/ships/weapons/<id>.png` (idle, charging 1 and 2, ready glowing, firing with recoil and a muzzle flash, firing 2;
-48 × 16 art px a frame, Ivan's cannon 80 × 24), the missile in `art/ships/shots/missile.png`, and 48 × 48 store
+64 × 24 art px a frame with the mount at (6, 12); Ivan's cannon 96 × 32, mount (8, 16); redrawn with more detail
+after Zachary's "models need detail": shaded housings, seams, rivets, vents, hoses, status and charge lights, banded
+barrels, muzzle shrouds), the missile in `art/ships/shots/missile.png`, and 48 × 48 store
 pictures in `art/ships/store/<id>.png`. The battle draws each gun on its mount in the frame that matches its
 charge, mirrored with enemy ships; lasers fly as glowing bolts, missiles as the sprite nose-first, and beams as a
 hot line from the gun with the cut glowing on the rooms it crosses. All of them are for sale at the Moogli trader.
