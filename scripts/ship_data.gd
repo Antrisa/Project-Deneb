@@ -181,6 +181,145 @@ const ANA_SHIPS := {
 }
 
 
+# The culture ships (Claude, 21 Nov; art approved by Zachary), at double resolution (art_scale 2). Generated from
+# tools/dev/ship_art/fleet2x.py INSIDES (rooms, doors, mounts), so art and game agree; stats are first guesses to
+# tune. Each also comes Rabble-repainted: enemy("<id>_rabble") flies it as a pirate (hull_rabble.png art).
+const CULTURE_SHIPS := {
+	"terran_patrol": {
+		"name": "Terran patrol", "size": Vector2(168, 96), "hull": 10, "crew": 4,
+		"art": "res://art/ships/terran_patrol/hull.png", "interior": "res://art/ships/terran_patrol/interior.png", "art_scale": 2,
+		"weapons": ["burst_laser", "heavy_laser"],
+		"mounts": [Vector2(144, 22), Vector2(144, 73.5), Vector2(107, 5), Vector2(107, 90.5)],
+		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [3, 3], "life": [1, 1], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(3, 1, 2, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(2, 1, 1, 1)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 2, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 2, 2, 1)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(5, 1, 1, 2)},
+		],
+		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(3, 2)], [Vector2i(4, 1), Vector2i(5, 1)]],
+	},
+	"zaash_skiff": {
+		"name": "Zaa'sh skiff", "size": Vector2(144, 96), "hull": 9, "crew": 3,
+		"art": "res://art/ships/zaash_skiff/hull.png", "interior": "res://art/ships/zaash_skiff/interior.png", "art_scale": 2,
+		"weapons": ["heavy_laser"],
+		"mounts": [Vector2(110, 25), Vector2(110, 70.5), Vector2(75, 18), Vector2(75, 77.5)],
+		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(3, 2, 1, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(2, 1, 1, 1)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 2, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 1, 1, 1)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(4, 1, 1, 2)},
+		],
+		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)]],
+	},
+	"vuultam_garden": {
+		"name": "Vuultam garden ship", "size": Vector2(168, 96), "hull": 10, "crew": 3,
+		"art": "res://art/ships/vuultam_garden/hull.png", "interior": "res://art/ships/vuultam_garden/interior.png", "art_scale": 2,
+		"weapons": ["rabble_laser"],
+		"mounts": [Vector2(135, 20), Vector2(135, 75.5), Vector2(110, 20), Vector2(110, 75.5)],
+		"systems": {"shields": [4, 4], "engines": [1, 1], "weapons": [1, 1], "life": [2, 2], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 1, 2, 2)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(4, 1, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(4, 2, 1, 1)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(5, 1, 1, 2)},
+		],
+		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(4, 1), Vector2i(5, 1)]],
+	},
+	"moogli_trader": {
+		"name": "Moogli trader", "size": Vector2(144, 96), "hull": 8, "crew": 3,
+		"art": "res://art/ships/moogli_trader/hull.png", "interior": "res://art/ships/moogli_trader/interior.png", "art_scale": 2,
+		"weapons": ["rabble_laser"],
+		"mounts": [Vector2(113, 18), Vector2(113, 77.5)],
+		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [1, 1], "life": [1, 1], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(2, 2, 1, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 1, 1, 1)},
+			{"id": "hold", "label": "Hold", "sys": "", "cells": Rect2i(3, 1, 1, 2)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(4, 1, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(4, 2, 1, 1)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(5, 1, 1, 2)},
+		],
+		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(4, 1), Vector2i(5, 1)]],
+	},
+	"ervani_courier": {
+		"name": "Ervani courier", "size": Vector2(144, 96), "hull": 7, "crew": 3,
+		"art": "res://art/ships/ervani_courier/hull.png", "interior": "res://art/ships/ervani_courier/interior.png", "art_scale": 2,
+		"weapons": ["rabble_laser", "rabble_laser"],
+		"mounts": [Vector2(118, 23), Vector2(118, 72.5), Vector2(80, 21), Vector2(80, 74.5)],
+		"systems": {"shields": [2, 2], "engines": [3, 3], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(2, 1, 1, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 2, 1, 1)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 1, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 2, 1, 1)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(4, 1, 1, 2)},
+		],
+		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)]],
+	},
+	"scyldar_lantern": {
+		"name": "Scyldar lantern ship", "size": Vector2(168, 96), "hull": 10, "crew": 3,
+		"art": "res://art/ships/scyldar_lantern/hull.png", "interior": "res://art/ships/scyldar_lantern/interior.png", "art_scale": 2,
+		"weapons": ["heavy_laser"],
+		"mounts": [Vector2(131, 18), Vector2(131, 77.5), Vector2(90, 15), Vector2(90, 80.5)],
+		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(2, 2, 1, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 1, 1, 1)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 1, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 2, 1, 1)},
+			{"id": "hold", "label": "Hold", "sys": "", "cells": Rect2i(4, 1, 1, 2)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(5, 1, 1, 2)},
+		],
+		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(4, 1), Vector2i(5, 1)]],
+	},
+	"arachnay_weaver": {
+		"name": "Arachnay weaver", "size": Vector2(144, 96), "hull": 9, "crew": 4,
+		"art": "res://art/ships/arachnay_weaver/hull.png", "interior": "res://art/ships/arachnay_weaver/interior.png", "art_scale": 2,
+		"weapons": ["rabble_laser", "heavy_laser"],
+		"mounts": [Vector2(118, 27), Vector2(118, 68.5), Vector2(80, 23), Vector2(80, 72.5)],
+		"systems": {"shields": [2, 2], "engines": [2, 2], "weapons": [2, 2], "life": [1, 1], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(2, 2, 1, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 2)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 1, 1, 1)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 1, 1, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 2, 1, 1)},
+			{"id": "hold", "label": "Hold", "sys": "", "cells": Rect2i(4, 1, 1, 2)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(5, 1, 1, 2)},
+		],
+		"doors": [[Vector2i(1, 1), Vector2i(2, 1)], [Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 1), Vector2i(3, 1)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 1), Vector2i(4, 1)], [Vector2i(4, 1), Vector2i(5, 1)]],
+	},
+	"collective_freighter": {
+		"name": "Collective freighter", "size": Vector2(192, 120), "hull": 12, "crew": 4,
+		"art": "res://art/ships/collective_freighter/hull.png", "interior": "res://art/ships/collective_freighter/interior.png", "art_scale": 2,
+		"weapons": ["rabble_laser"],
+		"mounts": [Vector2(176, 45), Vector2(176, 74.5), Vector2(75, 10), Vector2(75, 109.5)],
+		"systems": {"shields": [2, 2], "engines": [1, 1], "weapons": [1, 1], "life": [1, 1], "pilot": [1, 1]},
+		"rooms": [
+			{"id": "crew", "label": "Crew", "sys": "", "cells": Rect2i(3, 3, 1, 1)},
+			{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 1, 1, 3)},
+			{"id": "corridor", "label": "Corridor", "sys": "", "cells": Rect2i(2, 2, 5, 1)},
+			{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 1, 1, 1)},
+			{"id": "shields", "label": "Shields", "sys": "shields", "cells": Rect2i(3, 1, 1, 1)},
+			{"id": "hold_top", "label": "Hold", "sys": "", "cells": Rect2i(4, 1, 2, 1)},
+			{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(2, 3, 1, 1)},
+			{"id": "hold_bottom", "label": "Hold", "sys": "", "cells": Rect2i(4, 3, 2, 1)},
+			{"id": "pilot", "label": "Cockpit", "sys": "pilot", "cells": Rect2i(7, 2, 1, 1)},
+		],
+		"doors": [[Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 2), Vector2i(2, 1)], [Vector2i(3, 2), Vector2i(3, 1)], [Vector2i(4, 2), Vector2i(4, 1)], [Vector2i(2, 2), Vector2i(2, 3)], [Vector2i(3, 2), Vector2i(3, 3)], [Vector2i(4, 2), Vector2i(4, 3)], [Vector2i(6, 2), Vector2i(7, 2)]],
+	},
+}
+
 # What a won fight pays: [credits, {item: count}].
 const REWARDS := {
 	"rabble_cutter": [40, {"hull_plate": 1}],
@@ -193,6 +332,21 @@ const REWARDS := {
 static func enemy(id: String) -> Dictionary:
 	if ENEMIES.has(id):
 		return build(ENEMIES[id])
+	if CULTURE_SHIPS.has(id):
+		return build(CULTURE_SHIPS[id])
+	# Rabble pirates fly other peoples' ships, haphazardly repainted (Zachary, 21 Nov): the same rooms, the repainted
+	# art, and Rabble guns.
+	if id.ends_with("_rabble") and CULTURE_SHIPS.has(id.trim_suffix("_rabble")):
+		var base: String = id.trim_suffix("_rabble")
+		var def: Dictionary = CULTURE_SHIPS[base].duplicate(true)
+		def["name"] = "Rabble %s" % str(def["name"]).to_lower()
+		def["art"] = "res://art/ships/%s/hull_rabble.png" % base
+		def["interior"] = "res://art/ships/%s/interior_rabble.png" % base
+		var guns: Array = []
+		for i in range(maxi(2, (def["weapons"] as Array).size())):
+			guns.append("rabble_laser")
+		def["weapons"] = guns
+		return build(def)
 	return build(ANA_SHIPS.get(id, {}))
 
 

@@ -32,8 +32,6 @@ def terran_patrol():
     rivet_row(p, 70, 220, 40, 8); rivet_row(p, 70, 220, 151, 8)
     for y in (10, 181):
         p.bevel(p.mask(rect=(176, y - 6, 210, y + 6)), "white", width=2, face=4 if y < 96 else 3, shade_lower=False)
-        p.tube(p.mask(rect=(206, y - 3, 244, y + 2)), "metal", "x", bands=(5, 4, 3, 2, 1, 1))
-        p.tube(p.mask(rect=(242, y - 4, 248, y + 3)), "gunmetal", "x", bands=(4, 3, 2, 1))
         p.slot(182, y - 2, 198, y - 1)
     # the hull
     body = S([(10, 22), (138, 22), (150, 28), (166, 40), (166, 55), (150, 67), (138, 73), (10, 73)])
@@ -572,6 +570,67 @@ def collective_freighter():
     return p
 
 
+# Rooms, doors and gun mounts for the game: rooms {id: (col, row, w, h, system)} and doors ((c1, r1), (c2, r2)) in
+# 48-px cells (kit2x.interior cuts them; console_at() places the consoles); mounts in 24-px cell units, where the
+# game attaches guns (front pair first). scripts/ship_data.gd CULTURE_SHIPS must match. Doors only where needed.
+INSIDES = {
+    "terran_patrol": (
+        {"engines": (1, 1, 1, 2, "engines"), "shields": (2, 1, 1, 1, "shields"), "life": (2, 2, 1, 1, "life"),
+         "crew": (3, 1, 2, 1, ""), "weapons": (3, 2, 2, 1, "weapons"), "pilot": (5, 1, 1, 2, "pilot")},
+        [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)), ((3, 1), (3, 2)), ((4, 1), (5, 1))],
+        [(144, 22), (144, 73.5), (107, 5), (107, 90.5)],
+    ),
+    "zaash_skiff": (
+        {"engines": (1, 1, 1, 2, "engines"), "shields": (2, 1, 1, 1, "shields"), "life": (2, 2, 1, 1, "life"),
+         "weapons": (3, 1, 1, 1, "weapons"), "crew": (3, 2, 1, 1, ""), "pilot": (4, 1, 1, 2, "pilot")},
+        [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)), ((3, 1), (4, 1))],
+        [(110, 25), (110, 70.5), (75, 18), (75, 77.5)],
+    ),
+    "vuultam_garden": (
+        {"engines": (1, 1, 1, 2, "engines"), "life": (2, 1, 2, 2, "life"), "shields": (4, 1, 1, 1, "shields"),
+         "weapons": (4, 2, 1, 1, "weapons"), "pilot": (5, 1, 1, 2, "pilot")},
+        [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((3, 1), (4, 1)), ((3, 2), (4, 2)), ((4, 1), (5, 1))],
+        [(135, 20), (135, 75.5), (110, 20), (110, 75.5)],
+    ),
+    "moogli_trader": (
+        {"engines": (1, 1, 1, 2, "engines"), "life": (2, 1, 1, 1, "life"), "crew": (2, 2, 1, 1, ""),
+         "hold": (3, 1, 1, 2, ""), "shields": (4, 1, 1, 1, "shields"), "weapons": (4, 2, 1, 1, "weapons"),
+         "pilot": (5, 1, 1, 2, "pilot")},
+        [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)), ((3, 1), (4, 1)), ((3, 2), (4, 2)),
+         ((4, 1), (5, 1))],
+        [(113, 18), (113, 77.5)],
+    ),
+    "ervani_courier": (
+        {"engines": (1, 1, 1, 2, "engines"), "crew": (2, 1, 1, 1, ""), "life": (2, 2, 1, 1, "life"),
+         "shields": (3, 1, 1, 1, "shields"), "weapons": (3, 2, 1, 1, "weapons"), "pilot": (4, 1, 1, 2, "pilot")},
+        [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)), ((3, 1), (4, 1))],
+        [(118, 23), (118, 72.5), (80, 21), (80, 74.5)],
+    ),
+    "scyldar_lantern": (
+        {"engines": (1, 1, 1, 2, "engines"), "life": (2, 1, 1, 1, "life"), "crew": (2, 2, 1, 1, ""),
+         "shields": (3, 1, 1, 1, "shields"), "weapons": (3, 2, 1, 1, "weapons"), "hold": (4, 1, 1, 2, ""),
+         "pilot": (5, 1, 1, 2, "pilot")},
+        [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)), ((3, 1), (4, 1)), ((4, 1), (5, 1))],
+        [(131, 18), (131, 77.5), (90, 15), (90, 80.5)],
+    ),
+    "arachnay_weaver": (
+        {"engines": (1, 1, 1, 2, "engines"), "life": (2, 1, 1, 1, "life"), "crew": (2, 2, 1, 1, ""),
+         "shields": (3, 1, 1, 1, "shields"), "weapons": (3, 2, 1, 1, "weapons"), "hold": (4, 1, 1, 2, ""),
+         "pilot": (5, 1, 1, 2, "pilot")},
+        [((1, 1), (2, 1)), ((1, 2), (2, 2)), ((2, 1), (3, 1)), ((2, 2), (3, 2)), ((3, 1), (4, 1)), ((4, 1), (5, 1))],
+        [(118, 27), (118, 68.5), (80, 23), (80, 72.5)],
+    ),
+    "collective_freighter": (
+        {"engines": (1, 1, 1, 3, "engines"), "corridor": (2, 2, 5, 1, ""), "life": (2, 1, 1, 1, "life"),
+         "shields": (3, 1, 1, 1, "shields"), "hold_top": (4, 1, 2, 1, ""), "weapons": (2, 3, 1, 1, "weapons"),
+         "crew": (3, 3, 1, 1, ""), "hold_bottom": (4, 3, 2, 1, ""), "pilot": (7, 2, 1, 1, "pilot")},
+        [((1, 2), (2, 2)), ((2, 2), (2, 1)), ((3, 2), (3, 1)), ((4, 2), (4, 1)), ((2, 2), (2, 3)), ((3, 2), (3, 3)),
+         ((4, 2), (4, 3)), ((6, 2), (7, 2))],
+        [(176, 45), (176, 74.5), (75, 10), (75, 109.5)],
+    ),
+}
+
+
 SHIPS = {
     "terran_patrol": (terran_patrol, "Terran patrol (7x4)"),
     "zaash_skiff": (zaash_skiff, "Zaa'sh skiff (6x4)"),
@@ -583,7 +642,25 @@ SHIPS = {
     "collective_freighter": (collective_freighter, "Collective freighter (8x5)"),
 }
 
-if __name__ == "__main__":
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--install":
+    # python3 -I tools/dev/ship_art/fleet2x.py --install <repo root> [ids]: art/ships/<id>/hull.png and interior.png,
+    # and the Rabble repaint as hull_rabble.png and interior_rabble.png (same rooms)
+    from kit2x import interior
+    from bases2x import piratize2x, PIRATE_SWAPS
+    root = Path(sys.argv[2])
+    for sid in sys.argv[3:] or list(INSIDES):
+        fn = SHIPS[sid][0]
+        rooms, doors, _mounts = INSIDES[sid]
+        out = root / "art/ships" / sid
+        out.mkdir(parents=True, exist_ok=True)
+        clean = fn()
+        rabble = piratize2x(clean, seed=len(sid), swaps=PIRATE_SWAPS.get(sid))
+        clean.render().save(out / "hull.png")
+        interior(clean.copy(), rooms, doors).render().save(out / "interior.png")
+        rabble.render().save(out / "hull_rabble.png")
+        interior(rabble.copy(), rooms, doors).render().save(out / "interior_rabble.png")
+        print("installed", sid)
+elif __name__ == "__main__":
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/fleet2x")
     out.mkdir(parents=True, exist_ok=True)
     only = sys.argv[2:] or list(SHIPS)

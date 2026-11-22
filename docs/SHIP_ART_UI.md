@@ -172,7 +172,13 @@ front, in the order guns fill them (top front, bottom front, top back, bottom ba
 go on the first mounts; the game draws each gun there (mirrored with the ship, pointing at you), and its shots leave
 from it. Every ship gets enough mounts for the most guns it can carry.
 
-**For the rest:** each ship gets FTL-simple rooms and doors the same way, and the battle screen uses its
+**All the ships are in (21 Nov):** the four story enemies (`ENEMIES` and `ANA_SHIPS`, rooms in `story2x.py`
+INSIDES) and the eight culture ships (`ShipData.CULTURE_SHIPS`, generated from `fleet2x.py` INSIDES, with first-guess
+stats). Every culture ship also comes Rabble-repainted (`hull_rabble.png`, `interior_rabble.png`, same rooms):
+`ShipData.enemy("<id>_rabble")` flies it as a pirate with Rabble lasers. Install art with
+`python3 -I tools/dev/ship_art/fleet2x.py --install .` or `story2x.py --install . <ids>`.
+
+**How the art is fitted:** the battle screen uses each ship's
 `art_scale` (2 for these): the picture is fitted on its art pixels, while rooms, crew and the drone stay in 24-px cell
 units. At 1080p a 2x ship shows at 1 screen pixel per art pixel, so it looks the same size as a 1x ship did at 2x.
 
