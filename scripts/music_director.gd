@@ -14,7 +14,7 @@ extends Node
 #   Agri Complex, 06:00-21:00          Greenhouse Plucks, Tram Past Greenhouses
 #   anywhere else on the station:
 #     06:00                            Moonlit Morning (both takes), A New Path
-#     09:00 and 15:00                  the season's songs, Station Beeps at Echo Landing
+#     09:00 and 15:00                  the season's songs, Station Beeps at Echo Landing, Echo Landing
 #     12:00                            Lunch Ran Long, Station Beeps at Echo Landing
 #     18:00                            Lit Window Across the Station
 #     21:00                            Stary Night, Lit Window Across the Station
@@ -48,6 +48,7 @@ const SONGS := {
 	"frost_on_the_glass": ["frost_on_the_glass.mp3", -1.2],
 	"winter_in_the_station": ["winter_in_the_station.mp3", 0.0],   # not in yet: the upload was a copy of Lunch Ran Long
 	"station_beeps": ["station_beeps.mp3", -0.3],
+	"echo_landing": ["echo_landing.mp3", 0.2],             # added 22 Nov
 	"lunch_ran_long": ["lunch_ran_long.mp3", -0.1],
 	"lit_window_across_the_station": ["lit_window_across_the_station.mp3", 0.2],
 	"stary_night": ["stary_night.mp3", -0.1],
@@ -74,7 +75,7 @@ const MORNING_SONGS := ["moonlit_morning", "moonlit_morning_2", "a_new_path"]
 const LUNCH_SONGS := ["lunch_ran_long", "station_beeps"]
 const EVENING_SONGS := ["lit_window_across_the_station"]
 const NIGHT_SONGS := ["stary_night", "lit_window_across_the_station"]
-const DAY_SONGS := ["station_beeps"]          # joins the season's songs at 09:00 and 15:00
+const DAY_SONGS := ["station_beeps", "echo_landing"]          # join the season's songs at 09:00 and 15:00
 const SEASON_SONGS := {
 	"Spring": ["moon_green_awakening", "spring_shift"],
 	"Summer": ["sun_under_the_dome"],
