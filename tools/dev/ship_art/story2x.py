@@ -285,9 +285,9 @@ def loyalist_gunship():
 
 # ---------------------------------------------------------------- the covered fighter, 9 x 5
 
-def covered_fighter():
+def covered_fighter(trim="orange"):
     """What's under Freya's tarp: an old long-range Terran fighter with a crew deck. One big engine, swept wings
-    set back, a pointed nose; faded white with yellow trim and grey patches."""
+    set back, a pointed nose; faded white with orange trim (Zachary: orange or blue, not yellow) and grey patches."""
     p = Pix(432, 240)
     H = p.h
     rng = random.Random(61)
@@ -297,7 +297,7 @@ def covered_fighter():
         p.bevel(p.mask(polygon=pts), "hull", width=3, face=face, edge_light=5 if face == 4 else 4, shade_lower=False)
     for top in (True, False):
         band = [(176, 8), (190, 8), (238, 70), (226, 76)]
-        p.paint(p.mask(polygon=band if top else mirror(band, H)), "yellow")
+        p.paint(p.mask(polygon=band if top else mirror(band, H)), trim)
         for (a, b) in (((200, 88), (180, 20)), ((236, 88), (206, 34))):
             p.engrave([a, b] if top else mirror([a, b], H))
         flap = [(158, 86), (190, 86), (180, 56), (162, 60)]
@@ -313,7 +313,7 @@ def covered_fighter():
     p.bevel(p.mask(polygon=[(80, 84), (320, 84), (340, 94), (340, 146), (320, 156), (80, 156)]), "hull", width=3, face=4)
     # yellow trim lines, faded grey patches, panel lines
     for y in (100, 138):
-        p.paint(p.mask(rect=(60, y, 360, y + 2)) & bm, "yellow")
+        p.paint(p.mask(rect=(60, y, 360, y + 2)) & bm, trim)
     for (x0, y0, x1, y1) in ((110, 108, 150, 132), (250, 86, 290, 98), (200, 142, 236, 154)):
         plate(p, (x0, y0, x1, y1), "metal", bm, face=4, width=2)
     for x in (100, 160, 220, 280):
@@ -328,7 +328,7 @@ def covered_fighter():
     p.bevel(p.mask(polygon=[(340, 98), (382, 106), (404, 119), (382, 133), (340, 141), (352, 119)]), "glass", width=2, face=3, shade_lower=False)
     p.set_tone(p.mask(rect=(358, 104, 378, 106)), 5)
     p.engrave([(366, 103), (366, 136)], highlight=False)
-    p.paint(p.mask(polygon=[(404, 112), (424, 118), (424, 121), (404, 127)]), "yellow")
+    p.paint(p.mask(polygon=[(404, 112), (424, 118), (424, 121), (404, 127)]), trim)
     # a dorsal spine with an antenna and a sensor dish, airlocks on both sides
     p.bevel(p.mask(rect=(96, 114, 290, 125)), "hull", width=2, face=5, shade_lower=False)
     rivet_row(p, 102, 286, 119, 8)
