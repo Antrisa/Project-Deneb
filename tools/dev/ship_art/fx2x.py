@@ -1,10 +1,10 @@
 """Battle effects, FTL-style (Claude, 22 Nov 2026). Zachary: "space combat animations ... fire on the ship".
 
-art/ships/fx/fire.png   4 frames of 48 x 48 (one room cell), looping: flames licking up from the floor.
-art/ships/fx/smoke.png  4 frames of 48 x 48, looping: smoke rising from a damaged or burning room.
+art/ships/fx/fire.png   4 frames of 24 x 24, looping: a small fire; the game puts three in each burning cell.
+art/ships/fx/smoke.png  4 frames of 24 x 24, looping: smoke rising from a damaged or burning room.
 art/ships/fx/hit.png    6 frames of 48 x 48: a shot hitting the hull: flash, fireball, debris, smoke.
 
-Drawn on a 24-px grid and doubled, like the crew. Run from the repo root:  python3 -I tools/dev/ship_art/fx2x.py .
+Fire and smoke are at the ships' own pixel size, like the crew (Zachary, 22 Nov: smaller); the hit is doubled. Run from the repo root:  python3 -I tools/dev/ship_art/fx2x.py .
 """
 import sys, math, random
 from pathlib import Path
@@ -17,6 +17,10 @@ FIRE = [(106, 26, 16, 255), (226, 69, 31, 255), (255, 138, 42, 255), (255, 216, 
 
 def up2(a):
     return Image.fromarray(a, "RGBA").resize((G * 2, G * 2), Image.NEAREST)
+
+
+def up1(a):
+    return Image.fromarray(a, "RGBA")
 
 
 def flame(a, cx, base, h, w, phase):
@@ -49,7 +53,7 @@ def outline(a, col):
 
 
 def fire():
-    out = Image.new("RGBA", (48 * 4, 48), (0, 0, 0, 0))
+    out = Image.new("RGBA", (G * 4, G), (0, 0, 0, 0))
     for f in range(4):
         a = np.zeros((G, G, 4), np.uint8)
         rng = random.Random(f)
@@ -61,13 +65,13 @@ def fire():
             x, y = rng.randint(3, 20), rng.randint(2, 9)
             a[y, x] = FIRE[3 if rng.random() < 0.5 else 2]
         outline(a, FIRE[0])
-        out.alpha_composite(up2(a), (f * 48, 0))
+        out.alpha_composite(up1(a), (f * G, 0))
     return out
 
 
 def smoke():
     """Three puffs rising and swelling, evenly spaced so the 4 frames loop."""
-    out = Image.new("RGBA", (48 * 4, 48), (0, 0, 0, 0))
+    out = Image.new("RGBA", (G * 4, G), (0, 0, 0, 0))
     for f in range(4):
         a = np.zeros((G, G, 4), np.uint8)
         for i in range(3):
@@ -83,7 +87,7 @@ def smoke():
                         lit = (x - cx) + (y - cy) < -r * 0.3
                         g = 176 if lit else 138
                         a[y, x] = (g, g - 4, g + 2, alpha)
-        out.alpha_composite(up2(a), (f * 48, 0))
+        out.alpha_composite(up1(a), (f * G, 0))
     return out
 
 

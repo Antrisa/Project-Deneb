@@ -1,8 +1,9 @@
 """Crew for the ship battles, FTL-style (Claude, 22 Nov 2026). Zachary: "crew art, we can use mini people sprites like ftl
 and player in a space suit so we don't gotta worry about customization."
 
-Each sheet is art/ships/crew/<id>.png: 48 x 48 frames (drawn on a 24-px grid and doubled, so they're chunky like
-FTL's crew), 4 across, 11 rows. The figure stands in the middle of its frame; one crew member fills one room cell.
+Each sheet is art/ships/crew/<id>.png: 48 x 48 frames, 4 across, 11 rows. The figure is drawn on a 24-px grid at the
+ships' own pixel size (Zachary, 22 Nov: smaller), so it stands about half a room cell tall in the middle of its frame,
+its waist at (24, 28).
 
   row 0  walk down   4      row 4  typing at a console, up     4      row 8   knocked out                    1
   row 1  walk up     4      row 5  typing at a console, right  4      row 9   fighting (fists up, punching)  4
@@ -372,11 +373,20 @@ ROWS = [("walk_down", 4), ("walk_up", 4), ("walk_right", 4), ("idle", 2), ("work
         ("work_down", 4), ("repair", 4), ("down", 1), ("fight", 4), ("extinguish", 4)]
 
 
+# Zachary, 22 Nov: the crew were too big for the rooms. They're now drawn at the ships' own pixel size, not doubled:
+# a 24 x 24 figure in the middle of each 48 x 48 frame, its waist still at (24, 28), so the game needs no change.
+SMALL = True
+
+
 def sheet(who):
     out = Image.new("RGBA", (48 * 4, 48 * len(ROWS)), (0, 0, 0, 0))
     for r, (pose, n) in enumerate(ROWS):
         for i in range(n):
-            out.alpha_composite(frame(who, pose, i), (i * 48, r * 48))
+            f = frame(who, pose, i)
+            if SMALL:
+                out.alpha_composite(f.resize((G, G), Image.NEAREST), (i * 48 + 12, r * 48 + 14))
+            else:
+                out.alpha_composite(f, (i * 48, r * 48))
     return out
 
 

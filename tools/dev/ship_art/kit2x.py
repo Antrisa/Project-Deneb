@@ -357,6 +357,10 @@ def pick_airlocks(rooms, doors, n=None):
     return picks[:n]
 
 
+CONSOLE_DEPTH = (2, 6)          # a console's size in 24-px cell units: 2 to 6 out from the wall ...
+CONSOLE_ALONG = (7, 17)         # ... and 7 to 17 along it (Zachary, 22 Nov: smaller; was 2-7 and 4-20)
+
+
 def machine(p, room, rooms, doors, cell, k):
     sysname = room[4]
     if sysname not in STATION_SYSTEMS:
@@ -364,8 +368,8 @@ def machine(p, room, rooms, doors, cell, k):
     g = SCREEN_GLOW[sysname]
     (x, y), side = console_at(room, rooms, doors)
     x, y = x * cell, y * cell
-    a, b = int(2 * k), int(7 * k) - 1           # from the wall: 2 to 7 cell px deep
-    lo, hi = int(4 * k), int(20 * k)            # along the wall: 4 to 20
+    a, b = int(CONSOLE_DEPTH[0] * k), int(CONSOLE_DEPTH[1] * k) - 1      # how deep from the wall, in cell px
+    lo, hi = int(CONSOLE_ALONG[0] * k), int(CONSOLE_ALONG[1] * k)        # where along the wall
     if side == "top":
         r = (x + lo, y + a, x + hi, y + b)
     elif side == "bottom":

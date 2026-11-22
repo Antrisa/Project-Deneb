@@ -214,7 +214,9 @@ units. At 1080p a 2x ship shows at 1 screen pixel per art pixel, so it looks the
 ## 2. Crew art (in battle)
 
 **Done (22 Nov, Claude):** `tools/dev/ship_art/crew2x.py` draws twelve crew sheets in `art/ships/crew/<kind>.png`,
-FTL-style mini people drawn on a 24-px grid and doubled: 48 × 48 frames, 4 across, 11 rows (walk down, up, right;
+FTL-style mini people drawn on a 24-px grid at the ships' own pixel size (Zachary, 22 Nov: they were too big, so
+they're no longer doubled; about half a room cell tall, standing a little toward their console): 48 × 48 frames
+with the 24 × 24 figure in the middle and its waist at (24, 28), 4 across, 11 rows (walk down, up, right;
 idle; typing at a console facing up, right, down, 4 frames with the hands taking turns on the keys; repairing with a
 wrench and sparks; knocked out; fighting, fists up with a jab and a hook; putting out a fire with an extinguisher). Kinds: `player` (you,
 in a dark grey and orange space suit with a teal visor and a backpack, so no customisation is needed), `human`,
@@ -637,7 +639,8 @@ hot line from the gun with the cut glowing on the rooms it crosses. All of them 
 
 #### Rooms and hazards (Claude)
 - **Damage:** a hit on a room knocks bars off its system (shown red) until someone repairs it **(now)**. A blast
-  (`art/ships/fx/hit.png`, 6 frames) goes off where the shot lands.
+  (`art/ships/fx/hit.png`, 6 frames, about a cell wide) goes off where the shot lands. Consoles are smaller
+since 22 Nov (`kit2x.CONSOLE_DEPTH`, `CONSOLE_ALONG`).
 - **Air (now, 22 Nov):** every room has its own air, 0 to 1. Life support fills every room (0.04 a second for each
   bar; a ship without an oxygen system has scrubbers worth one bar); with it down, every room leaks 0.012 a second.
   An open door evens out the two rooms either side. Rooms with thin air turn red; below 0.15 crew choke (5 health a
@@ -649,7 +652,8 @@ hot line from the gun with the cut glowing on the rooms it crosses. All of them 
   cockpit, never on a console's wall. Enemies vent a burning room with an airlock when none of their crew are in it
   or on the way, and shut it once the fire is out.
 - **Fire (now):**
-  - burns in every cell of the room with smoke rising (`art/ships/fx/fire.png`, `smoke.png`, 4 frames each);
+  - burns as three small fires in every cell of the room, with smoke rising (`art/ships/fx/fire.png`, `smoke.png`,
+    4 frames of 24 × 24 each, at the ships' pixel size);
   - eats air (0.03 a second), hurts crew, and knocks a bar off the room's system every 3 seconds;
   - with air above 0.4 it reaches the next room every 8 seconds: through an open door, or a shut one 1 time in 3,
     never through an airlock;

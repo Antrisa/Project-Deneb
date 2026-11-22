@@ -90,6 +90,7 @@ var fx_smoke: Texture2D
 var fx_hit: Texture2D
 var blasts: Array = []           # {"pos" (page), "t", "k"}
 const BLAST_FRAME := 0.07
+const FIRE_SPOTS := [Vector2(0.08, 0.46), Vector2(0.42, 0.29), Vector2(0.29, 0.5)]   # top-left of each small fire, in cells
 const GUN_FRAME := {"small": Vector2(64, 24), "big": Vector2(96, 32)}
 const GUN_MOUNT := {"small": Vector2(6, 12), "big": Vector2(8, 16)}
 var shield_hits: Array = []      # {"mine", "pos" (page), "t"}
@@ -1030,8 +1031,12 @@ func _paint_hazards(at_player: bool, xf: Transform2D, k: float) -> void:
 				for cx in range(cols):
 					var cr: Rect2 = xf * Rect2(r_logical.position + Vector2(cx, cy) * cell, Vector2(cell, cell))
 					if fx_fire != null:
-						var fi: int = (int(ms * 9.0) + cx * 3 + cy * 2) % 4
-						screen.texture(fx_fire, cr, Rect2(fi * 48, 0, 48, 48))
+						# three small fires in each cell (Zachary, 22 Nov: smaller), each half a cell, out of step
+						var corner: Vector2 = r_logical.position + Vector2(cx, cy) * cell
+						for j in range(FIRE_SPOTS.size()):
+							var fi: int = (int(ms * 9.0) + cx * 3 + cy * 2 + j) % 4
+							var fr: Rect2 = xf * Rect2(corner + FIRE_SPOTS[j] * cell, Vector2(cell, cell) * 0.5)
+							screen.texture(fx_fire, fr, Rect2(fi * 24, 0, 24, 24))
 					else:
 						for i in range(3):
 							var fx: float = cr.position.x + cr.size.x * (0.25 + 0.25 * i)
@@ -1040,9 +1045,9 @@ func _paint_hazards(at_player: bool, xf: Transform2D, k: float) -> void:
 							screen.polygon(PackedVector2Array([Vector2(fx - 2.5 * k, fy), Vector2(fx, fy - h), Vector2(fx + 2.5 * k, fy)]), Color(1.0, 0.55, 0.15, 0.9))
 		var knocked_out: bool = systems.has(sname) and int(systems[sname]["max"]) > 0 and int(systems[sname]["damage"]) >= int(systems[sname]["max"])
 		if (burning or knocked_out) and fx_smoke != null:
-			var top_cell: Rect2 = xf * Rect2(r_logical.position + Vector2((cols - 1) * 0.5 * cell, 0), Vector2(cell, cell))
+			var puff: Rect2 = xf * Rect2(r_logical.position + Vector2(((cols - 1) * 0.5 + 0.2) * cell, -0.05 * cell), Vector2(cell, cell) * 0.6)
 			var si: int = int(ms * 5.0 + rid.length()) % 4
-			screen.texture(fx_smoke, top_cell.grow(2.0 * k), Rect2(si * 48, 0, 48, 48), Color(1, 1, 1, 0.9 if burning else 0.55))
+			screen.texture(fx_smoke, puff, Rect2(si * 24, 0, 24, 24), Color(1, 1, 1, 0.9 if burning else 0.55))
 
 
 # Blasts where shots land on a hull.
@@ -1051,7 +1056,7 @@ func _paint_blasts() -> void:
 		return
 	for b in blasts:
 		var f: int = mini(5, int(float(b["t"]) / BLAST_FRAME))
-		var size: float = 30.0 * float(b["k"])
+		var size: float = 22.0 * float(b["k"])
 		var at: Vector2 = b["pos"]
 		screen.texture(fx_hit, Rect2(at - Vector2(size, size) / 2.0, Vector2(size, size)), Rect2(f * 48, 0, 48, 48))
 
@@ -1160,13 +1165,16 @@ func _crew_spot(room_id: String, i: int, on_station: bool = false) -> Vector2:
 	return Vector2(clampf(p.x, r.position.x + 4, r.end.x - 4), clampf(p.y, r.position.y + 4, r.end.y - 4))
 
 
-# In front of a room's console, in ship-picture pixels: the middle of the cell the console is in.
+# In front of a room's console, in ship-picture pixels: the cell the console is in, a little toward the console
+# (the crew are half a cell tall since 22 Nov, so from the middle they'd stand off it).
 func _station_spot(room: Dictionary) -> Vector2:
 	if not room.has("cells"):
 		var r: Rect2 = room["rect"]
 		return r.get_center()
-	var cell: Vector2i = _console_at(foe, room)[0]
-	return (Vector2(cell) + Vector2(0.5, 0.5)) * ShipData.CELL
+	var at: Array = _console_at(foe, room)
+	var cell: Vector2i = at[0]
+	var side: Vector2i = at[1]
+	return (Vector2(cell) + Vector2(0.5, 0.5) + Vector2(side) * 0.2) * ShipData.CELL
 
 
 # Which cell's wall holds a room's console, and which wall: [Vector2i cell, Vector2i side]. A console never sits
@@ -1692,7 +1700,7 @@ func _paint_my_window() -> void:
 	var cockpit_room: Dictionary = _room(me["rooms"], "cockpit")
 	var cockpit: Rect2 = cockpit_room["rect"]
 	var seat: Array = _console_at(me, cockpit_room)
-	var you_at: Vector2 = (Vector2(seat[0]) + Vector2(0.5, 0.5)) * ShipData.CELL
+	var you_at: Vector2 = (Vector2(seat[0]) + Vector2(0.5, 0.5) + Vector2(seat[1]) * 0.2) * ShipData.CELL
 	var t_ms: float = Time.get_ticks_msec() / 1000.0
 	if not _paint_crew(me, xf, "player", you_at, _work_pose(seat[1], t_ms)):
 		var you: Vector2 = xf * (cockpit.get_center() + Vector2(-2, 0))      # in the seat, under the canopy
