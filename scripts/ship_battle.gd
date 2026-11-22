@@ -1421,7 +1421,7 @@ func _paint_shield(mine: bool, xf: Transform2D, size: Vector2, k: float, up: int
 			flash = maxf(flash, 1.0 - float(h["t"]) / 0.5)
 	if up > 0:
 		var tex: Texture2D = _shield_tex(Vector2i(int(r.x * 2.0), int(r.y * 2.0)))
-		screen.texture(tex, Rect2(screen.snap(mid - r), r * 2.0), Rect2(), Color(1, 1, 1, minf(1.0, 0.7 + 0.15 * up + 0.4 * flash)))
+		screen.texture(tex, Rect2(screen.snap(mid - r), r * 2.0), Rect2(), Color(1, 1, 1, minf(1.0, 0.6 + 0.1 * up + 0.4 * flash)))
 		if up > 1:
 			screen.ellipse(mid, r + Vector2(3, 3), Color(Color("9ae8ff"), 0.55), 1.0)
 	# ripples where shots were stopped
@@ -1453,20 +1453,20 @@ func _shield_tex(sz: Vector2i) -> Texture2D:
 			if r2 > 1.0:
 				continue
 			var rr: float = sqrt(r2)
-			var a: float = 0.08 + 0.32 * pow(rr, 6.0)
+			var a: float = 0.05 + 0.22 * pow(rr, 6.0)
 			var col := Color(0.42, 0.74, 1.0)
 			var p := Vector2(x, y) - c
 			for d in dirs:
 				var t: float = p.dot(d) / cell
 				if absf(t - roundf(t)) < 0.07:
-					a += 0.16 * r2
+					a += 0.1 * r2
 					col = Color(0.6, 0.86, 1.0)
 					break
 			if rr > rim:
-				a = 0.9
+				a = 0.75
 				col = Color(0.75, 0.94, 1.0)
 			elif rr > rim - 0.03:
-				a = maxf(a, 0.45)
+				a = maxf(a, 0.3)
 			img.set_pixel(x, y, Color(col, minf(a, 1.0)))
 	var tex := ImageTexture.create_from_image(img)
 	shield_texes[key] = tex
