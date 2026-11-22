@@ -258,7 +258,7 @@ func _input(event: InputEvent) -> void:
 		_back()
 
 
-# Easter egg: clicking the fighter once the title is up makes it spark; the third click knocks a wing off
+# Easter egg: clicking the fighter once the title is up makes it spark; the third click breaks a wing at its stripe
 # (scripts/title_scene.gd poke). Clicks on the buttons never get here.
 func _on_click(event: InputEvent) -> void:
 	if _live == null or _page != "" or _time < 24.7:

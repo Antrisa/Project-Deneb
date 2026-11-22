@@ -10,8 +10,9 @@ extends SubViewport
 # Layers, back to front: sky with stars and cloud light; lightning and shooting stars; sun; planet; moon base;
 # its lamps and the drifting rocks; the knocked-off wing; fighter; sparks.
 # Easter egg (Zachary, 21 Nov): click the fighter and it sparks where you touched it and jolts; the third click
-# knocks its intact wing off, and the wing tumbles away while the new cut edge sparks. title_screen.gd calls
-# poke(); the wing's pixels are title/scene/fighter_wing.png (tools/dev/title_wing_mask.py).
+# breaks its intact wing off at the orange stripe, and the outer panel tumbles away while the new cut sparks.
+# title_screen.gd calls poke(); title/scene/fighter_wing.png marks the panel and the cut
+# (tools/dev/title_wing_mask.py).
 
 const CANVAS := Vector2i(960, 540)
 const INTRO := 26.0
@@ -51,11 +52,11 @@ const ENGINE_PULSES := [-25.5, -22.9, -18.0, -12.1, -8.7, -4.2, 3.1, 11.0, 20.4,
 const SPARK_BURSTS := [-24.2, -21.0, -16.1, -9.7, -3.8, 4.8, 14.6, 27.2, 43.7, 60.1, 77.0, 89.6, 105.0, 114.3]
 const CLOUD_STARTS := [5.0, 27.0, 51.0, 77.0, 98.0, 109.0]
 # The easter egg. Points on the fighter are in fighter.png pixels; SPRITE_TO_MODEL turns them into scene.cpp's
-# 260x174 fighter space. Middle and root of the intact wing from tools/dev/title_wing_mask.py.
+# 260x174 fighter space. Middle of the panel that breaks off and of the cut, from tools/dev/title_wing_mask.py.
 const SPRITE_TO_MODEL := Vector2(260.0 / 72.0, 174.0 / 49.0)
 const DAMAGED_TIP := Vector2(50.01, 35.36)
-const WING_MIDDLE := Vector2(15.85, 13.09)
-const WING_ROOT := Vector2(23.2, 16.7)
+const WING_MIDDLE := Vector2(11.27, 11.17)
+const WING_ROOT := Vector2(16.77, 14.27)
 const POKES_TO_BREAK := 3
 const CUT_BURSTS := [1.9, 9.3, 17.0, 24.6, 33.1, 41.0, 50.2, 58.7, 66.3, 75.8, 84.0, 93.5, 101.2, 110.6]
 
@@ -467,7 +468,7 @@ func _spray(origin: Vector2, since: float, pick: int, count: int, reach: float) 
 		_line(at, at - dir * speed * 0.06, 0.8, Color8(255, int(lerpf(245.0, 140.0, k)), int(lerpf(205.0, 60.0, k))), sin(PI * pow(k, 0.5)) * 0.97)
 
 
-# The knocked-off wing drifts away from the ship, tumbling, until it leaves the picture.
+# The broken-off panel drifts away from the ship, tumbling, until it leaves the picture.
 func _set_wing_piece(ambient: float) -> void:
 	if _wing_off < 0.0:
 		_wing_layer.visible = false
@@ -500,7 +501,7 @@ func _to_fighter(at: Vector2) -> Vector2:
 
 
 # title_screen.gd: a click at this point of the 960x540 canvas. True when it hit the ship, which then sparks;
-# the third hit knocks the wing off.
+# the third hit breaks the wing at its orange stripe.
 func poke(at: Vector2) -> bool:
 	if _ship_image == null or not _hits_ship(at):
 		return false
@@ -523,7 +524,7 @@ func poke(at: Vector2) -> bool:
 	return true
 
 
-# Within a pixel of the ship's own pixels (not the wing once it's gone).
+# Within a pixel of the ship's own pixels (not the broken-off panel once it's gone).
 func _hits_ship(at: Vector2) -> bool:
 	var m := _to_fighter(at)
 	var px := int(floor((m.x + 0.5) / SPRITE_TO_MODEL.x))
@@ -536,7 +537,7 @@ func _hits_ship(at: Vector2) -> bool:
 				continue
 			if _ship_image.get_pixel(x, y).a < 0.5:
 				continue
-			if _wing_off >= 0.0 and _wing_image != null and _wing_image.get_pixel(x, y).a >= 0.5:
+			if _wing_off >= 0.0 and _wing_image != null and _wing_image.get_pixel(x, y).r >= 0.5:
 				continue
 			return true
 	return false

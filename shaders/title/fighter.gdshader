@@ -1,10 +1,11 @@
 // Title scene: the Needle fighter (scene.cpp fighter). The 72x49 sprite is drawn turned and scaled, with
 // flickering engine plumes behind it and glowing nozzles. Easter egg: `part` draws the whole ship (0), the ship
-// without its intact wing (1) or that wing alone (2) once it has come off (scripts/title_scene.gd).
+// without the outer panel of its intact wing, with a dark cut along the orange stripe (1), or that panel alone
+// once it has come off (2) (scripts/title_scene.gd).
 shader_type canvas_item;
 
 uniform sampler2D ship_tex : filter_nearest;
-uniform sampler2D wing_tex : filter_nearest;   // fighter_wing.png: the intact wing's pixels
+uniform sampler2D wing_tex : filter_nearest;   // fighter_wing.png: red on the panel that comes off, green on the cut
 uniform int part;
 uniform vec2 centre;
 uniform float scale;
@@ -33,6 +34,27 @@ vec4 sprite_pixel(sampler2D tex, vec2 q, float k) {
 	vec2 i = floor(q);
 	vec2 f = clamp(0.5 + (q - i - 0.5) * k, 0.0, 1.0);
 	return sample_bilinear(tex, i + f);
+}
+
+// A pixel of the ship, without the broken-off panel (part 1) or only that panel (part 2).
+vec4 ship_texel(ivec2 q) {
+	vec4 c = texelFetch(ship_tex, q, 0);
+	if (part != 0) {
+		float piece = texelFetch(wing_tex, q, 0).r;
+		c.a *= part == 1 ? 1.0 - piece : piece;
+	}
+	return c;
+}
+
+// sprite_pixel on the ship, with the part chosen pixel by pixel before blending, so no ghost edge is left.
+vec4 ship_sample(vec2 q, float k) {
+	vec2 i = floor(q);
+	vec2 p = i + clamp(0.5 + (q - i - 0.5) * k, 0.0, 1.0);
+	p = clamp(p, vec2(0.0), vec2(textureSize(ship_tex, 0)) - 2.0);
+	vec2 base = floor(p);
+	vec2 w = floor((p - base) * 256.0) / 256.0;
+	ivec2 b = ivec2(base);
+	return mix(mix(ship_texel(b), ship_texel(b + ivec2(1, 0)), w.x), mix(ship_texel(b + ivec2(0, 1)), ship_texel(b + ivec2(1, 1)), w.x), w.y);
 }
 
 void over(inout vec4 acc, vec3 tint, float alpha) {
@@ -73,17 +95,15 @@ void fragment() {
 		vec2 tsize = vec2(textureSize(ship_tex, 0));
 		if (su >= 0.0 && su < 260.0 && sv >= 0.0 && sv < 174.0) {
 			vec2 q = vec2((su + 0.5) * tsize.x / 260.0 - 0.5, (sv + 0.5) * tsize.y / 174.0 - 0.5);
-			vec4 tex = sprite_pixel(ship_tex, q, scale * 260.0 / tsize.x);
-			if (part != 0) {
-				float wing = sprite_pixel(wing_tex, q, scale * 260.0 / tsize.x).a;
-				tex.a *= part == 1 ? 1.0 - wing : wing;
-			}
+			vec4 tex = ship_sample(q, scale * 260.0 / tsize.x);
+			float cut = part == 1 ? sprite_pixel(wing_tex, q, scale * 260.0 / tsize.x).g : 0.0;
 			if (tex.a >= 1.5 / 255.0) {
 				vec3 k = tex.rgb * 255.0;
 				float cool = clamp((k.g - k.r + 10.0) * 0.02, 0.0, 1.0) * clamp((105.0 - sv) * 0.02, 0.0, 1.0);
 				float dim = 1.0 - ambient;
 				vec3 lit = vec3(k.r * ambient + cool * dim * 4.0, k.g * (ambient + 0.055 * dim) + cool * dim * 17.0, k.b * (ambient + 0.16 * dim) + cool * dim * 18.0);
 				lit = clamp(lit, 0.0, 255.0) / 255.0;
+				lit = mix(lit, vec3(56.0, 41.0, 63.0) / 255.0, 0.75 * cut);
 				for (int i = 0; i < 2; i++) {
 					float du = su - nozzles[i].x;
 					float dv = sv - nozzles[i].y;

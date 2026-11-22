@@ -1,7 +1,10 @@
-# The title screen's easter egg needs to know which pixels of the fighter are its intact wing (the far one).
-# This re-creates the pack's fighter render (source/fighter_model.py on fighter_geometry.py in
-# Echo_Landing_Title_Screen.zip) with each face tagged wing or body, checks it against fighter.png pixel for
-# pixel, and writes the wing's pixels as a mask. It also prints the wing's middle and root for title_scene.gd.
+# The title screen's easter egg knocks the outer part of the fighter's intact wing (the far one) off, from its
+# orange stripe outward (Zachary, 21 Nov: "not whole wing just from the orange stripe"), so the stub matches
+# the damaged wing, which also tore just past its stripe. This re-creates the pack's fighter render
+# (source/fighter_model.py on fighter_geometry.py in Echo_Landing_Title_Screen.zip) with each face tagged as
+# the piece that comes off or the rest, checks it against fighter.png pixel for pixel, and writes the mask:
+# an opaque picture, red where the piece is, green on the ship's pixels along the new cut. It prints the
+# piece's middle and the cut's middle for title_scene.gd (WING_MIDDLE, WING_ROOT).
 #   python3 tools/dev/title_wing_mask.py title/scene/fighter.png title/scene/fighter_wing.png
 import math, sys, numpy as np
 from PIL import Image, ImageFilter
@@ -22,19 +25,32 @@ def wing(y, c):
     s = (abs(y) - 9) / 40; trail = -1 + 6 * s; lead = 55 - 34 * s
     return (trail + (lead - trail) * c, y, .8 + 1.6 * (1 - abs(2 * c - 1)) + .4 * s)
 def lower(v): return (v[0], v[1], v[2] - 2.4)
+CUT = 31          # the orange stripe's outer edge, in span units
 def buildwing(side, broken):
+    piece = side == -1 and not broken
+    keep = GROUP[0]
     cs = [0, .14, .3, .47, .63, .82, 1]
     edge = [33.5, 32, 34, 31.7, 34.4, 33, 35.5] if broken else [49] * 7
     for j, (a, b) in enumerate(zip(cs, cs[1:])):
         for lo, hi in [(9, 19), (19, 27), (27, 31), (31, None)]:
             e0 = edge[j] if hi is None else hi; e1 = edge[j + 1] if hi is None else hi
             k = 'orange' if hi == 31 else ('trim' if j == 0 else 'sun' if j == 5 else 'cream')
+            GROUP[0] = 'wing' if piece and lo >= CUT else keep
             face([wing(side * lo, a), wing(side * lo, b), wing(side * e1, b), wing(side * e0, a)], k)
         p, q = wing(side * edge[j], a), wing(side * edge[j + 1], b)
+        GROUP[0] = 'wing' if piece else keep
         face([p, q, lower(q), lower(p)], 'shadow' if broken else 'metal')
     for c in [0, 1]:
-        u, v = wing(side * 9, c), wing(side * edge[-1 if c else 0], c)
-        face([u, v, lower(v), lower(u)], 'iron' if c == 0 else 'edge')
+        if piece:
+            # the leading and trailing edge strips, split where the piece breaks off
+            for lo, hi, g in ((9, CUT, keep), (CUT, edge[-1 if c else 0], 'wing')):
+                GROUP[0] = g
+                u, v = wing(side * lo, c), wing(side * hi, c)
+                face([u, v, lower(v), lower(u)], 'iron' if c == 0 else 'edge')
+        else:
+            u, v = wing(side * 9, c), wing(side * edge[-1 if c else 0], c)
+            face([u, v, lower(v), lower(u)], 'iron' if c == 0 else 'edge')
+    GROUP[0] = keep
     if broken:
         for c in [.23, .72]:
             p = np.array(wing(32, c)); q = np.array(wing(36.7, c))
@@ -88,12 +104,12 @@ def cockpit():
     roofshape([(x, w + .06, z + .10, h + .10) for x, w, z, h in stripe], lambda i, j: 'metal' if j != 2 else 'iron', 'glass', 'glasst')
 def mesh(broken):
     CRAFT.clear()
-    GROUP[0] = 'wing'; buildwing(-1, False)
-    GROUP[0] = 'body'; buildwing(1, broken); keel()
+    GROUP[0] = 'body'; buildwing(-1, False)
+    buildwing(1, broken); keel()
     for side in [-1, 1]:
         engine(side)
-        GROUP[0] = 'wing' if side == -1 else 'body'; pod(side, 21.4, 11, True)
-        GROUP[0] = 'body'; pod(side, 10.6, 54, False)
+        pod(side, 21.4, 11, True)
+        pod(side, 10.6, 54, False)
     grille()
     start = len(CRAFT); cockpit()
     for i in range(start, len(CRAFT)):
@@ -142,11 +158,11 @@ near_body = np.asarray(Image.fromarray(np.uint8(body) * 255).filter(ImageFilter.
 outline = (alpha > 0) & ~mask
 wing_full = wing | (outline & near_wing & ~near_body)
 print('wing pixels', int(wing.sum()), '+ outline', int((wing_full & ~wing).sum()), '; body pixels', int(body.sum()))
-# the root: wing pixels touching body pixels
-root = wing & near_body
-ys, xs = np.nonzero(root)
-print('root pixels', len(xs), 'centre', round(xs.mean() + .5, 2), round(ys.mean() + .5, 2), 'x range', xs.min(), xs.max(), 'y range', ys.min(), ys.max())
+# the cut: the ship's own pixels touching the piece
+cut = body & np.asarray(Image.fromarray(np.uint8(wing) * 255).filter(ImageFilter.MaxFilter(3))) > 0
+ys, xs = np.nonzero(cut)
+print('cut pixels', len(xs), 'middle (WING_ROOT)', round(xs.mean() + .5, 2), round(ys.mean() + .5, 2))
 ys, xs = np.nonzero(wing_full)
-print('wing centre', round(xs.mean() + .5, 2), round(ys.mean() + .5, 2))
-m = np.zeros((H, W, 4), np.uint8); m[..., :3] = 255; m[..., 3] = np.uint8(wing_full) * 255
-Image.fromarray(m).save(sys.argv[2])
+print('piece middle (WING_MIDDLE)', round(xs.mean() + .5, 2), round(ys.mean() + .5, 2))
+m = np.zeros((H, W, 3), np.uint8); m[..., 0] = np.uint8(wing_full) * 255; m[..., 1] = np.uint8(cut) * 255
+Image.fromarray(m, 'RGB').save(sys.argv[2])
