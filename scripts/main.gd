@@ -28,6 +28,7 @@ const EnemyScript = preload("res://scripts/enemy.gd")
 const DialogueScript = preload("res://scripts/dialogue_box.gd")
 const BattleScript = preload("res://scripts/ship_battle.gd")
 const MapScript = preload("res://scripts/ship_map.gd")
+const MusicDirector = preload("res://scripts/music_director.gd")
 const EventScript = preload("res://scripts/ship_event.gd")
 const StoreScript = preload("res://scripts/ship_store.gd")
 const SpaceEvents = preload("res://scripts/space_events.gd")
@@ -83,8 +84,7 @@ const ORE_PER_BAR := 2
 const JOB_IRON := 5                # what Job asks for in his first request
 const JOB_COPPER := 3
 
-# Which music plays where. Files are audio/music_<name>.ogg, or .wav if there is no .ogg.
-const MUSIC := {"main": "town", "west": "town", "agri": "town", "hotel": "town", "east": "town", "top": "town", "eng": "under", "bay": "under", "mine": "under", "tunnels": "under"}
+# Which song plays where and when: scripts/music_director.gd (songs in audio/music/).
 
 # Bulletin board requests, one per day in rotation.
 const BOARD := [
@@ -156,7 +156,7 @@ var top_fx: Node2D                 # animated overlays over the characters (scre
 var anim: Array = []               # [sprite, area name, frames per second, starting frame]
 var holos: Array = []              # Sara's hologram sprites (they flicker)
 var music: AudioStreamPlayer
-var music_name := ""
+var music_director                 # scripts/music_director.gd: picks the song for the place and the hour
 var music_on := true
 var pops: Array = []               # short effects: [sprite, seconds left, rise speed]
 var items_tex: Texture2D
@@ -698,8 +698,6 @@ func _go_to(area_name: String, tile: Vector2i, announce: bool = true) -> void:
 		en.visible = en.alive and en.area == area_name
 	player.position = _feet(tile)
 	player.set_limits(map_pixel_size(), MessWindow.HEADROOM if area_name == "mess" else 0)
-	var track: String = MUSIC.get(area_name, "under" if area_name.begins_with("cav_") else "town")
-	_play_music(track)
 	if announce:
 		var data: Dictionary = MapData.AREAS[area_name]
 		var area_title: String = data["title"]
@@ -2025,34 +2023,16 @@ func _setup_sounds() -> void:
 		add_child(p)
 		sounds[sound_name] = p
 	music = AudioStreamPlayer.new()
-	music.volume_db = -16.0
 	add_child(music)
-	music.finished.connect(music.play)      # loop
+	music_director = MusicDirector.new()
+	add_child(music_director)
+	music_director.setup(self, music)
 
 
-func _play_music(track: String) -> void:
-	if track == music_name:
-		return
-	music_name = track
-	var path: String = "res://audio/music_%s.ogg" % track
-	if not ResourceLoader.exists(path):
-		path = "res://audio/music_%s.wav" % track
-	if not ResourceLoader.exists(path):
-		music.stop()
-		return
-	music.stream = load(path)
-	if music_on:
-		music.play()
-
-
+# The music director stops or restarts the song on its next update.
 func _toggle_music() -> void:
 	music_on = not music_on
-	if music_on:
-		music.play()
-		_toast("Music on")
-	else:
-		music.stop()
-		_toast("Music off  (M turns it back on)")
+	_toast("Music on" if music_on else "Music off  (M turns it back on)")
 
 
 func sfx(sound_name: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:
@@ -2841,6 +2821,8 @@ func _toast(msg: String) -> void:
 
 
 func _process(delta: float) -> void:
+	if music_director != null:
+		music_director.update(delta)
 	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (datapad != null and datapad.blocking())
 	if datapad != null:
 		# The datapad leaves the keys alone while one of the game's own windows is open.
