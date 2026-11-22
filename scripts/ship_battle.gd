@@ -664,11 +664,24 @@ func _spare_room() -> String:
 	return r if r != "" else str(foe["rooms"][0]["id"])
 
 
-# Where crew member i stands in a room: the middle, spread out a little, kept inside the room.
-func _crew_spot(room_id: String, i: int) -> Vector2:
-	var r: Rect2 = _room(foe["rooms"], room_id).get("rect", Rect2(40, 40, 10, 10))
+# Where crew member i stands in a room: at the console when they're on station in a room with one (Zachary, 21 Nov:
+# "the rooms should just have consoles the people can work at"), otherwise the middle, spread out a little.
+func _crew_spot(room_id: String, i: int, on_station: bool = false) -> Vector2:
+	var room: Dictionary = _room(foe["rooms"], room_id)
+	var r: Rect2 = room.get("rect", Rect2(40, 40, 10, 10))
+	if on_station and str(room.get("sys", "")) in STATIONS:
+		return _station_spot(room)
 	var p: Vector2 = r.get_center() + CREW_SPOTS[i % CREW_SPOTS.size()]
 	return Vector2(clampf(p.x, r.position.x + 4, r.end.x - 4), clampf(p.y, r.position.y + 4, r.end.y - 4))
+
+
+# In front of a room's console, in ship-picture pixels. Matches the art (tools/dev/ship_art/kit2x.py, machine()):
+# the cockpit's console is on its front wall at the middle; the others sit on the top wall of the room's first cell.
+func _station_spot(room: Dictionary) -> Vector2:
+	var r: Rect2 = room["rect"]
+	if str(room.get("sys", "")) == "pilot":
+		return Vector2(r.end.x - 12.0, r.get_center().y)
+	return Vector2(r.position.x + 12.0, r.position.y + 12.0)
 
 
 func _make_enemy_crew() -> void:
@@ -680,7 +693,7 @@ func _make_enemy_crew() -> void:
 			home = _sys_room(STATIONS[i])
 		if home == "":
 			home = _spare_room()
-		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i), "hp": CREW_HP, "task": "station",
+		e_crew_list.append({"home": home, "room": home, "target": home, "pos": _crew_spot(home, i, true), "hp": CREW_HP, "task": "station",
 			"last": home, "path": [], "path_to": home})
 	e_crew = e_crew_list.size()
 
@@ -752,7 +765,7 @@ func _enemy_crew(delta: float) -> void:
 			for st in ShipData.route(foe, str(c3["last"]), str(c3["target"])):
 				steps.append({"pos": st["door"]["at"], "room": str(st["room"]), "door": st["door"]})
 			c3["path"] = steps
-		var goal: Vector2 = _crew_spot(str(c3["target"]), i)
+		var goal: Vector2 = _crew_spot(str(c3["target"]), i, str(c3["task"]) == "station" and str(c3["target"]) == str(c3["home"]))
 		var at: Vector2 = c3["pos"]
 		var step: float = CREW_SPEED * delta
 		var path: Array = c3["path"]

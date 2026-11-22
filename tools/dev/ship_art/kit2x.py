@@ -271,39 +271,31 @@ def interior(p, rooms, doors, cell=CELL, wall_mat="wall"):
     return p
 
 
+# Rooms where crew stand at a console and boost the system (Zachary, 21 Nov: "the rooms should just have consoles
+# the people can work at"): shields recharge faster, weapons arm faster, engines and the cockpit add evasion.
+# Other rooms are bare deck. Keep in step with ShipBattle._station_spot(): the cockpit's console is on the front
+# (right) wall at the room's middle; every other console is on the top wall of the room's first cell.
+STATION_SYSTEMS = ("pilot", "weapons", "shields", "engines")
+SCREEN_GLOW = {"pilot": "glow_teal", "weapons": "glow_red", "shields": "glow_blue", "engines": "glow"}
+
+
 def machine(p, sysname, x, y, w, h, k):
-    """The system's console or machine against the room's back wall (the left side; the cockpit's at the front)."""
-    t = int(2 * k) + 2
-    def box(x0, y0, x1, y1, mat="console"):
-        p.bevel(p.mask(rect=(x0, y0, x1, y1)), mat, width=1, face=3, shade_lower=False)
-    cy = y + h // 2
-    if sysname == "engines":
-        for yy in range(y + t + 2, y + h - t - 20, 24):
-            box(x + t + 2, yy, x + t + 22, yy + 18, "metal")
-            p.glow(p.mask(rect=(x + t + 6, yy + 6, x + t + 18, yy + 11)), "glow", 3)
-    elif sysname == "weapons":
-        box(x + t + 2, y + t + 2, x + t + 14, y + h - t - 3, "console")
-        for yy in range(y + t + 6, y + h - t - 6, 8):
-            p.glow(p.mask(rect=(x + t + 5, yy, x + t + 10, yy + 2)), "glow_red", 3)
-        box(x + w // 2 - 6, y + t + 2, x + w // 2 + 6, y + t + 10, "pipe")
-    elif sysname == "shields":
-        p.bevel(p.mask(ellipse=(x + w // 2 - 14, cy - 14, x + w // 2 + 14, cy + 14)), "metal", width=2, face=3, shade_lower=False)
-        p.dome(p.mask(ellipse=(x + w // 2 - 9, cy - 9, x + w // 2 + 9, cy + 9)), "blue")
-    elif sysname == "life":
-        p.tube(p.mask(rect=(x + t + 2, cy - 12, x + w - t - 3, cy + 10)), "blue", "x")
-        p.engrave([(x + t + 2, cy - 1), (x + w - t - 3, cy - 1)])
-        box(x + t + 2, y + h - t - 8, x + w - t - 3, y + h - t - 4, "pipe")
-    elif sysname == "pilot":
-        box(x + w - t - 12, y + t + 2, x + w - t - 3, y + h - t - 3, "console")
-        p.glow(p.mask(rect=(x + w - t - 10, y + t + 8, x + w - t - 7, y + h - t - 9)), "glow_teal", 3)
-        for sy in ([cy - 4] if h <= 48 else [y + h // 4 - 4, y + 3 * h // 4 - 4]):
-            box(x + w - t - 34, sy - 8, x + w - t - 20, sy + 12, "red")
-    elif sysname == "drones":
-        p.bevel(p.mask(ellipse=(x + w // 2 - 15, cy - 15, x + w // 2 + 15, cy + 15)), "console", width=1, face=3, shade_lower=False)
-        p.paint(p.mask(ellipse=(x + w // 2 - 9, cy - 9, x + w // 2 + 9, cy + 9)), "yellow")
-    elif sysname in ("", "crew"):
-        # bunks along the top wall, a locker
-        for bx in range(x + t + 4, x + w - t - 20, 22):
-            box(bx, y + t + 2, bx + 18, y + t + 12, "cloth")
-            box(bx + 1, y + t + 3, bx + 5, y + t + 11, "white")
-        box(x + w - t - 10, y + h - t - 20, x + w - t - 3, y + h - t - 3, "metal")
+    if sysname not in STATION_SYSTEMS:
+        return
+    g = SCREEN_GLOW[sysname]
+    if sysname == "pilot":
+        cy = y + h // 2
+        x0, x1 = x + w - int(7 * k), x + w - int(2 * k) - 1
+        y0, y1 = cy - int(8 * k), cy + int(8 * k)
+        p.bevel(p.mask(rect=(x0, y0, x1, y1)), "console", width=1, face=3, shade_lower=False)
+        p.glow(p.mask(rect=(x0 + 2, y0 + 3, x0 + 4, y1 - 3)), g, 3)
+        for yy in range(y0 + 4, y1 - 3, 5):
+            p.glow(p.mask(rect=(x1 - 3, yy, x1 - 2, yy + 1)), "glow_yellow", 3)
+    else:
+        cx = x + int(12 * k)
+        x0, x1 = cx - int(8 * k), cx + int(8 * k)
+        y0, y1 = y + int(2 * k), y + int(7 * k) - 1
+        p.bevel(p.mask(rect=(x0, y0, x1, y1)), "console", width=1, face=3, shade_lower=False)
+        p.glow(p.mask(rect=(x0 + 3, y1 - 4, x1 - 3, y1 - 2)), g, 3)
+        for xx in range(x0 + 4, x1 - 3, 5):
+            p.glow(p.mask(rect=(xx, y0 + 2, xx + 1, y0 + 3)), "glow_yellow", 3)
