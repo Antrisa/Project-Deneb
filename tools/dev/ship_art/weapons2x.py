@@ -4,8 +4,8 @@ beams"; guns attach to the hull's sides, FTL-style, where a ship's mounts are.
 art/ships/weapons/<id>.png  six frames side by side, barrel pointing right, the mount at the left middle:
     idle, charging 1, charging 2, ready (glowing), firing 1 (recoil, muzzle flash), firing 2.
     Small guns: 64 x 24 a frame (32 x 12 cell px); big guns (Ivan's cannon): 96 x 32. The mount point is
-    (6, 12) small, (8, 16) big. Zachary: "models need detail" -- shaded housings, seams, rivets, vents, hoses,
-    status and charge lights, banded barrels and muzzle shrouds.
+    (6, 12) small, (8, 16) big. Drawn FTL-style (Zachary: "doesnt read FTL enough"): chunky dark-grey
+    shapes with charge lights set into the body.
 art/ships/shots/missile.png three 16 x 8 frames, flying right (the flame flickers).
 art/ships/store/<id>.png    48 x 48 store pictures.
 
@@ -22,371 +22,249 @@ import kit2x  # noqa: F401  (adds the olive, rope, cloth, navy and rock colour r
 SMALL, BIG = (64, 24), (96, 32)
 
 
-# ---------------------------------------------------------------- parts
+# ---------------------------------------------------------------- parts, FTL-style
+# Zachary: "doesnt read FTL enough". FTL's guns are chunky dark-grey shapes with a thick dark outline and few small
+# details; what reads is the silhouette and the coloured lights set into the body, which fill up as the gun charges.
+# These are our own shapes in that style.
 
-def tip(p, x0, y0, x1, y1, g, frame):
-    """The emitter: dark when idle, warming while charging, bright when ready and firing."""
-    tone = {0: None, 1: 1, 2: 2, 3: 4, 4: 5, 5: 3}[frame]
-    if tone is None:
-        p.bevel(p.mask(rect=(x0, y0, x1, y1)), "dark", width=1, face=2, shade_lower=False)
-    else:
-        p.glow(p.mask(rect=(x0, y0, x1, y1)), g, tone)
-        if frame in (3, 4):
-            p.glow(p.mask(rect=(x0, y0, x0, y0)), g, 5)
+from pixkit import RAMPS
+RAMPS.setdefault("steel", ["#26262b", "#36363c", "#48484f", "#5c5c63", "#74747b", "#8e8e94"])
+RAMPS.setdefault("steel_dark", ["#1c1c21", "#26262b", "#323238", "#3e3e45", "#4c4c53", "#5c5c63"])
 
-
-def flash(p, x, y, g, frame, size=5):
-    if frame == 4:
-        p.glow(p.mask(ellipse=(x, y - size, x + size * 2 + 3, y + size)), g, 2)
-        p.glow(p.mask(ellipse=(x + 1, y - size + 2, x + size * 2, y + size - 2)), g, 4)
-        p.glow(p.mask(ellipse=(x + 2, y - size // 2, x + size + 1, y + size // 2)), g, 5)
-        for dy in (-size - 1, size + 1):                      # sparks off the flash
-            p.glow(p.mask(rect=(x + size, y + dy, x + size + 1, y + dy)), g, 4)
-    elif frame == 5:
-        p.glow(p.mask(ellipse=(x, y - size // 2, x + size + 1, y + size // 2)), g, 2)
-        p.glow(p.mask(rect=(x + 1, y - 1, x + 2, y)), g, 4)
+LIT = {0: 0.0, 1: 0.34, 2: 0.67, 3: 1.0, 4: 1.0, 5: 0.0}
 
 
 def recoil(frame):
     return {4: -3, 5: -1}.get(frame, 0)
 
 
-def housing(p, x0, y0, x1, y1, mat, seams=(), rivets=True, face=4, width=2):
-    p.bevel(p.mask(rect=(x0, y0, x1, y1)), mat, width=width, face=face, shade_lower=False)
-    for x in seams:
-        p.engrave([(x, y0 + 2), (x, y1 - 2)])
-    if rivets:
-        for (rx, ry) in ((x0 + 2, y0 + 2), (x1 - 2, y0 + 2), (x0 + 2, y1 - 2), (x1 - 2, y1 - 2)):
-            p.rivet(rx, ry)
-
-
-def vents(p, x0, x1, y, n, step=3):
-    for k in range(n):
-        p.slot(x0, y + k * step, x1, y + k * step)
-
-
-def barrel(p, x0, x1, yc, h, mat="metal", rings=(), ring_mat="gunmetal"):
-    p.tube(p.mask(rect=(x0, yc - h // 2, x1, yc - h // 2 + h - 1)), mat, "x",
-           bands=(5, 5, 4, 3, 3, 2, 1) if h >= 5 else (5, 3, 2, 1))
-    for x in rings:
-        p.tube(p.mask(rect=(x, yc - h // 2 - 1, x + 1, yc - h // 2 + h)), ring_mat, "x", bands=(4, 3, 2, 1))
-
-
-def hose(p, pts, mat="pipe"):
-    m = p._line(pts, width=2)
-    p.tube(m, mat, "x", bands=(5, 3, 2), shadow=False)
-    x, y = pts[len(pts) // 2]
-    p.bevel(p.mask(rect=(x - 1, y - 2, x + 1, y + 2)), "metal", width=1, face=4, shade_lower=False)
-
-
-def status(p, x, y, g, f):
-    """A little status light: off while charging, lit when ready or firing."""
-    if f in (3, 4, 5):
-        p.glow(p.mask(rect=(x, y, x + 1, y + 1)), g, 4)
+def body(p, pts_or_rect, mat="steel", face=4):
+    if isinstance(pts_or_rect, tuple):
+        m = p.mask(rect=pts_or_rect)
     else:
-        p.bevel(p.mask(rect=(x, y, x + 1, y + 1)), "dark", width=1, face=2, shade_lower=False)
+        m = p.mask(polygon=pts_or_rect)
+    p.bevel(m, mat, width=1, face=face, edge_light=5, edge_dark=1, shade_lower=True)
+    return m
 
 
-def charge_bar(p, x, y, n, g, f):
-    """A row of charge lights that fill as it charges."""
-    lit = {0: 0, 1: n // 3, 2: 2 * n // 3, 3: n, 4: n, 5: n // 2}[f]
+def lights(p, x0, y0, x1, y1, n, g, f, vertical=False):
+    """A dark inset window holding n lights: dim until the charge reaches them, then bright."""
+    p.bevel(p.mask(rect=(x0, y0, x1, y1)), "dark", width=1, face=0, edge_light=1, edge_dark=0, shade_lower=False)
+    lit = round(LIT[f] * n)
+    span = (y1 - y0 - 1) if vertical else (x1 - x0 - 1)
+    step = span / n
     for k in range(n):
-        if k < lit:
-            p.glow(p.mask(rect=(x + k * 2, y, x + k * 2, y + 1)), g, 3 if k < lit - 1 else 4)
+        a = int((y0 + 1 if vertical else x0 + 1) + k * step)
+        b = int((y0 + 1 if vertical else x0 + 1) + (k + 1) * step) - 2
+        if vertical:
+            r = (x0 + 1, a, x1 - 1, max(a, b))
         else:
-            p.set_tone(p.mask(rect=(x + k * 2, y, x + k * 2, y + 1)), 1)
+            r = (a, y0 + 1, max(a, b), y1 - 1)
+        on = (n - 1 - k) < lit if vertical else k < lit
+        p.glow(p.mask(rect=r), g, 2 if on else 0)
+        if on:
+            p.glow(p.mask(rect=(r[0], r[1], r[0], r[1])), g, 4)        # a highlight on each lit light
 
 
-def bracket(p, mat="gunmetal", big=False):
-    """The clamp that holds the gun to the hull, at the mount (left middle), with bolts and a hazard edge."""
-    h = 32 if big else 24
+def muzzle(p, x, y, g, f, size=5):
+    if f == 4:
+        p.glow(p.mask(ellipse=(x, y - size, x + size * 2 + 2, y + size)), g, 3)
+        p.glow(p.mask(ellipse=(x + 2, y - size // 2, x + size + 2, y + size // 2)), g, 5)
+    elif f == 5:
+        p.glow(p.mask(ellipse=(x, y - 2, x + 4, y + 2)), g, 2)
+
+
+def mount(p, h=24):
+    """The block that fixes the gun to the hull, at the left middle."""
     m = h // 2
-    p.bevel(p.mask(rect=(0, m - 8, 11, m + 7)), mat, width=2, face=3, shade_lower=False)
-    p.bevel(p.mask(rect=(2, m - 10, 7, m + 9)), "metal", width=1, face=4, shade_lower=False)
-    for y in (m - 8, m + 6):
-        p.rivet(4, y)
-    p.paint(p.mask(rect=(9, m - 7, 10, m + 6)), "yellow")
-    for y in range(m - 7, m + 7, 3):
-        p.mat[y, 9:11] = "dark"
+    body(p, (0, m - 7, 8, m + 6), "steel_dark", face=4)
+    p.set_tone(p.mask(rect=(2, m - 5, 2, m + 4)), 5)
 
 
 # ---------------------------------------------------------------- the guns (64 x 24 a frame; the mount at (6, 12))
 
-GLOW = {"burst_laser": "glow_red", "rabble_laser": "glow_green", "heavy_laser": "glow_green", "missile_launcher": "glow",
-        "cutting_beam": "glow_red", "heavy_beam": "glow_yellow", "ivan_cannon": "glow_yellow"}
-
-
 def burst_laser(f):
-    """Terran: a white and orange housing, two barrels in a shroud, a charge row."""
     p = Pix(*SMALL); r = recoil(f); g = "glow_red"
-    bracket(p)
-    housing(p, 10, 3, 34, 20, "white", seams=(18, 28))
-    p.paint(p.mask(rect=(13, 3, 16, 20)), "orange")
-    vents(p, 20, 26, 6, 3)
-    charge_bar(p, 20, 15, 4, g, f)
-    status(p, 30, 6, g, f)
-    hose(p, [(12, 21), (22, 22), (32, 21)])
-    p.bevel(p.mask(rect=(33 + r, 4, 40 + r, 19)), "gunmetal", width=1, face=4, shade_lower=False)
-    for y in (8, 15):
-        barrel(p, 40 + r, 54 + r, y, 4, "metal", rings=(44 + r, 50 + r))
-        p.bevel(p.mask(rect=(54 + r, y - 3, 56 + r, y + 2)), "gunmetal", width=1, face=4, shade_lower=False)
-        tip(p, 57 + r, y - 1, 58 + r, y + 1, g, f)
-        flash(p, 59 + r, y, g, f, 3)
+    mount(p)
+    for y in (7, 15):                                          # two short barrels
+        body(p, (36 + r, y - 2, 54 + r, y + 2), "steel_dark")
+        body(p, (52 + r, y - 3, 56 + r, y + 3))
+    body(p, [(8, 4), (34, 4), (40, 8), (40, 19), (8, 19)])
+    lights(p, 13, 9, 33, 13, 3, g, f)
+    muzzle(p, 57 + r, 7, g, f, 3); muzzle(p, 57 + r, 15, g, f, 3)
     return p
 
 
 def rabble_laser(f):
-    """Rabble: a rusty box held with straps and wire, a crooked barrel, a green tip."""
     p = Pix(*SMALL); r = recoil(f); g = "glow_green"
-    bracket(p, "rust")
-    housing(p, 10, 5, 30, 19, "rust", seams=(20,))
-    p.bevel(p.mask(rect=(14, 3, 18, 21)), "strap", width=1, face=4, shade_lower=False)
-    p.bevel(p.mask(rect=(23, 9, 29, 15)), "metal", width=1, face=3, shade_lower=False)
-    for (x, y) in ((24, 10), (28, 10), (24, 14), (28, 14)):
-        p.rivet(x, y)
-    status(p, 12, 8, g, f)
-    hose(p, [(20, 20), (30, 21), (40, 18)], "strap")
-    p.bevel(p.mask(rect=(30 + r, 8, 36 + r, 16)), "gunmetal", width=1, face=4, shade_lower=False)
-    barrel(p, 36 + r, 52 + r, 12, 5, "gunmetal", rings=(41 + r, 47 + r), ring_mat="rust")
-    p.bevel(p.mask(rect=(52 + r, 9, 55 + r, 15)), "rust", width=1, face=4, shade_lower=False)
-    tip(p, 55 + r, 11, 57 + r, 13, g, f)
-    flash(p, 58 + r, 12, g, f, 4)
+    mount(p)
+    body(p, (34 + r, 9, 54 + r, 14), "steel_dark")
+    body(p, (50 + r, 8, 55 + r, 15))
+    body(p, [(8, 6), (30, 6), (36, 9), (36, 16), (26, 19), (8, 19)])
+    p.paint(p.mask(rect=(10, 15, 18, 18)), "rust")              # a rusty patch
+    lights(p, 14, 9, 30, 12, 3, g, f)
+    muzzle(p, 56 + r, 11, g, f, 4)
     return p
 
 
 def heavy_laser(f):
-    """A heavy gunmetal block with deep cooling fins and a thick banded barrel."""
     p = Pix(*SMALL); r = recoil(f); g = "glow_green"
-    bracket(p)
-    housing(p, 10, 1, 36, 22, "gunmetal", seams=(30,))
-    for x in range(13, 28, 3):
-        p.slot(x, 4, x + 1, 19)
-    charge_bar(p, 31, 4, 2, g, f)
-    status(p, 32, 18, g, f)
-    hose(p, [(14, 0), (26, 1), (36, 0)])
-    barrel(p, 36 + r, 54 + r, 12, 9, "metal", rings=(40 + r, 46 + r, 52 + r))
-    p.engrave([(38 + r, 9), (52 + r, 9)], highlight=False)
-    p.bevel(p.mask(polygon=[(54 + r, 6), (58 + r, 8), (58 + r, 16), (54 + r, 18)]), "gunmetal", width=1, face=4, shade_lower=False)
-    tip(p, 58 + r, 10, 60 + r, 14, g, f)
-    flash(p, 61 + r, 12, g, f, 5)
+    mount(p)
+    body(p, (36 + r, 7, 56 + r, 16), "steel_dark")
+    body(p, (54 + r, 5, 59 + r, 18))
+    body(p, [(8, 2), (32, 2), (40, 6), (40, 18), (32, 22), (8, 22)])
+    lights(p, 13, 7, 33, 11, 4, g, f)
+    lights(p, 13, 14, 33, 18, 4, g, f)
+    muzzle(p, 60 + r, 11, g, f, 5)
     return p
 
 
 def missile_launcher(f):
-    """A launch pod: the missile slides out as it charges and is gone when it fires."""
-    p = Pix(*SMALL); g = "glow"
-    bracket(p)
-    out = {0: 0, 1: 5, 2: 9, 3: 13, 4: -99, 5: -99}[f]
-    if out > -99:
-        x = 22 + out
-        p.tube(p.mask(rect=(x, 8, x + 20, 15)), "white", "x", bands=(5, 5, 4, 3, 2))
-        p.paint(p.mask(rect=(x + 4, 8, x + 6, 15)), "red")
-        p.bevel(p.mask(polygon=[(x + 20, 8), (x + 26, 11), (x + 26, 12), (x + 20, 15)]), "red", width=1, face=4, shade_lower=False)
-        p.bevel(p.mask(polygon=[(x, 6), (x + 4, 8), (x, 8)]), "red", width=1, face=4, shade_lower=False)
-        p.bevel(p.mask(polygon=[(x, 17), (x + 4, 15), (x, 15)]), "red", width=1, face=4, shade_lower=False)
-    housing(p, 10, 1, 36, 22, "gunmetal", seams=(24,))
-    p.paint(p.mask(rect=(12, 2, 22, 3)), "yellow"); p.paint(p.mask(rect=(12, 20, 22, 21)), "yellow")
-    for x in range(12, 22, 4):
-        p.mat[2:4, x:x + 2] = "dark"; p.mat[20:22, x:x + 2] = "dark"
-    p.bevel(p.mask(rect=(30, 5, 40, 18)), "metal", width=1, face=3, shade_lower=False)
-    p.bevel(p.mask(rect=(33, 8, 40, 15)), "dark", width=1, face=1, shade_lower=False)
-    charge_bar(p, 13, 10, 4, g, f)
-    status(p, 26, 6, g, f)
-    hose(p, [(14, 23), (26, 22), (34, 23)])
+    p = Pix(*SMALL); g = "glow_green"
+    mount(p)
+    out = {0: 0, 1: 4, 2: 8, 3: 11, 4: -99, 5: -99}[f]
+    if out > -99:                                              # the missile sliding out of the tube
+        x = 34 + out
+        body(p, (x, 9, x + 12, 14), "white")
+        body(p, [(x + 12, 9), (x + 17, 11), (x + 17, 12), (x + 12, 14)], "red")
+    body(p, [(8, 3), (40, 3), (44, 7), (44, 17), (40, 21), (8, 21)])
+    body(p, (38, 7, 46, 16), "steel_dark")                     # the tube mouth
+    p.bevel(p.mask(rect=(41, 9, 46, 14)), "dark", width=1, face=0, edge_light=1, edge_dark=0, shade_lower=False)
+    lights(p, 12, 7, 18, 17, 3, g, f, vertical=True)
+    lights(p, 22, 7, 34, 11, 2, g, f)
     if f == 4:
-        p.glow(p.mask(ellipse=(38, 4, 58, 19)), "glow", 2)
-        p.glow(p.mask(ellipse=(40, 7, 52, 16)), "glow", 4)
-        p.glow(p.mask(ellipse=(41, 9, 47, 14)), "glow", 5)
-    if f == 5:
-        p.glow(p.mask(ellipse=(39, 8, 46, 15)), "glow", 1)
+        p.glow(p.mask(ellipse=(44, 4, 62, 19)), "glow", 3)
+        p.glow(p.mask(ellipse=(46, 8, 54, 15)), "glow", 5)
     return p
 
 
 def beam(f, heavy):
-    """A capacitor bank, a focusing barrel and a crystal lens that heats up."""
     p = Pix(*SMALL); g = "glow_yellow" if heavy else "glow_red"
-    bracket(p)
-    mat = "metal" if heavy else "white"
-    housing(p, 10, 1 if heavy else 3, 30, 22 if heavy else 20, mat, seams=(20,))
-    for k in range(3):                                         # capacitor cells
-        y = (4 if heavy else 5) + k * 6
-        p.tube(p.mask(rect=(12, y, 18, y + 3)), "trim_blue" if not heavy else "gold", "x", bands=(5, 4, 3, 2))
-    charge_bar(p, 22, 6, 4, g, f)
-    status(p, 26, 17, g, f)
-    hose(p, [(14, 23), (24, 22), (32, 21)])
-    barrel(p, 30, 44, 12, 7, "gunmetal", rings=(34, 39))
-    p.bevel(p.mask(polygon=[(44, 5), (50, 8), (50, 16), (44, 19)]), "gunmetal", width=1, face=4, shade_lower=False)
-    for y in (7, 17):
-        p.bevel(p.mask(rect=(44, y - 1, 48, y)), "silver", width=1, face=4, shade_lower=False)
-    lens = p.mask(ellipse=(49, 8, 56, 16))
-    if f == 0:
-        p.dome(lens, "glass")
-    else:
-        p.glow(lens, g, {1: 1, 2: 2, 3: 4, 4: 5, 5: 4}[f])
-        if f >= 3:
-            p.glow(p.mask(rect=(51, 10, 52, 11)), g, 5)
+    mount(p)
+    # two prongs reaching forward, the beam forms between them
+    reach = 58 if heavy else 52
+    for y in ((5, 8) if heavy else (6, 8)), ((15, 18) if heavy else (15, 17)):
+        body(p, (34, y[0], reach, y[1]), "steel_dark")
+    body(p, [(8, 3 if heavy else 4), (34, 3 if heavy else 4), (38, 7), (38, 16), (34, 20 if heavy else 19), (8, 20 if heavy else 19)])
+    lights(p, 12, 9, 34, 13, 4 if heavy else 3, g, f)
+    if f >= 1:                                                 # the beam forming between the prongs
+        p.glow(p.mask(rect=(38, 11, 38 + int(LIT[f] * (reach - 40)) if f < 4 else reach, 12)), g, 2 + min(3, f))
     if f in (4, 5):
-        p.glow(p.mask(rect=(56, 10, 63, 13)), g, 5 if f == 4 else 3)
-        p.glow(p.mask(rect=(56, 11, 63, 12)), "glow_yellow", 5)
+        p.glow(p.mask(rect=(38, 10, 63, 13)), g, 4 if f == 4 else 2)
+        p.glow(p.mask(rect=(38, 11, 63, 12)), "glow_yellow", 5)
     return p
 
 
 def ivan_cannon(f):
-    """Ivan's overcharged cannon: a big breech, a long barrel with gold coils that glow as it charges."""
     p = Pix(*BIG); r = recoil(f) * 2; g = "glow_yellow"
-    bracket(p, big=True)
-    housing(p, 10 + r, 2, 40 + r, 29, "gunmetal", seams=(20 + r, 32 + r))
-    vents(p, 22 + r, 30 + r, 6, 4, 4)
-    charge_bar(p, 22 + r, 23, 5, g, f)
-    status(p, 34 + r, 6, g, f)
-    hose(p, [(12, 31), (26, 30), (40, 31)])
-    hose(p, [(12, 0), (26, 1), (40, 0)])
-    barrel(p, 40 + r, 82 + r, 16, 11, "metal", rings=(44 + r,))
-    for x in (48, 58, 68):
-        p.tube(p.mask(rect=(x + r, 9, x + 4 + r, 23)), "gold", "x", bands=(5, 4, 4, 3, 2))
+    mount(p, 32)
+    body(p, (46 + r, 10, 84 + r, 21), "steel_dark")
+    for x in (52, 62, 72):                                     # gold coils, lit as it charges
+        body(p, (x + r, 7, x + 4 + r, 24), "gold")
         if f >= 1:
-            p.glow(p.mask(rect=(x + 1 + r, 14, x + 3 + r, 18)), g, min(5, 1 + f))
-    p.bevel(p.mask(polygon=[(82 + r, 9), (88 + r, 11), (88 + r, 21), (82 + r, 23)]), "gunmetal", width=2, face=4, shade_lower=False)
-    tip(p, 88 + r, 13, 90 + r, 19, g, f)
-    flash(p, 91 + r, 16, g, f, 6)
+            p.glow(p.mask(rect=(x + 1 + r, 13, x + 3 + r, 18)), g, min(5, 1 + f))
+    body(p, (82 + r, 8, 89 + r, 23))
+    body(p, [(8, 3), (40, 3), (48, 9), (48, 22), (40, 28), (8, 28)])
+    lights(p, 13, 8, 39, 13, 5, g, f)
+    lights(p, 13, 18, 39, 23, 5, g, f)
+    muzzle(p, 90 + r, 15, g, f, 6)
     return p
 
 
 def twin_missile(f):
-    """Two launch tubes; the top missile loads first, then the bottom."""
-    p = Pix(*SMALL)
-    bracket(p)
-    loaded = {0: (0, 0), 1: (7, 0), 2: (12, 5), 3: (12, 12), 4: (-99, -99), 5: (-99, -99)}[f]
+    p = Pix(*SMALL); g = "glow_green"
+    mount(p)
+    loaded = {0: (0, 0), 1: (8, 0), 2: (11, 5), 3: (11, 11), 4: (-99, -99), 5: (-99, -99)}[f]
     for y, out in ((7, loaded[0]), (16, loaded[1])):
         if out > 0:
-            x = 22 + out
-            p.tube(p.mask(rect=(x, y - 2, x + 16, y + 2)), "white", "x", bands=(5, 4, 3, 2, 1))
-            p.paint(p.mask(rect=(x + 3, y - 2, x + 4, y + 2)), "red")
-            p.bevel(p.mask(polygon=[(x + 16, y - 2), (x + 21, y), (x + 16, y + 2)]), "red", width=1, face=4, shade_lower=False)
-    housing(p, 10, 0, 32, 23, "gunmetal", seams=(22,))
-    p.paint(p.mask(rect=(12, 11, 20, 12)), "red")
-    charge_bar(p, 12, 4, 4, "glow", f)
-    charge_bar(p, 12, 18, 4, "glow", max(0, f - 1) if f < 4 else f)
+            x = 32 + out
+            body(p, (x, y - 2, x + 12, y + 2), "white")
+            body(p, [(x + 12, y - 2), (x + 16, y), (x + 12, y + 2)], "red")
+    body(p, [(8, 1), (38, 1), (42, 5), (42, 18), (38, 22), (8, 22)])
     for y in (7, 16):
-        p.bevel(p.mask(rect=(28, y - 4, 38, y + 3)), "metal", width=1, face=3, shade_lower=False)
-        p.bevel(p.mask(rect=(31, y - 2, 38, y + 1)), "dark", width=1, face=1, shade_lower=False)
-    status(p, 24, 11, "glow", f)
+        body(p, (36, y - 4, 44, y + 3), "steel_dark")
+        p.bevel(p.mask(rect=(40, y - 2, 44, y + 1)), "dark", width=1, face=0, edge_light=1, edge_dark=0, shade_lower=False)
+    lights(p, 12, 5, 32, 9, 3, g, min(f, 3) if f < 4 else 4)
+    lights(p, 12, 14, 32, 18, 3, g, max(0, f - 2) * 3 if 0 < f < 4 else (4 if f == 4 else 0))
     if f == 4:
         for y in (7, 16):
-            p.glow(p.mask(ellipse=(37, y - 5, 52, y + 4)), "glow", 3)
-            p.glow(p.mask(ellipse=(38, y - 2, 45, y + 1)), "glow", 5)
+            p.glow(p.mask(ellipse=(44, y - 5, 58, y + 4)), "glow", 3)
     return p
 
 
 def ion_blast(f):
-    """A white housing with a blue stripe and a copper coil round the barrel that lights blue."""
-    p = Pix(*SMALL); r = recoil(f); g = "glow_blue"
-    bracket(p)
-    housing(p, 10, 3, 28, 20, "white", seams=(22,))
-    p.paint(p.mask(rect=(12, 3, 15, 20)), "trim_blue")
-    charge_bar(p, 17, 15, 3, g, f)
-    status(p, 24, 6, g, f)
-    hose(p, [(14, 21), (24, 22), (30, 21)], "pipe")
-    barrel(p, 28 + r, 50 + r, 12, 7, "gunmetal")
-    for x in range(31, 47, 3):
-        if f == 0:
-            p.tube(p.mask(rect=(x + r, 6, x + 1 + r, 17)), "bronze", "x", bands=(5, 3))
-        else:
-            p.glow(p.mask(rect=(x + r, 6, x + 1 + r, 17)), g, {1: 1, 2: 2, 3: 4, 4: 5, 5: 3}[f])
-    p.bevel(p.mask(ellipse=(49 + r, 6, 57 + r, 17)), "metal", width=1, face=4, shade_lower=False)
-    tip(p, 52 + r, 10, 54 + r, 13, g, f)
-    flash(p, 57 + r, 12, g, f, 4)
+    p = Pix(*SMALL); r = recoil(f); g = "glow_teal"
+    mount(p)
+    body(p, (34 + r, 8, 46 + r, 15), "steel_dark")
+    # a round coil housing at the front, its rings lit cyan
+    body(p, [(44 + r, 4), (52 + r, 4), (56 + r, 8), (56 + r, 15), (52 + r, 19), (44 + r, 19)])
+    for x in (46, 49, 52):
+        p.glow(p.mask(rect=(x + r, 6, x + r, 17)), g, 4 if LIT[f] * 3 > (x - 46) / 3 else 0)
+    body(p, [(8, 4), (32, 4), (36, 8), (36, 16), (32, 20), (8, 20)])
+    lights(p, 13, 10, 31, 14, 3, g, f)
+    muzzle(p, 57 + r, 11, "glow_blue", f, 4)
     return p
 
 
 def toxin_dart(f):
-    """A green gas canister with a gauge, feeding a long needle barrel."""
     p = Pix(*SMALL); r = recoil(f); g = "glow_green"
-    bracket(p)
-    p.tube(p.mask(rect=(11, 1, 27, 22)), "green", "y", bands=(2, 3, 4, 5, 5, 4, 3, 2))
-    for y in (4, 19):
-        p.paint(p.mask(rect=(11, y, 27, y + 1)), "yellow")
-        for x in range(12, 27, 4):
-            p.mat[y:y + 2, x:x + 2] = "dark"
-    p.bevel(p.mask(ellipse=(15, 8, 23, 15)), "silver", width=1, face=4, shade_lower=False)   # the gauge
-    p.engrave([(19, 11), (21, 9)], highlight=False)
-    hose(p, [(26, 6), (30, 8), (32, 11)], "green")
-    p.bevel(p.mask(rect=(27 + r, 8, 33 + r, 15)), "gunmetal", width=1, face=4, shade_lower=False)
-    barrel(p, 33 + r, 52 + r, 12, 4, "metal", rings=(38 + r, 46 + r))
-    if f >= 1:
-        p.glow(p.mask(rect=(35 + r, 11, 35 + min(16, f * 5) + r, 12)), g, min(5, 1 + f))
-    p.bevel(p.mask(polygon=[(52 + r, 10), (59 + r, 12), (52 + r, 13)]), "silver", width=1, face=4, shade_lower=False)
-    status(p, 29 + r, 10, g, f)
-    if f == 4:
-        p.glow(p.mask(ellipse=(57 + r, 7, 63, 17)), g, 2)
-        p.glow(p.mask(ellipse=(59 + r, 10, 63, 14)), g, 4)
+    mount(p)
+    body(p, (32 + r, 10, 54 + r, 13), "steel_dark")             # the needle
+    body(p, [(54 + r, 10), (60 + r, 11), (60 + r, 12), (54 + r, 13)], "silver")
+    body(p, [(8, 5), (30, 5), (34, 9), (34, 15), (30, 19), (8, 19)])
+    # the gas tank window, filling green
+    lights(p, 12, 8, 28, 16, 4, g, f)
+    muzzle(p, 61 + r, 11, g, f, 3)
     return p
 
 
 def fire_beam(f):
-    """A russet housing with deep cooling fins, a heat lens and a scorched muzzle."""
     p = Pix(*SMALL); g = "glow"
-    bracket(p)
-    housing(p, 10, 2, 30, 21, "russet", rivets=True)
-    for x in (13, 17, 21, 25):
-        p.bevel(p.mask(rect=(x, 0, x + 1, 23)), "gunmetal", width=1, face=3, shade_lower=False)
-    charge_bar(p, 13, 10, 7, g, f)
-    hose(p, [(30, 3), (34, 4), (38, 6)], "pipe")
-    barrel(p, 30, 44, 12, 7, "gunmetal", rings=(35, 40))
-    p.bevel(p.mask(polygon=[(44, 5), (50, 8), (50, 16), (44, 19)]), "russet", width=1, face=4, shade_lower=False)
-    p.shade(p.mask(rect=(46, 8, 49, 16)), -1)
-    lens = p.mask(ellipse=(49, 8, 56, 16))
-    if f == 0:
-        p.dome(lens, "glass")
-    else:
-        p.glow(lens, g, {1: 1, 2: 2, 3: 4, 4: 5, 5: 4}[f])
-    status(p, 26, 17, g, f)
+    mount(p)
+    for y in ((5, 8), (15, 18)):
+        body(p, (34, y[0], 54, y[1]), "steel_dark")
+        body(p, (50, y[0] - 1, 55, y[1] + 1), "russet")
+    body(p, [(8, 3), (34, 3), (38, 7), (38, 16), (34, 20), (8, 20)])
+    lights(p, 12, 7, 34, 11, 4, g, f)
+    lights(p, 12, 13, 34, 17, 4, "glow_red", f)
+    if f >= 1:
+        p.glow(p.mask(rect=(38, 11, 38 + int(LIT[f] * 14) if f < 4 else 63, 12)), g, 2 + min(3, f))
     if f in (4, 5):
-        p.glow(p.mask(rect=(56, 9, 63, 14)), g, 4 if f == 4 else 2)
-        p.glow(p.mask(rect=(56, 11, 63, 12)), "glow_yellow", 5)
+        p.glow(p.mask(rect=(38, 9, 63, 14)), g, 4 if f == 4 else 2)
+        p.glow(p.mask(rect=(38, 11, 63, 12)), "glow_yellow", 5)
     return p
 
 
 def flak_cannon(f):
-    """An olive autoloader with a shell feed and a short, wide flared barrel."""
-    p = Pix(*SMALL); r = recoil(f); g = "glow"
-    bracket(p)
-    housing(p, 10, 1, 32, 22, "olive", seams=(24,))
-    for y in (4, 8, 12, 16):                                   # shells in the feed
-        p.tube(p.mask(rect=(13, y, 21, y + 2)), "bronze", "x", bands=(5, 4, 3))
-        p.bevel(p.mask(rect=(21, y, 22, y + 2)), "red", width=1, face=4, shade_lower=False)
-    status(p, 27, 5, g, f)
-    charge_bar(p, 25, 17, 3, g, f)
-    hose(p, [(14, 23), (24, 22), (32, 23)], "strap")
-    barrel(p, 32 + r, 46 + r, 12, 11, "gunmetal", rings=(36 + r, 41 + r))
-    p.bevel(p.mask(polygon=[(46 + r, 6), (53 + r, 2), (53 + r, 21), (46 + r, 17)]), "gunmetal", width=2, face=4, shade_lower=False)
-    tip(p, 51 + r, 5, 52 + r, 18, g, f)
+    p = Pix(*SMALL); r = recoil(f); g = "glow_red"
+    mount(p)
+    # a short barrel that flares into a wide mouth
+    body(p, (36 + r, 7, 48 + r, 16), "steel_dark")
+    body(p, [(48 + r, 7), (56 + r, 2), (56 + r, 21), (48 + r, 16)])
+    p.bevel(p.mask(rect=(54 + r, 5, 56 + r, 18)), "dark", width=1, face=0, edge_light=1, edge_dark=0, shade_lower=False)
+    # an angled body with a drum on top
+    body(p, [(8, 6), (30, 6), (38, 10), (38, 17), (30, 21), (8, 21)])
+    body(p, [(14, 1), (28, 1), (30, 6), (12, 6)], "steel_dark")
+    lights(p, 12, 11, 32, 15, 3, g, f)
     if f == 4:
         for dy in (-6, 0, 6):
-            p.glow(p.mask(ellipse=(54 + r, 8 + dy, 62 + r, 15 + dy)), g, 4)
-    elif f == 5:
-        p.glow(p.mask(ellipse=(54 + r, 9, 58 + r, 14)), g, 2)
+            p.glow(p.mask(ellipse=(57 + r, 8 + dy, 63, 15 + dy)), "glow", 4)
     return p
 
 
 def chain_laser(f):
-    """Three barrels in a spinning ring: each frame turns them a step."""
     p = Pix(*SMALL); g = "glow_teal"
-    bracket(p)
-    housing(p, 10, 2, 30, 21, "metal", seams=(20,))
-    p.paint(p.mask(rect=(24, 2, 27, 21)), "teal")
-    p.bevel(p.mask(ellipse=(13, 7, 19, 16)), "gunmetal", width=1, face=3, shade_lower=False)   # the motor
-    p.glow(p.mask(rect=(15, 11, 16, 12)), g, 1 + min(4, f))
-    charge_bar(p, 12, 18, 4, g, f)
-    hose(p, [(14, 1), (22, 0), (30, 1)], "pipe")
+    mount(p)
     turn = f % 3
-    for k in range(3):
-        y = (6, 12, 18)[(k + turn) % 3]
-        barrel(p, 30, 52, y, 4, "gunmetal" if k else "metal")
-        tip(p, 52, y - 1, 53, y + 1, g, f)
-    for x in (36, 46):
-        p.bevel(p.mask(rect=(x, 2, x + 2, 21)), "teal", width=1, face=4, shade_lower=False)
-    flash(p, 54, 12, g, f, 5)
+    for k in range(3):                                         # three barrels in a ring, turning
+        y = (5, 11, 17)[(k + turn) % 3]
+        body(p, (34, y - 2, 54, y + 1), "steel_dark" if k else "steel")
+        body(p, (52, y - 2, 55, y + 1))
+    body(p, (40, 2, 43, 21), "steel_dark")
+    body(p, [(8, 3), (32, 3), (36, 7), (36, 16), (32, 20), (8, 20)])
+    lights(p, 12, 6, 32, 10, 3, g, f)
+    lights(p, 12, 13, 32, 17, 3, g, f)
+    muzzle(p, 56, 11, g, f, 4)
     return p
 
 
