@@ -156,13 +156,13 @@ def build(g):
     # ponds are broken and sealed until S.A.R.A. repairs them (scripts/station_repair.gd): sliding doors with red
     # lights where their hallways meet them (INNER_DOORS, owner "repair:<id>"), and wreckage inside that her
     # drones clear (SEALED_ROOMS).
-    disc(F, 24, 29, 9, 'f')                                      # the storage dome
+    disc(F, 20, 30, 13, 'f')                                     # the storage dome, the workshop's size (Zachary, 23 Nov)
     rock = lambda x0, y0, x1, y1: [F[y].__setitem__(x, 'u') for y in range(y0, y1 + 1) for x in range(x0, x1 + 1) if F[y][x] == '#']
-    rock(34, 27, 40, 30)                                         # hallway east to your agri dome
-    rock(23, 39, 25, 50)                                         # hallway south to your workshop
+    rock(34, 28, 40, 31)                                         # hallway east to your agri dome
+    rock(19, 44, 21, 51)                                         # hallway south to your workshop
     sealed = []                                                  # (x, y, w, h, facing, repair)
-    F[27][33] = F[30][33] = '#'; F[28][33] = F[29][33] = 'u'; sealed.append((33, 28, 1, 2, 'E', 'storage'))
-    F[38][23] = F[38][25] = '#'; F[38][24] = 'u'; sealed.append((24, 38, 1, 1, 'S', 'storage'))
+    F[28][33] = F[31][33] = '#'; F[29][33] = F[30][33] = 'u'; sealed.append((33, 29, 1, 2, 'E', 'storage'))
+    F[43][19] = F[43][21] = '#'; F[43][20] = 'u'; sealed.append((20, 43, 1, 1, 'S', 'storage'))
     # the hot springs and fish ponds: a door where the link from the porch meets them, and a bulkhead across the
     # glass link down from your agri dome
     F[62][70] = F[65][70] = '#'; F[63][70] = F[64][70] = 'u'; sealed.append((70, 63, 1, 2, 'E', 'ponds'))
@@ -174,7 +174,7 @@ def build(g):
     sealed.append((door_x, cross, 1, 1, 'S', 'ponds'))
     for x, y, w_, h_, facing, rid in sealed:
         g.setdefault('INNER_DOORS', []).append(['agri', x, y, w_, h_, facing, 'repair:' + rid, rid])
-    g['SEALED_ROOMS'] = {'storage': ['agri', 14, 19, 33, 38], 'ponds': ['agri', 71, 47, 102, 80]}
+    g['SEALED_ROOMS'] = {'storage': ['agri', 7, 17, 33, 43], 'ponds': ['agri', 71, 47, 102, 80]}
     # Two houses either side of the link up to your field, mirror images about the porch's middle (x 55), their
     # fronts along the porch's top (y 56) and wrapping round its cut corners: yours on the right (aptPlayer), and on
     # the left one for a second player when co-op comes (aptCoop). Their roofs run back to the field dome.
@@ -196,10 +196,10 @@ def build(g):
             if F[y][x] == '#' and (x, y) not in house and not any((x + dx, y + dy) in inside for dx in range(-2, 3) for dy in range(-2, 3)):
                 F[y][x] = 'Q'
     a.t.zones += [['Agri dome', 36, 4, 74, 42], ['Front porch', porch[0], porch[1], porch[2], porch[3]], ['Your workshop', 11, 51, 37, 77],
-                  ['Hot springs & fish ponds', 71, 49, 101, 79], ['Storage dome', 14, 19, 33, 38], ['Glass link', 1, 1, 108, 82]]
+                  ['Hot springs & fish ponds', 71, 49, 101, 79], ['Storage dome', 7, 17, 33, 43], ['Glass link', 1, 1, 108, 82]]
     for x, y, w_, h_, facing, rid in sealed:
         a.keep_clear(x - 2, y - 2, x + w_ + 1, y + h_ + 1)
-    a.keep_clear(32, 26, 41, 31)          # the storage hallway's mouth in the dome
+    a.keep_clear(32, 27, 41, 32)          # the storage hallway's mouth in the dome
     a.keep_clear(53, 38, 57, 60)          # the link up to the dome, and its mouth
     a.keep_clear(53, 66, 57, 82)          # the way in
     a.keep_clear(36, 62, 74, 65)          # workshop - porch - hot springs
@@ -230,8 +230,8 @@ def build(g):
     # trap anyone once the doors open.
     for fx, fy in ((79, 52), (93, 57), (88, 66), (75, 70), (96, 72), (86, 77)): N('rubble', fx, fy, 'Rubble', None)
     for fx, fy in ((84, 51.5), (98, 64), (81, 74), (91, 70)): N('glass_shards', fx, fy, 'Broken glass', None)
-    for fx, fy in ((19, 24), (28, 22), (17, 32), (30, 33), (24, 36)): N('rubble', fx, fy, 'Rubble', None)
-    for fx, fy in ((23, 27), (29, 28), (19, 29)): N('glass_shards', fx, fy, 'Broken glass', None)
+    for fx, fy in ((13, 22), (26, 21), (10, 31), (29, 35), (17, 39), (23, 27)): N('rubble', fx, fy, 'Rubble', None)
+    for fx, fy in ((18, 24), (27, 30), (12, 36), (21, 33)): N('glass_shards', fx, fy, 'Broken glass', None)
     a.thing('look', 'Hot spring', 'Look', 83, 64.5, 40); a.thing('look', 'Fish ponds', 'Look', 87, 72.5, 40)
 
     # ================================================================== hotel (option C, Zachary 17 Nov)
