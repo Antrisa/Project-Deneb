@@ -202,7 +202,7 @@ def main():
     cell = items.height
     need = FIRST_SLOT + len(NEW_ICONS)
     out = Image.new("RGBA", (max(items.width // cell, need) * cell, cell), (0, 0, 0, 0))
-    out.paste(items.crop((0, 0, FIRST_SLOT * cell, cell)), (0, 0))
+    out.paste(items, (0, 0))          # keep every slot this script doesn't redraw (e.g. the shop icons, 72+)
     os.makedirs(os.path.join(ART, "museum"), exist_ok=True)
     for i, (name, fn) in enumerate(NEW_ICONS):
         if name.startswith("relic_"):
@@ -211,6 +211,7 @@ def main():
             pic = Image.open(os.path.join(ART, "items", ICON_FILE.get(name, name) + ".png")).convert("RGBA")
         if pic.size != (cell, cell):
             pic = pic.resize((cell, cell), Image.NEAREST)
+        out.paste(Image.new("RGBA", (cell, cell), (0, 0, 0, 0)), ((FIRST_SLOT + i) * cell, 0))
         out.paste(pic, ((FIRST_SLOT + i) * cell, 0))
     out.save(items_path)
     print("items.png: %d icons; relic pictures in art/museum/" % (out.width // cell))
