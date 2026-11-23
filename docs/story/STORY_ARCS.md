@@ -258,10 +258,11 @@ Ivan's sister unlearns that fear is loyalty. **Reviewed with Zachary on 23 Nov; 
 | 4 | Grease & Second Chances | Shuttle Bay, 14:00–17:00, Tuesday, Wednesday or Friday | Thrusters with Freya; Garrick says she's earning her berth. | In game (Zachary's script, a choice by Claude) |
 | 6 | Ghost of the Crown | Rusk's bar after 20:00 | Ivan before he was a monster. She asks to fly with you as crew. | In game (Zachary's script, replies by Claude) |
 | 8 | Co-Pilot's Promise (confession) | Observation Lounge, night | She wants to be your navigator. Perk: Wingmate. Accept, decline and friendship endings written. | In game (Zachary's lines, replies by Claude) |
-| 10 | True North | Shuttle Bay at sunset, then a narrated orbit over the crater | A star-chart console with both your initials. Keepsake: a flight jacket. | In game (Claude, from Zachary's outline) |
+| 10 | True North | Shuttle Bay at sunset: your ship lifts off, orbits the crater (told over a dark screen) and lands | A star-chart console with both your initials. Keepsake: a flight jacket. | In game (Claude, from Zachary's outline) |
 
 - **Decided (Zachary, 23 Nov):** her 2 plays the first time you meet her after her fight (now her 0); a new 2 in the mess hall where nobody will talk to her until you sit with her; the pirates always "knew" she was weak for not firing on transports (Decision 2); the pirates are the Chernobog and Ivan is the Rabble (Decision 3). Her week, the crew ask in 6, keeping 8 in the lounge and 10's shape were Claude's suggestions, not answered: change any of them.
 - 6's choices now give +High Friendship (there are no romance points).
+- **Animated (Zachary, 23 Nov):** all six now have poses, emote bubbles and sounds like the other arcs; 8 shows a meteor shower in the lounge's window, and in 10 you board your ship and watch it lift off and land (new scene steps `sky`, `hide`/`show` and `ship`).
 - **Still open:** the console in 10 could become a real upgrade on your ship (`ana_true_north_console` is set); Wingmate needs hooking into ship battles.
 - **Repeat (for later):** 4 has her charting the old ambush corridors for Eshu's skiffs; Eshu 6 "Safe Routes" is the same work. Make Eshu 6 the follow-on.
 

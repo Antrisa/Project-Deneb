@@ -43,6 +43,11 @@ func run() -> void:
 		assert(not s.player.scene_walking)
 		if id == "evarra_10":
 			assert(s.current_area == "east", "Evarra's 10 ends in the little park")
+		if id == "ana_8":
+			assert(s.sky_override == "", "the lounge's window goes back to the day's own sky after Ana's 8")
+		if id == "ana_10":
+			assert(s.player.visible, "you step back out of your ship after Ana's 10")
+			assert(s.wreck_sprite.modulate.a == 1.0, "your ship is back on its pad after Ana's 10")
 	assert(s.story_flags.get("freya_plans", false) and s.story_flags.get("freya_crew", false))
 	assert(s.story_flags.get("perk_master_mechanic", false) and s.story_flags.get("keepsake_wrench_pendant", false))
 	for f in ["jasper_butter_deposit", "perk_parisian_bistro_menu", "perk_sous_chefs_blessing", "keepsake_jasper_apron",

@@ -26,6 +26,11 @@ extends Node
 #                                      {"partner": who}, {"dating_other": who}
 #   ["flag", name]  ["friendship", who, points]  ["perk", id, toast]  ["keepsake", id, toast]
 #   ["partner", who]  ["toast", text]
+#   ["hide", who]  ["show", who]        out of sight and back (boarding your ship); everyone shows again at the end
+#   ["ship", "lift" or "land", seconds] your ship in the Shuttle Bay rises out through the launch doors and fades,
+#                                      or comes back down onto its pad; it's back on the pad when the scene ends
+#   ["sky", event]                     the Observation Lounge's window shows that sky event ("meteors", "aurora",
+#                                      "comet"...; scripts/lounge_sky.gd) until the scene ends
 
 const HeartEvents = preload("res://scripts/heart_events.gd")
 const NineFrame = preload("res://scripts/nine_frame.gd")
@@ -53,6 +58,8 @@ var _choice_at := 0
 var _choosing := false
 var _shake_time := 0.0
 var _shake_px := 0.0
+var _ship_home := Vector2.INF   # where your ship stands on its pad, while a scene flies it
+const SHIP_RISE := 220.0        # how far up the ship climbs before it's gone through the launch doors
 
 
 func _ready() -> void:
@@ -104,6 +111,12 @@ func play(id: String) -> void:
 	for r in _actors.values():
 		r.scene_end()
 	_actors = {}
+	world.player.visible = true
+	world.sky_override = ""
+	if _ship_home != Vector2.INF and world.wreck_sprite != null:
+		world.wreck_sprite.position = _ship_home
+		world.wreck_sprite.modulate.a = 1.0
+	_ship_home = Vector2.INF
 	world.player.scene_walking = false
 	world.player._cam.offset = Vector2.ZERO
 	world._heart_event_done(id)
@@ -195,6 +208,15 @@ func _step(s: Array) -> void:
 			world.partner = str(s[1])
 		"toast":
 			world._toast(str(s[1]))
+		"hide", "show":
+			if str(s[1]) == "player":
+				world.player.visible = op == "show"
+			elif _actor(str(s[1])) != null:
+				_actor(str(s[1])).visible = op == "show"     # main.gd's _snap_residents shows them again afterwards
+		"ship":
+			await _ship(str(s[1]), float(s[2]) if s.size() > 2 else 2.5)
+		"sky":
+			world.sky_override = str(s[1])
 		_:
 			push_warning("cutscene: unknown step " + op)
 
@@ -312,6 +334,34 @@ func _process(delta: float) -> void:
 	if _shake_time > 0.0:
 		_shake_time -= delta
 		world.player._cam.offset = Vector2(randf_range(-_shake_px, _shake_px), randf_range(-_shake_px, _shake_px)) if _shake_time > 0.0 else Vector2.ZERO
+
+
+# Your ship (main.gd's wreck_sprite, in the Shuttle Bay) lifts off its pad, climbing faster as it goes and fading
+# out through the launch doors, or comes back down and settles. The bay shakes a little as it goes.
+func _ship(how: String, seconds: float) -> void:
+	var ship: Sprite2D = world.wreck_sprite
+	if ship == null:
+		return
+	if _ship_home == Vector2.INF:
+		_ship_home = ship.position
+	var up: Vector2 = _ship_home + Vector2(0, -SHIP_RISE)
+	var t := create_tween().set_parallel(true)
+	if how == "lift":
+		ship.position = _ship_home
+		ship.modulate.a = 1.0
+		_shake_time = seconds * 0.5
+		_shake_px = 1.5
+		t.tween_property(ship, "position", up, seconds).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		t.tween_property(ship, "modulate:a", 0.0, seconds * 0.4).set_delay(seconds * 0.6)
+	else:
+		ship.position = up
+		ship.modulate.a = 0.0
+		t.tween_property(ship, "position", _ship_home, seconds).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		t.tween_property(ship, "modulate:a", 1.0, seconds * 0.4)
+	await t.finished
+	if how != "lift":
+		_shake_time = 0.3
+		_shake_px = 1.0
 
 
 # ---------------------------------------------------------------- lines, choices, fades

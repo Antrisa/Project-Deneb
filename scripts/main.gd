@@ -297,6 +297,7 @@ const PARTNER_CAP := 10
 var partner := ""                  # who you're dating ("" for no one): set when you accept a confession
 var events_seen: Array = []        # heart events already played (scripts/heart_events.gd)
 var cutscene                       # plays them (scripts/cutscene.gd)
+var sky_override := ""             # a scene's sky in the Observation Lounge's window ("meteors"); "" is the day's own
 var _event_area := ""              # the area heart events were last checked for
 const BEDROOM_HEARTS := 3          # a resident's bedroom opens to you from this many hearts (Zachary, 17 Nov)
 var area_links := {}               # area name -> {neighbouring area: [pad tiles that lead there]}

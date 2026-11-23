@@ -55,7 +55,8 @@ EVENT_ROWS = ["talk", "laugh", "sad", "jump", "gift", "bench", "wave"]
 EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "ready", "no", "wait", "help", "follow", "cute"}
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
-         "if", "flag", "friendship", "perk", "keepsake", "partner", "toast"}
+         "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky"}
+SKIES = {"clear", "eclipse", "gas_cloud", "meteors", "transit", "aurora", "comet", "storm"}   # scripts/lounge_sky.gd
 SOUNDS = {p.stem for p in (ROOT / 'audio').glob('*.wav')}
 DIRS = {"d", "u", "l", "r"}
 
@@ -118,7 +119,7 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         if op not in STEPS:
             bad(ev_id, "unknown step %r" % op)
             continue
-        if op in ("place", "walk", "face", "pose", "emote") and s[1] not in RESIDENTS and s[1] != "player":
+        if op in ("place", "walk", "face", "pose", "emote", "hide", "show") and s[1] not in RESIDENTS and s[1] != "player":
             bad(ev_id, "%s: %r is not a resident" % (op, s[1]))
         if op == "say":
             if s[1] and s[1] not in RESIDENTS and s[1] not in ("Sensors", "Sara"):
@@ -155,6 +156,12 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
             if s[2] not in EMOTES: bad(ev_id, "unknown emote %r" % s[2])
         elif op == "sfx":
             if s[1] not in SOUNDS: bad(ev_id, "no sound %r in audio/" % s[1])
+        elif op == "ship":
+            if s[1] not in ("lift", "land"): bad(ev_id, "ship: %r is neither lift nor land" % s[1])
+            if area != "bay": bad(ev_id, "ship: your ship is only in the Shuttle Bay, not %r" % area)
+        elif op == "sky":
+            if s[1] not in SKIES: bad(ev_id, "sky: no sky event %r" % s[1])
+            if area != "lounge": bad(ev_id, "sky: only the Observation Lounge has the window, not %r" % area)
         elif op == "choose":
             if not 2 <= len(s[1]) <= 4: bad(ev_id, "a choice needs 2 to 4 options")
             for o in s[1]:

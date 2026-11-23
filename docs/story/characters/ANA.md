@@ -7,7 +7,9 @@
 - **The pirates are the Chernobog; Ivan is the Rabble** (Decision 3). The game's text now says Chernobog cutter, Chernobog colours and so on. The Rabble's Reach and the Rabble's Nest are named after Ivan and keep their names.
 - **Tally is Eshu** everywhere (Decision 18), so Garrick's line in 4 says Eshu.
 
-**Not answered, so these are Claude's suggestions (change any of them):** her week and days off; at the end of 6 she asks to fly with you as crew; 8 stays in the Observation Lounge; 10 is a narrated orbit, with the flight jacket as the keepsake and the console bolted into your ship.
+**Not answered, so these are Claude's suggestions (change any of them):** her week and days off; at the end of 6 she asks to fly with you as crew; 8 stays in the Observation Lounge; in 10 your ship really lifts off and lands, with the orbit itself told over a dark screen; the flight jacket is the keepsake and the console is bolted into your ship.
+
+**Animated (Zachary, 23 Nov: "animate those scenes"):** all six now move the way the others do: poses from her heart-event sheet (talking, laughing, sad, a happy jump at the confession, waving, the gift), emote bubbles over everyone's heads, and sounds (the door, spoons and trays, wrenches and welding). In 0 she gets up off the cot to face you and sits back down to eat; in 2 the table laughs, Freya waves you over and then crosses the room; in 4 Ana backs away from the tools when Garrick walks in; in 8 the lounge's window shows a meteor shower whatever the day's sky; in 10 you both board your ship, it lifts off through the launch doors and later comes back down onto its pad.
 
 **The arc:** Ivan's sister unlearns that fear is loyalty.
 - 0: pulled out of the wreck, and nobody asking for anything back.
@@ -38,8 +40,9 @@
 
 ## In the game (23 Nov)
 
-All six are playable cutscenes in `scripts/heart_events.gd`. She poses from her new heart-event sheet (`art/npc_ana_event.png`) and her action sheet (in a Medbay bed, tuning engines, eating). Saffi and Garrick are in 0; Freya, Job, Stu, Garrick and Jasper in 2; Freya and Garrick in 4. Not run in Godot yet.
+All six are playable cutscenes in `scripts/heart_events.gd`. She poses from her new heart-event sheet (`art/npc_ana_event.png`) and her action sheet (in a Medbay bed, tuning engines, eating, drinking). Saffi and Garrick are in 0; Freya, Job, Stu, Garrick and Jasper in 2; Freya and Garrick in 4. Not run in Godot yet.
 
+- **New scene steps for her 8 and 10** (`scripts/cutscene.gd`): `["sky", "meteors"]` sets the Observation Lounge's window for the scene (`main.gd sky_override`, read by `scripts/lounge_sky.gd`); `["hide", who]` and `["show", who]` take someone out of sight and back (boarding); `["ship", "lift" or "land", seconds]` flies your ship in the Shuttle Bay up through the launch doors, fading out, or back down onto its pad. Everything goes back at the end of the scene: the day's sky, everyone visible, the ship on its pad.
 - **She only appears once she's arrived** (Wave 2, the day after you pull her out), so her scenes wait for that.
 - **0 has two places:** a new story flag, `ana_in_medbay`, is true for her first two days. Until then 0 plays in the Medbay; after that it plays in the Shuttle Bay. The scene marks her as met, so talking to her afterwards isn't a first meeting.
 - **The second flight's loyalists** now say: "We always knew you were weak. Never once fired on a transport. Ivan covered for you. Ivan's gone."
@@ -192,16 +195,17 @@ All six are playable cutscenes in `scripts/heart_events.gd`. She poses from her 
 
 **Trigger:** the Shuttle Bay 18:00–20:30 (sunset) while you're dating Ana, with her at 10 hearts.
 
-*(Zachary's outline: Ana surprises you with a custom-calibrated star-chart console etched with both your initials and takes you on a quiet scenic orbit above the moon's glowing crater. Keepsake: the console and a custom flight jacket. The lines are Claude's; the orbit is narrated under a fade, as in Freya's Test Flight.)*
+*(Zachary's outline: Ana surprises you with a custom-calibrated star-chart console etched with both your initials and takes you on a quiet scenic orbit above the moon's glowing crater. Keepsake: the console and a custom flight jacket. The lines are Claude's. You see the take-off and the landing in the bay; the orbit itself is told over a dark screen.)*
 
 - *[The Shuttle Bay at sunset. The launch doors stand open, and the crater's rim is turning gold.]*
 - **ANA:** "[happy] There you are. Get in. Navigator's orders."
 - **ANA:** "I made you something. Well. I made us something. It's bolted into the cockpit, so you can't give it back."
-- *(The screen fades.)*
+- *(She beckons. You both walk under the ship and climb aboard. The hatch shuts, the engines whine, and the ship lifts off its pad and climbs out through the launch doors. The screen fades.)*
 - *[Beside the controls, a new star-chart console glows: custom-calibrated, every lane she knows, and both your initials etched into the bezel.]*
 - *[The launch doors fall away beneath you. Ana takes you up in a slow, quiet orbit over the moon's glowing crater.]*
 - **ANA:** "[love] Every chart I ever drew was a way out. This is the first one that points home."
-- *[You land as the last of the light leaves the crater.]*
+- *[You come back down as the last of the light leaves the crater.]*
+- *(The screen comes back: the ship settles onto its pad and you both step out.)*
 - **ANA:** "[bashful] And this. A flight jacket, your size. Sesska did the stitching. Mine has both our initials on the collar too. Don't laugh."
 - *[A flight jacket, broken in just right.]*
 - **Keepsake: Ana's flight jacket** *(Zachary)*

@@ -118,5 +118,8 @@ func _process(delta: float) -> void:
 	elapsed = fmod(elapsed + delta, 3600.0)
 	var shader := material as ShaderMaterial
 	shader.set_shader_parameter("minute", float(clock.get("minutes")))
-	shader.set_shader_parameter("event", int(EVENT_IDS.get(sky_for(int(clock.get("day"))), 0)))
+	# a heart-event scene can ask for its own sky (scripts/cutscene.gd "sky"); otherwise the day's
+	var wanted: String = str(clock.get("sky_override")) if clock.get("sky_override") != null else ""
+	var sky: String = wanted if EVENT_IDS.has(wanted) else sky_for(int(clock.get("day")))
+	shader.set_shader_parameter("event", int(EVENT_IDS.get(sky, 0)))
 	shader.set_shader_parameter("clock_time", elapsed)
