@@ -2719,6 +2719,30 @@ SCHEDULE_DAYS_RAW = {
             ("13:00", "east", 177, 63, 26, "r", "idle", "rest"),
             ("17:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Freya"], 26, "d", "idle", "rest")]},
     ],
+    # Jasper (22 Nov): a chef's week. Wednesday's break is at Ooma's stall. Saturday is market day: Ooma's stall,
+    # the library (Owen's old Earth cookbooks), lunch as a customer, his usual break, then the dinner service
+    # only. Sunday is his day off (Evarra keeps the mess hall): a late breakfast, the fountain bench where he
+    # sketches his café, the common room, then dinner for Evarra on his own range at home. Once the garden dome
+    # is open, Sunday mornings are spent picking herbs beside Evarra in the greenhouse.
+    "Jasper": [
+        {"when": {"days": [2]}, "stops": [
+            ("06:00", "mess", 21, 4, 36, "d", "work", "cook"), ("14:30", "main", 95, 71, 26, "d", "idle", "relax"),
+            ("16:30", "mess", 21, 4, 36, "d", "work", "cook"), ("18:40", "mess", 25, 7, 26, "d", "eat", "eat"),
+            ("19:15", "mess", 21, 4, 36, "d", "work", "cook"), ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5]}, "stops": [
+            ("07:00", "main", 95, 71, 26, "d", "idle", "relax"), ("09:00", "library", 5, 11, 26, "u", "idle", "rest"),
+            ("12:00", "mess", 25, 7, 26, "d", "eat", "eat"), ("13:00", "common", 7, 8, 26, "d", "idle", "relax"),
+            ("16:30", "mess", 21, 4, 36, "d", "work", "cook"), ("18:40", "mess", 25, 7, 26, "d", "eat", "eat"),
+            ("19:15", "mess", 21, 4, 36, "d", "work", "cook"), ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6]}, "stops": [
+            ("08:30", "mess", 25, 7, 26, "d", "eat", "eat"), ("10:00", "main", 80, 66, 26, "l", "idle", "rest"),
+            ("13:00", "common", 7, 8, 26, "d", "idle", "relax"), ("16:00", "aptA", 5, 15, 26, "u", "work", "cook"),
+            ("19:00", "aptA", 11, 19, 26, "d", "eat", "eat"), ("21:00", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["east_dome"]}, "stops": [
+            ("08:30", "mess", 25, 7, 26, "d", "eat", "eat"), ("10:00", "east", 50, 17, 26, "u", "idle", "relax"),
+            ("13:00", "main", 80, 66, 26, "l", "idle", "rest"), ("16:00", "aptA", 5, 15, 26, "u", "work", "cook"),
+            ("19:00", "aptA", 11, 19, 26, "d", "eat", "eat"), ("21:00", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
+    ],
 }
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():

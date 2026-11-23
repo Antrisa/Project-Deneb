@@ -35,6 +35,14 @@ FACES = {
     "freya": dict(eyes=((10, 13), (15, 13)),
                   colours=dict(skin="#f2c29a", lid="#e8d9bd", white="#e6fbff", pupil="#1f3a32",
                                brow="#86593f", tear="#93e6ea")),
+    # Jasper and Evarra (22 Nov, for Jasper's heart events): two-by-two eyes with the brows on the row above
+    # (tools/fix_eyes.py); Jasper's "skin" is his orange fur
+    "jasper": dict(eyes=((7, 14), (14, 14)),
+                   colours=dict(skin="#f5823a", lid="#e4d5bb", white="#fbf3e0", pupil="#2a1510",
+                                brow="#583927", tear="#93e6ea")),
+    "evarra": dict(eyes=((10, 14), (15, 14)),
+                   colours=dict(skin="#d6a2c3", lid="#d4c8e2", white="#f6f0ff", pupil="#2d1f45",
+                                brow="#6d4250", tear="#93e6ea")),
 }
 
 L_, R_ = "L", "R"

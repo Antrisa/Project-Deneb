@@ -1279,6 +1279,8 @@ func _flag(flag_name: String) -> bool:
 		"ivan_defeated": return artie_found_day >= 0
 		"ana_rescued": return ana_found_day >= 0
 		"leviathan_slain": return leviathan_slain
+		# Jasper 6: you've grown Moon wheat (set at the first harvest; older saves count wheat you're carrying)
+		"moon_wheat_harvested": return bool(story_flags.get(flag_name, false)) or _count("moon_wheat") > 0
 	return bool(story_flags.get(flag_name, false))
 
 
@@ -5652,6 +5654,7 @@ func _try_harvest() -> bool:
 	var got: String = str(c["item"])
 	player.face(Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
 	if got == "moon_wheat":
+		story_flags["moon_wheat_harvested"] = true
 		player.tool_action("scythe", "scythe")
 	else:
 		player.show_pickup(_held_item_picture(got))

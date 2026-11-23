@@ -39,7 +39,7 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2.
-3. **Every 10-heart romance scene and every platonic scene is an outline**, and Jasper's and Evarra's own arcs have no dialogue at all.
+3. **Every 10-heart romance scene and every platonic scene is an outline**, and Evarra's own arc has no dialogue at all. (Freya's and Jasper's are now written and in the game.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3.
 5. **Two "first bees" scenes** (Evarra 6 and side-arc 6), and Evarra's own 6 can't play until Jasper is at 6 hearts as well.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
@@ -124,21 +124,19 @@ Also in the docs but not on this list: the yearly Grand Hotel Inspection (sectio
 
 ### 3.1 Jasper (Ervani, Head Chef)
 
-The Paris dream was really a dream of sharing a table.
+The Paris dream was really a dream of sharing a table. **Reviewed with Zachary on 22 Nov; all five are written and playable.** Full scenes and his week: [`characters/JASPER.md`](characters/JASPER.md).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Burnt Ration Soufflé | Mess hall, after 20:00 | Alone after dinner, his ration-powder soufflé collapses; you bring herbs; he fears the dream is silly. | Outline (Claude) |
-| 4 | Paris on a Screen | Mess hall, evening | Shows his holo-vid collection; has never tasted real butter. | Outline (Claude) |
-| 6 | Taste of Paris | Mess hall, morning; waits for West Agridome wheat | First real croissant. Unlocks the Parisian Bistro Menu. | Outline |
-| 8 | Candlelight in the Mess Hall (confession) | Mess hall after hours | A private dinner for two; the dream of Paris was a dream of sharing a table with you. Perk: Sous-Chef's Blessing. | Outline |
-| 10 | Café Étoile | Terrace by the plaza fountain | Opens an outdoor bistro terrace. Keepsake (Claude): a monogrammed apron. | Outline |
+| 2 | The Butter Tin (was Burnt Ration Soufflé) | Ooma's stall, Wednesday 14:30–16:30 or Saturday 07:00–09:00 | He's 400 Scrip short of a tin of real Terran butter; he leaves his savings with Ooma as a deposit for the season. | In game (Claude) |
+| 4 | Paris on a Screen | Common room on his break | The cooking-show holo-vid came in the pod with them; even his accent is borrowed from it. Evarra teases him. | In game (Claude) |
+| 6 | Taste of Paris | Mess hall 06:00–08:30, Monday to Saturday; once you've harvested Moon wheat | The first real croissant: Ooma's butter and your wheat. Unlocks the Parisian Bistro Menu. | In game (Claude, from Zachary's outline) |
+| 8 | A Table of My Own (confession; was Candlelight in the Mess Hall) | His home on a Sunday, 17:00–20:30 | He sets his own table for the first time; the dream was never the city. Friendship ending: Evarra comes home to a third plate. Perk: Sous-Chef's Blessing. | In game (Claude, from Zachary's outline) |
+| 10 | Café Étoile | The fountain, 07:00–11:00 (a morning scene, unlike the siblings' evening banquet there) | Opening morning of his café terrace; you're the first customer. Keepsake: an apron with both your names. | In game (Claude, from Zachary's outline) |
 
-- **Gap:** no dialogue for any of the five.
-- **Repeat:** his 2 is the side arc's 2 again (ration paste that won't turn French, herbs to the rescue). His own 2 needs different ground.
-- **Gap:** there is no butter in the game (`item_data.gd` has no butter, milk or cream), yet 4 sets up "never tasted real butter" and 6 is a croissant. It needs a source (an import from Ooma or the Moogli trader, a station substitute) or a different dish.
-- 6 "waits for West Agridome wheat": the farm already grows moon wheat, so this can simply be "you have harvested Moon-Wheat once".
-- 10's terrace by the fountain exists now, so it needs no backup.
+- **Decided:** more variety of place (only 6 in the mess hall); butter is Ooma's tin, not an item; the holo-vid came in the pod; a chef's week with Sundays off while Evarra keeps the mess hall.
+- **Still open:** the café terrace needs drawing on the plaza for after 10 (`cafe_etoile` is set); the bistro menu and his perk need cooking and food buffs in the game.
+- **For Evarra and the side arc:** her 6 and 10 and the siblings' 2 and 8 are also in the mess hall; spread them out the same way.
 
 ### 3.2 Evarra (Vuultam, Chief Baker & Gardener)
 
