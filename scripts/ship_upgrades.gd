@@ -535,7 +535,7 @@ func _paint_restore() -> void:
 		var xf: Transform2D = s.fit_into(Vector2(hull_tex.get_size()), Rect2(sc.position + Vector2(8, 18), sc.size - Vector2(16, 26)))
 		s.texture_xf(hull_tex, xf, Rect2(), Color(1, 1, 1, 0.35 + 0.65 * float(done) / float(stages.size())))
 	s.text(sc.position.x + 8, sc.position.y + 6, "COVERED FIGHTER", "micro", ShipScreen.SCOPE_TEXT)
-	s.text_right(sc.end.x - 8, sc.position.y + 6, "%d CREW SEATS, PODS, MEDBAY" % int(ShipData.CREW_SEATS["covered_fighter"]), "micro", ShipScreen.SCOPE_TEXT)
+	s.text_right(sc.end.x - 8, sc.position.y + 6, "%d CREW SEATS" % int(ShipData.CREW_SEATS["covered_fighter"]), "micro", ShipScreen.SCOPE_TEXT)
 	var box2 := Rect2(476, 210, 239, 172)
 	if done >= stages.size():
 		s.panel(box2, "power", "She's yours")

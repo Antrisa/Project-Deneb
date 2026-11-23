@@ -34,8 +34,10 @@ const SHIELD := Color("6fb0c6")
 const STATUS_Y := 391
 
 # Text: as datapad.gd, a real font at the screen's pixel size, measured with the bitmap fonts' advances.
-const TEXT_SIZE := {"label": 11.2, "body": 12.6, "strong": 14.0, "mid": 18.2, "title": 25.2, "clock": 21.0}
-const TEXT_BASE := {"label": 12, "body": 14, "strong": 15, "mid": 20, "title": 27, "clock": 20}
+# 23 Nov (Zachary: "some of the text looks low res"): the small "micro" capitals are a real font too now, a
+# monospaced one (the bitmap's advance is 5 for every letter; cap height 7, baseline 9), so no text is a bitmap.
+const TEXT_SIZE := {"label": 11.2, "body": 12.6, "strong": 14.0, "mid": 18.2, "title": 25.2, "clock": 21.0, "micro": 8.4}
+const TEXT_BASE := {"label": 12, "body": 14, "strong": 15, "mid": 20, "title": 27, "clock": 20, "micro": 9}
 const TEXT_BOLD := ["strong", "title", "clock"]
 
 var paint: Callable = Callable()       # fills the page
@@ -58,6 +60,7 @@ var _target := SubViewport.new()
 var _raster := Node2D.new()
 var _font: Font
 var _font_bold: Font
+var _font_mono: Font
 var _scopes := {}
 var _stars: Texture2D
 
@@ -79,6 +82,10 @@ func _ready() -> void:
 	bold.base_font = _font
 	bold.variation_embolden = 0.6
 	_font_bold = bold
+	var mono := SystemFont.new()
+	mono.font_names = PackedStringArray(["Consolas", "DejaVu Sans Mono", "Menlo", "Liberation Mono", "Courier New", "monospace"])
+	mono.font_weight = 600
+	_font_mono = mono
 	var composite := CanvasItemMaterial.new()
 	composite.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA
 	material = composite
@@ -97,7 +104,11 @@ func redraw() -> void:
 		var device := PixelGrid.to_pixels(self)
 		var available := size * device.get_scale().abs()
 		var fit := minf(available.x / DESIGN.x, available.y / DESIGN.y)
-		var step := floorf(fit + 0.00001) if fit >= 1.99999 else maxf(fit, 0.01)
+		# 23 Nov (Zachary: "the ui window itself is not taking up the whole screen"): scale the page by the exact
+		# fit, so the designed 768 x 432 layout fills the window (2.5x at 1080p, 3.33x at 1440p) instead of
+		# sitting in the middle of a bigger page at a whole-number step. Text is drawn at screen resolution, and
+		# ship pictures still get whole screen pixels per art pixel (fit_scale), so both stay sharp.
+		var step := maxf(fit, 0.01)
 		page = (available / step).floor()
 		var start := (device.origin + (available - page * step) * 0.5).round()
 		_layout = device.affine_inverse() * Transform2D(0.0, Vector2.ONE * step, 0.0, start)
@@ -467,7 +478,7 @@ func _paint_native() -> void:
 func _paint_text(x: int, y: int, value: String, font_name: String, color: Color) -> void:
 	var f: Dictionary = Art.FONTS[font_name]
 	if TEXT_SIZE.has(font_name) and _font != null:
-		var font: Font = _font_bold if font_name in TEXT_BOLD else _font
+		var font: Font = _font_mono if font_name == "micro" else (_font_bold if font_name in TEXT_BOLD else _font)
 		var font_size: int = maxi(1, roundi(float(TEXT_SIZE[font_name]) * _px))
 		var base_y: float = roundf((float(y) + float(TEXT_BASE[font_name])) * _px)
 		_raster.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0 / _px, 1.0 / _px))
