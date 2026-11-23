@@ -676,6 +676,10 @@ func _sit_picture(face: int) -> Array:
 	side.blit_rect(stand, Rect2i(0, 0, fw, SIT_HIP + 2), Vector2i.ZERO)
 	var knees := _opaque(stand, SIT_HIP + 2)
 	var front: int = knees[knees.size() - 1] if not knees.is_empty() else fw / 2
+	for y in range(SIT_HIP + 2, SIT_HIP + 5):          # the seat of the trousers, on the cushion
+		for x in _opaque(stand, y):
+			if x < front - 1:
+				side.set_pixel(x, y, stand.get_pixel(x, y))
 	for y in range(SIT_HIP, fh - 2):
 		for x in _opaque(stand, y):
 			if x < front - 4 and y < SIT_HIP + 6:
