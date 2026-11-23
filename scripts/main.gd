@@ -525,6 +525,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F6 and OS.is_debug_build():
 		_debug_boarding()
 		return
+	# F4 (editor and debug builds): straight into a free flight, whatever the story says
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F4 and OS.is_debug_build():
+		if battle != null and not battle.open and not ship_map.open:
+			if ship_hull <= 0:
+				ship_hull = int(ShipData.STARTER["hull"])
+			_start_run()
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10:
 		overview = not overview
 		player._cam.zoom = Vector2.ONE * (0.08 if overview else 1.0) * CAMERA_ZOOM
