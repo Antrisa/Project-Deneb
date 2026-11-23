@@ -162,13 +162,20 @@ def build(g):
     bake_floor.HOUSE_FRONTS['agri'] = [
         {"roof": (57, 43, 67, 57), "cuts": (2, 2, 0, 3), "front": (57, 43, 63, 59), "roof_art": 'hotel/cap_mix', "wall_art": 'east/wall'},
         {"roof": (43, 43, 53, 57), "cuts": (2, 2, 3, 0), "front": (47, 43, 53, 59), "roof_art": 'hotel/cap_mix', "wall_art": 'east/wall'}]
-    # The blocks behind them, between the glass links, stay roof rather than bare moon.
-    house = {(x, y) for x in list(range(57, 73)) + list(range(38, 54)) for y in range(34, 58)}
+    # The blocks behind them, between the glass links, stay roof rather than bare moon, right down to the porch and
+    # the workshop and hot springs links (Zachary, 23 Nov: no gaps at the houses' lower outer corners).
+    house = {(x, y) for x in list(range(57, 73)) + list(range(36, 54)) for y in range(34, 62)}
     # Outside the domes and links is bare moon, with a two-tile station wall round everything inside.
     inside = {(x, y) for y in range(84) for x in range(110) if F[y][x] not in '#Q~'}
     for y in range(1, 83):
         for x in range(1, 109):
             if F[y][x] == '#' and (x, y) not in house and not any((x + dx, y + dy) in inside for dx in range(-2, 3) for dy in range(-2, 3)):
+                F[y][x] = 'Q'
+    # A light well in each house's outer side, so the house has windows (Zachary: "if we do have gaps put them where
+    # the green marker is"): open to the moon, with the glass wall at its north edge.
+    for wx0 in (42, 66):
+        for y in range(47, 51):
+            for x in range(wx0, wx0 + 3):
                 F[y][x] = 'Q'
     a.t.zones += [['Agri dome', 36, 4, 74, 42], ['Front porch', porch[0], porch[1], porch[2], porch[3]], ['Your workshop', 11, 51, 37, 77],
                   ['Hot springs & fish ponds', 71, 49, 101, 79], ['Glass link', 1, 1, 108, 82]]
