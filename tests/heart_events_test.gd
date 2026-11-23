@@ -42,6 +42,7 @@ func run() -> void:
 		for r in s.residents:
 			assert(not r.in_scene, id + ": " + r.who + " is back on their schedule")
 		assert(not s.player.scene_walking)
+		assert(s.cutscene._fx.is_empty(), id + ": its bees, fireflies and steam are gone")
 		if id == "evarra_10":
 			assert(s.current_area == "east", "Evarra's 10 ends in the little park")
 		if id == "ana_8":

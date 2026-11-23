@@ -27,6 +27,7 @@
 All five are playable cutscenes in `scripts/heart_events.gd` (`siblings_2` to `siblings_10`), staged like the romance arcs: poses from both their heart-event sheets and action sheets (cooking, mixing, gardening), emote bubbles for everyone, and sounds. Not run in Godot yet.
 
 - **New engine bits:** an event's `"with"` (others who need the same hearts) and `"seasons"` (only in those seasons), checked in `main.gd _event_ready`; F3 meets both in debug builds (it raises the others' hearts and moves the day into the season). A new scene step, `["energy", -points]`, is the bee sting's cost.
+- **Animated (Zachary, 23 Nov):** a new scene step, `["fx", kind, x, y, spread]`, draws bees, fireflies or steam in code (`scripts/scene_fx.gd`) until there's art. Steam rises from the pot in 2, the mugs in 4 and the soufflé in 8; in 6 the bees buzz in the glass hive, pour out round the flowers (and find Jasper's helmet if you told him to keep it on), then settle on Evarra's hand; fireflies drift over the banquet in 10, with the bees joining them once there are bees. Ana's soup in her 0 steams too.
 - **To test:** in a debug build, **F3** plays the next event in order; the side arc comes after Ana's six.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **Not in yet:** Wildflower Honey production (the bees), the Starlight Soufflé recipe and its Grand Hotel Inspection bonus, the Family Table perk's effect on meals, and the framed photo above the mess hall counter (art). The apiary box and glass hive in 6 are narrated (art).
@@ -170,5 +171,5 @@ All five are playable cutscenes in `scripts/heart_events.gd` (`siblings_2` to `s
 ## Still open
 
 - **Wildflower Honey production**, the soufflé recipe and its Grand Hotel Inspection bonus, and the Family Table perk need the cooking and bee systems in the game; for now they're flags.
-- **Art:** the apiary box and glass hive (6), the framed photo above the mess hall counter (10).
+- **Art** (on the Art Fix List, 23 Nov): the apiary box and glass hive (6), the banquet table (10), the framed photo above the mess hall counter (10), and sprites for the bees and fireflies that are drawn in code for now.
 - **The Grand Hotel Inspection** (Spring 24) itself isn't in the calendar yet.

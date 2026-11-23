@@ -55,7 +55,8 @@ EVENT_ROWS = ["talk", "laugh", "sad", "jump", "gift", "bench", "wave"]
 EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "ready", "no", "wait", "help", "follow", "cute"}
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
-         "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy"}
+         "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy", "fx"}
+FX = {"bees", "fireflies", "steam"}   # scripts/scene_fx.gd
 SEASONS = {"Spring", "Summer", "Autumn", "Winter"}
 SKIES = {"clear", "eclipse", "gas_cloud", "meteors", "transit", "aurora", "comet", "storm"}   # scripts/lounge_sky.gd
 SOUNDS = {p.stem for p in (ROOT / 'audio').glob('*.wav')}
@@ -160,6 +161,10 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         elif op == "ship":
             if s[1] not in ("lift", "land"): bad(ev_id, "ship: %r is neither lift nor land" % s[1])
             if area != "bay": bad(ev_id, "ship: your ship is only in the Shuttle Bay, not %r" % area)
+        elif op == "fx":
+            if s[1] not in FX: bad(ev_id, "fx: no effect %r" % s[1])
+            f = A[area]['floor']
+            if not (0 <= s[3] < len(f) and 0 <= s[2] < len(f[0])): bad(ev_id, "fx: (%d,%d) is off the map" % (s[2], s[3]))
         elif op == "energy":
             if not (isinstance(s[1], int) and s[1] < 0): bad(ev_id, "energy: %r should be a small cost, a negative number" % s[1])
         elif op == "sky":

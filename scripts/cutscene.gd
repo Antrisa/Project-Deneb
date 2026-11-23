@@ -32,10 +32,13 @@ extends Node
 #   ["sky", event]                     the Observation Lounge's window shows that sky event ("meteors", "aurora",
 #                                      "comet"...; scripts/lounge_sky.gd) until the scene ends
 #   ["energy", -points]                a small cost for a wrong choice (a bee sting): takes that much energy
+#   ["fx", kind, x, y, spread]         bees, fireflies or steam drawn round that tile (scripts/scene_fx.gd); the same
+#                                      kind again moves it there (bees settling on a hand); all gone when the scene ends
 # Events can also need a second resident at the same hearts ("with": ["Evarra"]) and play only in some
 # seasons ("seasons": ["Autumn", "Winter"]): main.gd _event_ready.
 
 const HeartEvents = preload("res://scripts/heart_events.gd")
+const SceneFx = preload("res://scripts/scene_fx.gd")
 const NineFrame = preload("res://scripts/nine_frame.gd")
 const DIRS := {"d": 0, "u": 1, "l": 2, "r": 3}
 
@@ -63,6 +66,7 @@ var _shake_time := 0.0
 var _shake_px := 0.0
 var _ship_home := Vector2.INF   # where your ship stands on its pad, while a scene flies it
 const SHIP_RISE := 220.0        # how far up the ship climbs before it's gone through the launch doors
+var _fx := {}                   # kind -> the scene's effect node (scripts/scene_fx.gd)
 
 
 func _ready() -> void:
@@ -120,6 +124,9 @@ func play(id: String) -> void:
 		world.wreck_sprite.position = _ship_home
 		world.wreck_sprite.modulate.a = 1.0
 	_ship_home = Vector2.INF
+	for n in _fx.values():
+		n.queue_free()
+	_fx = {}
 	world.player.scene_walking = false
 	world.player._cam.offset = Vector2.ZERO
 	world._heart_event_done(id)
@@ -222,6 +229,8 @@ func _step(s: Array) -> void:
 			world.sky_override = str(s[1])
 		"energy":
 			world.energy = maxi(0, int(world.energy) + mini(0, int(s[1])))
+		"fx":
+			_show_fx(str(s[1]), Vector2i(int(s[2]), int(s[3])), float(s[4]) if s.size() > 4 else 14.0)
 		_:
 			push_warning("cutscene: unknown step " + op)
 
@@ -367,6 +376,19 @@ func _ship(how: String, seconds: float) -> void:
 	if how != "lift":
 		_shake_time = 0.3
 		_shake_px = 1.0
+
+
+# Bees, fireflies or steam round a tile (a little above the floor, where hands and flowers are). The same kind
+# again drifts the one already there to the new tile.
+func _show_fx(kind: String, t: Vector2i, spread: float) -> void:
+	var at: Vector2 = world._feet(t) + Vector2(0, -10)
+	if _fx.has(kind):
+		_fx[kind].move_to(at, spread)
+		return
+	var n = SceneFx.new()
+	n.setup(kind, at, spread)
+	world.actors.add_child(n)
+	_fx[kind] = n
 
 
 # ---------------------------------------------------------------- lines, choices, fades
