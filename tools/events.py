@@ -51,6 +51,10 @@ FACES = {
     "quill": dict(eyes=((8, 13), (14, 13)),
                   colours=dict(skin="#9ea999", lid="#c7d2b8", white="#d9e5c8", pupil="#0b0206",
                                brow="#221920", tear="#93e6ea")),
+    # Ix'ali (23 Nov): eyes at (9, 12) and (16, 12), brows on row 11 (tools/fix_eyes.py); her "skin" is her scales
+    "ixali": dict(eyes=((9, 12), (16, 12)),
+                  colours=dict(skin="#ddb74e", lid="#d7b773", white="#f3dc9a", pupil="#1f140f",
+                               brow="#5a392c", tear="#93e6ea")),
 }
 
 L_, R_ = "L", "R"

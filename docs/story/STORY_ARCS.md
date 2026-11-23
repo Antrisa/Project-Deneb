@@ -39,11 +39,11 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2.
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's, Job's and Quill's arcs are now written and in the game.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's, Job's, Quill's and Ix'ali's arcs are now written and in the game.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3.
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
-7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Ten now: Quill 10 moved to the little park.)
+7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Nine now: Quill 10 moved to the little park and Ix'ali 10 to the museum.)
 
 ---
 
@@ -201,21 +201,18 @@ Maren's shy apprentice finding his own voice. **Reviewed with Zachary on 23 Nov;
 
 ### 3.6 Ix'ali (Zaa'sh, Armourer)
 
-Junta steel, Earth chivalry: honour means protecting the weak.
+Junta steel, Earth chivalry: honour means protecting the weak. **Reviewed with Zachary on 23 Nov; all five are written and playable.** Full scenes, and her and Garrick's weeks: [`characters/IXALI.md`](characters/IXALI.md).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Steel & Chivalry | Armoury | Earth knights who swore to shield the weak. | Script |
-| 4 | The Relic Blade | Armoury, when you bring a Zaa'sh or Terran metal artifact | With Tar'Besh: folded lunar titanium. | Outline |
-| 6 | Sparring Under the Dome | Shuttle Bay mat (Garrick watching) | A blunted-blade duel. Unlocks the Star-Knight Aegis tier. | Short |
-| 8 | The Oath (confession) | Armoury forge after hours | She kneels and offers a star pendant, her shield and her heart. Perk: Chivalric Guard. | Script |
-| 10 | Forged in Starlight | Observation Lounge, night | Matching ceremonial pauldrons. Keepsake: a pauldron. | Outline |
+| 2 | Steel & Chivalry | Armoury forge, while Garrick is out | Earth knights who swore to shield the weak. Replies to the choice added. | In game (Zachary's script, replies by Claude) |
+| 4 | The Relic Blade | Museum, Precursor gallery, with Tar'Besh, on her day off; **no item needed** | Folded lunar titanium; one line of why she left the Junta (Claude). | In game (Claude, from Zachary's outline) |
+| 6 | Sparring at the Cavern Gate (was Sparring Under the Dome) | The mine's cavern gate in the evening, Vzz'ket and Garrick watching | A duel with blunted blades. Unlocks the Star-Knight Aegis tier. | In game (Zachary's line, scene by Claude) |
+| 8 | The Oath (confession) | Armoury forge after hours | She kneels and offers a star pendant, her shield and her heart. Perk: Chivalric Guard. Accept, decline and friendship endings written. | In game (Zachary's oath, replies by Claude) |
+| 10 | Forged in Starlight | Museum after hours, the first settlers' gallery | Matching ceremonial pauldrons. Keepsake: a pauldron. | In game (Claude) |
 
-- **Gap:** 2 ends on the choice, with no reply to either option.
-- **Gap:** 4 needs writing, and its trigger needs the engine to know what you're holding. Which items count as "a Zaa'sh or Terran metal artifact"?
-- **Clash:** the Master says her star pendant is an Oath-Crest, the marriage token. If she gives it to you at 8, you could propose with it before her 10. Decision 12.
-- **Gap:** "I am no longer a soldier of the Junta": did she serve and leave? One line of backstory would carry the arc. There's no training mat in the Shuttle Bay map yet.
-- **Idea:** 6 could set up the Chivalry & Forge Tourney (Summer 29), also in the Shuttle Bay.
+- **Decided (Zachary, 23 Nov):** Ix'ali and Garrick stagger two days off each (Ix'ali Tuesday and Thursday, Garrick Saturday and Sunday), with lines to match; 4 in the museum with no item; 6 at the cavern gate; 10 in the museum (one fewer Observation Lounge scene).
+- **Still open:** Decision 12 (is the star pendant an Oath-Crest you could propose with?); her backstory line in 4 is a placeholder; 6 could still set up the Chivalry & Forge Tourney (Summer 29).
 
 ### 3.7 Arthur "Artie" Vance (Human, Wave 1)
 
@@ -462,15 +459,15 @@ Each of the nine 8-heart scenes ends "Accept confession or stay friends", with n
 
 ### 7.4 Places in the scripts that aren't the game's maps
 
-Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill 8 is the library; Stu 6 "West Wing Residential Corridor" (East Home 2?); Artie 10 "Library / Concourse" (East orchard); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 "Shuttle Bay training mat" (no mat prop yet).
+Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill 8 is the library; Stu 6 "West Wing Residential Corridor" (East Home 2?); Artie 10 "Library / Concourse" (East orchard); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 is settled (the cavern gate).
 
 ### 7.5 Choices with no outcome, or the wrong kind
 
-Jasper & Evarra 8 option B; Ix'ali 2 (no reply after the choice); Ana 6 ("+High Romance"); the nine confessions (7.1).
+Jasper & Evarra 8 option B; Ana 6 ("+High Romance"); the nine confessions (7.1).
 
 ### 7.6 What the event engine will have to check
 
-From the triggers above: map and time window; weekday (Wed or Sat); season; hearts (one resident, both of a pair, or "as partners"); flags (Custodian restored, Harbinger woken, hotel open, ship has flown, resident arrived, an earlier event seen); the item in your hand (Ix'ali 4); and an automatic cutscene (Jasper & Evarra 8+). "Dusk", "sunset" and "night" need fixed clock windows, and "sunny" needs a meaning.
+From the triggers above: map and time window; weekday (Wed or Sat); season; hearts (one resident, both of a pair, or "as partners"); flags (Custodian restored, Harbinger woken, hotel open, ship has flown, resident arrived, an earlier event seen); and an automatic cutscene (Jasper & Evarra 8+). "Dusk", "sunset" and "night" need fixed clock windows, and "sunny" needs a meaning.
 
 ### 7.7 Eleven scenes in the Observation Lounge
 

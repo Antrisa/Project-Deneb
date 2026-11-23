@@ -2838,6 +2838,30 @@ SCHEDULE_DAYS_RAW = {
             ("13:00", "east", 118, 44, 26, "d", "idle", "rest"), ("17:35", "mess", 19, 12, 26, "d", "eat", "eat"),
             ("19:15", "aptDoc", 6, 5, 26, "d", "idle", "rest")]},
     ],
+    # Ix'ali and Garrick (23 Nov, Zachary): two days off each, staggered so the armoury always has one of them.
+    # Ix'ali is off Tuesdays and Thursdays: breakfast, the museum's Precursor gallery with Tar'Besh, lunch, Bram's
+    # salvage, dinner, and her evening sparring at the cavern gate as every night.
+    "Ix'ali": [
+        {"when": {"days": [1, 3]}, "stops": [
+            ("08:30", "mess", 10, 7, 26, "d", "eat", "eat"), ("10:00", "museum", 53, 29, 26, "u", "idle", "rest"),
+            ("12:30", "mess", 10, 7, 26, "d", "eat", "eat"), ("14:00", "bram", 3, 6, 26, "r", "idle", "rest"),
+            ("17:35", "mess", 10, 7, 26, "d", "eat", "eat"), ("19:15", "mine", 11, 28, 26, "l", "work", "spar"),
+            ("22:00", "flatIxali", 5, 5, 26, "d", "idle", "rest")]},
+    ],
+    # Garrick is off Saturdays and Sundays, with Saffi and Kit: home in the morning, a walk round the plaza ("not a
+    # patrol"), lunch, the little park on Saturday or home on Sunday, dinner, and Rusk's bar as every evening.
+    "Garrick": [
+        {"when": {"days": [5]}, "stops": [
+            ("09:00", "aptSec", 8, 7, 26, "d", "idle", "rest"), ("11:00", "main", 88, 66, 26, "d", "idle", "rest"),
+            ("13:00", "mess", 14, 9, 26, "u", "eat", "eat"), ("14:30", "east", 60, 44, 26, "d", "idle", "rest"),
+            ("17:35", "mess", 14, 9, 26, "u", "eat", "eat"), ("19:15", "bar", 26, 21, 26, "l", "idle", "drink"),
+            ("21:30", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
+        {"when": {"days": [6]}, "stops": [
+            ("09:00", "aptSec", 8, 7, 26, "d", "idle", "rest"), ("12:00", "main", 88, 66, 26, "d", "idle", "rest"),
+            ("13:00", "mess", 14, 9, 26, "u", "eat", "eat"), ("14:00", "aptSec", 8, 7, 26, "d", "idle", "rest"),
+            ("17:35", "mess", 14, 9, 26, "u", "eat", "eat"), ("19:15", "bar", 26, 21, 26, "l", "idle", "drink"),
+            ("21:30", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
+    ],
 }
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():
