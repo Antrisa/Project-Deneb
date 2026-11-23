@@ -45,6 +45,16 @@ const ABOUT := {
 	"wreck": "Something worth picking over, if nobody beats you to it.",
 	"quiet": "A still patch of space, off every trade lane. Somewhere to rest and patch up.",
 }
+# Hazards (23 Nov): a beacon, distress signal or stronghold from ring 2 out may sit in one, by zone. They change
+# the fight there (ship_battle.gd _tick_space): asteroids hit either ship, flares start fires on both, a nebula
+# adds evasion to both, an ion storm halves your reactor.
+const HAZARD_CHANCE := 0.25
+const ZONE_HAZARD := {"Reach": "asteroids", "Terran": "flare", "Zaa'sh": "nebula", "Collective": "ion_storm"}
+const HAZARD_ABOUT := {"asteroids": "Asteroids drift through: rocks will hit both ships.",
+	"flare": "A star close by: its flares start fires on both ships.",
+	"nebula": "Inside a nebula: both ships are harder to hit.",
+	"ion_storm": "An ion storm: your reactor runs at half power here."}
+
 # What an event's "reveal: <name>" adds to the map: [kind, name, store id or ""]. Anything else is a wreck.
 const REVEALS := {
 	"wreck field": ["wreck", "Wreck field", ""],
@@ -143,6 +153,10 @@ static func make_run(day: int, ring_stops: Array, max_ring := MAX_RING, nest_don
 			_:
 				s["name"] = "Beacon"
 		s["about"] = ABOUT[str(s["kind"])]
+	for st in stops:
+		if int(st["ring"]) >= 2 and str(st["kind"]) in ["beacon", "distress", "special"] and rng.randf() < HAZARD_CHANCE:
+			st["hazard"] = ZONE_HAZARD[str(st["zone"])]
+			st["about"] = str(st.get("about", "")) + " " + str(HAZARD_ABOUT[st["hazard"]])
 	return stops
 
 
@@ -173,6 +187,31 @@ static func add_hidden(stops: Array, from: int, reveal: String, rng: RandomNumbe
 	for k in range(mini(2, same.size())):
 		_link(stops, i, same[k])
 	return i
+
+
+# Eshu's contracts (23 Nov): each active contract turns a beacon in its zone, as near its ring as there is, into
+# a "contract" stop: the wanted ship waits there.
+static func place_contracts(stops: Array, contracts: Array, rng: RandomNumberGenerator) -> void:
+	for c in contracts:
+		var best := -1
+		var best_gap := 99
+		for i in stops.size():
+			var st: Dictionary = stops[i]
+			if str(st["kind"]) != "beacon" or str(st["zone"]) != str(c["zone"]):
+				continue
+			var gap: int = absi(int(st["ring"]) - int(c["ring"])) * 10 + rng.randi_range(0, 3)
+			if gap < best_gap:
+				best_gap = gap
+				best = i
+		if best < 0:
+			continue
+		var st2: Dictionary = stops[best]
+		st2["kind"] = "contract"
+		st2["enemy"] = str(c["enemy"])
+		st2["contract"] = str(c["id"])
+		st2["name"] = "Wanted: " + str(c["target_name"])
+		st2["about"] = ("Eshu's contract: capture the %s with its hull in one piece. Down its crew." if str(c["kind"]) == "capture" \
+				else "Eshu's bounty: the %s, destroyed or taken.") % str(c["target_name"]).to_lower()
 
 
 static func _shuffle(a: Array, rng: RandomNumberGenerator) -> void:

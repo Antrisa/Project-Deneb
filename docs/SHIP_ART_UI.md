@@ -715,7 +715,7 @@ Ideas with residents behind them:
   **hired crew die** (Zachary, 22 Nov; replaces "knocked out, not killed").
 
 #### Hiring
-- At Tally's Post & Privateer Dispatch once he arrives, and sometimes in stores and events.
+- At Eshu's Post & Privateer Dispatch once he arrives, and sometimes in stores and events.
 - Freya and Ana can join at 6 hearts, with an extra bonus at 8.
 
 ### 6.6 How a fight works: what the game will do (Claude)
@@ -757,7 +757,7 @@ Ideas with residents behind them:
   other side fights. Their defenders come one for each of your boarders; their boarders wreck your systems room
   by room. The LAUNCH and RECALL tabs sit at the right of the Crew panel.
 - **Getting other ships (Zachary, 22 Nov):** in the normal game, through Freya's quest (the covered fighter) and
-  Tally's capture contracts.
+  Eshu's capture contracts.
 
 ---
 
@@ -783,7 +783,7 @@ Tick what you want. **Built** means it's in the game now; **Agreed** means you'v
 - [ ] The Nest raid, then a smaller pirate stronghold each run; Ooma's ship as the special merchant
 - [x] **Enemy crew at their stations**, walking off to repair (fires come later)
 - [x] **The datapad look** for every ship screen, and the battle in two windows that fit each ship
-- [ ] Bigger ships with crew decks; hired crew at Tally's; Freya and Ana as crew
+- [ ] Bigger ships with crew decks; hired crew at Eshu's; Freya and Ana as crew
 - [ ] **Boarding** and teleporters; capture contracts
 - [ ] Ship art from your redrawn ships and interiors, and more ships, weapons and systems from your designs
 
@@ -847,5 +847,16 @@ Tick what you want. **Built** means it's in the game now; **Agreed** means you'v
   - **Ship selector:** once you own two ships, buttons along the top pick which one you're looking at; each keeps its own levels, hull and guns. "Fly this ship" (at the bench) makes it the one that launches.
   - Freya at 8 hearts: 20% off the Scrip.
 - **Covered fighter** (Freya's quest, open after your first two flights): use the covered fighter in the bay; Freya restores it in three stages: 6 hull plates + 120 Scrip; 4 coil wire + 2 circuit boards + 150; 1 cobalt-60 + 2 lithium cells + 200 (`COVERED_REPAIRS` in main.gd). Then it's yours, with 3 crew seats, pods and a medbay. Boarding and enemy boarders (Rabble ships) are on when you fly it.
-- **Crew board** (stand-in picture: the star chart, by launch control in the booth): Tally pins three hirelings every three days once she has arrived. Kinds and traits: `ShipData.HIRE_KINDS` (human steady; Zaa'sh fight 1.5x; Arachnay repair 1.6x; Moogli heal 1.6x; Vuultam, Ervani, Scyldar in between). Hired crew who go down without the tether don't come back; Freya or Ana knocked out go home and stop coming until you ask again.
+- **Crew board** (stand-in picture: the star chart, by launch control in the booth): Eshu pins three hirelings every three days once he has arrived. Kinds and traits: `ShipData.HIRE_KINDS` (human steady; Zaa'sh fight 1.5x; Arachnay repair 1.6x; Moogli heal 1.6x; Vuultam, Ervani, Scyldar in between). Hired crew who go down without the tether don't come back; Freya or Ana knocked out go home and stop coming until you ask again.
 - **Art needed:** the uncovered fighter in the bay (the tarp prop stays until then), and a real crew board prop (2 x 3 tiles).
+
+## 10. Contracts, surrender, fleeing, hazards, augments, crew skills (23 Nov)
+- **Eshu's contracts** (the courier, was Tally): a Contracts tab on the ship screen. At the crew board Eshu posts two every three days: a **bounty** (beat the wanted ship any way, 90 + 40 a ring) or a **capture** (down its crew with the hull whole, 180 + 60 a ring). Two at a time. A taken contract turns a beacon in its zone, near its ring, into a yellow **Wanted** stop on every run until it's done (`ShipRuns.place_contracts`). Pay comes in the salvage window.
+- **Captures:** a fight won by downing the crew while the hull holds is a capture: boarders walk home, the result says "captured", and you strip the ship for a second helping of salvage. (Captured ships aren't kept yet.)
+- **Surrender:** 40% of ordinary enemies offer Scrip (and maybe fuel or missiles) at 30% hull; "Let them go" ends the fight as spared and pays the offer. Strongholds and the Nest never do.
+- **Fleeing:** half of the non-Rabble ships (not wanted ships) charge their fold drive at half hull; a bar shows in their window; in 20 s they're gone. Knocking out their cockpit or engines stops it.
+- **Hazards:** a quarter of beacons, distress signals and strongholds from ring 2 out sit in one, by zone (shown in the stop's text and the enemy window): Reach asteroids (random hull hits on either ship), Terran solar flares (fires on both), Zaa'sh nebulae (+10 evasion both), Collective ion storms (your reactor halved).
+- **Augments** (`ShipData.AUGMENTS`, 3 at most, Augments tab at stores; sell back for half): Bram's salvage arm (+25% Scrip and scrap), Tikka's coil tune (weapons +10% charge), shield capacitor (shields back 20% faster), stealth plating (+5 evasion), fuel recycler (1 jump in 5 free), nano-patch swarm (+2 hull after each win).
+- **Store Systems tab:** a system level for Scrip only, at 1.6x the parts' worth plus Freya's price.
+- **Crew skills:** hired hands get up to +50% at repairing (2% a repair) and fighting (over 3 minutes of fights); shown on the Crew tab.
+- **Freya and Ana cross:** knocked out on a run, the next time you talk to them (that day or the next) they're cross, -2 friendship, and they stay home until you ask again.

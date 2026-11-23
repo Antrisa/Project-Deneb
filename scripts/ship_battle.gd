@@ -168,6 +168,13 @@ var foe: Dictionary = {}
 var foe_id := ""
 var e_hull := 0
 var e_hull_max := 0
+# 23 Nov: captures, surrender, fleeing, hazards and augments (all set from the fight's settings by main.gd)
+var captured := false              # won by downing their crew with the ship still whole
+var surrender_asked := false
+var e_flee := -1.0                 # their fold drive charging to escape, 0..100 (-1: not trying)
+var hazard := ""                   # "asteroids", "flare", "nebula", "ion_storm" or ""
+var hazard_t := 0.0
+var augments: Array = []
 var e_sys := {}
 var e_layers := 0
 var e_shield_timer := 0.0
@@ -285,6 +292,12 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	suit_air = SUIT_AIR
 	blasts.clear()
 	tutorial_said = {}
+	captured = false
+	surrender_asked = false
+	e_flee = -1.0
+	hazard = str(fight.get("hazard", ""))
+	hazard_t = randf_range(6.0, 10.0)
+	augments = fight.get("augments", [])
 	# your ship: the starter, or another from the fight (boarding test, F6; later Freya's quest and Tally's captures)
 	crew_mode = fight.has("crew") and fight.has("player_ship")
 	var on_starter: bool = str(fight.get("player_ship", "")) != "covered_fighter"
@@ -305,6 +318,8 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	hull_max = int(me["hull"])
 	hull = clampi(hull_now, 1, hull_max)
 	reactor = int(me["reactor"])
+	if str(fight.get("hazard", "")) == "ion_storm":
+		reactor = int(ceil(reactor / 2.0))      # an ion storm halves your reactor
 	uplink = bool(fight.get("uplink", false))
 	sys = _make_systems(me["systems"])
 	bar_sys = []
@@ -432,8 +447,9 @@ func _finish() -> void:
 func _win() -> void:
 	if result != "": return
 	result = "won"
-	_end_boarding(true)
-	result_text = "%s destroyed" % str(foe["name"]) + _lost_line()
+	captured = e_hull > 0
+	_end_boarding(not captured)          # boarders on a captured ship just walk home
+	result_text = ("%s captured" if captured else "%s destroyed") % str(foe["name"]) + _lost_line()
 	end_timer = 2.2
 	shake = 0.6
 	if e_hull <= 0 and not foe_gibs.is_empty():
@@ -515,9 +531,10 @@ func _tick(delta: float) -> void:
 		for key in systems:
 			systems[key]["ion"] = maxf(0.0, float(systems[key].get("ion", 0.0)) - delta)
 	_tick_hazards(delta)
+	_tick_space(delta)
 	if layers < top and shield_jam <= 0.0:
 		shield_timer += delta
-		if shield_timer >= ShipData.SHIELD_RECHARGE * (0.75 if _boosting("shields") else 1.0):
+		if shield_timer >= ShipData.SHIELD_RECHARGE * (0.75 if _boosting("shields") else 1.0) * (0.8 if augments.has("shield_cap") else 1.0):
 			shield_timer = 0.0
 			layers += 1
 	else:
@@ -591,9 +608,9 @@ func _charge_weapons(list: Array, systems: Dictionary, delta: float, mine: bool)
 		var full: float = _full_charge(w, data)
 		if powered:
 			budget -= cost
-			var speed: float = 1.0
+			var speed: float = 1.1 if mine and augments.has("coil_tune") else 1.0
 			if mine and _boosting("weapons"):
-				speed = 1.15
+				speed *= 1.15
 			elif not mine and _manned("weapons"):
 				speed = 1.1
 			# Ivan's cannon runs off its own room: crewed it charges faster, damaged it can't charge at all
@@ -693,6 +710,8 @@ func _my_evasion() -> int:
 					and str(_room(me_ship["rooms"], str(c["room"])).get("sys", "")) == "pilot":
 				base += int(c["pilot_bonus"])
 				break
+	if base > 0:
+		base += (5 if augments.has("stealth") else 0) + (10 if hazard == "nebula" else 0)
 	return base + 5 if base > 0 and _boosting("engines") else base
 
 
@@ -1350,7 +1369,7 @@ func _enemy_evasion() -> int:
 	var eng: int = _eff(e_sys, "engines")
 	if eng <= 0 or _eff(e_sys, "pilot") <= 0 or not _manned("pilot"):
 		return 0
-	return 5 * eng + 5 + (5 if _manned("engines") else 0)
+	return 5 * eng + 5 + (5 if _manned("engines") else 0) + (10 if hazard == "nebula" else 0)
 
 
 func _enemy_crew(delta: float) -> void:
@@ -2041,6 +2060,76 @@ func _hurt_aboard(room_id: String, dmg: int, where: Vector2) -> void:
 
 
 # Fights: anyone sharing a room with someone from the other side, both standing still, trades blows with them.
+# ---------------------------------------------------------------- surrender, fleeing, hazards (23 Nov)
+# Surrender: some enemies (fight "surrender": [effects]) offer a payment to be let go once they're down to 30% hull.
+# Taking it ends the fight as "spared"; main.gd pays the offer. Refusing fights on (you may want the capture).
+# Fleeing: ships that run (fight "flee": true) charge their fold drive at half hull; in about 20 s they're gone
+# ("escaped"). Damaging their cockpit or engines stops the charge while it's down.
+# Hazards at the stop (fight "hazard"): asteroids hit either ship now and then, a star's flares start fires on
+# both, a nebula adds 10 evasion to both, and an ion storm halves your reactor (in start()).
+const FLEE_TIME := 20.0
+
+func _tick_space(delta: float) -> void:
+	if bool(fight.get("story", false)):
+		return
+	var offer: Array = fight.get("surrender", [])
+	if not surrender_asked and not offer.is_empty() and e_hull > 0 and e_hull * 10 <= e_hull_max * 3:
+		surrender_asked = true
+		paused = true
+		var words: Array = []
+		for o in offer:
+			words.append(str(o).replace("item: ", "").replace("_", " "))
+		world._say(str(foe.get("name", "They")), ["\"Enough! We yield. Take %s and let us go.\"" % ", ".join(words)],
+				Callable(self, "_accept_surrender"), "Let them go")
+		world._say_then(Callable(self, "_after_offer"))
+		return
+	if bool(fight.get("flee", false)) and e_hull > 0 and e_hull * 2 <= e_hull_max:
+		if e_flee < 0.0:
+			e_flee = 0.0
+			_pop(_on_page(false, Vector2((foe["size"] as Vector2).x / 2.0, 0)), "They're charging their fold drive!", GOLD)
+			world.sfx("sh_ready", 0.8, -4.0)
+		if _eff(e_sys, "pilot") > 0 and _eff(e_sys, "engines") > 0:
+			e_flee = minf(100.0, e_flee + delta * 100.0 / FLEE_TIME)
+		if e_flee >= 100.0:
+			result = "escaped"
+			_end_boarding(true)
+			result_text = "%s jumped away" % str(foe["name"]) + _lost_line()
+			end_timer = 1.6
+			world.sfx("sh_fold", 1.2)
+			return
+	if hazard == "asteroids" or hazard == "flare":
+		hazard_t -= delta
+		if hazard_t <= 0.0:
+			hazard_t = randf_range(9.0, 14.0) if hazard == "asteroids" else randf_range(18.0, 25.0)
+			for at_player in ([randf() < 0.5] if hazard == "asteroids" else [true, false]):
+				var ship: Dictionary = me_ship if at_player else foe
+				var rooms: Array = ship["rooms"]
+				if rooms.is_empty():
+					continue
+				var room: Dictionary = rooms[randi() % rooms.size()]
+				var where: Vector2 = _on_page(at_player, (room["rect"] as Rect2).get_center())
+				if hazard == "asteroids":
+					_pop(where + Vector2(0, -14), "Asteroid!", Color("c8b8a8"))
+					_damage(at_player, str(room["id"]), 1, where)
+				else:
+					_pop(where + Vector2(0, -14), "Solar flare!", Color("ffb04a"))
+					_set_fire(at_player, str(room["id"]), where)
+
+
+func _accept_surrender() -> void:
+	if result != "":
+		return
+	result = "spared"
+	_end_boarding(false)
+	result_text = "%s surrenders" % str(foe["name"])
+	end_timer = 1.4
+	world.sfx("coin")
+
+
+func _after_offer() -> void:
+	paused = false
+
+
 # The ship's alarm (23 Nov): a two-tone beep every few seconds while your ship burns, a room's air is thin, or
 # the hull is down to a quarter. Crew blaster shots crackle while anyone is fighting.
 var alarm_t := 0.0
@@ -2078,6 +2167,7 @@ func _tick_fights(delta: float) -> void:
 		for e in e_crew_list:
 			if float(e["hp"]) > 0.0 and not bool(e.get("walking", false)) and str(e.get("ship", "foe")) == str(c["ship"]) and str(e["room"]) == str(c["room"]):
 				e["hp"] = maxf(0.0, float(e["hp"]) - FIGHT_DPS * float(c.get("fight_x", 1.0)) * delta)
+				c["xp_fight"] = float(c.get("xp_fight", 0.0)) + delta
 				c["brawl"] = true
 				c["foe_x"] = (e["pos"] as Vector2).x
 				c["foe_pos"] = e["pos"]
@@ -2138,6 +2228,7 @@ func _my_crew_tick(delta: float) -> void:
 				if float(c["work"]) >= REPAIR_TIME:
 					c["work"] = 0.0
 					sys[sname]["damage"] = int(sys[sname]["damage"]) - 1
+					c["xp_repair"] = int(c.get("xp_repair", 0)) + 1
 					_pop(_on_page(true, c["pos"]) + Vector2(0, -10), "Fixed", GOOD)
 					world.sfx("click", 1.6, -4.0)
 			elif sname == "medbay" and _eff(sys, "medbay") > 0 and float(c["hp"]) < CREW_HP:
@@ -3069,6 +3160,12 @@ func _paint_foe_window() -> void:
 				var full: float = float(ShipData.WEAPONS["ivan_cannon"]["charge"])
 				s.rect(Rect2(x0, y0 + 38, 150, 3), Color("3c2a1e"))
 				s.rect(Rect2(x0, y0 + 38, 150.0 * float(w["charge"]) / full, 3), GOLD)
+	if e_flee >= 0.0 and result == "":
+		s.text(x0, y0 + 37, "FOLD DRIVE", "micro", GOLD)
+		s.rect(Rect2(x0 + 60, y0 + 40, 90, 3), Color("3c2a1e"))
+		s.rect(Rect2(x0 + 60, y0 + 40, 90.0 * e_flee / 100.0, 3), GOLD)
+	if hazard != "" and result == "":
+		s.text_right(right, y0 + 43, {"asteroids": "ASTEROIDS", "flare": "SOLAR FLARES", "nebula": "NEBULA", "ion_storm": "ION STORM"}.get(hazard, ""), "micro", GOLD)
 	var destroyed: bool = e_hull <= 0
 	if break_t >= 0.0:
 		if result != "done":

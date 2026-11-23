@@ -6,6 +6,7 @@ extends CanvasLayer
 #   Systems      - each system's level, bought with Scrip and salvage (ShipData.SYSTEM_UPGRADES, system_cost)
 #   Hull & tank  - reactor bars, hull plating, the fuel tank (opens rings 4 and 5), the tether (crewed ships)
 #   Crew         - who flies with you on a crewed ship: Freya and Ana at 6 hearts, hired crew, and the board
+#   Contracts    - Eshu's bounties and captures: the ones you've taken, and (at the board) new ones
 # The ship buttons along the top pick which ship you're looking at; "Fly this ship" makes it the one that launches.
 # Freya's 8-heart perk (Master Mechanic) takes 20% off the Scrip.
 # main.gd owns the state (ship_ups, ships_owned, crew_roster...) and its helpers (_ups, _ship_def, switch_ship).
@@ -14,7 +15,7 @@ const ShipData = preload("res://scripts/ship_data.gd")
 const ShipScreen = preload("res://ui/ship_screen.gd")
 const ItemData = preload("res://scripts/item_data.gd")
 
-const TABS := ["Systems", "Hull & tank", "Crew"]
+const TABS := ["Systems", "Hull & tank", "Crew", "Contracts"]
 const SYS_ORDER := ["shields", "engines", "weapons", "life", "pilot", "drones", "pods", "medbay"]
 const ICON_ORDER := ["shields", "engines", "weapons", "life", "pilot", "drones", "cannon", "medbay", "crew", "doors", "sensors", "pods"]
 const INK := Color("373b36")
@@ -56,7 +57,7 @@ func open_at(place: String, cb: Callable = Callable()) -> void:
 	tab = 2 if place == "board" else 0
 	picked = 0
 	status = {"bench": "Freya: \"Bring me parts and Scrip and I'll fit anything.\"",
-		"board": "Tally's notice: CREW WANTED, CREW AVAILABLE. Signing fee up front.",
+		"board": "Eshu's notice: CREW WANTED, CREW AVAILABLE. Signing fee up front.",
 		"field": "Field refit: your drone fits what you've got on board."}.get(place, "")
 	open = true
 	visible = true
@@ -124,6 +125,15 @@ func _click(id: String, _p: Vector2, button: int) -> void:
 				world.sfx("click")
 		"hire":
 			_hire(int(arg))
+		"take_c":
+			var offers: Array = world.contract_offers()
+			var k: int = int(arg)
+			if k >= 0 and k < offers.size():
+				status = world.take_contract(offers[k])
+		"drop_c":
+			world.drop_contract(int(arg))
+			status = "Contract dropped. Eshu shrugs all four shoulders."
+			world.sfx("click")
 		"leave":
 			_leave()
 
@@ -288,6 +298,8 @@ func _paint() -> void:
 			x -= 4.0
 	if TABS[tab] == "Crew":
 		_paint_crew()
+	elif TABS[tab] == "Contracts":
+		_paint_contracts()
 	else:
 		_paint_rows()
 	s.shift(s.bottom_left())
@@ -428,14 +440,18 @@ func _paint_crew() -> void:
 	s.text(66, y + 4, "HIRED HANDS (%d OF %d)" % [world.crew_roster.size(), ROSTER_MAX], "micro", INK)
 	y += 18.0
 	if world.crew_roster.is_empty():
-		s.text(66, y + 2, "Nobody yet. Tally pins hirelings to the crew board in the Shuttle Bay.", "label", MUTED)
+		s.text(66, y + 2, "Nobody yet. Eshu pins hirelings to the crew board in the Shuttle Bay.", "label", MUTED)
 	for i in range(world.crew_roster.size()):
 		var c: Dictionary = world.crew_roster[i]
 		var kind: Array = ShipData.HIRE_KINDS.get(str(c["kind"]), ShipData.HIRE_KINDS["human"])
 		var box2 := Rect2(60, y, 404, 28)
 		s.frame(box2, Color("f0ede4"), Color("d0c9bb"))
 		s.text(70, y + 4, str(c["name"]), "strong", INK)
-		s.text_fit(150, y + 7, 220, "%s. %s" % [str(c["kind"]).capitalize(), str(kind[1])], "micro", MUTED)
+		var sk: Array = world.crew_skill(c)
+		var skill_words: String = ""
+		if float(sk[0]) >= 0.05 or float(sk[1]) >= 0.05:
+			skill_words = "  REPAIRS +%d%%, FIGHTS +%d%%" % [int(float(sk[0]) * 100), int(float(sk[1]) * 100)]
+		s.text_fit(150, y + 7, 220, "%s. %s%s" % [str(c["kind"]).capitalize(), str(kind[1]), skill_words], "micro", MUTED)
 		if where != "field":
 			s.button("dismiss/%d" % i, Rect2(box2.end.x - 64, y + 6, 60, 16), "Let go", false, "micro")
 		y += 32.0
@@ -443,14 +459,14 @@ func _paint_crew() -> void:
 	var right := Rect2(476, 84, 239, 298)
 	if where != "board":
 		s.panel(right, "map", "Hiring")
-		s.wrap_text(486, 114, 219, "Hire crew at Tally's crew board in the Shuttle Bay, by launch control. New faces every few days." if bool(world._arrived("Tally")) \
+		s.wrap_text(486, 114, 219, "Hire crew at Eshu's crew board in the Shuttle Bay, by launch control. New faces every few days." if bool(world._courier_here()) \
 				else "Nobody is hiring out crew on the Landing yet. That should change once the lane is open again.", "label", MUTED, 16.0)
 		return
 	s.panel(right, "map", "Crew available")
 	var offers: Array = world.crew_board_offers()
 	var oy: float = 112.0
 	if offers.is_empty():
-		s.wrap_text(486, oy, 219, "Everyone on the board has signed on with someone. Tally pins up new names every few days.", "label", MUTED, 16.0)
+		s.wrap_text(486, oy, 219, "Everyone on the board has signed on with someone. Eshu pins up new names every few days.", "label", MUTED, 16.0)
 	for i in range(offers.size()):
 		var o: Dictionary = offers[i]
 		var card := Rect2(482, oy, 227, 84)
@@ -461,6 +477,47 @@ func _paint_crew() -> void:
 		s.text(490, oy + 64, "%d SCRIP" % int(o["fee"]), "micro", OCHRE)
 		s.button("hire/%d" % i, Rect2(card.end.x - 64, oy + 60, 58, 18), "Hire", false, "micro", int(world.credits) >= int(o["fee"]))
 		oy += 90.0
+
+
+func _paint_contracts() -> void:
+	var s := screen
+	s.panel(Rect2(56, 84, 412, 298), "map", "Your contracts")
+	var y: float = 112.0
+	if world.contracts.is_empty():
+		s.wrap_text(66, y, 392, "None taken. Eshu posts bounties and capture contracts on the crew board in the Shuttle Bay. The wanted ship shows on your map on every run until it's done.", "label", MUTED, 16.0)
+	for i in range(world.contracts.size()):
+		var c: Dictionary = world.contracts[i]
+		var box := Rect2(60, y, 404, 52)
+		s.frame(box, Color("f0ede4"), Color("d0c9bb"))
+		s.text(70, y + 4, str(c["target_name"]), "strong", INK)
+		s.text_right(box.end.x - 8, y + 6, ("CAPTURE" if str(c["kind"]) == "capture" else "BOUNTY") + "  %d SCRIP" % int(c["reward"]), "micro", OCHRE)
+		s.text_fit(70, y + 22, 300, ("Down its crew with the hull whole" if str(c["kind"]) == "capture" else "Destroy or capture it") + ": %s, ring %d" % ["the Reach" if str(c["zone"]) == "Reach" else str(c["zone"]) + " zone", int(c["ring"])], "micro", MUTED)
+		if where != "field":
+			s.button("drop_c/%d" % i, Rect2(box.end.x - 64, y + 32, 60, 16), "Drop", false, "micro")
+		y += 58.0
+	var right := Rect2(476, 84, 239, 298)
+	if where != "board":
+		s.panel(right, "map", "New contracts")
+		s.wrap_text(486, 114, 219, "New contracts go up on Eshu's crew board in the Shuttle Bay every few days." if bool(world._courier_here()) \
+				else "Nobody is posting contracts on the Landing yet.", "label", MUTED, 16.0)
+		return
+	s.panel(right, "map", "Posted by Eshu")
+	var offers: Array = world.contract_offers()
+	var oy: float = 112.0
+	if offers.is_empty():
+		s.wrap_text(486, oy, 219, "Nothing new. Eshu posts more every few days.", "label", MUTED, 16.0)
+	for i in range(offers.size()):
+		var o: Dictionary = offers[i]
+		var card := Rect2(482, oy, 227, 96)
+		s.frame(card, Color("f8f6ef"), Color("d0c9bb"))
+		s.text_fit(490, oy + 4, 150, str(o["target_name"]), "strong", INK)
+		s.text_right(card.end.x - 8, oy + 7, "CAPTURE" if str(o["kind"]) == "capture" else "BOUNTY", "micro", MUTED)
+		var words: String = ("Wanted whole: down its crew without breaking the hull. Needs a ship that can board, or fire and gas."
+				if str(o["kind"]) == "capture" else "Wanted: destroyed or taken.")
+		s.wrap_text(490, oy + 26, 211, words, "label", MUTED, 15.0)
+		s.text(490, oy + 76, "%d SCRIP   RING %d" % [int(o["reward"]), int(o["ring"])], "micro", OCHRE)
+		s.button("take_c/%d" % i, Rect2(card.end.x - 64, oy + 72, 58, 18), "Take", false, "micro", world.contracts.size() < 2)
+		oy += 102.0
 
 
 func _item_icon(item: String, r: Rect2) -> void:

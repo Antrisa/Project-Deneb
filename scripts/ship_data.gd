@@ -85,23 +85,23 @@ const STORES := {
 	"terran_depot": {"name": "Terran supply depot", "weapons": ["burst_laser", "heavy_laser", "missile_launcher", "cutting_beam"],
 		"markup": 1.0, "fuel": 5, "missiles": 10, "drone_parts": 9, "repair": 6, "sells_at": 2.0,
 		"goods": ["hull_plate", "coil_wire", "lithium_cell", "circuit_board"],
-		"buys": {"*": 0.9}},
+		"augments": ["shield_cap", "stealth"], "buys": {"*": 0.9}},
 	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser", "cutting_beam", "toxin_dart", "twin_missile"],
 		"markup": 1.0, "fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8, "sells_at": 1.8,
 		"goods": ["coil_wire", "lithium_cell", "rare_earths", "hull_plate"],
-		"buys": {"*": 1.0}},
+		"augments": ["salvage_arm", "fuel_recycler"], "buys": {"*": 1.0}},
 	"collective_market": {"name": "Collective market", "weapons": ["heavy_beam", "ion_blast", "missile_launcher", "burst_laser"],
 		"markup": 1.1, "fuel": 7, "missiles": 11, "drone_parts": 8, "repair": 9, "sells_at": 2.0,
 		"goods": ["helium_3", "rare_earths", "circuit_board", "lithium_cell"],
-		"buys": {"*": 1.0, "rare_earths": 1.3, "helium_3": 1.3, "cobalt_60": 1.3, "void_sapphire": 1.2}},
+		"augments": ["coil_tune", "nano_patch"], "buys": {"*": 1.0, "rare_earths": 1.3, "helium_3": 1.3, "cobalt_60": 1.3, "void_sapphire": 1.2}},
 	"pirate_fence": {"name": "Pirate fence", "weapons": ["rabble_laser", "flak_cannon", "missile_launcher", "heavy_laser"],
 		"markup": 1.2, "fuel": 8, "missiles": 9, "drone_parts": 12, "repair": 10, "sells_at": 2.5,
 		"goods": ["cobalt_60", "void_sapphire", "circuit_board"],
-		"buys": {"*": 1.5}},
+		"augments": ["salvage_arm", "stealth"], "buys": {"*": 1.5}},
 	"ooma": {"name": "Ooma's ship", "weapons": ["twin_missile", "ion_blast", "toxin_dart", "fire_beam", "flak_cannon", "chain_laser"],
 		"markup": 1.1, "fuel": 6, "missiles": 10, "drone_parts": 8, "repair": 8, "sells_at": 2.2,
 		"goods": ["void_sapphire", "helium_3", "cobalt_60", "circuit_board"],
-		"buys": {"*": 1.2}},
+		"augments": ["coil_tune", "shield_cap", "nano_patch"], "buys": {"*": 1.2}},
 }
 const ZONE_STORE := {"Terran": "terran_depot", "Zaa'sh": "moogli_trader", "Collective": "collective_market", "Reach": "pirate_fence"}
 
@@ -604,6 +604,7 @@ const STOP_KINDS := {
 	"ooma": {"label": "Ooma's ship", "color": Color("ff9ad2")},
 	"wreck": {"label": "Wreck", "color": Color("9ab4c8")},
 	"quiet": {"label": "Quiet sector", "color": Color("8ee0c8")},
+	"contract": {"label": "Wanted ship", "color": Color("ffd84a")},
 }
 
 # The first flight (Zachary, 21 Nov): the route is locked. It heads off the Rabble and stops once at each kind
@@ -684,7 +685,7 @@ static func hull_cost(level: int) -> Array:         # level 0 -> 1 is the first 
 	return [50 + 20 * level, {"hull_plate": 2 + level / 2}]
 
 
-# Hired crew (23 Nov): Tally pins hirelings to the crew board in the Shuttle Bay. Each kind has a trait, as FTL's
+# Hired crew (23 Nov): Eshu pins hirelings to the crew board in the Shuttle Bay. Each kind has a trait, as FTL's
 # races do. [signing fee, trait text, fight_x, repair_x, heal_x]. Names are drawn for each board.
 const HIRE_KINDS := {
 	"human": [50, "Steady: no weak spots", 1.0, 1.0, 1.0],
@@ -698,3 +699,17 @@ const HIRE_KINDS := {
 const HIRE_NAMES := ["Dax", "Rook", "Mira", "Tesh", "Orrin", "Kell", "Sabe", "Juno", "Pell", "Vex", "Nim", "Harrow",
 	"Lio", "Brask", "Ottie", "Quen", "Zarra", "Fen", "Wick", "Talla"]
 const CREW_SEATS := {"starter": 0, "covered_fighter": 3}   # crew besides you
+
+
+# Augments (23 Nov): small fittings that stay on whichever ship flies, bought at stores (STORES "augments"), at
+# most AUGMENT_SLOTS. Some carry residents' names. Effects: ship_battle.gd (coil_tune, shield_cap, stealth) and
+# main.gd (salvage_arm, fuel_recycler, nano_patch).
+const AUGMENT_SLOTS := 3
+const AUGMENTS := {
+	"salvage_arm": {"name": "Bram's salvage arm", "price": 90, "desc": "A quarter more Scrip and scrap from beaten ships."},
+	"coil_tune": {"name": "Tikka's coil tune", "price": 110, "desc": "Your weapons charge 10% faster."},
+	"shield_cap": {"name": "Shield capacitor", "price": 120, "desc": "Shield layers come back 20% faster."},
+	"stealth": {"name": "Stealth plating", "price": 100, "desc": "+5 evasion while the cockpit works."},
+	"fuel_recycler": {"name": "Fuel recycler", "price": 80, "desc": "One jump in five costs no fuel."},
+	"nano_patch": {"name": "Nano-patch swarm", "price": 95, "desc": "Patches 2 hull after every fight you win."},
+}

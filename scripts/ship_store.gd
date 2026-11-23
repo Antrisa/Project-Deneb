@@ -86,8 +86,8 @@ func _click(id: String, _p: Vector2, button: int) -> void:
 	if id == "":
 		return
 	var action: String = id.get_slice("/", 0)
-	var arg: int = int(id.get_slice("/", 1)) if id.contains("/") else 0
-	_act(action, arg)
+	var raw: String = id.get_slice("/", 1) if id.contains("/") else "0"
+	_act(action, raw if action == "augbuy" else int(raw))
 
 
 # ---------------------------------------------------------------- what's for sale
@@ -129,7 +129,7 @@ func _goods() -> Array:
 func _empty_text() -> String:
 	match TABS[tab]:
 		"Trade goods": return "Nothing they want in your bag." if selling else "No goods today."
-		"Systems": return "Your ship has no room for more systems."
+		"Systems": return "Nothing to sell here." if selling else "Every system is as good as it gets."
 		"Crew": return "Your ship has no crew deck. Bigger ships can take crew."
 		"Drones & parts": return "No drones for sale. Drone parts are below, with fuel and missiles."
 		"Augments": return "Nothing in stock today."
@@ -169,6 +169,30 @@ func _act(action: String, arg) -> void:
 				status = "One drone part. You have %d. (Drones come later.)" % int(world.drone_parts)
 		"good", "goodall":
 			_trade(int(arg), action == "goodall")
+		"sysbuy":
+			var offers: Array = _system_offers()
+			var k: int = int(arg)
+			if k >= 0 and k < offers.size() and _pay(int(offers[k][2]), "Store fitting"):
+				var u: Dictionary = world._ups()
+				u["systems"][offers[k][0]] = int(offers[k][1]) + 1
+				status = "%s fitted: level %d." % [str(ShipData.SYSTEM_LABELS[offers[k][0]]), int(offers[k][1]) + 1]
+		"augbuy":
+			var a: String = str(arg)
+			var price: int = int(round(int(ShipData.AUGMENTS[a]["price"]) * float(stock.get("markup", 1.0))))
+			if world.augments.size() >= ShipData.AUGMENT_SLOTS:
+				status = "No room for another augment. Sell one first."
+				world.sfx("deny")
+			elif not world.augments.has(a) and _pay(price, "Augment"):
+				world.augments.append(a)
+				status = "%s fitted." % str(ShipData.AUGMENTS[a]["name"])
+		"augsell":
+			var k2: int = int(arg)
+			if k2 >= 0 and k2 < world.augments.size():
+				var a2: String = world.augments[k2]
+				world.augments.remove_at(k2)
+				world._money(int(ShipData.AUGMENTS[a2]["price"]) / 2, "Sold an augment")
+				world.sfx("coin")
+				status = "Sold the %s." % str(ShipData.AUGMENTS[a2]["name"]).to_lower()
 		"repair1", "repairall":
 			_repair(action == "repairall")
 		"leave":
@@ -265,15 +289,15 @@ func _paint() -> void:
 		s.button("tab/%d" % i, Rect2(56 + i * 90, 54, 88, 24), str(TABS[i]), tab == i, "micro")
 	s.button("mode", Rect2(600, 54, 112, 24), "Selling" if selling else "Buying", selling)
 	var slots: Array = _slots()
-	if TABS[tab] == "Trade goods":
-		_paint_goods()
-	for k in range(SLOTS_SHOWN if TABS[tab] != "Trade goods" else 0):
+	if TABS[tab] in LIST_TABS:
+		_paint_list()
+	for k in range(SLOTS_SHOWN if not TABS[tab] in LIST_TABS else 0):
 		var r := Rect2(56 + k * 104, 84, 98, 112)
 		if k >= slots.size():
 			s.frame(r, Color("ece9e0"), Color("d0c9bb"), Color("f4f2ec"), Color("dcd7cc"))
 			continue
 		_paint_slot(k, slots[k], r)
-	if slots.is_empty() and (TABS[tab] != "Trade goods" or _goods().is_empty()):
+	if slots.is_empty() and (not TABS[tab] in LIST_TABS or _list().is_empty()):
 		var y: float = 128.0
 		for ln in s.wrap_lines(_empty_text(), 380, "label"):
 			s.text_center(262, y, ln, "label", MUTED)
@@ -314,35 +338,107 @@ func _paint_slot(k: int, slot: Array, r: Rect2) -> void:
 	s.hit("slot/%d" % k, r)
 
 
-# The trade goods, two columns of six rows: icon, name, price, and Buy (or Sell 1 and Sell all).
-func _paint_goods() -> void:
+# The list tabs (23 Nov): trade goods, system levels for Scrip, and augments. Two columns of six rows: icon, name,
+# price, and buttons. Each row: [label, price text, icon item id or "", [[click id, button text, enabled]...]].
+const LIST_TABS := ["Trade goods", "Systems", "Augments"]
+
+func _list() -> Array:
+	var out: Array = []
+	match TABS[tab]:
+		"Trade goods":
+			var goods: Array = _goods()
+			for i in goods.size():
+				var g: Array = goods[i]
+				var label: String = "%s (%d)" % [str(ItemData.ITEMS[g[0]]["name"]) if ItemData.ITEMS.has(g[0]) else str(g[0]), int(g[2])]
+				var buttons: Array = [["good/%d" % i, "Sell", true], ["goodall/%d" % i, "All", true]] if selling \
+						else [["good/%d" % i, "Buy", int(world.credits) >= int(g[1])]]
+				out.append([label, "%s%d" % ["+" if selling else "", int(g[1])], str(g[0]), buttons])
+		"Systems":
+			if not selling:
+				var sysl: Array = _system_offers()
+				for i in sysl.size():
+					var o: Array = sysl[i]
+					out.append(["%s %d>%d" % [str(ShipData.SYSTEM_LABELS[o[0]]), int(o[1]), int(o[1]) + 1], str(o[2]), "",
+						[["sysbuy/%d" % i, "Fit", int(world.credits) >= int(o[2])]]])
+		"Augments":
+			if selling:
+				for i in world.augments.size():
+					var a: String = world.augments[i]
+					out.append([str(ShipData.AUGMENTS[a]["name"]), "+%d" % (int(ShipData.AUGMENTS[a]["price"]) / 2), "",
+						[["augsell/%d" % i, "Sell", true]]])
+			else:
+				var mine: Array = world.augments
+				for a in stock.get("augments", []):
+					var price: int = int(round(int(ShipData.AUGMENTS[a]["price"]) * float(stock.get("markup", 1.0))))
+					var owned: bool = mine.has(a)
+					out.append([str(ShipData.AUGMENTS[a]["name"]), "OWNED" if owned else str(price), "",
+						[["augbuy/" + str(a), "Buy", not owned and int(world.credits) >= price and mine.size() < ShipData.AUGMENT_SLOTS]]])
+	return out
+
+
+# System levels a store fits for Scrip alone (no parts), at a markup: [system, level now, price]. The flying ship's.
+func _system_offers() -> Array:
+	var out: Array = []
+	var d: Dictionary = world._ship_def()
+	for key in ShipData.SYSTEM_UPGRADES:
+		if not (d["systems"] as Dictionary).has(key):
+			continue
+		var lv: int = int(d["systems"][key][0])
+		if lv >= int(ShipData.SYSTEM_UPGRADES[key][0]):
+			continue
+		var cost: Array = ShipData.system_cost(key, lv + 1)
+		var parts := 0
+		for item in cost[1]:
+			parts += int(ShipData.TRADE_VALUE.get(item, 30)) * int(cost[1][item])
+		out.append([key, lv, int(round((int(cost[0]) + parts) * 1.6 * float(stock.get("markup", 1.0))))])
+	return out
+
+
+func _paint_list() -> void:
 	var s := screen
-	var goods: Array = _goods()
+	var rows: Array = _list()
 	var tex: Texture2D = world.items_tex
-	for i in range(mini(12, goods.size())):
-		var g: Array = goods[i]
+	for i in range(mini(12, rows.size())):
+		var row: Array = rows[i]
 		var r := Rect2(56 + (i / 6) * 208, 84 + (i % 6) * 19, 204, 17)
 		s.frame(r, Color("f0ede4"), Color("d0c9bb"))
-		if tex != null and ItemData.ITEMS.has(g[0]):
+		var tx: float = r.position.x + 6
+		if tex != null and str(row[2]) != "" and ItemData.ITEMS.has(row[2]):
 			var cell: int = tex.get_height()
-			s.texture(tex, Rect2(r.position + Vector2(2, 1), Vector2(15, 15)), Rect2(int(ItemData.ITEMS[g[0]]["icon"]) * cell, 0, cell, cell))
-		var item_name: String = str(ItemData.ITEMS[g[0]]["name"]) if ItemData.ITEMS.has(g[0]) else str(g[0])
-		s.text_fit(r.position.x + 20, r.position.y + 4, 74, "%s (%d)" % [item_name, int(g[2])], "micro", INK)
-		s.text(r.position.x + 98, r.position.y + 4, "%s%d" % ["+" if selling else "", int(g[1])], "micro", OCHRE)
-		if selling:
-			s.button("good/%d" % i, Rect2(r.end.x - 74, r.position.y + 1, 34, 15), "Sell", false, "micro")
-			s.button("goodall/%d" % i, Rect2(r.end.x - 38, r.position.y + 1, 36, 15), "All", false, "micro")
-		else:
-			s.button("good/%d" % i, Rect2(r.end.x - 44, r.position.y + 1, 42, 15), "Buy", false, "micro", int(world.credits) >= int(g[1]))
+			s.texture(tex, Rect2(r.position + Vector2(2, 1), Vector2(15, 15)), Rect2(int(ItemData.ITEMS[row[2]]["icon"]) * cell, 0, cell, cell))
+			tx = r.position.x + 20
+		var buttons: Array = row[3]
+		var bw: float = 0.0
+		for b in buttons:
+			bw += 38.0
+		s.text_fit(tx, r.position.y + 4, r.end.x - bw - tx - 40, str(row[0]), "micro", INK)
+		s.text_right(r.end.x - bw - 4, r.position.y + 4, str(row[1]), "micro", OCHRE)
+		var bx: float = r.end.x - bw
+		for b in buttons:
+			s.button(str(b[0]), Rect2(bx, r.position.y + 1, 36, 15), str(b[1]), false, "micro", bool(b[2]))
+			bx += 38.0
 
 
 func _paint_details(slots: Array) -> void:
 	var s := screen
 	var r := Rect2(476, 84, 239, 200)
-	if TABS[tab] == "Trade goods":
-		s.panel(r, "blaster", "Trade goods")
-		var hint: String = "Sell salvage from your bag. This store pays %s." % _pay_words() if selling \
-				else "Goods for the station: parts for ship repairs and machines. Switch to Selling to sell your salvage here."
+	if TABS[tab] in LIST_TABS:
+		s.panel(r, "blaster", str(TABS[tab]))
+		var hint: String = ""
+		match TABS[tab]:
+			"Trade goods":
+				hint = "Sell salvage from your bag. This store pays %s." % _pay_words() if selling \
+						else "Goods for the station: parts for ship repairs and machines. Switch to Selling to sell your salvage here."
+			"Systems":
+				hint = "Out here they'll fit a system level for Scrip alone, no parts, at a steep price. Freya does it cheaper with parts." \
+						if not selling else "Nothing to sell here."
+			"Augments":
+				hint = "Small fittings that stay on your ship: %d at most (you have %d). Hover a row's name to compare; they sell back for half." % [ShipData.AUGMENT_SLOTS, world.augments.size()]
+				var lines: Array = []
+				for a in (world.augments if selling else stock.get("augments", [])):
+					lines.append("%s: %s" % [str(ShipData.AUGMENTS[a]["name"]), str(ShipData.AUGMENTS[a]["desc"])])
+				if not lines.is_empty():
+					hint = "\n".join(lines) + "\n\nYou have %d of %d." % [world.augments.size(), ShipData.AUGMENT_SLOTS]
 		s.wrap_text(486, 114, 219, hint, "label", MUTED)
 		return
 	if picked < 0 or picked >= slots.size():

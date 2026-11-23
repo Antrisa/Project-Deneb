@@ -149,6 +149,10 @@ var said_covered := false           # Freya has told you about it
 var crew_roster: Array = []         # hired crew: {"id", "name", "kind"}
 var crew_taking: Dictionary = {"Freya": false, "Ana": false}   # at 6 hearts they can come along
 var board_hired: Array = []         # names hired off the current board
+var augments: Array = []            # ship augments fitted (ShipData.AUGMENTS), on whichever ship flies
+var contracts: Array = []           # Eshu's contracts you've taken (contract_offers)
+var contracts_done: Array = []      # ids of contracts finished or dropped (so they don't come back)
+var crew_cross: Dictionary = {}     # Freya / Ana -> the day they were knocked out on a run (cross with you)
 var said_goodbye := false          # the send-off at launch has played
 var said_run_hint := false         # S.A.R.A. has explained free flights
 var nest_done := false             # the Rabble's Nest has been raided (runs then have smaller strongholds)
@@ -1700,6 +1704,17 @@ func _talk(who: String) -> void:
 		_job_quest_talk()
 	elif who == "Vzz'ket" and job_quest == 3:
 		_vzzket_weapon()
+	elif crew_cross.has(who) and day - int(crew_cross[who]) <= 1:
+		crew_cross.erase(who)
+		if persons.has(who):
+			persons[who]["friendship"] = maxi(0, int(persons[who]["friendship"]) - 2)
+		var cross_lines: Dictionary = {
+			"Freya": ["[angry] I woke up in Maren's Medbay with a burn on my arm and no idea how the fight ended.",
+				"[sad] I said I'd fly with you. I didn't say I'd be left behind. Next time, watch my back."],
+			"Ana": ["[angry] You sent me in and you didn't pull me out. I've had captains like that. I left them.",
+				"[sad] ...Ask me again when you've got a tether. Or a plan."],
+		}
+		_say(who, cross_lines.get(who, ["[angry] Don't do that to me again."]))
 	elif who == "Freya" and flights >= 2 and not said_covered:
 		said_covered = true
 		_say("Freya", ["Now you're flying for real, there's something under that tarp at the back of the bay you should see.",
@@ -1957,6 +1972,7 @@ func _start_run() -> void:
 		_toast("Freya tops up the tank: %d fuel" % full_tank)
 		fuel = full_tank
 	run_stops = ShipRuns.make_run(day, ShipData.RING_STOPS, _rings_open(), nest_done, _ooma_out())
+	ShipRuns.place_contracts(run_stops, contracts, run_rng)
 	run_used = []
 	run_rng.seed = 104729 * day + Time.get_ticks_msec()
 	run_stop = -1
@@ -1973,7 +1989,10 @@ func _start_run() -> void:
 
 # Arrived at a stop on a free flight.
 func _arrive_run(i: int) -> void:
-	fuel = maxi(0, fuel - 1)
+	if augments.has("fuel_recycler") and run_rng.randf() < 0.2:
+		_toast("The fuel recycler covers that jump.")
+	else:
+		fuel = maxi(0, fuel - 1)
 	run_stop = i
 	var stop: Dictionary = run_stops[i]
 	var kind: String = str(stop["kind"])
@@ -2008,6 +2027,13 @@ func _arrive_run(i: int) -> void:
 		"special":
 			ship_event.close()
 			_run_fight("pirate_stronghold")
+		"contract":
+			if not contracts.any(func(k): return str(k["id"]) == str(stop.get("contract", ""))):
+				_toast("Someone else got to the wanted ship first.")
+				_back_to_map()
+			else:
+				ship_event.close()
+				_run_fight(str(stop["enemy"]))
 		"distress":
 			_run_event("distress", zone, ring)
 		_:
@@ -2042,7 +2068,21 @@ func _after_run_event(fight: String) -> void:
 func _run_fight(enemy_id: String) -> void:
 	ship_map.visible = false
 	run_enemy = enemy_id
-	battle.start(_my_fight({"enemy": enemy_id, "story": false}), Callable(self, "_after_run_fight"), ship_hull)
+	var stop: Dictionary = run_stops[run_stop] if run_stop >= 0 and run_stop < run_stops.size() else {}
+	var base := {"enemy": enemy_id, "story": false, "hazard": str(stop.get("hazard", ""))}
+	# Some ships give up at 30% hull and pay to be let go; traders and patrols run for it at half hull (23 Nov).
+	var ring: int = int(stop.get("ring", 1))
+	var hard: bool = enemy_id == "pirate_stronghold" or enemy_id == "rabble_nest"
+	if not hard and run_rng.randf() < 0.4:
+		var offer: Array = ["+%d Scrip" % (25 + 15 * ring + run_rng.randi_range(0, 10))]
+		if run_rng.randf() < 0.5:
+			offer.append("+1 fuel")
+		if run_rng.randf() < 0.4:
+			offer.append("+%d missiles" % run_rng.randi_range(1, 2))
+		base["surrender"] = offer
+	if not enemy_id.contains("rabble") and not hard and str(stop.get("kind", "")) != "contract" and run_rng.randf() < 0.5:
+		base["flee"] = true
+	battle.start(_my_fight(base), Callable(self, "_after_run_fight"), ship_hull)
 
 
 func _after_run_fight(result: String, hull_left: int) -> void:
@@ -2052,18 +2092,108 @@ func _after_run_fight(result: String, hull_left: int) -> void:
 		run_stops = []
 		_ship_lost()
 		return
+	var was_captured: bool = battle.captured
+	var offer: Array = battle.fight.get("surrender", [])
 	battle.close()
-	if result == "won":
-		var stop: Dictionary = run_stops[run_stop] if run_stop >= 0 else {"ring": 1, "kind": "beacon"}
-		var special: bool = str(stop["kind"]) == "special"
-		var got: Dictionary = apply_space_effects(ShipRuns.reward(int(stop["ring"]), special, run_rng, run_enemy, relics_found))
-		# The salvage shows in the event window over the stop, like an event's outcome.
+	var stop: Dictionary = run_stops[run_stop] if run_stop >= 0 else {"ring": 1, "kind": "beacon"}
+	if result == "spared":
+		var paid: Dictionary = apply_space_effects(offer)
 		ship_event.show_backdrop(stop)
+		ship_event.show_result("They yield", "They power down their guns and send the payment across. You let them limp away.",
+				paid["gains"], Callable(self, "_after_salvage"))
+		return
+	if result == "escaped":
+		_toast("They jumped away before you could finish them.")
+		_back_to_map()
+		return
+	if result == "won":
+		var special: bool = str(stop["kind"]) == "special"
+		var loot: Array = ShipRuns.reward(int(stop["ring"]), special, run_rng, run_enemy, relics_found)
 		var words: String = "The stronghold's guns fall silent. Your crew strip what they can carry before its reactor goes." if special \
 				else "Their ship drifts dark. Your crew cross over in suits and strip what they can carry."
-		ship_event.show_result("Salvage", words, got["gains"], Callable(self, "_after_salvage"))
+		if was_captured:
+			# a whole ship to strip: a second helping of salvage (no second Scrip roll)
+			loot.append_array(ShipRuns.reward(int(stop["ring"]), special, run_rng, "", relics_found).slice(1))
+			words = "Their crew are down and their ship is yours, whole. You strip it from bow to stern, then cut it loose for Eshu's tugs."
+		loot = _augment_loot(loot)
+		loot.append_array(_contract_done(str(stop.get("contract", "")), was_captured))
+		var got: Dictionary = apply_space_effects(loot)
+		# The salvage shows in the event window over the stop, like an event's outcome.
+		ship_event.show_backdrop(stop)
+		ship_event.show_result("Captured" if was_captured else "Salvage", words, got["gains"], Callable(self, "_after_salvage"))
 		return
 	_back_to_map()
+
+
+# Augments that change a fight's pay: Bram's salvage arm (+25% Scrip and scrap), the nano-patch swarm (+2 hull).
+func _augment_loot(loot: Array) -> Array:
+	var out: Array = []
+	for e in loot:
+		var t: String = str(e)
+		if augments.has("salvage_arm") and t.begins_with("+") and t.ends_with(" Scrip"):
+			t = "+%d Scrip" % int(round(int(t.trim_prefix("+").trim_suffix(" Scrip")) * 1.25))
+		elif augments.has("salvage_arm") and t.begins_with("item: scrap x"):
+			t = "item: scrap x%d" % int(ceil(int(t.trim_prefix("item: scrap x")) * 1.25))
+		out.append(t)
+	if augments.has("nano_patch"):
+		out.append("+2 hull")
+	return out
+
+
+# ---------------------------------------------------------------- Eshu's contracts (23 Nov)
+# Eshu's crew board also carries contracts, two every three days: a bounty (beat the wanted ship any way) or a
+# capture (down its crew with the ship whole: board it, or gas and fire it out). Taking one puts the wanted ship on
+# your map on every run until it's done (ShipRuns.place_contracts). Two at a time. Pay comes as soon as it's done.
+const CONTRACT_MAX := 2
+
+func contract_offers() -> Array:
+	var block: int = (day - 1) / 3
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9173 * block + 11
+	var out: Array = []
+	for i in 2:
+		var cid := "c%d_%d" % [block, i]
+		var zone: String = ["Reach", "Reach", "Terran", "Zaa'sh", "Collective"][rng.randi() % 5]
+		var enemy_id: String = ShipRuns.pick_enemy(zone, rng)
+		var ring: int = rng.randi_range(2, maxi(2, _rings_open()))
+		var capture: bool = rng.randf() < 0.5
+		var reward: int = (180 + 60 * ring) if capture else (90 + 40 * ring)
+		var c := {"id": cid, "kind": "capture" if capture else "bounty", "enemy": enemy_id, "zone": zone, "ring": ring,
+			"reward": reward, "target_name": str(ShipData.enemy(enemy_id).get("name", enemy_id))}
+		if contracts_done.has(cid) or contracts.any(func(k): return str(k["id"]) == cid):
+			continue
+		out.append(c)
+	return out
+
+
+func take_contract(c: Dictionary) -> String:
+	if contracts.size() >= CONTRACT_MAX:
+		return "Two contracts at a time. Finish or drop one first."
+	contracts.append(c)
+	sfx("quest")
+	return "Taken: %s. It'll be on your map in the %s." % [str(c["target_name"]), "Rabble's Reach" if str(c["zone"]) == "Reach" else str(c["zone"]) + " zone"]
+
+
+func drop_contract(i: int) -> void:
+	if i >= 0 and i < contracts.size():
+		contracts_done.append(str(contracts[i]["id"]))
+		contracts.remove_at(i)
+
+
+# A fight at a contract stop is won: pay out if it counts (a capture contract needs the ship whole).
+func _contract_done(cid: String, was_captured: bool) -> Array:
+	if cid == "":
+		return []
+	for i in contracts.size():
+		var c: Dictionary = contracts[i]
+		if str(c["id"]) != cid:
+			continue
+		if str(c["kind"]) == "capture" and not was_captured:
+			return ["note: Eshu wanted it whole. The contract stands; it'll be back on your map."]
+		contracts.remove_at(i)
+		contracts_done.append(cid)
+		return ["+%d Scrip" % int(c["reward"]), "note: Eshu's contract paid"]
+	return []
 
 
 func _after_salvage(_fight: String) -> void:
@@ -2124,9 +2254,15 @@ func switch_ship(id: String) -> void:
 	ship_weapons = ship_loadouts.get(id, (ShipData.SHIP_DEFS[id]["weapons"] as Array).duplicate())
 
 
-# Tally's crew board (Zachary 23 Nov: hire at a board in the Shuttle Bay until the Dispatch has a room).
+# The courier Eshu (was Tally; the resident is still "Tally" in this code until the rename lands) is here from
+# four days after Artie is found. Checked directly so it works whichever name the resident has.
+func _courier_here() -> bool:
+	return artie_found_day >= 0 and day >= artie_found_day + 4
+
+
+# Eshu's crew board (Zachary 23 Nov: hire at a board in the Shuttle Bay until the Dispatch has a room).
 func _crew_board() -> void:
-	if not _arrived("Tally"):
+	if not _courier_here():
 		_say("Crew board", ["An empty board with a hand-written card: POST & PRIVATEER DISPATCH. CREW FOR HIRE. OPENING SOON."])
 		return
 	ship_upgrades.open_at("board")
@@ -2176,7 +2312,7 @@ func _pay_covered() -> void:
 		ships_owned.append("covered_fighter")
 		ship_hulls["covered_fighter"] = int(_ship_def("covered_fighter")["hull"])
 		_say("Freya", ["[happy] She's done. A real ship, crew deck and all. Boarding pods, a medbay...",
-			"Choose which one flies at my bench. And you'll want hands aboard: Tally pins hirelings on the crew board."])
+			"Choose which one flies at my bench. And you'll want hands aboard: Eshu pins hirelings on the crew board."])
 	else:
 		_say("Freya", ["Done. %d of %d. She's starting to look like a ship again." % [covered_stage, COVERED_REPAIRS.size()]])
 	_save_game()
@@ -2187,6 +2323,7 @@ func _pay_covered() -> void:
 func _my_fight(base: Dictionary) -> Dictionary:
 	var f: Dictionary = base.duplicate()
 	f["player_def"] = _ship_def()
+	f["augments"] = augments.duplicate()
 	if active_ship != "starter":
 		f["player_ship"] = active_ship
 		f["crew"] = _crew_for_run()
@@ -2211,9 +2348,16 @@ func _crew_for_run() -> Array:
 		if out.size() >= seats:
 			break
 		var k: Array = ShipData.HIRE_KINDS.get(str(c["kind"]), ShipData.HIRE_KINDS["human"])
+		var sk: Array = crew_skill(c)
 		out.append({"name": str(c["name"]), "kind": str(c["kind"]), "id": str(c["id"]),
-			"fight_x": float(k[2]), "repair_x": float(k[3]), "heal_x": float(k[4])})
+			"fight_x": float(k[2]) * (1.0 + sk[1]), "repair_x": float(k[3]) * (1.0 + sk[0]), "heal_x": float(k[4])})
 	return out
+
+
+# A hired hand's skill from experience: [repair bonus, fight bonus], each up to +50%. 25 repairs or a minute
+# and a half of fighting gets you there.
+func crew_skill(c: Dictionary) -> Array:
+	return [minf(0.5, int(c.get("xp_repair", 0)) * 0.02), minf(0.5, float(c.get("xp_fight", 0.0)) / 180.0)]
 
 
 func _crew_hearts(who: String) -> int:
@@ -2227,11 +2371,19 @@ func _crew_after_fight() -> void:
 	if battle == null or not battle.crew_mode:
 		return
 	for c in battle.my_crew:
-		if not bool(c.get("gone", false)) or bool(c.get("you", false)):
+		if bool(c.get("you", false)):
 			continue
 		var cid: String = str(c.get("id", ""))
+		if not bool(c.get("gone", false)):
+			# crew skills (23 Nov): hired hands get better at what they do, up to half again
+			for r in crew_roster:
+				if str(r["id"]) == cid:
+					r["xp_repair"] = int(r.get("xp_repair", 0)) + int(c.get("xp_repair", 0))
+					r["xp_fight"] = float(r.get("xp_fight", 0.0)) + float(c.get("xp_fight", 0.0))
+			continue
 		if bool(c.get("named", false)):
 			crew_taking[cid] = false
+			crew_cross[cid] = day
 		else:
 			crew_roster = crew_roster.filter(func(r): return str(r["id"]) != cid)
 
@@ -2515,6 +2667,8 @@ func apply_space_effects(effects: Array) -> Dictionary:
 				if relic_id != "":
 					_give(relic_id, 1)
 				gains.append(["Relic: %s (for Tar'Besh's museum)" % relic_name, note])
+		elif t.begins_with("note: "):
+			gains.append([t.trim_prefix("note: "), note])
 		elif t.begins_with("reveal: "):
 			var reveal: String = t.trim_prefix("reveal: ").strip_edges()
 			if not run_stops.is_empty():
@@ -3884,6 +4038,10 @@ func _save_game() -> void:
 	cfg.set_value("ships", "said_covered", said_covered)
 	cfg.set_value("ships", "crew", crew_roster)
 	cfg.set_value("ships", "board_hired", board_hired)
+	cfg.set_value("ships", "augments", augments)
+	cfg.set_value("ships", "contracts", contracts)
+	cfg.set_value("ships", "contracts_done", contracts_done)
+	cfg.set_value("ships", "crew_cross", crew_cross)
 	cfg.set_value("museum", "gifts", museum_gifts)
 	cfg.set_value("ship", "missiles", missiles)
 	cfg.set_value("ship", "drone_parts", drone_parts)
@@ -3956,6 +4114,15 @@ func _load_game() -> void:
 	crew_roster = saved_roster if saved_roster is Array else []
 	var saved_hired = cfg.get_value("ships", "board_hired", [])
 	board_hired = saved_hired if saved_hired is Array else []
+	for key2 in ["augments", "contracts", "contracts_done"]:
+		var v2 = cfg.get_value("ships", key2, [])
+		if v2 is Array:
+			match key2:
+				"augments": augments = v2
+				"contracts": contracts = v2
+				"contracts_done": contracts_done = v2
+	var saved_cross = cfg.get_value("ships", "crew_cross", {})
+	crew_cross = saved_cross if saved_cross is Dictionary else {}
 	ship_hull = clampi(int(cfg.get_value("ship", "hull", _hull_max())), 0, _hull_max())
 	flights = int(cfg.get_value("ship", "flights", 0))
 	artie_found_day = int(cfg.get_value("ship", "artie_found_day", -1))
