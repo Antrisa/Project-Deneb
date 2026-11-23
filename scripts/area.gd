@@ -11,6 +11,7 @@ var overhead := false      # true for the layer drawn in front of characters (to
 var hidden_objects := {}
 var lunar = preload("res://scripts/lunar_ground.gd").new()
 var cell := 16             # size of one tile in tiles.png (16, or 32 for double-detail art)
+var wall_top: Texture2D    # overhead layer only: the wall tops that lean over the floor (tools/bake_floor.py)
 
 
 func setup(area_data: Dictionary, tex: Texture2D, is_overhead: bool = false) -> void:
@@ -24,6 +25,28 @@ func setup(area_data: Dictionary, tex: Texture2D, is_overhead: bool = false) -> 
 	cell = tex.get_width() / int(MapData.TILE_COLUMNS)
 	if MapData.LUNAR_AREAS.has(data["title"]) and not overhead:
 		_make_chunks()
+		_add_water()
+
+
+# Animated water (23 Nov): where tools/bake_floor.py saved a water outline for this level (the lake, the underground
+# ocean), a sprite over the baked floor runs shaders/water_surface.gdshader inside it. The outline leaves out the
+# walls and the docks, so it only moves the water itself.
+func _add_water() -> void:
+	var path := "res://art/lunar/watermask_%s.png" % lunar.key
+	if not ResourceLoader.exists(path):
+		return
+	var mask: Texture2D = load(path)
+	var rows: Array = data["floor"]
+	var s := Sprite2D.new()
+	s.texture = mask
+	s.centered = false
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	s.scale = Vector2.ONE * (rows[0].length() * TILE) / float(mask.get_width())
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/water_surface.gdshader")
+	mat.set_shader_parameter("art_size", Vector2(mask.get_width(), mask.get_height()))
+	s.material = mat
+	add_child(s)
 
 
 # Levels in the promenade style are far bigger than the screen. Drawn as one item, Godot had to handle every tile of it
@@ -54,6 +77,14 @@ func _draw() -> void:
 		if not overhead:
 			pass                 # drawn by the chunks (see _make_chunks)
 		else:
+			# The tops of thick walls where they lean over the floor (the bottom row of a room): drawn in front of
+			# characters, so you walk under the wall at the bottom of a map instead of over it.
+			var top_path := "res://art/lunar/walls_%s_top.png" % lunar.key
+			if wall_top == null and ResourceLoader.exists(top_path):
+				wall_top = load(top_path)
+			if wall_top != null:
+				var rows: Array = data["floor"]
+				draw_texture_rect(wall_top, Rect2(0, 0, rows[0].length() * TILE, rows.size() * TILE), false)
 			# Tops of the tall store-front objects (sign boards, racks, shelves), drawn in front of characters.
 			for y in range(1, data.obj.size()):
 				for x in data.obj[y].length():

@@ -189,9 +189,11 @@ def build(g):
     chamfer_room(F, 2, 2, W - 3, H - 3, 'm', 6)
     ocean = [(24, 2), (W - 2, 2), (W - 2, H - 2), (31, H - 2), (31, 23), (24, 16)]
     fill_poly(F, ocean, 'O', only='m')
-    g.setdefault('FLOOR_EXTRAS', {})['cav_45'] = {'holes': [ocean]}
+    g.setdefault('FLOOR_EXTRAS', {})['cav_45'] = {'holes': [ocean], 'hole_char': 'O', 'floor_char': 'm', 'lake': True}
     ux, uy = 7, 8
     room.thing('look', 'Underground ocean', 'Look', 28, 26, 50)          # the Harbinger itself is a creature (main.gd)
     room.t.zones.append(['The underground ocean', 1, 1, W - 2, H - 2])
     maps['cav_45'] = finish(g, room, 'steam', (ux, uy), 45, 4, walls=('cav_steam_roof', 'cav_steam_wall'))
+    import bake_floor
+    bake_floor.AREA_FLOORS['cav_45']['O'] = ('lake/water', ('142236', .35))      # the ocean: deep water like the lake's
     g['CAVERNS'] = {'maps': maps, 'bands': bands, 'last': 45, 'gate': [7, 26], 'boss': [20, 22]}

@@ -1257,71 +1257,10 @@ SPR["ooma"] = sheet({"skin": OOM, "hair": OOM, "top": OROBE, "legs": OROBE, "arm
 for k, im in SPR.items():
     im.save(art("npc_%s.png" % k))
 
-# ---------------------------------------------------------------- cave creatures (2 walking frames of 16x16, facing left)
-BUG = Img(32, 16)
-for f in range(2):
-    o = f * 16
-    BUG.ell(o + 7.5, 14, 5.5, 1.5, (0, 0, 0, 70))
-    BUG.ell(o + 8.5, 9, 5, 3.6, (66, 44, 78)); BUG.ell(o + 8, 8, 4, 2.4, (98, 66, 112)); BUG.rect(o + 6, 6, o + 8, 6, (150, 110, 164))
-    BUG.rect(o + 2, 8, o + 4, 11, (52, 34, 62)); BUG.px(o + 2, 9, (240, 70, 60)); BUG.px(o + 1, 11, (200, 190, 200)); BUG.px(o + 1, 12, (200, 190, 200))
-    BUG.rect(o + 8, 6, o + 8, 12, (52, 34, 62))
-    for i, x in enumerate([5, 8, 11]):
-        y = 13 if (i + f) % 2 == 0 else 12
-        BUG.rect(o + x, 11, o + x, y, (40, 26, 48)); BUG.px(o + x - 1, y, (40, 26, 48))
-    outline_img(BUG, o, 0, 16, 16)
-BUG.save(art("enemy_bug.png"))
-LIZ = Img(32, 16)
-LG, LD, LL = (104, 134, 92), (70, 96, 66), (150, 176, 126)
-for f in range(2):
-    o = f * 16
-    LIZ.ell(o + 7.5, 14, 6.5, 1.5, (0, 0, 0, 70))
-    LIZ.rect(o + 4, 8, o + 11, 11, LG); LIZ.rect(o + 4, 8, o + 11, 8, LL); LIZ.rect(o + 4, 11, o + 11, 11, LD)
-    LIZ.rect(o + 1, 7, o + 4, 10, LG); LIZ.rect(o + 1, 7, o + 3, 7, LL); LIZ.px(o + 2, 8, (250, 220, 90)); LIZ.px(o + 0, 9, LD)
-    LIZ.rect(o + 11, 9, o + 13, 10, LG); LIZ.rect(o + 13, 10 - f, o + 15, 10 - f, LD)
-    for x in (5, 7, 9):
-        LIZ.px(o + x, 7, (190, 120, 70))
-    for i, x in enumerate([4, 10]):
-        y = 13 if (i + f) % 2 == 0 else 12
-        LIZ.rect(o + x, 11, o + x, y, LD); LIZ.px(o + x - 1, y, LD)
-    outline_img(LIZ, o, 0, 16, 16)
-LIZ.save(art("enemy_lizard.png"))
-# Deeper creatures (tools/caverns.py bands): a spore crawler (green floors), a vent crab (steam floors), and the
-# Harbinger (floor 45), which the game draws four times bigger.
-SPC = Img(32, 16)
-for f in range(2):
-    o = f * 16
-    SPC.ell(o + 7.5, 14, 6, 1.5, (0, 0, 0, 70))
-    SPC.ell(o + 8, 10, 6, 3, (70, 110, 70)); SPC.ell(o + 8, 9, 5, 2, (110, 170, 100))
-    for x, h in ((5, 4), (8, 6), (11, 4)):
-        SPC.rect(o + x, 9 - h, o + x, 8, (200, 220, 180)); SPC.rect(o + x - 1, 9 - h - 1, o + x + 1, 9 - h, (180, 240, 160))
-    SPC.px(o + 2, 10, (250, 220, 90))
-    for i, x in enumerate([4, 7, 10, 12]):
-        y = 13 if (i + f) % 2 == 0 else 12
-        SPC.rect(o + x, 12, o + x, y, (50, 80, 50))
-    outline_img(SPC, o, 0, 16, 16)
-SPC.save(art("enemy_spore_crawler.png"))
-VCR = Img(32, 16)
-for f in range(2):
-    o = f * 16
-    VCR.ell(o + 7.5, 14, 6.5, 1.5, (0, 0, 0, 70))
-    VCR.ell(o + 8, 9, 5.5, 3.2, (170, 70, 50)); VCR.ell(o + 8, 8, 4, 2, (220, 120, 80))
-    VCR.rect(o + 1, 5 + f, o + 3, 7 + f, (200, 90, 60)); VCR.rect(o + 13, 6 - f, o + 15, 8 - f, (200, 90, 60))
-    VCR.px(o + 6, 6, (255, 240, 200)); VCR.px(o + 9, 6, (255, 240, 200))
-    for i, x in enumerate([4, 6, 10, 12]):
-        y = 13 if (i + f) % 2 == 0 else 12
-        VCR.rect(o + x, 11, o + x, y, (120, 50, 40))
-    outline_img(VCR, o, 0, 16, 16)
-VCR.save(art("enemy_vent_crab.png"))
-HRB = Img(32, 16)
-for f in range(2):
-    o = f * 16
-    HRB.ell(o + 8, 14, 7.5, 1.6, (0, 0, 0, 80))
-    HRB.ell(o + 8, 9 - f * .5, 7, 5, (54, 30, 52)); HRB.ell(o + 8, 7 - f * .5, 5, 3.5, (80, 40, 76))
-    HRB.px(o + 5, 6, (255, 130, 60)); HRB.px(o + 10, 6, (255, 130, 60))
-    for x in (2, 5, 11, 14):
-        HRB.rect(o + x, 11, o + x, 13 - (x + f) % 2, (40, 22, 40))
-    outline_img(HRB, o, 0, 16, 16)
-HRB.save(art("enemy_harbinger.png"))
+# ---------------------------------------------------------------- cave creatures
+# The creature sheets (art/enemy_*.png: bug, lizard, spore crawler, vent crab, echo bat, and the floor-45 boss in
+# enemy_harbinger.png) are hand-drawn art since 23 Nov, laid out like the residents' sheets (4 directions x 5 rows).
+# They are made by the art tools (creatures4.py), not here, so the build leaves them alone.
 
 # ================================================================ portraits (64x64, six expressions each)
 # Each portrait file is six 64x64 pictures side by side, in this order.
@@ -3195,7 +3134,24 @@ for key_ in bake_floor.AREA_FLOORS:
 # The lounge bake uses the quiet frame of the animated view.
 bake_floor.lounge_window_strip(A["lounge"].w, os.path.join(OUT, "art", "lunar")).save(os.path.join(OUT, "art", "lunar", "window_lounge.png"))
 bake_floor.bay_window_strip(A["bay"].w, os.path.join(OUT, "art", "lunar")).save(os.path.join(OUT, "art", "lunar", "window_bay.png"))
+# Round every door, the wall tops stay under the people (the doors are drawn among them): see bake_walls.
+for e_ in ENTRANCES:
+    k_, x_, y_, f_ = e_[0], e_[1], e_[2], e_[6]
+    bake_floor.DOOR_CUTS.setdefault(k_, []).append((x_ - 1.5, y_ - 2, x_ + 2.5, y_ + 5) if f_ == "N" else
+                                                   (x_ - 1, y_ - 2, x_ + 2, y_ + 2) if f_ in ("E", "W") else (x_ - 2, y_ - 3, x_ + 3, y_ + 1))
+for d_ in globals().get("INNER_DOORS", []):
+    bake_floor.DOOR_CUTS.setdefault(d_[0], []).append((d_[1] - 1, d_[2] - 2, d_[1] + d_[3] + 1, d_[2] + d_[4] + 1))
 for key_ in ["main"] + list(bake_floor.AREA_FLOORS):
     win_ = os.path.join(OUT, "art", "lunar", "window_%s.png" % key_)
     bake_floor.bake_walls(key_, A[key_].floor, os.path.join(OUT, "art", "lunar"), bake_floor.Image.open(win_) if os.path.exists(win_) else None).save(os.path.join(OUT, "art", "lunar", "walls_%s.png" % key_))
-    print("walls baked: art/lunar/walls_%s.png" % key_)
+    bake_floor.LAST_TOP.save(os.path.join(OUT, "art", "lunar", "walls_%s_top.png" % key_))
+    print("walls baked: art/lunar/walls_%s.png (+ _top)" % key_)
+    water_ = os.path.join(OUT, "art", "lunar", "watermask_%s.png" % key_)
+    if os.path.exists(water_):
+        # The animated water must not show through the walls: clear the mask wherever a wall is drawn.
+        import numpy as np_
+        wm_ = np_.asarray(bake_floor.Image.open(water_).convert("L")).copy()
+        wl_ = np_.asarray(bake_floor.Image.open(os.path.join(OUT, "art", "lunar", "walls_%s.png" % key_)).convert("RGBA"))[..., 3]
+        if wl_.shape == wm_.shape:
+            wm_[wl_ > 230] = 0                # solid wall (the cavern mood layer is see-through everywhere)
+        bake_floor.Image.fromarray(wm_, "L").save(water_)

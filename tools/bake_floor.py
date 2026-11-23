@@ -244,10 +244,15 @@ def bake(rows, art_dir, style="new", strip=128):
             wh = np.where(g1 > 0, 1.0, 0.0)
             wu = np.where(g2 > 0, 1.0, np.where(px > 70.0, 0.0, wu))
             fore = forecourt_inset(px, py)
+        # The porches in front of the doors used to be rounded pockets of their own paving (they looked like
+        # stray arches on the floor); now they are paved like the walks (Zachary, 22 Nov: no circles).
+        porch = wp > 0.5
+        wp = np.zeros_like(wp)
         pocket = np.maximum(wp, np.maximum(wh, wu))
         kind = np.where(pocket > 0.5, np.where(wp == pocket, 3, np.where(wh == pocket, 4, 5)), kind)
         on_route = (radius < 174) | ((route < 40) & ((radius < 480) | (ch == ord(".")) | (ch == ord("a"))))
         on_route |= fore > 0                                   # forecourts are paved like the walks
+        if style != "v11": on_route |= porch
         kind = np.where(on_route, 1, kind)
         if style == "v11":
             color = baker.swatch(kind, x, y)
@@ -317,6 +322,126 @@ AREA_FLOORS = {
 }
 
 
+
+# ---------------------------------------------------------------- cavern floor variety (23 Nov 2026)
+def _value_noise(H, W, cell, seed):
+    """Smooth 0..1 noise (bilinear value noise, numpy only), deterministic per seed."""
+    r = np.random.default_rng(seed)
+    gh, gw = H // cell + 3, W // cell + 3
+    g = r.random((gh, gw))
+    yy = np.arange(H) / cell; xx = np.arange(W) / cell
+    y0 = np.floor(yy).astype(int); x0 = np.floor(xx).astype(int)
+    fy = (yy - y0)[:, None]; fx = (xx - x0)[None, :]
+    fy = fy * fy * (3 - 2 * fy); fx = fx * fx * (3 - 2 * fx)
+    a = g[y0][:, x0]; b = g[y0][:, x0 + 1]; c = g[y0 + 1][:, x0]; d = g[y0 + 1][:, x0 + 1]
+    return a * (1 - fx) * (1 - fy) + b * fx * (1 - fy) + c * (1 - fx) * fy + d * fx * fy
+
+
+CAVE_DECOR = {   # dirt colour, tint strength, pebble light/mid/dark, extra kind
+    "rock": ("8a6a4a", .15, ("b8a690", "7a6a5c", "3e3430"), None),
+    "lush": ("3e3020", .55, ("8a9a78", "56664a", "2a3424"), "moss"),
+    "steam": ("5a5a62", .78, ("aab4bc", "6e7884", "343c46"), "crust"),
+    "lake": ("3a4048", .5, ("98a8b4", "5e6c78", "2c3440"), None),
+}
+
+
+def _cave_variety(img, ch, key, art_dir, Xn, Yn):
+    """Break the cavern floor up: sunken dirt patches with a shadowed lip, pebbles, hairline cracks, and per band
+    moss with tufts and glow-caps (green) or pale mineral crust and damp spots (steam)."""
+    band = "lush" if "lush" in key else "steam" if ("steam" in key or key == "cav_45") else "lake" if key == "lake" else "rock"
+    dirt_hex, dirt_k, peb, extra = CAVE_DECOR[band]
+    H, W = ch.shape
+    floor = ch == ord("m")
+    if not floor.any():
+        return
+    seed = sum(ord(c) * (i + 1) for i, c in enumerate(key))
+    rng = np.random.default_rng(seed)
+    n1 = _value_noise(H, W, 44, seed) * .86 + _value_noise(H, W, 15, seed + 1) * .14
+    dirt = floor & (n1 > (0.66 if band == "steam" else 0.63))
+    tex = np.asarray(Image.open(os.path.join(art_dir, "mine_path.png")).convert("RGB")) / 255.
+    col = tex[Yn % tex.shape[0], Xn % tex.shape[1]]
+    col = col * (1 - dirt_k) + hexc(dirt_hex) * dirt_k
+    img[dirt, :3] = np.clip(col[dirt] * 255, 0, 255).astype(np.uint8)
+    up = np.roll(dirt, 1, 0); lf = np.roll(dirt, 1, 1); dn = np.roll(dirt, -1, 0); rt = np.roll(dirt, -1, 1)
+    shade = dirt & (~up | ~lf)                 # the stone lip casts a line of shadow into the dirt
+    light = dirt & (~dn | ~rt) & ~shade        # and the far edge catches the light
+    img[shade, :3] = (img[shade, :3] * .62).astype(np.uint8)
+    img[light, :3] = np.clip(img[light, :3].astype(int) * 1.18, 0, 255).astype(np.uint8)
+    outer = floor & ~dirt & (np.roll(dirt, -1, 0) | np.roll(dirt, -1, 1))
+    img[outer, :3] = (img[outer, :3] * .8).astype(np.uint8)
+    # a second, lighter variant: worn patches of the stone itself
+    n2 = _value_noise(H, W, 28, seed + 7)
+    worn = floor & ~dirt & (n2 > 0.72)
+    img[worn, :3] = np.clip(img[worn, :3].astype(int) * 1.08 + 4, 0, 255).astype(np.uint8)
+    pl, pm, pd = (np.array(hexc(c)) * 255 for c in peb)
+    def put(x, y, c):
+        if 0 <= y < H and 0 <= x < W and floor[y, x]: img[y, x, :3] = c
+    # pebbles: more on and around the dirt
+    near = dirt | outer
+    count = int(floor.sum() / 260)
+    ys, xs = np.nonzero(floor)
+    for _ in range(count):
+        k = rng.integers(len(ys)); y, x = ys[k], xs[k]
+        if not near[y, x] and rng.random() < 0.6: continue
+        big = rng.random() < 0.35
+        put(x, y, pl); put(x + 1, y, pm); put(x, y + 1, pm); put(x + 1, y + 1, pd)
+        if big: put(x + 2, y, pm); put(x + 2, y + 1, pd); put(x, y + 2, pd); put(x + 1, y + 2, pd)
+    # hairline cracks
+    for _ in range(int(floor.sum() / 9000) + 2):
+        k = rng.integers(len(ys)); y, x = ys[k], xs[k]
+        dx, dy = (1, 0) if rng.random() < .5 else (1, 1)
+        for i in range(int(rng.integers(6, 16))):
+            put(x, y, pd); x += dx; y += dy if rng.random() < .5 else 0
+    if extra == "moss":
+        n3 = _value_noise(H, W, 22, seed + 11)
+        moss = floor & ~dirt & (n3 > 0.72)
+        g = np.array(hexc("4a7a38")) * 255; g2 = np.array(hexc("5e9a44")) * 255
+        img[moss, :3] = (img[moss, :3] * .68 + np.where(((Xn + Yn) % 3 == 0)[moss][:, None], g2, g) * .32).astype(np.uint8)
+        tuft = [np.array(hexc(c)) * 255 for c in ("3e6a32", "6fa84c", "9cc870")]
+        cap = [np.array(hexc(c)) * 255 for c in ("2a5a5e", "8fe3d2", "e6fff6")]
+        for _ in range(int(floor.sum() / 700)):
+            k = rng.integers(len(ys)); y, x = ys[k], xs[k]
+            if rng.random() < 0.8:
+                put(x, y, tuft[1]); put(x + 1, y - 1, tuft[2]); put(x + 2, y, tuft[1]); put(x + 1, y, tuft[0])
+            else:
+                put(x, y, cap[2]); put(x + 1, y, cap[1]); put(x, y + 1, cap[0])
+    elif extra == "crust":
+        n3 = _value_noise(H, W, 18, seed + 11)
+        crust = floor & ~dirt & (n3 > 0.8)
+        c1 = np.array(hexc("c8b090")) * 255
+        img[crust, :3] = (img[crust, :3] * .7 + c1 * .3).astype(np.uint8)
+        edge = crust & ~(np.roll(crust, 1, 0) & np.roll(crust, -1, 0) & np.roll(crust, 1, 1) & np.roll(crust, -1, 1))
+        img[edge, :3] = np.clip(img[edge, :3].astype(int) + 22, 0, 255).astype(np.uint8)
+        n4 = _value_noise(H, W, 10, seed + 13)
+        damp = floor & ~dirt & ~crust & (n4 > 0.8)
+        img[damp, :3] = (img[damp, :3] * .78).astype(np.uint8)
+
+
+def _soil_variety(img, ch, Xn, Yn):
+    """The Agri dome's soil (23 Nov): all of it can be dug, so it stays plain dirt, broken up by soft damp (darker)
+    and dry (lighter) patches, a scatter of pebbles and the odd sprouting weed."""
+    soil = ch == ord("a")
+    if not soil.any():
+        return
+    H, W = ch.shape
+    damp = soil & (_value_noise(H, W, 38, 901) > 0.71)
+    img[damp, :3] = (img[damp, :3] * .86).astype(np.uint8)
+    dry = soil & ~damp & (_value_noise(H, W, 30, 902) > 0.7)
+    img[dry, :3] = np.clip(img[dry, :3].astype(int) * 1.07 + 3, 0, 255).astype(np.uint8)
+    rng = np.random.default_rng(903)
+    ys, xs = np.nonzero(soil)
+    peb = [np.array(hexc(c)) * 255 for c in ("9a8e84", "6e645e", "463e3a")]
+    weed = [np.array(hexc(c)) * 255 for c in ("3e6a32", "6fa84c")]
+    def put(x, y, c):
+        if 0 <= y < H and 0 <= x < W and soil[y, x]: img[y, x, :3] = c
+    for _ in range(int(soil.sum() / 900)):
+        k = rng.integers(len(ys)); y, x = ys[k], xs[k]
+        put(x, y, peb[0]); put(x + 1, y, peb[1]); put(x + 1, y + 1, peb[2])
+    for _ in range(int(soil.sum() / 4000)):
+        k = rng.integers(len(ys)); y, x = ys[k], xs[k]
+        put(x, y, weed[1]); put(x + 1, y - 1, weed[1]); put(x + 1, y, weed[0]); put(x + 2, y, weed[1])
+
+
 def bake_area(key, rows, art_dir, extras=None):
     baker = Baker(art_dir)
     table = AREA_FLOORS[key]
@@ -362,6 +487,10 @@ def bake_area(key, rows, art_dir, extras=None):
             paint(c, m)
     if key == "hotel":
         _hotel_finishes(img, art_dir)
+    if key.startswith("cav_") or key in ("mine", "tunnels", "lake"):
+        _cave_variety(img, ch, key, art_dir, Xn, Yn)
+    if key == "agri":
+        _soil_variety(img, ch, Xn, Yn)
     extras = extras or {}
     for rc, pts, among in extras.get("regions", []):
         # A floor kind laid on a true outline rather than by tiles (the lake's shingle shore): pixels of the
@@ -401,7 +530,7 @@ def bake_area(key, rows, art_dir, extras=None):
             sh &= np.roll(np.roll(inside, dy, 0), dx, 1)
         lip = inside & ~sh & area
         if extras.get("lake"):
-            _lake_water(img, inside, area, ch, ord(fc), Xn, Yn)
+            _lake_water(img, inside, area, ch, ord(fc), Xn, Yn, key=key, art_dir=art_dir)
         else:
             img[lip, :3] = (img[lip, :3] * .35).astype(np.uint8)
     if "data_lines" in extras:
@@ -433,21 +562,22 @@ def _hotel_finishes(img, art_dir):
     def texture(name):
         return np.asarray(Image.open(os.path.join(art_dir, "hotel", name + ".png")).convert("RGB"))
 
-    # The fountain coping covers the staircase at the edge of the water tiles.
-    radius = 5.2 * PX
+    # The fountain coping covers the staircase at the edge of the water tiles: an octagon, eight facets of
+    # stone, like every other shape in the game (Zachary, 22 Nov: no circles).
+    radius = 5.6 * PX
     cx, cy = 60 * PX, int(21.5 * PX)
     extent = int(np.ceil(radius))
     patch = img[cy-extent:cy+extent, cx-extent:cx+extent, :3]
     yy, xx = np.indices(patch.shape[:2])
     dx, dy = xx + .5 - extent, yy + .5 - extent
-    rr = np.hypot(dx, dy) / PX
+    rr = np.maximum(np.maximum(np.abs(dx), np.abs(dy)), (np.abs(dx) + np.abs(dy)) / np.sqrt(2)) / PX
     angle = np.arctan2(dy, dx)
-    wedge = np.floor((angle + np.pi) * 12 / np.pi).astype(int)
+    wedge = np.floor((angle + np.pi + np.pi / 8) * 4 / np.pi).astype(int)
     for index, name in enumerate(("mineral", "mineral_a", "mineral_b")):
         stone = texture(name)
         mask = (rr >= 3.04) & (rr < 5.15) & (wedge % 3 == index)
         patch[mask] = stone[yy[mask] % stone.shape[0], xx[mask] % stone.shape[1]]
-    joints = np.abs(np.sin(angle * 12)) * rr * PX / 12 < .8
+    joints = np.abs(np.sin(4 * (angle - np.pi / 8))) * rr * PX / 4 < .9          # at the octagon's corners
     patch[(rr >= 3.22) & (rr < 5.15) & joints] = (161, 152, 134)
     water = texture("basin_water")
     wet = rr < 3.04
@@ -455,6 +585,21 @@ def _hotel_finishes(img, art_dir):
     patch[(rr >= 3.04) & (rr < 3.16)] = (75, 102, 106)
     patch[(rr >= 3.16) & (rr < 3.29)] = (192, 181, 152)
     patch[(rr >= 5.10) & (rr < 5.18)] = (147, 135, 111)
+    # Ripples spreading from the middle, then an eight-sided plinth with a spout of water on it.
+    for r0, c0 in ((2.35, (96, 150, 150)), (1.75, (84, 136, 138))):
+        patch[(np.abs(rr - r0) < .05) & wet] = c0
+    plinth = rr < 1.05
+    stone_ = texture("mineral")
+    patch[plinth] = stone_[yy[plinth] % stone_.shape[0], xx[plinth] % stone_.shape[1]]
+    lit = plinth & (dy + dx < 0) & (rr > .82)
+    patch[lit] = np.clip(patch[lit].astype(int) + 28, 0, 255)
+    shade_ = plinth & (dy + dx > 0) & (rr > .82)
+    patch[shade_] = (patch[shade_] * .72).astype(np.uint8)
+    patch[(rr >= 1.05) & (rr < 1.2)] = (40, 70, 74)                         # its shadow line in the water
+    bowl = rr < .55
+    patch[bowl] = (78, 140, 146)
+    patch[rr < .28] = (176, 222, 220)                                         # the spout
+    patch[(rr < .14)] = (236, 250, 246)
 
     for name, tx, ty, w, h, cut, edge in (
         ("red_carpet_mix", 93.35, 21.7, 9.4, 5.5, .7, (102, 65, 62)),
@@ -480,7 +625,7 @@ def _hotel_finishes(img, art_dir):
         img[63*PX:63*PX+tex.shape[0], tx*PX:tx*PX+tex.shape[1], :3] = tex
 
 
-def _lake_water(img, inside, area, ch, shore, Xn, Yn):
+def _lake_water(img, inside, area, ch, shore, Xn, Yn, key=None, art_dir=None):
     """The underground lake (22 Nov): deeper and darker towards the middle, a pale shallow rim, a thin wet line
     where the water meets the shingle, darker wet stones along the shore, and faint glints on the surface."""
     from scipy.ndimage import distance_transform_edt, gaussian_filter
@@ -499,15 +644,86 @@ def _lake_water(img, inside, area, ch, shore, Xn, Yn):
     rgb[wet] *= (.62 + .38 * np.clip(dout[wet] / 14.0, 0, 1) ** .8)[:, None]
     dock = ch == ord("p")
     sh = np.zeros_like(water)
-    for k in range(1, 7): sh |= np.roll(np.roll(dock, k, 0), k // 2, 1)
+    for k in range(1, 10): sh |= np.roll(np.roll(dock, k, 0), k // 2, 1)
     sh &= water & ~dock
-    rgb[sh] *= .55
+    rgb[sh] *= .45
     rnd = np.random.default_rng(45)
     gl = water & (din > 10) & (rnd.random(water.shape) < .0016)
     for dx in (0, 1, 2):
         g2 = np.roll(gl, dx, 1) & water
         rgb[g2] = rgb[g2] * .3 + np.array([150, 230, 235]) * .7
     img[..., :3] = np.clip(rgb, 0, 255).astype(np.uint8)
+    painted = _docks(img, dock, water, Xn, Yn) if dock.any() else np.zeros_like(water)
+    if key and art_dir:
+        # The water's outline, for the animated surface the game lays over it (area.gd, shaders/water_surface).
+        # tools/build.py clears it under the baked walls once they exist.
+        m = water & ~painted
+        Image.fromarray((m * 255).astype(np.uint8), "L").save(os.path.join(art_dir, "watermask_%s.png" % key))
+
+
+DOCK_WOOD = ["2e1e18", "4a3226", "684834", "866044", "a67c56", "c49c70"]
+
+
+def _docks(img, dock, water, Xn, Yn):
+    """Each dock (23 Nov): planks across its width with dark gaps, grain and nails, lit on the left and shaded on
+    the right; a thick front face where it ends over the water; posts going down into the water with a pale ripple
+    ring where they meet it; and mooring posts standing up at the corners. Returns the pixels painted over water."""
+    from scipy.ndimage import label
+    W = [np.array(hexc(c)) * 255 for c in DOCK_WOOD]
+    H_, W_ = dock.shape
+    painted = np.zeros_like(dock)
+    lab, n = label(dock)
+    def put(x, y, c, over_water=True):
+        if 0 <= y < H_ and 0 <= x < W_ and (dock[y, x] or (over_water and water[y, x])):
+            img[y, x, :3] = c
+            if water[y, x]: painted[y, x] = True
+    for i in range(1, n + 1):
+        ys, xs = np.nonzero(lab == i)
+        x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
+        vertical = (y1 - y0) > (x1 - x0)
+        for y, x in zip(ys, xs):
+            a = (y - y0) if vertical else (x - x0)       # along the dock
+            plank = a // 4
+            if a % 4 == 3:
+                c = W[0]
+            else:
+                tone = 3 + ((plank * 7) % 5 == 0) - ((plank * 11) % 7 == 0)
+                across = (x - x0) if vertical else (y - y0)
+                width = (x1 - x0) if vertical else (y1 - y0)
+                if across <= 1: tone = 4                        # lit edge
+                elif across >= width - 1: tone = 1              # shaded edge
+                if (x * 7 + y * 3 + plank * 13) % 17 == 0: tone -= 1
+                c = W[max(0, min(5, tone))]
+                if a % 4 == 1 and across in (3, width - 3): c = W[0]          # nails
+            img[y, x, :3] = c
+        # the front face: under the end (a long dock) or the whole south side (a side dock)
+        RIP, RIP2 = np.array([150, 220, 222]), np.array([100, 170, 182])
+        for x in range(x0, x1 + 1):
+            for k in range(1, 8):
+                put(x, y1 + k, W[2] if k == 1 else W[1] if k < 6 else W[0])
+            if (x - x0) % 8 == 0:
+                for k in range(2, 6): put(x, y1 + k, W[0])                 # board joints on the face
+        def piling(px, top, depth):
+            # a round post going down into the water: lit on the left, a ripple ring where it meets the water
+            for k in range(depth):
+                put(px, top + k, W[3]); put(px + 1, top + k, W[2]); put(px + 2, top + k, W[1]); put(px + 3, top + k, W[0])
+            for dx in range(-1, 5): put(px + dx, top + depth, RIP)
+            put(px - 2, top + depth - 1, RIP2); put(px + 5, top + depth - 1, RIP2)
+            put(px - 1, top + depth + 1, RIP2); put(px + 4, top + depth + 1, RIP2)
+        posts = [x0 + 2, x1 - 5] if vertical else list(range(x0 + 4, x1 - 3, 48))
+        for px in posts:
+            piling(px, y1 + 8, 7)
+        if vertical:
+            # pilings along both sides of a long dock, every two tiles, standing just clear of the deck
+            for py in range(y0 + 20, y1 - 6, 48):
+                piling(x0 - 4, py, 6)
+                piling(x1 + 1, py, 6)
+        # mooring posts standing up at the outer corners
+        for (cx, cy) in ([(x0 + 1, y1 - 3), (x1 - 3, y1 - 3)] if vertical else [(x0 + 1, y0 + 1), (x1 - 3, y0 + 1)]):
+            for dy in range(3):
+                for dx in range(3):
+                    put(cx + dx, cy + dy, W[5] if dy == 0 and dx < 2 else W[3] if dy < 2 else W[1], over_water=False)
+    return painted
 
 
 def _stair_extras(img, Xn, Yn, stairs):
@@ -921,7 +1137,25 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     else:
         shadow = ~Wl & (down(B, 1) | down(B, 2) | down(B, 3) | down(B, 4))
         out[shadow, :3] = (0.1, 0.12, 0.18); out[shadow, 3] = 0.22
-    return Image.fromarray(np.clip(out * 255.0, 0, 255).astype(np.uint8), "RGBA")
+    # The top of a thick wall leans one tile up over the floor north of it (the bottom row of the room above).
+    # People there walk under it, so that part goes in a layer drawn in front of them (walls_<key>_top.png,
+    # area.gd), except round doors, which are drawn among the people themselves (Zachary, 22 Nov).
+    global LAST_TOP
+    over = roof & ~B
+    cutm = np.zeros((H, W), bool)
+    for x0, y0, x1, y1 in DOOR_CUTS.get(key, []):
+        cutm[max(0, int(y0 * PX)):max(0, int(y1 * PX)), max(0, int(x0 * PX)):max(0, int(x1 * PX))] = True
+    over &= ~cutm
+    del cutm
+    img8 = np.clip(out * 255.0, 0, 255).astype(np.uint8)
+    del out
+    top = np.zeros_like(img8); top[over] = img8[over]
+    LAST_TOP = Image.fromarray(top, "RGBA")
+    return Image.fromarray(img8, "RGBA")
+
+
+DOOR_CUTS = {}      # key -> [(x0, y0, x1, y1) in tiles]: no overhead wall top here (doors), set by build.py
+LAST_TOP = None     # the overhead part of the walls bake_walls made last
 
 
 def _over(out, m, col, k):

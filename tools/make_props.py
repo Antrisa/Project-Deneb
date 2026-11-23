@@ -824,7 +824,7 @@ def cavern_shaft(d, w, h):
 
 PROPS = {
     'cavern_ladder': (64, 104, cavern_ladder), 'stalagmite': (32, 72, stalagmite), 'giant_mushroom': (64, 104, giant_mushroom),
-    'fern': (32, 32, fern), 'crystal_column': (32, 104, crystal_column), 'harbinger': (256, 200, harbinger), 'cavern_shaft': (32, 32, cavern_shaft),
+    'fern': (32, 32, fern), 'crystal_column': (32, 104, crystal_column), 'cavern_shaft': (32, 32, cavern_shaft),
     'boulder': (64, 64, boulder), 'ore_analyzer': (64, 104, ore_analyzer), 'barricade': (128, 64, barricade),
     'crystal_cluster': (64, 64, crystal_cluster), 'glow_fungus': (32, 40, glow_fungus), 'work_light': (32, 72, work_light),
     'holo_dais': (96, 96, holo_dais), 'memory_core': (64, 112, memory_core), 'wall_screen': (128, 80, wall_screen),

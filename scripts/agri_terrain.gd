@@ -41,6 +41,7 @@ var art_field: Texture2D
 var art_tilled: Texture2D
 var art_wet: Texture2D
 var art_border: Texture2D
+var art_bed: Texture2D                     # art/farm/hydro_bed.png: a hydroponic bed set down on the soil
 var crop_art := {}
 var crop_sprites := {}                     # tile -> Sprite2D in the game's depth-sorted layer (station.actors)
 
@@ -59,6 +60,7 @@ func setup(game: Node, rows: Array) -> void:
 	art_tilled = _load("res://art/farm/tilled.png")
 	art_wet = _load("res://art/farm/tilled_wet.png")
 	art_border = _load("res://art/farm/field_border.png")
+	art_bed = _load("res://art/farm/hydro_bed.png")
 	visibility_changed.connect(_sync_visibility)
 
 func _load(path: String) -> Texture2D:
@@ -82,35 +84,15 @@ func _draw() -> void:
 	if frame < 0:
 		return
 	_draw_field()
-	# The herb patches: the farm's field dirt and grass border when that art exists, else the old soil art.
-	if art_field != null:
-		_draw_undug(Rect2i(HERB_PATCHES[0] * 2, Vector2i(HERB_PATCHES.size() * 2, 2)))
-	else:
-		for patch in HERB_PATCHES:
-			_draw_cell(patch, 8)
 	_draw_water(pond_cells, Color.WHITE)
 	_draw_water(spring_cells, SPRING_TINT)
 
 # ---------------------------------------------------------------- the field
 
+# Since 23 Nov the whole dome floor is soil (baked into the floor picture, tools/bake_floor.py), and any open tile
+# can be dug or take a hydroponic bed, so there is no field rectangle or grass border to draw: only what you dug
+# or set down.
 func _draw_field() -> void:
-	if field.size == Vector2i.ZERO:
-		return
-	# Undug ground: the new field art per tile, or the old 2 x 2-tile soil pieces with their grass border.
-	if art_field != null:
-		_draw_undug(field)
-	else:
-		var c0: Vector2i = field.position / 2
-		var cells: Vector2i = field.size / 2
-		for cy in cells.y:
-			for cx in cells.x:
-				var row := _frame_row(cx, cy, cells)
-				var cell := c0 + Vector2i(cx, cy)
-				if row < 0:
-					var v := _variant(cell.x, cell.y)
-					draw_texture_rect_region(SOIL, Rect2(cell * WORLD_CELL, Vector2.ONE * WORLD_CELL), Rect2(v * ART_CELL, 0, ART_CELL, ART_CELL))
-				else:
-					_draw_cell(cell, row)
 	var day: int = station.day
 	for tile in station.farm:
 		var t: Dictionary = station.farm[tile]
@@ -154,10 +136,16 @@ func _variant(x: int, y: int) -> int:
 	return ((x * 17) ^ (y * 29)) % 3
 
 func _dug(tile: Vector2i) -> bool:
-	return station.farm.has(tile)
+	return station.farm.has(tile) and not bool(station.farm[tile].get("bed", false))
 
 func _draw_dug(tile: Vector2i, wet: bool) -> void:
 	var dst := Rect2(tile * TILE, Vector2.ONE * TILE)
+	if bool(station.farm[tile].get("bed", false)):
+		if art_bed != null:
+			draw_texture_rect(art_bed, dst, false)
+		else:
+			draw_rect(dst.grow(-ART), Color("5a6a78")); draw_rect(dst.grow(-3 * ART), Color("2e2018"))
+		return
 	var joins := (1 if _dug(tile + Vector2i.UP) else 0) + (2 if _dug(tile + Vector2i.RIGHT) else 0) \
 		+ (4 if _dug(tile + Vector2i.DOWN) else 0) + (8 if _dug(tile + Vector2i.LEFT) else 0)
 	var sheet: Texture2D = art_wet if wet and art_wet != null else art_tilled

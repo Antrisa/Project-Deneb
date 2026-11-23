@@ -1,4 +1,8 @@
-"""Placeholder art for the relics (museum pieces) and the ship-salvage items (23 Nov 2026).
+"""Item icons for the relics (museum pieces) and the ship-salvage items (23 Nov 2026).
+
+Since 23 Nov the relic pictures in art/museum/ are the finished hand-drawn art (the art tools' relics4.py), so this
+script no longer draws them: it only copies them, and the salvage icons, into art/items.png. The old placeholder
+drawing functions are kept below for reference but not used.
 
 Draws each relic as a 24x24 picture in art/museum/<name>.png (the case shows it) and adds the relics and the
 salvage items to the end of the hand-made art/items.png, in the order of NEW_ICONS below (their "icon" numbers in
@@ -165,6 +169,8 @@ NEW_ICONS = [
     ("relic_garden_seeds", garden_seeds), ("relic_rabble_flag", rabble_flag), ("relic_bone_dice", bone_dice),
     ("relic_star_compass", star_compass), ("relic_captain_signet", captain_signet),
     ("relic_gold_tooth", gold_tooth), ("relic_captain_log", captain_log),
+    ("hydro_bed", None),                                                     # slot 49 (23 Nov): the hydroponic bed
+    ("silica_sand", None), ("lithium_salts", None),                          # slots 50-51 (23 Nov): new cavern ores
 ]
 
 
@@ -177,11 +183,10 @@ def main():
     out.paste(items.crop((0, 0, FIRST_SLOT * cell, cell)), (0, 0))
     os.makedirs(os.path.join(ART, "museum"), exist_ok=True)
     for i, (name, fn) in enumerate(NEW_ICONS):
-        if fn is None:
-            pic = Image.open(os.path.join(ART, "items", name + ".png")).convert("RGBA")
+        if name.startswith("relic_"):
+            pic = Image.open(os.path.join(ART, "museum", name.replace("relic_", "") + ".png")).convert("RGBA")
         else:
-            pic = fn().image()
-            pic.save(os.path.join(ART, "museum", name.replace("relic_", "") + ".png"))
+            pic = Image.open(os.path.join(ART, "items", name + ".png")).convert("RGBA")
         if pic.size != (cell, cell):
             pic = pic.resize((cell, cell), Image.NEAREST)
         out.paste(pic, ((FIRST_SLOT + i) * cell, 0))

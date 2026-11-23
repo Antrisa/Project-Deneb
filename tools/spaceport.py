@@ -179,7 +179,10 @@ def build(g):
     hotel_in = (60, 1)
     fill(F, 59, 2, 61, 9, 'u'); F[hotel_in[1]][hotel_in[0]] = 'u'
     disc(F, 60, 24, 15, 'i')                                     # the round lobby
-    disc(F, 60, 21.5, 3.2, 'O')                                  # its fountain
+    for y in range(17, 27):                                      # its fountain: an octagon, no circles (Zachary, 22 Nov)
+        for x in range(55, 66):
+            dx, dy = abs(x + .5 - 60), abs(y + .5 - 21.5)
+            if max(dx, dy, (dx + dy) / 1.4142) < 3.2: F[y][x] = 'O'
     chamfer_room(F, 12, 10, 41, 33, 'p', 4)                      # dining room
     fill(F, 42, 22, 45, 24, 'u')
     chamfer_room(F, 12, 36, 31, 49, 'k', 3)                      # kitchen

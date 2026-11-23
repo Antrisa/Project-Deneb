@@ -79,7 +79,7 @@ const REPAIRS := [
 ]
 const SLOT_COUNT := 24             # inventory slots; the first 8 are the hotbar
 
-const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1, "quartz": 12, "gold_ore": 40, "titanium_ore": 25,
+const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1, "quartz": 12, "silica_sand": 4, "lithium_salts": 30, "gold_ore": 40, "titanium_ore": 25,
 		"carbon": 6, "steel_bar": 30, "gold_bar": 90, "titanium_bar": 60,
 		"crater_potato": 18, "moon_wheat": 10, "star_tomato": 30,
 		"scrap": 2, "circuit_board": 45, "lithium_cell": 35, "rare_earths": 25, "helium_3": 80, "cobalt_60": 70,
@@ -90,8 +90,13 @@ const TUNNEL_GOAL := 6             # creatures Job asks you to clear out of the 
 const MAX_ENERGY := 270            # Stardew-style energy: cuts cost it, food tops it up, sleep refills it
 const CUT_ENERGY := 2              # energy per laser cut
 # Seconds of holding the laser per cut: harder rock takes longer. Anything not listed takes DEFAULT_CUT_TIME.
-const CUT_TIME := {"stone": 0.5, "copper_ore": 0.8, "iron_ore": 1.2, "quartz": 1.0, "carbon": 1.0, "gold_ore": 1.6, "titanium_ore": 2.0}
-const NEEDS_TIER := {"titanium_ore": 2}   # too hard for the basic laser
+const CUT_TIME := {"boulder": 3.0, "stone": 0.5, "copper_ore": 0.8, "iron_ore": 1.2, "quartz": 1.0, "carbon": 1.0, "gold_ore": 1.6, "titanium_ore": 2.0,
+		"silica_sand": 0.7, "lithium_salts": 1.4}
+const NEEDS_TIER := {"titanium_ore": 2, "boulder": 2}   # too hard for the basic laser
+# Cavern rocks come in three looks per band (art/stone*.png); boulders (2 x 2 tiles) give BOULDER_STONE stone.
+const CAV_STONES := {"rock": ["stone", "stone_rock_1", "stone_rock_2"], "lush": ["stone_lush_0", "stone_lush_1", "stone_lush_2"],
+		"steam": ["stone_steam_0", "stone_steam_1", "stone_steam_2"]}
+const BOULDER_STONE := 10
 const TIER_SPEED := {1: 1.0, 2: 0.6}      # cut time multiplier for each laser tier
 const DEFAULT_CUT_TIME := 1.0
 const NODE_HITS := 2               # cuts per ore vein each time it refills (daily, or every few days: MapData.NODES)
@@ -213,11 +218,11 @@ var cut_buzz := 0.0                # seconds until the next laser sound
 var cut_bar: Node2D                # the little progress bar over what you are cutting
 # The Caverns (tools/caverns.py): floors under the mine, a new layout each visit.
 const CAV_ORES := {                # what veins each depth band has, with weights
-	"rock": [["copper_ore", 5], ["iron_ore", 3], ["carbon", 2], ["quartz", 1]],
-	"lush": [["iron_ore", 4], ["copper_ore", 2], ["carbon", 1], ["quartz", 2], ["gold_ore", 1]],
-	"steam": [["quartz", 2], ["gold_ore", 2], ["titanium_ore", 2], ["iron_ore", 1]],
+	"rock": [["copper_ore", 5], ["iron_ore", 3], ["carbon", 2], ["quartz", 1], ["silica_sand", 2]],
+	"lush": [["iron_ore", 4], ["copper_ore", 2], ["carbon", 1], ["quartz", 2], ["gold_ore", 1], ["silica_sand", 1], ["lithium_salts", 1]],
+	"steam": [["quartz", 2], ["gold_ore", 2], ["titanium_ore", 2], ["iron_ore", 1], ["lithium_salts", 2]],
 }
-const CAV_MOBS := {"rock": ["bug", "lizard"], "lush": ["spore_crawler", "spore_crawler", "bug", "lizard"], "steam": ["vent_crab", "vent_crab", "lizard"]}
+const CAV_MOBS := {"rock": ["bug", "lizard", "echo_bat"], "lush": ["spore_crawler", "spore_crawler", "bug", "lizard", "echo_bat"], "steam": ["vent_crab", "vent_crab", "lizard", "echo_bat"]}
 const CAV_POWER := {"rock": [1.0, 0, 1.0], "lush": [2.0, 1, 1.3], "steam": [3.5, 2, 1.6]}   # creature health x, extra bite, size
 var cav_floor := 0                 # the floor you are on, 0 when not in the caverns
 var cav_lift := 0                  # the deepest lift stop reached (every 5 floors)
@@ -716,6 +721,32 @@ func map_pixel_size() -> Vector2i:
 	var rows: Array = data["floor"]
 	var first: String = rows[0]
 	return Vector2i(first.length() * TILE, rows.size() * TILE)
+
+
+# Fliers (the echo bat) go anywhere inside the map: only its edge stops them.
+func outside_map(p: Vector2) -> bool:
+	var floor_rows: Array = MapData.AREAS[current_area]["floor"]
+	var tx := int(floor(p.x / TILE))
+	var ty := int(floor(p.y / TILE))
+	return ty < 0 or ty >= floor_rows.size() or tx < 0 or tx >= String(floor_rows[ty]).length()
+
+
+# Walls and other solid floor, the map's edge, shut doors (used to hide a flier's shadow while it crosses a wall).
+func wall_at(p: Vector2) -> bool:
+	var data: Dictionary = MapData.AREAS[current_area]
+	var floor_rows: Array = data["floor"]
+	var tx := int(floor(p.x / TILE))
+	var ty := int(floor(p.y / TILE))
+	if ty < 0 or ty >= floor_rows.size():
+		return true
+	var frow: String = floor_rows[ty]
+	if tx < 0 or tx >= frow.length():
+		return true
+	var portal_key := _portal_key(current_area, Vector2i(tx, ty))
+	if portals.has(portal_key) and portals[portal_key].opening < 0.95: return true
+	for d in inner_doors:
+		if d.area == current_area and d.blocks() and d.tiles.has(Vector2i(tx, ty)): return true
+	return MapData.SOLID_FLOOR.contains(frow[tx])
 
 
 func solid_at(p: Vector2) -> bool:
@@ -3145,7 +3176,7 @@ func _use_tool() -> void:
 		_swing_hits(item)
 	elif use == "eat":
 		_eat(item)
-	elif use in ["hoe", "water", "plant"]:
+	elif use in ["hoe", "water", "plant", "place"]:
 		_farm_use(use, item)
 
 
@@ -3243,12 +3274,21 @@ func _update_cut(delta: float, paused: bool) -> void:
 
 func _mine(t: Dictionary) -> void:
 	var node: Dictionary = ore_nodes[int(t["node"])]
-	var item: String = node["item"]
+	var item: String = str(node.get("give", node["item"]))
+	var amount: int = int(node.get("yield", 1))
 	node["hits"] = int(node["hits"]) - 1
 	if int(node["hits"]) <= 0:
 		var s: Sprite2D = node["sprite"]
-		s.frame = 1
-	_give(item, 1)
+		if bool(node.get("boulder", false)):
+			s.visible = false                       # a boulder breaks up completely and frees its tiles
+			s.set_meta("gone", true)
+			for tt in node["tiles"]:
+				blocked[current_area].erase(tt)
+				fixed[current_area].erase(tt)
+			things.erase(t)
+		else:
+			s.frame = 1
+	_give(item, amount)
 	energy = maxi(0, energy - CUT_ENERGY)
 	if bool(node.get("cav", false)) and item == "stone" and int(node["hits"]) <= 0:
 		cav_rocks_left -= 1
@@ -3256,15 +3296,15 @@ func _mine(t: Dictionary) -> void:
 	sfx("zap", randf_range(0.9, 1.1))
 	var vein_pos: Vector2 = t["pos"]
 	_pop_item(item, vein_pos + Vector2(0, -10))
-	_toast("+1 %s  (%d)" % [_item_name(item), _count(item)])
+	_toast("+%d %s  (%d)" % [amount, _item_name(item), _count(item)])
 	if energy < CUT_ENERGY:
 		_toast("You're worn out. Eat something, or call it a day.")
 
 
 # One ore vein or rock: its sprite, its tile blocked, and a thing to cut. Cavern ones (cav) go when you leave the floor.
-func _add_node(item: String, node_area: String, tile: Vector2i, every: int, cav: bool) -> void:
+func _add_node(item: String, node_area: String, tile: Vector2i, every: int, cav: bool, art: String = "") -> void:
 	var vein := Sprite2D.new()
-	vein.texture = load("res://art/%s.png" % item)
+	vein.texture = load("res://art/%s.png" % (art if art != "" else item))
 	vein.hframes = 2
 	vein.centered = false
 	_fit_sprite(vein, 2, 1, 16.0)
@@ -3286,13 +3326,40 @@ func _add_node(item: String, node_area: String, tile: Vector2i, every: int, cav:
 		cav_sprites.append(vein)
 
 
+# A cavern boulder (23 Nov, like Stardew's): 2 x 2 tiles with `tile` its top-left, cut with the steel laser in one long
+# cut for BOULDER_STONE stone. It goes when cut (no rubble) and frees its tiles.
+func _add_boulder(node_area: String, tile: Vector2i, band: String) -> void:
+	var s := Sprite2D.new()
+	s.texture = load("res://art/boulder_%s.png" % band)
+	s.centered = false
+	_fit_sprite(s, 1, 1, 32.0)
+	s.position = Vector2(tile.x * TILE + 16, tile.y * TILE + 32)
+	s.visible = node_area == current_area
+	actors.add_child(s)
+	area_sprites.append([s, node_area])
+	var tiles: Array = [tile, tile + Vector2i(1, 0), tile + Vector2i(0, 1), tile + Vector2i(1, 1)]
+	var here: Dictionary = blocked[node_area]
+	var fixed_here: Dictionary = fixed[node_area]
+	for tt in tiles:
+		here[tt] = true
+		fixed_here[tt] = true
+	var index: int = ore_nodes.size()
+	ore_nodes.append({"item": "boulder", "give": "stone", "yield": BOULDER_STONE, "hits": 1, "sprite": s, "every": 1,
+		"cav": true, "tile": tile, "tiles": tiles, "boulder": true})
+	things.append({
+		"kind": "ore", "name": "Boulder", "hint": "Hold to cut the boulder", "area": node_area,
+		"pos": Vector2(tile.x * TILE + 16, tile.y * TILE + 16), "radius": 34.0, "who": "", "node": index, "cav": true,
+	})
+	cav_sprites.append(s)
+
+
 func _node_hits(item: String) -> int:
 	return 1 if item == "stone" else NODE_HITS     # a rock breaks in one cut; a vein gives NODE_HITS
 
 
 func _reset_nodes() -> void:
 	for node in ore_nodes:
-		if day % maxi(1, int(node.get("every", 1))) != 0:
+		if day % maxi(1, int(node.get("every", 1))) != 0 or bool(node.get("boulder", false)):
 			continue
 		node["hits"] = _node_hits(str(node["item"]))
 		var s: Sprite2D = node["sprite"]
@@ -4220,7 +4287,7 @@ func _spawn_concourse() -> void:
 	for area_name in MapData.AREA_PROPS:
 		for p in MapData.AREA_PROPS[area_name]:
 			_spawn_prop(p,area_name)
-	_spawn_prop(["star_chart", CREW_BOARD.x, CREW_BOARD.y, 2, 3, "Crew board"], "bay")   # stand-in picture for the board
+	_spawn_prop(["crew_board", CREW_BOARD.x, CREW_BOARD.y, 2, 3, "Crew board"], "bay")   # Eshu's crew board (art 23 Nov)
 	# What the museum's cases hold (Tar'Besh's own pieces to start with); donations add more with show_exhibit().
 	for i in MapData.MUSEUM_SLOTS.size():
 		var slot: Array = MapData.MUSEUM_SLOTS[i]
@@ -4623,6 +4690,22 @@ const CROPS := {
 }
 
 
+# Farming (23 Nov, Zachary: "just have it all be dirt ... you can till if you want or place objects like the
+# hydroponic beds"): every open soil tile ("a") of the Agri dome can be dug, planted, or take a hydroponic bed.
+func farmable(tile: Vector2i) -> bool:
+	if current_area != "agri":
+		return false
+	var rows: Array = MapData.AREAS[current_area]["floor"]
+	if tile.y < 0 or tile.y >= rows.size():
+		return false
+	var row: String = rows[tile.y]
+	if tile.x < 0 or tile.x >= row.length() or row[tile.x] != "a":
+		return false
+	if farm.has(tile):
+		return true
+	return not solid_at(Vector2(tile.x * TILE + 8, tile.y * TILE + 8))
+
+
 func farm_field() -> Rect2i:
 	var f: Array = MapData.FARM_FIELDS.get(current_area, [])
 	if f.size() != 4: return Rect2i()
@@ -4642,7 +4725,7 @@ func farm_target() -> Vector2i:
 
 # For the field drawing: the tile to outline, or (-1, -1) when no farm tool is in hand.
 func farm_cursor() -> Vector2i:
-	if not _selected_use() in ["hoe", "water", "plant"] or not farm_field().has_point(farm_target()):
+	if not _selected_use() in ["hoe", "water", "plant", "place"] or not farmable(farm_target()):
 		return Vector2i(-1, -1)
 	return farm_target()
 
@@ -4660,7 +4743,18 @@ func crop_stage(t: Dictionary) -> int:
 # the action play".) The equipped tool follows the hands through its action poses.
 func _farm_use(use: String, item: String) -> void:
 	var tile: Vector2i = farm_target()
-	var on_field: bool = farm_field().has_point(tile)
+	var on_field: bool = farmable(tile)
+	if use == "place":
+		# A hydroponic bed: set down on open soil, it takes seeds like a dug tile and waters itself every night.
+		if on_field and not farm.has(tile):
+			farm[tile] = {"crop": "", "age": 0, "watered": -1, "bed": true}
+			_give(item, -1)
+			sfx("click", 0.7)
+			if farm_view != null: farm_view.sync_crops()
+		else:
+			sfx("deny")
+			_toast("Set it down on open soil in the Agri dome")
+		return
 	if use == "plant":
 		if on_field and farm.has(tile) and str(farm[tile]["crop"]) == "":
 			farm[tile]["crop"] = str(ItemData.ITEMS[item].get("crop", ""))
@@ -4704,7 +4798,7 @@ func _farm_energy() -> bool:
 
 # E on a ripe crop in front of you (or under the mouse, next to you) picks it.
 func _try_harvest() -> bool:
-	if not farm_field().has_point(farm_target()): return false
+	if not farmable(farm_target()): return false
 	var tile: Vector2i = farm_target()
 	if not farm.has(tile) or crop_stage(farm[tile]) < 0: return false
 	var t: Dictionary = farm[tile]
@@ -4734,7 +4828,7 @@ func _try_harvest() -> bool:
 func _grow_crops() -> void:
 	for tile in farm:
 		var t: Dictionary = farm[tile]
-		if str(t["crop"]) != "" and int(t["watered"]) == day:
+		if str(t["crop"]) != "" and (int(t["watered"]) == day or bool(t.get("bed", false))):
 			t["age"] = int(t["age"]) + 1
 	if farm_view != null: farm_view.sync_crops()
 
@@ -4764,10 +4858,14 @@ func _take_farm_tools() -> void:
 	if _count("hoe") > 0 and _count("watering_can") > 0:
 		_toast("You already have a hoe and a watering can")
 		return
+	var first: bool = _count("hoe") == 0
 	if _count("hoe") == 0: _give("hoe", 1)
 	if _count("watering_can") == 0: _give("watering_can", 1)
 	sfx("quest")
 	_toast("You take a hoe and a watering can. Evarra won't miss them.")
+	if first and not farm.values().any(func(f): return bool(f.get("bed", false))):
+		_give("hydro_bed", 2)
+		_toast("+2 Hydroponic beds: set them down anywhere on the soil (more at the workbench)")
 
 
 # Until the shops open, the seed rack gives a handful of each seed once a day, so farming can be tried out.
@@ -4840,7 +4938,7 @@ func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
 	spots.shuffle()
 	var mobs: int = mini(3 + n / 8, 8)
 	var veins: int = randi_range(5, 8)
-	cav_rocks = randi_range(22, 30)
+	cav_rocks = randi_range(40, 55)
 	cav_rocks_left = cav_rocks
 	cav_shaft = false
 	var weights: Array = CAV_ORES[band]
@@ -4870,10 +4968,27 @@ func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
 					break
 			_add_node(item, key, tile, 1, true)
 		elif i < mobs + veins + cav_rocks:
-			_add_node("stone", key, tile, 1, true)
+			var looks: Array = CAV_STONES.get(band, ["stone"])
+			_add_node("stone", key, tile, 1, true, str(looks[randi() % looks.size()]))
 		else:
 			break
 		i += 1
+	# A few boulders on spots nothing else took, where a 2 x 2 block of free spots fits.
+	var free := {}
+	for k in range(i, spots.size()):
+		free[Vector2i(int(spots[k][0]), int(spots[k][1]))] = true
+	var placed := 0
+	var want: int = randi_range(2, 4)
+	for k in range(i, spots.size()):
+		if placed >= want:
+			break
+		var t0 := Vector2i(int(spots[k][0]), int(spots[k][1]))
+		var block: Array = [t0, t0 + Vector2i(1, 0), t0 + Vector2i(0, 1), t0 + Vector2i(1, 1)]
+		if block.all(func(tt): return free.has(tt) and not blocked[key].has(tt)):
+			_add_boulder(key, t0, band)
+			for tt in block:
+				free.erase(tt)
+			placed += 1
 
 
 func _maybe_open_shaft(t: Dictionary, node: Dictionary) -> void:
