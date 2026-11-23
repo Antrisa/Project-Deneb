@@ -5,6 +5,7 @@ extends SceneTree
 #   godot --headless --script res://tests/heart_events_test.gd
 
 const HeartEvents = preload("res://scripts/heart_events.gd")
+const BridgeScript = preload("res://scripts/datapad_bridge.gd")
 
 
 func _initialize() -> void:
@@ -45,6 +46,8 @@ func run() -> void:
 			assert(s.current_area == "east", "Evarra's 10 ends in the little park")
 		if id == "ana_8":
 			assert(s.sky_override == "", "the lounge's window goes back to the day's own sky after Ana's 8")
+		if id == "siblings_10":
+			assert(["Autumn", "Winter"].has(str(BridgeScript.season_date(s.day)[0])), "the siblings' banquet is in autumn or winter")
 		if id == "ana_10":
 			assert(s.player.visible, "you step back out of your ship after Ana's 10")
 			assert(s.wreck_sprite.modulate.a == 1.0, "your ship is back on its pad after Ana's 10")
@@ -58,7 +61,9 @@ func run() -> void:
 			"artie_troop_story", "artie_scouts", "perk_junior_scout_reports", "perk_thrifty", "keepsake_scoutmaster_badge",
 			"stu_uniform", "stu_nameplate", "perk_five_star_partner", "keepsake_silver_bell",
 			"ana_soup", "ana_seat", "ana_corridors", "ana_compass", "perk_wingmate", "ana_true_north_console",
-			"keepsake_flight_jacket"]:
+			"keepsake_flight_jacket",
+			"siblings_bechamel", "siblings_pod_story", "perk_wildflower_honey", "siblings_bees", "perk_starlight_souffle",
+			"siblings_practice_run", "perk_family_table", "keepsake_family_photo", "siblings_feast"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)

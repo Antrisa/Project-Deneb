@@ -41,8 +41,8 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2. (Ana's part settled 23 Nov: the game's version, with her crew always calling her weak for never firing on transports.)
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana.)
-4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3. (All but Jasper & Evarra 8 are settled: the hotel opens after Ivan's fall, before Stu arrives.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana; so is the Jasper & Evarra side arc.)
+4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3. (All settled: the hotel opens after Ivan's fall, before Stu arrives, and the siblings' 8 plays in the mess hall until then.)
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
 7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Eight now: Quill 10 moved to the little park, Ix'ali 10 to the museum and Stu 10 to the terminal airlock; Artie 6 and Ana 8 stay.)
@@ -138,7 +138,7 @@ The Paris dream was really a dream of sharing a table. **Reviewed with Zachary o
 
 - **Decided:** more variety of place (only 6 in the mess hall); butter is Ooma's tin, not an item; the holo-vid came in the pod; days off staggered with Evarra's (he's off Tuesdays and Saturdays, she's off Wednesdays and Sundays), with lines for those days.
 - **Still open:** the café terrace needs drawing on the plaza for after 10 (`cafe_etoile` is set); the bistro menu and his perk need cooking and food buffs in the game.
-- **For the side arc:** the siblings' 2 and 8 are also in the mess hall; spread them out when we get to it.
+- **For the side arc:** done 23 Nov: only the siblings' 2 stays in the mess hall; their 8 is in the hotel's dining room (the mess hall until the hotel opens) and their 4 in the West Terminal's star dome.
 
 ### 3.2 Evarra (Vuultam, Chief Baker & Gardener)
 
@@ -270,21 +270,20 @@ Ivan's sister unlearns that fear is loyalty. **Reviewed with Zachary on 23 Nov; 
 
 ## 4. Jasper & Evarra: the sibling side arc
 
-Needs **both** at the level. All five are full scripts ([ROMANCE_SCRIPTS.md](ROMANCE_SCRIPTS.md), Part 1).
+Needs **both** at the level. All five are full scripts ([ROMANCE_SCRIPTS.md](ROMANCE_SCRIPTS.md), Part 1). **Reviewed with Zachary on 23 Nov; all five are playable.** Full scenes: [`characters/JASPER_EVARRA.md`](characters/JASPER_EVARRA.md).
 
 | ♥ (both) | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Haute Cuisine on a Ration Budget | Mess hall, 13:00–16:00 | Grey béchamel; "little brother?!" | Script |
-| 4 | The Escape Pod Memory | Observation Lounge after 19:00 | Two infants in one thermal blanket, about twenty years ago. | Script |
-| 6 | Operation Honeybee | East Agridome, a sunny morning; waits for its restoration | The first bees. Unlocks Wildflower Honey. | Script |
-| 8 | The Critic's Practice Run | Mess hall, evening; waits for the hotel | Fusion, not imitation. Unlocks Starlight Soufflé & Lunar Truffle Glaze. | Script |
-| 8+ | A Table for the Whole Sector | Plaza fountain banquet, evening; after the Critic's run | The whole station at one table. Reward: Family Table perk and a framed photo. | Script |
+| 2 | Haute Cuisine on a Ration Budget | Mess hall kitchen, 13:00–14:30 on Monday, Thursday or Friday | Grey béchamel; "little brother?!" | In game (Zachary's script) |
+| 4 | The Escape Pod Memory | The West Terminal's star dome, 20:30–midnight (was the Observation Lounge) | Two infants in one thermal blanket, about twenty years ago. Honey tarts once the garden dome is restored, ration-flour tarts before. | In game (Zachary's script, a choice and the early version by Claude) |
+| 6 | Operation Honeybee | The garden dome, Wednesday 08:00–11:00, once it's restored | The first bees, brought by Ooma's ship. Unlocks Wildflower Honey. | In game (Zachary's script, a choice and the sting by Claude) |
+| 8 | The Critic's Practice Run | The hotel's dining room, 21:30–midnight; the mess hall until the hotel opens | Fusion, not imitation. Unlocks Starlight Soufflé & Lunar Truffle Glaze. | In game (Zachary's script, outcomes by Claude) |
+| 8+ | A Table for the Whole Sector | Plaza fountain banquet, 18:00–21:00 in autumn or winter, after the Critic's run | The whole station at one table. Reward: Family Table perk and a framed photo. | In game (Zachary's script) |
 
-- **Gap (4):** only the honey-tart version is written. The trigger says that before the East Agridome is restored Jasper brings herb tea and ration-flour tarts, so "Merrow let me harvest the first Nectar-Blossoms" and "it tastes like real sunlight" need a second version.
-- **Clash (6):** the hive comes "by Eshu's mail skiff", but the East Agridome can be restored in Spring, before Eshu arrives. Another carrier is needed (Ooma's ship on a Wednesday or Saturday, or Bram ordering it). "A sunny morning" needs defining inside a dome on a moon (daytime, not Winter?). And Decision 8 (two first-bees scenes).
-- **Lock (8):** it waits for the hotel, but 8s never wait. Either the side arc is an exception like Zaas, or 8 gets a version without the hotel (practising for the Landing Day potluck?). Decision 9.
-- **Gap (8):** "The Spring Hotel Inspection is weeks away" is only true in late Winter or early Spring; make it season-aware. Option B ("stick strictly to the recipe") has no outcome: Jasper's "You're right..." answers option A.
-- **Clash (8+):** "call twenty-eight neighbors family" is right only once Ana has arrived; "every neighbor" always is. The framed photo needs art.
+- **Decided (Zachary, 23 Nov):** 8 in the hotel's dining room, with the mess hall until the hotel opens (Decision 9); 4 in the West Terminal's star dome (Decision 17), in both versions; Ooma brings the hive; the banquet only in autumn or winter; **wrong choices get small consequences** instead of the same reward.
+- **Wrong choices:** in 8, sticking to the holo-recipe flattens the soufflé: no friendship, and the dish waits for the banquet. In 6 (Claude's new choice), telling Jasper to keep the welding helmet on gets you stung (−10 energy) and no friendship. In 4 (Claude's new choice), asking Evarra whether she wants to know where she's from gets nothing and a quiet Evarra.
+- **"Every neighbor"** replaces "twenty-eight neighbors"; "the Grand Hotel Inspection comes every spring" replaces "the Spring Hotel Inspection is weeks away" (and before the hotel opens, the critic is booked for opening night).
+- **Still open:** honey production, the soufflé's Inspection bonus and Family Table need the cooking and bee systems; art for the apiary box and glass hive, and the framed photo. Freya 8 is also in the West Terminal's star dome (on its bench; the siblings' 4 is at the glass).
 
 ---
 
@@ -451,7 +450,7 @@ Each of the nine 8-heart scenes ends "Accept confession or stay friends", with n
 
 | Event | Problem | Fix |
 |---|---|---|
-| Jasper & Evarra 8 (and so 8+) | Waits for the hotel; 8s never wait | Now only waits for Ivan's fall (the hotel opens then). Exception, or a no-hotel version (Decision 9) |
+| Jasper & Evarra 8 (and so 8+) | Waits for the hotel; 8s never wait | Done 23 Nov: the mess hall until the hotel opens (Decision 9) |
 | Stu 8 | Hotel lobby; no backup | Done 23 Nov: the hotel opens after Ivan, before Stu arrives, so no backup is needed |
 | Stu 2, 6 | Hotel; Stu arrives long before it may open | Done 23 Nov: as above; 6 moved to East Home 2's door |
 | Evarra 8 | East orchard; no backup | Done 22 Nov: the promenade flower beds until the garden dome opens |
@@ -464,7 +463,7 @@ Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill
 
 ### 7.5 Choices with no outcome, or the wrong kind
 
-Jasper & Evarra 8 option B; ~~Ana 6 ("+High Romance")~~ (fixed 23 Nov); the nine confessions (7.1).
+~~Jasper & Evarra 8 option B~~ (fixed 23 Nov: the soufflé falls flat, no friendship, the dish waits for the banquet); ~~Ana 6 ("+High Romance")~~ (fixed 23 Nov); the nine confessions (7.1).
 
 ### 7.6 What the event engine will have to check
 
@@ -472,7 +471,7 @@ From the triggers above: map and time window; weekday (Wed or Sat); season; hear
 
 ### 7.7 Eleven scenes in the Observation Lounge
 
-Jasper & Evarra 4, Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, S.A.R.A. 8, Tikka & Sesska 6, Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open. (Moved: Quill 10 to the little park, Ix'ali 10 to the museum, Stu 10 to the terminal airlock. Ana 8 stays: it's a navigator's scene.)
+~~Jasper & Evarra 4~~ (moved 23 Nov to the West Terminal's star dome), Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, S.A.R.A. 8, Tikka & Sesska 6, Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open. (Moved: Quill 10 to the little park, Ix'ali 10 to the museum, Stu 10 to the terminal airlock. Ana 8 stays: it's a navigator's scene.)
 
 ### 7.8 Art the scenes need that doesn't exist yet
 
@@ -492,7 +491,7 @@ Answer by number; anything left open stays as it is.
 6. **Where threads A and B end:** at the Neutral Zone Summit, or elsewhere?
 7. **Pip's parents:** found, a letter only, or left open?
 8. **The first bees:** decided 22 Nov: side-arc 6. Evarra 6 is now a wildflower border round your field.
-9. **Jasper & Evarra 8 waiting for the hotel:** allow it as an exception, or write a version without the hotel? Since the hotel now opens after Ivan's fall (23 Nov), it only waits for that.
+9. **Jasper & Evarra 8 waiting for the hotel:** decided 23 Nov: it plays in the hotel's dining room, and in the mess hall until the hotel opens.
 10. **Stu before the hotel opens:** decided 23 Nov: the hotel opens after the Ivan fight, before Stu arrives, so he needs no job before it and no backup places. Guests come Friday to Sunday.
 11. **Backups for the East orchard:** done. Evarra 8: the promenade flower beds; Artie 8 and 10: the little park (they moved to the garden dome's woods). The engine now has backup places (`"backup"` in `scripts/heart_events.gd`).
 12. **Ix'ali's star pendant** at 8: an Oath-Crest you could propose with, or something else?
@@ -500,7 +499,7 @@ Answer by number; anything left open stays as it is.
 14. **Keepsakes marked (Claude):** Job's oar charm. (Jasper's apron and Evarra's pressed-flower frame are in the game.)
 15. **Hearts:** 100 points a heart, as in the NPC Master? Then the code is changed to match.
 16. **"The Nest":** rename the cavern event or the pirate stronghold.
-17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock).
+17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc and the Jasper & Evarra side arc; the platonic arcs are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).

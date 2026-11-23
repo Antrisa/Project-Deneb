@@ -1337,7 +1337,15 @@ func _event_ready(ev: Dictionary) -> bool:
 	var who: String = ev["who"]
 	if not _arrived(who) or _hearts(who) < int(ev["hearts"]):
 		return false
+	# a scene for two (the Jasper & Evarra side arc): everyone in "with" needs the hearts too
+	for w in ev.get("with", []):
+		if not _arrived(str(w)) or _hearts(str(w)) < int(ev["hearts"]):
+			return false
 	if bool(ev.get("partner", false)) and partner != who:
+		return false
+	# "seasons": only in these seasons ("Autumn", "Winter"...)
+	var seasons: Array = ev.get("seasons", [])
+	if not seasons.is_empty() and not seasons.has(str(BridgeScript.season_date(day)[0])):
 		return false
 	for s in ev.get("seen", []):
 		if not events_seen.has(s):
@@ -1392,8 +1400,15 @@ func _debug_next_heart_event() -> void:
 				story_flags[f] = true
 		if bool(ev.get("partner", false)):
 			partner = who
-		var st: Dictionary = persons[who]
-		st["friendship"] = maxi(int(st["friendship"]), int(ev["hearts"]) * FRIEND_PER_HEART)
+		for w in [who] + Array(ev.get("with", [])):
+			var st: Dictionary = persons[str(w)]
+			st["friendship"] = maxi(int(st["friendship"]), int(ev["hearts"]) * FRIEND_PER_HEART)
+		# a seasonal event: on to the first day of a season it plays in
+		var seasons: Array = ev.get("seasons", [])
+		for _i in 121:
+			if seasons.is_empty() or seasons.has(str(BridgeScript.season_date(day)[0])):
+				break
+			day += 1
 		ev = _event_place(ev)
 		var w: Array = ev.get("windows", [[null, "06:00", "26:00"]])[0]
 		if w[0] != null:

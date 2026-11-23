@@ -55,7 +55,8 @@ EVENT_ROWS = ["talk", "laugh", "sad", "jump", "gift", "bench", "wave"]
 EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "ready", "no", "wait", "help", "follow", "cute"}
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
-         "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky"}
+         "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy"}
+SEASONS = {"Spring", "Summer", "Autumn", "Winter"}
 SKIES = {"clear", "eclipse", "gas_cloud", "meteors", "transit", "aurora", "comet", "storm"}   # scripts/lounge_sky.gd
 SOUNDS = {p.stem for p in (ROOT / 'audio').glob('*.wav')}
 DIRS = {"d", "u", "l", "r"}
@@ -159,6 +160,8 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         elif op == "ship":
             if s[1] not in ("lift", "land"): bad(ev_id, "ship: %r is neither lift nor land" % s[1])
             if area != "bay": bad(ev_id, "ship: your ship is only in the Shuttle Bay, not %r" % area)
+        elif op == "energy":
+            if not (isinstance(s[1], int) and s[1] < 0): bad(ev_id, "energy: %r should be a small cost, a negative number" % s[1])
         elif op == "sky":
             if s[1] not in SKIES: bad(ev_id, "sky: no sky event %r" % s[1])
             if area != "lounge": bad(ev_id, "sky: only the Observation Lounge has the window, not %r" % area)
@@ -192,6 +195,10 @@ for ev_id, ev in EVENTS.items():
         continue
     if ev['who'] not in RESIDENTS:
         bad(ev_id, "%r is not a resident" % ev['who'])
+    for w in ev.get('with', []):
+        if w not in RESIDENTS: bad(ev_id, "with: %r is not a resident" % w)
+    for se in ev.get('seasons', []):
+        if se not in SEASONS: bad(ev_id, "seasons: %r is not a season" % se)
     for need in ev.get('seen', []):
         if need not in EVENTS: bad(ev_id, "seen: no event %r" % need)
     for w in ev.get('windows', []):

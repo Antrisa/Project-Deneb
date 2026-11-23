@@ -31,6 +31,9 @@ extends Node
 #                                      or comes back down onto its pad; it's back on the pad when the scene ends
 #   ["sky", event]                     the Observation Lounge's window shows that sky event ("meteors", "aurora",
 #                                      "comet"...; scripts/lounge_sky.gd) until the scene ends
+#   ["energy", -points]                a small cost for a wrong choice (a bee sting): takes that much energy
+# Events can also need a second resident at the same hearts ("with": ["Evarra"]) and play only in some
+# seasons ("seasons": ["Autumn", "Winter"]): main.gd _event_ready.
 
 const HeartEvents = preload("res://scripts/heart_events.gd")
 const NineFrame = preload("res://scripts/nine_frame.gd")
@@ -217,6 +220,8 @@ func _step(s: Array) -> void:
 			await _ship(str(s[1]), float(s[2]) if s.size() > 2 else 2.5)
 		"sky":
 			world.sky_override = str(s[1])
+		"energy":
+			world.energy = maxi(0, int(world.energy) + mini(0, int(s[1])))
 		_:
 			push_warning("cutscene: unknown step " + op)
 
