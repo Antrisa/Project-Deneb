@@ -51,6 +51,9 @@ var station_calendar
 const CreatorScript = preload("res://scripts/creator.gd")
 const TitleScript = preload("res://scripts/title_screen.gd")
 const BridgeScript = preload("res://scripts/datapad_bridge.gd")
+const ShopsScript = preload("res://scripts/shops.gd")   # the shops, Job's geode bench, cooking, drinks, gear (23 Nov)
+const ShopData = preload("res://scripts/shop_data.gd")
+var shops                          # scripts/shops.gd
 var datapad                        # the Terran datapad HUD and pages (scripts/datapad_bridge.gd); null = old UI
 const EMOTE_SCENE := "res://overhead_emotes/overhead_emote.tscn"     # bubbles over residents' heads (20 Nov)
 var title                          # the title screen (scripts/title_screen.gd) until Play is pressed, then null
@@ -62,9 +65,6 @@ const SECONDS_PER_GAME_MINUTE := 1.5   # real seconds per game minute; raise to 
 const SAVE_PATH := "user://save.cfg"
 
 # Bram's hauling job
-const JOB_CRATES := 3
-const JOB_PAY_EACH := 15
-const JOB_BONUS := 15
 
 # The covered fighter in the bay (Freya's quest, Zachary 23 Nov): she restores it in stages for Scrip and salvage,
 # like Tikka's repairs on your first ship. Open once you've made your first two flights.
@@ -83,14 +83,7 @@ const REPAIRS := [
 ]
 const SLOT_COUNT := 24             # inventory slots; the first 8 are the hotbar
 
-const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1, "quartz": 12, "silica_sand": 4, "lithium_salts": 30, "gold_ore": 40, "titanium_ore": 25,
-		"carbon": 6, "steel_bar": 30, "gold_bar": 90, "titanium_bar": 60,
-		"crater_potato": 18, "moon_wheat": 10, "star_tomato": 30,
-		"scrap": 2, "circuit_board": 45, "lithium_cell": 35, "rare_earths": 25, "helium_3": 80, "cobalt_60": 70,
-		"void_sapphire": 100,
-		"aluminium_ore": 10, "aluminium_bar": 35, "thermal_quartz": 45, "sulphur": 15, "ice": 6, "basalt_core": 60,
-		"geode": 10, "moon_opal": 60, "crater_garnet": 90, "glass_pane": 12, "refined_silicon": 30, "brick": 5,
-		"magnet": 50, "motor": 140, "precision_lens": 160, "high_density_core": 600}      # what Bram pays (relics are for the museum, not for sale)
+# What things sell for, who buys them and what the shops stock: scripts/shop_data.gd (23 Nov).
 const MAX_HP := 10
 const WEAPON_DAMAGE := 2
 const TUNNEL_GOAL := 6             # creatures Job asks you to clear out of the north tunnels
@@ -194,6 +187,7 @@ var garden_busy := false
 var farm := {}
 var farm_view: Node2D               # scripts/agri_terrain.gd, which draws the field
 var seeds_taken_day := -1
+var welcomed := false             # Bram and Jasper's first-morning visit has happened (_welcome_visit)
 var travelling := false
 var portals := {}
 var door_locks := {}
@@ -249,8 +243,6 @@ const CAV_VEINS := [
 	["lithium_salts", 31, 45, 3], ["thermal_quartz", 31, 45, 2], ["sulphur", 31, 45, 3], ["ice", 31, 45, 2],
 	["basalt_core", 35, 45, 2], ["cobalt_60", 40, 45, 1], ["geode", 1, 45, 1],
 ]
-const GEODE_GEMS := {"rock": ["moon_opal", "moon_opal", "quartz"], "lush": ["crater_garnet", "moon_opal", "crater_garnet"],
-		"steam": ["void_sapphire", "crater_garnet", "thermal_quartz"]}        # what a cut geode gives, by band
 const CAV_MOBS := {"rock": ["bug", "lizard", "echo_bat"], "lush": ["spore_crawler", "spore_crawler", "bug", "lizard", "echo_bat"], "steam": ["vent_crab", "vent_crab", "lizard", "echo_bat"]}
 const CAV_POWER := {"rock": [1.0, 0, 1.0], "lush": [2.0, 1, 1.3], "steam": [3.5, 2, 1.6]}   # creature health x, extra bite, size
 var cav_floor := 0                 # the floor you are on, 0 when not in the caverns
@@ -289,9 +281,6 @@ var day := 1
 var minutes := float(DAY_START)
 var credits := 0
 var repair_stage := 0              # 0..REPAIRS.size()
-var job_active := false
-var job_delivered := 0
-var job_done_today := false
 
 var sounds := {}                   # sound name -> AudioStreamPlayer
 var fixed := {}                    # area name -> {Vector2i tile: true} (things residents must walk around)
@@ -423,6 +412,11 @@ func _ready() -> void:
 	repair_view = StationRepair.new()
 	repair_view.world = self
 	add_child(repair_view)
+	shops = ShopsScript.new()
+	shops.setup(self)
+	add_child(shops)
+	if datapad != null and datapad.pad != null:
+		datapad.pad.shop_action.connect(shops.on_action)
 	_load_game()
 	_sync_station()
 	_deliver_mail()
@@ -1193,6 +1187,8 @@ func _snap_residents() -> void:
 		r.away = gone
 		if MapData.SCHEDULES_ALT.has(r.who):
 			r.schedule = MapData.SCHEDULES_ALT[r.who] if _first_days(r.who) else MapData.SCHEDULES[r.who]
+		elif WELCOME_SCHEDULE.has(r.who):
+			r.schedule = _welcome_schedule(r.who) if (day == 1 and not welcomed) else MapData.SCHEDULES[r.who]
 		r.snap(minutes)
 
 
@@ -1502,10 +1498,8 @@ func _usable(t: Dictionary) -> bool:
 	if t["area"] != current_area:
 		return false
 	var kind: String = t["kind"]
-	if kind == "pickup":
-		return job_active and not player.carrying
-	if kind == "drop":
-		return player.carrying
+	if kind == "pickup" or kind == "drop":
+		return false                 # Bram's crate-hauling job is gone (Zachary, 23 Nov)
 	if kind == "sealed":
 		return not station_fixed.has(str(t["repair"]))
 	return true
@@ -1621,9 +1615,11 @@ func _interact(t: Dictionary) -> void:
 	elif kind == "garden":
 		_water_garden(t)
 	elif kind == "farm_tools":
-		_take_farm_tools()
+		_say("Garden tools", ["Hooks for a hoe and a watering can. Bram and Jasper brought yours on your first morning."])
 	elif kind == "seeds":
-		_take_seeds()
+		_say("Seed rack", ["Empty. Bram sells seeds at his Sundries on the town square."])
+	elif kind == "inspect" and current_area == "aptPlayer" and str(t["name"]) == "Kitchenette":
+		shops.open("Cook")
 	elif kind == "game":
 		var company := _activity_near(t.pos,48.0,["chess","hologame"])
 		if not company.is_empty():
@@ -1700,11 +1696,6 @@ func _interact(t: Dictionary) -> void:
 		_look_at_ship()
 	elif kind == "launch":
 		_launch_console()
-	elif kind == "pickup":
-		player.set_carrying(true)
-		_toast("South lift off the town square, then the yellow pad in the cargo bay")
-	elif kind == "drop":
-		_deliver_crate()
 	elif kind == "bed":
 		_say("Your bunk", ["Sleep until morning?"], Callable(self, "_end_day"), "Sleep")
 	elif kind == "wardrobe":
@@ -1781,13 +1772,7 @@ func _talk(who: String) -> void:
 		pass
 	elif who == "Tar'Besh" and _first_relic() != "":
 		_offer_relic("Tar'Besh")
-	elif who == "Maren":
-		_maren_shop()
-	elif who == "Bram" and _bars_value() > 0:
-		_bram_sell()
-	elif who == "Bram" and not job_done_today:
-		_bram_job()
-	elif who == "Tikka" and repair_stage < REPAIRS.size():
+	elif who == "Tikka" and repair_stage < REPAIRS.size() and not _at_workplace(who):
 		_tikka_repair()
 	elif who == "Job" and (job_quest <= 2 or job_quest == 4):
 		_job_quest_talk()
@@ -1815,8 +1800,16 @@ func _talk(who: String) -> void:
 			"And my bench is yours: anything you want fitted to your ship, that's where we do it."])
 
 		_freya_ship_repair()
-	elif int(st.get("talks_today", 0)) >= TALKS_PER_DAY and not _special_day(who):
-		# Two chats a day, as in Stardew; business (jobs, shops, quests) and birthdays are not counted.
+	elif SHOP_HELLO.has(who) and _at_workplace(who):
+		_shop_offer(who)
+	else:
+		_chat(who)
+
+
+# Everyday talk: two chats a day, as in Stardew; business (jobs, shops, quests) and birthdays are not counted.
+func _chat(who: String) -> void:
+	var st: Dictionary = persons[who]
+	if int(st.get("talks_today", 0)) >= TALKS_PER_DAY and not _special_day(who):
 		_emote(who, &"wait")
 		_toast("%s has said all there is to say today." % who)
 	else:
@@ -1826,6 +1819,28 @@ func _talk(who: String) -> void:
 
 
 const TALKS_PER_DAY := 2
+
+# The shopkeepers (scripts/shop_data.gd): talking to one at work offers their shop (the datapad's Shop page,
+# scripts/shops.gd) or a chat. Job's is his geode bench. Tikka also takes you through the ship repairs.
+const SHOP_HELLO := {
+	"Bram": "[happy] Sundries, seeds and fittings. And I'll take anything off your hands, at a fair-ish price.",
+	"Tikka": "Bars, plate and wire, if you'd rather buy than smelt. I pay well for ore, metal and salvage, too.",
+	"Rusk": "What'll it be? Tea, fizz, or something with a kick.",
+	"Jasper": "[happy] Hungry? Or here to learn a dish? I'll buy your crops, too: the fresher the better.",
+	"Sesska": "Every thread on this rack I spun myself. I'll buy shells and hide for the loom.",
+	"Ix'ali": "Armour, fitted to you. Stand still.",
+	"Maren": "Medpacks are on the shelf. One will put you right back on your feet.",
+	"Job": "[happy] Got geodes? I'll crack them for you. And I'll buy any pretty rocks you don't want.",
+}
+
+
+func _shop_offer(who: String) -> void:
+	var line: String = SHOP_HELLO[who]
+	if who == "Tikka" and repair_stage < REPAIRS.size():
+		_say(who, [line], Callable(shops, "open").bind(who), "Shop", Callable(self, "_tikka_repair"), "Ship repairs")
+	else:
+		_say(who, [line], Callable(shops, "open").bind(who), "Crack geodes" if who == "Job" else "Shop",
+				Callable(self, "_chat").bind(who), "Just chat")
 
 
 # A resident's birthday (scripts/datapad_bridge.gd RESIDENTS) lets you chat as much as you like.
@@ -1862,63 +1877,6 @@ func _next_repeat(who: String) -> String:
 	st["next"] = n + 1
 	var line: String = repeat[n % repeat.size()]
 	return line
-
-
-# ---------------------------------------------------------------- Maren's medbay
-
-const MEDPACK_PRICE := 40
-
-
-func _maren_shop() -> void:
-	_say("Maren", [
-		_next_repeat("Maren"),
-		"Medpacks are %d credits. One will put you right back on your feet. Want one?" % MEDPACK_PRICE,
-	], Callable(self, "_buy_medpack"), "Buy (%d cr)" % MEDPACK_PRICE)
-
-
-func _buy_medpack() -> void:
-	if credits < MEDPACK_PRICE:
-		sfx("deny")
-		_say("Maren", ["[sad] You're short. Come back when you have %d credits. If it's urgent, collapse outside and someone will carry you in." % MEDPACK_PRICE])
-		return
-	_money(-(MEDPACK_PRICE), "Medbay")
-	_give("medpack", 1)
-	sfx("coin")
-	_toast("Bought a medpack  -%d credits" % MEDPACK_PRICE)
-
-
-# ---------------------------------------------------------------- Bram's job
-
-func _bram_job() -> void:
-	if job_active:
-		var left: int = JOB_CRATES - job_delivered
-		_say("Bram", ["Fabrication shop next to my place, south lift off the square, yellow pad in the cargo bay. %d to go." % left])
-	else:
-		_say("Bram", [
-			"%d crates from the fabrication shop next to my place, down to the cargo bay. %d credits each, and %d more for the last."
-					% [JOB_CRATES, JOB_PAY_EACH, JOB_BONUS],
-			"Interested?",
-		], Callable(self, "_accept_job"), "Take the job")
-
-
-func _accept_job() -> void:
-	job_active = true
-	job_delivered = 0
-	_say("Bram", ["Good. Take the south lift off the square and look for the yellow pad in the cargo bay. One crate at a time."])
-
-
-func _deliver_crate() -> void:
-	player.set_carrying(false)
-	job_delivered += 1
-	_money(JOB_PAY_EACH, "Bram's crates")
-	sfx("coin")
-	if job_delivered >= JOB_CRATES:
-		_money(JOB_BONUS, "Bram's crates")
-		job_active = false
-		job_done_today = true
-		_toast("Job done  +%d cr  (Bram has more tomorrow)" % (JOB_PAY_EACH + JOB_BONUS))
-	else:
-		_toast("+%d cr  (%d of %d delivered)" % [JOB_PAY_EACH, job_delivered, JOB_CRATES])
 
 
 # ---------------------------------------------------------------- ship repair
@@ -3232,7 +3190,7 @@ func _use_tool() -> void:
 			if not player.tool_action(_tool_art(item), "laser"):
 				player.show_tool(_item_icon(item))
 			sfx("zap", 0.7, -6.0)
-			energy = maxi(0, energy - CUT_ENERGY)
+			energy = maxi(0, energy - shops.tool_energy(CUT_ENERGY))
 	elif use == "weapon":
 		if swing_cd > 0.0:
 			return
@@ -3346,8 +3304,7 @@ func _mine(t: Dictionary) -> void:
 	var item: String = str(node.get("give", node["item"]))
 	var amount: int = int(node.get("yield", 1))
 	if item == "geode":
-		var gems: Array = GEODE_GEMS.get(_cav_band(maxi(cav_floor, 1)), ["moon_opal"])
-		item = str(gems[randi() % gems.size()])          # cut open, a geode gives what grew inside
+		item = "cavern_geode"            # Job cracks it open at his bench (scripts/shops.gd, Zachary 23 Nov)
 	node["hits"] = int(node["hits"]) - 1
 	if int(node["hits"]) <= 0:
 		var s: Sprite2D = node["sprite"]
@@ -3361,7 +3318,9 @@ func _mine(t: Dictionary) -> void:
 		else:
 			s.frame = 1
 	_give(item, amount)
-	energy = maxi(0, energy - CUT_ENERGY)
+	energy = maxi(0, energy - shops.tool_energy(CUT_ENERGY))
+	if current_area == "mine" or current_area == "tunnels":
+		shops.maybe_geode(current_area)
 	if bool(node.get("cav", false)) and item == "stone" and int(node["hits"]) <= 0:
 		cav_rocks_left -= 1
 		_maybe_open_shaft(t, node)
@@ -3802,57 +3761,42 @@ func _choose_weapon(kind: String) -> void:
 			"(Select it on your hotbar and press Space or click to swing. A ration pack from Jasper mends you.)"])
 
 
-# ---------------------------------------------------------------- selling to Bram
+# ---------------------------------------------------------------- the shipping crate (Zachary, 23 Nov)
+# The crate by your front door, as in Stardew Valley: put in anything that sells (ShopData.VALUE) and Bram collects
+# it overnight. The crate pays full value, the most anything sells for (Zachary, 23 Nov: "shipping bin pays most");
+# the day's recap shows it as "Shipped to Bram". Use the crate with something that sells picked on your hotbar to put
+# that whole stack in, or with nothing that sells picked to ship everything you carry that sells.
 
+# What everything you carry that sells is worth at the crate (worn clothes and armour stay on you).
 func _bars_value() -> int:
 	var total := 0
-	for item in SELL:
-		total += _count(item) * int(SELL[item])
+	for item in items:
+		if ShopData.VALUE.has(item):
+			total += (_count(str(item)) - shops._worn(str(item))) * ShopData.value(str(item))
 	return total
 
-
-func _bram_sell() -> void:
-	_say("Bram", ["[happy] Now those I can move. %d bars, %d shells and hides. I'll give you %d credits for the lot."
-			% [_count("iron_bar") + _count("copper_bar"), _count("chitin") + _count("hide"), _bars_value()]],
-			Callable(self, "_do_sell"), "Sell all", Callable(self, "_bram_default"), "Keep them")
-
-
-func _do_sell() -> void:
-	var value: int = _bars_value()
-	for item in SELL:
-		items[item] = 0
-	_sync_slots()
-	_money(value, "Sold to Bram")
-	sfx("coin")
-	_toast("Sold  +%d cr" % value)
-
-
-# ---------------------------------------------------------------- the shipping crate (Zachary, 23 Nov)
-# The crate by your front door, as in Stardew Valley: put in anything Bram buys (SELL) and he collects it overnight
-# and pays his prices; the day's recap shows it as "Shipped to Bram". Use the crate with something he buys picked on
-# your hotbar to put that whole stack in, or with nothing he buys picked to ship everything you carry that he buys.
 
 func _shipping_value() -> int:
 	var total := 0
 	for item in shipping:
-		total += int(shipping[item]) * int(SELL.get(item, 0))
+		total += int(shipping[item]) * ShopData.value(str(item))
 	return total
 
 
 func _shipping_crate() -> void:
 	var held: String = slots[selected]
-	if held != "" and SELL.has(held) and _count(held) > 0:
+	if held != "" and ShopData.VALUE.has(held) and _count(held) > 0:
 		_ship(held, _count(held))
 		_toast("Shipped %d %s  (Bram pays %d cr in the morning)" % [int(shipping[held]), _item_name(held).to_lower(), _shipping_value()])
 		return
-	var lines: Array = ["Bram empties this crate overnight and pays for whatever is in it."]
+	var lines: Array = ["Bram empties this crate overnight and pays full value for whatever is in it."]
 	if not shipping.is_empty():
 		lines.append("In it so far: %d credits' worth." % _shipping_value())
 	if _bars_value() > 0:
-		lines.append("Put in everything you carry that he buys? That's %d credits more." % _bars_value())
+		lines.append("Put in everything you carry that sells? That's %d credits more." % _bars_value())
 		_say("Shipping crate", lines, Callable(self, "_ship_all"), "Ship it all")
 	else:
-		lines.append("(Pick something Bram buys on your hotbar, then use the crate to put it in.)")
+		lines.append("(Pick something that sells on your hotbar, then use the crate to put it in.)")
 		_say("Shipping crate", lines)
 
 
@@ -3863,10 +3807,10 @@ func _ship(item: String, n: int) -> void:
 
 
 func _ship_all() -> void:
-	for item in SELL:
-		var n: int = _count(item)
-		if n > 0:
-			_ship(item, n)
+	for item in items.keys():
+		var n: int = _count(str(item)) - shops._worn(str(item))
+		if n > 0 and ShopData.VALUE.has(item):
+			_ship(str(item), n)
 	_toast("Shipped  (Bram pays %d cr in the morning)" % _shipping_value())
 
 
@@ -3988,13 +3932,6 @@ func _debug_repair_kit() -> void:
 		for item in needs:
 			_give(item, int(needs[item]))
 	_toast("Debug: Scrip and materials for every station repair.")
-
-
-func _bram_default() -> void:
-	if not job_done_today:
-		_bram_job()
-	else:
-		_say("Bram", [_next_repeat("Bram")])
 
 
 # ---------------------------------------------------------------- bulletin board
@@ -4120,6 +4057,11 @@ func hurt_player(amount: int, from: Vector2) -> void:
 	if hurt_cd > 0.0 or dialogue.active or ui.open or (datapad != null and datapad.blocking()):
 		return
 	hurt_cd = 0.9
+	amount = shops.damage_taken(amount)      # armour and the Anchor tonic can turn a bite aside
+	if amount <= 0:
+		sfx("click")
+		player.flash()
+		return
 	hp -= amount
 	sfx("hurt")
 	var ppos: Vector2 = player.position
@@ -4155,7 +4097,7 @@ func _collapse() -> void:
 func _eat(item: String) -> void:
 	var info: Dictionary = ItemData.ITEMS[item]
 	var gives_energy: int = int(info.get("energy", 0))
-	if hp >= MAX_HP and (gives_energy == 0 or energy >= MAX_ENERGY):
+	if hp >= MAX_HP and (gives_energy == 0 or energy >= MAX_ENERGY) and not ShopData.DRINK_EFFECTS.has(item):
 		_toast("You're not hurt" if gives_energy == 0 else "You're not hungry")
 		return
 	_give(item, -1)
@@ -4168,10 +4110,14 @@ func _eat(item: String) -> void:
 		animated = player.play_eating(appearance if not appearance.is_empty() else maker.defaults(), _held_item_picture(item))
 	if not animated:
 		player.show_tool(_item_icon(item))
+	if bool(info.get("drink", false)):
+		shops.start_drink(item)
 	if item == "medpack":
 		_toast("The medpack hisses. Everything stops hurting at once.")
-	else:
+	elif item == "ration":
 		_toast("Ration pack six. It restores you, and that is all that can be said for it.")
+	else:
+		_toast("%s: %s" % [_item_name(item), str(info.get("desc", "")).get_slice(". ", 0).trim_suffix(".")])
 
 
 # Meals and hand-picked crops use their inventory icon cropped to its painted pixels.
@@ -4389,6 +4335,9 @@ func _process(delta: float) -> void:
 	_update_inner_doors(delta)
 
 	if not paused and not travelling and not garden_busy:
+		shops.tick(delta)
+		if _welcome_due():
+			_welcome_visit()
 		minutes += delta / SECONDS_PER_GAME_MINUTE
 		if minutes >= DAY_END:
 			_pass_out()
@@ -4425,8 +4374,6 @@ func _process(delta: float) -> void:
 	hud_quest.text = ""          # quests are in the journal now (J)
 
 	var goal: String = "Ship %d/%d" % [repair_stage, REPAIRS.size()]
-	if job_active:
-		goal = "Crates %d/%d   %s" % [job_delivered, JOB_CRATES, goal]
 	hud_goal.text = goal
 
 	if toast_time > 0.0:
@@ -4546,12 +4493,6 @@ func journal() -> Array:
 		out.append(["Today's request", ["Done for today."], true])
 	else:
 		out.append(["Today's request", ["There is a new request on the bulletin board in the town square each day."], false])
-	if job_active:
-		out.append(["Bram's crates", ["Carry crates from the fabrication shop to the yellow pad in the cargo bay. %d of %d delivered." % [job_delivered, JOB_CRATES]], false])
-	elif job_done_today:
-		out.append(["Bram's crates", ["Done for today."], true])
-	else:
-		out.append(["Bram's crates", ["Bram pays for hauling, once a day. Ask him at Bram's Sundries."], false])
 	return out
 
 
@@ -4559,10 +4500,10 @@ func _next_day() -> void:
 	_grow_crops()
 	day += 1
 	minutes = float(DAY_START)
-	job_active = false
-	job_delivered = 0
-	job_done_today = false
 	player.set_carrying(false)
+	shops.drink_left = 0.0             # a drink wears off overnight
+	shops.drink = ""
+	shops._apply_drink()
 	hp = MAX_HP
 	energy = MAX_ENERGY
 	_clear_cavern()
@@ -4663,6 +4604,9 @@ func _save_game() -> void:
 	cfg.set_value("home", "chests", chests)
 	cfg.set_value("home", "machines", machines)
 	cfg.set_value("farm", "seeds_taken_day", seeds_taken_day)
+	cfg.set_value("game", "welcomed", welcomed)
+	cfg.set_value("shops", "known_recipes", shops.known_recipes)
+	cfg.set_value("shops", "wearing", shops.wearing)
 	cfg.set_value("access", "doors", door_locks)
 	cfg.set_value("ship", "hull", ship_hull)
 	cfg.set_value("ship", "flights", flights)
@@ -4752,6 +4696,12 @@ func _load_game() -> void:
 	if saved_farm is Dictionary:
 		farm = saved_farm
 	seeds_taken_day = int(cfg.get_value("farm", "seeds_taken_day", -1))
+	# Saves from before the welcome visit (23 Nov) are past day one or already have their tools.
+	welcomed = bool(cfg.get_value("game", "welcomed", day > 1 or int(items.get("hoe", 0)) > 0))
+	var saved_recipes = cfg.get_value("shops", "known_recipes", [])
+	shops.known_recipes = saved_recipes if saved_recipes is Array else []
+	var saved_wearing = cfg.get_value("shops", "wearing", {})
+	shops.wearing = saved_wearing if saved_wearing is Dictionary else {}
 	var saved_placed = cfg.get_value("home", "placed", [])
 	var saved_chests = cfg.get_value("home", "chests", {})
 	chests = saved_chests if saved_chests is Dictionary else {}
@@ -5295,7 +5245,6 @@ func _water_garden(t: Dictionary) -> void:
 # plant seeds on it, water it, and each night a watered crop grows a day. Right-click a ripe crop to pick it.
 # One tile is one character wide. The crops are placeholders until the economy chat's crop list.
 const FARM_ENERGY := 2              # energy per dig or watering, as in Stardew
-const SEED_HANDFUL := 5             # what the seed rack gives of each kind, once a day (until shops open)
 const CROPS := {
 	"crater_potato": {"days": 4, "stages": 4, "regrow": 0, "item": "crater_potato"},
 	"moon_wheat": {"days": 3, "stages": 3, "regrow": 0, "item": "moon_wheat"},
@@ -5405,7 +5354,7 @@ func _farm_energy() -> bool:
 		sfx("deny")
 		_toast("Too tired. Eat something, or sleep.")
 		return false
-	energy -= FARM_ENERGY
+	energy -= shops.tool_energy(FARM_ENERGY)
 	return true
 
 
@@ -5467,30 +5416,80 @@ func _irrigate(t: Dictionary) -> void:
 	_toast("Every dug tile is watered")
 
 
-func _take_farm_tools() -> void:
-	if _count("hoe") > 0 and _count("watering_can") > 0:
-		_toast("You already have a hoe and a watering can")
-		return
-	var first: bool = _count("hoe") == 0
-	if _count("hoe") == 0: _give("hoe", 1)
-	if _count("watering_can") == 0: _give("watering_can", 1)
-	sfx("quest")
-	_toast("You take a hoe and a watering can. Evarra won't miss them.")
-	if first and not farm.values().any(func(f): return bool(f.get("bed", false))):
-		_give("hydro_bed", 2)
-		_toast("+2 Hydroponic beds: set them down anywhere on the soil (more at the workbench)")
+# ---------------------------------------------------------------- your first morning (Zachary, 23 Nov)
+# Bram and Jasper come round to your apartment on day one: a rundown of the station, then a hoe, a watering can,
+# two hydroponic beds and a bag of seeds. They wait by the door until 09:00 (WELCOME_SCHEDULE), then go to work.
+# The visit starts by itself the first time you are home on day one with nothing else open.
+
+const WELCOME_SEEDS := {"crater_potato_seeds": 15, "moon_wheat_seeds": 10}
+const WELCOME_SCHEDULE := {
+	"Bram": [0, "aptPlayer", 13, 21, 26, "u", "idle", 0],
+	"Jasper": [0, "aptPlayer", 15, 21, 26, "u", "idle", 0],
+}
+const WELCOME_UNTIL := 540        # 09:00
 
 
-# Until the shops open, the seed rack gives a handful of each seed once a day, so farming can be tried out.
-func _take_seeds() -> void:
-	if seeds_taken_day == day:
-		_toast("You've had today's seeds. The rack refills overnight.")
-		return
-	seeds_taken_day = day
-	for seed_id in ["crater_potato_seeds", "moon_wheat_seeds", "star_tomato_seeds"]:
-		_give(seed_id, SEED_HANDFUL)
+# Day one's schedule for Bram or Jasper: by your door until 09:00, then their usual day from wherever it has got to.
+func _welcome_schedule(who: String) -> Array:
+	var out: Array = [WELCOME_SCHEDULE[who]]
+	var normal: Array = MapData.SCHEDULES[who]
+	var last: Array = []
+	for e in normal:
+		if int(e[0]) <= WELCOME_UNTIL:
+			last = e.duplicate()
+		else:
+			if not last.is_empty():
+				last[0] = WELCOME_UNTIL
+				out.append(last)
+				last = []
+			out.append(e)
+	if not last.is_empty():
+		last[0] = WELCOME_UNTIL
+		out.append(last)
+	return out
+
+
+func _welcome_due() -> bool:
+	return not welcomed and day == 1 and current_area == "aptPlayer"
+
+
+func _welcome_visit() -> void:
+	welcomed = true
+	for who in ["Bram", "Jasper"]:
+		if persons.has(who):
+			persons[who]["met"] = true
+			_emote(who, &"hello")
+	_say("Bram", [
+		"[happy] Knock knock! You're up. Bram, salvage broker; Bram's Sundries, on the town square. And this is Jasper.",
+		"S.A.R.A. asked us to show you the ropes. Quick version: the Landing runs on scrip, and you earn it.",
+		"Cut ore in Job's mine and smelt it, grow crops in the agri dome, or salvage what the void leaves lying about.",
+		"Everybody buys their own kind of thing: Tikka in Engineering takes metal and parts, Jasper takes crops, Job takes pretty rocks.",
+		"And I take anything, at a slightly worse price. Or drop it in the crate by your door, and I'll collect overnight and pay full value.",
+	])
+	_say_then(Callable(self, "_welcome_jasper"))
+
+
+func _welcome_jasper() -> void:
+	_say("Jasper", [
+		"[happy] And I'm the one who feeds everyone. Dinner's at six in the mess hall, and I sell meals and recipes all day.",
+		"Your kitchenette works, by the way. Learn a recipe from me and cook it here: it's cheaper than eating out.",
+		"We brought you something to start with. The agri dome's been waiting for someone with time to dig.",
+	])
+	_say_then(Callable(self, "_welcome_gifts"))
+
+
+func _welcome_gifts() -> void:
+	if _count("hoe") == 0:
+		_give("hoe", 1)
+	if _count("watering_can") == 0:
+		_give("watering_can", 1)
+	_give("hydro_bed", 2)
+	for seed_id in WELCOME_SEEDS:
+		_give(seed_id, int(WELCOME_SEEDS[seed_id]))
 	sfx("quest")
-	_toast("+%d each: crater potato, moon wheat and star tomato seeds" % SEED_HANDFUL)
+	_toast("+ Hoe, watering can, 2 hydroponic beds, %d potato and %d wheat seeds" % [int(WELCOME_SEEDS["crater_potato_seeds"]), int(WELCOME_SEEDS["moon_wheat_seeds"])])
+	_say("Bram", ["Field's in the agri dome, west of your door. Talk to any of us at work to shop. Good luck, pilot."])
+	_save_game()
 
 
 # ---------------------------------------------------------------- the Caverns

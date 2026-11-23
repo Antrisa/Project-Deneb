@@ -11,6 +11,7 @@ extends Node
 
 const PAD_SCENE := "res://datapad/datapad.tscn"
 const ItemData = preload("res://scripts/item_data.gd")
+const ShopData = preload("res://scripts/shop_data.gd")
 const MapDataRef = preload("res://scripts/map_data.gd")
 const HEART_POINTS := 5            # friendship points per heart, as on the old Friends page
 const SEASONS := [["Spring", 28], ["Summer", 31], ["Autumn", 31], ["Winter", 31]]   # NPC master doc, section 2
@@ -65,7 +66,7 @@ const AREA_PLACE := {
 const QUEST_GIVER := {
 	"Get off this moon": ["Tikka", "Engineering"], "A hand in the mine": ["Job", "Mine"],
 	"Clear the north tunnels": ["Job", "Mine"], "Today's request": ["Bulletin board", "Town square"],
-	"Bram's crates": ["Bram", "Town square"], "The caverns": ["Vzz'ket", "Mine"],
+"The caverns": ["Vzz'ket", "Mine"],
 }
 
 var world                    # main.gd
@@ -94,7 +95,10 @@ func setup(game) -> bool:
 		pad.extra_textures[id] = _icon(int(info["icon"]))
 	pad.recipes = _recipes()
 	pad.produce_items = []
-	pad.gear_types = {}            # no equipment system yet
+	# What fits each gear-page slot (23 Nov): armour, boots, and the clothes that show over them (ShopData.WEAR).
+	pad.gear_types = {}
+	for id in ShopData.WEAR:
+		pad.gear_types[id] = str(ShopData.WEAR[id][0])
 	pad.skills = []                # no skills yet: the page says "No skills recorded"
 	pad.crew = []
 	pad.jobs = []
@@ -113,7 +117,13 @@ func setup(game) -> bool:
 	pad.quit_requested.connect(_on_quit)
 	pad.slots_swapped.connect(_on_slots_swapped)
 	pad.storage_moved.connect(_on_storage_moved)
+	pad.equipment_changed.connect(_on_equipment_changed)
 	return true
+
+
+func _on_equipment_changed(slots: Dictionary) -> void:
+	if world.shops != null:
+		world.shops.set_wearing(slots)
 
 
 # True while a datapad page, the station menu, the emote picker or the day summary is open: the game pauses.
@@ -150,6 +160,10 @@ func sync(modal: bool) -> void:
 		_sent["selected"] = int(world.selected)
 		pad.bag_slots = bag
 		pad.set_inventory(counts, quick, int(world.selected))
+		# What you wear comes from the save the first time the bag is known (scripts/shops.gd wearing).
+		if not bool(_sent.get("gear", false)) and world.shops != null:
+			_sent["gear"] = true
+			pad.set_equipment(world.shops.wearing)
 	if str(pad.page) == "Map":
 		var spot := [str(world.current_area), world.player_tile(), int(world.minutes)]
 		if spot != _sent.get("map_spot"):
@@ -286,6 +300,8 @@ func _icon(index: int) -> Texture2D:
 
 
 func _category(info: Dictionary) -> String:
+	if info.has("wear"):
+		return "Gear"
 	match str(info.get("use", "")):
 		"mine", "weapon":
 			return "Tools"
@@ -301,7 +317,11 @@ func _kind(id: String, info: Dictionary) -> String:
 		"weapon":
 			return "Weapon"
 		"eat":
+			if bool(info.get("drink", false)):
+				return "Drink"
 			return "Food" if int(info.get("energy", 0)) > 0 else "Medicine"
+	if info.has("wear"):
+		return "Armour" if str(info["wear"]) in ["head", "armor", "boots"] else "Clothing"
 	if id.ends_with("_ore"):
 		return "Raw material"
 	if id.ends_with("_bar"):

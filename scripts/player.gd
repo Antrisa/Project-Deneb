@@ -7,6 +7,7 @@ const MapData = preload("res://scripts/map_data.gd")
 
 const SPEED := 70.0
 const CARRY_SPEED := 50.0
+var speed_mult := 1.0               # drinks: Spacer fizz is faster, Anchor tonic slower (scripts/shops.gd)
 
 var world            # set by main.gd before entering the tree
 var frozen := false
@@ -554,7 +555,7 @@ func _move_player(delta: float) -> void:
 	var start := position
 	# put down somewhere already on a wall's picture (an old save, a door): let them walk off it
 	var faces := not _blocked(position)
-	var speed: float = CARRY_SPEED if carrying else SPEED
+	var speed: float = (CARRY_SPEED if carrying else SPEED) * speed_mult
 	var step: Vector2 = dir * speed * delta
 	var next_x: Vector2 = position + Vector2(step.x, 0)
 	if not _blocked(next_x, faces):

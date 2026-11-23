@@ -3,6 +3,8 @@ extends Control
 signal item_used(item_id: String)
 signal craft_requested(recipe_index: int)
 signal purchase_requested(item_id: String, unit_price: int)
+# Echo Landing shops (23 Nov): a button on the Shop page was pressed; action is "<verb>/<key>" (scripts/shops.gd).
+signal shop_action(action: String)
 signal hotbar_changed(slots: Array, selected_slot: int)
 signal menu_changed(page_name: String)
 signal setting_changed(setting: String, enabled: bool)
@@ -35,9 +37,11 @@ const TAB_LINERS := {"Inventory":"inventory_liner","Crafting":"mod_workshop","Sk
 const TAB_NAMES := ["Inventory","Crafting","Skills","NPC relations","Map","Quests","Settings"]
 const TAB_ICONS := ["inventory","craft","skills","crew","map","journal","system"]
 # Weapons and tools live on the quick slots (the hotbar), so the gear page has no slots for them (22 Nov).
+# Echo Landing (23 Nov): armour on the left (head, body, boots), clothes that show over it on the right (hat,
+# outfit), the laser's parts below. The rings are gone. Wearables are in scripts/shop_data.gd WEAR.
 const GEAR_SLOTS := [
-	["head","Head","head","Head / outerwear"],
-	["armor","Armor","armor","Body armor"],["ring1","Ring 1","ring","Ring 1"],["ring2","Ring 2","ring","Ring 2"],
+	["head","Head","head","Head armour"],["armor","Armour","armor","Body armour"],["boots","Boots","boots","Boots"],
+	["hat","Hat","hat","Hat (shows over your armour)"],["outfit","Outfit","outfit","Outfit (shows over your armour)"],
 	["lens","Lens","lens","Laser lens"],["power","Power pack","power","Laser power pack"]]
 var gear_types: Dictionary = Sample.GEAR_TYPES.duplicate()
 var equipment: Dictionary = {}
@@ -109,7 +113,10 @@ var inventory_capacity := 24
 var bag_slots: Array = []
 var _held := -1              # the bag slot whose item is being carried by the pointer (-1: none)
 var _mouse_ui := Vector2.ZERO
-var shop_stock: Array = []
+# Echo Landing shops (23 Nov): tabs of rows, filled by scripts/shops.gd. Each tab is [name, rows]; each row is
+# [icon id, title, subtitle, price text, buttons], each button [action, label, enabled].
+var shop_tabs: Array = []
+var shop_tab := 0
 # A chest you built (23 Nov): the Storage page lists your bag and the chest side by side, four rows a page;
 # Store / Take move a whole stack across (main.gd chest_move).
 var storage_name := ""
@@ -231,12 +238,22 @@ func show_dialogue(speaker: String, message: String, portrait_key: String = "") 
 	dialogue = {"speaker":speaker,"lines":_dialogue_pages(message),"index":0,"portrait":portrait_key}
 	show_page("Dialogue")
 
-func show_shop(merchant: String, stock: Array) -> void:
-	_return_page = page if (page in TABS or page=="Relics") else "HUD"
+func show_shop(merchant: String, tabs: Array, keep_place := false) -> void:
+	if page!="Shop":
+		_return_page = page if (page in TABS or page=="Relics") else "HUD"
 	shop_name = merchant
-	shop_stock = stock.duplicate(true)
-	shop_page=0
-	show_page("Shop")
+	shop_tabs = tabs.duplicate(true)
+	if not keep_place:
+		shop_tab=0
+		shop_page=0
+	shop_tab=clampi(shop_tab,0,maxi(0,shop_tabs.size()-1))
+	shop_page=clampi(shop_page,0,maxi(0,ceili(_shop_rows().size()/4.0)-1))
+	if page=="Shop": refresh()
+	else: show_page("Shop")
+
+func _shop_rows() -> Array:
+	if shop_tab<0 or shop_tab>=shop_tabs.size(): return []
+	return shop_tabs[shop_tab][1]
 
 func show_storage(title: String, chest_list: Array, bag_list: Array) -> void:
 	_return_page = page if (page in TABS or page=="Relics") else "HUD"
@@ -610,17 +627,17 @@ func _inventory() -> void:
 		_txt(66,detail_y+7,"No items in this group","body",MUTED)
 	_img("gear_display",520,136,86,123)
 	_img(player_sprite,539,146,48,96)
-	# head and armour on the left of the figure, the rings on the right, the laser parts below
+	# armour on the left of the figure, clothes on the right, the laser parts below
 	for i in GEAR_SLOTS.size():
 		var slot: Array=GEAR_SLOTS[i]
-		var x: int=420 if i<2 else 613
-		var y:=139+40*i if i<2 else 139+40*(i-2)
-		var width:=94 if i<2 else 88
-		if i>=4:
-			x=420+(i-4)*141
+		var x: int=420 if i<3 else 613
+		var y:=139+40*i if i<3 else 139+40*(i-3)
+		var width:=94 if i<3 else 88
+		if i>=5:
+			x=420+(i-5)*141
 			y=280
 			width=138
-		_gear_cell(slot,x,y,width,32 if i<4 else 26)
+		_gear_cell(slot,x,y,width,32 if i<5 else 26)
 	_txt(421,264,"MINING LASER SOCKETS","micro",MUTED)
 	_rect(420,316,280,1,RULE)
 	_txt(421,320,"QUICK ACCESS","micro",MUTED)
@@ -1141,19 +1158,30 @@ func _system() -> void:
 		_txt(434-_width(keys[i],"label")/2,y+1,keys[i],"label")
 		_txt(478,y,actions[i],"body")
 
+# Echo Landing (23 Nov): a tab per kind of business (Buy, Sell, Crack, Cook), four rows a page, up to two buttons
+# a row. scripts/shops.gd builds the rows and acts on the buttons (shop_action), then sends the rows again.
 func _shop() -> void:
 	_heading(shop_name,str(station_scrip)+" SCRIP")
-	_txt(70,146,"AVAILABLE SUPPLIES","micro",MUTED)
-	_pager("shop_pages",69,350,shop_stock.size(),shop_page,625)
+	for t in shop_tabs.size():
+		_btn("shoptab/"+str(t),69+t*104,139,98,21,str(shop_tabs[t][0]),t==shop_tab)
+	var rows:=_shop_rows()
+	_pager("shop_pages",69,350,rows.size(),shop_page,625)
+	if rows.is_empty():
+		_txt(70,180,"Nothing here right now.","body",MUTED)
 	var first:=shop_page*4
-	for i in range(first,mini(first+4,shop_stock.size())):
-		var v:Array=shop_stock[i]
-		if not catalog.has(v[0]):continue
+	for i in range(first,mini(first+4,rows.size())):
+		var v:Array=rows[i]
 		var y:=166+(i-first)*45
 		_rect(69,y,627,40,"#f0eee7")
 		_bevel(69,y,627,40,"#fffdf5","#d8d1c3")
-		_img(v[0],80,y+3,33,33);_txt(126,y+9,catalog[v[0]][0],"strong");_right(554,y+10,str(v[1])+" scrip","label",MUTED)
-		_btn("buy/"+str(i),576,y+7,108,25,"Buy",true,station_scrip>=int(v[1]))
+		if catalog.has(str(v[0])) or extra_textures.has(str(v[0])): _img(str(v[0]),80,y+3,33,33)
+		_txt(126,y+3,str(v[1]),"strong")
+		_txt(126,y+22,str(v[2]),"micro",MUTED)
+		_right(476,y+11,str(v[3]),"label",MUTED)
+		var buttons:Array=v[4]
+		for b in buttons.size():
+			var bt:Array=buttons[b]
+			_btn("shop/"+str(bt[0]),486+b*105,y+7,100,25,str(bt[1]),b==0,bool(bt[2]))
 func _storage() -> void:
 	_heading(storage_name,"STORAGE")
 	_txt(70,146,"YOUR BAG","micro",MUTED)
@@ -1418,7 +1446,7 @@ func _activate(id: String) -> void:
 		"crew_pages":
 			gift_page=0
 			crew_index=clampi((floori(crew_index/4.0)+(1 if arg=="next" else -1))*4,0,crew.size()-1)
-		"shop_pages":shop_page=clampi(shop_page+(1 if arg=="next" else -1),0,maxi(0,ceili(shop_stock.size()/4.0)-1))
+		"shop_pages":shop_page=clampi(shop_page+(1 if arg=="next" else -1),0,maxi(0,ceili(_shop_rows().size()/4.0)-1))
 		"store_pages":storage_page_bag=clampi(storage_page_bag+(1 if arg=="next" else -1),0,maxi(0,ceili(storage_bag.size()/4.0)-1))
 		"take_pages":storage_page_chest=clampi(storage_page_chest+(1 if arg=="next" else -1),0,maxi(0,ceili(storage_chest.size()/4.0)-1))
 		"store","take":
@@ -1458,10 +1486,10 @@ func _activate(id: String) -> void:
 			if arg=="hints": hints=not hints
 			elif arg=="scenery": scenery=not scenery
 			setting_changed.emit(arg,hints if arg=="hints" else scenery)
-		"buy":
-			var i:=arg.to_int()
-			if i>=0 and i<shop_stock.size() and station_scrip>=int(shop_stock[i][1]):
-				purchase_requested.emit(str(shop_stock[i][0]),int(shop_stock[i][1]))
+		"shop": shop_action.emit(arg)
+		"shoptab":
+			shop_tab=clampi(arg.to_int(),0,maxi(0,shop_tabs.size()-1))
+			shop_page=0
 	refresh()
 
 func _at(p: Vector2) -> String:
