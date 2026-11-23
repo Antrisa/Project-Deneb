@@ -774,7 +774,10 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
                "bl": opn(-1, 0) & opn(0, 1) & opn(-1, 1) & (sol(-1, -1) | sol(1, 1)),
                "br": opn(1, 0) & opn(0, 1) & opn(1, 1) & (sol(1, -1) | sol(-1, 1))}
         for k_, m_ in cut.items():
-            m_ = tiles & m_
+            # (22 Nov) door_near was worked out but never used, so the wall either side of a doorway or lift
+            # was cut into a triangle that looked walkable and wasn't, e.g. the core entrance on the Survey
+            # Level and the Engineering lift. Those tiles now stay square, matching where you can walk.
+            m_ = tiles & m_ & ~door_near
             for ty, tx in zip(*np.nonzero(m_)):
                 B[ty * PX:(ty + 1) * PX, tx * PX:(tx + 1) * PX] &= ~tri[k_]
     if style == "smooth":
