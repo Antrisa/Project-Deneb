@@ -65,6 +65,17 @@ func open_event(new_event: Dictionary, cb: Callable) -> void:
 	screen.redraw()
 
 
+# A window that only reports something (the salvage after a won fight): the text and gains, then Continue.
+func show_result(title: String, text: String, gains: Array, cb: Callable) -> void:
+	event = {"title": title, "text": text, "choices": []}
+	outcome = {"text": text, "gains": gains, "fight": ""}
+	on_done = cb
+	showing_window = true
+	open = true
+	visible = true
+	screen.redraw()
+
+
 func close() -> void:
 	open = false
 	visible = false
@@ -173,7 +184,7 @@ func _paint() -> void:
 	if outcome.is_empty():
 		below = mini(4, (event.get("choices", []) as Array).size()) * ROW
 	else:
-		below = (outcome.get("gains", []) as Array).size() * LINE + 4.0
+		below = _gain_rows() * LINE + 4.0
 	var height: float = 30.0 + body.size() * LINE + 8.0 + below + 4.0
 	var top: float = clampf(bottom - height, bottom - 262.0, bottom - 122.0)
 	_paint_scene(Rect2(left, 46, wide, top - 50.0))
@@ -191,13 +202,22 @@ func _paint() -> void:
 			_paint_choice(i, choices[i], Rect2(left + 9.0, y + i * ROW, wide - 18.0, 24))
 		_status("Choose with a click, or keys 1 to %d." % mini(4, choices.size()))
 	else:
-		for g in outcome.get("gains", []):
-			s.text(left + 11.0, y, str(g[0]), "label", Color(g[1]).darkened(0.35))
-			y += LINE
+		# More than six lines (a big salvage) go in two columns.
+		var gains: Array = outcome.get("gains", [])
+		var rows: int = _gain_rows()
+		for gi in gains.size():
+			var g: Array = gains[gi]
+			var gx: float = left + 11.0 + (wide * 0.5 if gi >= rows else 0.0)
+			s.text_fit(gx, y + (gi % rows) * LINE, wide * 0.5 - 16.0 if gains.size() > 6 else wide - 22.0, str(g[0]), "label", Color(g[1]).darkened(0.35))
 		_status("Press E, or click Continue.")
 		s.shift(s.bottom_right())
 		s.solid_button("continue", Rect2(625, 388, 82, 22), "Continue")
 		s.shift(Vector2.ZERO)
+
+
+func _gain_rows() -> int:
+	var n: int = (outcome.get("gains", []) as Array).size()
+	return n if n <= 6 else int(ceil(n / 2.0))
 
 
 func _status(line: String) -> void:

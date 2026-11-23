@@ -68,7 +68,71 @@ const ITEMS = {
 			"desc": "Pale wheat that grows fast under the dome lights. Bram buys it; one day it will be flour."},
 	"star_tomato": {"name": "Star tomato", "icon": 30, "use": "eat", "energy": 20, "heal": 1,
 			"desc": "A five-pointed tomato, sweet and sharp. Bram pays well for them."},
+	# Salvage from beaten ships (23 Nov). Icons 31-37 are the artist's (art/items/), copied in by tools/dev/relic_art.py.
+	"scrap": {"name": "Scrap", "icon": 31, "use": "",
+			"desc": "Twisted hull, cable and broken fittings from a beaten ship. Bram takes it by the sackful."},
+	"circuit_board": {"name": "Circuit board", "icon": 32, "use": "",
+			"desc": "Pulled whole from a wrecked console. Machines and blasters will need these."},
+	"lithium_cell": {"name": "Lithium cell", "icon": 33, "use": "",
+			"desc": "A charged power cell from a ship's battery rack. Bram buys them."},
+	"rare_earths": {"name": "Rare earths", "icon": 34, "use": "",
+			"desc": "Ore from a freighter's hold. It makes the magnets inside motors."},
+	"helium_3": {"name": "Helium-3", "icon": 35, "use": "",
+			"desc": "A bottle of fusion fuel from a ship's tanks. Worth a great deal to the right buyer."},
+	"cobalt_60": {"name": "Cobalt-60", "icon": 36, "use": "",
+			"desc": "A shielded canister from deep in the Reach. Handle with care; Bram pays well for it."},
+	"void_sapphire": {"name": "Void sapphire", "icon": 37, "use": "",
+			"desc": "A deep blue gem, someone's hidden treasure. Bram pays a fortune; others might love it more."},
+	# Relics (23 Nov): rare finds for Tar'Besh's museum. Give them at his desk or to him. "relic" is the picture
+	# in art/museum/ and "gallery" the wing of cases it goes to first (MapData.MUSEUM_SLOTS). "pirate" relics drop
+	# from beaten Rabble ships; the others come from space events ("relic: <name>" in scripts/space_events.gd).
+	"relic_pilgrim_bell": {"name": "Pilgrim's bell", "icon": 38, "use": "", "relic": "pilgrim_bell", "gallery": "Peoples of the Rim",
+			"desc": "A silver bell from a pilgrim ship. It still rings true. For Tar'Besh's museum."},
+	"relic_station_crest": {"name": "Station crest plate", "icon": 39, "use": "", "relic": "station_crest", "gallery": "The first settlers",
+			"desc": "The old crest of a station long gone, unbolted from a dead beacon. For Tar'Besh's museum."},
+	"relic_duellist_bell": {"name": "Duellist's bell", "icon": 40, "use": "", "relic": "duellist_bell", "gallery": "Peoples of the Rim",
+			"desc": "A Zaa'sh pilot's mast bell, given in respect. For Tar'Besh's museum."},
+	"relic_convoy_charm": {"name": "Convoy charm", "icon": 41, "use": "", "relic": "convoy_charm", "gallery": "Peoples of the Rim",
+			"desc": "A carved charm from a refugee convoy, smooth from being held. For Tar'Besh's museum."},
+	"relic_garden_seeds": {"name": "Garden-ship seeds", "icon": 42, "use": "", "relic": "garden_seeds", "gallery": "Natural history",
+			"desc": "Strange seeds, warm to the touch, from a Vuultam garden ship. For Tar'Besh's museum."},
+	"relic_rabble_flag": {"name": "Torn Rabble banner", "icon": 43, "use": "", "relic": "rabble_flag", "gallery": "Precursor gallery", "pirate": true,
+			"desc": "A raider's banner, scorched where you hit them. For Tar'Besh's museum."},
+	"relic_bone_dice": {"name": "Pirate's bone dice", "icon": 44, "use": "", "relic": "bone_dice", "gallery": "Precursor gallery", "pirate": true,
+			"desc": "Loaded, of course. Found in a raider captain's pocket. For Tar'Besh's museum."},
+	"relic_star_compass": {"name": "Raider's star compass", "icon": 45, "use": "", "relic": "star_compass", "gallery": "Precursor gallery", "pirate": true,
+			"desc": "A brass compass that points at no star you know. For Tar'Besh's museum."},
+	"relic_captain_signet": {"name": "Rabble captain's signet", "icon": 46, "use": "", "relic": "captain_signet", "gallery": "Precursor gallery", "pirate": true,
+			"desc": "A heavy gold ring with a red stone, worn by a Rabble captain. For Tar'Besh's museum."},
+	"relic_gold_tooth": {"name": "Raider's gold tooth", "icon": 47, "use": "", "relic": "gold_tooth", "gallery": "Precursor gallery", "pirate": true,
+			"desc": "A gold fang on a cord. You decide not to ask. For Tar'Besh's museum."},
+	"relic_captain_log": {"name": "Pirate captain's log", "icon": 48, "use": "", "relic": "captain_log", "gallery": "Precursor gallery", "pirate": true,
+			"desc": "Years of raids in a cramped hand, with the Landing on the last page. For Tar'Besh's museum."},
 }
+
+# The relics, and the ones Rabble ships can drop.
+static func relics() -> Array:
+	var out: Array = []
+	for id in ITEMS:
+		if ITEMS[id].has("relic"):
+			out.append(id)
+	return out
+
+
+static func pirate_relics() -> Array:
+	var out: Array = []
+	for id in ITEMS:
+		if bool(ITEMS[id].get("pirate", false)):
+			out.append(id)
+	return out
+
+
+# The relic item with this name ("Pilgrim's bell"), or "" (space events name relics by their names).
+static func relic_named(relic_name: String) -> String:
+	for id in ITEMS:
+		if ITEMS[id].has("relic") and str(ITEMS[id]["name"]).to_lower() == relic_name.to_lower():
+			return id
+	return ""
 
 # What a furnace makes from each ore you can hold.
 const SMELTS = {"iron_ore": "iron_bar", "copper_ore": "copper_bar", "gold_ore": "gold_bar", "titanium_ore": "titanium_bar"}

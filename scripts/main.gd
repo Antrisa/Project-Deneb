@@ -70,7 +70,9 @@ const SLOT_COUNT := 24             # inventory slots; the first 8 are the hotbar
 
 const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone": 1, "quartz": 12, "gold_ore": 40, "titanium_ore": 25,
 		"carbon": 6, "steel_bar": 30, "gold_bar": 90, "titanium_bar": 60,
-		"crater_potato": 18, "moon_wheat": 10, "star_tomato": 30}      # what Bram pays
+		"crater_potato": 18, "moon_wheat": 10, "star_tomato": 30,
+		"scrap": 2, "circuit_board": 45, "lithium_cell": 35, "rare_earths": 25, "helium_3": 80, "cobalt_60": 70,
+		"void_sapphire": 100}      # what Bram pays (relics are for the museum, not for sale)
 const MAX_HP := 10
 const WEAPON_DAMAGE := 2
 const TUNNEL_GOAL := 6             # creatures Job asks you to clear out of the north tunnels
@@ -123,6 +125,8 @@ var drone_parts := 0
 var ship_weapons: Array = ["burst_laser", ""]    # what's fitted in each weapon slot ("" = empty)
 var said_goodbye := false          # the send-off at launch has played
 var said_run_hint := false         # S.A.R.A. has explained free flights
+var relics_found: Array = []       # relic item ids you have ever held (so ships don't drop the same one twice)
+var museum_gifts: Dictionary = {}  # museum case (index into MapData.MUSEUM_SLOTS, as a string) -> relic item id
 var ana_found_day := -1            # the day you pulled Ana out of her ship (the Wave 2 arrival counts from it)
 var garden_watered_day := -1
 var garden_busy := false
@@ -1482,6 +1486,12 @@ func _interact(t: Dictionary) -> void:
 		if not company.is_empty():
 			_say(t.name,["%s are using this table. You watch their next move; the other table may be free." % ", ".join(company)])
 		else: community_game.start()
+	elif current_area == "museum" and kind == "look" and t.name == "Tar'Besh's desk" and _first_relic() != "":
+		_offer_relic("Tar'Besh's desk")
+	elif current_area == "museum" and kind == "look" and _gift_case_at(t.pos) != "":
+		var gift: String = _gift_case_at(t.pos)
+		_say(str(ItemData.ITEMS[gift]["name"]), [str(ItemData.ITEMS[gift]["desc"]).trim_suffix(" For Tar'Besh's museum."),
+				"The card under it reads: 'Found out in the Reach, and given to the Landing.'"])
 	elif current_area == "bay" and kind == "look" and t.name == "Hangar windows":
 		_say(t.name, [BayWindow.OBSERVATIONS[BayWindow.view_for(day)]])
 	elif current_area == "lounge" and (kind == "observe" or (kind == "look" and t.name == "Panoramic window")):
@@ -1620,6 +1630,8 @@ func _talk(who: String) -> void:
 		pass
 	elif _farewell(who):
 		pass
+	elif who == "Tar'Besh" and _first_relic() != "":
+		_offer_relic("Tar'Besh")
 	elif who == "Maren":
 		_maren_shop()
 	elif who == "Bram" and _bars_value() > 0:
@@ -1866,6 +1878,10 @@ func _launch_console() -> void:
 # scripts/ship_runs.gd makes the day's map; here the ship goes stop to stop. A run ends when you fold home (free
 # outside a fight), or when your ship is beaten (the Medbay, as always).
 const RUN_FUEL := 3                  # Freya tops the tank up to this much when you launch with less
+# Time stands still while you're out in space (the clock only runs on the station), and you always get home at
+# 8pm, or when you left if that was later (Zachary, 23 Nov).
+const RETURN_TIME := 20 * 60
+var run_enemy := ""                  # the ship being fought on a run
 var run_stops: Array = []
 var run_used: Array = []             # events already drawn this run
 var run_rng := RandomNumberGenerator.new()
@@ -1896,7 +1912,6 @@ func _arrive_run(i: int) -> void:
 	fuel = maxi(0, fuel - 1)
 	run_stop = i
 	var stop: Dictionary = run_stops[i]
-	minutes = minf(minutes + 20.0, DAY_END - 1.0)
 	if bool(stop["seen"]):
 		_toast("Nothing new here.")
 		return
@@ -1944,6 +1959,7 @@ func _after_run_event(fight: String) -> void:
 
 func _run_fight(enemy_id: String) -> void:
 	ship_map.visible = false
+	run_enemy = enemy_id
 	battle.start({"enemy": enemy_id, "story": false}, Callable(self, "_after_run_fight"), ship_hull)
 
 
@@ -1956,12 +1972,23 @@ func _after_run_fight(result: String, hull_left: int) -> void:
 	battle.close()
 	if result == "won":
 		var stop: Dictionary = run_stops[run_stop] if run_stop >= 0 else {"ring": 1, "kind": "beacon"}
-		var got: Dictionary = apply_space_effects(ShipRuns.reward(int(stop["ring"]), str(stop["kind"]) == "special", run_rng))
-		var words: Array = []
-		for g in got["gains"]:
-			words.append(str(g[0]))
-		_toast("Salvage: " + ", ".join(words))
+		var special: bool = str(stop["kind"]) == "special"
+		var got: Dictionary = apply_space_effects(ShipRuns.reward(int(stop["ring"]), special, run_rng, run_enemy, relics_found))
+		# The salvage shows in the event window over the stop, like an event's outcome.
+		ship_event.show_backdrop(stop)
+		var words: String = "The stronghold's guns fall silent. Your crew strip what they can carry before its reactor goes." if special \
+				else "Their ship drifts dark. Your crew cross over in suits and strip what they can carry."
+		ship_event.show_result("Salvage", words, got["gains"], Callable(self, "_after_salvage"))
+		return
 	_back_to_map()
+
+
+func _after_salvage(_fight: String) -> void:
+	_back_to_map()
+
+
+func _home_at_eight() -> void:
+	minutes = clampf(maxf(minutes, float(RETURN_TIME)), float(DAY_START), DAY_END - 1.0)
 
 
 # Fold home: the run ends and you're back in the Shuttle Bay with what you found.
@@ -1971,7 +1998,7 @@ func _fold_home() -> void:
 	ship_store.close()
 	run_stops = []
 	sfx("warp")
-	minutes = minf(minutes + 60.0, DAY_END - 1.0)
+	_home_at_eight()
 	_snap_residents()
 	var lines: Array = ["[happy] Welcome back. The fold drive's still warm."]
 	if ship_hull < int(ShipData.STARTER["hull"]):
@@ -2140,12 +2167,24 @@ func apply_space_effects(effects: Array) -> Dictionary:
 				spec = spec.substr(0, x)
 			_give(spec, n)
 			var item_name: String = str(ItemData.ITEMS[spec]["name"]) if ItemData.ITEMS.has(spec) else spec
-			gains.append(["%s%d %s" % ["+" if n >= 0 else "", n, item_name], good if n >= 0 else bad])
+			if ItemData.ITEMS.has(spec) and ItemData.ITEMS[spec].has("relic") and n > 0:
+				gains.append(["Relic: %s (for Tar'Besh's museum)" % item_name, note])
+			else:
+				gains.append(["%s%d %s" % ["+" if n >= 0 else "", n, item_name], good if n >= 0 else bad])
 		elif t.begins_with("fight: "):
 			fight = t.trim_prefix("fight: ").strip_edges()
 			gains.append(["They attack!", bad])
 		elif t.begins_with("relic: "):
-			gains.append(["Relic: %s (for Tar'Besh's museum, later)" % t.trim_prefix("relic: "), note])
+			var relic_name: String = t.trim_prefix("relic: ").strip_edges()
+			var relic_id: String = ItemData.relic_named(relic_name)
+			if relic_id != "" and relics_found.has(relic_id):
+				# You found this one before: a trader on the next beacon buys the spare.
+				_money(40, "Sold a spare relic")
+				gains.append(["Another %s. A trader buys the spare: +40 Scrip" % relic_name.to_lower(), good])
+			else:
+				if relic_id != "":
+					_give(relic_id, 1)
+				gains.append(["Relic: %s (for Tar'Besh's museum)" % relic_name, note])
 		elif t.begins_with("reveal: "):
 			gains.append(["Marked on your map: %s (later)" % t.trim_prefix("reveal: "), note])
 		elif parts.size() >= 2 and (parts[0].begins_with("+") or parts[0].begins_with("-")):
@@ -2264,7 +2303,7 @@ func _land_after_first_flight() -> void:
 	ship_map.close()
 	ship_event.close()
 	ship_store.close()
-	minutes = minf(minutes + 180.0, DAY_END - 1.0)
+	_home_at_eight()
 	_snap_residents()
 	var lines: Array = [
 		"[happy] You came back! With company, by the look of it.",
@@ -2285,7 +2324,7 @@ func _ship_lost() -> void:
 	ship_hull = 0
 	var lost: int = mini(credits * SHIP_LOSS_SHARE / 100, 150)
 	_money(-(lost), "Lost when your ship was beaten")
-	minutes = minf(minutes + 180.0, DAY_END - 1.0)
+	_home_at_eight()
 	hp = maxi(1, MAX_HP / 2)
 	var bed: Array = MapData.MEDBAY
 	_go_to(str(bed[0]), Vector2i(int(bed[1]), int(bed[2])), false)
@@ -2293,7 +2332,7 @@ func _ship_lost() -> void:
 	if persons.has("Maren"):
 		persons["Maren"]["met"] = true
 	_say("Maren", [
-		"[sad] Easy. Freya and Tikka towed your ship in on the station tug. You've been out for three hours.",
+		"[sad] Easy. Freya and Tikka towed your ship in on the station tug. You've been out for hours.",
 		"[angry] %d credits went on getting you both back. The ship is in the bay, and she's in a bad way." % lost,
 		"Freya will want a word before you fly again.",
 	])
@@ -2387,7 +2426,7 @@ func _ana_aboard() -> void:
 func _land_after_second_flight() -> void:
 	battle.close()
 	ship_map.close()
-	minutes = minf(minutes + 180.0, DAY_END - 1.0)
+	_home_at_eight()
 	_snap_residents()
 	_say("Garrick", [
 		"[angry] Ivan's sister. In our Medbay. On my station.",
@@ -2470,6 +2509,8 @@ func count_of(item: String) -> int:
 # Adds (or with a negative number, removes) items, and keeps the inventory slots in step.
 func _give(item: String, n: int) -> void:
 	items[item] = maxi(0, _count(item) + n)
+	if n > 0 and ItemData.ITEMS.has(item) and ItemData.ITEMS[item].has("relic") and not relics_found.has(item):
+		relics_found.append(item)
 	_sync_slots()
 
 
@@ -3477,6 +3518,8 @@ func _save_game() -> void:
 	cfg.set_value("ship", "artie_found_day", artie_found_day)
 	cfg.set_value("ship", "fuel", fuel)
 	cfg.set_value("ship", "said_run_hint", said_run_hint)
+	cfg.set_value("museum", "relics_found", relics_found)
+	cfg.set_value("museum", "gifts", museum_gifts)
 	cfg.set_value("ship", "missiles", missiles)
 	cfg.set_value("ship", "drone_parts", drone_parts)
 	cfg.set_value("ship", "weapons", ship_weapons)
@@ -3534,6 +3577,11 @@ func _load_game() -> void:
 	artie_found_day = int(cfg.get_value("ship", "artie_found_day", -1))
 	fuel = int(cfg.get_value("ship", "fuel", 6))
 	said_run_hint = bool(cfg.get_value("ship", "said_run_hint", false))
+	var saved_relics = cfg.get_value("museum", "relics_found", [])
+	relics_found = saved_relics if saved_relics is Array else []
+	var saved_gifts = cfg.get_value("museum", "gifts", {})
+	museum_gifts = saved_gifts if saved_gifts is Dictionary else {}
+	_show_museum_gifts()
 	missiles = int(cfg.get_value("ship", "missiles", 0))
 	drone_parts = int(cfg.get_value("ship", "drone_parts", 0))
 	var saved_weapons = cfg.get_value("ship", "weapons", ["burst_laser", ""])
@@ -3612,6 +3660,7 @@ func _spawn_concourse() -> void:
 		var slot: Array = MapData.MUSEUM_SLOTS[i]
 		if slot.size() > 4 and str(slot[4]) != "":
 			show_exhibit(i, str(slot[4]))
+	_show_museum_gifts()
 	for area_name in MapData.AREA_ROOF_PROPS:
 		for p in MapData.AREA_ROOF_PROPS[area_name]:
 			var roof_sprite := Sprite2D.new()
@@ -3764,6 +3813,80 @@ func _apply_prop_season() -> void:
 			path = "res://art/lunar/%s_%s.png" % [e[1], season]
 		sp.texture = load(path)
 		sp.offset.y = -sp.texture.get_height()
+
+# ---------------------------------------------------------------- museum donations (23 Nov)
+# Relics from space (item_data.gd, "relic") go to Tar'Besh: talk to him, or use his desk when he's out. Each
+# fills the first empty case in its gallery (any empty case once that wing is full) and stays there.
+
+# The first relic in your bag, or "".
+func _first_relic() -> String:
+	for id in ItemData.relics():
+		if _count(id) > 0:
+			return id
+	return ""
+
+
+func _offer_relic(speaker: String) -> void:
+	var id: String = _first_relic()
+	var relic_name: String = str(ItemData.ITEMS[id]["name"])
+	if _free_case(id) < 0:
+		_say(speaker, ["Every case in the museum is full. Tar'Besh will have to build more."])
+		return
+	var lines: Array
+	if speaker == "Tar'Besh":
+		lines = ["[happy] Is that... a %s? Where did you find it? No, tell me later. May the museum keep it?" % relic_name.to_lower()]
+	else:
+		lines = ["Tar'Besh isn't here. A tray on the desk is labelled DONATIONS in three languages.",
+			"Leave your %s for the museum?" % relic_name.to_lower()]
+	_say(speaker, lines, Callable(self, "_donate_relic").bind(id, speaker), "Donate")
+
+
+func _donate_relic(id: String, speaker: String) -> void:
+	var slot: int = _free_case(id)
+	if slot < 0 or _count(id) <= 0:
+		return
+	_give(id, -1)
+	museum_gifts[str(slot)] = id
+	show_exhibit(slot, str(ItemData.ITEMS[id]["relic"]))
+	sfx("quest")
+	var label: String = str(MapData.MUSEUM_SLOTS[slot][2])
+	if speaker == "Tar'Besh":
+		_say("Tar'Besh", ["[happy] It goes in %s, where everyone can see it. Thank you, truly." % label])
+	else:
+		_toast("Donated: %s. It's on show in %s." % [str(ItemData.ITEMS[id]["name"]), label])
+	_save_game()
+
+
+# The case a relic goes in: the first empty one in its gallery, else the first empty one anywhere; -1 if none.
+func _free_case(id: String) -> int:
+	var gallery: String = str(ItemData.ITEMS[id].get("gallery", ""))
+	var any := -1
+	for i in MapData.MUSEUM_SLOTS.size():
+		var slot: Array = MapData.MUSEUM_SLOTS[i]
+		if str(slot[4]) != "" or museum_gifts.has(str(i)):
+			continue
+		if str(slot[2]) == gallery:
+			return i
+		if any < 0:
+			any = i
+	return any
+
+
+func _show_museum_gifts() -> void:
+	for key in museum_gifts:
+		var id: String = str(museum_gifts[key])
+		if ItemData.ITEMS.has(id):
+			show_exhibit(int(key), str(ItemData.ITEMS[id]["relic"]))
+
+
+# The donated relic in the case whose Look spot is at `at` (THINGS puts it at the case's tile + (16, 24)), or "".
+func _gift_case_at(at: Vector2) -> String:
+	for key in museum_gifts:
+		var slot: Array = MapData.MUSEUM_SLOTS[int(key)]
+		if at.distance_to(Vector2(int(slot[0]) * 16 + 16, int(slot[1]) * 16 + 24)) < 6.0:
+			return str(museum_gifts[key])
+	return ""
+
 
 # Puts a picture (art/museum/<picture>.png, 24x24) on the cushion inside museum case number `slot`
 # (an index into MapData.MUSEUM_SLOTS). The case's glass is see-through, so the exhibit is drawn behind it.

@@ -13,6 +13,7 @@
 # run. Fights draw the zone's own ships or Rabble raiders (a cutter or a repainted culture ship).
 
 const SpaceEvents = preload("res://scripts/space_events.gd")
+const ItemData = preload("res://scripts/item_data.gd")
 
 const MAX_RING := 3                          # rings open on a run for now
 const ZONE_KEYS := ["Terran", "Zaa'sh", "Reach", "Collective"]   # ShipData.ZONES order; the events' zone names
@@ -166,16 +167,48 @@ static func pick_enemy(zone: String, rng: RandomNumberGenerator) -> String:
 	return RAIDERS[rng.randi() % RAIDERS.size()]
 
 
-# What a won fight pays, as event effects (main.gd apply_space_effects): Scrip growing with the ring, and a chance
-# of fuel, missiles or a drone part. The stronghold pays more.
-static func reward(ring: int, special: bool, rng: RandomNumberGenerator) -> Array:
-	var out: Array = ["+%d Scrip" % (20 + 15 * ring + rng.randi_range(0, 15) + (80 if special else 0))]
+# What a won fight pays, as event effects (main.gd apply_space_effects): Scrip growing with the ring, a chance of
+# fuel, missiles or a drone part, and the ship's salvage for the player (23 Nov, Zachary: "ships should also give
+# loot for player like hull plating, rare resources. And rare pirate relics for musem."): scrap every time, hull
+# plate and wire often, rarer things further out. Rabble ships (ids with "rabble", and the stronghold) can carry a
+# pirate relic you haven't found yet; the stronghold always does while any are left. `found` lists the relic ids
+# the player already has or has given to the museum.
+const RELIC_CHANCE := [0.0, 0.08, 0.12, 0.16, 0.2, 0.24]     # a Rabble ship carrying a relic, by ring
+
+static func reward(ring: int, special: bool, rng: RandomNumberGenerator, enemy_id := "", found: Array = []) -> Array:
+	var r: int = clampi(ring, 1, 5)
+	var out: Array = ["+%d Scrip" % (20 + 15 * r + rng.randi_range(0, 15) + (80 if special else 0))]
 	if rng.randf() < 0.4 or special:
 		out.append("+1 fuel")
 	if rng.randf() < 0.3 or special:
 		out.append("+%d missiles" % rng.randi_range(1, 2))
 	if rng.randf() < 0.25:
 		out.append("+1 drone parts")
+	# salvage
+	out.append("item: scrap x%d" % rng.randi_range(2, 3 + r))
 	if special:
 		out.append("item: hull_plate x2")
+	elif rng.randf() < 0.35:
+		out.append("item: hull_plate x1")
+	if rng.randf() < 0.3:
+		out.append("item: coil_wire x%d" % rng.randi_range(1, 2))
+	if rng.randf() < 0.1 + 0.05 * r or special:
+		out.append("item: circuit_board x1")
+	if rng.randf() < 0.15:
+		out.append("item: lithium_cell x1")
+	if r >= 2 and rng.randf() < 0.2:
+		out.append("item: rare_earths x%d" % rng.randi_range(1, 2))
+	if r >= 2 and rng.randf() < 0.08 * r:
+		out.append("item: helium_3 x1")
+	if r >= 3 and rng.randf() < 0.1:
+		out.append("item: cobalt_60 x1")
+	if rng.randf() < (0.5 if special else 0.04):
+		out.append("item: void_sapphire x1")
+	if special or enemy_id.contains("rabble"):
+		var left: Array = []
+		for id in ItemData.pirate_relics():
+			if not found.has(id):
+				left.append(id)
+		if not left.is_empty() and (special or rng.randf() < float(RELIC_CHANCE[r])):
+			out.append("item: %s x1" % str(left[rng.randi() % left.size()]))
 	return out

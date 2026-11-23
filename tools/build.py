@@ -1853,6 +1853,8 @@ save_wav("deny", tone(170, 130, 0.14, 0.45, "square", 2.0))
 
 # ================================================================ item icons, hearts, weapon swing (for the menus and hotbar)
 # Order here must match "icon" in scripts/item_data.gd.
+# Slots 31-48 (ship salvage and relics) are added straight to the hand-made items.png by tools/dev/relic_art.py;
+# a new icon drawn here should start at 49.
 IT = Img(16 * 31, 16)
 
 

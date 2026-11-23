@@ -455,9 +455,9 @@ const CULTURE_SHIPS := {
 
 # What a won fight pays: [credits, {item: count}].
 const REWARDS := {
-	"rabble_cutter": [40, {"hull_plate": 1}],
-	"ivan_flagship": [150, {"hull_plate": 2, "coil_wire": 2}],
-	"loyalist_gunship": [60, {"coil_wire": 1}],
+	"rabble_cutter": [40, {"hull_plate": 1, "scrap": 3}],
+	"ivan_flagship": [150, {"hull_plate": 2, "coil_wire": 2, "scrap": 5, "circuit_board": 1}],
+	"loyalist_gunship": [60, {"coil_wire": 1, "scrap": 3, "lithium_cell": 1}],
 }
 
 

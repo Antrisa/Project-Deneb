@@ -817,3 +817,10 @@ Tick what you want. **Built** means it's in the game now; **Agreed** means you'v
     - Freya's covered fighter.
 16. **Combat music and sounds:** weapon fire, shield hits, alarms for fire and breaches, the jump.
 17. **A difficulty setting** for ship runs (enemy hull and damage, prices).
+
+## 8. Salvage and relics (23 Nov)
+- Time stands still in space. Coming home (folding back, losing the ship, the story landings) sets the clock to 8pm, or leaves it if you left later.
+- A won fight on a run opens a **Salvage** window over the stop: Scrip, maybe fuel, missiles and drone parts, plus items for the player: scrap every time; hull plate, coil wire, circuit boards and lithium cells often; rare earths and helium-3 from ring 2; cobalt-60 on ring 3; a void sapphire now and then (half the time at the stronghold). Numbers: `ShipRuns.reward()`.
+- **Pirate relics:** a Rabble ship (any id with `rabble`) can carry one you haven't found yet (8% on ring 1, +4% a ring); the stronghold always has one while any are left. Six pirate relics plus the five from events (`relic: <name>`). A relic you already found, met again in an event, is sold for 40 Scrip.
+- **Museum:** give relics to Tar'Besh, or leave them at his desk. Each fills the first empty case in its gallery (`"gallery"` in `scripts/item_data.gd`), or any empty case. Pirate relics go beside the old pirate cutlass. Saved as `[museum] gifts`.
+- **Art:** the relic pictures in `art/museum/<name>.png` (24x24) and their inventory icons (slots 38-48 of `art/items.png`) are placeholders drawn by `tools/dev/relic_art.py`; replace them freely. Salvage icons (slots 31-37) are the artist's own from `art/items/`.
