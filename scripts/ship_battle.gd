@@ -1270,10 +1270,7 @@ func _station_spot(room: Dictionary, ship: Dictionary = {}) -> Vector2:
 	if not room.has("cells"):
 		var r: Rect2 = room["rect"]
 		return r.get_center()
-	var at: Array = _console_at(foe if ship.is_empty() else ship, room)
-	var cell: Vector2i = at[0]
-	var side: Vector2i = at[1]
-	return (Vector2(cell) + Vector2(0.5, 0.5) + Vector2(side) * 0.2) * ShipData.CELL
+	return _cell_center(_desk_tile(foe if ship.is_empty() else ship, room))
 
 
 # Which cell's wall holds a room's console, and which wall: [Vector2i cell, Vector2i side]. A console never sits
@@ -1765,18 +1762,47 @@ func _my_spot(c: Dictionary, i: int) -> Vector2:
 # between rooms. "cell" is where they are (or last stood), "cells" the cells still to walk, "goal_cell" the one
 # they're heading for.
 
-func _cell_center(cell: Vector2i) -> Vector2:
-	return (Vector2(cell) + Vector2(0.5, 0.5)) * ShipData.CELL
+# Zachary, 22 Nov: "the crew sprites aren't actually on the small square tiles, to fit 4 sprites in a 4 tile room".
+# So the squares people stand on are the floor tiles, half a room cell each way (TILE): four to a cell, and a crew
+# sprite fills one. "cell" in a person's data is one of these floor tiles.
+const TILE := 12.0                # ShipData.CELL / 2
+
+
+func _cell_center(tile: Vector2i) -> Vector2:
+	return (Vector2(tile) + Vector2(0.5, 0.5)) * TILE
+
+
+# The room cell a floor tile is in.
+func _parent(tile: Vector2i) -> Vector2i:
+	return Vector2i(floori(tile.x / 2.0), floori(tile.y / 2.0))
+
+
+func _tile_room(ship: Dictionary, tile: Vector2i) -> String:
+	return ShipData._room_at_cell(ship["rooms"], _parent(tile))
 
 
 func _room_cells(room: Dictionary) -> Array:
 	var out: Array = []
 	if room.has("cells"):
 		var r: Rect2i = room["cells"]
-		for y in range(r.position.y, r.end.y):
-			for x in range(r.position.x, r.end.x):
+		for y in range(r.position.y * 2, r.end.y * 2):
+			for x in range(r.position.x * 2, r.end.x * 2):
 				out.append(Vector2i(x, y))
 	return out
+
+
+# The floor tile in front of a station's console: the first of its cell's two tiles on that wall (the console is
+# drawn in front of it, kit2x.CONSOLE_ALONG).
+func _desk_tile(ship: Dictionary, room: Dictionary) -> Vector2i:
+	var at: Array = _console_at(ship, room)
+	var cell: Vector2i = at[0]
+	var side: Vector2i = at[1]
+	var t := cell * 2
+	if side == Vector2i(0, 1):
+		t.y += 1
+	elif side == Vector2i(1, 0):
+		t.x += 1
+	return t
 
 
 # Everyone standing on one side's ship ("me" or "foe"), theirs and yours.
@@ -1803,8 +1829,8 @@ func _pick_cell(side: String, ship: Dictionary, rid: String, who: Dictionary, st
 		if not is_same(p, who):
 			taken[p.get("goal_cell", p.get("cell", Vector2i(-1, -1)))] = true
 	var desk := Vector2i(-1, -1)
-	if str(room.get("sys", "")) in STATIONS:
-		desk = _console_at(ship, room)[0]
+	if str(room.get("sys", "")) in STATIONS and room.has("cells"):
+		desk = _desk_tile(ship, room)
 	if station and desk.x >= 0 and not taken.has(desk):
 		return desk
 	for cell in cells:                   # leave the console's cell for whoever mans it
@@ -1826,15 +1852,15 @@ func _cell_path(ship: Dictionary, from: Vector2i, to: Vector2i) -> Array:
 		var here: Vector2i = queue.pop_front()
 		if here == to:
 			break
-		var here_room: String = ShipData._room_at_cell(ship["rooms"], here)
+		var here_room: String = _tile_room(ship, here)
 		for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			var n: Vector2i = here + dir
 			if came.has(n):
 				continue
-			var n_room: String = ShipData._room_at_cell(ship["rooms"], n)
+			var n_room: String = _tile_room(ship, n)
 			if n_room == "":
 				continue
-			if n_room != here_room and not _has_door(ship, here, n):
+			if n_room != here_room and not _has_door(ship, _parent(here), _parent(n)):
 				continue
 			came[n] = here
 			queue.append(n)
@@ -1896,15 +1922,15 @@ func _move_person(c: Dictionary, ship: Dictionary, side: String, delta: float, s
 		else:
 			c["pos"] = here
 			c["walking"] = false
-			c["room"] = ShipData._room_at_cell(ship["rooms"], c["cell"])
+			c["room"] = _tile_room(ship, c["cell"])
 			c["last"] = c["room"]
 		return
 	var next: Vector2i = path[0]
 	var to: Vector2 = _cell_center(next)
-	var room_now: String = ShipData._room_at_cell(ship["rooms"], c["cell"])
-	var room_next: String = ShipData._room_at_cell(ship["rooms"], next)
+	var room_now: String = _tile_room(ship, c["cell"])
+	var room_next: String = _tile_room(ship, next)
 	if room_now != room_next:
-		var door: Dictionary = _door_between(ship, c["cell"], next)
+		var door: Dictionary = _door_between(ship, _parent(c["cell"]), _parent(next))
 		if not door.is_empty():
 			_door_pass(door)
 	if at.distance_to(to) <= step:
@@ -2430,7 +2456,7 @@ func _pose_of(c: Dictionary, ship: Dictionary, fires: Dictionary) -> Array:
 		return ["repair", int(t * 6.0) % 4, false]
 	if at_home and room.has("cells") and str(room.get("sys", "")) in STATIONS:
 		var at: Array = _console_at(ship, room)
-		if c.get("cell", Vector2i(-1, -1)) == at[0]:
+		if c.get("cell", Vector2i(-1, -1)) == _desk_tile(ship, room):
 			return _work_pose(at[1], t)
 	return ["idle", int(t * 1.5) % 2, false]
 
@@ -2736,7 +2762,7 @@ func _paint_my_window() -> void:
 	var cockpit_room: Dictionary = _room(me["rooms"], "cockpit")
 	var cockpit: Rect2 = cockpit_room["rect"]
 	var seat: Array = _console_at(me, cockpit_room)
-	var you_at: Vector2 = (Vector2(seat[0]) + Vector2(0.5, 0.5) + Vector2(seat[1]) * 0.2) * ShipData.CELL
+	var you_at: Vector2 = _cell_center(_desk_tile(me, cockpit_room))
 	var t_ms: float = Time.get_ticks_msec() / 1000.0
 	if not _paint_crew(me, xf, "player", you_at, _work_pose(seat[1], t_ms)):
 		var you: Vector2 = xf * (cockpit.get_center() + Vector2(-2, 0))      # in the seat, under the canopy
@@ -2830,7 +2856,7 @@ func _crew_pose(c: Dictionary) -> Array:
 	if str(c["task"]) == "repair":
 		return ["repair", int(t * 6.0) % 4, false]
 	if str(c["room"]) == str(c["home"]) and str(room.get("sys", "")) in STATIONS and room.has("cells") \
-			and c.get("cell", Vector2i(-1, -1)) == _console_at(foe, room)[0]:
+			and c.get("cell", Vector2i(-1, -1)) == _desk_tile(foe, room):
 		return _work_pose(_console_at(foe, room)[1], t)
 	return ["idle", int(t * 1.5) % 2, false]
 

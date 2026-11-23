@@ -409,7 +409,9 @@ def pick_airlocks(rooms, doors, n=None):
 
 
 CONSOLE_DEPTH = (2, 6)          # a console's size in 24-px cell units: 2 to 6 out from the wall ...
-CONSOLE_ALONG = (7, 17)         # ... and 7 to 17 along it (Zachary, 22 Nov: smaller; was 2-7 and 4-20)
+CONSOLE_ALONG = (2, 10)         # ... and 2 to 10 along it: in front of the first of the cell's two floor tiles on that
+                                # wall (the left one on a top or bottom wall, the upper one on a side wall), where
+                                # its crew member stands (Zachary, 22 Nov: crew stand on the small floor tiles)
 
 
 def machine(p, room, rooms, doors, cell, k):
