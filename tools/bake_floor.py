@@ -307,8 +307,7 @@ AREA_FLOORS = {
     "west": {".": ("arrivals/terminal", None), "p": ("arrivals/plaza", None), "f": ("arrivals/carpet", None), "h": ("arrivals/carpet_blue", None), "u": ("arrivals/terminal", None),
              "A": ("arrivals/plaza", None), "Q": ("sp_moon", None), "V": ("eng_floor_pad", None), "g": ("arrivals/glass", None), "Y": ("arrivals/basin", None)},
     "agri": {"Q": ("agri/moon", None), "a": ("agri/soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("agri/spa", None),
-             "u": ("sp_terminal", None), "O": ("agri/water", ("70c8d0", 0.25)), "Y": ("agri/water", None),
-             "k": ("home/deck", None)},          # the front porch's decking (23 Nov)
+             "u": ("sp_terminal", None), "O": ("agri/water", ("70c8d0", 0.25)), "Y": ("agri/water", None)},
     "east": {".": ("sp_plaza", None), "s": ("ea_grass", None), "h": ("ea_deck", None), "a": ("sp_soil", None), "f": ("ea_rubber", None),
              "k": ("ea_court", None), "o": ("ea_deck", None), "t": ("ea_tile", None), "e": ("eng_floor_grate", None), "u": ("sp_terminal", None),
              "A": ("sp_terminal", None), "Y": ("agri/water", None), "O": ("agri/water", ("70c8d0", 0.25)), "p": ("east/dock", None),
@@ -889,7 +888,10 @@ ROOF_TINTS = ["ffffff", "dbe4ee", "f0e9df", "c6d3e2"]
 
 ROOF_ZONE_FN = {}             # level key -> fn(tx, ty) giving roof zones, set by tools/east.py and others
 # Buildings that stand inside a map and are drawn in their own materials, not the map's walls (23 Nov: your
-# apartment on the agri complex's front porch): key -> [(x0, y0, x1, y1, roof, wall face)], tiles inclusive.
+# apartment on the agri complex's front porch): key -> [{"roof": (x0, y0, x1, y1), "cuts": (top-left, top-right,
+# bottom-left, bottom-right), "front": (x0, y0, x1, y1), "roof_art": ..., "wall_art": ...}], tiles inclusive.
+# The roof's corners are cut at 45 degrees by `cuts` tiles, so the building reads soft-edged rather than as a hard
+# rectangle; the wall faces of the tiles in `front` are drawn in wall_art.
 HOUSE_FRONTS = {}
 
 
@@ -1041,10 +1043,15 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
             mask = roof & (indices == index)
             tile = np.asarray(Image.open(os.path.join(art_dir, roof_name + suffix + ".png"))) / 255.
             rc[mask] = tile[(yy[mask]+PX) % (2*PX), xx[mask] % (2*PX)]
-    for (hx0, hy0, hx1, hy1, h_roof, _) in HOUSE_FRONTS.get(key, []):
-        mr_ = np.asarray(Image.open(os.path.join(art_dir, h_roof + ".png")).convert("RGB"), dtype=np.float32) / 255.0
-        rty_, rtx_ = (yy + PX) // PX, xx // PX
-        in_ = roof & (rtx_ >= hx0) & (rtx_ <= hx1) & (rty_ >= hy0) & (rty_ <= hy1)
+    for hf_ in HOUSE_FRONTS.get(key, []):
+        hx0, hy0, hx1, hy1 = hf_["roof"]
+        ctl, ctr, cbl, cbr = hf_["cuts"]
+        mr_ = np.asarray(Image.open(os.path.join(art_dir, hf_["roof_art"] + ".png")).convert("RGB"), dtype=np.float32) / 255.0
+        rx_, ry_ = xx + .5, yy + PX + .5                              # the roof pixel's place on the tile grid
+        l_, r_ = rx_ - hx0 * PX, (hx1 + 1) * PX - rx_
+        t_, b_ = ry_ - hy0 * PX, (hy1 + 1) * PX - ry_
+        in_ = roof & (l_ >= 0) & (r_ >= 0) & (t_ >= 0) & (b_ >= 0) & (l_ + t_ >= ctl * PX) & (r_ + t_ >= ctr * PX) \
+            & (l_ + b_ >= cbl * PX) & (r_ + b_ >= cbr * PX)
         rc[in_] = _tex_lookup(mr_, yy + PX, xx)[in_]
     out[roof, :3] = rc[roof]
     # wall face: the material stretched over 32 pixels, or the window view where the wall is a window
@@ -1067,8 +1074,9 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
             if key == "hotel": mask &= ~wing                         # no paintings or sconces on the bare ribs
             tile = np.asarray(Image.open(os.path.join(art_dir, wall_name + suffix + ".png"))) / 255.
             fc[mask] = tile[v[mask], xx[mask] % (2*PX)]
-    for (hx0, hy0, hx1, hy1, _, h_wall) in HOUSE_FRONTS.get(key, []):
-        mw_ = np.asarray(Image.open(os.path.join(art_dir, h_wall + ".png")).convert("RGB"), dtype=np.float32) / 255.0
+    for hf_ in HOUSE_FRONTS.get(key, []):
+        hx0, hy0, hx1, hy1 = hf_["front"]
+        mw_ = np.asarray(Image.open(os.path.join(art_dir, hf_["wall_art"] + ".png")).convert("RGB"), dtype=np.float32) / 255.0
         in_ = face & (ftx >= hx0) & (ftx <= hx1) & (fty >= hy0) & (fty <= hy1 + 1)
         fw_ = mw_[(v * mw_.shape[0]) // (2 * PX), ((xx % (2 * PX)) * mw_.shape[1]) // (2 * PX)]
         fc[in_] = fw_[in_]

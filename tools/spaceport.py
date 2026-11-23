@@ -128,7 +128,9 @@ def build(g):
     # intersecting hallway, then place the home on the top right of that circle"): the porch is the old shed's size
     # (17 x 15), sitting on the crossing where the workshop-springs link meets the way in from the junction, and your
     # apartment is a building of its own on its top-right corner, with a plank roof and a sided front
-    # (bake_floor.HOUSE_FRONTS), its door opening onto the porch.
+    # (bake_floor.HOUSE_FRONTS), its door opening onto the porch. Then ("soften the sharp edges of the house, remove
+    # the wood flooring from the porch make it like the left circle"): the roof's corners are cut at 45 degrees,
+    # the house's corner on the porch is cut too, and the porch is floored like your workshop ('f').
     a = Room(g, 'agri', 'Agri Complex', 110, 84)
     F = a.F
     fill(F, 1, 1, 108, 82, '#')
@@ -136,7 +138,7 @@ def build(g):
     disc(F, 24, 64, 13, 'f')                                     # your workshop
     disc(F, 86, 64, 15, 's')                                     # hot springs and fish ponds
     porch = (47, 57, 63, 71)
-    chamfer_room(F, porch[0], porch[1], porch[2], porch[3], 'k', 3)   # the front porch: wooden decking
+    chamfer_room(F, porch[0], porch[1], porch[2], porch[3], 'f', 3)   # the front porch, floored like the workshop
     chamfer_room(F, 77, 54, 89, 63, 'O', 3)                      # the hot spring
     chamfer_room(F, 89, 65, 97, 72, 'Y', 2); chamfer_room(F, 77, 67, 85, 74, 'Y', 2)   # fish ponds
     band(F, (55, 23), (24, 64), 1.6, 'u'); band(F, (55, 23), (86, 64), 1.6, 'u'); band(F, (24, 64), (86, 64), 1.6, 'u')
@@ -144,13 +146,15 @@ def build(g):
     fill(F, 54, 72, 56, 81, 'u')                                 # the way in, from the junction
     agri_in = (55, 82); F[agri_in[1]][agri_in[0]] = 'u'
     # Your apartment: a building between the link up to your field and the hot springs link, standing on the
-    # porch's top-right corner (x 57-63 down to y 60); its front runs on over the link to the hot springs.
-    house_front = (57, 43, 67, 60)
-    fill(F, 57, porch[1], porch[2], house_front[3], '#')
-    home_door = (60, house_front[3]); F[home_door[1]][home_door[0]] = 'k'
+    # porch's top-right corner (x 57-63 down to y 60); its roof runs back over the link to the hot springs.
+    house_front = (57, 43, 63, 60)
+    fill(F, 57, porch[1], porch[2], 60, '#')
+    F[60][57] = 'f'                                              # its corner on the porch, cut at 45 degrees
+    home_door = (60, 60); F[home_door[1]][home_door[0]] = 'f'
     g['PLAYER_HOME_DOOR'] = ('agri', home_door)
     import bake_floor
-    bake_floor.HOUSE_FRONTS['agri'] = [house_front + ('hotel/cap_mix', 'east/wall')]
+    bake_floor.HOUSE_FRONTS['agri'] = [{"roof": (57, 43, 67, 61), "cuts": (2, 2, 0, 3), "front": house_front,
+                                        "roof_art": 'hotel/cap_mix', "wall_art": 'east/wall'}]
     # The rest of the block behind it, between the glass links, stays roof rather than bare moon.
     house = {(x, y) for x in range(57, 73) for y in range(34, 62)}
     # Outside the domes and links is bare moon, with a two-tile station wall round everything inside.
