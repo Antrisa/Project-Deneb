@@ -649,7 +649,7 @@ const LOOKS = {
 # tools/build.py SCHEDULE_DAYS_RAW; the station calendar lists them. Jasper and Evarra stagger theirs, so one
 # of them always keeps the mess hall.
 const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6], "Quill": [0, 5], "Maren": [3, 6],
-	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3]}
+	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3], "Tar'Besh": [0]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -750,5 +750,11 @@ const DAY_LINES := {
 			"[happy] Saturday shift. Quiet bay, loud engines. Best kind of day."],
 		6: ["Sunday. Freya left me a note: 'Don't touch my bench.' I touched her bench.",
 			"Still covering the bay. Somebody has to keep your ship pointed the right way."],
+	},
+	"Tar'Besh": {
+		0: ["Monday. The museum is shut. The relics need a day without being stared at. So do I.",
+			"[happy] My day off. Owen owes me a rematch, and he knows it, and he is hiding in the library."],
+		4: ["Friday. I pray in the Sanctum in the mornings. The crystals are excellent listeners. They rarely interrupt.",
+			"The Temple would call my Friday prayers irregular. The Temple calls a great many things irregular."],
 	},
 }

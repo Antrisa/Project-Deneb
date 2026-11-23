@@ -11,6 +11,8 @@ The full scripts that exist are copied next to this file: [`ROMANCE_SCRIPTS.md`]
 
 **The pirates are the Chernobog** (Zachary, 23 Nov). **Ivan himself is "the Rabble"**, so the Rabble's Reach and the Rabble's Nest keep their names. Ids and files stay `rabble_*`.
 
+**The Sky-Weavers are a sentient nebula** (Zachary, 23 Nov): the main story's ending reveals it, and that should end the Zaa'sh hatred of AI, since their own gods were never ordinary living things either. "Sky-Weavers" is only the Zaa'sh name for them. Still open: their true name (Claude's ideas: the Choir, the Lumen, or a name the Custodians translate at the end) and whether "Starborn" stays the scholars' word. Tar'Besh, the exiled cleric who first guessed it, is the thread that leads there (section 5.2).
+
 **How far each scene is written:**
 
 - **Script:** a full scene: setting, dialogue, choices and what they give.
@@ -41,7 +43,7 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2. (Ana's part settled 23 Nov: the game's version, with her crew always calling her weak for never firing on transports.)
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana; so are the Jasper & Evarra side arc and S.A.R.A.'s new platonic arc.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana; so are the Jasper & Evarra side arc and S.A.R.A.'s and Tar'Besh's platonic arcs.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3. (All settled: the hotel opens after Ivan's fall, before Stu arrives, and the siblings' 8 plays in the mess hall until then.)
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
@@ -92,7 +94,7 @@ Also in the docs but not on this list: the yearly Grand Hotel Inspection (sectio
 | Thread | Opened by | Closed by |
 |---|---|---|
 | **A. The Terran hardliners** want Annex 4 back or S.A.R.A.'s self-destruct carried out. Lore V4 adds Empress Asta, whose father's death is tied to synthetic rights. | Nothing now (S.A.R.A.'s "Ghost Signal" was dropped, 23 Nov) | Nothing |
-| **B. The Junta and the Custodians.** "If word reaches Zaa'sh space that sentient constructs are active here, the Junta will send warships." | Prologue 4; Tar'Besh | Nothing (Tar'Besh's own arc never mentions it) |
+| **B. The Junta and the Custodians.** "If word reaches Zaa'sh space that sentient constructs are active here, the Junta will send warships." | Prologue 4; Tar'Besh 6 (he lies to the Temple about the crystals, 23 Nov) | Nothing yet; the Sky-Weavers' reveal at the end should end the Zaa'sh hatred of AI |
 | **C. Pip's parents** are alive in Collective space. | Maren/Owen/Pip 4, Eshu 4 (Pip's letter) | Nothing |
 | **D. Who took Artie** in October 2036 ("a silent silver light lifted my truck"), and why was his pod in Ivan's hold? A silent silver light sounds like a Precursor drone. | Artie 2 | Nothing |
 | **E. The Precursor Lexicon in your head.** Quill's "electromagnetic spike", the Mother-Drone's "Tend the small worlds". | Prologue 2–3 | Only the Custodians talking to you |
@@ -308,16 +310,18 @@ The hostess who never clocks off. **A new set, decided with Zachary on 23 Nov; a
 
 ### 5.2 Tar'Besh (Zaa'sh, Cleric & Curator)
 
+The heretic who was sent here to die. **Reviewed with Zachary on 23 Nov; all four are written and playable.** Full scenes and his week: [`characters/TARBESH.md`](characters/TARBESH.md).
+
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Dust on the Relics | Museum | He stiffens at S.A.R.A.'s chime; you catalogue a Sky-Weaver astrolabe. | Outline |
-| 4 | The Power Surge | Plaza fountain (Pip and Nub) | S.A.R.A. shields the children with her own emitters. | Outline |
-| 6 | Tea in the Survey Suite | S.A.R.A.'s core | Zaa'sh spiced tea; he apologises. | Outline |
-| 8 | Keeper of the Starborn | Museum | A plaque to all seven species. Reward: Starborn Relic Appraisal, +25% Scrip on donations. | Outline |
+| 2 | Dust on the Relics | The museum before opening (not Monday or Friday morning) | He flinches at S.A.R.A.'s chime but answers her; Vzz'ket can't. "Everything I was taught says she is an empty mirror." | In game (Claude) |
+| 4 | Next Assignment (was The Power Surge) | His flat, at his shrine, in the evening | The Temple's letter meant to kill him; S.A.R.A. was the voice that talked his drifting shuttle in. | In game (Claude, from Zachary's backstory) |
+| 6 | The Summons (was Tea in the Survey Suite) | S.A.R.A.'s core, evening | The Temple offers his rank back if he recants and reports her for "cleansing"; he refuses, and lies about the crystals. | In game (Claude) |
+| 8 | Every Kind of Mind (was Keeper of the Starborn) | The Sanctum after hours | A plaque to the seven peoples, "and one mind of light", and a blank line for whoever made the relics. Perk: Relic Appraisal (+25% Scrip on donations). | In game (Claude) |
 
-- **Gap:** Lore V4 calls him exiled. Exiled for what?
-- **Gap:** he keeps the Custodian secret (thread B), and his arc never mentions it.
-- "Starborn" in 8's title gives away the Convergence if 8 plays first. "Keeper of the Sky-Weavers" until then?
+- **Decided (Zachary, 23 Nov):** he was a high cleric sent out as a pilgrim to study the Sky-Weavers' relics; for suggesting they might have been sentient, he was as good as cast out, and too well connected to strip, so he was given a "next assignment" in the Neutral Zone and left to the pirates or hunger. He's uneasy with S.A.R.A. at first but quick to accept her; the conflict is the Temple. His week: the museum shuts on Mondays (his day off) and he prays in the Sanctum on Friday mornings.
+- **Settled:** why he was exiled (above); thread B is in his arc now (6); 8's new title doesn't give the Convergence away. Wrong choices: nothing (2, 8), −20 friendship (4, 6).
+- He only ever says "Sky-Weavers"; the nebula's true name is still open (see the top of this review).
 
 ### 5.3 Zaas (Scyldar, Water Reclamation Officer); Merrow appears
 
@@ -503,4 +507,4 @@ Answer by number; anything left open stays as it is.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc and S.A.R.A.; Tar'Besh is next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A. and Tar'Besh; Zaas is next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).

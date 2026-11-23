@@ -66,7 +66,8 @@ func run() -> void:
 			"keepsake_flight_jacket",
 			"siblings_bechamel", "siblings_pod_story", "perk_wildflower_honey", "siblings_bees", "perk_starlight_souffle",
 			"siblings_practice_run", "perk_family_table", "keepsake_family_photo", "siblings_feast",
-			"sara_lost_property", "sara_concierge", "sara_emitter", "sara_rest", "perk_concierge", "sara_night_shift"]:
+			"sara_lost_property", "sara_concierge", "sara_emitter", "sara_rest", "perk_concierge", "sara_night_shift",
+			"tarbesh_astrolabe", "tarbesh_assignment", "tarbesh_summons", "tarbesh_plaque", "perk_relic_appraisal"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)

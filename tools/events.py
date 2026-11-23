@@ -64,6 +64,11 @@ FACES = {
                 colours=dict(skin="#acb34c", lid="#f6df97", white="#fdf4b4", pupil="#070008",
                              brow="#2b1f1a", tear="#93e6ea")),
     # Ana (23 Nov, for her heart events): eyes from tools/fix_eyes.py (two wide, under her fringe)
+    # Tar'Besh (23 Nov, for his heart events): eyes from tools/fix_eyes.py (front left (8, 13), right (15, 13));
+    # his "skin" is the scales round his eyes
+    "tarbesh": dict(eyes=((8, 13), (15, 13)),
+                    colours=dict(skin="#b3944d", lid="#dac08a", white="#edd197", pupil="#371921",
+                                 brow="#54392a", tear="#93e6ea")),
     "ana": dict(eyes=((8, 13), (14, 13)),
                 colours=dict(skin="#e1a378", lid="#e4cbb9", white="#f8ddca", pupil="#2f161e",
                              brow="#2c1119", tear="#93e6ea")),

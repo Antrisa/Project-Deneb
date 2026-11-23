@@ -2986,6 +2986,18 @@ SCHEDULE_DAYS_RAW = {
             ("14:00", "lounge", 45, 15, 26, "r", "idle", "chart"), ("17:30", "mess", 4, 12, 26, "d", "eat", "eat"),
             ("19:30", "bar", 9, 25, 26, "r", "idle", "drink"), ("22:15", *HOME_SPOTS["Ana"], 26, "d", "idle", "rest")]},
     ],
+    # Tar'Besh (23 Nov): the museum shuts on Mondays (his day off: the lounge, chess on the plaza, the lounge
+    # again), and Friday mornings he's at prayer in the Sanctum before opening up late.
+    "Tar'Besh": [
+        {"when": {"days": [0]}, "stops": [
+            ("09:00", "lounge", 24, 14, 26, "u", "idle", "ponder"), ("12:30", "main", 131, 75, 26, "d", "eat", "eat"),
+            ("13:30", "main", 99, 77, 26, "l", "idle", "chess"), ("17:35", "main", 131, 75, 26, "d", "eat", "eat"),
+            ("19:15", "lounge", 24, 14, 26, "u", "idle", "ponder"), ("23:00", *HOME_SPOTS["Tar'Besh"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [4]}, "stops": [
+            ("07:00", "sanctum", 23, 20, 26, "l", "idle", "ponder"), ("11:30", "museum", 55, 28, 26, "u", "work", "study"),
+            ("17:35", "main", 131, 75, 26, "d", "eat", "eat"), ("19:15", "lounge", 24, 14, 26, "u", "idle", "ponder"),
+            ("23:00", *HOME_SPOTS["Tar'Besh"], 26, "d", "idle", "rest")]},
+    ],
 }
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():
