@@ -2651,7 +2651,7 @@ func crew_skill(c: Dictionary) -> Array:
 func _crew_hearts(who: String) -> int:
 	if not persons.has(who) or (who == "Ana" and not _arrived("Ana")):
 		return 0
-	return int(persons[who].get("friendship", 0)) / 5
+	return _hearts(who)    # 100 points a heart (NPC Master 3.1), like the heart events
 
 
 # After a fight on a crewed ship: hired crew who didn't make it are gone; Freya or Ana knocked out go home.
