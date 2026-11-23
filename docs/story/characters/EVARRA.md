@@ -40,7 +40,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
 
 - **Two new things in the cutscene engine:**
   - **Backup places** (`"backup"` in an event): her 8 plays in the orchard once the garden dome is open, and at the promenade flower beds until then, so it never waits for the story.
-  - **Moving map mid-scene** (`["go", area, x, y, dir]`): her 10 starts in your kitchen in the hotel and ends in the little park.
+  - **Moving map mid-scene** (`["go", area, x, y, dir]`): her 10 starts in your kitchen and ends in the little park.
 - **To test:** in a debug build, **F3** plays the next event in order (Freya's and Jasper's come first, so Evarra's 2 is the eleventh press); **F5** opens the garden dome (4 needs it; with it closed, 8 plays at the flower beds).
 - **Checked offline:** `python3 tests/check_heart_events.py` (it checks 8 at both places).
 - **Not in yet:** the wildflower border on your field after 6 (`evarra_wildflowers` is set so a map version can switch on), what the brioche and Green Thumb do in play, and the frame as an item you can hold.
@@ -155,12 +155,12 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
 
 ## ♥10 The Moonlit Bakery
 
-**Trigger:** come home to the hotel 20:30–23:30 while you're dating Evarra, with her at 10 hearts.
+**Trigger:** come home to your flat 20:30–23:30 while you're dating Evarra, with her at 10 hearts.
 
-**Setting:** your kitchen in the hotel, then a blanket in the little park in the East complex.
+**Setting:** your kitchen (your flat by the farm since 23 Nov; it was the hotel's), then a blanket in the little park in the East complex.
 
 - *[Your kitchen smells of honey and warm bread. Every bowl you own is out. Evarra is floury to the elbows.]*
-- **EVARRA:** "[happy] S.A.R.A. let me in. She said you wouldn't mind, and that your oven had never been used. Both True, I see."
+- **EVARRA:** "[happy] S.A.R.A. let me in. She said you wouldn't mind, and that your oven had never been used. Both true, I see."
 - **EVARRA:** "Roll this out for me? Not too thin. It's going to be a honey cake. Three tiers, if we're lucky."
 - **CHOICE:**
   - **"Like this?"** (+High Friendship)
@@ -168,7 +168,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
     - **EVARRA:** "[happy] Perfect. Again."
   - **"I'll do the icing. I'm an artist."** (+High Friendship)
     - **EVARRA:** "[happy] An artist. All right. Pink stars only."
-- *[Flour everywhere. The oven ticks and hums. For once the whole hotel smells like a bakery.]*
+- *[Flour everywhere. The oven ticks and hums. For once your whole flat smells like a bakery.]*
 - **EVARRA:** "[happy] Three tiers! A bit lopsided. Jasper will say it leans. Let him."
 - **EVARRA:** "[happy] Now we take it somewhere with grass. You carry the basket. I carry the cake. Nobody runs."
 - *(The scene moves to the little park in the East complex.)*

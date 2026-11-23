@@ -632,18 +632,19 @@ const EVENTS := {
 	},
 	"evarra_10": {
 		"who": "Evarra", "hearts": 10, "title": "The Moonlit Bakery",
-		# Zachary (22 Nov): baking first, then a picnic with what you baked. Your kitchen in the hotel, after her
-		# shift; then the little park in the East complex.
-		"area": "hotel", "windows": [[null, "20:30", "23:30"]],
+		# Zachary (22 Nov): baking first, then a picnic with what you baked. Your kitchen, after her shift; then the
+		# little park in the East complex. (Your kitchen moved with you on 23 Nov, from the hotel to your own flat by
+		# the farm, aptPlayer.)
+		"area": "aptPlayer", "windows": [[null, "20:30", "23:30"]],
 		"partner": true,
-		"player": [22, 42, "l"],
-		"cast": [["Evarra", 15, 40, "u", "mix u"]],
+		"player": [14, 23, "u"],
+		"cast": [["Evarra", 5, 15, "u", "mix u"]],
 		"steps": [
 			["wait", 0.6],
 			["say", "", ["Your kitchen smells of honey and warm bread. Every bowl you own is out. Evarra is floury to the elbows."]],
 			["pose", "Evarra", ""], ["face", "Evarra", "player"], ["emote", "Evarra", "hello"],
 			["say", "Evarra", ["[happy] S.A.R.A. let me in. She said you wouldn't mind, and that your oven had never been used. Both true, I see."]],
-			["walk", "player", 17, 40], ["face", "player", "l"], ["face", "Evarra", "r"],
+			["walk", "player", 7, 15], ["face", "player", "l"], ["face", "Evarra", "r"],
 			["pose", "Evarra", "talk"],
 			["say", "Evarra", ["Roll this out for me? Not too thin. It's going to be a honey cake. Three tiers, if we're lucky."]],
 			["pose", "Evarra", ""],
@@ -655,7 +656,7 @@ const EVENTS := {
 					["emote", "Evarra", "joy"],
 					["say", "Evarra", ["[happy] An artist. All right. Pink stars only."]]]}]],
 			["fade", 0.7, 1.0], ["sfx", "click"],
-			["say", "", ["Flour everywhere. The oven ticks and hums. For once the whole hotel smells like a bakery."]],
+			["say", "", ["Flour everywhere. The oven ticks and hums. For once your whole flat smells like a bakery."]],
 			["clock", 90],
 			["fade", 0.0, 1.0],
 			["pose", "Evarra", "laugh"], ["emote", "Evarra", "joy"],
@@ -1456,7 +1457,7 @@ const EVENTS := {
 	"stu_2": {
 		"who": "Stu", "hearts": 2, "title": "Packed Bags by the Airlock",
 		# the hotel lobby on a guest morning (the hotel takes guests Friday to Sunday): Friday once the transport's
-		# guests are in, or Saturday and Sunday from when you wake (your quarters are in the hotel)
+		# guests are in, or Saturday and Sunday mornings
 		"area": "hotel", "windows": [[[4], "09:30", "11:00"], [[5, 6], "06:00", "11:00"]],
 		"player": [60, 38, "u"],
 		"cast": [["Stu", 60, 33, "d", "bell d"]],

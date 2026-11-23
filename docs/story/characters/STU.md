@@ -45,7 +45,7 @@
 All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his new heart-event sheet (`art/npc_stu_event.png`) and his action sheet (the bell, the luggage). S.A.R.A. speaks in 2; Sesska is in 4 and Tobbin in 6. Not run in Godot yet.
 
 - **He only appears once he's arrived** (Wave 1, two days after Ivan falls), so his scenes wait for that.
-- **Your quarters are in the hotel,** so the game now checks the hotel's heart events when you wake, as if you'd just walked in. That's how 2 can play on a Saturday or Sunday morning without leaving and coming back. (No other hotel event is a morning one.)
+- **You used to wake in the hotel,** so 2 could play on a Saturday or Sunday morning without leaving and coming back. Since 23 Nov you live in your own flat by the farm, and 2 plays when you walk into the hotel on those mornings. (The game still checks your home's events when you wake.)
 - **To test:** in a debug build, **F3** plays the next event in order (Stu's 2 is the thirty-seventh press); it brings Wave 1 in if it hasn't arrived.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **Not in yet:** Five-Star Partner in play (there's no hotel income yet), the nameplate as a prop on East Home 2's door (narrated), the uniform as a new outfit, the bell as an item you can hold.
@@ -54,7 +54,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
 
 ## ♥2 Packed Bags by the Airlock
 
-**Trigger:** the hotel lobby with Stu at 2 hearts: Friday 09:30–11:00 (once the transport's guests are in), or Saturday or Sunday 06:00–11:00 (including when you wake in your quarters).
+**Trigger:** the hotel lobby with Stu at 2 hearts: Friday 09:30–11:00 (once the transport's guests are in), or Saturday or Sunday 06:00–11:00.
 
 - *[The hotel lobby, open for the weekend. Stu is polishing the brass reception bell.]* *(Zachary)*
 - *[A small, worn canvas duffel bag sits half hidden behind the potted fern.]* *(Zachary)*

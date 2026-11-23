@@ -104,7 +104,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
   - **"You were amazing, Quill."** (+High Friendship)
     - **QUILL:** "[bashful] I was terrified. Apparently it does not show. That is useful to know."
   - **"Told you you'd get there."** (+High Friendship)
-    - **QUILL:** "[happy] You did. I have written it down. I write down everything that turns out to be True."
+    - **QUILL:** "[happy] You did. I have written it down. I write down everything that turns out to be true."
 
 ---
 

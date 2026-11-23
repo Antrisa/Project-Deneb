@@ -4901,7 +4901,7 @@ func _next_day() -> void:
 	var repaired: Array = _finish_repairs()
 	_go_home()
 	_snap_residents()
-	# You wake in your quarters in the hotel: check its heart events again, as if you'd just arrived (Stu 2).
+	# You wake at home: check its heart events again, as if you'd just arrived.
 	_event_area = ""
 	_save_game()
 	_toast("Day %d  (saved)" % day + ("   You've got mail." if post > 0 else ""))
