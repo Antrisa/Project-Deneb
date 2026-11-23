@@ -3013,6 +3013,14 @@ SCHEDULE_DAYS_RAW = {
             ("17:05", "main", 126, 75, 26, "d", "eat", "eat"), ("19:15", "lounge", 37, 9, 26, "u", "idle", "stargaze"),
             ("23:00", *HOME_SPOTS["Zaas"], 26, "d", "idle", "rest")]},
     ],
+    # Ooma (23 Nov, her arc): on the station Wednesdays and Saturdays only (VISITOR_DAYS). Once the Merrow Deep is open
+    # (the Leviathan is dead), her Saturday evenings are on its south beach, feet in the water (her 8), then back to
+    # her stall for the night. Her stall is where tools/concourse.py puts her usual day: (120, 108).
+    "Ooma": [
+        {"when": {"days": [5], "flags": ["leviathan_slain"]}, "stops": [
+            ("06:00", "main", 95, 73, 26, "u", "work", "beckon"), ("16:55", "mess", 9, 12, 26, "d", "eat", "eat"),
+            ("18:30", "lake", 34, 40, 26, "u", "idle", ""), ("22:30", "main", 95, 73, 26, "u", "work", "beckon")]},
+    ],
     # Bram (Zachary, 23 Nov): the general store keeps going six and a half days. Thursdays off ("only a dumb person
     # would close wednesday... thats why i am closed on thursday!": a nod to a certain other general store), and a
     # half day on Sunday. Thursday: a late breakfast, the common room, lunch on the plaza watching who needs what,

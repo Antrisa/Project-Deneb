@@ -2,7 +2,7 @@
 
 Zachary added a mailbox, the message pad by your front door on the agri complex's porch, so that residents can send you mail and gifts, as in Stardew Valley. Then he asked: "if it makes sense in any of the previous arcs add and next morning get mail from the person or gifts. and keep in mind for future arcs."
 
-So sixteen heart events now send a letter that comes with the next morning's post, and five of the letters have a gift in them. The wording is a first draft by Claude, for Zachary to change: the letters live in `scripts/mail_data.gd`.
+So sixteen heart events now send a letter that comes with the next morning's post, and five of the letters have a gift in them. Bram & Ooma's arcs (written the same day, after the rule) added three more, two with gifts: nineteen in all. The wording is a first draft by Claude, for Zachary to change: the letters live in `scripts/mail_data.gd`.
 
 ## How it works
 
@@ -45,6 +45,9 @@ About one letter per arc, rarely two. A gift shouldn't repeat the event's own pe
 | Zaas 6, First Splash | `merrow_plaque` | Merrow | About the plaque | - |
 | Vzz'ket 8, The Watch Changes | `vzzket_sleep` | Vzz'ket | The box chirped | - |
 | Rusk 8, The First Page | `rusk_ilsa_vine` | Rusk | How Ilsa grew them | - |
+| Bram 4, Quiet Credit | `bram_seeds` | Bram | You heard nothing | Crater potato seeds x5 |
+| Ooma 2, The First Pick | `ooma_sapphire` | Ooma | The first pick | Void sapphire x1 |
+| Bram & Ooma 8, Merchant Guild of Two | `guild_catalogue` | Bram | Guild business | - |
 
 Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The gate" (when Job's north tunnels are done), and S.A.R.A.'s notes on the storage dome and the fish ponds.
 
@@ -261,3 +264,43 @@ Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The
 > Bring me five and I'll fill the cask. Three days, and you've a bottle of Nebula wine. Ship it: Bram's cousins pay what it's worth, and it's worth a lot.
 >
 > - Rusk
+
+### You heard nothing (`bram_seeds`): after Bram's 4, Quiet Credit
+
+*From Bram, the next morning. Enclosed: Crater potato seeds x5.*
+
+> Friend.
+>
+> About this morning. You heard nothing. I said nothing. The freighter flew, and that is the end of the matter.
+>
+> Enclosed: crater potato seeds. They were going stale. This is not generosity. This is stock control.
+>
+> Do not tell anyone about the seeds either.
+>
+> - Bram Ollo
+
+### The first pick (`ooma_sapphire`): after Ooma's 2, The First Pick
+
+*From Ooma, the next morning. Enclosed: Void sapphire x1. She signs with one letter.*
+
+> Pilot.
+>
+> You bought nothing this morning. That was wise. The first pick is never what is on the table.
+>
+> This was not on the table. Keep it somewhere dry. If Bram asks what it is worth, tell him to make you an offer, and then wait.
+>
+> - O.
+
+### Guild business (`guild_catalogue`): after Bram & Ooma's 8, Merchant Guild of Two
+
+*From Bram, the next morning: how Ooma's catalogue works.*
+
+> Partner.
+>
+> The catalogue works like this. Every time Ooma comes in, there is one thing in it for you. Ask her, and pay her.
+>
+> Next time the tides bring her, it comes with her. Wednesdays and Saturdays, mostly. The tides are not always punctual.
+>
+> I keep the books. She keeps the secrets. You keep coming back. Everybody wins, mostly me.
+>
+> - Bram Ollo, the Merchant Guild of Two

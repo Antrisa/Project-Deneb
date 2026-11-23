@@ -770,6 +770,12 @@ const DAY_LINES := {
 			"Sundays I listen. The rock hums, the pumps knock, and under all of it, if you are patient, something answers.",
 			"[happy] Day off. Which is to say, day on, for the ocean. Report any ice."],
 	},
+	# Ooma (23 Nov): Saturdays, once the Merrow Deep is open, she spends her evenings on its beach
+	"Ooma": {
+		5: {"flag": "leviathan_slain", "lines": [
+			"Saturday. Tonight I put my feet in your sea. Do not tell Zaas I called it yours. [happy] He would want it in writing.",
+			"Three hundred ports, and only one of them has a sea under the floor. I make a point of visiting it."]},
+	},
 	# Bram (Zachary, 23 Nov): Thursdays off, and a half day on Sunday
 	"Bram": {
 		3: ["[happy] Thursday! My day off. People ask me, why Thursday? Only a fool closes on a Wednesday. So: Thursday.",

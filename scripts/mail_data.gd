@@ -260,6 +260,43 @@ const LETTERS := {
 		],
 		"sign": "Rusk",
 	},
+	# Bram 4, Quiet Credit
+	"bram_seeds": {
+		"from": "Bram",
+		"title": "You heard nothing",
+		"body": [
+			"Friend.",
+			"About this morning. You heard nothing. I said nothing. The freighter flew, and that is the end of the matter.",
+			"Enclosed: crater potato seeds. They were going stale. This is not generosity. This is stock control.",
+			"Do not tell anyone about the seeds either.",
+		],
+		"sign": "Bram Ollo",
+		"gift": {"crater_potato_seeds": 5},
+	},
+	# Ooma 2, The First Pick: something that wasn't on the table. She signs with one letter.
+	"ooma_sapphire": {
+		"from": "Ooma",
+		"title": "The first pick",
+		"body": [
+			"Pilot.",
+			"You bought nothing this morning. That was wise. The first pick is never what is on the table.",
+			"This was not on the table. Keep it somewhere dry. If Bram asks what it is worth, tell him to make you an offer, and then wait.",
+		],
+		"sign": "O.",
+		"gift": {"void_sapphire": 1},
+	},
+	# Bram & Ooma 8, Merchant Guild of Two: how the catalogue works (main.gd _ooma_order_talk)
+	"guild_catalogue": {
+		"from": "Bram",
+		"title": "Guild business",
+		"body": [
+			"Partner.",
+			"The catalogue works like this. Every time Ooma comes in, there is one thing in it for you. Ask her, and pay her.",
+			"Next time the tides bring her, it comes with her. Wednesdays and Saturdays, mostly. The tides are not always punctual.",
+			"I keep the books. She keeps the secrets. You keep coming back. Everybody wins, mostly me.",
+		],
+		"sign": "Bram Ollo, the Merchant Guild of Two",
+	},
 }
 
 const DATED := {"welcome": 1, "sara_storage": 3}

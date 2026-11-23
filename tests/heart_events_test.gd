@@ -80,7 +80,10 @@ func run() -> void:
 			"zaas_helmet", "zaas_heartbeat", "merrow_deep", "zaas_captain", "perk_deep_sea_sonar_lure",
 			"vzzket_wall", "vzzket_blessing", "vzzket_clutch_brother", "vzzket_sensors", "perk_monster_radar",
 			"rusk_lights", "rusk_tail", "rusk_sea_chest", "rusk_first_page",
-			"vzzket_tall_tales", "vzzket_shell", "vzzket_open_mic", "vzzket_sentinels", "perk_chitin_piercer_traps"]:
+			"vzzket_tall_tales", "vzzket_shell", "vzzket_open_mic", "vzzket_sentinels", "perk_chitin_piercer_traps",
+			"bram_night_pod", "bram_quiet_credit", "bram_long_column", "bram_told", "bram_paid_in_full", "perk_moogli_trade_beacon",
+			"ooma_first_pick", "ooma_three_names", "ooma_inspection", "ooma_low_tide", "perk_ooma_old_friend",
+			"guild_toaster", "guild_tip_wreck", "guild_partners", "perk_ooma_catalogue"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
@@ -103,5 +106,17 @@ func run() -> void:
 	assert(not s.mail_waiting.has("quill_spores"), "and now it's read")
 	s.read_letter("quill_spores")
 	assert(s._count("medpack") == medpacks + 2, "a letter's gift only comes the first time you open it")
+	# Ooma's catalogue (Bram & Ooma's 8): order on one visit, and it comes with her on the next
+	s.credits = 5000
+	s.ooma_order = {}
+	var offer: Array = s._ooma_offer()
+	var had: int = s._count(str(offer[0]))
+	s._ooma_order()
+	assert(not s.ooma_order.is_empty(), "an order from Ooma's catalogue is on its way")
+	assert(s.credits == 5000 - int(offer[2]), "the order is paid for when you place it")
+	s.day += 3
+	assert(s._ooma_order_talk(), "Ooma brings the order on her next visit")
+	assert(s._count(str(offer[0])) == had + int(offer[1]), "the order is in your pack")
+	assert(s.ooma_order.is_empty())
 	print("PASS: ", HeartEvents.ORDER.size(), " heart events played to the end, choices picked, flags set, letters sent.")
 	quit()
