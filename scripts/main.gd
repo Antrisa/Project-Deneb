@@ -1412,7 +1412,7 @@ const SEATS := {
 	"chair_w": [2, [Vector2(8, 17)], -1],
 	"bench_e": [3, [Vector2(18, 24), Vector2(18, 38)], -1],
 	"bench_w": [2, [Vector2(11, 24), Vector2(11, 38)], -1],
-	"waiting_seat_w": [2, [Vector2(14, 19), Vector2(14, 37)], -1],
+	"waiting_seat_w": [2, [Vector2(12, 15), Vector2(12, 33)], -1],
 }
 
 
