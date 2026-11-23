@@ -620,7 +620,6 @@ func _blocked(p: Vector2, faces: bool = true) -> bool:
 # main.gd says where the hips go and, for a seat whose back is between the sitter and the camera, the
 # line below which the sitter is hidden.
 const SIT_HIP := 36          # art row of the hips in a standing frame
-const SIT_THIGH := 5         # how far the thighs reach forward, sitting sideways
 var sitting := false
 var _sit_sprite: Sprite2D
 
@@ -667,37 +666,24 @@ func _sit_picture(face: int) -> Array:
 		if face == 0:
 			out.blit_rect(stand, Rect2i(0, SIT_HIP + 4, fw, fh - SIT_HIP - 4), Vector2i(0, SIT_HIP + 2))
 		return [out, _middle(stand, SIT_HIP)]
-	# Sideways: worked out facing right, then mirrored for left.
+	# Sideways: worked out facing right, then mirrored for left. The legs stick straight out along the
+	# seat (23 Nov): the front of the legs, from the hips down, is turned a quarter, so the shins face
+	# the ceiling and the boots stand up at the far end.
 	if face == 2:
 		stand.flip_x()
-	var w := fw + SIT_THIGH + 2
+	var w := fw + 12
 	var side := Image.create(w, fh, false, Image.FORMAT_RGBA8)
-	side.blit_rect(stand, Rect2i(0, 0, fw, SIT_HIP), Vector2i.ZERO)
-	var knee := 0
-	for y in range(SIT_HIP, SIT_HIP + 4):           # the thighs, along the seat
-		var xs := _opaque(stand, y)
-		if xs.is_empty():
-			continue
-		var a: int = xs[0]
-		var b: int = xs[xs.size() - 1]
-		for x in range(a, b + 1):
-			side.set_pixel(x, y, stand.get_pixel(x, y))
-		var cloth := stand.get_pixel(maxi(a, b - 2), y)
-		for x in range(b - 1, b - 1 + SIT_THIGH):
-			side.set_pixel(x, y, cloth)
-		side.set_pixel(b + SIT_THIGH - 2, y, stand.get_pixel(maxi(a, b - 1), y))
-		side.set_pixel(b + SIT_THIGH - 1, y, stand.get_pixel(b, y))
-		knee = maxi(knee, b + SIT_THIGH - 1)
-	var toes := 0
-	for y in range(SIT_HIP + 4, fh):
-		var xs := _opaque(stand, y)
-		if not xs.is_empty():
-			toes = maxi(toes, xs[xs.size() - 1])
-	var shift := knee - toes + 1
-	for y in range(SIT_HIP + 4, fh):                  # the shins and feet, hanging from the knees
+	side.blit_rect(stand, Rect2i(0, 0, fw, SIT_HIP + 2), Vector2i.ZERO)
+	var knees := _opaque(stand, SIT_HIP + 2)
+	var front: int = knees[knees.size() - 1] if not knees.is_empty() else fw / 2
+	for y in range(SIT_HIP, fh - 2):
 		for x in _opaque(stand, y):
-			if x + shift >= 0 and x + shift < w:
-				side.set_pixel(x + shift, y, stand.get_pixel(x, y))
+			if x < front - 4:
+				continue
+			var nx: int = front - 1 + (y - SIT_HIP)
+			var ny: int = SIT_HIP + (front - x)
+			if ny >= 0 and ny < fh and nx >= 0 and nx < w:
+				side.set_pixel(nx, ny, stand.get_pixel(x, y))
 	var hip_x := _middle(stand, SIT_HIP)
 	if face == 2:
 		side.flip_x()
