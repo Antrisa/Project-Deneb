@@ -21,7 +21,8 @@ extends RefCounted
 const ORDER := ["freya_2", "freya_4", "freya_6", "freya_8", "freya_10",
 	"jasper_2", "jasper_4", "jasper_6", "jasper_8", "jasper_10",
 	"evarra_2", "evarra_4", "evarra_6", "evarra_8", "evarra_10",
-	"job_2", "job_4", "job_6", "job_8", "job_10"]
+	"job_2", "job_4", "job_6", "job_8", "job_10",
+	"quill_2", "quill_4", "quill_6", "quill_8", "quill_10"]
 
 const EVENTS := {
 	# ---------------------------------------------------------------- Freya (docs/story/characters/FREYA.md)
@@ -848,6 +849,172 @@ const EVENTS := {
 			["pose", "Job", ""],
 			["emote", "Job", "love"], ["emote", "player", "love"],
 			["keepsake", "oar_charm", "Keepsake: Job's carved oar charm"],
+		],
+	},
+	# ---------------------------------------------------------------- Quill (docs/story/characters/QUILL.md)
+	"quill_2": {
+		"who": "Quill", "hearts": 2, "title": "The Spilled Apothecary",
+		# the medbay on Maren's days off (Thursday, Sunday), when Quill has it alone
+		"area": "medbay", "windows": [[[3, 6], "11:00", "15:00"]],
+		"player": [5, 8, "u"],
+		"cast": [["Quill", 3, 4, "r", "sort r"]],
+		"steps": [
+			["wait", 0.5], ["sfx", "click"],
+			["say", "", ["Quill is on his knees by the lab bench, gathering scattered glass vials. His green-blue cheek blotches have flushed bright teal."]],
+			["pose", "Quill", ""], ["face", "Quill", "player"], ["emote", "Quill", "surprise"],
+			["say", "Quill", ["[shocked] Oh, no, no—don't step there! That's luminescent cavern spore extract!",
+				"If it stains Maren's clean tiles, I'll be inventorying gauze pads until Year 405!"]],
+			["walk", "player", 4, 4], ["face", "player", "l"], ["face", "Quill", "r"],
+			["say", "", ["You kneel down and help sort the intact vials back into the rack."]],
+			["pose", "Quill", "sort r"],
+			["say", "Quill", ["Thank you... Maren's treated soldiers and spacers across three sectors, and I still drop my own sample trays.",
+				"[sad] Sometimes I wonder if I'm cut out to be a real medic."]],
+			["pose", "Quill", ""],
+			["choose", [
+				{"text": "You're researching cures nobody else on the station understands.", "friendship": 60, "steps": [
+					["emote", "Quill", "surprise"],
+					["say", "Quill", ["[bashful] ...Nobody understands them because I have not finished explaining them. But thank you."]]]},
+				{"text": "Even Maren had to start somewhere. Keep at it.", "friendship": 30, "steps": [
+					["say", "Quill", ["[happy] She says she once splinted the wrong leg. I think she was being kind. I hope she was being kind."]]]}]],
+			["say", "Quill", ["[happy] Please do not tell her about the spores."]],
+		],
+	},
+	"quill_4": {
+		"who": "Quill", "hearts": 4, "title": "Field Notes in the Dark",
+		# the North Cave past the mine, on his morning off (Monday, Saturday), with Vzz'ket on guard. (The script's
+		# "upper caverns" are random floors, so a cutscene can't be set on one.)
+		"area": "tunnels", "windows": [[[0, 5], "09:00", "12:30"]],
+		"seen": ["quill_2"],
+		"player": [30, 35, "u"],
+		"cast": [["Quill", 22, 29, "l", "read l"], ["Vzz'ket", 26, 31, "d"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Glowing blue moss covers the rocks. Quill is sketching it in a leather notebook while Vzz'ket stands guard nearby."]],
+			["face", "Vzz'ket", "player"],
+			["say", "Vzz'ket", ["The medic has drawn the same rock eleven times. I am guarding a very patient rock."]],
+			["walk", "player", 23, 29], ["face", "player", "l"],
+			["pose", "Quill", ""], ["face", "Quill", "player"], ["emote", "Quill", "joy"],
+			["say", "Quill", ["[happy] Look at the cellular regeneration on this cavern lichen!",
+				"Mixed with Merrow's hydroponic aloe, it heals burn trauma twice as fast as standard Terran medpacks—",
+				"and works safely on Zaa'sh, Arachnay, and humans alike!"]],
+			["choose", [
+				{"text": "Can I help you collect some?", "friendship": 60, "steps": [
+					["say", "", ["You scrape lichen into sample jars while he labels each one in tiny handwriting."]],
+					["say", "Quill", ["[happy] You have steady hands. That is the highest compliment I know."]]]},
+				{"text": "Is it safe down here?", "friendship": 30, "steps": [
+					["say", "Vzz'ket", ["It is safe because I am here."]],
+					["say", "Quill", ["He says that about everywhere. It is very reassuring."]]]}]],
+			["pose", "Quill", "talk"],
+			["say", "Quill", ["I will call it Xeno-Salve. Doctor Maren will say the name is too plain. She will be right. I will keep it anyway."]],
+			["pose", "Quill", ""],
+			["perk", "xeno_salve", "New recipe: Xeno-Salve (restores full health and cures debuffs)"],
+		],
+	},
+	"quill_6": {
+		"who": "Quill", "hearts": 6, "title": "Doctor's Orders",
+		# the mine head (Zachary, 23 Nov): Job is the bruised miner. Weekday afternoons when Quill is on duty
+		"area": "mine", "windows": [[[1, 2, 3, 4], "13:30", "15:30"]],
+		"seen": ["quill_4"],
+		"player": [60, 26, "l"],
+		"cast": [["Job", 55, 23, "d", "bench"], ["Quill", 55, 25, "u", "sort u"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["At the mine head, Job sits on a bench with a bruised, swelling arm. Quill kneels beside him with a jar of green salve."]],
+			["face", "Job", "player"],
+			["say", "Job", ["[sad] Rock found my arm 'fore I found the rock. Doc's off seein' to a freighter crew, so I got the young'un."]],
+			["say", "Quill", ["Please hold still. This will be cold, then warm, then you will forget it was there."]],
+			["say", "", ["He works quickly and calmly: salve, splint, a neat bandage. His hands are perfectly still. He doesn't drop a thing."]],
+			["emote", "Job", "surprise"], ["pose", "Job", "laugh"],
+			["say", "Job", ["[surprised] Well, I'll be. Can't feel a thing, cher."]],
+			["pose", "Job", "bench"],
+			["place", "Maren", 66, 25, "l"], ["walk", "Maren", 58, 24], ["face", "Maren", "Quill"],
+			["pose", "Quill", ""], ["face", "Quill", "Maren"], ["emote", "Quill", "surprise"],
+			["say", "Maren", ["[happy] Well done, Quill. Steady hands, sharp diagnosis. I think it's high time we put your name on the clinic door beside mine."]],
+			["pose", "Quill", "jump"], ["emote", "Quill", "joy"],
+			["say", "Quill", ["[happy] I... I didn't even drop a single vial."]],
+			["pose", "Quill", ""], ["face", "Quill", "player"],
+			["choose", [
+				{"text": "You were amazing, Quill.", "friendship": 60, "steps": [
+					["say", "Quill", ["[bashful] I was terrified. Apparently it does not show. That is useful to know."]]]},
+				{"text": "Told you you'd get there.", "friendship": 60, "steps": [
+					["say", "Quill", ["[happy] You did. I have written it down. I write down everything that turns out to be true."]]]}]],
+			["flag", "quill_clinic_door"],
+		],
+	},
+	"quill_8": {
+		"who": "Quill", "hearts": 8, "title": "Heartbeat",
+		# the library in the evening, where he reads every night he isn't covering the clinic
+		"area": "library", "windows": [[[0, 1, 2, 4, 5], "19:15", "22:00"]],
+		"player": [8, 13, "u"],
+		"cast": [["Quill", 14, 11, "l", "read l"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Quiet evening light in the library. Quill is sitting beside the potted luminescent ferns with a book he isn't reading."]],
+			["pose", "Quill", ""], ["face", "Quill", "player"], ["emote", "Quill", "surprise"],
+			["say", "Quill", ["[surprised] Oh! You came. I was... reading. The same page. For about an hour."]],
+			["walk", "player", 12, 11], ["face", "player", "r"], ["face", "Quill", "l"],
+			["pose", "Quill", "talk"],
+			["say", "Quill", ["I've spent years studying biology—how hearts beat, how cells mend, how different species adapt to new worlds.",
+				"Yet every time you walk into the Medbay, my own pulse forgets every textbook rule I've ever memorized."]],
+			["pose", "Quill", ""],
+			["if", {"dating_other": "Quill"},
+				# the friendship ending: you're dating someone else
+				[["say", "Quill", ["[bashful] ...That was a very unscientific way to say you are my dearest friend. I am keeping the sentence anyway."]],
+				 ["pose", "Quill", "gift"],
+				 ["say", "", ["He gives you a bookmark: a pressed fern that still glows faintly."]],
+				 ["pose", "Quill", ""], ["emote", "Quill", "joy"]],
+				[["pose", "Quill", "gift"],
+				 ["say", "", ["Blushing deeply, he offers you a bookmark: a pressed fern that still glows faintly."]],
+				 ["say", "Quill", ["[love] You helped me believe in myself. Would you... let me care for you, not just as your medic, but as someone who loves you?"]],
+				 ["pose", "Quill", ""], ["emote", "Quill", "love"],
+				 ["choose", [
+					{"text": "Yes, Quill. I'd like that.", "steps": [
+						["partner", "Quill"],
+						["emote", "Quill", "surprise"],
+						["say", "Quill", ["[surprised] You... yes? My pulse is doing something extremely irregular.", "[happy] It is fine. It is wonderful."]],
+						["pose", "Quill", "laugh"], ["emote", "Quill", "joy"], ["wait", 0.8], ["pose", "Quill", ""],
+						["fade", 0.7, 1.0],
+						["say", "", ["Neither of you reads another word. The ferns glow on until the library lights go down."]],
+						["fade", 0.0, 1.0]]},
+					{"text": "You mean a lot to me, as a friend.", "steps": [
+						["pose", "Quill", "sad"], ["emote", "Quill", "sad"],
+						["say", "Quill", ["[sad] Of course. Thank you for telling me honestly. Honesty is good medicine."]],
+						["pose", "Quill", ""],
+						["say", "Quill", ["[happy] Keep the bookmark. Ferns do not take things back."]]]}]]]],
+			["pose", "Quill", "talk"],
+			["say", "Quill", ["[happy] And please stop collapsing in the mine. From now on I am keeping a closer eye on you. Medically."]],
+			["pose", "Quill", ""],
+			["perk", "guardian_medic", "Perk: Guardian Medic (+20 max health, and collapsing costs no Scrip)"],
+		],
+	},
+	"quill_10": {
+		"who": "Quill", "hearts": 10, "title": "Constellation Study",
+		# the little park in the East complex at night (Zachary, 23 Nov), with the plant he names after you
+		"area": "east", "windows": [[null, "20:00", "24:00"]],
+		"partner": true,
+		"player": [53, 45, "u"],
+		"cast": [["Quill", 53, 40, "d"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The little park at night. The ring lights are dimmed, and the dome overhead is full of stars. In a fresh bed of soil, something small is glowing."]],
+			["emote", "Quill", "hello"],
+			["say", "Quill", ["[happy] You came. Good. Come and look. Carefully. It is shy."]],
+			["walk", "player", 52, 40], ["face", "player", "r"], ["face", "Quill", "l"],
+			["say", "", ["A small plant with silver leaves, each one pricked with tiny points of light, like a map of the sky."]],
+			["pose", "Quill", "talk"],
+			["say", "Quill", ["I charted it in the North Cave. A new species. Nobody in three sectors has catalogued it, so I get to name it.",
+				"[bashful] The convention is Latin. I have decided the convention is wrong."]],
+			["pose", "Quill", ""],
+			["say", "", ["The little tag beside it, in Quill's tiny handwriting, says your name."]],
+			["say", "Quill", ["[love] It glows brightest when someone it knows is near. I tested that. Many times. It is very reliable.",
+				"Look up. If you match its leaves to the stars, they line up. I did not plan that. I am choosing to believe it anyway."]],
+			["pose", "Quill", "gift"],
+			["say", "Quill", ["[bashful] And this. I engraved it myself, badly. A stethoscope on one side, a compass on the other.",
+				"So you can always find your way back to a heartbeat."]],
+			["say", "", ["A small brass charm, still warm from his pocket."]],
+			["pose", "Quill", ""],
+			["emote", "Quill", "love"], ["emote", "player", "love"],
+			["keepsake", "stethoscope_compass", "Keepsake: Quill's stethoscope-compass charm"],
 		],
 	},
 }

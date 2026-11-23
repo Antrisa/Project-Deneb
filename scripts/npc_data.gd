@@ -648,7 +648,7 @@ const LOOKS = {
 # Days off (22 Nov, Zachary): weekday numbers, 0 = Monday ... 6 = Sunday. The schedules for those days are in
 # tools/build.py SCHEDULE_DAYS_RAW; the station calendar lists them. Jasper and Evarra stagger theirs, so one
 # of them always keeps the mess hall.
-const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6]}
+const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6], "Quill": [0, 5], "Maren": [3, 6]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -684,5 +684,25 @@ const DAY_LINES := {
 		6: ["[happy] Sunday. Pot of gumbo on the stove by noon. Smell it from the street by two.",
 			"Mama always said Sunday's for slow food and slower talk. I keep to it.",
 			"[happy] No pick, no lift, no quota. Just me and a wooden spoon."],
+	},
+	"Quill": {
+		0: ["[happy] My day off. I am going to look at moss. On purpose. For hours.",
+			"Vzz'ket has agreed to guard me in the North Cave. He says I sketch too slowly to be worth eating."],
+		5: ["Saturday. Owen saved me a journal on fungal symbiosis. I may not speak to anyone until dinner.",
+			"[happy] No patients today. I keep checking my hands for gloves anyway."],
+		3: ["[surprised] Doctor Maren is off today. I am in charge. Please do not get injured. I mean that kindly.",
+			"I have the clinic until tonight. I have checked the bandages twice. They are still alphabetical."],
+		6: ["Doctor Maren is with her family today. The medbay is mine. It is very quiet. I do not like it.",
+			"[happy] If you need a check-up, today is ideal. I have nothing to do but worry."],
+	},
+	"Maren": {
+		3: ["[happy] My day off. Quill has the clinic. If you're bleeding, go to him. If you're dying, come and find me.",
+			"Thursday. I'm going to drink a cup of tea while it's still hot. First time in thirty years."],
+		6: ["Sunday's for family. Owen pretends to work, Pip pretends to behave, and I pretend not to notice either.",
+			"[happy] No clinic today. I've been told to rest by my own assistant. The cheek of him."],
+		0: ["Quill's off poking moss in some cave. I've told Vzz'ket to bring him back in one piece.",
+			"[sad] No Quill today, so I did the inventory myself. The bandages are not alphabetical any more."],
+		5: ["Saturday, so it's just me. If you're going to fall off something, do it before lunch.",
+			"[happy] Quill's day off. I made him promise not to read medical journals. He's reading medical journals."],
 	},
 }

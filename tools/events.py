@@ -47,6 +47,10 @@ FACES = {
     "job": dict(eyes=((8, 13), (14, 13)),
                 colours=dict(skin="#b66037", lid="#e0c297", white="#f4d3a5", pupil="#1a0b10",
                              brow="#2c111c", tear="#93e6ea")),
+    # Quill (23 Nov): eyes behind his glasses, brows on row 12 (tools/fix_eyes.py)
+    "quill": dict(eyes=((8, 13), (14, 13)),
+                  colours=dict(skin="#9ea999", lid="#c7d2b8", white="#d9e5c8", pupil="#0b0206",
+                               brow="#221920", tear="#93e6ea")),
 }
 
 L_, R_ = "L", "R"

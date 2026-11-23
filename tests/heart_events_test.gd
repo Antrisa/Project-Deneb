@@ -47,10 +47,11 @@ func run() -> void:
 	assert(s.story_flags.get("perk_master_mechanic", false) and s.story_flags.get("keepsake_wrench_pendant", false))
 	for f in ["jasper_butter_deposit", "perk_parisian_bistro_menu", "perk_sous_chefs_blessing", "keepsake_jasper_apron",
 			"evarra_wildflowers", "perk_honey_lavender_brioche", "perk_green_thumb", "keepsake_pressed_flower_frame",
-			"job_rig_quest", "perk_bedrock_strength", "keepsake_oar_charm"]:
+			"job_rig_quest", "perk_bedrock_strength", "keepsake_oar_charm",
+			"perk_xeno_salve", "quill_clinic_door", "perk_guardian_medic", "keepsake_stethoscope_compass"]:
 		assert(s.story_flags.get(f, false), f)
 	# F4 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
-	assert(s.partner == "Job")
+	assert(s.partner == "Quill")
 	print("PASS: ", HeartEvents.ORDER.size(), " heart events played to the end, choices picked, flags set.")
 	quit()

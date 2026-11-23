@@ -2802,6 +2802,42 @@ SCHEDULE_DAYS_RAW = {
             ("16:00", "home6", 20, 9, 26, "d", "idle", "rest"), ("19:15", *HOME_SPOTS["Job at the bar"], 26, "u", "idle", "drink"),
             ("22:00", *HOME_SPOTS["Job"], 26, "d", "idle", "rest")]},
     ],
+    # Quill and Maren (23 Nov, Zachary): two days off each, staggered so one of them always has the medbay.
+    # Quill is off Mondays and Saturdays: breakfast, sketching moss in the North Cave (Vzz'ket guards the gate),
+    # lunch, the little park in the East complex (or the garden dome, once it's open), dinner, the library as
+    # every evening. On Maren's days off (Thursday, Sunday) he has the clinic alone and takes her evening shift.
+    "Quill": [
+        {"when": {"days": [3, 6]}, "stops": [
+            ("06:00", "medbay", 2, 5, 26, "d", "work", "sort"), ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"),
+            ("18:15", "medbay", 2, 5, 26, "d", "work", "sort"), ("21:30", "flatQuill", 5, 5, 26, "d", "idle", "rest")]},
+        {"when": {"days": [0, 5]}, "stops": [
+            ("08:00", "mess", 25, 12, 26, "d", "eat", "eat"), ("09:00", "tunnels", 22, 29, 26, "l", "idle", "read"),
+            ("12:30", "mess", 25, 12, 26, "d", "eat", "eat"), ("14:00", "east", 53, 40, 26, "d", "idle", "read"),
+            ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"), ("19:15", "library", 8, 10, 26, "d", "idle", "rest"),
+            ("22:00", "flatQuill", 5, 5, 26, "d", "idle", "rest")]},
+        {"when": {"days": [0, 5], "flags": ["east_dome"]}, "stops": [
+            ("08:00", "mess", 25, 12, 26, "d", "eat", "eat"), ("09:00", "tunnels", 22, 29, 26, "l", "idle", "read"),
+            ("12:30", "mess", 25, 12, 26, "d", "eat", "eat"), ("14:00", "east", 150, 46, 26, "d", "idle", "read"),
+            ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"), ("19:15", "library", 8, 10, 26, "d", "idle", "rest"),
+            ("22:00", "flatQuill", 5, 5, 26, "d", "idle", "rest")]},
+    ],
+    # Maren is off Thursdays and Sundays. Thursday: breakfast, the library with Owen, a hot cup of tea in the
+    # common room, the fountain bench, dinner, home early. Sunday is for family: the library with Owen, the little
+    # park (or the garden dome), dinner, home.
+    "Maren": [
+        {"when": {"days": [3]}, "stops": [
+            ("08:30", "mess", 19, 12, 26, "d", "eat", "eat"), ("10:00", "library", 6, 11, 26, "u", "idle", "rest"),
+            ("12:30", "common", 12, 9, 26, "d", "idle", "rest"), ("15:00", "main", 100, 66, 26, "d", "idle", "rest"),
+            ("17:35", "mess", 19, 12, 26, "d", "eat", "eat"), ("19:15", "aptDoc", 6, 5, 26, "d", "idle", "rest")]},
+        {"when": {"days": [6]}, "stops": [
+            ("08:30", "mess", 19, 12, 26, "d", "eat", "eat"), ("10:00", "library", 6, 11, 26, "u", "idle", "rest"),
+            ("13:00", "east", 58, 50, 26, "d", "idle", "rest"), ("17:35", "mess", 19, 12, 26, "d", "eat", "eat"),
+            ("19:15", "aptDoc", 6, 5, 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["east_dome"]}, "stops": [
+            ("08:30", "mess", 19, 12, 26, "d", "eat", "eat"), ("10:00", "library", 6, 11, 26, "u", "idle", "rest"),
+            ("13:00", "east", 118, 44, 26, "d", "idle", "rest"), ("17:35", "mess", 19, 12, 26, "d", "eat", "eat"),
+            ("19:15", "aptDoc", 6, 5, 26, "d", "idle", "rest")]},
+    ],
 }
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():

@@ -39,11 +39,11 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2.
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's and Job's arcs are now written and in the game.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's, Job's and Quill's arcs are now written and in the game.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3.
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
-7. **Eleven scenes are in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars.
+7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Ten now: Quill 10 moved to the little park.)
 
 ---
 
@@ -186,19 +186,18 @@ A quiet man finding home on a moon he never chose. **Reviewed with Zachary on 22
 
 ### 3.5 Quill (Vuultam, Medical Assistant)
 
-Maren's shy apprentice finding his own voice.
+Maren's shy apprentice finding his own voice. **Reviewed with Zachary on 23 Nov; all five are written and playable.** Full scenes, and his and Maren's weeks: [`characters/QUILL.md`](characters/QUILL.md).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | The Spilled Apothecary | Medbay, 11:00–15:00 | Spilled spore vials; he doubts he's a real medic. | Script |
-| 4 | Field Notes in the Dark | Upper caverns (Vzz'ket on guard) | Cavern lichen plus Merrow's aloe. Unlocks Xeno-Salve. | Short |
-| 6 | Doctor's Orders | Medbay, afternoon | Treats a miner alone; Maren puts his name on the clinic door. | Short |
-| 8 | Heartbeat (confession) | Library or medbay, evening | A pressed glowing-fern bookmark. Perk: Guardian Medic. | Script |
-| 10 | Constellation Study | Observation Lounge, night | Names a new plant after you. Keepsake: stethoscope-compass charm. | Outline |
+| 2 | The Spilled Apothecary | Medbay, 11:00–15:00 on Maren's day off | Spilled spore vials; he doubts he's a real medic. | In game (Zachary's script, replies to the choice by Claude) |
+| 4 | Field Notes in the Dark | The North Cave past the mine, on his morning off, Vzz'ket on guard | Cavern lichen plus Merrow's aloe. A choice added. Unlocks Xeno-Salve. | In game (Zachary's line, scene by Claude) |
+| 6 | Doctor's Orders | The mine head, weekday afternoons | He treats Job's arm without a tremor; Maren puts his name on the clinic door. | In game (Zachary's lines, scene by Claude) |
+| 8 | Heartbeat (confession) | The library in the evening | A pressed glowing-fern bookmark. Perk: Guardian Medic. Accept, decline and friendship endings written. | In game (Zachary's speeches, replies by Claude) |
+| 10 | Constellation Study | The little park in the East complex at night | A new glowing species, named after you; a stethoscope-compass charm. | In game (Claude) |
 
-- **Clash:** 8 is at "the Library / Medbay garden bench"; there's no medbay garden. The library suits his evening reading.
-- **Gap:** 4 and 6 have no choice.
-- **Idea:** in the prologue Quill notices "a brief electromagnetic spike" in your scans. His 4 or 6 could come back to it (he's been reading your scans; the Lexicon shows up again), tying a romance to the main story (thread E).
+- **Decided (Zachary, 23 Nov):** Quill and Maren stagger two days off each (Quill Monday and Saturday, Maren Thursday and Sunday), with lines to match; 4 in the North Cave; 6 at the mine head; 8 in the library; 10 in the little park (one fewer Observation Lounge scene).
+- **Still open:** the clinic-door sign and the glowing plant need art; thread E (the "electromagnetic spike" in your scans) could still come back in one of his scenes.
 
 ### 3.6 Ix'ali (Zaa'sh, Armourer)
 
@@ -463,7 +462,7 @@ Each of the nine 8-heart scenes ends "Accept confession or stay friends", with n
 
 ### 7.4 Places in the scripts that aren't the game's maps
 
-Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill 8 "Library / Medbay garden bench" (pick one); Stu 6 "West Wing Residential Corridor" (East Home 2?); Artie 10 "Library / Concourse" (East orchard); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 "Shuttle Bay training mat" (no mat prop yet).
+Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill 8 is the library; Stu 6 "West Wing Residential Corridor" (East Home 2?); Artie 10 "Library / Concourse" (East orchard); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 "Shuttle Bay training mat" (no mat prop yet).
 
 ### 7.5 Choices with no outcome, or the wrong kind
 
