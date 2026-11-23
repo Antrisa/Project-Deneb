@@ -373,13 +373,27 @@ func swing(kind: String) -> void:
 	_animate_attack()
 
 
-# The spear is thrust out and drawn back; the sword sweeps through an arc. The body leans into it.
+# The body's pose through a swing (23 Nov), from the tool poses: the sword is wound up, swept across
+# and followed through, like the scythe; the spear is drawn back to the chest, thrust out at arm's
+# length, and recovered.
+func _attack_row() -> int:
+	var k: float = 1.0 - clampf(_attack_time / ATTACK_LEN, 0.0, 1.0)
+	if _attack_kind == "spear":
+		return Poses.GRIP if k < 0.3 else (Poses.FOLLOW if k < 0.75 else Poses.RECOVER)
+	return Poses.WINDUP if k < 0.25 else (Poses.SWEEP if k < 0.55 else (Poses.FOLLOW if k < 0.8 else Poses.RECOVER))
+
+
+# The spear is thrust out and drawn back; the sword sweeps through an arc. The body leans into it, and
+# the weapon stays in the hand of the pose.
 func _animate_attack() -> void:
 	var k: float = 1.0 - clampf(_attack_time / ATTACK_LEN, 0.0, 1.0)
 	var lean: float = sin(k * PI)
 	var hand: Vector2 = HAND + _attack_dir * 3.0
+	var posed := _action_body.texture != null and _action_body.vframes >= Poses.PREVIOUS_COUNT and not sitting
+	if posed:
+		hand = Poses.world_grip(_attack_row(), _dir, _action_body.vframes) + _attack_dir * lean * 2.0
 	if _attack_kind == "spear":
-		_weapon.position = hand + _attack_dir * (lean * 13.0 - 7.0)
+		_weapon.position = hand + _attack_dir * ((lean * 6.0 - 7.0) if posed else (lean * 13.0 - 7.0))
 		_weapon.rotation = _attack_dir.angle()
 	else:
 		var sweep: float = lerpf(-1.4, 1.4, k)
@@ -388,6 +402,7 @@ func _animate_attack() -> void:
 		_weapon.position = hand
 		_weapon.rotation = _attack_dir.angle() + sweep
 	_sprite.position = Vector2(-8, -30) + _attack_dir * lean * 2.0
+	_refresh_body_pose()
 
 
 func set_carrying(value: bool) -> void:
@@ -493,6 +508,7 @@ func _process(delta: float) -> void:
 		if _attack_time <= 0.0:
 			_weapon.visible = false
 			_sprite.position = Vector2(-8, -30)
+			_refresh_body_pose()
 	if _tool_time > 0.0:
 		_tool_time -= delta
 		if _tool_time <= 0.0:
@@ -576,6 +592,8 @@ func _refresh_body_pose() -> void:
 		if _eat_time < EAT_HOLD + EAT_DROP:
 			row = 0
 			dir = 0
+	elif can_pose and _attack_time > 0.0 and _action_body.vframes >= Poses.PREVIOUS_COUNT:
+		row = _attack_row()
 	elif can_pose and carrying:
 		row = _sprite.frame_coords.y
 	elif can_pose and _held_time > 0.0:
