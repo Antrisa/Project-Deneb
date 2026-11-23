@@ -315,7 +315,7 @@ const PEOPLE = {
 			"If you see a small fox going somewhere fast, that's Kit, and wherever he's going, he's not allowed.",
 		],
 		"repeat": [
-			"[happy] Rusk is my uncle. Don't believe a word he says about me as a kit.",
+			"[happy] Rusk isn't family. He just turned up for every birthday until nobody could tell the difference.",
 			"I keep the house, the boy and the chief of security in order. [angry] Only one of them listens.",
 			"The market is quiet most days. But when Ooma's stall is up, I always find something I didn't need.",
 			"[love] Garrick came here to guard a station. He stayed because it turned into a town.",
@@ -649,7 +649,7 @@ const LOOKS = {
 # tools/build.py SCHEDULE_DAYS_RAW; the station calendar lists them. Jasper and Evarra stagger theirs, so one
 # of them always keeps the mess hall.
 const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6], "Quill": [0, 5], "Maren": [3, 6],
-	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3], "Tar'Besh": [0], "Zaas": [6]}
+	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3], "Tar'Besh": [0], "Zaas": [6], "Rusk": [0]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -715,6 +715,9 @@ const DAY_LINES := {
 			"Garrick left me a list of rules. Rule one: do not test anything on the walls. The walls are fine."],
 		6: ["Sunday. Garrick is at home with his family, so the forms are mine. I have signed them all with a flourish.",
 			"[happy] Nobody to tell me to stop sharpening. Today is a very good day."],
+		4: {"flag": "vzzket_open_mic", "lines": [
+			"Friday. Vzz'ket is at the story night, so the gate is mine tonight. I have told it several stories.",
+			"[happy] I hold the gate on Fridays now. Vzz'ket left me eleven instructions. I have followed four."]},
 	},
 	"Garrick": {
 		5: ["Day off. Saffi says I'm not to patrol. I'm not. I'm walking. In a circle. Round the plaza.",
@@ -761,5 +764,19 @@ const DAY_LINES := {
 		6: ["[happy] Sunday! Expedition day. Merrow has the plant, and I have a hydrophone and a packed lunch.",
 			"Sundays I listen. The rock hums, the pumps knock, and under all of it, if you are patient, something answers.",
 			"[happy] Day off. Which is to say, day on, for the ocean. Report any ice."],
+	},
+	"Rusk": {
+		0: ["Monday. The bar opens at six, and until then I'm a man of leisure. [happy] A man of leisure with a bad back.",
+			"Mondays I soak, I eat with Saffi and the boy, and I let Bram tell me his prices are fair. Then I open up.",
+			"[happy] No pouring till six. If you see Job at my door at noon, send him to the bath house."],
+	},
+	# Vzz'ket's nights off only start once he's earned them (his 6, then his 8): {"flag", "lines"} waits for the flag
+	"Vzz'ket": {
+		4: {"flag": "vzzket_open_mic", "lines": [
+			"Friday. The armourer holds my gate tonight. I am to sit in the barman's chairs and listen to lies.",
+			"[happy] Story night. The small fox tells the same one every week. It is a good one. Do not tell him I said so."]},
+		6: {"flag": "vzzket_sentinels", "lines": [
+			"Sunday. The box watches the gate. I am... resting. I do not know what to do with my hands.",
+			"The cleric is teaching me the old Zaa'sh hymns. I knew them as a hatchling. I had forgotten I knew them."]},
 	},
 }

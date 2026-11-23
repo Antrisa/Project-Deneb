@@ -45,7 +45,7 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2. (Ana's part settled 23 Nov: the game's version, with her crew always calling her weak for never firing on transports.)
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana; so are the Jasper & Evarra side arc and the platonic arcs of S.A.R.A., Tar'Besh and Zaas.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana; so are the Jasper & Evarra side arc and the platonic arcs of S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3. (All settled: the hotel opens after Ivan's fall, before Stu arrives, and the siblings' 8 plays in the mess hall until then.)
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
@@ -100,7 +100,7 @@ Also in the docs but not on this list: the yearly Grand Hotel Inspection (sectio
 | **C. Pip's parents** are alive in Collective space. | Maren/Owen/Pip 4, Eshu 4 (Pip's letter) | Nothing |
 | **D. Who took Artie** in October 2036 ("a silent silver light lifted my truck"), and why was his pod in Ivan's hold? A silent silver light sounds like a Precursor drone. | Artie 2 | Nothing |
 | **E. The Precursor Lexicon in your head.** Quill's "electromagnetic spike", the Mother-Drone's "Tend the small worlds". | Prologue 2–3 | Only the Custodians talking to you |
-| **F. "Something big stirring below."** The giant carapace, the crawlers fleeing upward, the tides Zaas hears. | Vzz'ket & Rusk 4, Chitin Exodus, Zaas 4 | Implied by the floor-45 boss, never said |
+| **F. "Something big stirring below."** The giant carapace, the crawlers fleeing upward, the tides Zaas hears. | Vzz'ket & Rusk 4, Chitin Exodus, Zaas 4 | The Leviathan on floor 45 (decided 23 Nov: it broke the brood-queen's shell in Vzz'ket & Rusk 4, and its heartbeat is what Zaas hears in his 4) |
 | **G. The Chernobog remnants.** "The Chernobog lieutenants scattered." | Ana 2 | Space runs could pick it up (pirate strongholds) |
 
 **Idea (Claude), nothing decided:** the Neutral Zone Summit is where A and B could land. Each power arrives with a claim (the Empire on S.A.R.A. and Annex 4, the Junta on the Custodians, the Collective on its refugees), and how the residents stand with you decides how it goes: S.A.R.A. 6 and Tar'Besh's secret pay off, Eshu (who keeps a private line to every empire and puts the kettle on for rival envoys) gets everyone to one table, and Ix'ali, Ana and Artie each have a side to speak for. C and D could close earlier, in Year 1: Pip's parents through Eshu's network, and Artie's abductors through the Starborn Convergence.
@@ -293,7 +293,7 @@ Needs **both** at the level. All five are full scripts ([ROMANCE_SCRIPTS.md](ROM
 
 ## 5. Platonic arcs
 
-All 40 were outlines; S.A.R.A.'s, Tar'Besh's and Zaas's are written and in the game now (23 Nov). Text is from the NPC Master; where the Master has only a word or two, the older bible's outline is used.
+All 40 were outlines; S.A.R.A.'s, Tar'Besh's, Zaas's and Vzz'ket & Rusk's are written and in the game now (23 Nov). Text is from the NPC Master; where the Master has only a word or two, the older bible's outline is used.
 
 ### 5.1 S.A.R.A. (AI, Steward & Concierge)
 
@@ -343,15 +343,18 @@ The water officer who was right about the ocean, and gave it to the one who kept
 
 ### 5.4 Vzz'ket & Rusk (both)
 
+The barman who tells tall tales, and the hunter nobody believes. **Reviewed with Zachary on 23 Nov; all four are written and playable.** Full scenes and their weeks: [`characters/VZZKET_RUSK.md`](characters/VZZKET_RUSK.md).
+
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Tall Tales at the Bar | Rusk's bar at night | Rusk laughs off the crawler migration; Vzz'ket sharpens his spear. | Outline |
-| 4 | The Nest | Caverns, lush floors | A carapace far bigger than any crawler. | Outline |
-| 6 | On the House | Rusk's bar | Rusk apologises; Friday Open-Mic & Story Night starts. | Outline |
-| 8 | Sentinels of Echo Landing | Rusk's bar | Chitin-Piercer Traps and monster radar; Secret Reserve drinks. | Outline |
+| 2 | Tall Tales at the Bar | Rusk's bar, late, after Vzz'ket's shift | Rusk's bug-migration routine for Job and Freya; Vzz'ket, sharpening his spear: "They are running." | In game (Claude) |
+| 4 | The Broken Shell (was The Nest) | The far east end of the North Cave, in the evening | Vzz'ket shows you both a crawler brood-queen's shell, broken open from outside; Rusk takes back about forty jokes. | In game (Claude) |
+| 6 | On the House | Rusk's bar on a Friday evening | Rusk apologises in front of everyone and opens the stage: Friday Open-Mic & Story Night. Vzz'ket's true story, then Rusk's forty years. | In game (Claude) |
+| 8 | Sentinels of Echo Landing | The cavern gate near midnight, then the bar | The radar (S.A.R.A.'s sensors) and Ix'ali's traps; Vzz'ket trusts it because Tar'Besh asks him to, and leaves the gate for one drink. Rusk hangs his sign: THE NIGHT WATCH. Rewards: Chitin-Piercer Traps and monster radar; the Secret Reserve. | In game (Claude) |
 
-- **Clash:** "the Nest" is also the pirate stronghold in the space-combat plan ("the Nest raid"). Rename one. Decision 16.
-- Rusk gets no scene of his own. His forty years behind the bar and being Saffi's uncle (both Claude placeholders) go unused.
+- **Decided (Zachary, 23 Nov):** the Leviathan broke the shell (thread F); "The Nest" is now "The Broken Shell" (Decision 16); Rusk is not Saffi's uncle but a figure in her family's life; Vzz'ket is old-school Zaa'sh and doesn't like S.A.R.A. at first, but respects Tar'Besh; Claude's places and weeks accepted. Wrong choices: −20 with Vzz'ket (2, 6, 8), and a crawler bite in 4 (−10 energy).
+- **Their weeks:** Rusk has Monday mornings off (the bar opens at 18:00). Vzz'ket has no day off until he's earned one: Friday nights at the Open-Mic after 6 (Ix'ali holds the gate), Sundays after 8.
+- **Rusk's own scene** is his half of 6 (forty years, every bar lost, this one kept). The bar's run-down state and its repair are still to be designed; the sign in 8 could become part of that.
 
 ### 5.5 Bram & Ooma (both, except 4)
 
@@ -508,8 +511,8 @@ Answer by number; anything left open stays as it is.
 13. **Freya's father:** decided 22 Nov: **Jorvik**, who died testing an earlier version of the stabilizer. Still open: how long ago.
 14. **Keepsakes marked (Claude):** Job's oar charm. (Jasper's apron and Evarra's pressed-flower frame are in the game.)
 15. **Hearts:** 100 points a heart, as in the NPC Master? Then the code is changed to match.
-16. **"The Nest":** rename the cavern event or the pirate stronghold.
+16. **"The Nest":** decided 23 Nov: the cavern event is now "The Broken Shell"; the Rabble's Nest keeps its name.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh and Zaas; Vzz'ket & Rusk are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram & Ooma are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).

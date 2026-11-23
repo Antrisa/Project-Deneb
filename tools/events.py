@@ -64,6 +64,13 @@ FACES = {
                 colours=dict(skin="#acb34c", lid="#f6df97", white="#fdf4b4", pupil="#070008",
                              brow="#2b1f1a", tear="#93e6ea")),
     # Ana (23 Nov, for her heart events): eyes from tools/fix_eyes.py (two wide, under her fringe)
+    # Vzz'ket and Rusk (23 Nov, for their heart events): eyes from tools/fix_eyes.py
+    "vzzket": dict(eyes=((10, 12), (16, 12)),
+                   colours=dict(skin="#b59748", lid="#d8b06c", white="#ebc076", pupil="#1f140f",
+                                brow="#523628", tear="#93e6ea")),
+    "rusk": dict(eyes=((8, 13), (14, 13)),
+                 colours=dict(skin="#e67543", lid="#decdac", white="#f6ecd4", pupil="#2a1a12",
+                              brow="#563f2f", tear="#93e6ea")),
     # Zaas and Merrow (23 Nov, for his heart events): eyes from tools/fix_eyes.py; Zaas's "skin" is his teal face,
     # under the hat brim
     "zaas": dict(eyes=((10, 20), (16, 20)),

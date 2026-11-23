@@ -2133,7 +2133,13 @@ func _plain_intro(who: String) -> String:
 # cover for someone who's off (NpcData.DAY_LINES). A different line each week.
 func _day_line(who: String) -> String:
 	var weekday: int = (day - 1) % 7
-	var lines: Array = NpcData.DAY_LINES.get(who, {}).get(weekday, [])
+	var entry = NpcData.DAY_LINES.get(who, {}).get(weekday, [])
+	if entry is Dictionary:
+		# {"flag": f, "lines": [...]}: a day that only changes once the story has got there (Vzz'ket's nights off)
+		if not _flag(str(entry["flag"])):
+			return ""
+		entry = entry["lines"]
+	var lines: Array = entry
 	if lines.is_empty():
 		return ""
 	return str(lines[floori((day - 1) / 7.0) % lines.size()])

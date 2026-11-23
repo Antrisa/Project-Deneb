@@ -587,3 +587,5 @@ npc_ana_event.png
 npc_tarbesh_event.png
 npc_zaas_event.png
 npc_merrow_event.png
+npc_vzzket_event.png
+npc_rusk_event.png

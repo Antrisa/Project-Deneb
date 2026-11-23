@@ -3013,6 +3013,27 @@ SCHEDULE_DAYS_RAW = {
             ("17:05", "main", 126, 75, 26, "d", "eat", "eat"), ("19:15", "lounge", 37, 9, 26, "u", "idle", "stargaze"),
             ("23:00", *HOME_SPOTS["Zaas"], 26, "d", "idle", "rest")]},
     ],
+    # Rusk (23 Nov): Monday mornings off, the bar opens at six in the evening: a soak at the bath house, lunch by
+    # the fountain with Saffi and Kit (not family, but he's always been there for them), Bram's in the afternoon.
+    "Rusk": [
+        {"when": {"days": [0]}, "stops": [
+            ("09:30", "bathhouse", 30, 10, 26, "r", "idle", "rest"), ("12:30", "main", 101, 58, 26, "l", "eat", "eat"),
+            ("14:30", "bram", 4, 4, 26, "r", "idle", "rest"), ("17:00", "main", 121, 70, 26, "d", "eat", "eat"),
+            ("18:00", *HOME_SPOTS["Rusk at work"], 36, "d", "work", "pour"), ("23:30", *HOME_SPOTS["Rusk"], 26, "d", "idle", "rest")]},
+    ],
+    # Vzz'ket (23 Nov): no day off at first: that's his flaw. After his 6 (the Open-Mic) Friday nights are at the bar,
+    # with Ix'ali holding the gate (she spars there every evening anyway). After his 8 the radar and the traps keep
+    # watch, and Sunday is his: the museum with Tar'Besh in the morning, holo-darts at the bar, the Open-Mic seats.
+    "Vzz'ket": [
+        {"when": {"days": [4], "flags": ["vzzket_open_mic"]}, "stops": [
+            ("06:00", "mine", 8, 27, 26, "r", "idle", "guard"), ("17:15", "main", 130, 70, 26, "d", "eat", "eat"),
+            ("19:00", "bar", 29, 16, 26, "r", "idle", "eat"), ("23:30", *HOME_SPOTS["Vzz'ket"], 26, "r", "idle", "guard")]},
+        {"when": {"days": [6], "flags": ["vzzket_sentinels"]}, "stops": [
+            ("08:00", "main", 130, 70, 26, "d", "eat", "eat"), ("09:30", "museum", 52, 28, 26, "r", "idle", "walk_stop"),
+            ("12:30", "main", 130, 70, 26, "d", "eat", "eat"), ("13:30", "bar", 7, 13, 26, "u", "idle", "walk_stop"),
+            ("17:15", "main", 130, 70, 26, "d", "eat", "eat"), ("19:00", "bar", 29, 19, 26, "r", "idle", "eat"),
+            ("23:30", *HOME_SPOTS["Vzz'ket"], 26, "r", "idle", "guard")]},
+    ],
 }
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():

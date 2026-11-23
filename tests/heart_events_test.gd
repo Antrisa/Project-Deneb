@@ -52,6 +52,8 @@ func run() -> void:
 			assert(["Autumn", "Winter"].has(str(BridgeScript.season_date(s.day)[0])), "the siblings' banquet is in autumn or winter")
 		if id == "zaas_6":
 			assert(s.leviathan_slain, "Zaas's 6 is at the lake, so F3 kills the Leviathan first")
+		if id == "vzzket_8":
+			assert(s.current_area == "bar", "Vzz'ket's 8 ends in the bar, under the new sign")
 		if id == "ana_10":
 			assert(s.player.visible, "you step back out of your ship after Ana's 10")
 			assert(s.wreck_sprite.modulate.a == 1.0, "your ship is back on its pad after Ana's 10")
@@ -70,7 +72,9 @@ func run() -> void:
 			"siblings_practice_run", "perk_family_table", "keepsake_family_photo", "siblings_feast",
 			"sara_lost_property", "sara_concierge", "sara_emitter", "sara_rest", "perk_concierge", "sara_night_shift",
 			"tarbesh_astrolabe", "tarbesh_assignment", "tarbesh_summons", "tarbesh_plaque", "perk_relic_appraisal",
-			"zaas_helmet", "zaas_heartbeat", "merrow_deep", "zaas_captain", "perk_deep_sea_sonar_lure"]:
+			"zaas_helmet", "zaas_heartbeat", "merrow_deep", "zaas_captain", "perk_deep_sea_sonar_lure",
+			"vzzket_tall_tales", "vzzket_shell", "vzzket_open_mic", "vzzket_sentinels", "perk_chitin_piercer_traps",
+			"perk_secret_reserve"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
