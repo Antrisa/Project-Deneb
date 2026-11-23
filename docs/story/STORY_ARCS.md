@@ -39,11 +39,11 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2.
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's, Job's, Quill's and Ix'ali's arcs are now written and in the game.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's, Job's, Quill's, Ix'ali's and Artie's arcs are now written and in the game.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3.
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
-7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Nine now: Quill 10 moved to the little park and Ix'ali 10 to the museum.)
+7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Nine now: Quill 10 moved to the little park and Ix'ali 10 to the museum; Artie 6 stays.)
 
 ---
 
@@ -216,20 +216,19 @@ Junta steel, Earth chivalry: honour means protecting the weak. **Reviewed with Z
 
 ### 3.7 Arthur "Artie" Vance (Human, Wave 1)
 
-Woke up centuries late; finds a second chapter teaching the station's kids.
+Woke up centuries late; finds a second chapter teaching the station's kids. **Reviewed with Zachary on 23 Nov; all six (with a new 0) are written and playable.** Full scenes and his week: [`characters/ARTIE.md`](characters/ARTIE.md).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Centuries Late | Library | October 2036, Minnesota, "a silent silver light lifted my truck". | Script |
-| 4 | The Junior Scouts | Plaza fountain | Knots and orienteering with Pip, Nub and Kit. Unlocks Junior Scout Foraging Reports. | Short |
-| 6 | Echoes of 2036 | Observation Lounge | S.A.R.A. projects a 2030s sky with crickets. | Short |
-| 8 | Campfire Under Glass (confession) | East orchard at night | Marshmallows beside Evarra's wildflowers. Perk: Thrifty. | Script |
-| 10 | Merit Badge of the Heart | Campout in the East orchard | The kids give you an Honorary Scoutmaster badge Sesska sewed. Keepsake: the badge. | Outline |
+| 0 | Out of Time (new) | Medbay, once he's awake; then the plaza and the Observation Lounge | You show him round; the stars are all in the wrong places. | In game (Claude, from Zachary's direction) |
+| 2 | Centuries Late | Library, mornings, while the kids are at lessons | October 2036, the silver light; his old troop, and three kids who've never seen a campfire. | In game (Zachary's script, the Scouts idea by Claude) |
+| 4 | The Junior Scouts | The plaza fountain at lunchtime | The first meeting. Starts the Scouts (Monday afternoons, first-Saturday outings). Unlocks Junior Scout Foraging Reports. | In game (Zachary's line, scene by Claude) |
+| 6 | Echoes of 2036 | Observation Lounge, Sunday afternoon or early evening | S.A.R.A.'s 2030s sky with crickets. | In game (Zachary's lines, S.A.R.A. and a choice by Claude) |
+| 8 | Campfire Under Glass (confession) | The garden dome's woods by the hot springs at night; **backup:** the little park | Perk: Thrifty. Accept, decline and friendship endings written. | In game (Zachary's lines, replies by Claude) |
+| 10 | Merit Badge of the Heart | A Scouts campout in the dome's woods; **backup:** the little park | The kids make you an Honorary Scoutmaster. Keepsake: the badge. | In game (Claude) |
 
-- **Clash:** 2's trigger says "after rescuing Artie from the pirate base" (Decision 1). 10's trigger in the script says "Library / Concourse", but the scene is a campout in the East orchard (the Master agrees with the orchard).
-- **Lock:** 8 and 10 are in the East orchard, which needs the Sovereign. Both need a backup; the plaza fountain, where the Scouts meet, would fit. Decision 11.
-- **Gap:** 4 and 6 have one line each.
-- **Gap:** thread D. Who took him, and how did he get into Ivan's hold? Decision 5.
+- **Decided (Zachary, 23 Nov):** a 0-heart tour; 2 gives him the Scouts idea; campfire scenes in the dome woods with the little park as backup (Decision 11, his part); his week before and after the Scouts; the silver-light origin (his game lines changed to match).
+- **Still open:** thread D: who took him, and how did his pod end up in Ivan's hold? (Decision 5, the second half.)
 
 ### 3.8 Stowaway Stu (Moogli, Wave 1)
 
@@ -454,12 +453,12 @@ Each of the nine 8-heart scenes ends "Accept confession or stay friends", with n
 | Stu 8 | Hotel lobby; no backup | Reception (Decision 10) |
 | Stu 2, 6 | Hotel; Stu arrives long before it may open | Reception; East Home 2 (Decision 10) |
 | Evarra 8 | East orchard; no backup | Done 22 Nov: the promenade flower beds until the garden dome opens |
-| Artie 8, 10 | East orchard; no backup | Plaza fountain (Decision 11) |
+| Artie 8, 10 | East orchard; no backup | Done 23 Nov: the dome's woods, backup the little park |
 | Evarra 6 | Waits on side arc 6, which needs Jasper's hearts | Done 22 Nov: her 6 no longer needs honey |
 
 ### 7.4 Places in the scripts that aren't the game's maps
 
-Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill 8 is the library; Stu 6 "West Wing Residential Corridor" (East Home 2?); Artie 10 "Library / Concourse" (East orchard); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 is settled (the cavern gate).
+Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill 8 is the library; Stu 6 "West Wing Residential Corridor" (East Home 2?); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 is settled (the cavern gate).
 
 ### 7.5 Choices with no outcome, or the wrong kind
 
@@ -493,7 +492,7 @@ Answer by number; anything left open stays as it is.
 8. **The first bees:** decided 22 Nov: side-arc 6. Evarra 6 is now a wildflower border round your field.
 9. **Jasper & Evarra 8 waiting for the hotel:** allow it as an exception, or write a version without the hotel?
 10. **Stu before the hotel opens:** his job, and backup places for 2, 6 and 8.
-11. **Backups for the East orchard** (Artie 8 and 10). Evarra 8's is done: the promenade flower beds. The engine now has backup places (`"backup"` in `scripts/heart_events.gd`).
+11. **Backups for the East orchard:** done. Evarra 8: the promenade flower beds; Artie 8 and 10: the little park (they moved to the garden dome's woods). The engine now has backup places (`"backup"` in `scripts/heart_events.gd`).
 12. **Ix'ali's star pendant** at 8: an Oath-Crest you could propose with, or something else?
 13. **Freya's father:** decided 22 Nov: **Jorvik**, who died testing an earlier version of the stabilizer. Still open: how long ago.
 14. **Keepsakes marked (Claude):** Job's oar charm. (Jasper's apron and Evarra's pressed-flower frame are in the game.)

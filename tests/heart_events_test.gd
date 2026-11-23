@@ -49,10 +49,11 @@ func run() -> void:
 			"evarra_wildflowers", "perk_honey_lavender_brioche", "perk_green_thumb", "keepsake_pressed_flower_frame",
 			"job_rig_quest", "perk_bedrock_strength", "keepsake_oar_charm",
 			"perk_xeno_salve", "quill_clinic_door", "perk_guardian_medic", "keepsake_stethoscope_compass",
-			"ixali_folded_titanium", "perk_star_knight_aegis", "perk_chivalric_guard", "keepsake_pauldron"]:
+			"ixali_folded_titanium", "perk_star_knight_aegis", "perk_chivalric_guard", "keepsake_pauldron",
+			"artie_troop_story", "artie_scouts", "perk_junior_scout_reports", "perk_thrifty", "keepsake_scoutmaster_badge"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
-	assert(s.partner == "Ix'ali")
+	assert(s.partner == "Artie")
 	print("PASS: ", HeartEvents.ORDER.size(), " heart events played to the end, choices picked, flags set.")
 	quit()

@@ -12,6 +12,7 @@ extends Node
 #   ["say", who, [lines], label]      lines with [happy]-style portrait tags; who "" is narration; label
 #                                      (optional) is shown instead of the name, e.g. "Tikka (comms)"
 #   ["place", who, x, y, dir]          dir "d", "u", "l", "r"
+#   ["met", who]                       you've now met them (a scene that introduces someone)
 #   ["go", area, x, y, dir]            the scene moves to another map: the player goes to that tile (fade first;
 #                                      place the cast there after it)
 #   ["walk", who, x, y]                walks there and waits; ["walks", [[who, x, y], ...]] walks several at once
@@ -127,6 +128,10 @@ func _step(s: Array) -> void:
 			await _say(label, s[2], who)
 		"place":
 			_place(str(s[1]), int(s[2]), int(s[3]), str(s[4]))
+		"met":
+			# the scene introduces them, so talking to them next isn't a first meeting
+			if world.persons.has(str(s[1])):
+				world.persons[str(s[1])]["met"] = true
 		"go":
 			# the scene moves to another map (best done under a fade): the player goes there; place the cast after
 			world._go_to(str(s[1]), Vector2i(int(s[2]), int(s[3])), false)

@@ -54,7 +54,7 @@ EVENTS, ORDER = he['EVENTS'], he['ORDER']
 EVENT_ROWS = ["talk", "laugh", "sad", "jump", "gift", "bench", "wave"]
 EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "ready", "no", "wait", "help", "follow", "cute"}
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
-STEPS = {"say", "place", "go", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
+STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
          "if", "flag", "friendship", "perk", "keepsake", "partner", "toast"}
 SOUNDS = {p.stem for p in (ROOT / 'audio').glob('*.wav')}
 DIRS = {"d", "u", "l", "r"}
@@ -121,7 +121,7 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         if op in ("place", "walk", "face", "pose", "emote") and s[1] not in RESIDENTS and s[1] != "player":
             bad(ev_id, "%s: %r is not a resident" % (op, s[1]))
         if op == "say":
-            if s[1] and s[1] not in RESIDENTS and s[1] != "Sensors":
+            if s[1] and s[1] not in RESIDENTS and s[1] not in ("Sensors", "Sara"):
                 bad(ev_id, "say: %r is not a resident" % s[1])
             for line in s[2]:
                 count["lines"] += 1

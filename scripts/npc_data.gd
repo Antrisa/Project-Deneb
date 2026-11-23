@@ -354,7 +354,7 @@ const PEOPLE = {
 		"pitch": 1.0,
 		"first": [
 			"[surprised] Whoa. Okay. You're the one who towed me in? Arthur Vance. Artie. Thank you. I think.",
-			"Last thing I remember is a lake in Minnesota and a cold-sleep trial that was supposed to last a month.",
+			"Last thing I remember is the highway home from a troop campout in Minnesota. Then a light. Then nothing.",
 			"[sad] They tell me it's been centuries. Nobody's sure how many. That's a lot of missed birthdays.",
 		],
 		"repeat": [

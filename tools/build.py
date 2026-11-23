@@ -2689,6 +2689,8 @@ for who, rows in SCHEDULES_ALT_RAW.items():
 # time off work, "Saturday and Sunday no work", and their weeks change as new places unlock, like the east
 # garden dome). main.gd starts each morning from the resident's usual day (SCHEDULES) and takes the LAST entry
 # here whose "when" fits today, so list the plain days first and the ones that need a story flag after them.
+# "dates" are days of the season (1-31): {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7]} is the first Saturday of each
+# season (a season is the station's month).
 #   when:  "days": weekdays (0 = Monday ... 5 = Saturday, 6 = Sunday); "seasons": ["Spring", "Summer", ...];
 #          "flags": story flags that must be set (main.gd _flag()); "not": flags that must not be set.
 #          Leave a key out to match any day.
@@ -2862,12 +2864,88 @@ SCHEDULE_DAYS_RAW = {
             ("17:35", "mess", 14, 9, 26, "u", "eat", "eat"), ("19:15", "bar", 26, 21, 26, "l", "idle", "drink"),
             ("21:30", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
     ],
+    # Artie (23 Nov, Zachary). Before the Scouts (his 4 sets artie_scouts): out of place, he reads in the library,
+    # wanders round the plaza and sits in the Observation Lounge. After: he helps Owen in the library, runs the
+    # Junior Scouts at the fountain on Monday afternoons, and takes them on an outing on the first Saturday of each
+    # season (the little park, or the garden dome's woods once it's open). His Sundays are his own.
+    "Artie": [
+        {"when": {"days": [0, 2, 4], "not": ["artie_scouts"]}, "stops": [
+            ("08:00", "library", 12, 12, 26, "u", "idle", "read"), ("11:00", "main", 83, 61, 26, "l", "idle", "rest"),
+            ("11:40", "main", 97, 61, 26, "r", "idle", "rest"), ("12:20", "main", 90, 69, 26, "d", "idle", "rest"),
+            ("13:00", "mess", 10, 9, 26, "u", "eat", "eat"), ("14:00", "lounge", 37, 13, 26, "u", "idle", "read"),
+            ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"), ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [1, 3, 5, 6], "not": ["artie_scouts"]}, "stops": [
+            ("09:00", "lounge", 37, 13, 26, "u", "idle", "read"), ("12:00", "main", 83, 61, 26, "l", "idle", "rest"),
+            ("12:40", "main", 90, 69, 26, "d", "idle", "rest"), ("13:15", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("14:30", "library", 12, 12, 26, "u", "idle", "read"), ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [1, 2, 3, 4], "flags": ["artie_scouts"]}, "stops": [
+            ("08:00", "library", 5, 6, 26, "u", "work", "read"), ("12:30", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("14:00", "library", 5, 6, 26, "u", "work", "read"), ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
+            ("08:00", "library", 5, 6, 26, "u", "work", "read"), ("12:30", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("14:30", "main", 90, 64, 26, "d", "work", "knots"), ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "flags": ["artie_scouts"]}, "stops": [
+            ("09:00", "main", 83, 61, 26, "l", "idle", "rest"), ("11:00", "lounge", 37, 13, 26, "u", "idle", "read"),
+            ("13:00", "mess", 10, 9, 26, "u", "eat", "eat"), ("14:30", "library", 12, 12, 26, "u", "idle", "read"),
+            ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"), ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["artie_scouts"]}, "stops": [
+            ("09:30", "mess", 10, 9, 26, "u", "eat", "eat"), ("11:00", "main", 97, 61, 26, "r", "idle", "rest"),
+            ("13:00", "lounge", 37, 13, 26, "u", "idle", "read"), ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts"]}, "stops": [
+            ("09:00", "east", 60, 48, 26, "d", "work", "campfire"), ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts", "east_dome"]}, "stops": [
+            ("09:00", "east", 164, 45, 26, "d", "work", "campfire"), ("17:00", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+    ],
+    # Pip, Kit and Nub join the Junior Scouts once Artie starts them: Monday afternoons at the fountain, and the
+    # first-Saturday outing.
+    "Pip": [
+        {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
+            ("07:30", "library", 9, 9, 26, "u", "work", "study"), ("12:30", "main", 97, 57, 26, "d", "idle", "play"),
+            ("15:00", "main", 88, 67, 26, "u", "idle", "play"), ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"),
+            ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts"]}, "stops": [
+            ("09:00", "east", 59, 51, 26, "u", "idle", "play"), ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"),
+            ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts", "east_dome"]}, "stops": [
+            ("09:00", "east", 162, 47, 26, "u", "idle", "play"), ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"),
+            ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
+    ],
+    "Kit": [
+        {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
+            ("08:00", "library", 11, 10, 26, "u", "work", "study"), ("12:30", "main", 98, 57, 26, "d", "idle", "play"),
+            ("15:00", "main", 90, 67, 26, "u", "idle", "play"), ("17:35", "mess", 19, 9, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts"]}, "stops": [
+            ("09:00", "east", 61, 51, 26, "u", "idle", "play"), ("17:35", "mess", 19, 9, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts", "east_dome"]}, "stops": [
+            ("09:00", "east", 166, 47, 26, "u", "idle", "play"), ("17:35", "mess", 19, 9, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
+    ],
+    "Nub": [
+        {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
+            ("08:00", "library", 7, 9, 26, "u", "work", "draw"), ("12:30", "main", 96, 57, 26, "d", "idle", "play"),
+            ("15:00", "main", 92, 67, 26, "u", "idle", "play"), ("17:35", "mess", 9, 9, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts"]}, "stops": [
+            ("09:00", "east", 60, 51, 26, "u", "idle", "play"), ("17:35", "mess", 9, 9, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts", "east_dome"]}, "stops": [
+            ("09:00", "east", 164, 47, 26, "u", "idle", "play"), ("17:35", "mess", 9, 9, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
+    ],
 }
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():
     SCHEDULE_DAYS[who] = []
     for v_ in days_:
-        assert set(v_["when"]) <= {"days", "seasons", "flags", "not"}, ("unknown key in when", who, v_["when"])
+        assert set(v_["when"]) <= {"days", "seasons", "dates", "flags", "not"}, ("unknown key in when", who, v_["when"])
         rows = list(v_["stops"])
         spot_ = sleep_spot(who)
         if spot_ is not None:

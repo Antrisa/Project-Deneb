@@ -1256,11 +1256,15 @@ func _day_schedule(who: String) -> Array:
 	var pick: Array = MapData.SCHEDULES[who]
 	var weekday: int = (day - 1) % 7
 	var season: String = str(BridgeScript.season_date(day)[0])
+	var date: int = int(BridgeScript.season_date(day)[1])
 	for v in MapData.SCHEDULE_DAYS.get(who, []):
 		var cond: Dictionary = v[0]
 		if cond.has("days") and not (cond["days"].has(weekday) or cond["days"].has(float(weekday))):
 			continue
 		if cond.has("seasons") and not cond["seasons"].has(season):
+			continue
+		# days of the season: the first Saturday of each season is {"days": [5], "dates": [1, ..., 7]}
+		if cond.has("dates") and not (cond["dates"].has(date) or cond["dates"].has(float(date))):
 			continue
 		var fits := true
 		for f in cond.get("flags", []):
@@ -1370,7 +1374,11 @@ func _debug_next_heart_event() -> void:
 		var ev: Dictionary = HeartEvents.EVENTS[id]
 		var who: String = ev["who"]
 		if not _arrived(who):
-			continue
+			# debug: bring the newcomer in, a few days after they arrived (out of the Medbay)
+			if who == "Ana":
+				ana_found_day = day - 5
+			else:
+				artie_found_day = day - 5
 		for s in ev.get("seen", []):
 			if not events_seen.has(s):
 				events_seen.append(s)
