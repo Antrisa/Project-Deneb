@@ -3127,10 +3127,11 @@ if PREV:
 # Baked here once instead of in the game (it took the game a long time). See tools/bake_floor.py.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bake_floor
-bake_floor.bake(bake_floor.rows_from_map_data(os.path.join(OUT, "scripts", "map_data.gd")), os.path.join(OUT, "art", "lunar")).save(os.path.join(OUT, "art", "lunar", "floor_main.png"))
+import warm_shift   # the warm C colour shift for every baked floor and wall (23 Nov 2026)
+warm_shift.warm(bake_floor.bake(bake_floor.rows_from_map_data(os.path.join(OUT, "scripts", "map_data.gd")), os.path.join(OUT, "art", "lunar"))).save(os.path.join(OUT, "art", "lunar", "floor_main.png"))
 print("promenade floor baked: art/lunar/floor_main.png")
 for key_ in bake_floor.AREA_FLOORS:
-    bake_floor.bake_area(key_, ["".join(r_) for r_ in A[key_].floor], os.path.join(OUT, "art", "lunar"), FLOOR_EXTRAS.get(key_)).save(os.path.join(OUT, "art", "lunar", "floor_%s.png" % key_))
+    warm_shift.warm(bake_floor.bake_area(key_, ["".join(r_) for r_ in A[key_].floor], os.path.join(OUT, "art", "lunar"), FLOOR_EXTRAS.get(key_))).save(os.path.join(OUT, "art", "lunar", "floor_%s.png" % key_))
     print("floor baked: art/lunar/floor_%s.png" % key_)
 # The lounge bake uses the quiet frame of the animated view.
 bake_floor.lounge_window_strip(A["lounge"].w, os.path.join(OUT, "art", "lunar")).save(os.path.join(OUT, "art", "lunar", "window_lounge.png"))
@@ -3144,8 +3145,8 @@ for d_ in globals().get("INNER_DOORS", []):
     bake_floor.DOOR_CUTS.setdefault(d_[0], []).append((d_[1] - 1, d_[2] - 2, d_[1] + d_[3] + 1, d_[2] + d_[4] + 1))
 for key_ in ["main"] + list(bake_floor.AREA_FLOORS):
     win_ = os.path.join(OUT, "art", "lunar", "window_%s.png" % key_)
-    bake_floor.bake_walls(key_, A[key_].floor, os.path.join(OUT, "art", "lunar"), bake_floor.Image.open(win_) if os.path.exists(win_) else None).save(os.path.join(OUT, "art", "lunar", "walls_%s.png" % key_))
-    bake_floor.LAST_TOP.save(os.path.join(OUT, "art", "lunar", "walls_%s_top.png" % key_))
+    warm_shift.warm(bake_floor.bake_walls(key_, A[key_].floor, os.path.join(OUT, "art", "lunar"), bake_floor.Image.open(win_) if os.path.exists(win_) else None)).save(os.path.join(OUT, "art", "lunar", "walls_%s.png" % key_))
+    warm_shift.warm(bake_floor.LAST_TOP).save(os.path.join(OUT, "art", "lunar", "walls_%s_top.png" % key_))
     print("walls baked: art/lunar/walls_%s.png (+ _top)" % key_)
     water_ = os.path.join(OUT, "art", "lunar", "watermask_%s.png" % key_)
     if os.path.exists(water_):
