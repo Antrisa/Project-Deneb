@@ -1,7 +1,7 @@
 extends RefCounted
 # Letters that come to your mailbox (Zachary, 23 Nov: "a message system like in stardew you can get mail from the
 # NPCs"). The post comes every morning (scripts/main.gd _deliver_mail). A letter waits in your mailbox, the message
-# pad by your front door on the agri complex's front porch, until you read it (an envelope bobs over the pad), and
+# pad on the agri complex's front porch, until you read it (an envelope bobs over the pad), and
 # you can read it again any time after: the pad keeps them all (scripts/mail_reader.gd).
 #
 # LETTERS: id -> {"from": who sent it, "title": what the list of letters shows, "body": [paragraphs],
@@ -18,9 +18,9 @@ const LETTERS := {
 		"title": "Welcome home",
 		"body": [
 			"Good morning, and welcome to Echo Landing.",
-			"The apartment behind this door is yours for as long as you stay. It belonged to the agri keeper, before the dome broke, and nobody has lived in it since. I aired it out. Twice.",
+			"The apartment on the right of this porch is yours for as long as you stay. It belonged to the agri keeper, before the dome broke, and nobody has lived in it since. I aired it out. Twice.",
 			"This pad is your mailbox. The post comes every morning; until the station has a courier again, my maintenance drones carry it. They are punctual, and they do not read your letters. I have asked.",
-			"The crate beside it is Bram's. Put in anything he buys and he collects it overnight, and pays in the morning. The workbench along the porch is yours too.",
+			"The crate across the porch is Bram's. Put in anything he buys and he collects it overnight, and pays in the morning. The workbench in your workshop, along the west link, is yours too.",
 		],
 		"sign": "S.A.R.A.",
 	},

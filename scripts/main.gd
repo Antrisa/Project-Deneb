@@ -4119,7 +4119,7 @@ func journal() -> Array:
 		out.append(["A hand in the mine", ["You mined, smelted and cleared the tunnels for Job."], true])
 		if not caverns_open and not mail_days.has("vzzket_caverns"):
 			out.append(["The caverns", ["Vzz'ket guards the gate under the mine. Job says he'll send word when he's ready to talk.",
-				"Letters come with the morning post: check the message pad by your front door."], false])
+				"Letters come with the morning post: check the message pad on your front porch."], false])
 		elif not caverns_open:
 			out.append(["The caverns", ["Vzz'ket wrote. He wants to see you at the cavern gate, at the bottom of the mine."], false])
 		else:
@@ -4749,7 +4749,10 @@ func set_door_locked(area_name: String,tile: Vector2i,value: bool) -> void:
 func _enter_portal(t: Dictionary) -> void:
 	var key: String = t.key
 	if door_locks.get(key,false):
-		_toast("Locked — access is not available yet")
+		if str(t.entry[3]) == "aptCoop":
+			_toast("Player 2's apartment: kept for a second player (co-op comes later)")
+		else:
+			_toast("Locked — access is not available yet")
 		sfx("deny")
 		return
 	var e: Array = t.entry

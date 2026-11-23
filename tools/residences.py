@@ -403,12 +403,13 @@ def build(g):
     hm.finish(hall, doors["Tar'Besh"])
 
     player_home(g)
+    coop_home(g)
     survey.WALKABLE = saved
 
 
 def player_home(g):
     """Your apartment (Zachary, 23 Nov): its front door is on the agri complex's front porch, between your field,
-    the workshop and the hot springs, with your mailbox outside (tools/spaceport.py). You start the game here and
+    the workshop and the hot springs, with your mailbox on the porch (tools/spaceport.py). You start the game here and
     wake here every morning ("Your bed"); the wardrobe opens the character screen. A bedroom and a washroom along
     the top; the kitchen, a little table and a sitting area in the open room. Furnished sparely: it has stood
     empty for years, and you have only just arrived."""
@@ -436,3 +437,29 @@ def player_home(g):
     w, h, _ = SIZES['bed']
     g['PLAYER_START'] = ['aptPlayer'] + list(free_spot(hm.r, bx + w + .5, by + h - .5, hm.taken, hm.doors))
     g['PLAYER_SARA'] = ['aptPlayer'] + list(free_spot(hm.r, 11.5, 6.5, hm.taken, hm.doors))
+
+
+def coop_home(g):
+    """The second player's apartment (Zachary, 23 Nov: "for co op lets also fill in the top left to make another house
+    for your multiplayer person"): the house on the left of the link up to your field, the mirror image of yours. The
+    same rooms, furnished the same way, but nothing in it is yours: no bed to sleep in, no wardrobe to change in. Its
+    door on the porch is locked (scripts/main.gd says why) until co-op exists; then the second player starts and
+    sleeps here as you do in yours."""
+    hm = Home(g, 'aptCoop', "Player 2's apartment", 29, False, 14, {
+        'h': (CARPET, ('3a5a7a', .2)), 'j': (NAVY, None)})
+    hm.room('Bedroom', 13, 25, 'top', 'h', 19)
+    hm.room('Washroom', 3, 11, 'top', 't', 7, '', 'washroom')
+    hm.open_plan(9, 15, (3, 16, 11, 23), (12, 12, 25, 23))
+    hm.put('bed', 23, 5.5, "Player 2's bed", 'look'); hm.put('wardrobe', 18, 4.5, 'Wardrobe')
+    hm.put('footlocker', 23, 8.5, 'Footlocker'); hm.put('armchair', 15, 5.5, 'Armchair', 'seat'); hm.put('plants', 16, 8.5, 'Plant')
+    hm.put('shower', 4, 5.5, 'Shower'); hm.put('toilet', 8.5, 4.5, 'Toilet'); hm.put('bath_sink', 10.5, 4.5, 'Washbasin')
+    hm.put('kitchenette', 5, 14.5, 'Kitchenette', 'inspect'); hm.put('fridge', 8, 14.5, 'Fridge')
+    hm.put('table', 6.5, 19.5, 'Dining table', 'seat')
+    hm.put('sofa', 20.5, 17.5, 'Sofa', 'seat'); hm.put('cafe_table', 20.5, 20.5, 'Coffee table')
+    hm.put('armchair', 24.5, 18.5, 'Armchair', 'seat'); hm.put('books', 24.5, 13.5, 'Bookshelf')
+    hm.put('tree_tub', 3.5, 22.5, 'Potted tree')
+    key, door = g['COOP_HOME_DOOR']
+    hm.finish(outside=(key, door))
+    for e in g['RES_ENTRANCES']:                     # locked from the porch until there is a second player
+        if e[0] == key and e[3] == 'aptCoop':
+            e[8] = True

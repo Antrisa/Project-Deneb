@@ -58,7 +58,7 @@ const PLACES := [
 	["Mine", 49, 31, "Mining sector", "Job's dig, the North Cave above it and the cavern gate at its west end."],
 ]
 const AREA_PLACE := {
-	"eng": "Engineering", "bay": "Engineering", "west": "Spaceport", "hotel": "Spaceport", "agri": "Agri dome", "aptPlayer": "Agri dome",
+	"eng": "Engineering", "bay": "Engineering", "west": "Spaceport", "hotel": "Spaceport", "agri": "Agri dome", "aptPlayer": "Agri dome", "aptCoop": "Agri dome",
 	"east": "East complex", "mine": "Mine", "tunnels": "Mine",
 }
 # Which person or place each journal entry belongs to (scripts/main.gd journal()).

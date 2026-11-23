@@ -1,5 +1,5 @@
 extends Node2D
-# The envelope that bobs over your mailbox (the message pad by your front door) while a letter waits in it, as in
+# The envelope that bobs over your mailbox (the message pad on your front porch) while a letter waits in it, as in
 # Stardew Valley. Drawn here in code on the world's 16-unit tile grid, just above the top of the pad.
 # main.gd makes one for the prop titled "Message pad" (_spawn_prop) and shows it only on that map.
 

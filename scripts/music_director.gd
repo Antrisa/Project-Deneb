@@ -221,8 +221,8 @@ func _place_now() -> String:
 	var area: String = world.current_area
 	if area == "mine" or area == "tunnels" or area.begins_with("cav_"):
 		return "mines"
-	if area == "aptPlayer":
-		return "agri"          # your apartment opens onto the farm's porch: the farm's songs carry on indoors
+	if area == "aptPlayer" or area == "aptCoop":
+		return "agri"          # the apartments open onto the farm's porch: the farm's songs carry on indoors
 	if area == "bram" or area == "mess" or area == "top" or area == "lounge" or area == "agri":
 		return area
 	return "station"

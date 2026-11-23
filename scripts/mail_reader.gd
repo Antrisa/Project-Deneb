@@ -1,7 +1,7 @@
 extends CanvasLayer
 # Reading your letters (Zachary, 23 Nov: mail from the residents, as in Stardew Valley), drawn in the Terran
-# datapad style like the other new screens. Opened from your mailbox: the message pad by your front door, on the
-# agri complex's front porch.
+# datapad style like the other new screens. Opened from your mailbox: the message pad on the agri complex's front
+# porch.
 #   - Your letters down the left, newest first; a dot marks one you haven't read.
 #   - The letter you picked on a sheet of paper on the right. It opens on the oldest one you haven't read.
 #   - Click a letter (or press Up / Down) to read it. The pad keeps every letter, so you can read it again.
