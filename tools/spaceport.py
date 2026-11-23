@@ -26,7 +26,7 @@ SIZES.update({
     'tree_tub': (1, 2, 1), 'lamp_post': (1, 2, 1), 'waiting_seat_w': (1, 3, 2), 'waiting_seat_e': (1, 3, 2), 'market_counter': (3, 2, 1),
     'view_bench': (2, 2, 1),
     'customs_desk': (3, 2, 1), 'stanchion': (1, 1, 1), 'departures_board': (4, 2, 1), 'beacon_mast': (3, 4, 2),
-    'planter_dead': (3, 2, 1), 'rubble': (2, 1, 1), 'mailbox': (1, 2, 1), 'flowers': (4, 2, 2), 'glass_shards': (2, 1, 0), 'shipping_bin': (2, 2, 1), 'steam_vent': (1, 1, 1),
+    'planter_dead': (3, 2, 1), 'rubble': (2, 1, 0), 'mailbox': (1, 2, 1), 'flowers': (4, 2, 2), 'glass_shards': (2, 1, 0), 'shipping_bin': (2, 2, 1), 'steam_vent': (1, 1, 1),
     'bunk_bed': (2, 3, 2), 'armchair': (2, 2, 1), 'footlocker': (2, 1, 1), 'gym_rack': (3, 2, 1),
     'front_desk': (5, 2, 1), 'front_desk_l': (3, 2, 1), 'front_desk_r': (3, 2, 1), 'key_board': (2, 2, 1), 'luggage_cart': (2, 2, 1),
     'sofa': (3, 2, 1), 'fireplace': (3, 3, 1), 'fridge': (2, 3, 1), 'bar_table': (3, 2, 1), 'cafe_table': (2, 2, 1),
@@ -151,6 +151,30 @@ def build(g):
     fill(F, 54, 40, 56, 56, 'u')                                 # porch up to the agri dome (3 wide, centred)
     fill(F, 54, 72, 56, 81, 'u')                                 # the way in, from the junction
     agri_in = (55, 82); F[agri_in[1]][agri_in[0]] = 'u'
+    # The storage dome (Zachary, 23 Nov: "a storage circle ... above the bottom left circle connected by two
+    # hallways"), between your field and your workshop, with a hallway to each. It and the hot springs and fish
+    # ponds are broken and sealed until S.A.R.A. repairs them (scripts/station_repair.gd): sliding doors with red
+    # lights where their hallways meet them (INNER_DOORS, owner "repair:<id>"), and wreckage inside that her
+    # drones clear (SEALED_ROOMS).
+    disc(F, 24, 29, 9, 'f')                                      # the storage dome
+    rock = lambda x0, y0, x1, y1: [F[y].__setitem__(x, 'u') for y in range(y0, y1 + 1) for x in range(x0, x1 + 1) if F[y][x] == '#']
+    rock(34, 27, 40, 30)                                         # hallway east to your agri dome
+    rock(23, 39, 25, 50)                                         # hallway south to your workshop
+    sealed = []                                                  # (x, y, w, h, facing, repair)
+    F[27][33] = F[30][33] = '#'; F[28][33] = F[29][33] = 'u'; sealed.append((33, 28, 1, 2, 'E', 'storage'))
+    F[38][23] = F[38][25] = '#'; F[38][24] = 'u'; sealed.append((24, 38, 1, 1, 'S', 'storage'))
+    # the hot springs and fish ponds: a door where the link from the porch meets them, and a bulkhead across the
+    # glass link down from your agri dome
+    F[62][70] = F[65][70] = '#'; F[63][70] = F[64][70] = 'u'; sealed.append((70, 63, 1, 2, 'E', 'ponds'))
+    cross = 46
+    run = [x for x in range(60, 80) if F[cross][x] == 'u']
+    door_x = next(x for x in run if F[cross - 1][x] == 'u' and F[cross + 1][x] == 'u' and x not in (run[0], run[-1]))
+    for x in run:
+        F[cross][x] = 'u' if x == door_x else '#'
+    sealed.append((door_x, cross, 1, 1, 'S', 'ponds'))
+    for x, y, w_, h_, facing, rid in sealed:
+        g.setdefault('INNER_DOORS', []).append(['agri', x, y, w_, h_, facing, 'repair:' + rid, rid])
+    g['SEALED_ROOMS'] = {'storage': ['agri', 14, 19, 33, 38], 'ponds': ['agri', 71, 47, 102, 80]}
     # Two houses either side of the link up to your field, mirror images about the porch's middle (x 55), their
     # fronts along the porch's top (y 56) and wrapping round its cut corners: yours on the right (aptPlayer), and on
     # the left one for a second player when co-op comes (aptCoop). Their roofs run back to the field dome.
@@ -172,7 +196,10 @@ def build(g):
             if F[y][x] == '#' and (x, y) not in house and not any((x + dx, y + dy) in inside for dx in range(-2, 3) for dy in range(-2, 3)):
                 F[y][x] = 'Q'
     a.t.zones += [['Agri dome', 36, 4, 74, 42], ['Front porch', porch[0], porch[1], porch[2], porch[3]], ['Your workshop', 11, 51, 37, 77],
-                  ['Hot springs & fish ponds', 71, 49, 101, 79], ['Glass link', 1, 1, 108, 82]]
+                  ['Hot springs & fish ponds', 71, 49, 101, 79], ['Storage dome', 14, 19, 33, 38], ['Glass link', 1, 1, 108, 82]]
+    for x, y, w_, h_, facing, rid in sealed:
+        a.keep_clear(x - 2, y - 2, x + w_ + 1, y + h_ + 1)
+    a.keep_clear(32, 26, 41, 31)          # the storage hallway's mouth in the dome
     a.keep_clear(53, 38, 57, 60)          # the link up to the dome, and its mouth
     a.keep_clear(53, 66, 57, 82)          # the way in
     a.keep_clear(36, 62, 74, 65)          # workshop - porch - hot springs
@@ -185,14 +212,10 @@ def build(g):
     a.keep_clear(field[0] - 1, field[1] - 1, field[0] + field[2], field[1] + field[3])
     a.t.zones.insert(0, ['Your field', field[0], field[1], field[0] + field[2] - 1, field[1] + field[3] - 1])
     P, N = a.prop, a.near
-    # the agri dome: the west corner still grows; the rest is dead planters, rubble and broken glass
+    # No set dressing anywhere in the district (Zachary, 23 Nov: "remove all the set dressings like i said except
+    # the sale bin and message box"). What's left works: the shipping crate and the message pad on the porch, the
+    # seed rack, garden tools and irrigation valve for your field, and the workbench that opens the Crafting page.
     N('hydroponics', 45, 29.5, 'Irrigation valve', 'garden', 'Water')     # waters every tilled tile at once
-    N('planter_long', 43, 31.5, 'Herb bed', 'inspect', 'Inspect')
-    for ang in range(250, 520, 30):
-        x, y = 55 + 12 * math.cos(math.radians(ang)), 23 + 12 * math.sin(math.radians(ang))
-        N('planter_dead', x, y, 'Dead planter', 'inspect', 'Inspect')
-    for fx, fy in ((60, 12), (66, 22), (57, 34), (48, 9), (64, 31)): N('rubble', fx, fy, 'Rubble', None)
-    for fx, fy in ((53, 14), (62, 18), (68, 28), (59, 27)): N('glass_shards', fx, fy, 'Broken glass', None)
     a.thing('look', 'Broken agri dome', 'Look', 58, 22, 60)
     # By the dome's door: the seed rack and the garden tools (they were on the porch until 23 Nov).
     N('seed_rack', 51, 38.5, 'Seed rack', 'seeds', 'Take seeds'); N('garden_tools', 59.5, 38.5, 'Garden tools', 'farm_tools', 'Take')
@@ -200,13 +223,15 @@ def build(g):
     # (lower right), which is your mailbox (scripts/mail_reader.gd) (Zachary, 23 Nov).
     N('shipping_bin', 50, 69.5, 'Shipping crate', 'ship', 'Ship to Bram')
     N('terminal', 60.5, 69.5, 'Message pad', 'mail', 'Read your mail')
-    # your workshop
-    N('workbench', 19.5, 58.5, 'Workbench', 'craft', 'Craft'); N('workbench', 27.5, 58.5, 'Workbench', None)   # the first opens the Crafting page
-    N('tool_cart', 15, 65, 'Tool cart', None); N('welding_rig', 32, 67, 'Welding rig'); N('parts_rack', 20, 72.5, 'Parts rack', None)
-    N('locker', 29, 72.5, 'Tool locker', None); N('pipe_rack', 24, 66.5, 'Pipe stock', None)
-    # hot springs and fish ponds
-    for fx, fy in ((79, 53.5), (85, 52.5), (90, 54.5)): N('steam_vent', fx, fy, 'Steam vent', None)
-    N('bench_n', 84, 77, 'Bench [N]', 'seat', 'Sit'); N('plants', 96, 59, 'Fern', 'inspect', 'Inspect'); N('plants', 75, 72, 'Fern', 'inspect', 'Inspect')
+    # your workshop: the workbench opens the Crafting page
+    N('workbench', 19.5, 58.5, 'Workbench', 'craft', 'Craft')
+    # Wreckage in the two broken domes. S.A.R.A.'s drones clear it the night they repair the dome (main.gd
+    # _sync_station: any prop inside a SEALED_ROOMS box goes once that repair is done). Not solid, so it can't
+    # trap anyone once the doors open.
+    for fx, fy in ((79, 52), (93, 57), (88, 66), (75, 70), (96, 72), (86, 77)): N('rubble', fx, fy, 'Rubble', None)
+    for fx, fy in ((84, 51.5), (98, 64), (81, 74), (91, 70)): N('glass_shards', fx, fy, 'Broken glass', None)
+    for fx, fy in ((19, 24), (28, 22), (17, 32), (30, 33), (24, 36)): N('rubble', fx, fy, 'Rubble', None)
+    for fx, fy in ((23, 27), (29, 28), (19, 29)): N('glass_shards', fx, fy, 'Broken glass', None)
     a.thing('look', 'Hot spring', 'Look', 83, 64.5, 40); a.thing('look', 'Fish ponds', 'Look', 87, 72.5, 40)
 
     # ================================================================== hotel (option C, Zachary 17 Nov)

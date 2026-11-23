@@ -44,6 +44,7 @@ const MuseumScript = preload("res://scripts/museum_donate.gd")
 const MailData = preload("res://scripts/mail_data.gd")
 const MailReader = preload("res://scripts/mail_reader.gd")
 const MailFlag = preload("res://scripts/mail_flag.gd")
+const StationRepair = preload("res://scripts/station_repair.gd")
 const UpgradesScript = preload("res://scripts/ship_upgrades.gd")
 var station_calendar
 
@@ -168,6 +169,13 @@ var relics_found: Array = []       # relic item ids you have ever held (so ships
 var museum_view                    # scripts/museum_donate.gd: choosing cases for relics
 var ship_upgrades                  # scripts/ship_upgrades.gd: the ship screen (upgrades, ships, crew)
 var mail_view                      # scripts/mail_reader.gd: reading your letters
+var repair_view                    # scripts/station_repair.gd: paying S.A.R.A. to repair a sealed dome
+# Station repairs (23 Nov): the broken domes S.A.R.A. has repaired, the ones paid for that open tomorrow, the
+# wreckage props still lying in the broken ones ([sprite, repair id]), and the day she last brought repairs up.
+var station_fixed: Array = []
+var station_due: Array = []
+var wreck_props: Array = []
+var repairs_said_day := -1
 # Mail (23 Nov): letters (scripts/mail_data.gd) come with the morning post to your mailbox on the front porch.
 var mail_waiting: Array = []       # letters in the box you haven't read yet, oldest first
 var mail_days: Dictionary = {}     # every letter that has come: id -> the day it came, in the order they came
@@ -402,7 +410,11 @@ func _ready() -> void:
 	mail_view = MailReader.new()
 	mail_view.world = self
 	add_child(mail_view)
+	repair_view = StationRepair.new()
+	repair_view.world = self
+	add_child(repair_view)
 	_load_game()
+	_sync_station()
 	_deliver_mail()
 	wreck_sprite.frame = repair_stage
 	_go_home()
@@ -595,6 +607,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F6 and OS.is_debug_build():
 		_debug_boarding()
 		return
+	# F3 (editor and debug builds): the Scrip and materials for every station repair, to try them out
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F3 and OS.is_debug_build():
+		_debug_repair_kit()
+		return
 	# F4 (editor and debug builds): straight into a free flight, whatever the story says
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F4 and OS.is_debug_build():
 		if battle != null and not battle.open and not ship_map.open:
@@ -623,6 +639,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if mail_view != null and mail_view.open:
 		mail_view.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
+	if repair_view != null and repair_view.open:
+		repair_view.handle_input(event)
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("new_game"):
@@ -1474,6 +1494,8 @@ func _usable(t: Dictionary) -> bool:
 		return job_active and not player.carrying
 	if kind == "drop":
 		return player.carrying
+	if kind == "sealed":
+		return not station_fixed.has(str(t["repair"]))
 	return true
 
 
@@ -1580,6 +1602,8 @@ func _interact(t: Dictionary) -> void:
 	if travelling or garden_busy: return
 	if kind == "portal":
 		_enter_portal(t)
+	elif kind == "sealed":
+		repair_view.open_at(str(t["repair"]))
 	elif kind == "garden":
 		_water_garden(t)
 	elif kind == "farm_tools":
@@ -1761,6 +1785,8 @@ func _talk(who: String) -> void:
 		_vzzket_weapon()
 	elif who == "Vzz'ket" and job_quest >= 5 and not caverns_open:
 		_cavern_gate()
+	elif who == "Sara" and repairs_said_day != day and _repair_to_mention() != "":
+		_sara_repairs(_repair_to_mention())
 	elif crew_cross.has(who) and day - int(crew_cross[who]) <= 1:
 		crew_cross.erase(who)
 		if persons.has(who):
@@ -3573,6 +3599,109 @@ func _open_crafting() -> void:
 		ui.show_menu(1)
 
 
+# ---------------------------------------------------------------- station repairs (23 Nov)
+# Zachary: the fish ponds dome is "broken and closed off untill you do the harbinger quest and then pay sara to fix
+# it", and the storage dome is "also broken untill you pay sara with scrip and materials to reopen". The repairs
+# and their prices are in scripts/station_repair.gd, which also draws the page you pay on. You pay; her drones work
+# overnight; the sealed doors open and the wreckage is gone in the morning.
+
+# "open" (repaired), "due" (paid for, opens tomorrow), "locked" (has to wait, e.g. for the Harbinger) or "ready".
+func repair_state(id: String) -> String:
+	if station_fixed.has(id):
+		return "open"
+	if station_due.has(id):
+		return "due"
+	var r: Dictionary = StationRepair.REPAIRS.get(id, {})
+	var after: String = str(r.get("after", ""))
+	if after != "" and not bool(get(after)):
+		return "locked"
+	return "ready"
+
+
+func can_pay_repair(id: String) -> bool:
+	var r: Dictionary = StationRepair.REPAIRS.get(id, {})
+	return not r.is_empty() and repair_state(id) == "ready" and credits >= int(r["cost"]) and _has_all(r["needs"])
+
+
+# The repairs page's Pay S.A.R.A.: takes the Scrip and materials and books her drones for tonight. Returns the
+# status line.
+func pay_station_repair(id: String) -> String:
+	var r: Dictionary = StationRepair.REPAIRS.get(id, {})
+	if r.is_empty():
+		return ""
+	match repair_state(id):
+		"open":
+			return "S.A.R.A.: \"That one is done.\""
+		"due":
+			return "S.A.R.A.: \"My drones are on it tonight.\""
+		"locked":
+			sfx("deny")
+			return "S.A.R.A.: \"%s\"" % str(r.get("wait", "Not yet."))
+	if not can_pay_repair(id):
+		sfx("deny")
+		return "S.A.R.A.: \"Not yet. I need everything on the list.\""
+	_money(-int(r["cost"]), "Repairs: " + str(r["name"]).to_lower())
+	var needs: Dictionary = r["needs"]
+	for item in needs:
+		_give(item, -int(needs[item]))
+	station_due.append(id)
+	sfx("quest")
+	_save_game()
+	return "S.A.R.A.: \"Thank you. My drones start tonight. It will be open in the morning.\""
+
+
+# The night's work: what was paid for is repaired. Returns the ids repaired.
+func _finish_repairs() -> Array:
+	var done: Array = []
+	for id in station_due:
+		if not station_fixed.has(id):
+			station_fixed.append(id)
+			done.append(id)
+	station_due.clear()
+	_sync_station()
+	return done
+
+
+# Clears the wreckage out of the domes S.A.R.A. has repaired (the sealed doors open by themselves:
+# _update_inner_doors asks _inner_locked).
+func _sync_station() -> void:
+	for i in range(wreck_props.size() - 1, -1, -1):
+		var pair: Array = wreck_props[i]
+		if not station_fixed.has(str(pair[1])):
+			continue
+		var sprite: Node = pair[0]
+		for j in range(area_sprites.size() - 1, -1, -1):
+			if area_sprites[j][0] == sprite:
+				area_sprites.remove_at(j)
+		sprite.queue_free()
+		wreck_props.remove_at(i)
+
+
+# A repair S.A.R.A. could start today, if she hasn't brought one up yet today.
+func _repair_to_mention() -> String:
+	for id in StationRepair.ORDER:
+		if repair_state(str(id)) == "ready":
+			return str(id)
+	return ""
+
+
+func _sara_repairs(id: String) -> void:
+	repairs_said_day = day
+	var r: Dictionary = StationRepair.REPAIRS[id]
+	_say("Sara", [str(r["mention"])], Callable(repair_view, "open_at").bind(id), "Show me")
+
+
+# F3 (editor and debug builds only): enough Scrip and materials for every station repair.
+func _debug_repair_kit() -> void:
+	for id in StationRepair.REPAIRS:
+		var r: Dictionary = StationRepair.REPAIRS[id]
+		_money(int(r["cost"]), "Debug: repairs")
+		var needs: Dictionary = r["needs"]
+		for item in needs:
+			_give(item, int(needs[item]))
+	_toast("Debug: Scrip and materials for every station repair.")
+
+
 func _bram_default() -> void:
 	if not job_done_today:
 		_bram_job()
@@ -3953,10 +4082,10 @@ func _toast(msg: String) -> void:
 func _process(delta: float) -> void:
 	if music_director != null:
 		music_director.update(delta)
-	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (ship_upgrades != null and ship_upgrades.open) or (datapad != null and datapad.blocking())
+	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (repair_view != null and repair_view.open) or (ship_upgrades != null and ship_upgrades.open) or (datapad != null and datapad.blocking())
 	if datapad != null:
 		# The datapad leaves the keys alone while one of the game's own windows is open.
-		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (ship_upgrades != null and ship_upgrades.open) or travelling or garden_busy)
+		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (repair_view != null and repair_view.open) or (ship_upgrades != null and ship_upgrades.open) or travelling or garden_busy)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	if not seasonal_props.is_empty():
@@ -4159,11 +4288,14 @@ func _next_day() -> void:
 		persons[who]["talked_today"] = false
 		persons[who]["talks_today"] = 0
 	var post: int = _deliver_mail()
+	var repaired: Array = _finish_repairs()
 	_go_home()
 	_snap_residents()
 	_save_game()
 	_toast("Day %d  (saved)" % day + ("   You've got mail." if post > 0 else ""))
 	_morning_news()
+	for id in repaired:
+		_toast("S.A.R.A.: repairs finished overnight. %s: open." % str(StationRepair.REPAIRS[id]["name"]))
 
 
 # ---------------------------------------------------------------- mail
@@ -4230,6 +4362,8 @@ func _save_game() -> void:
 	cfg.set_value("mail", "days", mail_days)
 	cfg.set_value("mail", "due", mail_due)
 	cfg.set_value("farm", "shipping", shipping)
+	cfg.set_value("station", "fixed", station_fixed)
+	cfg.set_value("station", "due", station_due)
 	if not appearance.is_empty():
 		cfg.set_value("game", "appearance", appearance)
 	for who in persons:
@@ -4311,6 +4445,10 @@ func _load_game() -> void:
 	mail_due = saved_due if saved_due is Dictionary else {}
 	var saved_shipping = cfg.get_value("farm", "shipping", {})
 	shipping = saved_shipping if saved_shipping is Dictionary else {}
+	var saved_fixed = cfg.get_value("station", "fixed", [])
+	station_fixed = saved_fixed if saved_fixed is Array else []
+	var saved_repairs = cfg.get_value("station", "due", [])
+	station_due = saved_repairs if saved_repairs is Array else []
 	var saved_look = cfg.get_value("game", "appearance", {})
 	if saved_look is Dictionary and not saved_look.is_empty() and maker != null:
 		appearance = maker.tidy(saved_look)
@@ -4435,6 +4573,10 @@ func _spawn_concourse() -> void:
 		actors.add_child(inner)
 		area_sprites.append([inner,e[0]])
 		inner_doors.append(inner)
+		if str(e[6]).begins_with("repair:"):
+			# a door sealed until S.A.R.A. repairs what is behind it: using it opens her repairs page
+			things.append({"kind": "sealed", "name": "Sealed door", "hint": "Ask S.A.R.A.", "area": e[0], "pos": inner.center(),
+				"radius": 34.0, "who": "", "repair": str(e[6]).substr(7)})
 	for p in MapData.CONCOURSE_PROPS:
 		_spawn_prop(p,"main")
 	# Other levels drawn in the promenade style (the Survey Level, ...): their props and roof machinery.
@@ -4494,6 +4636,12 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 	sprite.visible = false
 	actors.add_child(sprite)
 	area_sprites.append([sprite,area_name])
+	if p[0] in ["rubble", "glass_shards"]:
+		# wreckage in a broken dome: S.A.R.A.'s drones clear it when they repair the dome (_sync_station)
+		for id in MapData.SEALED_ROOMS:
+			var box: Array = MapData.SEALED_ROOMS[id]
+			if str(box[0]) == area_name and int(p[1]) >= int(box[1]) and int(p[1]) <= int(box[3]) and int(p[2]) >= int(box[2]) and int(p[2]) <= int(box[4]):
+				wreck_props.append([sprite, str(id)])
 	if p[0] == "terminal" and str(p[5]) == "Message pad":
 		# your mailbox: its screen shows an envelope (scripts/lunar_terminal.gd), and another bobs over it while a
 		# letter waits (drawn over the walls, like the other overlays)
@@ -5262,6 +5410,7 @@ func _wake_harbinger(key: String) -> void:
 
 func _harbinger_slain() -> void:
 	harbinger_slain = true
+	send_mail("sara_ponds", 1)           # S.A.R.A.: the springs are quiet now, so she can repair the fish ponds
 	sfx("quest")
 	_money(500, "The Harbinger, defeated")
 	_say("Underground ocean", ["The Harbinger sinks back into the dark water, and does not rise again.",
@@ -5282,20 +5431,32 @@ func _bedroom_locked(owners: String) -> bool:
 		if int(persons[who]["friendship"]) >= BEDROOM_HEARTS * FRIEND_PER_HEART: return false
 	return known
 
+# A sliding door is locked if it's a bedroom you aren't welcome in yet, or a door S.A.R.A. sealed on a broken
+# dome she hasn't repaired (owner "repair:<id>").
+func _inner_locked(who_owns: String) -> bool:
+	if who_owns.begins_with("repair:"):
+		return not station_fixed.has(who_owns.substr(7))
+	return _bedroom_locked(who_owns)
+
+
 func _update_inner_doors(delta: float) -> void:
 	for d in inner_doors:
 		if d.area != current_area: continue
 		var c: Vector2 = d.center()
 		var reach: float = 22.0 + maxf(d.size_px.x, d.size_px.y) * 0.5
-		d.locked = _bedroom_locked(d.room_owner)
+		d.locked = _inner_locked(d.room_owner)
 		var player_near: bool = player.position.distance_to(c) < reach
 		var want: bool = player_near and not d.locked
 		for r in residents:
 			if r.area == current_area and r.position.distance_to(c) < reach: want = true
 		if player_near and d.locked and not d.has_meta("warned"):
 			d.set_meta("warned", true)
-			var names: String = d.room_owner.replace("|", " and ")
-			_toast("%s's room — locked. Get to know %s better first." % [names, "them" if "|" in d.room_owner else names])
+			if d.room_owner.begins_with("repair:"):
+				var rep: Dictionary = StationRepair.REPAIRS.get(d.room_owner.substr(7), {})
+				_toast("Sealed: %s. S.A.R.A. can repair it (E)." % str(rep.get("name", "broken")).to_lower())
+			else:
+				var names: String = d.room_owner.replace("|", " and ")
+				_toast("%s's room — locked. Get to know %s better first." % [names, "them" if "|" in d.room_owner else names])
 			sfx("deny")
 		elif not player_near and d.has_meta("warned"):
 			d.remove_meta("warned")

@@ -8,7 +8,8 @@ extends RefCounted
 #                 "sign": the sign-off}. Keep a letter to about four short paragraphs, so it fits on the page.
 # DATED: letters that come on a fixed day (day 1 is the first morning of the game).
 # Everything else is sent by the story, with main.gd send_mail(id, days): it comes with the post that many
-# mornings later. "vzzket_caverns" is sent when you finish Job's north tunnels (job_quest 5).
+# mornings later. "vzzket_caverns" is sent when you finish Job's north tunnels (job_quest 5); "sara_ponds" when the
+# Harbinger is slain (the fish ponds can be repaired then: scripts/station_repair.gd).
 #
 # The wording of these letters is a first draft by Claude, for Zachary to change.
 
@@ -35,6 +36,28 @@ const LETTERS := {
 		],
 		"sign": "Vzz'ket",
 	},
+	"sara_storage": {
+		"from": "S.A.R.A.",
+		"title": "The storage dome",
+		"body": [
+			"A small matter of housekeeping.",
+			"Between your field and your workshop is the agri dome's old storage dome. A pressure seal failed there years ago, and I closed the doors on it. It has been full of broken glass ever since.",
+			"My drones can repair it, for Scrip and a few materials. Ask at either of its doors and I will show you what it needs.",
+			"You will want somewhere to keep things. Everyone does, eventually.",
+		],
+		"sign": "S.A.R.A.",
+	},
+	"sara_ponds": {
+		"from": "S.A.R.A.",
+		"title": "The springs are quiet",
+		"body": [
+			"Since the Harbinger went down, the pressure in the spring pipes has held. Nothing is cracking them any more.",
+			"That means I can repair the hot springs and the fish ponds, east of your porch. They have been sealed since long before you came.",
+			"Ask at either of their doors and I will tell you what it costs.",
+			"I would very much like a warm bath on this station again. Not for me. I have no use for one. For the station.",
+		],
+		"sign": "S.A.R.A.",
+	},
 }
 
-const DATED := {"welcome": 1}
+const DATED := {"welcome": 1, "sara_storage": 3}
