@@ -27,9 +27,9 @@
 | Every day at first (unchanged) | The cavern gate from 06:00; dinner; the gate again 19:00; the promenade 22:00; his bedroll by the gate 23:30 |
 | After his 8, Monday to Saturday | The gate by day; dinner; the gate 19:00 (sparring with Ix'ali); a drink at the bar 21:00; his bedroll 23:00 |
 | After his 8, Sunday (his day off) | Breakfast; the museum with Tar'Besh 09:30; lunch; holo-darts at the bar 13:30; dinner; the stage seats 19:00 |
-| Fridays, after the side arc's 6 | The gate by day; dinner; the Open-Mic seats in the bar from 19:00 (Ix'ali holds the gate) |
+| Fridays, after the side arc's 8 | The gate by day; dinner; the Open-Mic seats in the bar from 19:00 (Ix'ali holds the gate) |
 
-- **Day lines** for Friday (after the side arc's 6) and Sunday (after his 8) only appear once he's earned them.
+- **Day lines** for Friday (after the side arc's 8) and Sunday (after his 8) only appear once he's earned them.
 - He isn't on the calendar's days-off list (it can't read story flags yet).
 
 ---

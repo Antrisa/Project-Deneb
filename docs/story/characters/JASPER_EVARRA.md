@@ -1,33 +1,32 @@
 # Jasper & Evarra: the sibling side arc (23 Nov 2026)
 
 **Decided with Zachary, 23 Nov:**
-- **8 moves to the hotel's dining room**, the room the critic will actually eat in. Until the hotel opens (after Ivan's fall) it plays in the mess hall instead, so it never waits. This settles Decision 9.
+- **Trimmed to three scenes** (Zachary, 23 Nov, for every side arc: "trim to 3"): the pod memory (4), the bees (6) and the banquet. The béchamel (2) and the critic's practice run (8) are cut; their scripts are kept at the end of this doc. The Starlight Soufflé now comes at the banquet.
+- *(Before the trim)* **8 moves to the hotel's dining room**, the room the critic will actually eat in. Until the hotel opens (after Ivan's fall) it plays in the mess hall instead, so it never waits. This settles Decision 9.
 - **4 moves out of the Observation Lounge** to the West Terminal's little star dome above the landing pads, in two versions: honey tarts once the garden dome is restored, herb tea and ration-flour tarts before.
 - **Ooma's ship brings the hive in 6**, not Eshu's mail skiff (Eshu can arrive later than the garden dome).
-- **A wrong choice costs a little** instead of giving the same reward. In 8, sticking to the holo-recipe flattens the soufflé: no friendship, and the signature dish waits for the banquet. The same rule is used for the new choices in 4 and 6.
-- **The banquet only happens in autumn or winter**, on an evening after the Critic's run.
+- **A wrong choice costs a little** instead of giving the same reward: in 4 a quiet Evarra and nothing gained, in 6 a bee sting.
+- **The banquet only happens in autumn or winter**, on an evening after the pod memory (4). It doesn't wait for the bees: the honey lines change once they've come.
 
 **The arc:** two foundlings from one escape pod turn scarcity into a feast.
-- 2: grey béchamel and "little brother?!"
 - 4: two infants in one thermal blanket.
 - 6: the first bees.
-- 8: fusion, not imitation.
-- 10: the whole station at one table.
+- 10: the whole station at one table, and Jasper's own soufflé.
 
 **What's whose:** lines marked *(Zachary)* are his, from "Heart Events: All Romances" (Part 1, Jasper & Evarra): the setting, every line and the three choices of 2; the setting and every line of 4 (the version before the garden dome is Claude's); the setting and every line of 6; the setting, Jasper's and S.A.R.A.'s lines and both choices of 8; the setting and both speeches of 10. Everything else is Claude's, for Zachary to change or approve: the choice in 4, the choice in 6 and the sting, what happens after each choice in 8, and the small reactions. Choices give +30 (Friendship) or +60 (High Friendship), to one or both of them as the script says.
 
-**How it triggers:** both of them at the hearts (the event's `"with": ["Evarra"]`). Neither can pass 8 hearts unless you're dating them, so the "10" needs both at 8 and plays after 8.
+**How it triggers:** both of them at the hearts (the event's `"with": ["Evarra"]`). Neither can pass 8 hearts unless you're dating them, so the "10" (the banquet) needs both at 8.
 
-**Flags this arc sets:** `siblings_bechamel` (2), `siblings_pod_story` (4), `siblings_bees` and the perk `perk_wildflower_honey` (6; `siblings_helmet` if you told Jasper to keep the helmet on), `siblings_practice_run` and either the perk `perk_starlight_souffle` or `siblings_holo_recipe` (8), `siblings_feast`, the perk `perk_family_table` and the keepsake `keepsake_family_photo` (10).
+**Flags this arc sets:** `siblings_pod_story` (4), `siblings_bees` and the perk `perk_wildflower_honey` (6; `siblings_helmet` if you told Jasper to keep the helmet on), `siblings_feast`, the perks `perk_starlight_souffle` and `perk_family_table`, and the keepsake `keepsake_family_photo` (10).
 
 ---
 
 ## In the game (23 Nov)
 
-All five are playable cutscenes in `scripts/heart_events.gd` (`siblings_2` to `siblings_10`), staged like the romance arcs: poses from both their heart-event sheets and action sheets (cooking, mixing, gardening), emote bubbles for everyone, and sounds. Not run in Godot yet.
+All three are playable cutscenes in `scripts/heart_events.gd` (`siblings_4`, `siblings_6`, `siblings_10`), staged like the romance arcs: poses from both their heart-event sheets and action sheets (cooking, mixing, gardening), emote bubbles for everyone, and sounds. Not run in Godot yet.
 
 - **New engine bits:** an event's `"with"` (others who need the same hearts) and `"seasons"` (only in those seasons), checked in `main.gd _event_ready`; F3 meets both in debug builds (it raises the others' hearts and moves the day into the season). A new scene step, `["energy", -points]`, is the bee sting's cost.
-- **Animated (Zachary, 23 Nov):** a new scene step, `["fx", kind, x, y, spread]`, draws bees, fireflies or steam in code (`scripts/scene_fx.gd`) until there's art. Steam rises from the pot in 2, the mugs in 4 and the soufflé in 8; in 6 the bees buzz in the glass hive, pour out round the flowers (and find Jasper's helmet if you told him to keep it on), then settle on Evarra's hand; fireflies drift over the banquet in 10, with the bees joining them once there are bees. Ana's soup in her 0 steams too.
+- **Animated (Zachary, 23 Nov):** a new scene step, `["fx", kind, x, y, spread]`, draws bees, fireflies or steam in code (`scripts/scene_fx.gd`) until there's art. Steam rises from the mugs in 4; in 6 the bees buzz in the glass hive, pour out round the flowers (and find Jasper's helmet if you told him to keep it on), then settle on Evarra's hand; fireflies drift over the banquet in 10, with the bees joining them once there are bees. Ana's soup in her 0 steams too.
 - **To test:** in a debug build, **F3** plays the next event in order; the side arc comes after Ana's six.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **Not in yet:** Wildflower Honey production (the bees), the Starlight Soufflé recipe and its Grand Hotel Inspection bonus, the Family Table perk's effect on meals, and the framed photo above the mess hall counter (art). The apiary box and glass hive in 6 are narrated (art).
@@ -35,32 +34,9 @@ All five are playable cutscenes in `scripts/heart_events.gd` (`siblings_2` to `s
 
 ---
 
-## ♥2 Haute Cuisine on a Ration Budget
-
-**Trigger:** the mess hall 13:00–14:30 on a Monday, Thursday or Friday (both work; Jasper goes on his break at 14:30), with both at 2 hearts.
-
-- *[The mess hall kitchen. Smoke curls from a simmering pot while a holo-projector plays a crackling old video of a Parisian bistro.]* *(Zachary)*
-- *[Jasper is furiously whisking a grey paste in a steel bowl, his fox ears flat. Evarra snips leaves from one potted herb onto ration biscuits.]* *(Zachary)*
-- **JASPER** *(Zachary)*: "[angry] Non, non, non! Look at the viscosity, Evarra! In the old Earth holos, Chef Laurent's béchamel flows like liquid silk!"
-- **JASPER** *(Zachary)*: "[sad] Mine looks like Tikka's hull sealant!"
-- **EVARRA** *(Zachary)*: "[happy] That might be because Chef Laurent had butter, cream and flour, Jasper—and we have dehydrated soy-paste and reclaimed water."
-- **JASPER** *(Zachary)*: "[happy] Ah, mon ami! Tell me honestly—does this smell like a candlelit terrace overlooking the Seine, or like boiled cardboard?"
-- **CHOICE** *(Zachary)*:
-  - **"It smells... ambitious. Maybe add some of Evarra's herbs?"** (+Friendship with both)
-    - *[Evarra sprinkles a pinch of her herbs into the bowl. Jasper sniffs it, and one ear lifts.]*
-  - **"Honestly, it looks a little like hull sealant."** (+Friendship with Evarra only)
-    - *[Jasper laughs ruefully and sets the whisk down. His ears stay flat.]* *(Zachary's "laughs ruefully")*
-  - **"It's the passion behind the dish that counts."** (+Friendship with Jasper only)
-    - **JASPER:** "[happy] Passion! You hear that, Evarra? Passion!"
-- **EVARRA** *(Zachary)*: "[happy] See? Even our newest neighbor agrees. You don't need Earth butter to make people feel at home, little brother."
-- **JASPER** *(Zachary)*: "[surprised] Little brother?! Evarra, we were found in the same escape pod—we have no idea who hatched or was born first!"
-- **JASPER** *(Zachary)*: "Besides, one day I will serve a true Parisian feast right here on Echo Landing. You'll see!"
-
----
-
 ## ♥4 The Escape Pod Memory
 
-**Trigger:** the West Terminal's star dome 20:30–midnight (after Evarra's shift; Jasper comes up once the mess hall closes), with both at 4 hearts, after 2. *(Moved from the Observation Lounge, Zachary 23 Nov.)*
+**Trigger:** the West Terminal's star dome 20:30–midnight (after Evarra's shift; Jasper comes up once the mess hall closes), with both at 4 hearts. *(Moved from the Observation Lounge, Zachary 23 Nov.)*
 
 - *[The West Terminal's little star dome. Starlight falls on Evarra by the glass, turning a small, tarnished metal locket over in her hands.]* *(Zachary, moved)*
 - *[She looks up with a gentle smile and makes room for you at the glass.]* *(Zachary, changed: she patted the bench)*
@@ -118,7 +94,58 @@ All five are playable cutscenes in `scripts/heart_events.gd` (`siblings_2` to `s
 
 ---
 
-## ♥8 The Critic's Practice Run
+## ♥10 A Table for the Whole Sector
+
+**Trigger:** the plaza fountain 18:00–21:00 in autumn or winter, after the pod memory (4), with both at 8 hearts. Everyone who has arrived on the station is there. Rewards: the Starlight Soufflé recipe, the Family Table perk and a framed photo above the mess hall counter.
+
+- *[A starlit banquet around the fountain. Every resident shares one long table laden with fresh bread, pastries, roasted roots and sparkling cider.]* *(Zachary)*
+- *[Jasper rings a little silver bell. Evarra brings out a towering honey-and-berry cake decorated with edible star-flowers.]* *(Zachary)*
+- **JASPER** *(Zachary)*: "[happy] When Evarra and I arrived on this station, we had nothing but a tin of ration cubes and a flickering holo-vid."
+- **JASPER** *(Zachary, "every neighbor" for "twenty-eight neighbors")*: "[happy] Tonight, we feed travelers from three empires and call every neighbor family!"
+- **JASPER:** "[happy] And tonight's soufflé comes from no holo. Our honey, the caverns' truffles, and a little nerve. Paris never tasted anything like it." *(Claude: the critic's run, which unlocked it, is cut)*
+- **Recipe: Starlight Soufflé & Lunar Truffle Glaze** *(Zachary's reward from the cut 8: a big boost at the Grand Hotel Inspection, Spring 24)*
+- **EVARRA** *(Zachary)*: "[happy] You gave me my garden, and you gave my brother his kitchen."
+- **EVARRA** *(Zachary)*: "[love] No matter where we came from before that escape pod, this is our home forever."
+- *[The whole station cheers around the fountain as fireflies and honeybees drift beneath the dome.]* *(Zachary; no bees before 6)*
+- **Perk: Family Table (cooked meals restore 25% more health and energy)** *(Zachary)*
+- **A framed photo of Jasper, Evarra and you now hangs above the mess hall counter** *(Zachary)*
+
+---
+
+## Still open
+
+- **Wildflower Honey production**, the soufflé recipe and its Grand Hotel Inspection bonus, and the Family Table perk need the cooking and bee systems in the game; for now they're flags.
+- **Art** (on the Art Fix List, 23 Nov): the apiary box and glass hive (6), the banquet table (10), the framed photo above the mess hall counter (10), and sprites for the bees and fireflies that are drawn in code for now.
+- **The Grand Hotel Inspection** (Spring 24) itself isn't in the calendar yet.
+
+---
+
+## Cut (Zachary, 23 Nov: side arcs are three scenes)
+
+Kept here for the record. They're Zachary's scripts ("Heart Events: All Romances", Part 1), so they could come back as something else: the béchamel as a day line, say, or the critic's run as part of the Grand Hotel Inspection. The code for both is in git history (`siblings_2`, `siblings_8`, before 23 Nov's trim).
+
+### ♥2 Haute Cuisine on a Ration Budget (cut)
+
+**Trigger:** the mess hall 13:00–14:30 on a Monday, Thursday or Friday (both work; Jasper goes on his break at 14:30), with both at 2 hearts.
+
+- *[The mess hall kitchen. Smoke curls from a simmering pot while a holo-projector plays a crackling old video of a Parisian bistro.]* *(Zachary)*
+- *[Jasper is furiously whisking a grey paste in a steel bowl, his fox ears flat. Evarra snips leaves from one potted herb onto ration biscuits.]* *(Zachary)*
+- **JASPER** *(Zachary)*: "[angry] Non, non, non! Look at the viscosity, Evarra! In the old Earth holos, Chef Laurent's béchamel flows like liquid silk!"
+- **JASPER** *(Zachary)*: "[sad] Mine looks like Tikka's hull sealant!"
+- **EVARRA** *(Zachary)*: "[happy] That might be because Chef Laurent had butter, cream and flour, Jasper—and we have dehydrated soy-paste and reclaimed water."
+- **JASPER** *(Zachary)*: "[happy] Ah, mon ami! Tell me honestly—does this smell like a candlelit terrace overlooking the Seine, or like boiled cardboard?"
+- **CHOICE** *(Zachary)*:
+  - **"It smells... ambitious. Maybe add some of Evarra's herbs?"** (+Friendship with both)
+    - *[Evarra sprinkles a pinch of her herbs into the bowl. Jasper sniffs it, and one ear lifts.]*
+  - **"Honestly, it looks a little like hull sealant."** (+Friendship with Evarra only)
+    - *[Jasper laughs ruefully and sets the whisk down. His ears stay flat.]* *(Zachary's "laughs ruefully")*
+  - **"It's the passion behind the dish that counts."** (+Friendship with Jasper only)
+    - **JASPER:** "[happy] Passion! You hear that, Evarra? Passion!"
+- **EVARRA** *(Zachary)*: "[happy] See? Even our newest neighbor agrees. You don't need Earth butter to make people feel at home, little brother."
+- **JASPER** *(Zachary)*: "[surprised] Little brother?! Evarra, we were found in the same escape pod—we have no idea who hatched or was born first!"
+- **JASPER** *(Zachary)*: "Besides, one day I will serve a true Parisian feast right here on Echo Landing. You'll see!"
+
+### ♥8 The Critic's Practice Run (cut)
 
 **Trigger:** the hotel's dining room 21:30–midnight, after the last service, with both at 8 hearts. Until the hotel opens (after Ivan's fall), the mess hall instead. Gameplay unlock: Jasper's signature dish, *Starlight Soufflé & Lunar Truffle Glaze*: a big boost at the Grand Hotel Inspection (Spring 24).
 
@@ -146,30 +173,3 @@ All five are playable cutscenes in `scripts/heart_events.gd` (`siblings_2` to `s
     - **JASPER:** "[sad] Competent. The worst word in any language."
     - **EVARRA:** "[sad] We'll try again, little brother. With our own honey next time."
     - *(He works the dish out on his own and serves it at the banquet; the recipe unlocks there.)*
-
----
-
-## ♥10 A Table for the Whole Sector
-
-**Trigger:** the plaza fountain 18:00–21:00 in autumn or winter, after the Critic's run, with both at 8 hearts. Everyone who has arrived on the station is there. Reward: the Family Table perk and a framed photo above the mess hall counter.
-
-- *[A starlit banquet around the fountain. Every resident shares one long table laden with fresh bread, pastries, roasted roots and sparkling cider.]* *(Zachary)*
-- *[Jasper rings a little silver bell. Evarra brings out a towering honey-and-berry cake decorated with edible star-flowers.]* *(Zachary)*
-- **JASPER** *(Zachary)*: "[happy] When Evarra and I arrived on this station, we had nothing but a tin of ration cubes and a flickering holo-vid."
-- **JASPER** *(Zachary, "every neighbor" for "twenty-eight neighbors")*: "[happy] Tonight, we feed travelers from three empires and call every neighbor family!"
-- **If the soufflé fell flat in 8:**
-  - **JASPER:** "[happy] And tonight's soufflé comes from no holo. Our honey, the caverns' truffles, and a little nerve. I worked it out after all."
-  - **Recipe: Starlight Soufflé & Lunar Truffle Glaze**
-- **EVARRA** *(Zachary)*: "[happy] You gave me my garden, and you gave my brother his kitchen."
-- **EVARRA** *(Zachary)*: "[love] No matter where we came from before that escape pod, this is our home forever."
-- *[The whole station cheers around the fountain as fireflies and honeybees drift beneath the dome.]* *(Zachary; no bees before 6)*
-- **Perk: Family Table (cooked meals restore 25% more health and energy)** *(Zachary)*
-- **A framed photo of Jasper, Evarra and you now hangs above the mess hall counter** *(Zachary)*
-
----
-
-## Still open
-
-- **Wildflower Honey production**, the soufflé recipe and its Grand Hotel Inspection bonus, and the Family Table perk need the cooking and bee systems in the game; for now they're flags.
-- **Art** (on the Art Fix List, 23 Nov): the apiary box and glass hive (6), the banquet table (10), the framed photo above the mess hall counter (10), and sprites for the bees and fireflies that are drawn in code for now.
-- **The Grand Hotel Inspection** (Spring 24) itself isn't in the calendar yet.

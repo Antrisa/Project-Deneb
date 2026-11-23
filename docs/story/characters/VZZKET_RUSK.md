@@ -3,6 +3,7 @@
 **Their own arcs:** [`VZZKET.md`](VZZKET.md) and [`RUSK.md`](RUSK.md) (Zachary, 23 Nov: "I'm fine with shared side arcs but they need single arcs too"). This is the side arc they share, like Jasper & Evarra's.
 
 **Decided with Zachary, 23 Nov:**
+- **Trimmed to three scenes** (Zachary, 23 Nov, for every side arc: "trim to 3"): 2, 4 and 8. The 6 (On the House) is cut; its heart lives on in 8, where Rusk apologises and opens the Friday Open-Mic at the gate, and Vzz'ket tells his true story under the new sign. The 6's script is kept at the end of this doc.
 - **The shell in 4** is a crawler brood-mother's, broken open by **the Leviathan** ("sure"): that's what the crawlers are running from, and its heartbeat is what Zaas hears in his 4 (story thread F).
 - **"The Nest" is now "The Broken Shell"** (Decision 16): the Rabble's Nest keeps its name.
 - **S.A.R.A.'s sensors moved to Vzz'ket's own 8**, where he stops guarding night and day. This side arc's 8 keeps Ix'ali's traps, Rusk's toast and the sign.
@@ -11,24 +12,23 @@
 **The arc:** the barman who tells tall tales, and the hunter nobody believes.
 - 2: Rusk's bug joke, and the one person at the counter who isn't laughing.
 - 4: the shell; Rusk takes back about forty jokes.
-- 6: Rusk says sorry in front of everyone and opens the stage (Friday Open-Mic); Vzz'ket's true story, then Rusk's forty years.
-- 8: the traps, a bottle from the Secret Reserve, and Ix'ali on watch; the bar gets its name: THE NIGHT WATCH.
+- 8: the traps, a bottle from the Secret Reserve, Rusk's apology and the Friday Open-Mic, and Ix'ali on watch; the bar gets its name, THE NIGHT WATCH, and Vzz'ket tells his true story.
 
 **Both need the hearts** (`"who": "Vzz'ket", "with": ["Rusk"]`). Right answers give +60 (High Friendship) to each. Wrong ones: −20 with Vzz'ket, and in 4 a crawler bite as well (−10 energy). Their weeks are in their own docs.
 
 **What's whose:** the outlines are the NPC Master's; the scenes and every line are drafts by Claude.
 
-**Flags this arc sets:** `vzzket_tall_tales` (2), `vzzket_shell` (4), `vzzket_open_mic` (6: Friday nights at the bar for Vzz'ket, Ix'ali on the gate), `vzzket_sentinels` and the perk `perk_chitin_piercer_traps` (8).
+**Flags this arc sets:** `vzzket_tall_tales` (2), `vzzket_shell` (4), `vzzket_open_mic` (Friday nights at the bar for Vzz'ket, Ix'ali on the gate), `vzzket_sentinels` and the perk `perk_chitin_piercer_traps` (all 8).
 
 ---
 
 ## In the game (23 Nov)
 
-All four are playable cutscenes in `scripts/heart_events.gd` (`nightwatch_2` to `nightwatch_8`, after Rusk's own). Not run in Godot yet.
+All three are playable cutscenes in `scripts/heart_events.gd` (`nightwatch_2`, `nightwatch_4`, `nightwatch_8`, after Rusk's own). Not run in Godot yet.
 
-- **The bar's stage** (built on 21 Nov for this) gets its first use in 6. In 8 the scene moves from the gate to the bar (`go`), where Rusk hangs the sign.
+- In 8 the scene moves from the gate to the bar (`go`), where Rusk hangs the sign. The bar's stage (built on 21 Nov) is where Vzz'ket's Fridays are from then on.
 - **S.A.R.A.** speaks over the bar speakers in 2.
-- **To test:** in a debug build, **F3** plays the next event in order (6 waits for a Friday; F3 moves the day on).
+- **To test:** in a debug build, **F3** plays the next event in order (F3 sets the hearts, day and time each one needs).
 - **Not in yet:** the traps in play (a flag); the broken shell, the traps and the new sign as art (Art Fix List). The bar's run-down state and its repair are still to be designed; the sign could become part of that.
 
 ---
@@ -93,7 +93,57 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`nightwatch_2` to 
     - *(-20 friendship with Vzz'ket)*
 - **VZZ'KET:** "We go back now. Quietly."
 
-## ♥6 On the House
+## ♥8 Sentinels of Echo Landing
+
+**Trigger:** the cavern gate, 21:00–23:30, both at 8 hearts. Ix'ali, and Rusk with a bottle. Reward: Chitin-Piercer Traps at the cavern gate.
+
+- *[The cavern gate, near midnight. Ix'ali is fitting long black spikes into iron frames along the barricade.]*
+- *[Crawler traps, forged from the shells that came up the stair.]*
+- **IX'ALI:** "[happy] Chitin-piercers! Their own shells, made into their own teeth. Vzz'ket's design, my forge."
+- **VZZ'KET:** "They will hold a brood until morning. Then I will have words with it."
+- **RUSK:** "[happy] Gentlemen! Lady! A toast. One of the last bottles of my Secret Reserve."
+- **RUSK:** "I've been saving it for something worth saving it for. This is it."
+- **RUSK** *(from the cut 6)*: "[sad] And an apology. I told the bug story wrong for a year. I've seen what they were running from. I'm done laughing at you."
+- **RUSK:** "[happy] So: from this Friday the stage at my bar is open, every week. Stories, songs, lies if you must."
+- **RUSK:** "[happy] And your drinks are on the house, friend. Forever. ...Within reason."
+- **VZZ'KET:** "...I do not tell stories."
+- *(The Friday Open-Mic starts: `vzzket_open_mic`.)*
+- **RUSK:** "And then, friend: one drink. At my bar. I've something to show you."
+- *If S.A.R.A.'s sensors are in (his own 8 has played):*
+  - **IX'ALI:** "The machine's box and I have the gate tonight. Go, before I change my mind."
+- *If not:*
+  - **IX'ALI:** "I have the gate tonight. And on Fridays, it seems. Go, before I change my mind."
+- **RUSK:** "You've known him longest, pilot. Who keeps the gate tonight?"
+- **CHOICE:**
+  - **"Ix'ali does. Vzz'ket's coming for a drink."** (+High Friendship)
+    - **VZZ'KET:** "...One drink."
+    - **IX'ALI:** "[happy] Two. I am counting."
+    - *[Rusk's bar, a little after midnight. Rusk climbs onto a chair by the door with something wrapped in a sack.]*
+    - *[He pulls the sack away. Hand-painted, and only slightly crooked: THE NIGHT WATCH.]*
+    - **RUSK:** "[happy] Had it in the back for a week. Every bar needs a name, and this one finally earned it."
+    - **VZZ'KET:** "...You named your bar after my work."
+    - **RUSK:** "[happy] After the folk who keep it. You at your gate, me at mine. Sit down, friend. The stool knows better than to bite you."
+    - **RUSK:** "[happy] And the first story on my stage is yours, Friday. Practise on us."
+    - **VZZ'KET** *(from the cut 6)*: "...A true one, then. It is short."
+    - **VZZ'KET:** "My first night at the gate, a crawler came up the stair carrying its young on its back. I let it pass."
+    - **VZZ'KET:** "[sad] Every night since, I have wondered what it was carrying them away from. Now I know. That is the story."
+    - **RUSK:** "[happy] ...It'll do, friend. It'll more than do."
+    - **VZZ'KET:** "[happy] Sleep well, pilot. ...Tonight, that is what the armourer is for."
+    - *(+60 friendship with Rusk)*
+  - **"Vzz'ket should stay on watch. Just in case."**
+    - **VZZ'KET:** "...Yes. Just in case."
+    - *[Rusk pours three small glasses on top of the barricade and leaves the fourth beside Vzz'ket. He doesn't touch it.]*
+    - **RUSK:** "[sad] Next time, then. There's always a next time down here. That's rather the trouble."
+    - *(-20 friendship with Vzz'ket)*
+- *[Perk: Chitin-Piercer Traps at the cavern gate]*
+
+---
+
+## Cut (Zachary, 23 Nov: side arcs are three scenes)
+
+Kept here for the record; its apology, the Open-Mic and Vzz'ket's true story moved into 8, and Rusk's forty years are his own arc's 6 (The Sea Chest). The code is in git history (`nightwatch_6`, before 23 Nov's trim).
+
+### ♥6 On the House (cut)
 
 **Trigger:** Rusk's bar on a Friday, 19:00–21:00, after 4. Job, Freya, Bram, Saffi and Kit are there. Starts Friday Open-Mic & Story Night.
 
@@ -124,37 +174,3 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`nightwatch_2` to 
 - **RUSK:** "[sad] Every bar I ever had, I lost. To a war, to a landlord, to a fire."
 - **RUSK:** "This one's a ruin, and the lights go when they like. I'm keeping it."
 - **SAFFI:** "[happy] Hear, hear!"
-
-## ♥8 Sentinels of Echo Landing
-
-**Trigger:** the cavern gate, 21:00–23:30, both at 8 hearts. Ix'ali, and Rusk with a bottle. Reward: Chitin-Piercer Traps at the cavern gate.
-
-- *[The cavern gate, near midnight. Ix'ali is fitting long black spikes into iron frames along the barricade.]*
-- *[Crawler traps, forged from the shells that came up the stair.]*
-- **IX'ALI:** "[happy] Chitin-piercers! Their own shells, made into their own teeth. Vzz'ket's design, my forge."
-- **VZZ'KET:** "They will hold a brood until morning. Then I will have words with it."
-- **RUSK:** "[happy] Gentlemen! Lady! A toast. One of the last bottles of my Secret Reserve."
-- **RUSK:** "I've been saving it for something worth saving it for. This is it."
-- **RUSK:** "And then, friend: one drink. At my bar. I've something to show you."
-- *If S.A.R.A.'s sensors are in (his own 8 has played):*
-  - **IX'ALI:** "The machine's box and I have the gate tonight. Go, before I change my mind."
-- *If not:*
-  - **IX'ALI:** "I have the gate tonight. I hold it on Fridays already. Go, before I change my mind."
-- **RUSK:** "You've known him longest, pilot. Who keeps the gate tonight?"
-- **CHOICE:**
-  - **"Ix'ali does. Vzz'ket's coming for a drink."** (+High Friendship)
-    - **VZZ'KET:** "...One drink."
-    - **IX'ALI:** "[happy] Two. I am counting."
-    - *[Rusk's bar, a little after midnight. Rusk climbs onto a chair by the door with something wrapped in a sack.]*
-    - *[He pulls the sack away. Hand-painted, and only slightly crooked: THE NIGHT WATCH.]*
-    - **RUSK:** "[happy] Had it in the back for a week. Every bar needs a name, and this one finally earned it."
-    - **VZZ'KET:** "...You named your bar after my work."
-    - **RUSK:** "[happy] After the folk who keep it. You at your gate, me at mine. Sit down, friend. The stool knows better than to bite you."
-    - **VZZ'KET:** "[happy] Sleep well, pilot. ...Tonight, that is what the armourer is for."
-    - *(+60 friendship with Rusk)*
-  - **"Vzz'ket should stay on watch. Just in case."**
-    - **VZZ'KET:** "...Yes. Just in case."
-    - *[Rusk pours three small glasses on top of the barricade and leaves the fourth beside Vzz'ket. He doesn't touch it.]*
-    - **RUSK:** "[sad] Next time, then. There's always a next time down here. That's rather the trouble."
-    - *(-20 friendship with Vzz'ket)*
-- *[Perk: Chitin-Piercer Traps at the cavern gate]*

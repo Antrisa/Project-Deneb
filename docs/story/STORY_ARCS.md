@@ -32,12 +32,14 @@ Review notes are marked by kind: **Clash** (two sources disagree), **Lock** (bre
 | | Events | Script | Short | Outline |
 |---|---|---|---|---|
 | Romance arcs (9 × 5) | 45 | 17 | 10 | 18 |
-| Jasper & Evarra side arc | 5 | 5 | 0 | 0 |
+| Jasper & Evarra side arc | 5 (3 since the trim) | 5 | 0 | 0 |
 | Platonic arcs (10 × 4) | 40 | 0 | 0 | 40 (five are only a reward, no scene) |
 | **All heart events** | **90** | **22** | **10** | **58** |
 | Prologue | 4 | 4 | 0 | 0 |
 | Main story beats after the prologue | 15 | 5 in game | 0 | 10 |
 | Holidays and calendar events | 9 | 0 | 0 | 9 |
+
+*(The table is the review as of 22 Nov. Since then (23 Nov): every pair and family member gets an arc of their own, side arcs are 2–3 scenes, and the two side arcs so far were trimmed to three each.)*
 
 Not written at all yet: the nine friendship endings for the 8-heart confessions, the accept and decline replies to each confession, the wedding cutscene, break-up reactions, birthday lines, and scenes for the five platonic 8-heart rewards that only have a reward.
 
@@ -274,18 +276,18 @@ Ivan's sister unlearns that fear is loyalty. **Reviewed with Zachary on 23 Nov; 
 
 ## 4. Jasper & Evarra: the sibling side arc
 
-Needs **both** at the level. All five are full scripts ([ROMANCE_SCRIPTS.md](ROMANCE_SCRIPTS.md), Part 1). **Reviewed with Zachary on 23 Nov; all five are playable.** Full scenes: [`characters/JASPER_EVARRA.md`](characters/JASPER_EVARRA.md).
+Needs **both** at the level. All five were full scripts ([ROMANCE_SCRIPTS.md](ROMANCE_SCRIPTS.md), Part 1). **Reviewed with Zachary on 23 Nov, then trimmed to three (Zachary: side arcs are 2–3 scenes, "trim to 3"): the pod memory, the bees and the banquet are playable; 2 and 8 are cut** (their scripts are kept at the end of the character doc). Full scenes: [`characters/JASPER_EVARRA.md`](characters/JASPER_EVARRA.md).
 
 | ♥ (both) | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Haute Cuisine on a Ration Budget | Mess hall kitchen, 13:00–14:30 on Monday, Thursday or Friday | Grey béchamel; "little brother?!" | In game (Zachary's script) |
+| 2 | Haute Cuisine on a Ration Budget | Mess hall kitchen, 13:00–14:30 on Monday, Thursday or Friday | Grey béchamel; "little brother?!" | **Cut** (23 Nov) |
 | 4 | The Escape Pod Memory | The West Terminal's star dome, 20:30–midnight (was the Observation Lounge) | Two infants in one thermal blanket, about twenty years ago. Honey tarts once the garden dome is restored, ration-flour tarts before. | In game (Zachary's script, a choice and the early version by Claude) |
 | 6 | Operation Honeybee | The garden dome, Wednesday 08:00–11:00, once it's restored | The first bees, brought by Ooma's ship. Unlocks Wildflower Honey. | In game (Zachary's script, a choice and the sting by Claude) |
-| 8 | The Critic's Practice Run | The hotel's dining room, 21:30–midnight; the mess hall until the hotel opens | Fusion, not imitation. Unlocks Starlight Soufflé & Lunar Truffle Glaze. | In game (Zachary's script, outcomes by Claude) |
-| 8+ | A Table for the Whole Sector | Plaza fountain banquet, 18:00–21:00 in autumn or winter, after the Critic's run | The whole station at one table. Reward: Family Table perk and a framed photo. | In game (Zachary's script) |
+| 8 | The Critic's Practice Run | The hotel's dining room, 21:30–midnight; the mess hall until the hotel opens | Fusion, not imitation. | **Cut** (23 Nov); the soufflé moved to the banquet |
+| 8+ | A Table for the Whole Sector | Plaza fountain banquet, 18:00–21:00 in autumn or winter, after the pod memory | The whole station at one table, and Jasper's own soufflé. Rewards: Starlight Soufflé & Lunar Truffle Glaze, the Family Table perk and a framed photo. | In game (Zachary's script; the soufflé line Claude's) |
 
 - **Decided (Zachary, 23 Nov):** 8 in the hotel's dining room, with the mess hall until the hotel opens (Decision 9); 4 in the West Terminal's star dome (Decision 17), in both versions; Ooma brings the hive; the banquet only in autumn or winter; **wrong choices get small consequences** instead of the same reward.
-- **Wrong choices:** in 8, sticking to the holo-recipe flattens the soufflé: no friendship, and the dish waits for the banquet. In 6 (Claude's new choice), telling Jasper to keep the welding helmet on gets you stung (−10 energy) and no friendship. In 4 (Claude's new choice), asking Evarra whether she wants to know where she's from gets nothing and a quiet Evarra.
+- **Wrong choices:** in 6 (Claude's new choice), telling Jasper to keep the welding helmet on gets you stung (−10 energy) and no friendship. In 4 (Claude's new choice), asking Evarra whether she wants to know where she's from gets nothing and a quiet Evarra.
 - **"Every neighbor"** replaces "twenty-eight neighbors"; "the Grand Hotel Inspection comes every spring" replaces "the Spring Hotel Inspection is weeks away" (and before the hotel opens, the critic is booked for opening night).
 - **Still open:** honey production, the soufflé's Inspection bonus and Family Table need the cooking and bee systems; art for the apiary box and glass hive, and the framed photo. Freya 8 is also in the West Terminal's star dome (on its bench; the siblings' 4 is at the glass).
 
@@ -343,7 +345,7 @@ The water officer who was right about the ocean, and gave it to the one who kept
 
 ### 5.4 Vzz'ket & Rusk: their own arcs, and a side arc (The Night Watch)
 
-**Reviewed with Zachary on 23 Nov; all twelve are written and playable.** Each has an arc of his own, and they share a side arc like Jasper & Evarra's (Zachary: "I'm fine with shared side arcs but they need single arcs too"). Full scenes: [`characters/VZZKET.md`](characters/VZZKET.md), [`characters/RUSK.md`](characters/RUSK.md), [`characters/VZZKET_RUSK.md`](characters/VZZKET_RUSK.md) (the side arc).
+**Reviewed with Zachary on 23 Nov; all eleven are written and playable** (the side arc was trimmed to three: its 6 is cut and folded into its 8). Each has an arc of his own, and they share a side arc like Jasper & Evarra's (Zachary: "I'm fine with shared side arcs but they need single arcs too"). Full scenes: [`characters/VZZKET.md`](characters/VZZKET.md), [`characters/RUSK.md`](characters/RUSK.md), [`characters/VZZKET_RUSK.md`](characters/VZZKET_RUSK.md) (the side arc).
 
 **Vzz'ket** (Zaa'sh, Cavern Hunter): the guard who never leaves his post.
 
@@ -369,11 +371,11 @@ The water officer who was right about the ocean, and gave it to the one who kept
 |---|---|---|---|---|
 | 2 | Tall Tales at the Bar | Rusk's bar, late, after Vzz'ket's shift | Rusk's bug-migration routine for Job and Freya; Vzz'ket, sharpening his spear: "They are running." | In game (Claude) |
 | 4 | The Broken Shell (was The Nest) | The far east end of the North Cave, in the evening | A crawler brood-queen's shell, broken open from outside by the Leviathan; Rusk takes back about forty jokes. | In game (Claude) |
-| 6 | On the House | Rusk's bar on a Friday evening | Rusk apologises in front of everyone and opens the stage: Friday Open-Mic & Story Night. Vzz'ket's true story, then Rusk's forty years. | In game (Claude) |
-| 8 | Sentinels of Echo Landing | The cavern gate near midnight, then the bar | Ix'ali's chitin-piercer traps, one of the last bottles of the Secret Reserve, and Ix'ali on watch; Rusk hangs his sign: THE NIGHT WATCH. Reward: Chitin-Piercer Traps. | In game (Claude) |
+| 6 | On the House | Rusk's bar on a Friday evening | Rusk apologises in front of everyone and opens the stage. | **Cut** (23 Nov): the apology, the Open-Mic and Vzz'ket's true story are in 8 now |
+| 8 | Sentinels of Echo Landing | The cavern gate near midnight, then the bar | Ix'ali's chitin-piercer traps, one of the last bottles of the Secret Reserve, Rusk's apology and the Friday Open-Mic, and Ix'ali on watch; Rusk hangs his sign, THE NIGHT WATCH, and Vzz'ket tells his true story. Reward: Chitin-Piercer Traps. | In game (Claude) |
 
 - **Decided (Zachary, 23 Nov):** the Leviathan broke the shell (thread F); "The Nest" is now "The Broken Shell" (Decision 16); Rusk is not Saffi's uncle but a figure in her family's life; Vzz'ket is old-school Zaa'sh and doesn't like S.A.R.A. at first, but respects Tar'Besh; Vzz'ket's 6 is at his campsite (made up properly), his 8 gives his first spear as a keepsake and ends his guarding night and day; Rusk's 8 gives a seed whose grapes you grow, replant or ferment into wine that sells high. Wrong choices: −20 (and a crawler bite in the side arc's 4).
-- **Their weeks:** Rusk has Monday mornings off (the bar opens at 18:00). Vzz'ket has no day off until he's earned one: his nights after his own 8 (Sundays off too), and Friday nights at the Open-Mic after the side arc's 6 (Ix'ali holds the gate).
+- **Their weeks:** Rusk has Monday mornings off (the bar opens at 18:00). Vzz'ket has no day off until he's earned one: his nights after his own 8 (Sundays off too), and Friday nights at the Open-Mic after the side arc's 8 (Ix'ali holds the gate).
 - **Still open:** the bar's run-down state and its repair (Rusk 2's lamp and the side arc's sign could be steps of it); furnishing your quarters (for the spear); a Fermenter at home (the economy plan has one).
 
 ### 5.5 Bram & Ooma (both, except 4)
@@ -526,7 +528,7 @@ Answer by number; anything left open stays as it is.
 6. **Where threads A and B end:** at the Neutral Zone Summit, or elsewhere?
 7. **Pip's parents:** found, a letter only, or left open?
 8. **The first bees:** decided 22 Nov: side-arc 6. Evarra 6 is now a wildflower border round your field.
-9. **Jasper & Evarra 8 waiting for the hotel:** decided 23 Nov: it plays in the hotel's dining room, and in the mess hall until the hotel opens.
+9. **Jasper & Evarra 8 waiting for the hotel:** decided 23 Nov: it plays in the hotel's dining room, and in the mess hall until the hotel opens. (Then cut the same day, when side arcs became three scenes.)
 10. **Stu before the hotel opens:** decided 23 Nov: the hotel opens after the Ivan fight, before Stu arrives, so he needs no job before it and no backup places. Guests come Friday to Sunday.
 11. **Backups for the East orchard:** done. Evarra 8: the promenade flower beds; Artie 8 and 10: the little park (they moved to the garden dome's woods). The engine now has backup places (`"backup"` in `scripts/heart_events.gd`).
 12. **Ix'ali's star pendant** at 8: an Oath-Crest you could propose with, or something else?

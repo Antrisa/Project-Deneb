@@ -784,7 +784,7 @@ const DAY_LINES := {
 			"Mondays I soak, I eat with Saffi and the boy, and I let Bram tell me his prices are fair. Then I open up.",
 			"[happy] No pouring till six. If you see Job at my door at noon, send him to the bath house."],
 	},
-	# Vzz'ket's nights off only start once he's earned them (the side arc's 6, his own 8): {"flag", "lines"} waits for
+	# Vzz'ket's nights off only start once he's earned them (the side arc's 8, his own 8): {"flag", "lines"} waits for
 	# the flag
 	"Vzz'ket": {
 		4: {"flag": "vzzket_open_mic", "lines": [

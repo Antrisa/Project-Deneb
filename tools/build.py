@@ -3040,7 +3040,7 @@ SCHEDULE_DAYS_RAW = {
     # Vzz'ket (23 Nov): no day off at first: that's his flaw. After his own 8 (S.A.R.A.'s sensors on the stair) he
     # stops guarding night and day: the gate by day, sparring with Ix'ali in the evening, a drink at the bar, and
     # his bedroll by 23:00; Sundays are his (the museum with Tar'Besh, holo-darts, the stage seats). After the side
-    # arc's 6 (the Open-Mic) Friday nights are at the bar, with Ix'ali holding the gate.
+    # arc's 8 (the Open-Mic starts there) Friday nights are at the bar, with Ix'ali holding the gate.
     "Vzz'ket": [
         {"when": {"days": [0, 1, 2, 3, 4, 5], "flags": ["vzzket_sensors"]}, "stops": [
             ("06:00", "mine", 8, 27, 26, "r", "idle", "guard"), ("17:15", "main", 130, 70, 26, "d", "eat", "eat"),
