@@ -14,6 +14,7 @@ signal equipment_changed(slots: Dictionary)
 signal discard_requested(item_id: String, amount: int)
 signal quit_requested
 signal resume_requested
+signal slots_swapped(a: int, b: int)
 
 const Art = preload("res://datapad/art.gd")
 const Sample = preload("res://datapad/catalog.gd")
@@ -32,9 +33,9 @@ const TABS := ["Inventory","Crafting","Skills","Crew","Map","Journal","System"]
 const TAB_LINERS := {"Inventory":"inventory_liner","Crafting":"mod_workshop","Skills":"mod_training","Crew":"mod_residents","Map":"mod_navigation","Journal":"mod_requests","System":"mod_preferences","Relics":"mod_custodians"}
 const TAB_NAMES := ["Inventory","Crafting","Skills","NPC relations","Map","Quests","Settings"]
 const TAB_ICONS := ["inventory","craft","skills","crew","map","journal","system"]
+# Weapons and tools live on the quick slots (the hotbar), so the gear page has no slots for them (22 Nov).
 const GEAR_SLOTS := [
-	["melee","Melee","melee","Melee weapon"],["blaster","Blaster","blaster","Blaster pistol"],
-	["tool","Tool","tool","Farming / fishing tool"],["head","Head","head","Head / outerwear"],
+	["head","Head","head","Head / outerwear"],
 	["armor","Armor","armor","Body armor"],["ring1","Ring 1","ring","Ring 1"],["ring2","Ring 2","ring","Ring 2"],
 	["lens","Lens","lens","Laser lens"],["power","Power pack","power","Laser power pack"]]
 var gear_types: Dictionary = Sample.GEAR_TYPES.duplicate()
@@ -86,6 +87,14 @@ var control_scheme := "Keys"
 var _map_parent := "HUD"
 var recipe_index := 0
 var place_index := 1
+# The sector map (the level you are on), set by the game: its picture is extra_textures["sector_map"].
+var sector_title := ""
+var sector_size := Vector2.ZERO          # the picture's size here, in datapad pixels
+var sector_marks: Array = []             # [position on the picture, label]
+var sector_people: Array = []            # [position, name]
+var sector_you := Vector2(-1, -1)
+var mark_index := -1
+var mark_page := 0
 var crew_index := 0
 var job_index := 0
 var tracked := -1
@@ -94,6 +103,11 @@ var hints := true
 var scenery := true
 var bag_page := 0
 var inventory_capacity := 24
+# The bag as the game keeps it (main.gd slots): which item is in each slot, the first 8 being the quick
+# slots. Click an item to pick it up, click another slot to put it there (swapping), as in Stardew.
+var bag_slots: Array = []
+var _held := -1              # the bag slot whose item is being carried by the pointer (-1: none)
+var _mouse_ui := Vector2.ZERO
 var shop_stock: Array = []
 var shop_page := 0
 var shop_name := "Station supplies"
@@ -195,6 +209,7 @@ func show_page(key: String) -> void:
 		return
 	_overlay=""
 	_pressed_item=""
+	_held=-1
 	page = key
 	_focus_id = ""
 	_hover_id = ""
@@ -271,6 +286,8 @@ func refresh() -> void:
 		var tw := mini(500,_width(_toast,"label")+26)
 		_rect((768-tw)/2,353,tw,20,DARK)
 		_txt((768-tw)/2+13,355,_toast,"label",IVORY)
+	if page=="Inventory" and _held>=0 and _overlay=="" and _bag_item(_held)!="":
+		_img(_bag_item(_held),int(_mouse_ui.x)-14,int(_mouse_ui.y)-14,29,29)
 	if _overlay!="": _overlay_draw()
 	for h in hits:
 		if h[0] == _focus_id or h[0] == _hover_id:
@@ -527,20 +544,28 @@ func _inventory() -> void:
 		_hit("filter/"+group,fx,136,fw,19)
 		fx += fw+2
 	var items := _items()
+	var by_slot := _by_slot()
 	for k in 24:
 		var index := bag_page*24+k
 		var x := 66+(k%8)*41
 		var y := 160+floori(k/8.0)*39
 		var id := str(items[index]) if index<items.size() else ""
-		var selected := id!="" and id==item_selection
+		if by_slot:
+			id = _bag_item(k)
+		var selected := (id!="" and id==item_selection and _held<0) or k==_held and by_slot
 		_img("slot_selected" if selected else ("slot_empty" if id=="" else "slot_rest"),x,y,38,36)
-		if id!="":
+		if by_slot and k<8 and hints:
+			_txt(x+3,y+1,str(k+1),"micro",MUTED)
+		if id!="" and not (by_slot and k==_held):
 			_img(id,x+4,y+2,29,29)
 			if equipment.values().has(id):
 				_rect(x+2,y+2,4,4,"#688776")
 			if int(item_counts[id])>1: _stack_count(x+35,y+23,int(item_counts[id]))
+		if by_slot:
+			_hit("bagslot/"+str(k),x,y,38,36)
+		elif id!="":
 			_hit("item/"+id,x,y,38,36)
-	if items.size()>24:
+	if items.size()>24 and not by_slot:
 		_btn("bag/prev",260,275,60,18,"Previous",false,bag_page>0)
 		_btn("bag/next",328,275,60,18,"Next",false,(bag_page+1)*24<items.size())
 	var detail_y := 293 if items.size()>24 else 284
@@ -561,20 +586,45 @@ func _inventory() -> void:
 		_txt(66,detail_y+7,"No items in this group","body",MUTED)
 	_img("gear_display",520,136,86,123)
 	_img(player_sprite,539,146,48,96)
+	# head and armour on the left of the figure, the rings on the right, the laser parts below
 	for i in GEAR_SLOTS.size():
 		var slot: Array=GEAR_SLOTS[i]
-		var x: int=420 if i<3 else 613
-		var y:=139+40*i if i<3 else 137+31*(i-3)
-		var width:=94 if i<3 else 88
-		if i>=7:
-			x=420+(i-7)*141
+		var x: int=420 if i<2 else 613
+		var y:=139+40*i if i<2 else 139+40*(i-2)
+		var width:=94 if i<2 else 88
+		if i>=4:
+			x=420+(i-4)*141
 			y=280
 			width=138
-		_gear_cell(slot,x,y,width,26 if i>=3 else 32)
+		_gear_cell(slot,x,y,width,32 if i<4 else 26)
 	_txt(421,264,"MINING LASER SOCKETS","micro",MUTED)
 	_rect(420,316,280,1,RULE)
 	_txt(421,320,"QUICK ACCESS","micro",MUTED)
 	_belt(421,335,true)
+	if _held>=0 and _bag_item(_held)!="":
+		_txt(66,121,"Click a slot to put it there; right-click to put it back","micro",OCHRE)
+
+
+# The "All" view shows the bag slot by slot, so things can be moved; the others list what matches.
+func _by_slot() -> bool:
+	return bag_filter=="All" and not bag_slots.is_empty()
+
+
+func _bag_item(k: int) -> String:
+	if k<0 or k>=bag_slots.size() or bag_slots[k]==null: return ""
+	var id:=str(bag_slots[k])
+	return id if catalog.has(id) and int(item_counts.get(id,0))>0 else ""
+
+
+func _move_held(to: int) -> void:
+	if _held<0: return
+	if to!=_held and to>=0 and to<bag_slots.size():
+		var moved=bag_slots[_held]
+		bag_slots[_held]=bag_slots[to]
+		bag_slots[to]=moved
+		slots_swapped.emit(_held,to)
+		item_selection=_bag_item(to)
+	_held=-1
 
 func _gear_cell(slot: Array,x: int,y: int,w: int,h: int) -> void:
 	var key:String=slot[0]
@@ -820,6 +870,9 @@ func _current_place() -> int:
 	return -1
 
 func _map_page() -> void:
+	if extra_textures.has("sector_map") and sector_size.x > 0:
+		_sector_page()
+		return
 	_tab_titles("Station map","Location details",458)
 	if places.is_empty():
 		_txt(69,152,"No locations charted","body",MUTED)
@@ -865,6 +918,85 @@ func _map_page() -> void:
 		_btn("map_pages/prev",458,343,48,20,"Prev",false,first>0)
 		_btn("map_pages/next",511,343,48,20,"Next",false,first+8<places.size())
 	_btn("locate",572,343,125,20,"Locate player",false,current>=0)
+
+func _sector_page() -> void:
+	_tab_titles(sector_title,"Places here",458)
+	var bx:=69
+	var by:=141
+	_rect(bx,by,368,220,"#2f352f")
+	var mx:=bx+int((368-sector_size.x)/2.0)
+	var my:=by+int((220-sector_size.y)/2.0)
+	_img("sector_map",mx,my,int(sector_size.x),int(sector_size.y))
+	_outline(mx-1,my-1,int(sector_size.x)+2,int(sector_size.y)+2,"#596055")
+	for person in sector_people:
+		var at:Vector2=person[0]
+		_rect(mx+int(at.x)-2,my+int(at.y)-2,5,5,"#2b4f63")
+		_rect(mx+int(at.x)-1,my+int(at.y)-1,3,3,"#8fd6f2")
+		_hit("person/"+str(person[1]),mx+int(at.x)-4,my+int(at.y)-4,9,9)
+	for i in sector_marks.size():
+		var at:Vector2=sector_marks[i][0]
+		var x:=mx+int(at.x)
+		var y:=my+int(at.y)
+		var selected:=i==mark_index
+		_rect(x-6,y-6,13,13,"#e4a16d" if selected else "#96a48f")
+		_rect(x-5,y-5,11,11,"#79563f" if selected else "#52665a")
+		var num:=str(i+1)
+		_txt(x+1-_width(num,"micro")/2,y-5,num,"micro","#fff9e8")
+		_hit("mark/"+str(i),x-7,y-7,15,15)
+	if sector_you.x>=0:
+		var yx:=mx+int(sector_you.x)
+		var yy:=my+int(sector_you.y)
+		_rect(yx-4,yy-4,9,9,"#fff9e8")
+		_rect(yx-3,yy-3,7,7,"#c74b3c")
+		_txt(yx+7,yy-6,"YOU","micro","#fff9e8")
+	# the name of the place picked (or the person or place pointed at) over the map
+	var shown:=""
+	var shown_at:=Vector2.ZERO
+	if _hover_id.begins_with("mark/") or _hover_id.begins_with("person/"):
+		if _hover_id.begins_with("mark/"):
+			var k:=_hover_id.trim_prefix("mark/").to_int()
+			if k<sector_marks.size(): shown=str(sector_marks[k][1]); shown_at=sector_marks[k][0]
+		else:
+			shown=_hover_id.trim_prefix("person/")
+			for person in sector_people:
+				if str(person[1])==shown: shown_at=person[0]
+	elif mark_index>=0 and mark_index<sector_marks.size():
+		shown=str(sector_marks[mark_index][1])
+		shown_at=sector_marks[mark_index][0]
+	if shown!="":
+		var tw:=_width(shown,"label")+10
+		var tx:=clampi(mx+int(shown_at.x)-tw/2,bx,bx+368-tw)
+		var ty:=clampi(my+int(shown_at.y)-26,by,by+220-18)
+		_rect(tx,ty,tw,17,DARK)
+		_txt(tx+5,ty+1,shown,"label",IVORY)
+	# the directory: every labelled place on this level
+	_txt(459,142,"%d PLACES  /  %d PEOPLE" % [sector_marks.size(),sector_people.size()],"micro",MUTED)
+	var per:=16
+	mark_page=clampi(mark_page,0,maxi(0,ceili(sector_marks.size()/float(per))-1))
+	var first:=mark_page*per
+	for i in range(first,mini(first+per,sector_marks.size())):
+		var col:=(i-first)%2
+		var row:=floori((i-first)/2.0)
+		var x:=458+col*120
+		var y:=158+row*20
+		if i==mark_index:_rect(x,y,117,18,"#ead5bc")
+		_txt(x+3,y+3,str(i+1),"micro",OCHRE)
+		var label:=str(sector_marks[i][1])
+		while label.length()>3 and _width(label,"label")>96: label=label.substr(0,label.length()-2)
+		if label!=str(sector_marks[i][1]): label+="."
+		_txt(x+17,y,label,"label",INK)
+		_hit("mark/"+str(i),x,y,117,18)
+	if sector_marks.is_empty():
+		_txt(459,160,"Nothing labelled on this level","body",MUTED)
+	if sector_marks.size()>per:
+		_btn("mark_pages/prev",458,343,48,20,"Prev",false,mark_page>0)
+		_btn("mark_pages/next",511,343,48,20,"Next",false,first+per<sector_marks.size())
+	_rect(79,343,6,5,"#d99866")
+	_txt(91,340,"PLACE","micro","#e4e8d9")
+	_rect(135,343,6,5,"#8fd6f2")
+	_txt(147,340,"RESIDENT","micro","#e4e8d9")
+	_rect(209,343,6,5,"#c74b3c")
+	_txt(221,340,"YOU","micro","#e4e8d9")
 
 func _journal() -> void:
 	_tab_titles("Quests","Objective",319)
@@ -1047,6 +1179,10 @@ func select_slot(index: int) -> void:
 	refresh()
 	hotbar_changed.emit(hotbar.duplicate(),active_slot)
 func _back() -> void:
+	if _held>=0:
+		_held=-1
+		refresh()
+		return
 	if _overlay!="":
 		_close_overlay()
 		return
@@ -1170,6 +1306,7 @@ func _activate(id: String) -> void:
 			return
 		"relictab": _toggle_relics();return
 		"trash":
+			_held=-1
 			if page=="Inventory" and catalog.has(item_selection):_open_overlay("trash",item_selection)
 			return
 		"quit":
@@ -1191,9 +1328,21 @@ func _activate(id: String) -> void:
 			return
 		"back": _back();return
 		"advance": _advance();return
-		"slot": select_slot(arg.to_int());return
+		"slot":
+			if page=="Inventory" and _held>=0:
+				_move_held(arg.to_int())
+			else:
+				select_slot(arg.to_int());return
+		"bagslot":
+			var k:=arg.to_int()
+			if _held>=0:
+				_move_held(k)
+			elif _bag_item(k)!="":
+				_held=k
+				item_selection=_bag_item(k)
 		"item": item_selection=arg
 		"filter":
+			_held=-1
 			bag_filter=arg
 			bag_page=0
 			_ensure_item()
@@ -1230,6 +1379,9 @@ func _activate(id: String) -> void:
 		"craft":
 			if not craft_costs(recipe_index).is_empty():craft_requested.emit(recipe_index)
 		"place","maprow": place_index=arg.to_int()
+		"mark": mark_index=-1 if mark_index==arg.to_int() else arg.to_int()
+		"mark_pages": mark_page+=1 if arg=="next" else -1
+		"person": pass
 		"map_pages": place_index=clampi((floori(place_index/8.0)+(1 if arg=="next" else -1))*8,0,maxi(0,places.size()-1))
 		"locate":
 			var current:=_current_place()
@@ -1288,18 +1440,32 @@ func _focus_step(d: Vector2) -> void:
 	refresh()
 func _pointer(event: InputEvent) -> bool:
 	var found := _at(get_global_transform_with_canvas().affine_inverse() * event.position)
+	_mouse_ui = _layout.affine_inverse() * (get_global_transform_with_canvas().affine_inverse() * event.position)
+	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_RIGHT and _held>=0:
+		_held=-1
+		refresh()
+		return true
 	if event is InputEventMouseMotion:
-		if found != _hover_id:
+		if found != _hover_id or _held>=0:
 			_hover_id = found
 			refresh()
 	elif event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not event.pressed:
 		if _pressed_item!="" and found=="trash" and page=="Inventory" and _overlay=="" and item_counts.get(_pressed_item,0)>0:
+			_held=-1
 			item_selection=_pressed_item
 			_open_overlay("trash",_pressed_item)
+		elif _held>=0 and _pressed_item!="" and page=="Inventory" and _overlay=="":
+			# dragged and let go over another slot: it goes there too
+			var to:=-1
+			if found.begins_with("bagslot/"): to=found.trim_prefix("bagslot/").to_int()
+			elif found.begins_with("slot/"): to=found.trim_prefix("slot/").to_int()
+			if to>=0 and to!=_held:
+				_move_held(to)
+				refresh()
 		_pressed_item=""
 	elif event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_LEFT and found != "":
-			_pressed_item=found.trim_prefix("item/") if found.begins_with("item/") else ""
+			_pressed_item=found.trim_prefix("item/") if found.begins_with("item/") else (_bag_item(found.trim_prefix("bagslot/").to_int()) if found.begins_with("bagslot/") else "")
 			_focus_id = ""
 			_activate(found)
 			return true

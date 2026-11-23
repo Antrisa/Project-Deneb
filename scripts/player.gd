@@ -483,9 +483,6 @@ func _eating_done() -> void:
 
 
 func _process(delta: float) -> void:
-	if sitting:
-		sit_blend = move_toward(sit_blend,1.0,delta*5.0)
-		queue_redraw()
 	if _slash_time > 0.0:
 		_slash_time -= delta
 		if _slash_time <= 0.0:
@@ -611,68 +608,103 @@ func _blocked(p: Vector2) -> bool:
 			return true
 	return false
 
-# Seated pose uses the current customized character texture, articulated at hips/knees.
-# Unlike moving the standing sprite behind a bench, this hides the standing legs.
+# Sitting (22 Nov): the seated picture is built from the standing frame of the player's own sheet, so
+# it wears their colours. Facing the screen or away, the thighs are foreshortened (two rows of leg come
+# out); from the side, the thighs run forward along the seat and the shins hang from the knee.
+# main.gd says where the hips go and, for a seat whose back is between the sitter and the camera, the
+# line below which the sitter is hidden.
+const SIT_HIP := 36          # art row of the hips in a standing frame
+const SIT_THIGH := 5         # how far the thighs reach forward, sitting sideways
 var sitting := false
-var sit_blend := 0.0
-var seat_pants := Color("405363")
-var seat_boots := Color("26313d")
-func _seat_palette(row_start: int, row_end: int, fallback: Color) -> Color:
-	var image := _sprite.texture.get_image()
-	if image.is_compressed(): image.decompress()
-	var unit: float = image.get_width()/4.0/16.0
-	var votes := {}
-	var best := 0
-	var chosen := fallback
-	for y in range(row_start,row_end):
-		for x in range(4,12):
-			var c := image.get_pixel(int((_dir*16+x)*unit),int(y*unit))
-			if c.a<0.9: continue
-			var k := c.to_html()
-			votes[k] = int(votes.get(k,0))+1
-			if votes[k]>best:
-				best = votes[k]
-				chosen = c
-	return chosen
-func set_sitting(value: bool, direction: int = 0) -> void:
+var _sit_sprite: Sprite2D
+
+
+func set_sitting(value: bool, direction: int = 0, hip: Vector2 = Vector2.ZERO, hide_below: float = INF) -> void:
 	sitting = value
 	_dir = direction
 	if value:
-		seat_pants = _seat_palette(21,26,seat_pants)
-		seat_boots = _seat_palette(27,32,seat_boots)
+		if _sit_sprite == null:
+			_sit_sprite = Sprite2D.new()
+			_sit_sprite.centered = false
+			_sit_sprite.scale = Vector2.ONE * Poses.ART_SCALE
+			add_child(_sit_sprite)
+		var built: Array = _sit_picture(direction)
+		var img: Image = built[0]
+		var hip_x: float = built[1]
+		# the hips land on the seat; anything below hide_below (world y) is behind the seat back
+		var at: Vector2 = (hip - position - Vector2(hip_x, SIT_HIP) * Poses.ART_SCALE).round()
+		if hide_below < INF:
+			var keep := int(floor((hide_below - position.y - at.y) / Poses.ART_SCALE))
+			for y in range(maxi(keep, 0), img.get_height()):
+				for x in img.get_width():
+					img.set_pixel(x, y, Color(0, 0, 0, 0))
+		_sit_sprite.texture = ImageTexture.create_from_image(img)
+		_sit_sprite.position = at
+	if _sit_sprite != null:
+		_sit_sprite.visible = value
 	_refresh_body_pose()
-	z_index = 1 if value else 0
-	if not value: sit_blend = 0.0
-	queue_redraw()
-func _seat_piece(src: Rect2, dest: Rect2) -> void:
-	var tex: Texture2D = _sprite.texture
-	var unit: float = tex.get_width()/4.0/16.0
-	var frame_x: float = _dir*16.0*unit
-	draw_texture_rect_region(tex,dest,Rect2(Vector2(frame_x,0)+src.position*unit,src.size*unit))
-func _draw() -> void:
-	if not sitting or _sprite == null:return
-	var lower := floorf((1.0-sit_blend)*3.0)
-	draw_set_transform(Vector2(0,-lower))
-	if _dir == 1:
-		# Seen from behind: only the head and shoulders show above the seat back.
-		_seat_piece(Rect2(0,0,16,15),Rect2(-8,-29,16,15))
-		draw_set_transform(Vector2.ZERO)
-		return
-	_seat_piece(Rect2(0,0,16,21),Rect2(-8,-29,16,21))
-	if _dir == 0:
-		# Knees project forward and outward; shins hang from the cushion.
-		for x in [-7.0,1.0]:
-			draw_rect(Rect2(x,-8,6,4),seat_pants)
-			draw_rect(Rect2(x+1,-8,4,2),seat_pants.lightened(0.12))
-			draw_rect(Rect2(x,-5,6,1),seat_pants.darkened(0.22))
-			draw_rect(Rect2(x+1,-4,4,4),seat_pants.darkened(0.12))
-			draw_rect(Rect2(x,0,6,3),seat_boots)
-			draw_rect(Rect2(x,2,6,1),seat_boots.darkened(0.2))
-	else:
-		# A right-angle bend at the hip and forward-shifted shins in side view.
-		var right := _dir == 3
-		draw_set_transform(Vector2(0,-8-lower),-PI/2.0 if right else PI/2.0)
-		_seat_piece(Rect2(4,21,8,7),Rect2(-4,0,8,7))
-		draw_set_transform(Vector2(0,-lower))
-		_seat_piece(Rect2(4,26,8,6),Rect2(3 if right else -11,-4,8,6))
-	draw_set_transform(Vector2.ZERO)
+
+
+# [picture, hip x] for sitting with the given facing, from the standing frame of the walk sheet.
+func _sit_picture(face: int) -> Array:
+	var sheet: Image = _sprite.texture.get_image()
+	if sheet.is_compressed():
+		sheet.decompress()
+	sheet.convert(Image.FORMAT_RGBA8)
+	var fw := int(sheet.get_width() / 4)
+	var fh := int(sheet.get_height() / _sprite.vframes)
+	var stand := sheet.get_region(Rect2i(face * fw, 0, fw, fh))
+	if face < 2:
+		var out := Image.create(fw, fh, false, Image.FORMAT_RGBA8)
+		out.blit_rect(stand, Rect2i(0, 0, fw, SIT_HIP + 2), Vector2i.ZERO)
+		out.blit_rect(stand, Rect2i(0, SIT_HIP + 4, fw, fh - SIT_HIP - 4), Vector2i(0, SIT_HIP + 2))
+		return [out, _middle(stand, SIT_HIP)]
+	# Sideways: worked out facing right, then mirrored for left.
+	if face == 2:
+		stand.flip_x()
+	var w := fw + SIT_THIGH + 2
+	var side := Image.create(w, fh, false, Image.FORMAT_RGBA8)
+	side.blit_rect(stand, Rect2i(0, 0, fw, SIT_HIP), Vector2i.ZERO)
+	var knee := 0
+	for y in range(SIT_HIP, SIT_HIP + 4):           # the thighs, along the seat
+		var xs := _opaque(stand, y)
+		if xs.is_empty():
+			continue
+		var a: int = xs[0]
+		var b: int = xs[xs.size() - 1]
+		for x in range(a, b + 1):
+			side.set_pixel(x, y, stand.get_pixel(x, y))
+		var cloth := stand.get_pixel(maxi(a, b - 2), y)
+		for x in range(b - 1, b - 1 + SIT_THIGH):
+			side.set_pixel(x, y, cloth)
+		side.set_pixel(b + SIT_THIGH - 2, y, stand.get_pixel(maxi(a, b - 1), y))
+		side.set_pixel(b + SIT_THIGH - 1, y, stand.get_pixel(b, y))
+		knee = maxi(knee, b + SIT_THIGH - 1)
+	var toes := 0
+	for y in range(SIT_HIP + 4, fh):
+		var xs := _opaque(stand, y)
+		if not xs.is_empty():
+			toes = maxi(toes, xs[xs.size() - 1])
+	var shift := knee - toes + 1
+	for y in range(SIT_HIP + 4, fh):                  # the shins and feet, hanging from the knees
+		for x in _opaque(stand, y):
+			if x + shift >= 0 and x + shift < w:
+				side.set_pixel(x + shift, y, stand.get_pixel(x, y))
+	var hip_x := _middle(stand, SIT_HIP)
+	if face == 2:
+		side.flip_x()
+		hip_x = w - 1 - hip_x
+	return [side, hip_x]
+
+
+func _opaque(img: Image, y: int) -> Array:
+	var xs := []
+	for x in img.get_width():
+		if img.get_pixel(x, y).a > 0.0:
+			xs.append(x)
+	return xs
+
+
+func _middle(img: Image, y: int) -> float:
+	var xs := _opaque(img, y)
+	return img.get_width() / 2.0 if xs.is_empty() else (float(xs[0]) + float(xs[xs.size() - 1])) / 2.0

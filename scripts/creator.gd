@@ -1,5 +1,6 @@
 extends Control
-# The "who are you?" screen: pick hair, face, clothes and colours.
+# The "who are you?" screen: pick a gender, then hair, eye, skin and clothes colours. Each gender
+# has one outfit and hairstyle (scripts/player_maker.gd STARTER_LOOKS).
 # Shown at the start of a new game, and again from the locker in your quarters.
 # main.gd passes key presses and clicks here while it is open.
 
@@ -8,16 +9,16 @@ const MakerScript = preload("res://scripts/player_maker.gd")
 
 # What each line of the screen changes: [key in the look, label]
 const ROWS := [
-	["hair", "Hair"], ["hairColor", "Hair colour"], ["eyeColor", "Eyes"], ["skinColor", "Skin"],
-	["tops", "Top"], ["topColor", "Top colour"], ["bottoms", "Bottom"], ["bottomColor", "Bottom colour"],
+	["hairColor", "Hair colour"], ["eyeColor", "Eyes"], ["skinColor", "Skin"],
+	["topColor", "Top colour"], ["bottomColor", "Bottom colour"],
 ]
 const PANEL := Rect2(4, 4, 312, 172)
 const ROW_X := 156.0
 const ROW_Y := 34.0
 const ROW_H := 12.0
 const SHUFFLE := Rect2(16, 112, 43, 15)
-const STARTER := Rect2(61, 112, 51, 15)
-const START := Rect2(114, 112, 34, 15)
+const STARTER := Rect2(61, 112, 63, 15)
+const START := Rect2(126, 112, 28, 15)
 const DIM := Color(0.6, 0.7, 0.85)
 const GOLD := Color(1.0, 0.824, 0.498)
 
@@ -92,8 +93,14 @@ func _change(index: int, by: int) -> void:
 	elif MakerScript.OPTIONS.has(key):
 		var n: int = maker.option_count(key)
 		var next: int = (int(look[key]) + by + n) % n
-		if key == "body" and first_time and look == maker.defaults(int(look[key])):
+		if key == "body":
+			# the other gender's outfit and hair, keeping any colours already picked
+			var colours := {}
+			for k in MakerScript.PALETTES:
+				colours[k] = look[k]
 			look = maker.defaults(next)
+			if not (first_time and _starter_colours(colours, 1 - next)):
+				look.merge(colours, true)
 		else:
 			look[key] = next
 	else:
@@ -104,11 +111,20 @@ func _change(index: int, by: int) -> void:
 	_refresh()
 
 
+func _starter_colours(colours: Dictionary, body: int) -> bool:
+	var starter: Dictionary = maker.defaults(body)
+	for k in colours:
+		if colours[k] != starter[k]:
+			return false
+	return true
+
+
 func _shuffle() -> void:
-	# Shuffle changes the look only; gender stays as chosen.
+	# Shuffle changes the colours only; gender stays as chosen.
 	var keep_body: int = int(look.get("body", 0))
 	look = maker.random_look()
 	look["body"] = keep_body
+	look = maker.tidy(look)
 	world.sfx("click", 0.9)
 	_refresh()
 
@@ -230,7 +246,7 @@ func _draw() -> void:
 	_txt(Vector2(22, 34), "Front       Back        Left        Right", DIM, 6)
 
 	_button(SHUFFLE, "Shuffle", 0)
-	_button(STARTER, "Starter look", 0)
+	_button(STARTER, "Starter colours", 0)
 	_button(START, "Start" if first_time else "Done", 1)
 
 	for i in _rows.size():

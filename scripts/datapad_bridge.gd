@@ -11,6 +11,7 @@ extends Node
 
 const PAD_SCENE := "res://datapad/datapad.tscn"
 const ItemData = preload("res://scripts/item_data.gd")
+const MapDataRef = preload("res://scripts/map_data.gd")
 const HEART_POINTS := 5            # friendship points per heart, as on the old Friends page
 const SEASONS := [["Spring", 28], ["Summer", 31], ["Autumn", 31], ["Winter", 31]]   # NPC master doc, section 2
 
@@ -110,6 +111,7 @@ func setup(game) -> bool:
 	pad.emote_selected.connect(_on_emote)
 	pad.discard_requested.connect(_on_discard)
 	pad.quit_requested.connect(_on_quit)
+	pad.slots_swapped.connect(_on_slots_swapped)
 	return true
 
 
@@ -139,11 +141,20 @@ func sync(modal: bool) -> void:
 		if int(world.items[id]) > 0 and ItemData.ITEMS.has(id):
 			counts[id] = int(world.items[id])
 	var quick: Array = world.slots.slice(0, 8)
-	if counts != _sent.get("counts") or quick != _sent.get("quick") or int(world.selected) != int(_sent.get("selected", -1)):
+	var bag: Array = world.slots.duplicate()
+	if counts != _sent.get("counts") or bag != _sent.get("bag") or int(world.selected) != int(_sent.get("selected", -1)):
 		_sent["counts"] = counts
 		_sent["quick"] = quick
+		_sent["bag"] = bag
 		_sent["selected"] = int(world.selected)
+		pad.bag_slots = bag
 		pad.set_inventory(counts, quick, int(world.selected))
+	if str(pad.page) == "Map":
+		var spot := [str(world.current_area), world.player_tile(), int(world.minutes)]
+		if spot != _sent.get("map_spot"):
+			_sent["map_spot"] = spot
+			_sector_refresh()
+			pad.refresh()
 	var vitals := [int(world.hp), _max_hp, int(world.energy), int(world.max_energy)]
 	if vitals != _sent.get("vitals"):
 		_sent["vitals"] = vitals
@@ -287,8 +298,9 @@ func _crew() -> Array:
 	return out
 
 
-# The neutral face from a portrait strip (square pictures side by side), smoothly shrunk to the 74x70 frame
-# on the resident file. The datapad draws at its own small pixel size, so a 128-pixel face needs shrinking.
+# The neutral face from a portrait strip (square pictures side by side), in a frame shaped like the
+# resident file's 74x70 one. The face keeps all its pixels (22 Nov): shrinking it smoothly here and
+# enlarging it again on screen is what made the faces fuzzy, so the datapad now scales the full picture.
 func _small_portrait(strip: Texture2D) -> Texture2D:
 	var img: Image = strip.get_image()
 	if img == null:
@@ -298,9 +310,9 @@ func _small_portrait(strip: Texture2D) -> Texture2D:
 	img.convert(Image.FORMAT_RGBA8)
 	var side: int = img.get_height()
 	var face: Image = img.get_region(Rect2i(0, 0, side, side))
-	face.resize(70, 70, Image.INTERPOLATE_LANCZOS)
-	var framed := Image.create_empty(74, 70, false, Image.FORMAT_RGBA8)
-	framed.blit_rect(face, Rect2i(0, 0, 70, 70), Vector2i(2, 0))
+	var margin: int = roundi(side * 2.0 / 70.0)
+	var framed := Image.create_empty(side + 2 * margin, side, false, Image.FORMAT_RGBA8)
+	framed.blit_rect(face, Rect2i(0, 0, side, side), Vector2i(margin, 0))
 	return ImageTexture.create_from_image(framed)
 
 
@@ -317,7 +329,100 @@ func _jobs() -> Array:
 	return out
 
 
+# ---------------------------------------------------------------- the Map page: the sector you are in
+# The level's own baked floor and walls, shrunk to fit, with its labelled places and doorways numbered,
+# the residents who are there, and you (22 Nov). Built once per level; the dots move as people do.
+const SECTOR_BOX := Vector2(368, 220)     # the datapad's map frame, in its own pixels
+const SECTOR_SHARP := 2.0                 # the picture is made at twice that, so it stays crisp
+var _sector_area := ""
+var _sector_tiles_to_map := 1.0          # datapad pixels per world unit
+
+
+func _sector_refresh() -> void:
+	var area: String = str(world.current_area)
+	var data: Dictionary = MapDataRef.AREAS.get(area, {})
+	if data.is_empty():
+		return
+	var rows: Array = data["floor"]
+	var cols: int = str(rows[0]).length()
+	var world_size := Vector2(cols * 16, rows.size() * 16)
+	if area != _sector_area:
+		_sector_area = area
+		var title := str(data.get("title", area))
+		var key := str(MapDataRef.LUNAR_AREAS.get(title, area))
+		var fit: float = minf(SECTOR_BOX.x / world_size.x, SECTOR_BOX.y / world_size.y)
+		var shown := (world_size * fit).floor().max(Vector2.ONE)
+		var px := Vector2i((shown * SECTOR_SHARP).floor())
+		var img := _sector_picture(key, rows, data["obj"], px)
+		pad.extra_textures["sector_map"] = ImageTexture.create_from_image(img)
+		pad.sector_title = title
+		pad.sector_size = shown
+		_sector_tiles_to_map = fit
+		var marks: Array = []
+		for m in MapDataRef.MAP_MARKS:
+			if str(m[1]) == area:
+				_add_mark(marks, Vector2(float(m[2]) * 16 + 8, float(m[3]) * 16 + 8) * fit, str(m[4]))
+		for e in MapDataRef.ENTRANCES:
+			if str(e[0]) == area:
+				_add_mark(marks, Vector2(float(e[1]) * 16 + 8, float(e[2]) * 16 + 8) * fit, str(e[7]))
+		pad.sector_marks = marks
+		pad.mark_index = -1
+	var here: Vector2i = world.player_tile()
+	pad.sector_you = Vector2(here.x * 16 + 8, here.y * 16 + 8) * _sector_tiles_to_map
+	var people: Array = []
+	for r in world.residents:
+		if str(r.area) == area and not r.away:
+			people.append([Vector2(r.tile.x * 16 + 8, r.tile.y * 16 + 8) * _sector_tiles_to_map, str(r.who)])
+	pad.sector_people = people
+
+
+# One label per place: a doorway and a map mark with the same name, or two ends of one wide door, once.
+func _add_mark(marks: Array, at: Vector2, label: String) -> void:
+	for m in marks:
+		if str(m[1]) == label and (m[0] as Vector2).distance_to(at) < 24.0:
+			return
+	marks.append([at, label])
+
+
+func _sector_picture(key: String, rows: Array, objs: Array, px: Vector2i) -> Image:
+	var floor_path := "res://art/lunar/floor_%s.png" % key
+	if ResourceLoader.exists(floor_path):
+		var img: Image = _plain(load(floor_path))
+		var walls_path := "res://art/lunar/walls_%s.png" % key
+		if ResourceLoader.exists(walls_path):
+			var walls: Image = _plain(load(walls_path))
+			if walls.get_size() != img.get_size():
+				walls.resize(img.get_width(), img.get_height(), Image.INTERPOLATE_NEAREST)
+			img.blend_rect(walls, Rect2i(Vector2i.ZERO, walls.get_size()), Vector2i.ZERO)
+		img.resize(px.x, px.y, Image.INTERPOLATE_BILINEAR)
+		return img
+	# No baked picture: draw the tiles plainly (walls dark, furniture mid, floor light).
+	var tiles := Image.create(str(rows[0]).length(), rows.size(), false, Image.FORMAT_RGBA8)
+	for y in rows.size():
+		var frow: String = rows[y]
+		var orow: String = objs[y] if y < objs.size() else ""
+		for x in frow.length():
+			var c := Color("d8d2c2")
+			if MapDataRef.SOLID_FLOOR.contains(frow[x]):
+				c = Color("3a3f3a")
+			elif x < orow.length() and orow[x] != " " and not MapDataRef.OPEN_OBJ.contains(orow[x]):
+				c = Color("9a9484")
+			tiles.set_pixel(x, y, c)
+	tiles.resize(px.x, px.y, Image.INTERPOLATE_NEAREST)
+	return tiles
+
+
+func _plain(tex: Texture2D) -> Image:
+	var img: Image = tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	return img
+
+
 func _on_menu_changed(page_name: String) -> void:
+	if page_name == "Map":
+		_sector_refresh()
 	if page_name in ["Crew", "Journal", "Inventory", "Map"]:
 		pad.crew = _crew()
 		pad.jobs = _jobs()
@@ -356,7 +461,14 @@ func _on_hotbar_changed(wanted: Array, active: int) -> void:
 		var j: int = world.slots.find(want)
 		if j != -1:
 			world.swap_slots(i, j)
-	_sent.erase("quick")
+	_sent.erase("bag")
+
+
+# An item moved in the bag (picked up and put down on the Inventory page).
+func _on_slots_swapped(a: int, b: int) -> void:
+	if a >= 0 and b >= 0 and a < world.slots.size() and b < world.slots.size():
+		world.swap_slots(a, b)
+	_sent.erase("bag")
 
 
 func _on_recap_closed() -> void:

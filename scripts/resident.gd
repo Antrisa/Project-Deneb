@@ -19,6 +19,8 @@ var _entry := -1
 var _target_area := ""
 var _target_tile := Vector2i.ZERO
 var _path: Array = []        # tiles still to walk in the current area
+var _walker := 1             # seed for this resident's own taste in routes (main.gd find_path)
+var _lane := Vector2.ZERO    # where on each tile they walk, so two on one route don't overlap
 var _settled := false        # standing at their spot (and blocking that tile)
 var _walk_distance := 0.0
 var _walk_rows := 3
@@ -49,6 +51,9 @@ const ACT_ROW := {"work": 0, "eat": 1, "idle": 2}
 func setup(main, person_name: String, tex: Texture2D, entries: Array, entry_thing: Dictionary, activity_tex: Texture2D = null) -> void:
 	world = main
 	who = person_name
+	_walker = maxi(1, absi(hash(person_name)) % 100000)
+	var lane_seed: int = absi(hash(person_name + " lane"))
+	_lane = Vector2(float(lane_seed % 7) - 3.0, float((lane_seed / 7) % 5) - 2.0)
 	_walk_tex = tex
 	_walk_rows = WalkCycle.rows(tex)
 	_act_tex = activity_tex
@@ -143,7 +148,7 @@ func _plan() -> void:
 			goals = world.pads_to(area, next_area)
 	_path = []
 	if not goals.is_empty():
-		_path = world.find_path(area, tile, goals)
+		_path = world.find_path(area, tile, goals, _walker)
 	if _path.is_empty() and not (area == _target_area and tile == _target_tile):
 		# No route found: appear at the destination rather than getting stuck.
 		area = _target_area
@@ -167,7 +172,8 @@ func _move(delta: float) -> void:
 		return
 
 	var next: Vector2i = _path[0]
-	var dest: Vector2 = _spot(next)
+	# keep to their own lane on the way, and step onto the very middle of the last tile
+	var dest: Vector2 = _spot(next) + (_lane if _path.size() > 1 else Vector2.ZERO)
 	var step: float = SPEED * delta
 	var heading: Vector2 = dest - position
 	if heading.length() > 0.5:

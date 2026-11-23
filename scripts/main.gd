@@ -959,7 +959,7 @@ func _ensure_person(who: String) -> String:
 		persons[who] = {
 			"id": id, "first": info["first"], "repeat": info["repeat"], "pitch": float(info.get("pitch", 1.0)),
 			"portrait": load("res://art/portrait_%s.png" % id),
-			"met": false, "talked_today": false, "friendship": 0, "next": 0,
+			"met": false, "talked_today": false, "friendship": 0, "next": 0, "talks_today": 0, "intro_due": false,
 		}
 	return id
 
@@ -1161,39 +1161,124 @@ func _npc_walkable(area_name: String, t: Vector2i, goal_set: Dictionary) -> bool
 
 
 # Shortest walk from one tile to the nearest of the goal tiles. Returns the tiles to step on, in order.
-func find_path(area_name: String, from: Vector2i, goals: Array) -> Array:
+# A resident's route across one area (A*). Each resident (walker, a seed from their name) has their own
+# taste in routes: every 5x5 block of tiles costs them a little more or less to cross, so two people
+# going the same way often take different aisles or sides of a room. Turning costs a little too, so
+# routes run in long straight lines rather than staircases. walker 0: the plain shortest route.
+const PATH_DIRS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+const PATH_TURN := 0.35
+const PATH_TASTE := 0.9
+const PATH_BLOCK := 5
+const PATH_GREED := 1.5      # how hard the search leans toward the goal: much faster, routes still near-shortest
+
+
+func find_path(area_name: String, from: Vector2i, goals: Array, walker: int = 0) -> Array:
 	var goal_set := {}
 	for g in goals:
 		goal_set[g] = true
 	if goal_set.has(from):
 		return []
+	# states are a tile and the way the walker last stepped (4: not yet moved)
+	var start := Vector3i(from.x, from.y, 4)
+	var cost := {start: 0.0}
 	var came := {}
-	came[from] = from
-	var queue: Array = [from]
-	var head := 0
+	var heap: Array = []          # [f, order, state], a binary heap on f
+	var order := 0
+	_heap_push(heap, [PATH_GREED * _path_guess(from, goals), order, start])
 	var found = null
-	while head < queue.size():
-		var cur: Vector2i = queue[head]
-		head += 1
-		if goal_set.has(cur):
+	var seen := 0
+	while not heap.is_empty() and seen < 40000:
+		var top: Array = _heap_pop(heap)
+		var cur: Vector3i = top[2]
+		var so_far: float = cost[cur]
+		if float(top[0]) > so_far + PATH_GREED * _path_guess(Vector2i(cur.x, cur.y), goals) + 0.001:
+			continue                  # a better way here was already taken
+		seen += 1
+		var here := Vector2i(cur.x, cur.y)
+		if goal_set.has(here):
 			found = cur
 			break
-		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-			var nb: Vector2i = cur + d
-			if came.has(nb):
-				continue
+		for i in 4:
+			var nb: Vector2i = here + PATH_DIRS[i]
 			if not _npc_walkable(area_name, nb, goal_set):
 				continue
-			came[nb] = cur
-			queue.append(nb)
+			var step := 1.0
+			if cur.z != 4 and cur.z != i:
+				step += PATH_TURN
+			if walker != 0:
+				step += PATH_TASTE * _path_taste(walker, nb)
+			var next := Vector3i(nb.x, nb.y, i)
+			var ng: float = so_far + step
+			if cost.has(next) and float(cost[next]) <= ng:
+				continue
+			cost[next] = ng
+			came[next] = cur
+			order += 1
+			_heap_push(heap, [ng + PATH_GREED * _path_guess(nb, goals), order, next])
 	if found == null:
 		return []
 	var path: Array = []
-	var at: Vector2i = found
-	while at != from:
-		path.push_front(at)
+	var at: Vector3i = found
+	while at != start:
+		path.push_front(Vector2i(at.x, at.y))
 		at = came[at]
 	return path
+
+
+func _path_guess(t: Vector2i, goals: Array) -> float:
+	var best := INF
+	for gl in goals:
+		var goal: Vector2i = gl
+		best = minf(best, float(absi(goal.x - t.x) + absi(goal.y - t.y)))
+	return best
+
+
+# 0..1, the same for every tile in a block, different for each walker.
+func _path_taste(walker: int, t: Vector2i) -> float:
+	var h: int = hash(Vector3i(floori(float(t.x) / PATH_BLOCK), floori(float(t.y) / PATH_BLOCK), walker))
+	return float(absi(h) % 1000) / 1000.0
+
+
+func _heap_push(heap: Array, item: Array) -> void:
+	heap.append(item)
+	var i := heap.size() - 1
+	while i > 0:
+		var up := (i - 1) / 2
+		if _heap_less(heap[i], heap[up]):
+			var tmp = heap[i]
+			heap[i] = heap[up]
+			heap[up] = tmp
+			i = up
+		else:
+			break
+
+
+func _heap_pop(heap: Array) -> Array:
+	var top: Array = heap[0]
+	var last: Array = heap.pop_back()
+	if not heap.is_empty():
+		heap[0] = last
+		var i := 0
+		var n := heap.size()
+		while true:
+			var l := 2 * i + 1
+			var r := l + 1
+			var m := i
+			if l < n and _heap_less(heap[l], heap[m]):
+				m = l
+			if r < n and _heap_less(heap[r], heap[m]):
+				m = r
+			if m == i:
+				break
+			var tmp = heap[i]
+			heap[i] = heap[m]
+			heap[m] = tmp
+			i = m
+	return top
+
+
+func _heap_less(a: Array, b: Array) -> bool:
+	return float(a[0]) < float(b[0]) or (float(a[0]) == float(b[0]) and int(a[1]) < int(b[1]))
 
 
 # Which neighbouring area to head for first when travelling between two areas.
@@ -1263,6 +1348,78 @@ func _nearest_thing():
 	return best
 
 
+# Where to sit on each kind of seat (22 Nov), in its own art pixels: the facing (0 down, 1 up, 2 left,
+# 3 right), each place's hip position, and for a seat whose back is between the sitter and the camera,
+# the art row below which the sitter is hidden (-1: none). Several places on a bench or sofa: the one
+# nearest the player is taken.
+const SEAT_SORT := 12.0
+const SEATS := {
+	"bench_s": [0, [Vector2(17, 28), Vector2(39, 28)], -1],
+	"bench": [0, [Vector2(18, 26), Vector2(48, 26)], -1],
+	"view_bench": [0, [Vector2(18, 22), Vector2(46, 22)], -1],
+	"waiting_seat": [0, [Vector2(13, 22), Vector2(37, 22), Vector2(61, 22)], -1],
+	"sofa": [0, [Vector2(18, 18), Vector2(38, 18)], -1],
+	"armchair": [0, [Vector2(16, 19)], -1],
+	"chair_s": [0, [Vector2(11, 17)], -1],
+	"bench_n": [1, [Vector2(17, 18), Vector2(39, 18)], 22],
+	"chair_n": [1, [Vector2(11, 12)], 3],
+	"bar_stool": [1, [Vector2(8, 9)], -1],
+	"cafe_table": [1, [Vector2(15, 26)], -1],
+	"chair_e": [3, [Vector2(9, 13)], -1],
+	"chair_w": [2, [Vector2(8, 13)], -1],
+	"bench_e": [3, [Vector2(13, 22), Vector2(13, 40)], -1],
+	"bench_w": [2, [Vector2(16, 22), Vector2(16, 40)], -1],
+	"waiting_seat_w": [2, [Vector2(13, 12), Vector2(13, 31)], -1],
+}
+
+
+# The seat prop under a seat's spot (THINGS put the spot 8 units above the middle of the prop's bottom
+# edge). Empty if there is none.
+func _seat_prop(t: Dictionary) -> Array:
+	var props: Array = MapData.CONCOURSE_PROPS if current_area == "main" else MapData.AREA_PROPS.get(current_area, [])
+	var pos: Vector2 = t["pos"]
+	var best: Array = []
+	var best_d := 6.0
+	for p in props:
+		if not SEATS.has(str(p[0])):
+			continue
+		var spot := Vector2(float(p[1]) * TILE + float(p[3]) * TILE * 0.5, float(int(p[2]) + int(p[4])) * TILE - 8.0)
+		# the same title wins a tie ("Dining chair left" sits on a "Dining chair [E]")
+		var d := spot.distance_to(pos) + (0.0 if str(p[5]) == str(t["name"]) else 0.5)
+		if d < best_d:
+			best_d = d
+			best = p
+	return best
+
+
+func _sit_on(t: Dictionary) -> void:
+	var p := _seat_prop(t)
+	var kind: String = str(p[0]) if not p.is_empty() else ""
+	if not SEATS.has(kind) or not ResourceLoader.exists("res://art/lunar/%s.png" % kind):
+		# a seat with no picture of its own: sit on the spot, facing the screen
+		player.position = t["pos"]
+		player.set_sitting(true, 0, t["pos"] + Vector2(0, -6))
+		return
+	var tex: Texture2D = load("res://art/lunar/%s.png" % kind)
+	var left: float = float(p[1]) * TILE + (float(p[3]) * TILE - tex.get_width() * ART) * 0.5
+	var bottom: float = float(int(p[2]) + int(p[4])) * TILE
+	var top: float = bottom - tex.get_height() * ART
+	var info: Array = SEATS[kind]
+	var hip := Vector2.ZERO
+	var nearest := INF
+	for slot in info[1]:
+		var at := Vector2(left, top) + Vector2(slot) * ART
+		var d := at.distance_to(seat_return)
+		if d < nearest:
+			nearest = d
+			hip = at
+	# the sitter sorts just in front of the seat; a seat back between them and the camera hides the rest
+	var sort_y: float = bottom - (SEAT_SORT if kind == "game_chair" or kind == "bar_stool" or kind.begins_with("chair_") or kind.begins_with("bench_") else 0.0)
+	player.position = Vector2(round(hip.x), sort_y + 1.0)
+	var hide_below: float = top + float(info[2]) * ART if int(info[2]) >= 0 else INF
+	player.set_sitting(true, int(info[0]), hip, hide_below)
+
+
 func _stand_from_seat() -> void:
 	seated = false
 	player.position = seat_return
@@ -1309,13 +1466,7 @@ func _interact(t: Dictionary) -> void:
 		seat_return = player.position
 		seated = true
 		player.frozen = true
-		# The 20 Nov benches are drawn lower and smaller than the old ones, so their sitters sit 8 units
-		# lower, with the hips on the cushion and the feet near the floor (checked against the art, not in Godot).
-		var name_l: String = str(t.name).to_lower()
-		var lower_seat: float = 8.0 if ("bench" in name_l or "pew" in name_l) else 0.0
-		player.position = t["pos"] + Vector2(0, -2 + lower_seat)
-		player._dir = 1 if "[N]" in t.name else 3 if "[E]" in t.name or "left" in t.name else 2 if "[W]" in t.name or "right" in t.name else 0
-		player.set_sitting(true,player._dir)
+		_sit_on(t)
 		_toast("Seated — interact or move to stand")
 	elif kind == "menu_terminal":
 		_say("Mess hall menu", ["Community dinner • 18:00\nWarm meals and a place for everyone.", "Head inside to meet the mess hall crew. Patio seating is open all day."])
@@ -1416,6 +1567,15 @@ func _talk(who: String) -> void:
 
 	if not st["met"]:
 		st["met"] = true
+		# The first-meeting lines are spoken at work ("This is my bar", "Welcome to the library"). Met
+		# anywhere else, they say hello plainly and keep the proper welcome for their own place.
+		if _at_workplace(who):
+			_say(who, st["first"])
+		else:
+			st["intro_due"] = true
+			_say(who, [_plain_intro(who)])
+	elif bool(st.get("intro_due", false)) and _at_workplace(who):
+		st["intro_due"] = false
 		_say(who, st["first"])
 	elif _board_delivery(who):
 		pass
@@ -1435,9 +1595,44 @@ func _talk(who: String) -> void:
 		_vzzket_weapon()
 	elif who == "Freya" and repair_stage >= REPAIRS.size() and ship_hull < ShipData.STARTER["hull"]:
 		_freya_ship_repair()
+	elif int(st.get("talks_today", 0)) >= TALKS_PER_DAY and not _special_day(who):
+		# Two chats a day, as in Stardew; business (jobs, shops, quests) and birthdays are not counted.
+		_emote(who, &"wait")
+		_toast("%s has said all there is to say today." % who)
 	else:
+		st["talks_today"] = int(st.get("talks_today", 0)) + 1
 		var activity_line := _activity_dialogue(who)
 		_say(who, [activity_line if activity_line != "" else _next_repeat(who)])
+
+
+const TALKS_PER_DAY := 2
+
+
+# A resident's birthday (scripts/datapad_bridge.gd RESIDENTS) lets you chat as much as you like.
+func _special_day(who: String) -> bool:
+	var facts: Array = BridgeScript.RESIDENTS.get(who, [])
+	if facts.size() < 3:
+		return false
+	var date: Array = BridgeScript.season_date(day)
+	return str(facts[2]) == "%s %d" % [date[0], date[1]]
+
+
+# Whether a resident is at their place of work: near the first "work" stop of today's schedule.
+# People who don't walk about (S.A.R.A.), or have no work stop, always count as at work.
+func _at_workplace(who: String) -> bool:
+	var r = _resident_named(who)
+	if r == null:
+		return true
+	for e in r.schedule:
+		if e.size() > 6 and str(e[6]) == "work":
+			return str(r.area) == str(e[1]) and Vector2(r.tile).distance_to(Vector2(float(e[2]), float(e[3]))) <= 10.0
+	return true
+
+
+func _plain_intro(who: String) -> String:
+	var facts: Array = BridgeScript.RESIDENTS.get(who, [])
+	var role: String = str(facts[0]).to_lower() if not facts.is_empty() else "one of the crew"
+	return "[happy] You're the pilot Sara pulled out of the wreck! I'm %s, %s. Come and find me at work some time and I'll say hello properly." % [who, role]
 
 
 func _next_repeat(who: String) -> String:
@@ -1477,10 +1672,10 @@ func _buy_medpack() -> void:
 func _bram_job() -> void:
 	if job_active:
 		var left: int = JOB_CRATES - job_delivered
-		_say("Bram", ["Fabrication shop next door, south lift off the square, yellow pad in the cargo bay. %d to go." % left])
+		_say("Bram", ["Fabrication shop next to my place, south lift off the square, yellow pad in the cargo bay. %d to go." % left])
 	else:
 		_say("Bram", [
-			"%d crates from the fabrication shop next door, down to the cargo bay. %d credits each, and %d more for the last."
+			"%d crates from the fabrication shop next to my place, down to the cargo bay. %d credits each, and %d more for the last."
 					% [JOB_CRATES, JOB_PAY_EACH, JOB_BONUS],
 			"Interested?",
 		], Callable(self, "_accept_job"), "Take the job")
@@ -3079,6 +3274,7 @@ func _next_day() -> void:
 	_reset_nodes()
 	for who in persons:
 		persons[who]["talked_today"] = false
+		persons[who]["talks_today"] = 0
 	_go_home()
 	_snap_residents()
 	_save_game()
@@ -3113,6 +3309,7 @@ func _save_game() -> void:
 		cfg.set_value(section, "met", st["met"])
 		cfg.set_value(section, "friendship", st["friendship"])
 		cfg.set_value(section, "next", st["next"])
+		cfg.set_value(section, "intro_due", bool(st.get("intro_due", false)))
 	cfg.set_value("access", "garden_watered_day", garden_watered_day)
 	cfg.set_value("farm", "tiles", farm)
 	cfg.set_value("farm", "seeds_taken_day", seeds_taken_day)
@@ -3166,6 +3363,7 @@ func _load_game() -> void:
 		st["met"] = bool(cfg.get_value(section, "met", false))
 		st["friendship"] = int(cfg.get_value(section, "friendship", 0))
 		st["next"] = int(cfg.get_value(section, "next", 0))
+		st["intro_due"] = bool(cfg.get_value(section, "intro_due", false))
 
 	garden_watered_day = int(cfg.get_value("access", "garden_watered_day", -1))
 	var saved_farm = cfg.get_value("farm", "tiles", {})
@@ -3291,9 +3489,10 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 	# Centred on its tiles and standing on its bottom edge.
 	sprite.position = Vector2(p[1]*16+(p[3]*16-fw*ART)*0.5,(p[2]+p[4])*16)
 	if p[0] == "game_chair" or p[0] == "bar_stool" or p[0].begins_with("chair_") or p[0].begins_with("bench_"):
-		# The back of a chair sorts behind its occupant without moving the artwork.
-		sprite.position.y -= 12
-		sprite.offset.y += 24
+		# The back of a chair sorts behind its occupant without moving the artwork (12 world units is
+		# 18 art pixels; it was 24, which drew these seats 4 units low).
+		sprite.position.y -= SEAT_SORT
+		sprite.offset.y += SEAT_SORT / ART
 	if p[0] in BED_PROPS:
 		_spawn_bed(sprite, p, area_name)
 	sprite.visible = false

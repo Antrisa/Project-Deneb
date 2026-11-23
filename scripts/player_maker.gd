@@ -160,12 +160,10 @@ func defaults(body: int = 0) -> Dictionary:
 	return STARTER_LOOKS[clampi(body, 0, STARTER_LOOKS.size() - 1)].duplicate()
 
 
-# A look with anything missing or out of range replaced by the default.
+# A look with anything missing or out of range replaced by the default. Each gender has one fixed
+# outfit and hairstyle (its starter look); only the colours are the player's to choose (22 Nov).
 func tidy(look: Dictionary) -> Dictionary:
 	var out := defaults(int(look.get("body", 0)))
-	for k in NAMES:
-		if look.has(k):
-			out[k] = clampi(int(look[k]), 0, 9)
 	for k in PALETTES:
 		if look.has(k) and Color.html_is_valid(str(look[k])):
 			out[k] = str(look[k])
@@ -175,10 +173,9 @@ func tidy(look: Dictionary) -> Dictionary:
 	return out
 
 
+# Random colours; the outfit and hairstyle stay the gender's own (see tidy).
 func random_look() -> Dictionary:
 	var out := {}
-	for k in NAMES:
-		out[k] = randi() % 10
 	for k in PALETTES:
 		var colours: Array = PALETTES[k]
 		out[k] = colours[randi() % colours.size()]
