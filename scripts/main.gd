@@ -1971,7 +1971,26 @@ func _say_then(cb: Callable) -> void:
 	dialogue.on_done = cb
 
 
+# S.A.R.A.'s rest night (her 8, "Night Shift": you kept watch, sara_rest): Sundays from 23:00 her pads stand by
+# until morning, and she can't be talked to. Her one hour off a week, and then some.
+func _sara_resting() -> bool:
+	return bool(story_flags.get("sara_rest", false)) and (day - 1) % 7 == 6 and minutes >= 23 * 60
+
+
+func _sara_rest_tick() -> void:
+	var resting: bool = _sara_resting()
+	for pair in sara_nodes:
+		var h = pair[0]
+		if resting and h.current_clip != "standby":
+			h.play("standby")
+		elif not resting and h.current_clip == "standby":
+			h.play("wake")
+
+
 func _talk(who: String) -> void:
+	if who == "Sara" and _sara_resting():
+		_say("", ["S.A.R.A.'s pad hums softly in standby. A little sign floats over it: BACK AT 06:00. SORRY. (NOT SORRY.)"])
+		return
 	var st: Dictionary = persons[who]
 	var first_today: bool = st["met"] and not st["talked_today"]
 	if who == "Sara":
@@ -4652,6 +4671,7 @@ func _process(delta: float) -> void:
 			_pass_out()
 		for r in residents:
 			r.tick(delta, minutes)
+		_sara_rest_tick()
 		for en in enemies.duplicate():       # a bite can end the day and clear a cavern floor mid-loop
 			en.tick(delta)
 		hurt_cd = maxf(0.0, hurt_cd - delta)

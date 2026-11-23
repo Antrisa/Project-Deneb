@@ -32,8 +32,13 @@ extends Node
 #   ["sky", event]                     the Observation Lounge's window shows that sky event ("meteors", "aurora",
 #                                      "comet"...; scripts/lounge_sky.gd) until the scene ends
 #   ["energy", -points]                a small cost for a wrong choice (a bee sting): takes that much energy
-#   ["fx", kind, x, y, spread]         bees, fireflies or steam drawn round that tile (scripts/scene_fx.gd); the same
-#                                      kind again moves it there (bees settling on a hand); all gone when the scene ends
+#   ["fx", kind, x, y, spread]         bees, fireflies, steam or heartbeats drawn round that tile (scripts/scene_fx.gd); the
+#                                      same kind again moves it there (bees settling on a hand); all gone when the scene ends
+#   ["sara", clip]                     S.A.R.A. plays one of her hologram clips (sara/animations_data.gd: greeting, laugh,
+#                                      glitch_hand, standby, wake...): her portable projection if the scene placed one,
+#                                      else her pad in this area. "emote" and "say" work for "Sara" too.
+#   ["sara", "place", x, y]            her portable projection (her 6 onwards) materializes on that tile, and her pad here
+#                                      hides; after a "go", place it again. Gone, and her pads back, when the scene ends.
 # Events can also need a second resident at the same hearts ("with": ["Evarra"]) and play only in some
 # seasons ("seasons": ["Autumn", "Winter"]): main.gd _event_ready.
 
@@ -67,6 +72,7 @@ var _shake_px := 0.0
 var _ship_home := Vector2.INF   # where your ship stands on its pad, while a scene flies it
 const SHIP_RISE := 220.0        # how far up the ship climbs before it's gone through the launch doors
 var _fx := {}                   # kind -> the scene's effect node (scripts/scene_fx.gd)
+var _holo = null                # S.A.R.A.'s portable projection in this scene ("sara", "place")
 
 
 func _ready() -> void:
@@ -127,6 +133,12 @@ func play(id: String) -> void:
 	for n in _fx.values():
 		n.queue_free()
 	_fx = {}
+	if _holo != null:
+		_holo.queue_free()
+		_holo = null
+	for pair in world.sara_nodes:      # her pads: shown where you are, back to idle
+		pair[0].visible = pair[1] == world.current_area
+		pair[0].play("idle")
 	world.player.scene_walking = false
 	world.player._cam.offset = Vector2.ZERO
 	world._heart_event_done(id)
@@ -159,6 +171,8 @@ func _step(s: Array) -> void:
 			# the scene moves to another map (best done under a fade): the player goes there; place the cast after
 			world._go_to(str(s[1]), Vector2i(int(s[2]), int(s[3])), false)
 			world._event_area = world.current_area
+			if _holo != null:
+				_holo.visible = false      # the scene places her again on the new map
 			world.player.scene_face(int(DIRS.get(str(s[4]), 0)))
 		"walk":
 			_start_walk(str(s[1]), Vector2i(int(s[2]), int(s[3])))
@@ -176,6 +190,8 @@ func _step(s: Array) -> void:
 		"emote":
 			if str(s[1]) == "player":
 				world.player.show_emote(StringName(str(s[2])))
+			elif str(s[1]) == "Sara":
+				_sara_emote(StringName(str(s[2])))
 			elif _actor(str(s[1])) != null:
 				world._emote(str(s[1]), StringName(str(s[2])))
 		"wait":
@@ -229,6 +245,8 @@ func _step(s: Array) -> void:
 			world.sky_override = str(s[1])
 		"energy":
 			world.energy = maxi(0, int(world.energy) + mini(0, int(s[1])))
+		"sara":
+			_sara(s)
 		"fx":
 			_show_fx(str(s[1]), Vector2i(int(s[2]), int(s[3])), float(s[4]) if s.size() > 4 else 14.0)
 		_:
@@ -389,6 +407,51 @@ func _show_fx(kind: String, t: Vector2i, spread: float) -> void:
 	n.setup(kind, at, spread)
 	world.actors.add_child(n)
 	_fx[kind] = n
+
+
+# S.A.R.A. in a scene: the hologram that's speaking here (her portable projection, else her pad in this area).
+func _sara_here():
+	if _holo != null and _holo.visible:
+		return _holo
+	for pair in world.sara_nodes:
+		if pair[1] == world.current_area:
+			return pair[0]
+	return null
+
+
+func _sara(s: Array) -> void:
+	if str(s[1]) == "place":
+		if _holo == null:
+			if not ResourceLoader.exists("res://sara/sara_hologram.tscn"):
+				return
+			_holo = load("res://sara/sara_hologram.tscn").instantiate()
+			_holo.show_projector = false            # a beam from the emitter on your belt, no dais
+			_holo.art_scale = (2.0 / 3.0) / 2.0     # the same size as her pads (main.gd _add_sara)
+			world.actors.add_child(_holo)
+		_holo.position = world._feet(Vector2i(int(s[2]), int(s[3])))
+		_holo.visible = true
+		_holo.play("materialize")
+		for pair in world.sara_nodes:              # one S.A.R.A. at a time
+			if pair[1] == world.current_area:
+				pair[0].visible = false
+		return
+	var h = _sara_here()
+	if h != null:
+		h.play(str(s[1]))
+
+
+# An emote bubble over S.A.R.A. (her holograms have none of their own).
+func _sara_emote(id: StringName) -> void:
+	var h = _sara_here()
+	if h == null or not ResourceLoader.exists("res://overhead_emotes/overhead_emote.tscn"):
+		return
+	var e = h.get_node_or_null("SceneEmote")
+	if e == null:
+		e = load("res://overhead_emotes/overhead_emote.tscn").instantiate()
+		e.name = "SceneEmote"
+		e.scale = Vector2.ONE * (2.0 / 3.0)       # as over the player: 24-pixel art above a 32-tall figure
+		h.add_child(e)
+	e.show_story(id, 1.4)
 
 
 # ---------------------------------------------------------------- lines, choices, fades

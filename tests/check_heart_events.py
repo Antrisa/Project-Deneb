@@ -55,8 +55,10 @@ EVENT_ROWS = ["talk", "laugh", "sad", "jump", "gift", "bench", "wave"]
 EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "ready", "no", "wait", "help", "follow", "cute"}
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
-         "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy", "fx"}
-FX = {"bees", "fireflies", "steam"}   # scripts/scene_fx.gd
+         "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy", "fx", "sara"}
+FX = {"bees", "fireflies", "steam", "heartbeats"}   # scripts/scene_fx.gd
+SARA_CLIPS = set(re.findall(r'"name": "(\w+)"', (ROOT / 'sara/animations_data.gd').read_text()))
+SPECIAL = {"Sara"}   # S.A.R.A.: a hologram on her pads (MapData.PEOPLE), not a walking resident
 SEASONS = {"Spring", "Summer", "Autumn", "Winter"}
 SKIES = {"clear", "eclipse", "gas_cloud", "meteors", "transit", "aurora", "comet", "storm"}   # scripts/lounge_sky.gd
 SOUNDS = {p.stem for p in (ROOT / 'audio').glob('*.wav')}
@@ -121,7 +123,8 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         if op not in STEPS:
             bad(ev_id, "unknown step %r" % op)
             continue
-        if op in ("place", "walk", "face", "pose", "emote", "hide", "show") and s[1] not in RESIDENTS and s[1] != "player":
+        if op in ("place", "walk", "face", "pose", "emote", "hide", "show") and s[1] not in RESIDENTS and s[1] != "player" \
+                and not (op == "emote" and s[1] in SPECIAL):
             bad(ev_id, "%s: %r is not a resident" % (op, s[1]))
         if op == "say":
             if s[1] and s[1] not in RESIDENTS and s[1] not in ("Sensors", "Sara"):
@@ -161,6 +164,11 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         elif op == "ship":
             if s[1] not in ("lift", "land"): bad(ev_id, "ship: %r is neither lift nor land" % s[1])
             if area != "bay": bad(ev_id, "ship: your ship is only in the Shuttle Bay, not %r" % area)
+        elif op == "sara":
+            if s[1] == "place":
+                check_spot(ev_id, area, s[2], s[3], "S.A.R.A.'s projection")
+            elif s[1] not in SARA_CLIPS:
+                bad(ev_id, "sara: no hologram clip %r" % s[1])
         elif op == "fx":
             if s[1] not in FX: bad(ev_id, "fx: no effect %r" % s[1])
             f = A[area]['floor']
@@ -198,7 +206,7 @@ for ev_id, ev in EVENTS.items():
     if ev['area'] not in A:
         bad(ev_id, "no area %r" % ev['area'])
         continue
-    if ev['who'] not in RESIDENTS:
+    if ev['who'] not in RESIDENTS and ev['who'] not in SPECIAL:
         bad(ev_id, "%r is not a resident" % ev['who'])
     for w in ev.get('with', []):
         if w not in RESIDENTS: bad(ev_id, "with: %r is not a resident" % w)

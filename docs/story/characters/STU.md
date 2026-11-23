@@ -164,5 +164,5 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
 ## Still open
 
 - **His real name:** does the game ever give it back? His 8 says he doesn't care any more ("Being Stu is plenty"), so it can stay lost. (Optional.)
-- **The brass bell:** it's on the hotel's front desk in 2 and 10. S.A.R.A.'s 4 ("Turrets & Velvet Curtains") gives the station a brass reception bell; is that this one?
+- **The brass bell:** it's on the hotel's front desk in 2 and 10. Settled 23 Nov: it's just the hotel's (S.A.R.A.'s new arc no longer gives the station a bell).
 - **The Five-Star Partner perk** needs hotel income to exist first.

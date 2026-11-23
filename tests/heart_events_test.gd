@@ -43,6 +43,7 @@ func run() -> void:
 			assert(not r.in_scene, id + ": " + r.who + " is back on their schedule")
 		assert(not s.player.scene_walking)
 		assert(s.cutscene._fx.is_empty(), id + ": its bees, fireflies and steam are gone")
+		assert(s.cutscene._holo == null, id + ": S.A.R.A.'s portable projection is gone")
 		if id == "evarra_10":
 			assert(s.current_area == "east", "Evarra's 10 ends in the little park")
 		if id == "ana_8":
@@ -64,7 +65,8 @@ func run() -> void:
 			"ana_soup", "ana_seat", "ana_corridors", "ana_compass", "perk_wingmate", "ana_true_north_console",
 			"keepsake_flight_jacket",
 			"siblings_bechamel", "siblings_pod_story", "perk_wildflower_honey", "siblings_bees", "perk_starlight_souffle",
-			"siblings_practice_run", "perk_family_table", "keepsake_family_photo", "siblings_feast"]:
+			"siblings_practice_run", "perk_family_table", "keepsake_family_photo", "siblings_feast",
+			"sara_lost_property", "sara_concierge", "sara_emitter", "sara_rest", "perk_concierge", "sara_night_shift"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)

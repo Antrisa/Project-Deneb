@@ -1,7 +1,8 @@
 extends Node2D
 # Little effects drawn in code for heart-event scenes (scripts/cutscene.gd "fx", 23 Nov 2026), so what the
 # narration says can be seen: bees buzzing round a spot, fireflies drifting and blinking over a wide one, steam
-# curling up from a pot or a mug. Stand-ins until there's art for them (Art Fix List, "Heart events").
+# curling up from a pot or a mug, and the station's heartbeats as little lights rising round S.A.R.A.'s dais.
+# Stand-ins until there's art for them (Art Fix List, "Heart events").
 
 var kind := "bees"
 var center := Vector2.ZERO      # where the effect is heading (world pixels)
@@ -19,7 +20,7 @@ func setup(what: String, at: Vector2, radius: float) -> void:
 	z_index = 40                # over the people standing in the scene
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(what)
-	var count: int = {"bees": 22, "fireflies": 28, "steam": 7}.get(what, 12)
+	var count: int = {"bees": 22, "fireflies": 28, "steam": 7, "heartbeats": 26}.get(what, 12)
 	for _i in count:
 		var speed: float = rng.randf_range(2.0, 4.5) if what == "bees" else rng.randf_range(0.3, 0.9)
 		_motes.append([rng.randf() * TAU, speed, rng.randf_range(0.3, 1.0), rng.randf() * TAU])
@@ -60,6 +61,15 @@ func _draw() -> void:
 					p = p.round()
 					draw_rect(Rect2(p - Vector2(1, 1), Vector2(3, 3)), Color(0.85, 1.0, 0.5, 0.18 * glow))
 					draw_rect(Rect2(p, Vector2(1, 1)), Color(0.95, 1.0, 0.6, glow))
+			"heartbeats":
+				# a ring of small lights round the spot, each beating twice and resting, on its own slow rhythm
+				var a: float = float(m[3]) + _t * 0.08
+				var p: Vector2 = _here + Vector2(cos(a), sin(a) * 0.45) * reach - Vector2(0, 6.0 + float(m[2]) * 10.0)
+				var beat: float = fmod(_t * (0.9 + sp * 0.3) + ph, 1.0)
+				var pulse: float = 1.0 if beat < 0.08 or (beat > 0.18 and beat < 0.26) else 0.35
+				p = p.round()
+				draw_rect(Rect2(p - Vector2(1, 1), Vector2(3, 3)), Color(0.55, 0.85, 1.0, 0.2 * pulse))
+				draw_rect(Rect2(p, Vector2(1, 1)), Color(0.75, 0.95, 1.0, pulse))
 			"steam":
 				# puffs rise, sway and fade, then start again at the bottom
 				var life: float = fmod(_t * sp * 0.35 + ph, 1.0)

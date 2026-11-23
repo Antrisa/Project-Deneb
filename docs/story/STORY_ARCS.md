@@ -41,7 +41,7 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2. (Ana's part settled 23 Nov: the game's version, with her crew always calling her weak for never firing on transports.)
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana; so is the Jasper & Evarra side arc.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana; so are the Jasper & Evarra side arc and S.A.R.A.'s new platonic arc.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3. (All settled: the hotel opens after Ivan's fall, before Stu arrives, and the siblings' 8 plays in the mess hall until then.)
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
@@ -84,14 +84,14 @@ Also in the docs but not on this list: the yearly Grand Hotel Inspection (sectio
 - ~~**Clash: what the pirates are called.**~~ Settled 23 Nov (Decision 3): the pirates are the Chernobog; Ivan is the Rabble. The game's text says Chernobog cutter, Chernobog colours and so on; the Rabble's Reach and the Rabble's Nest are named after Ivan.
 - **Clash: "awaken" or "restore".** Prologue scene 4 wakes all three crystals at once and they talk. The bundles doc and the story-event triggers then speak of "awakening" each Custodian ("1st Custodian Awakened"). Suggest: the prologue wakes them, bundles **restore** their wings, and triggers say "first Custodian restored". Decision 19.
 - **Clash: the player's ship.** The prologue's *Wandering Star* loses its rear half in the blind jump; the game has a fighter repaired in the Shuttle Bay. If the fighter is what's left of the *Wandering Star*, one line from Freya or Tikka would settle it. Decision 4.
-- **Repeat: S.A.R.A.'s secret.** S.A.R.A. 2 has her tell you she let her self-destruct timer run out; The Secret of Annex 4 then reveals the same thing as a discovery. Suggest she jokes around it at 2 and the tape gives the full truth.
+- ~~**Repeat: S.A.R.A.'s secret.**~~ Gone 23 Nov: her new arc doesn't tell it, so The Secret of Annex 4 is the only place it comes out.
 - **Gap: there is no act structure.** Beats are gated by bundles and items, not by a shape across the year. Section 1.4 sketches one.
 
 ### 1.3 Threads that open and never close
 
 | Thread | Opened by | Closed by |
 |---|---|---|
-| **A. The Terran hardliners** want Annex 4 back or S.A.R.A.'s self-destruct carried out. Lore V4 adds Empress Asta, whose father's death is tied to synthetic rights. | S.A.R.A. 6 "Ghost Signal" | Nothing |
+| **A. The Terran hardliners** want Annex 4 back or S.A.R.A.'s self-destruct carried out. Lore V4 adds Empress Asta, whose father's death is tied to synthetic rights. | Nothing now (S.A.R.A.'s "Ghost Signal" was dropped, 23 Nov) | Nothing |
 | **B. The Junta and the Custodians.** "If word reaches Zaa'sh space that sentient constructs are active here, the Junta will send warships." | Prologue 4; Tar'Besh | Nothing (Tar'Besh's own arc never mentions it) |
 | **C. Pip's parents** are alive in Collective space. | Maren/Owen/Pip 4, Eshu 4 (Pip's letter) | Nothing |
 | **D. Who took Artie** in October 2036 ("a silent silver light lifted my truck"), and why was his pod in Ivan's hold? A silent silver light sounds like a Precursor drone. | Artie 2 | Nothing |
@@ -293,17 +293,18 @@ All 40 are outlines. Text is from the NPC Master; where the Master has only a wo
 
 ### 5.1 S.A.R.A. (AI, Steward & Concierge)
 
+The hostess who never clocks off. **A new set, decided with Zachary on 23 Nov; all four are written and playable.** Full scenes: [`characters/SARA.md`](characters/SARA.md).
+
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | The Croissant Protocol | Reception at night | Paris hotel brochures; she let her self-destruct timer run out rather than detonate with guests aboard. | Outline |
-| 4 | Turrets & Velvet Curtains | Plaza, with Garrick | Compromise: a hidden defence grid and a brass reception bell. | Outline |
-| 6 | Ghost Signal | S.A.R.A.'s core, evening | A Terran patrol has found Annex 4's signature; hardliners want the station back or her self-destruct carried out; the old directive is still live in her core. Keep it between you. Clips: `warning`, `glitches`. | Outline (Claude) |
-| 8 | Five-Star Heart | Observation Lounge | A ribbon-cutting (with the hotel) or honorary co-proprietor (without). Reward: Concierge Fast-Travel & Station Alerts. | Outline |
+| 2 | Lost Property | Reception (her West Terminal pad), 18:00–22:00 | She can see every item guests ever left behind and remembers every owner, but she can't open the drawer. You're her hands. | In game (Claude) |
+| 4 | Ask the Concierge | Her plaza pad, weekday lunchtime | Rusk, Bram, Garrick and Pip all need her at once; she starts to glitch and asks you who goes first. | In game (Claude) |
+| 6 | Walkabout | The Shuttle Bay, then the plaza fountain and the library | Freya and Tikka build her a portable projector; she stands beside you for the first time and turns a page. | In game (Claude) |
+| 8 | Night Shift | Her core on the Survey Level, late at night | The station's heartbeats as lights round her dais; keep watch and she rests for the first time (then every Sunday night). Perk: Concierge Fast-Travel & Station Alerts. | In game (Claude) |
 
-- **Repeat:** 2 and The Secret of Annex 4 (section 1.2).
-- **Gap:** 6 opens thread A, and nothing closes it.
-- The brass bell from 4 turns up in Stu 2 and on Landing Day. Is it at Reception or in the hotel lobby? (Stu 2 has it on the hotel's front desk, 23 Nov.)
-- Two secrets kept from two empires (hers in 6, the Custodians in the prologue). Good material for the Summit.
+- **Decided (Zachary, 23 Nov):** none of the old four (The Croissant Protocol, Turrets & Velvet Curtains, Ghost Signal, Five-Star Heart); this new set instead. Wrong choices: −20 friendship and a glitch (2), nothing and a hurt Pip (4), a walk that ends early (6), no rest night (8).
+- **What it drops:** the Paris dream (Jasper's), her self-destruct secret (the museum tape still tells it, so the old Repeat is gone), her argument with Garrick (Garrick's family 6 owns it now), and thread A (nothing opens it now). The brass bell on the hotel desk is just the hotel's.
+- **Her rest night** (`sara_rest`, from 8): Sundays from 23:00 her pads stand by. Her day off, out of the story.
 
 ### 5.2 Tar'Besh (Zaa'sh, Cleric & Curator)
 
@@ -400,7 +401,7 @@ All 40 are outlines. Text is from the NPC Master; where the Master has only a wo
 | 6 | Self-Defence Class (Garrick's) | Plaza | Self-defence without militarising the plaza. | Outline |
 | 8 | (no title) (Garrick's) | Armoury | Rewards only: Potluck Buffs; Perimeter Defence. | Gap |
 
-- **Repeat:** 6 settles S.A.R.A. vs Garrick a second time (S.A.R.A. 4 already did). Pick one to own it, and give the other a different beat.
+- **S.A.R.A. vs Garrick:** S.A.R.A.'s new arc (23 Nov) no longer settles it, so 6 owns it.
 - **Gap:** Garrick is "wary of the player's pirate-hunter background" (cast doc); no scene uses it. **Gap:** 4's smuggler beacon goes nowhere (a space-run stop? Ooma?). 8 has no scene.
 
 ### 5.10 Eshu (Arachnay, Courier & bounty pilot; Wave 1)
@@ -471,7 +472,7 @@ From the triggers above: map and time window; weekday (Wed or Sat); season; hear
 
 ### 7.7 Eleven scenes in the Observation Lounge
 
-~~Jasper & Evarra 4~~ (moved 23 Nov to the West Terminal's star dome), Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, S.A.R.A. 8, Tikka & Sesska 6, Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open. (Moved: Quill 10 to the little park, Ix'ali 10 to the museum, Stu 10 to the terminal airlock. Ana 8 stays: it's a navigator's scene.)
+~~Jasper & Evarra 4~~ (moved 23 Nov to the West Terminal's star dome), Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, ~~S.A.R.A. 8~~ (her new 8 is at her core), Tikka & Sesska 6, Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open. (Moved: Quill 10 to the little park, Ix'ali 10 to the museum, Stu 10 to the terminal airlock. Ana 8 stays: it's a navigator's scene.)
 
 ### 7.8 Art the scenes need that doesn't exist yet
 
@@ -502,4 +503,4 @@ Answer by number; anything left open stays as it is.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc and the Jasper & Evarra side arc; the platonic arcs are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc and S.A.R.A.; Tar'Besh is next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
