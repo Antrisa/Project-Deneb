@@ -365,6 +365,16 @@ func _sector_refresh() -> void:
 		for e in MapDataRef.ENTRANCES:
 			if str(e[0]) == area:
 				_add_mark(marks, Vector2(float(e[1]) * 16 + 8, float(e[2]) * 16 + 8) * fit, str(e[7]))
+		# the ways out to other levels (lifts, airlocks, ramps), named for where they lead
+		for w in data.get("warps", []):
+			var to: Dictionary = MapDataRef.AREAS.get(str(w[2]), {})
+			var at := Vector2(float(w[0]) * 16 + 8, float(w[1]) * 16 + 8) * fit
+			var taken := false
+			for m in marks:
+				if (m[0] as Vector2).distance_to(at) < 6.0:
+					taken = true
+			if not taken and not to.is_empty():
+				_add_mark(marks, at, "To " + str(to.get("title", w[2])))
 		pad.sector_marks = marks
 		pad.mark_index = -1
 	var here: Vector2i = world.player_tile()
