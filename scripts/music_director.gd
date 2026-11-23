@@ -301,10 +301,18 @@ func _level(song: String) -> float:
 
 
 func _exists(song: String) -> bool:
+	return _path(song) != ""
+
+
+# The song's file: as named in SONGS, or the same name as .ogg or .wav (free music often comes as those).
+func _path(song: String) -> String:
 	if not SONGS.has(song):
-		return false
-	var entry: Array = SONGS[song]
-	return ResourceLoader.exists(MUSIC_DIR + str(entry[0]))
+		return ""
+	var named: String = MUSIC_DIR + str(SONGS[song][0])
+	for p in [named, named.get_basename() + ".ogg", named.get_basename() + ".wav"]:
+		if ResourceLoader.exists(p):
+			return p
+	return ""
 
 
 func _stream(song: String) -> AudioStream:
@@ -312,7 +320,6 @@ func _stream(song: String) -> AudioStream:
 		return _streams[song]
 	if not _exists(song):
 		return null
-	var entry: Array = SONGS[song]
-	var stream: AudioStream = load(MUSIC_DIR + str(entry[0]))
+	var stream: AudioStream = load(_path(song))
 	_streams[song] = stream
 	return stream

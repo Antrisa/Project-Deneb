@@ -2974,7 +2974,9 @@ func _setup_sounds() -> void:
 		var pool: Array = []
 		for k in 3:
 			var sp := AudioStreamPlayer.new()
-			sp.stream = load("res://audio/%s.wav" % sound_name)
+			# a real sound dropped in as .ogg (Kenney's packs come as .ogg) wins over the made-up .wav
+			sp.stream = load("res://audio/%s.ogg" % sound_name) if ResourceLoader.exists("res://audio/%s.ogg" % sound_name) \
+					else load("res://audio/%s.wav" % sound_name)
 			add_child(sp)
 			pool.append(sp)
 		sounds[sound_name] = pool

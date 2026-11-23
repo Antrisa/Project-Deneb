@@ -860,3 +860,7 @@ Tick what you want. **Built** means it's in the game now; **Agreed** means you'v
 - **Store Systems tab:** a system level for Scrip only, at 1.6x the parts' worth plus Freya's price.
 - **Crew skills:** hired hands get up to +50% at repairing (2% a repair) and fighting (over 3 minutes of fights); shown on the Crew tab.
 - **Freya and Ana cross:** knocked out on a run, the next time you talk to them (that day or the next) they're cross, -2 friendship, and they stay home until you ask again.
+
+## 11. Real sounds and battle music (23 Nov; to fetch)
+The battle sounds are made-up placeholders (`tools/dev/ship_sounds.py`). A real sound replaces one by dropping `audio/sh_<name>.ogg` (or `.wav`) in; an `.ogg` wins over the placeholder `.wav`. Battle music: `audio/music/combat_1` and `combat_2` as `.mp3`, `.ogg` or `.wav`.
+Suggested free sources (all CC0 unless noted): Kenney's Sci-fi Sounds, Impact Sounds and Digital Audio (kenney.nl); Freesound.org filtered to CC0 for the airlock and fire; music from OpenGameArt: "Interstellar Fleet 1" (Zane Little, CC0, looping), "Fast fight / battle music (looped)" (Ville Nousiainen, CC0), "8-bit Epic Space Shooter Music" (HydroGene, CC0, loops), "ZenoStar" (CC0).
