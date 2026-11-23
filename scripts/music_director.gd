@@ -6,6 +6,8 @@ extends Node
 # never the same one twice running.
 #   character screen                   A New Path (it carries on into the first morning)
 #   flying (launch to landing)         Next Beacon, Nebula Waltz
+#   a space battle                     the combat songs (audio/music/combat_1.mp3, combat_2.mp3) once they're in;
+#                                      until then the flying songs carry on through fights
 #   the Mine, North Cave, caverns      Crystal Seam
 #   Bram's Sundries                    Bram's Stall Chirp
 #   the Mess hall                      Lit Mess-Window
@@ -57,6 +59,8 @@ const SONGS := {
 	"lit_mess_window": ["lit_mess_window.mp3", -2.9],
 	"the_ai_core": ["the_ai_core.mp3", 0.9],
 	"nebula_waltz": ["nebula_waltz.mp3", -0.7],
+	"combat_1": ["combat_1.mp3", 0.0],        # not in yet (23 Nov): battle music to come
+	"combat_2": ["combat_2.mp3", 0.0],
 	"greenhouse_plucks": ["greenhouse_plucks.mp3", 0.1],
 	"tram_past_greenhouses": ["tram_past_greenhouses.mp3", -0.2],
 	"next_beacon": ["next_beacon.mp3", -1.0],
@@ -64,6 +68,7 @@ const SONGS := {
 const PLACE_SONGS := {
 	"creator": ["a_new_path"],
 	"space": ["next_beacon", "nebula_waltz"],
+	"battle": ["combat_1", "combat_2"],
 	"mines": ["crystal_seam"],
 	"bram": ["brams_stall_chirp"],
 	"mess": ["lit_mess_window"],
@@ -209,6 +214,8 @@ func _has_own_songs() -> bool:
 func _place_now() -> String:
 	if world.creator != null and world.creator.open:
 		return "creator"
+	if world.battle != null and world.battle.open and (_exists("combat_1") or _exists("combat_2")):
+		return "battle"
 	if (world.ship_map != null and world.ship_map.open) or (world.battle != null and world.battle.open):
 		return "space"
 	var area: String = world.current_area
@@ -236,7 +243,7 @@ func _quiet() -> void:
 
 func _rest() -> void:
 	var span := QUIET
-	if _place == "space":
+	if _place == "space" or _place == "battle":
 		span = SPACE_QUIET
 	elif _has_own_songs():
 		span = PLACE_QUIET

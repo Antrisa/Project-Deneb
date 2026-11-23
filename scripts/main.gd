@@ -106,6 +106,9 @@ const BOARD := [
 ]
 const WEEKDAYS := ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 const SOUND_NAMES := ["step", "click", "coin", "zap", "smelt", "warp", "quest", "deny", "swing", "hit", "hurt", "die", "eat"]
+# Space-battle sounds (tools/dev/ship_sounds.py). Each gets a few players so quick repeats overlap.
+const SHIP_SOUNDS := ["sh_laser", "sh_missile", "sh_beam", "sh_ion", "sh_flak", "sh_dart", "sh_shield", "sh_hull", "sh_hit",
+	"sh_miss", "sh_explode", "sh_fire", "sh_alarm", "sh_vent", "sh_fold", "sh_ready", "sh_blaster", "sh_pod", "sh_door"]
 
 var tiles_tex: Texture2D
 var actors: Node2D
@@ -2597,6 +2600,14 @@ func _setup_sounds() -> void:
 		p.stream = load("res://audio/%s.wav" % sound_name)
 		add_child(p)
 		sounds[sound_name] = p
+	for sound_name in SHIP_SOUNDS:
+		var pool: Array = []
+		for k in 3:
+			var sp := AudioStreamPlayer.new()
+			sp.stream = load("res://audio/%s.wav" % sound_name)
+			add_child(sp)
+			pool.append(sp)
+		sounds[sound_name] = pool
 	music = AudioStreamPlayer.new()
 	add_child(music)
 	music_director = MusicDirector.new()
@@ -2613,7 +2624,18 @@ func _toggle_music() -> void:
 func sfx(sound_name: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:
 	if not sounds.has(sound_name):
 		return
-	var p: AudioStreamPlayer = sounds[sound_name]
+	var p: AudioStreamPlayer
+	if sounds[sound_name] is Array:
+		var pool: Array = sounds[sound_name]
+		p = pool[0]
+		for sp in pool:                 # a free player, else the one that started first
+			if not (sp as AudioStreamPlayer).playing:
+				p = sp
+				break
+		if p.playing:
+			pool.push_back(pool.pop_front())
+	else:
+		p = sounds[sound_name]
 	p.pitch_scale = pitch
 	p.volume_db = volume_db
 	p.play()

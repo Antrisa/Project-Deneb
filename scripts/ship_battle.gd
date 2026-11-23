@@ -438,7 +438,7 @@ func _win() -> void:
 	if e_hull <= 0 and not foe_gibs.is_empty():
 		break_t = 0.0                # it breaks apart (a ship won by downing its crew stays whole)
 		end_timer = 3.0
-	world.sfx("die", 0.6)
+	world.sfx("sh_explode" if e_hull <= 0 else "quest")
 
 
 func _lose(why: String) -> void:
@@ -449,7 +449,7 @@ func _lose(why: String) -> void:
 	end_timer = JUMP_AT + 1.2
 	lose_t = 0.0
 	shake = 1.4
-	world.sfx("die")
+	world.sfx("sh_explode", 0.8)
 
 
 func _jump() -> void:
@@ -458,7 +458,7 @@ func _jump() -> void:
 	result_text = "Fold jump: heading home"
 	end_timer = 1.2
 	jump_t = 0.0
-	world.sfx("warp")
+	world.sfx("sh_fold")
 
 
 # ---------------------------------------------------------------- the clock
@@ -491,7 +491,7 @@ func _process(delta: float) -> void:
 			lose_t += delta
 			if lose_t >= JUMP_AT and jump_t < 0.0:
 				jump_t = 0.0
-				world.sfx("warp")
+				world.sfx("sh_fold")
 		if jump_t >= 0.0:
 			jump_t += delta
 		_move_shots(delta, false)
@@ -504,6 +504,7 @@ func _process(delta: float) -> void:
 
 
 func _tick(delta: float) -> void:
+	_tick_alarm(delta)
 	# shields come back one layer at a time
 	var top := _max_layers()
 	if layers > top: layers = top
@@ -552,7 +553,10 @@ func _tick(delta: float) -> void:
 		return
 
 	if not bool(fight.get("story", false)) and _eff(sys, "pilot") > 0:
+		var was_ready: bool = fold >= 100.0
 		fold = minf(100.0, fold + delta * 0.6 * (1 + _eff(sys, "engines")))
+		if fold >= 100.0 and not was_ready and not bool(fight.get("story", false)):
+			world.sfx("sh_ready", 1.0, -6.0)
 
 	# Ivan's second phase
 	if foe.has("overcharge_at") and not overcharged and e_hull <= int(ceil(e_hull_max * float(foe["overcharge_at"]))):
@@ -774,7 +778,7 @@ func _fire(w: Dictionary, at_player: bool) -> void:
 		beams.append({"at_player": at_player, "from": from, "a": to - dir * half, "b": to + dir * half, "t": -0.15,
 			"dmg": int(data["damage"]), "color": data["color"], "hit": randf() * 100.0 >= dodge, "rooms": {}, "said": false,
 			"fire": bool(data.get("fire", false))})
-		world.sfx("zap", 0.6, -2.0)
+		world.sfx("sh_beam", 1.0 if not at_player else 0.85, 0.0 if not at_player else -3.0)
 		return
 	# from and to are ship-picture pixels: from on the firing ship, to on the target.
 	var rooms: Array = (me_ship if at_player else foe)["rooms"]
@@ -795,7 +799,8 @@ func _fire(w: Dictionary, at_player: bool) -> void:
 			"t": -0.3 * i, "dmg": int(data["damage"]), "at_player": at_player, "room": room_id, "kind": kind,
 			"ion": float(data.get("ion", 0.0)), "gas": float(data.get("gas", 0.0)),
 			"hit": randf() * 100.0 >= dodge, "color": data["color"], "heavy": int(data["damage"]) >= 3})
-	world.sfx("zap", 1.2 if not at_player else 0.8, -4.0)
+	var fire_sound: String = {"missile": "sh_missile", "ion": "sh_ion", "flak": "sh_flak", "poison": "sh_dart"}.get(kind, "sh_laser")
+	world.sfx(fire_sound, randf_range(0.95, 1.05) * (1.0 if not at_player else 0.85), 0.0 if not at_player else -3.0)
 
 
 func _move_shots(delta: float, resolve: bool) -> void:
@@ -816,6 +821,7 @@ func _land(s: Dictionary) -> void:
 	var where: Vector2 = _on_page(at_player, s["to"])
 	if not bool(s["hit"]):
 		_pop(where, "Miss", DIM)
+		world.sfx("sh_miss", randf_range(0.9, 1.1), -6.0)
 		return
 	var missile: bool = str(s.get("kind", "")) == "missile"
 	var kind: String = str(s.get("kind", ""))
@@ -827,13 +833,14 @@ func _land(s: Dictionary) -> void:
 		shield_timer = 0.0
 		_pop(where + Vector2(-10, 0), "Blocked", SHIELD_BLUE)
 		shield_hits.append({"mine": true, "pos": _shield_edge(true, where), "t": 0.0})
-		world.sfx("click", 0.6)
+		world.sfx("sh_shield")
 		return
 	if not at_player and e_layers > 0 and not missile:
 		e_layers -= 1
 		e_shield_timer = 0.0
 		_pop(where + Vector2(10, 0), "Blocked", SHIELD_BLUE)
 		shield_hits.append({"mine": false, "pos": _shield_edge(false, where), "t": 0.0})
+		world.sfx("sh_shield", 1.15, -4.0)
 		return
 	if kind == "poison":
 		if at_player:
@@ -860,7 +867,7 @@ func _damage(at_player: bool, room_id: String, dmg: int, where: Vector2) -> void
 		_hurt_aboard(room_id, dmg, where)
 		_pop(where, "-%d" % dmg, BAD)
 		shake = 0.25
-		world.sfx("hurt")
+		world.sfx("sh_hull", randf_range(0.9, 1.05))
 		if hull <= 0:
 			hull = 0
 			_lose("Hull breached")
@@ -878,7 +885,7 @@ func _damage(at_player: bool, room_id: String, dmg: int, where: Vector2) -> void
 					w["charge"] = 0.0
 					_pop(where + Vector2(0, -8), "Cannon drained!", GOLD)
 		_pop(where, "-%d" % dmg, GOLD)
-		world.sfx("hit")
+		world.sfx("sh_hit", randf_range(0.95, 1.1), -2.0)
 		if e_hull <= 0:
 			e_hull = 0
 			_win()
@@ -950,6 +957,7 @@ func _set_fire(at_player: bool, room_id: String, where: Vector2) -> void:
 	var fires: Dictionary = my_fires if at_player else foe_fires
 	if not fires.has(room_id):
 		_pop(where + Vector2(0, -10), "Fire!", Color("ffb04a"))
+		world.sfx("sh_fire", 1.0 if at_player else 1.15, 0.0 if at_player else -4.0)
 	fires[room_id] = {"t": FIRE_TIME, "acc": 0.0}
 
 
@@ -1655,8 +1663,10 @@ func _click(id: String, p: Vector2, button: int) -> void:
 	for d in me_ship.get("door_list", []):
 		if _door_rect(d, my_xf).grow(3.0).has_point(p):
 			d["open"] = not bool(d["open"])
-			world.sfx("click", 0.8 if bool(d["open"]) else 1.1, -4.0)
+			world.sfx("sh_door", 0.9 if bool(d["open"]) else 1.1, -4.0)
 			if bool(d.get("airlock", false)):
+				if bool(d["open"]):
+					world.sfx("sh_vent", 1.0, -3.0)
 				_pop(p + Vector2(0, -10), "Venting" if bool(d["open"]) else "Airlock shut", Color("dfe8ff"))
 			return
 	# crew mode: a picked crew member goes to the room clicked, on whichever ship they're on
@@ -2020,6 +2030,29 @@ func _hurt_aboard(room_id: String, dmg: int, where: Vector2) -> void:
 
 
 # Fights: anyone sharing a room with someone from the other side, both standing still, trades blows with them.
+# The ship's alarm (23 Nov): a two-tone beep every few seconds while your ship burns, a room's air is thin, or
+# the hull is down to a quarter. Crew blaster shots crackle while anyone is fighting.
+var alarm_t := 0.0
+var blaster_t := 0.0
+
+func _tick_alarm(delta: float) -> void:
+	alarm_t -= delta
+	var trouble: bool = not my_fires.is_empty() or hull * 4 <= hull_max
+	for rid in my_air:
+		if float(my_air[rid]) < AIR_THIN:
+			trouble = true
+	if trouble and alarm_t <= 0.0:
+		alarm_t = 3.0
+		world.sfx("sh_alarm", 1.0, -9.0)
+	blaster_t -= delta
+	if blaster_t <= 0.0:
+		for c in my_crew + e_crew_list:
+			if bool(c.get("brawl", false)):
+				blaster_t = randf_range(0.25, 0.45)
+				world.sfx("sh_blaster", randf_range(0.9, 1.15), -7.0)
+				break
+
+
 func _tick_fights(delta: float) -> void:
 	for c in my_crew:
 		c["brawl"] = false
@@ -2221,7 +2254,7 @@ func _launch_pod(target: String) -> void:
 		c["brawl"] = false
 	pods_flying.append({"mine": true, "t": 0.0, "from": _room_center(true, pr), "room": target, "crew": team})
 	pod_charge = 0.0
-	world.sfx("zap", 0.6, -2.0)
+	world.sfx("sh_pod")
 
 
 func _recall() -> void:
@@ -2256,7 +2289,8 @@ func _enemy_launch() -> void:
 		e["brawl"] = false
 	pods_flying.append({"mine": false, "t": 0.0, "from": from, "room": to, "crew": team})
 	_pop(_on_page(false, from) + Vector2(0, -12), "Boarding pod!", BAD)
-	world.sfx("zap", 0.5, -2.0)
+	world.sfx("sh_pod", 0.85)
+	world.sfx("sh_alarm", 1.0, -4.0)
 
 
 func _move_pods(delta: float) -> void:
