@@ -100,7 +100,7 @@ Also in the docs but not on this list: the yearly Grand Hotel Inspection (sectio
 | **C. Pip's parents** are alive in Collective space. | Maren/Owen/Pip 4, Eshu 4 (Pip's letter) | Nothing |
 | **D. Who took Artie** in October 2036 ("a silent silver light lifted my truck"), and why was his pod in Ivan's hold? A silent silver light sounds like a Precursor drone. | Artie 2 | Nothing |
 | **E. The Precursor Lexicon in your head.** Quill's "electromagnetic spike", the Mother-Drone's "Tend the small worlds". | Prologue 2–3 | Only the Custodians talking to you |
-| **F. "Something big stirring below."** The giant carapace, the crawlers fleeing upward, the tides Zaas hears. | Vzz'ket & Rusk 4, Chitin Exodus, Zaas 4 | The Leviathan on floor 45 (decided 23 Nov: it broke the brood-queen's shell in Vzz'ket & Rusk 4, and its heartbeat is what Zaas hears in his 4) |
+| **F. "Something big stirring below."** The giant carapace, the crawlers fleeing upward, the tides Zaas hears. | Vzz'ket & Rusk's side arc 4, Chitin Exodus, Zaas 4 | The Leviathan on floor 45 (decided 23 Nov: it broke the brood-queen's shell in Vzz'ket & Rusk's side arc 4, and its heartbeat is what Zaas hears in his 4) |
 | **G. The Chernobog remnants.** "The Chernobog lieutenants scattered." | Ana 2 | Space runs could pick it up (pirate strongholds) |
 
 **Idea (Claude), nothing decided:** the Neutral Zone Summit is where A and B could land. Each power arrives with a claim (the Empire on S.A.R.A. and Annex 4, the Junta on the Custodians, the Collective on its refugees), and how the residents stand with you decides how it goes: S.A.R.A. 6 and Tar'Besh's secret pay off, Eshu (who keeps a private line to every empire and puts the kettle on for rival envoys) gets everyone to one table, and Ix'ali, Ana and Artie each have a side to speak for. C and D could close earlier, in Year 1: Pip's parents through Eshu's network, and Artie's abductors through the Starborn Convergence.
@@ -338,23 +338,43 @@ The water officer who was right about the ocean, and gave it to the one who kept
 
 - **Decided (Zachary, 23 Nov):** the Scyldar are an ocean people, so his search is homesickness, not a hobby; the sea is the Merrow Deep. Claude's rework of the places and the bell (it was a research skiff) was accepted. Wrong choices: soaked and nothing gained (2, −10 energy), −20 friendship (4, 6, 8).
 - **His week:** Sunday is his day off and his expedition day: the North Cave with his hydrophone, or the lake once it's open.
-- **Linked:** 4's heartbeat, the Chitin Exodus and Vzz'ket's carapace all point at the same thing below (thread F). Job's "I'll dig him a tunnel" pays off in the bell's drill motor.
+- **Linked:** 4's heartbeat, the Chitin Exodus and the brood-queen's shell (Vzz'ket & Rusk's side arc) all point at the same thing below (thread F). Job's "I'll dig him a tunnel" pays off in the bell's drill motor.
 - **Gap (still):** Merrow's own 8 (section 5.8) should be about her; this arc gives her the badge but not her story.
 
-### 5.4 Vzz'ket & Rusk (both)
+### 5.4 Vzz'ket & Rusk: their own arcs, and a side arc (The Night Watch)
 
-The barman who tells tall tales, and the hunter nobody believes. **Reviewed with Zachary on 23 Nov; all four are written and playable.** Full scenes and their weeks: [`characters/VZZKET_RUSK.md`](characters/VZZKET_RUSK.md).
+**Reviewed with Zachary on 23 Nov; all twelve are written and playable.** Each has an arc of his own, and they share a side arc like Jasper & Evarra's (Zachary: "I'm fine with shared side arcs but they need single arcs too"). Full scenes: [`characters/VZZKET.md`](characters/VZZKET.md), [`characters/RUSK.md`](characters/RUSK.md), [`characters/VZZKET_RUSK.md`](characters/VZZKET_RUSK.md) (the side arc).
+
+**Vzz'ket** (Zaa'sh, Cavern Hunter): the guard who never leaves his post.
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 2 | Back to the Wall | The mess hall at dinner | He eats standing, back to the wall, eyes on the door; a hunter sleeps where the prey comes in. | In game (Claude) |
+| 4 | A Blessing for the Spear | The Sanctum, Friday morning | Tar'Besh, who blessed his first spear long ago, blesses a new one; they disagree about S.A.R.A. | In game (Claude) |
+| 6 | The Night He Left | His campsite by the cavern gate, late | The Hatching Feast; his clutch-brother Tzz'ar held the tunnel alone. The spear and sword he lends you were Tzz'ar's. | In game (Claude; the camp, Zachary) |
+| 8 | The Watch Changes | The cavern gate, morning | You've cleared the caverns (or killed the Leviathan); S.A.R.A.'s motion sensors take the night watch and he accepts her help. Rewards: his first spear (a keepsake for your quarters) and the Cavern Monster Radar. | In game (Zachary's outline, scene by Claude) |
+
+**Rusk** (Ervani, Bartender): the barman whose tall tales cover what he won't say.
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 2 | Lights That Stay On | The bar in the morning | You hold the ladder; his list: a proper counter, lights that stay on, a sign. | In game (Claude) |
+| 4 | Uncle Rusk | The fountain, Monday lunch with Saffi and Kit | A tall tale about his tail for Kit; the true one (a fire, a child carried out) for you. | In game (Claude) |
+| 6 | The Sea Chest | His room after closing | Ilsa's sign from his first real bar; she grew the grapes and made the Secret Reserve. | In game (Claude) |
+| 8 | The First Page | The bar's front step at closing | A new ledger, your story on the first page; seeds of Ilsa's vine. Reward: Nebula grape seeds; Rusk's cask turns five grapes into a bottle of Nebula wine (sells for 350). | In game (Zachary's reward idea, scene by Claude) |
+
+**The side arc** (both at the level):
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
 | 2 | Tall Tales at the Bar | Rusk's bar, late, after Vzz'ket's shift | Rusk's bug-migration routine for Job and Freya; Vzz'ket, sharpening his spear: "They are running." | In game (Claude) |
-| 4 | The Broken Shell (was The Nest) | The far east end of the North Cave, in the evening | Vzz'ket shows you both a crawler brood-queen's shell, broken open from outside; Rusk takes back about forty jokes. | In game (Claude) |
+| 4 | The Broken Shell (was The Nest) | The far east end of the North Cave, in the evening | A crawler brood-queen's shell, broken open from outside by the Leviathan; Rusk takes back about forty jokes. | In game (Claude) |
 | 6 | On the House | Rusk's bar on a Friday evening | Rusk apologises in front of everyone and opens the stage: Friday Open-Mic & Story Night. Vzz'ket's true story, then Rusk's forty years. | In game (Claude) |
-| 8 | Sentinels of Echo Landing | The cavern gate near midnight, then the bar | The radar (S.A.R.A.'s sensors) and Ix'ali's traps; Vzz'ket trusts it because Tar'Besh asks him to, and leaves the gate for one drink. Rusk hangs his sign: THE NIGHT WATCH. Rewards: Chitin-Piercer Traps and monster radar; the Secret Reserve. | In game (Claude) |
+| 8 | Sentinels of Echo Landing | The cavern gate near midnight, then the bar | Ix'ali's chitin-piercer traps, one of the last bottles of the Secret Reserve, and Ix'ali on watch; Rusk hangs his sign: THE NIGHT WATCH. Reward: Chitin-Piercer Traps. | In game (Claude) |
 
-- **Decided (Zachary, 23 Nov):** the Leviathan broke the shell (thread F); "The Nest" is now "The Broken Shell" (Decision 16); Rusk is not Saffi's uncle but a figure in her family's life; Vzz'ket is old-school Zaa'sh and doesn't like S.A.R.A. at first, but respects Tar'Besh; Claude's places and weeks accepted. Wrong choices: −20 with Vzz'ket (2, 6, 8), and a crawler bite in 4 (−10 energy).
-- **Their weeks:** Rusk has Monday mornings off (the bar opens at 18:00). Vzz'ket has no day off until he's earned one: Friday nights at the Open-Mic after 6 (Ix'ali holds the gate), Sundays after 8.
-- **Rusk's own scene** is his half of 6 (forty years, every bar lost, this one kept). The bar's run-down state and its repair are still to be designed; the sign in 8 could become part of that.
+- **Decided (Zachary, 23 Nov):** the Leviathan broke the shell (thread F); "The Nest" is now "The Broken Shell" (Decision 16); Rusk is not Saffi's uncle but a figure in her family's life; Vzz'ket is old-school Zaa'sh and doesn't like S.A.R.A. at first, but respects Tar'Besh; Vzz'ket's 6 is at his campsite (made up properly), his 8 gives his first spear as a keepsake and ends his guarding night and day; Rusk's 8 gives a seed whose grapes you grow, replant or ferment into wine that sells high. Wrong choices: −20 (and a crawler bite in the side arc's 4).
+- **Their weeks:** Rusk has Monday mornings off (the bar opens at 18:00). Vzz'ket has no day off until he's earned one: his nights after his own 8 (Sundays off too), and Friday nights at the Open-Mic after the side arc's 6 (Ix'ali holds the gate).
+- **Still open:** the bar's run-down state and its repair (Rusk 2's lamp and the side arc's sign could be steps of it); furnishing your quarters (for the spear); a Fermenter at home (the economy plan has one).
 
 ### 5.5 Bram & Ooma (both, except 4)
 

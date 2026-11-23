@@ -114,6 +114,17 @@ const ITEMS = {
 			"desc": "Pale wheat that grows fast under the dome lights. Bram buys it; one day it will be flour."},
 	"star_tomato": {"name": "Star tomato", "icon": 30, "use": "eat", "energy": 20, "heal": 1,
 			"desc": "A five-pointed tomato, sweet and sharp. Bram pays well for them."},
+	# Rusk's 8 (23 Nov): seeds of his late wife's vine. The grapes plant again, or go in Rusk's cask: five make a
+	# bottle of Nebula wine, his Secret Reserve, worth a small fortune (main.gd _rusk_cask_talk)
+	"nebula_grape_seeds": {"name": "Nebula grape seeds", "icon": 119, "use": "plant", "crop": "nebula_grape",
+			"desc": "From Rusk's sea chest: seeds of Ilsa's vine. Plant on a dug tile. Ready in 8 watered days, then fruits again every 3."},
+	"nebula_grape": {"name": "Nebula grapes", "icon": 120, "use": "plant", "crop": "nebula_grape",
+			"desc": "Purple grapes that glow faintly in the dark. Plant one to start another vine, or take five to Rusk for his cask."},
+	"nebula_wine": {"name": "Nebula wine", "icon": 121, "use": "",
+			"desc": "Rusk's Secret Reserve, from Ilsa's vine. Bram will pay a small fortune for it, if you can bear to sell."},
+	# Vzz'ket's 8 (23 Nov): a keepsake to hang in your quarters once you can furnish them
+	"vzzket_first_spear": {"name": "Vzz'ket's first spear", "icon": 118, "use": "",
+			"desc": "A hatchling's spear, short and plain, blessed long ago by a young cleric named Tar'Besh. For your wall, once you can furnish your quarters."},
 	# Salvage from beaten ships (23 Nov). Icons 31-37 are the artist's (art/items/), copied in by tools/dev/relic_art.py.
 	"scrap": {"name": "Scrap", "icon": 31, "use": "",
 			"desc": "Twisted hull, cable and broken fittings from a beaten ship. Bram takes it by the sackful."},

@@ -145,6 +145,12 @@ def build(g):
     mat = N('prayer_mat', 6.5, 30.5, "Vzz'ket's bedroll", 'look', 'Look')
     N('brazier', 8.5, 30.5, 'Camp stove', 'look', 'Look'); N('footlocker', 6, 21.5, "Vzz'ket's kit chest", 'look', 'Look')
     N('cargo', 3.5, 29.5, 'Ration crates', None)
+    # (23 Nov) the camp made up properly, for his 6 and 8: his hunting banner on one side of the gate and his spear
+    # rack on the other. Stand-ins until the camp has its own art (Art Fix List: a lean-to, a fire pit, a sitting
+    # log, the rack; there's no room for a seat by the stove until then)
+    SIZES.setdefault('banner_pole', (1, 2, 1))
+    N('holy_banner', 2.5, 27.5, "Vzz'ket's hunting banner", 'look', 'Look')
+    P('banner_pole', 2, 21, 'Spear rack', 'look', 'Look')
     g.setdefault('HOME_SPOTS', {})["Vzz'ket"] = ('mine',) + free_spot(m, mat[0] + 1, mat[1] + .5, set(), set())
     # the conveyor from the hopper out to Engineering, painted into the floor along the loading spot's north side
     g.setdefault('FLOOR_EXTRAS', {})['mine'] = {'belts': [[(63.5, 8.5), (67.9, 8.5)]], 'rails': [[(9.5, 26), (48.5, 26)]],

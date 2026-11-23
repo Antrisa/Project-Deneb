@@ -27,8 +27,9 @@ const VALUE := {
 	# crops and cooking (Jasper)
 	"crater_potato": 18, "moon_wheat": 10, "star_tomato": 30, "flour": 10, "milk_powder": 3,
 	"moon_wheat_bread": 32, "crater_potato_mash": 46, "star_tomato_soup": 68, "mess_hall_stew": 80, "station_breakfast": 70,
-	# ice (Rusk)
-	"ice": 6,
+	# ice (Rusk); Ilsa's vine, from Rusk's 8 (23 Nov): grapes (Jasper buys them), and the wine Rusk's cask makes from
+	# them (nobody buys it at full value but the shipping crate: Bram's cousins on the trade lanes)
+	"ice": 6, "nebula_grape": 45, "nebula_wine": 350,
 	# gems, minerals and geodes (Job)
 	"quartz": 12, "thermal_quartz": 45, "moon_opal": 60, "crater_garnet": 90, "void_sapphire": 140,
 	"lunar_agate": 20, "anorthosite": 18, "moon_olivine": 25, "regolith_jasper": 22, "ilmenite": 45, "selenite_rose": 50,
@@ -42,7 +43,7 @@ const BUYS := {
 		"lithium_salts", "sulphur", "basalt_core", "iron_bar", "copper_bar", "aluminium_bar", "steel_bar", "gold_bar",
 		"titanium_bar", "hull_plate", "coil_wire", "glass_pane", "refined_silicon", "brick", "magnet", "motor",
 		"precision_lens", "high_density_core", "scrap", "circuit_board", "lithium_cell", "rare_earths", "helium_3", "cobalt_60"],
-	"Jasper": ["crater_potato", "moon_wheat", "star_tomato", "flour", "moon_wheat_bread", "crater_potato_mash",
+	"Jasper": ["crater_potato", "moon_wheat", "star_tomato", "nebula_grape", "flour", "moon_wheat_bread", "crater_potato_mash",
 		"star_tomato_soup", "mess_hall_stew", "station_breakfast"],
 	"Sesska": ["chitin", "hide"],
 	"Rusk": ["ice"],

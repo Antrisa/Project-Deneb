@@ -25,7 +25,7 @@ extends Node
 #   ["if", {condition}, [then steps], [else steps]]   conditions: {"flag": f}, {"not_flag": f}, {"arrived": who},
 #                                      {"partner": who}, {"dating_other": who}
 #   ["flag", name]  ["friendship", who, points]  ["perk", id, toast]  ["keepsake", id, toast]
-#   ["partner", who]  ["toast", text]
+#   ["partner", who]  ["toast", text]  ["give", item, count, toast]   puts items in your pack (Rusk's seeds)
 #   ["hide", who]  ["show", who]        out of sight and back (boarding your ship); everyone shows again at the end
 #   ["ship", "lift" or "land", seconds] your ship in the Shuttle Bay rises out through the launch doors and fades,
 #                                      or comes back down onto its pad; it's back on the pad when the scene ends
@@ -231,6 +231,10 @@ func _step(s: Array) -> void:
 			world.story_flags["keepsake_" + str(s[1])] = true
 			world.sfx("quest")
 			world._toast(str(s[2]))
+		"give":
+			world._give(str(s[1]), int(s[2]))
+			world.sfx("quest")
+			world._toast(str(s[3]))
 		"partner":
 			world.partner = str(s[1])
 		"toast":

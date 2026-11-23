@@ -270,6 +270,7 @@ var leviathan_slain := false     # the sea monster on floor 45 (the Harbinger is
 # Complex), and later the Shipwright's Suite, the hotel and so on. _flag() reads these and the ones the game
 # already keeps. Residents' weekly days (MapData.SCHEDULE_DAYS) change with them.
 var story_flags := {}
+var rusk_cask := {}                # Rusk's cask (his 8): {"bottles": n, "ready": day} while your grapes ferment (saved)
 # Places the story opens. Nothing opens them in play yet (the Custodians' bundles will); in debug builds F5
 # opens or closes them all, to test residents' days (22 Nov).
 const PLACE_FLAGS := ["east_dome", "suite_restored"]
@@ -2038,6 +2039,8 @@ func _talk(who: String) -> void:
 		_cavern_gate()
 	elif who == "Sara" and repairs_said_day != day and _repair_to_mention() != "":
 		_sara_repairs(_repair_to_mention())
+	elif who == "Rusk" and _rusk_cask_talk():
+		pass
 	elif crew_cross.has(who) and day - int(crew_cross[who]) <= 1:
 		crew_cross.erase(who)
 		if persons.has(who):
@@ -4082,6 +4085,49 @@ func _choose_weapon(kind: String) -> void:
 			"(Select it on your hotbar and press Space or click to swing. A ration pack from Jasper mends you.)"])
 
 
+# ---------------------------------------------------------------- Rusk's cask
+# From his 8 (23 Nov, Zachary: a special seed to grow, ferment or plant again, for drinks that sell high): bring
+# Rusk Nebula grapes and he ferments them in his cask, a bottle of Nebula wine for every five, ready in three days.
+# Not counted as one of the day's chats (business). The Fermenter in the economy plan could do the same at home.
+const CASK_GRAPES := 5
+const CASK_DAYS := 3
+
+
+func _rusk_cask_talk() -> bool:
+	if not _flag("rusk_first_page"):
+		return false
+	if not rusk_cask.is_empty():
+		if day < int(rusk_cask["ready"]):
+			return false
+		var n: int = int(rusk_cask["bottles"])
+		rusk_cask = {}
+		_give("nebula_wine", n)
+		sfx("quest")
+		_toast("+%d Nebula wine" % n)
+		_say("Rusk", ["[happy] There she is. %s of Nebula wine, the way Ilsa made it." % ("One bottle" if n == 1 else "%d bottles" % n),
+			"Ship it, and Bram's cousins will pay what it's worth. Or keep one back for a night that deserves it."])
+		return true
+	if _count("nebula_grape") < CASK_GRAPES:
+		return false
+	var bottles: int = _count("nebula_grape") / CASK_GRAPES
+	_say("Rusk", ["Nebula grapes! Give them here and I'll put them down in the cask.",
+		"%d grapes makes %d bottle%s. Come back in %d days." % [bottles * CASK_GRAPES, bottles, "" if bottles == 1 else "s", CASK_DAYS]],
+		Callable(self, "_rusk_cask_fill"), "Leave them with Rusk", Callable(self, "_rusk_cask_keep"), "Keep them")
+	return true
+
+
+func _rusk_cask_fill() -> void:
+	var bottles: int = _count("nebula_grape") / CASK_GRAPES
+	_give("nebula_grape", -bottles * CASK_GRAPES)
+	rusk_cask = {"bottles": bottles, "ready": day + CASK_DAYS}
+	sfx("click")
+	_toast("Rusk's cask: %d bottle%s in %d days" % [bottles, "" if bottles == 1 else "s", CASK_DAYS])
+
+
+func _rusk_cask_keep() -> void:
+	_say("Rusk", ["[happy] Planting more? Good. She'd have liked a whole field of them."])
+
+
 # ---------------------------------------------------------------- the shipping crate (Zachary, 23 Nov)
 # The crate by your front door, as in Stardew Valley: put in anything that sells (ShopData.VALUE) and Bram collects
 # it overnight. The crate pays full value, the most anything sells for (Zachary, 23 Nov: "shipping bin pays most");
@@ -4924,6 +4970,7 @@ func _save_game() -> void:
 	cfg.set_value("game", "cav_deepest", cav_deepest)
 	cfg.set_value("game", "leviathan_slain", leviathan_slain)
 	cfg.set_value("game", "story_flags", story_flags)
+	cfg.set_value("game", "rusk_cask", rusk_cask)
 	cfg.set_value("game", "events_seen", events_seen)
 	cfg.set_value("game", "partner", partner)
 	cfg.set_value("game", "hearts_scale", FRIEND_PER_HEART)
@@ -5020,6 +5067,7 @@ func _load_game() -> void:
 	# saves from before 22 Nov called the floor-45 monster the Harbinger
 	leviathan_slain = bool(cfg.get_value("game", "leviathan_slain", cfg.get_value("game", "harbinger_slain", false)))
 	story_flags = cfg.get_value("game", "story_flags", {})
+	rusk_cask = cfg.get_value("game", "rusk_cask", {})
 	var saved_seen = cfg.get_value("game", "events_seen", [])
 	events_seen = saved_seen if saved_seen is Array else []
 	partner = str(cfg.get_value("game", "partner", ""))
@@ -5614,6 +5662,7 @@ const CROPS := {
 	"crater_potato": {"days": 4, "stages": 4, "regrow": 0, "item": "crater_potato"},
 	"moon_wheat": {"days": 3, "stages": 3, "regrow": 0, "item": "moon_wheat"},
 	"star_tomato": {"days": 6, "stages": 4, "regrow": 3, "item": "star_tomato"},
+	"nebula_grape": {"days": 8, "stages": 5, "regrow": 3, "item": "nebula_grape"},     # Rusk's 8 (art/farm/crops)
 }
 
 

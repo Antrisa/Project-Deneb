@@ -53,7 +53,11 @@ func run() -> void:
 		if id == "zaas_6":
 			assert(s.leviathan_slain, "Zaas's 6 is at the lake, so F3 kills the Leviathan first")
 		if id == "vzzket_8":
-			assert(s.current_area == "bar", "Vzz'ket's 8 ends in the bar, under the new sign")
+			assert(s._count("vzzket_first_spear") == 1, "Vzz'ket gives you his first spear")
+		if id == "rusk_8":
+			assert(s._count("nebula_grape_seeds") >= 3, "Rusk gives you seeds of Ilsa's vine")
+		if id == "nightwatch_8":
+			assert(s.current_area == "bar", "the side arc's 8 ends in the bar, under the new sign")
 		if id == "ana_10":
 			assert(s.player.visible, "you step back out of your ship after Ana's 10")
 			assert(s.wreck_sprite.modulate.a == 1.0, "your ship is back on its pad after Ana's 10")
@@ -73,8 +77,9 @@ func run() -> void:
 			"sara_lost_property", "sara_concierge", "sara_emitter", "sara_rest", "perk_concierge", "sara_night_shift",
 			"tarbesh_astrolabe", "tarbesh_assignment", "tarbesh_summons", "tarbesh_plaque", "perk_relic_appraisal",
 			"zaas_helmet", "zaas_heartbeat", "merrow_deep", "zaas_captain", "perk_deep_sea_sonar_lure",
-			"vzzket_tall_tales", "vzzket_shell", "vzzket_open_mic", "vzzket_sentinels", "perk_chitin_piercer_traps",
-			"perk_secret_reserve"]:
+			"vzzket_wall", "vzzket_blessing", "vzzket_clutch_brother", "vzzket_sensors", "perk_monster_radar",
+			"rusk_lights", "rusk_tail", "rusk_sea_chest", "rusk_first_page",
+			"vzzket_tall_tales", "vzzket_shell", "vzzket_open_mic", "vzzket_sentinels", "perk_chitin_piercer_traps"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)

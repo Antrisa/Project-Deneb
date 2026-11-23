@@ -1,61 +1,35 @@
-# Vzz'ket & Rusk: heart events and their weeks (23 Nov 2026)
+# Vzz'ket & Rusk: the side arc, The Night Watch (23 Nov 2026)
+
+**Their own arcs:** [`VZZKET.md`](VZZKET.md) and [`RUSK.md`](RUSK.md) (Zachary, 23 Nov: "I'm fine with shared side arcs but they need single arcs too"). This is the side arc they share, like Jasper & Evarra's.
 
 **Decided with Zachary, 23 Nov:**
 - **The shell in 4** is a crawler brood-mother's, broken open by **the Leviathan** ("sure"): that's what the crawlers are running from, and its heartbeat is what Zaas hears in his 4 (story thread F).
 - **"The Nest" is now "The Broken Shell"** (Decision 16): the Rabble's Nest keeps its name.
-- **Rusk is not Saffi's uncle** (that was Claude's placeholder), "but can be a figure in their lives": he has turned up for every birthday until nobody could tell the difference. Saffi's line in the game says so now, and he has lunch with her and Kit on Mondays.
-- **Vzz'ket is old-school Zaa'sh and doesn't like S.A.R.A. at the start** ("a voice with no throat"), **but he respects Tar'Besh**, so in 8 he trusts the radar (S.A.R.A.'s sensors) because the cleric asks him to. This is one small step, not the big Zaa'sh change the main story's ending brings.
-- **Their weeks** as Claude suggested (below).
-- **Claude's rework of places, accepted:** the bar, the North Cave, the bar's stage, the cavern gate (three of the four were in the bar).
+- **S.A.R.A.'s sensors moved to Vzz'ket's own 8**, where he stops guarding night and day. This side arc's 8 keeps Ix'ali's traps, Rusk's toast and the sign.
+- **The Secret Reserve** is Ilsa's wine (Rusk's own arc). In this arc's 8 Rusk opens one of its last bottles; in his own 8 he gives you her vine.
 
 **The arc:** the barman who tells tall tales, and the hunter nobody believes.
 - 2: Rusk's bug joke, and the one person at the counter who isn't laughing.
 - 4: the shell; Rusk takes back about forty jokes.
-- 6: Rusk says sorry in front of everyone and opens the stage; Vzz'ket's true story, then Rusk's.
-- 8: the radar, the traps and a bottle from the Secret Reserve; Vzz'ket leaves the gate for one drink, and the bar gets its name: THE NIGHT WATCH.
+- 6: Rusk says sorry in front of everyone and opens the stage (Friday Open-Mic); Vzz'ket's true story, then Rusk's forty years.
+- 8: the traps, a bottle from the Secret Reserve, and Ix'ali on watch; the bar gets its name: THE NIGHT WATCH.
 
-**Both need the hearts** (`"with": ["Rusk"]`; the events are Vzz'ket's). Right answers give +60 (High Friendship) to each. Wrong ones: −20 with Vzz'ket (2, 6, 8), and in 4 a crawler bite as well (−10 energy, −20). Both are platonic, so they cap at 8 hearts.
+**Both need the hearts** (`"who": "Vzz'ket", "with": ["Rusk"]`). Right answers give +60 (High Friendship) to each. Wrong ones: −20 with Vzz'ket, and in 4 a crawler bite as well (−10 energy). Their weeks are in their own docs.
 
 **What's whose:** the outlines are the NPC Master's; the scenes and every line are drafts by Claude.
 
-**Flags this arc sets:** `vzzket_tall_tales` (2), `vzzket_shell` (4), `vzzket_open_mic` (6), `vzzket_sentinels` and the perks `perk_chitin_piercer_traps` and `perk_secret_reserve` (8).
-
----
-
-## Their weeks (in the game: `tools/build.py`, `SCHEDULE_DAYS_RAW`)
-
-**Rusk**
-
-| Day | Where he goes |
-|---|---|
-| Tuesday to Sunday (unchanged) | Behind the counter from 07:00; dinner; the bar again 18:50; bed 23:55 |
-| Monday (his morning off: the bar opens at 18:00) | A soak at the bath house 09:30; lunch by the fountain with Saffi and Kit; Bram's in the afternoon; dinner; the bar from 18:00 |
-
-A whole day shut would have left Job, Freya, Garrick and Bram at a dark bar, so it's a morning off. The calendar lists Monday as his day off.
-
-**Vzz'ket**
-
-| When | Where he goes |
-|---|---|
-| Every day at first (unchanged) | The cavern gate from 06:00; dinner; the gate again 19:00; the promenade 22:00; his bedroll by the gate 23:30 |
-| Fridays, after his 6 | The gate by day; dinner; the Open-Mic seats in the bar from 19:00. Ix'ali holds the gate (she spars there every evening anyway). |
-| Sundays, after his 8 (his day off) | Breakfast; the museum with Tar'Besh 09:30; lunch; holo-darts at the bar 13:30; dinner; the stage seats 19:00 |
-
-- **Day lines:** Rusk's Monday; Vzz'ket's Friday and Sunday, and Ix'ali's Friday, only once the scene that earns them has played. `DAY_LINES` entries can now be `{"flag": f, "lines": [...]}` (`main.gd _day_line()`).
-- Vzz'ket isn't on the calendar's days-off list (it can't read story flags yet).
+**Flags this arc sets:** `vzzket_tall_tales` (2), `vzzket_shell` (4), `vzzket_open_mic` (6: Friday nights at the bar for Vzz'ket, Ix'ali on the gate), `vzzket_sentinels` and the perk `perk_chitin_piercer_traps` (8).
 
 ---
 
 ## In the game (23 Nov)
 
-All four are playable cutscenes in `scripts/heart_events.gd` (`vzzket_2` to `vzzket_8`, after Zaas's). Not run in Godot yet.
+All four are playable cutscenes in `scripts/heart_events.gd` (`nightwatch_2` to `nightwatch_8`, after Rusk's own). Not run in Godot yet.
 
-- **Heart-event sheets** are new for **Vzz'ket and Rusk** (`art/npc_vzzket_event.png`, `art/npc_rusk_event.png`, from the rig by `tools/events.py`). They also use their action rows: his guard stance with the spear; Rusk pouring.
 - **The bar's stage** (built on 21 Nov for this) gets its first use in 6. In 8 the scene moves from the gate to the bar (`go`), where Rusk hangs the sign.
-- **S.A.R.A.** speaks over the bar speakers in 2 and through the radar in 8; there's no pad in the mine.
+- **S.A.R.A.** speaks over the bar speakers in 2.
 - **To test:** in a debug build, **F3** plays the next event in order (6 waits for a Friday; F3 moves the day on).
-- **Checked offline:** `python3 tests/check_heart_events.py`.
-- **Not in yet:** the traps, the radar and the Secret Reserve in play (they're flags); the broken shell, the radar box and traps, and the new sign as art (all on the Art Fix List). The bar's run-down state and its repair are still to be designed; the sign could become part of that.
+- **Not in yet:** the traps in play (a flag); the broken shell, the traps and the new sign as art (Art Fix List). The bar's run-down state and its repair are still to be designed; the sign could become part of that.
 
 ---
 
@@ -153,39 +127,34 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`vzzket_2` to `vzz
 
 ## ♥8 Sentinels of Echo Landing
 
-**Trigger:** the cavern gate, 21:00–23:30, both at 8 hearts. Tikka, Tar'Besh, and Rusk with a bottle. Rewards: Chitin-Piercer Traps and the cavern monster radar (Vzz'ket); the Secret Reserve (Rusk).
+**Trigger:** the cavern gate, 21:00–23:30, both at 8 hearts. Ix'ali, and Rusk with a bottle. Reward: Chitin-Piercer Traps at the cavern gate.
 
-- *[The cavern gate, near midnight. Tikka has bolted a squat grey box to the barricade, bristling with S.A.R.A.'s old station sensors.]*
-- *[Tar'Besh is watching with his hands folded in his sleeves.]*
-- **TIKKA:** "[happy] Motion, heat, and a sound pickup Zaas swears by. Anything bigger than a boot comes up that stair, the radar knows."
-- **TIKKA:** "Ix'ali forged the spikes for the traps. Chitin-piercers. They'll hold a brood of crawlers till morning."
-- **TIKKA:** "...And the radar tells S.A.R.A., and S.A.R.A. wakes whoever's on watch. That's the part he doesn't like."
-- **VZZ'KET:** "[angry] I do not need a voice with no throat to tell me when to wake."
-- **S.A.R.A.** *(the radar)*: "[sad] I don't sleep either, Vzz'ket. I thought that might be something we had in common."
-- **TAR'BESH:** "Hunter. I have trusted her with every relic in the museum. She has not dropped one."
-- **TAR'BESH:** "That is more than I can say for Pip. You may trust her with a door."
-- **VZZ'KET:** "...You ask this, cleric? You?"
-- **TAR'BESH:** "I do."
-- **VZZ'KET:** "...Then I will try it. One night."
-- **RUSK:** "[happy] Gentlemen! Lady! ...Box! A toast. This bottle's older than the station."
+- *[The cavern gate, near midnight. Ix'ali is fitting long black spikes into iron frames along the barricade.]*
+- *[Crawler traps, forged from the shells that came up the stair.]*
+- **IX'ALI:** "[happy] Chitin-piercers! Their own shells, made into their own teeth. Vzz'ket's design, my forge."
+- **VZZ'KET:** "They will hold a brood until morning. Then I will have words with it."
+- **RUSK:** "[happy] Gentlemen! Lady! A toast. One of the last bottles of my Secret Reserve."
 - **RUSK:** "I've been saving it for something worth saving it for. This is it."
+- **RUSK:** "And then, friend: one drink. At my bar. I've something to show you."
+- *If S.A.R.A.'s sensors are in (his own 8 has played):*
+  - **IX'ALI:** "The machine's box and I have the gate tonight. Go, before I change my mind."
+- *If not:*
+  - **IX'ALI:** "I have the gate tonight. I hold it on Fridays already. Go, before I change my mind."
 - **RUSK:** "You've known him longest, pilot. Who keeps the gate tonight?"
 - **CHOICE:**
-  - **"The radar does. Vzz'ket's coming for a drink."** (+High Friendship)
+  - **"Ix'ali does. Vzz'ket's coming for a drink."** (+High Friendship)
     - **VZZ'KET:** "...One drink."
-    - **S.A.R.A.** *(the radar)*: "[happy] I've got it. Go on. I'll wake you if anything so much as sneezes."
-    - **VZZ'KET:** "[angry] Crawlers do not sneeze. ...Thank you."
+    - **IX'ALI:** "[happy] Two. I am counting."
     - *[Rusk's bar, a little after midnight. Rusk climbs onto a chair by the door with something wrapped in a sack.]*
     - *[He pulls the sack away. Hand-painted, and only slightly crooked: THE NIGHT WATCH.]*
     - **RUSK:** "[happy] Had it in the back for a week. Every bar needs a name, and this one finally earned it."
     - **VZZ'KET:** "...You named your bar after my work."
-    - **RUSK:** "[happy] After the folk who keep it. Sit down, friend. The stool doesn't bite you. It knows better."
-    - **VZZ'KET:** "[happy] Sleep well, pilot. ...Tonight, that is what the box is for."
+    - **RUSK:** "[happy] After the folk who keep it. You at your gate, me at mine. Sit down, friend. The stool knows better than to bite you."
+    - **VZZ'KET:** "[happy] Sleep well, pilot. ...Tonight, that is what the armourer is for."
     - *(+60 friendship with Rusk)*
   - **"Vzz'ket should stay on watch. Just in case."**
     - **VZZ'KET:** "...Yes. Just in case."
     - *[Rusk pours three small glasses on top of the barricade and leaves the fourth beside Vzz'ket. He doesn't touch it.]*
     - **RUSK:** "[sad] Next time, then. There's always a next time down here. That's rather the trouble."
     - *(-20 friendship with Vzz'ket)*
-- *[Perk: Chitin-Piercer Traps and the cavern monster radar]*
-- *[New at Rusk's: the Secret Reserve]*
+- *[Perk: Chitin-Piercer Traps at the cavern gate]*

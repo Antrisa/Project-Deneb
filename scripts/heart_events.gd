@@ -34,7 +34,9 @@ const ORDER := ["freya_2", "freya_4", "freya_6", "freya_8", "freya_10",
 	"sara_2", "sara_4", "sara_6", "sara_8",
 	"tarbesh_2", "tarbesh_4", "tarbesh_6", "tarbesh_8",
 	"zaas_2", "zaas_4", "zaas_6", "zaas_8",
-	"vzzket_2", "vzzket_4", "vzzket_6", "vzzket_8"]
+	"vzzket_2", "vzzket_4", "vzzket_6", "vzzket_8",
+	"rusk_2", "rusk_4", "rusk_6", "rusk_8",
+	"nightwatch_2", "nightwatch_4", "nightwatch_6", "nightwatch_8"]
 
 const EVENTS := {
 	# ---------------------------------------------------------------- Freya (docs/story/characters/FREYA.md)
@@ -2900,6 +2902,338 @@ const EVENTS := {
 		],
 	},
 	"vzzket_2": {
+		"who": "Vzz'ket", "hearts": 2, "title": "Back to the Wall",
+		# his own arc (23 Nov): the mess hall at dinner. He eats standing in the corner, back to the wall, eyes on the
+		# door; a hunter sleeps where the prey comes, which is why his bed is a bedroll by the cavern gate
+		"area": "mess", "windows": [[null, "17:15", "18:45"]],
+		"player": [14, 18, "u"],
+		"cast": [["Vzz'ket", 1, 15, "r", "eat r"], ["Kit", 14, 17, "u"]],
+		"steps": [
+			["hide", "Kit"],
+			["wait", 0.6],
+			["say", "", ["Dinner in the mess hall. Every table is full of talk, except the corner by the west wall.",
+				"Vzz'ket eats his stew there standing up, his back to the wall and his eyes on the door."]],
+			["walk", "player", 4, 15], ["face", "player", "l"],
+			["pose", "Vzz'ket", ""], ["face", "Vzz'ket", "player"],
+			["say", "Vzz'ket", ["Pilot. You are standing in my view of the door."]],
+			["choose", [
+				{"text": "[Stand beside him, back to the wall]", "friendship": 60, "steps": [
+					["walk", "player", 1, 14], ["face", "player", "r"],
+					["say", "", ["You lean on the wall beside him and look at the room the way he does. Every way in. Every way out."]],
+					["emote", "Vzz'ket", "ready"],
+					["say", "Vzz'ket", ["...Good. You learn faster than the armourer."]]]},
+				{"text": "[Take the empty seat in the middle of the room]", "steps": [
+					["walk", "player", 9, 12], ["face", "player", "u"],
+					["show", "Kit"], ["sfx", "sh_door"], ["emote", "player", "surprise"], ["shake", 0.15, 1.0],
+					["walk", "Kit", 12, 15],
+					["say", "Kit", ["[happy] VZZ'KET! Mum says you have to eat SITTING DOWN like a PERSON."]],
+					["walk", "Kit", 14, 18], ["hide", "Kit"],
+					["face", "Vzz'ket", "player"],
+					["say", "Vzz'ket", ["[angry] Middle of the room. Back to the door. You would have been the first one taken."]],
+					["friendship", "Vzz'ket", -20]]}]],
+			["say", "Vzz'ket", ["A hunter eats with a wall behind him and the door in his eye. And he sleeps where the prey comes in."]],
+			["say", "", ["You ask about the bedroll by the cavern gate."]],
+			["say", "Vzz'ket", ["The gate is the door. So I sleep by the door.", "[sad] ...One night, I did not. Eat your stew, pilot."]],
+			["face", "Vzz'ket", "r"], ["pose", "Vzz'ket", "eat r"],
+			["flag", "vzzket_wall"],
+		],
+	},
+	"vzzket_4": {
+		"who": "Vzz'ket", "hearts": 4, "title": "A Blessing for the Spear",
+		# his own arc: Tar'Besh's Friday prayers in the Sanctum. The cleric the Temple exiled blessed Vzz'ket's first
+		# spear when he was a hatchling, which is why the old-school hunter respects him (Zachary, 23 Nov); they
+		# disagree about S.A.R.A.
+		"area": "sanctum", "windows": [[[4], "07:00", "11:00"]],
+		"seen": ["vzzket_2"],
+		"player": [37, 19, "l"],
+		"cast": [["Tar'Besh", 23, 20, "r"], ["Vzz'ket", 25, 20, "l"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The Sanctum on a Friday morning. Tar'Besh is at his prayers before the crystals.",
+				"Vzz'ket kneels in front of him, a new spearhead laid across his palms."]],
+			["walk", "player", 29, 20], ["face", "player", "l"],
+			["pose", "Tar'Besh", "talk"], ["sfx", "blip"],
+			["say", "Tar'Besh", ["By the sky that made the hunter and the hunted: may this point fly true, and may it rarely need to."]],
+			["pose", "Tar'Besh", ""], ["emote", "Vzz'ket", "ready"],
+			["say", "Tar'Besh", ["[happy] The last spear I blessed for you was no longer than my arm. And you were no taller than that brazier."]],
+			["face", "Vzz'ket", "player"],
+			["say", "Vzz'ket", ["The cleric came to our lodge on his pilgrimage, when I was a hatchling. He blessed my first spear."]],
+			["say", "Sara", ["[happy] Good morning! I've turned the Sanctum's heating back on, Tar'Besh, like you asked."], "S.A.R.A. (speakers)"],
+			["emote", "Vzz'ket", "frustrated"],
+			["say", "Vzz'ket", ["[angry] The voice with no throat. Even here."]],
+			["face", "Tar'Besh", "Vzz'ket"],
+			["say", "Tar'Besh", ["She keeps the braziers lit when I forget. The crystals have not complained."]],
+			["say", "Vzz'ket", ["The Temple says—"]],
+			["say", "Tar'Besh", ["The Temple exiled me, hunter. And still you come to me for blessings."]],
+			["face", "Vzz'ket", "Tar'Besh"],
+			["say", "Vzz'ket", ["The Temple did not bless my first spear. You did."]],
+			["face", "Vzz'ket", "player"],
+			["say", "Vzz'ket", ["You. You trust the voice?"]],
+			["choose", [
+				{"text": "I do. You don't have to. Not yet.", "friendship": 60, "steps": [
+					["say", "Vzz'ket", ["...'Not yet.' You sound like him."]],
+					["pose", "Tar'Besh", "laugh"],
+					["say", "Tar'Besh", ["[happy] There are worse things to sound like. Go on, hunter. Your gate is waiting."]],
+					["pose", "Tar'Besh", ""]]},
+				{"text": "Only a fool wouldn't.", "steps": [
+					["emote", "Vzz'ket", "frustrated"],
+					["say", "Vzz'ket", ["[angry] Then I am a fool. I have been called worse, by better."]],
+					["emote", "Tar'Besh", "sad"],
+					["friendship", "Vzz'ket", -20]]}]],
+			["walk", "Vzz'ket", 37, 20],
+			["flag", "vzzket_blessing"],
+		],
+	},
+	"vzzket_6": {
+		"who": "Vzz'ket", "hearts": 6, "title": "The Night He Left",
+		# his own arc: his camp by the cavern gate, late (made up properly on 23 Nov for this: banner, sitting stone,
+		# spear rack). The night of the Hatching Feast he left his post, and his clutch-brother held the tunnel alone.
+		# The spear and sword he lends you were his (scripts/item_data.gd)
+		"area": "mine", "windows": [[null, "22:30", "24:00"]],
+		"seen": ["vzzket_4"],
+		"player": [14, 27, "l"],
+		"cast": [["Vzz'ket", 7, 31, "r"]],
+		"steps": [
+			["wait", 0.8],
+			["fx", "steam", 8, 30, 3],
+			["say", "", ["Vzz'ket's camp by the cavern gate, late. The fire in the camp stove has burned down to violet coals.",
+				"He sits on an upturned ration crate beside it, turning a whetstone over in his claws, not using it."]],
+			["walk", "player", 9, 31], ["face", "player", "l"],
+			["face", "Vzz'ket", "player"],
+			["say", "Vzz'ket", ["Sit. The gate is quiet. I can talk and listen at once."]],
+			["face", "Vzz'ket", "r"],
+			["say", "Vzz'ket", ["On Kesh'ra our lodge held the hive-tunnels under the colony. Two hunters on the gate each night.",
+				"Me, and my clutch-brother, Tzz'ar."]],
+			["say", "Vzz'ket", ["On the night of the Hatching Feast, I left. One cup. One song. Back before the moon turned.",
+				"The tunnels had been quiet for a year. I was young."]],
+			["pose", "Vzz'ket", "sad"],
+			["say", "Vzz'ket", ["[sad] When I came back, the gate was shut from the inside. Tzz'ar held it alone until the lodge came.",
+				"The colony slept through it. Nobody else was hurt."]],
+			["say", "Vzz'ket", ["[sad] They gave me his spear and his sword. You have carried both of them. That is why I said, bring them back clean."]],
+			["pose", "Vzz'ket", ""],
+			["say", "Vzz'ket", ["So I do not leave the gate. Not for one cup. Not for one song."]],
+			["choose", [
+				{"text": "[Sit with him by the fire]", "friendship": 60, "steps": [
+					["say", "", ["You sit. For a long time neither of you says anything, and the coals tick, and nothing comes up the stair."]],
+					["face", "Vzz'ket", "player"],
+					["say", "Vzz'ket", ["He held it. That is the whole story. ...Thank you for listening to it."]]]},
+				{"text": "You can't guard it forever.", "steps": [
+					["face", "Vzz'ket", "player"], ["emote", "Vzz'ket", "frustrated"],
+					["say", "Vzz'ket", ["[angry] Watch me."]],
+					["friendship", "Vzz'ket", -20]]}]],
+			["face", "Vzz'ket", "r"], ["pose", "Vzz'ket", "guard r"],
+			["flag", "vzzket_clutch_brother"],
+		],
+	},
+	"vzzket_8": {
+		"who": "Vzz'ket", "hearts": 8, "title": "The Watch Changes",
+		# his own arc (Zachary, 23 Nov): why he stops guarding night and day. You've cleared most of what comes up
+		# (or, once it's dead, you killed the thing the crawlers ran from), and S.A.R.A. puts motion sensors down the
+		# stair to wake him if anything does. He trusts her enough now to accept. He gives you his first spear, a
+		# keepsake for your quarters. From then on his nights and his Sundays are his own (tools/build.py)
+		"area": "mine", "windows": [[null, "06:00", "09:00"]],
+		"player": [14, 26, "l"],
+		"cast": [["Vzz'ket", 8, 27, "r", "guard r"], ["Tikka", 4, 23, "u", "tinker u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Morning at the cavern gate. Tikka is up on a crate, bolting a small grey box to the rock above the barricade.",
+				"It has S.A.R.A.'s station seal on it. Vzz'ket watches it the way he watches the stair."]],
+			["walk", "player", 10, 27], ["face", "player", "l"],
+			["pose", "Vzz'ket", ""], ["face", "Vzz'ket", "player"],
+			["if", {"flag": "leviathan_slain"},
+				[["say", "Vzz'ket", ["You killed the thing that broke the brood-queen. The thing the crawlers were running from.",
+					"Since then the stair has been quiet. Truly quiet. I listened for a month to be sure."]]],
+				[["say", "Vzz'ket", ["You have cleared more of the caverns than our lodge did in a season.",
+					"Three a week became one. One became none. I listened for a month to be sure."]]]],
+			["sfx", "click"], ["pose", "Tikka", ""], ["face", "Tikka", "player"],
+			["say", "Tikka", ["[happy] Motion sensors, all the way down the stair. Anything bigger than a boot comes up, S.A.R.A. knows."]],
+			["sfx", "blip"],
+			["say", "Sara", ["[happy] And I'll wake you, Vzz'ket. Day or night. I don't sleep either, you know."], "S.A.R.A. (the sensors)"],
+			["face", "Vzz'ket", "l"], ["wait", 1.0],
+			["say", "Vzz'ket", ["A year ago I would have pulled that box off the wall.",
+				"The cleric says a mind is a mind, whatever it is made of. ...Tzz'ar talked too much as well. He would have liked you, machine."]],
+			["say", "Sara", ["[happy] I'll take that."], "S.A.R.A. (the sensors)"],
+			["face", "Vzz'ket", "player"],
+			["choose", [
+				{"text": "Let her keep watch tonight. Get some sleep.", "friendship": 60, "steps": [
+					["say", "Vzz'ket", ["...Yes. Tonight, I will sleep the whole night. I do not remember the last time."]],
+					["emote", "Vzz'ket", "joy"]]},
+				{"text": "Are you sure you can trust her?", "steps": [
+					["wait", 0.8],
+					["say", "Vzz'ket", ["...No. But I will try. You are the one who taught me to try, pilot. Do not stop now."]],
+					["friendship", "Vzz'ket", -20]]}]],
+			["walk", "Vzz'ket", 6, 22], ["face", "Vzz'ket", "u"], ["sfx", "click"],
+			["say", "", ["He kneels at his kit chest and brings out something long, wrapped in faded lodge cloth."]],
+			["walk", "Vzz'ket", 9, 26], ["face", "Vzz'ket", "player"], ["pose", "Vzz'ket", "gift"],
+			["say", "Vzz'ket", ["My first spear. The one the cleric blessed. Hang it where you sleep.",
+				"On Kesh'ra, a hunter's first spear watches over the house. Yours has no hunter in it yet. It has one now."]],
+			["give", "vzzket_first_spear", 1, "Vzz'ket gives you his first spear (for your quarters)"],
+			["pose", "Vzz'ket", ""],
+			["say", "Sara", ["[happy] Sleep well, Vzz'ket. That's what I'm for."], "S.A.R.A. (the sensors)"],
+			["emote", "Vzz'ket", "surprise"],
+			["say", "Vzz'ket", ["[happy] ...Those are my words, machine. Keep them. They suit you."]],
+			["perk", "monster_radar", "Perk: Cavern Monster Radar (S.A.R.A. warns you what's waiting below)"],
+			["flag", "vzzket_sensors"],
+		],
+	},
+	"rusk_2": {
+		"who": "Rusk", "hearts": 2, "title": "Lights That Stay On",
+		# his own arc (23 Nov): the bar in the morning, before the regulars. You hold the ladder while he rewires the
+		# lamp over the counter, and hear his list: a proper counter, lights that stay on, a sign
+		"area": "bar", "windows": [[[1, 2, 3, 4, 5, 6], "07:00", "10:00"]],
+		"player": [20, 30, "u"],
+		"cast": [["Rusk", 14, 18, "u"]],
+		"steps": [
+			["wait", 0.6],
+			["sfx", "zap"], ["shake", 0.15, 1.0],
+			["say", "", ["Rusk's bar in the morning, chairs still up on the tables. The lamp over the counter sputters, sparks and goes out.",
+				"Rusk is halfway up a stepladder with a screwdriver in his teeth."]],
+			["walk", "player", 15, 19], ["face", "player", "l"],
+			["face", "Rusk", "player"], ["emote", "Rusk", "hello"],
+			["say", "Rusk", ["[happy] Ah! Hold the ladder, would you? Not the left leg. The left leg is decorative."]],
+			["face", "Rusk", "u"], ["sfx", "click"], ["wait", 0.5], ["sfx", "zap"],
+			["say", "Rusk", ["Forty years behind bars, and I've never had all three at once.",
+				"A proper counter. Lights that stay on. And a sign. Two out of three, once, on Halden's Rest. The roof fell in."]],
+			["face", "Rusk", "player"],
+			["choose", [
+				{"text": "Hand me the pliers. Let's fix it properly.", "friendship": 60, "steps": [
+					["say", "", ["You find the frayed wire behind the shade, and Rusk wraps it while you hold the light steady."]],
+					["sfx", "click"], ["wait", 0.4], ["sfx", "coin"],
+					["say", "", ["The lamp comes on, and stays on. Warm light across the whole counter."]],
+					["emote", "Rusk", "joy"], ["pose", "Rusk", "laugh"],
+					["say", "Rusk", ["[happy] One out of three! Before breakfast! Pilot, you've ruined me for other helpers."]],
+					["pose", "Rusk", ""]]},
+				{"text": "Why bother? The whole place is a ruin.", "steps": [
+					["pose", "Rusk", "sad"],
+					["say", "Rusk", ["[sad] Ruins are where I've always done my best work."]],
+					["sfx", "zap"], ["shake", 0.1, 1.0],
+					["say", "", ["The lamp sputters and dies again. Rusk climbs down without another word and goes to find a new fuse."]],
+					["pose", "Rusk", ""],
+					["friendship", "Rusk", -20]]}]],
+			["flag", "rusk_lights"],
+		],
+	},
+	"rusk_4": {
+		"who": "Rusk", "hearts": 4, "title": "Uncle Rusk",
+		# his own arc: Monday lunch by the fountain with Saffi and Kit. He isn't family (Zachary, 23 Nov), but he has
+		# been there for them. Kit wants the story of his tail; Rusk tells a tall one, then tells you the true one
+		"area": "main", "windows": [[[0], "11:45", "13:30"]],
+		"seen": ["rusk_2"],
+		"player": [130, 99, "u"],
+		"cast": [["Rusk", 126, 93, "l", "eat l"], ["Saffi", 124, 93, "r", "eat r"], ["Kit", 124, 94, "r"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Monday lunch by the fountain. Rusk, Saffi and Kit share a basket of Jasper's sandwiches on the fountain's edge."]],
+			["walk", "player", 127, 95], ["face", "player", "Rusk"],
+			["emote", "Kit", "joy"],
+			["say", "Kit", ["[happy] Uncle Rusk! Do the one about your tail! The tip of your tail!"]],
+			["pose", "Rusk", ""], ["face", "Rusk", "Kit"], ["pose", "Rusk", "talk"],
+			["say", "Rusk", ["[happy] Ah. The Battle of the Crab Nebula. Pirates on every side, and a space whale the size of a moon.",
+				"And me with nothing but a bottle of brandy and a very strong opinion."]],
+			["pose", "Rusk", "laugh"], ["emote", "Kit", "love"],
+			["say", "Saffi", ["[happy] Last week it was a duel with a Junta admiral."]],
+			["say", "Rusk", ["[happy] It was both. Busy week."]],
+			["pose", "Rusk", ""],
+			["say", "Saffi", ["Come on, Kit. Hands washed before Ooma's stall or there's no stall."]],
+			["walks", [["Kit", 117, 99], ["Saffi", 119, 99]]],
+			["face", "Rusk", "player"],
+			["say", "", ["When they've gone, Rusk lowers his voice."]],
+			["say", "Rusk", ["Third bar. Halden's Rest. Kitchen fire, two in the morning, and a kid asleep in the back room.",
+				"Got him out. Left the tip of my tail in the doorframe."]],
+			["pose", "Rusk", "sad"],
+			["say", "Rusk", ["[sad] Tell it true and they ask about the bar. Then the one before it. Then about her. The whale's simpler."]],
+			["pose", "Rusk", ""],
+			["choose", [
+				{"text": "The true one's better than the whale.", "friendship": 60, "steps": [
+					["say", "Rusk", ["[bashful] ...Don't you tell Kit. He'd be heartbroken it wasn't a whale."]],
+					["emote", "Rusk", "love"]]},
+				{"text": "So it was all a lie?", "steps": [
+					["say", "Rusk", ["[sad] All my stories are lies, pilot. That's what makes them safe to tell."]],
+					["friendship", "Rusk", -20]]}]],
+			["flag", "rusk_tail"],
+		],
+	},
+	"rusk_6": {
+		"who": "Rusk", "hearts": 6, "title": "The Sea Chest",
+		# his own arc: his room behind the bar, after closing. The sign from his first real bar, which he ran with his
+		# late wife Ilsa: she grew nebula grapes over the door and made the wine that's now his Secret Reserve. Forty
+		# years of ledgers full of everyone's stories, and none of his
+		"area": "bar", "windows": [[null, "23:00", "24:00"]],
+		"seen": ["rusk_4"],
+		"player": [29, 6, "l"],
+		"cast": [["Rusk", 24, 6, "d"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Rusk's room behind the bar, after closing. His sea chest stands open.",
+				"He kneels beside it with something long and flat wrapped in sailcloth."]],
+			["walk", "player", 22, 6], ["face", "player", "r"],
+			["face", "Rusk", "player"],
+			["say", "Rusk", ["Come in. Mind the ledgers. They bite less than the stool, but only just."]],
+			["sfx", "click"],
+			["say", "", ["He folds back the sailcloth. A painted wooden sign, its edges scorched: ILSA'S."]],
+			["pose", "Rusk", "talk"],
+			["say", "Rusk", ["My first real bar. Hers, really. I poured. She grew nebula grapes over the door and made the wine in the cellar."]],
+			["pose", "Rusk", "sad"],
+			["say", "Rusk", ["[sad] The war took the bar. Time took her. I took the sign, and a few bottles of her wine.",
+				"That's the Secret Reserve. There's not much of it left."]],
+			["pose", "Rusk", ""],
+			["face", "Rusk", "u"],
+			["say", "Rusk", ["Forty years of ledgers on that shelf. Every story anyone ever told me across a bar.", "Not one page of mine."]],
+			["face", "Rusk", "player"],
+			["choose", [
+				{"text": "Then tell me about her.", "friendship": 60, "steps": [
+					["pose", "Rusk", "laugh"],
+					["say", "Rusk", ["[happy] She laughed at my jokes. Only the bad ones. The good ones she said she'd heard before.",
+						"...There. That's a page."]],
+					["pose", "Rusk", ""], ["emote", "Rusk", "love"]]},
+				{"text": "Maybe it's time to let it go.", "steps": [
+					["pose", "Rusk", "sad"],
+					["say", "Rusk", ["[sad] I've let go of everything else, pilot. I'll keep the sign."]],
+					["pose", "Rusk", ""],
+					["friendship", "Rusk", -20]]}]],
+			["say", "", ["He doesn't put the sign back in the chest. He props it against the armchair, where he can see it from the bed."]],
+			["flag", "rusk_sea_chest"],
+		],
+	},
+	"rusk_8": {
+		"who": "Rusk", "hearts": 8, "title": "The First Page",
+		# his own arc: the bar's front step at closing. He finishes his forty-year ledger and starts a new one, with
+		# your story on the first page, and gives you seeds of Ilsa's vine (Zachary, 23 Nov: a special seed to grow,
+		# ferment or plant again, for drinks that sell high): the grapes replant, or go in his cask for Nebula wine
+		"area": "main", "windows": [[null, "23:00", "24:00"]],
+		"player": [93, 108, "l"],
+		"cast": [["Rusk", 90, 108, "d", "bench"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Closing time on the promenade. Rusk sits on the bar's front step with two ledgers: one fat and battered, one new."]],
+			["walk", "player", 92, 108], ["face", "player", "l"],
+			["face", "Rusk", "player"], ["emote", "Rusk", "hello"],
+			["say", "Rusk", ["Forty years in this one. Every story anyone ever told me, except mine. Then I told you mine. So it's finished."]],
+			["sfx", "click"],
+			["say", "", ["He closes the old ledger and opens the new one on his knee. The first page is blank."]],
+			["say", "Rusk", ["New bar, new book. And a new book needs a first page. I thought it should be yours. Tell me something true."]],
+			["choose", [
+				{"text": "[Tell him about the crash, and the moon, and staying]", "friendship": 60, "steps": [
+					["say", "", ["You tell him. He writes it down in a slow, square hand, and doesn't add a single whale."]],
+					["pose", "Rusk", "laugh"],
+					["say", "Rusk", ["[happy] 'The pilot fell through the roof, and stayed for supper.' ...It's a start."]],
+					["pose", "Rusk", "bench"]]},
+				{"text": "Make something up. Make it exciting.", "steps": [
+					["say", "Rusk", ["[sad] ...I could. I've made up plenty. I was hoping for a true one."]],
+					["say", "", ["In the end you tell him about the crash anyway. He writes it down, but he doesn't smile."]],
+					["friendship", "Rusk", -20]]}]],
+			["pose", "Rusk", ""], ["face", "Rusk", "player"], ["pose", "Rusk", "gift"],
+			["say", "Rusk", ["One more thing. Seeds from Ilsa's vine. I've carried them forty years and never had dirt to put them in.",
+				"Then somebody fell through the roof and started digging."]],
+			["say", "Rusk", ["Grow them. Plant the grapes again for more vines, or bring me five and I'll put them in the cask.",
+				"Her wine was the Secret Reserve. Let's not let it run out."]],
+			["give", "nebula_grape_seeds", 3, "Rusk gives you 3 Nebula grape seeds"],
+			["pose", "Rusk", ""],
+			["toast", "New: bring Rusk five Nebula grapes and he'll make a bottle of Nebula wine"],
+			["flag", "rusk_first_page"],
+		],
+	},
+	"nightwatch_2": {
 		"who": "Vzz'ket", "hearts": 2, "title": "Tall Tales at the Bar",
 		"with": ["Rusk"],
 		# Rusk's bar late, after Vzz'ket comes off the gate: Rusk's "bug migration" routine for the regulars, and
@@ -2956,14 +3290,14 @@ const EVENTS := {
 			["flag", "vzzket_tall_tales"],
 		],
 	},
-	"vzzket_4": {
+	"nightwatch_4": {
 		"who": "Vzz'ket", "hearts": 4, "title": "The Broken Shell",
 		"with": ["Rusk"],
 		# was "The Nest" (a clash with the Rabble's Nest; Decision 16, 23 Nov). The far east end of the North Cave
 		# in the evening (the caverns' floors are random): a crawler brood-mother's shell, broken open from outside.
 		# What broke it is the Leviathan (Zachary, 23 Nov): the thing the crawlers run from, whose heart Zaas heard
 		"area": "tunnels", "windows": [[null, "19:00", "22:00"]],
-		"seen": ["vzzket_2"],
+		"seen": ["nightwatch_2"],
 		"player": [31, 35, "u"],
 		"cast": [["Vzz'ket", 30, 32, "d", "guard d"], ["Rusk", 32, 32, "d"]],
 		"steps": [
@@ -3016,14 +3350,14 @@ const EVENTS := {
 			["fade", 0.0, 0.6],
 		],
 	},
-	"vzzket_6": {
+	"nightwatch_6": {
 		"who": "Vzz'ket", "hearts": 6, "title": "On the House",
 		"with": ["Rusk"],
 		# the bar on a Friday evening: Rusk apologises in front of everyone and opens the stage, Friday Open-Mic &
 		# Story Night. Vzz'ket tells the first story (a true one), Rusk the second (his forty years). From now on
 		# Vzz'ket spends Friday nights here and Ix'ali holds the gate
 		"area": "bar", "windows": [[[4], "19:00", "21:00"]],
-		"seen": ["vzzket_4"],
+		"seen": ["nightwatch_4"],
 		"player": [20, 30, "u"],
 		"cast": [["Rusk", 20, 14, "d", "pour d"], ["Vzz'ket", 21, 28, "u"], ["Job", 19, 17, "u"], ["Freya", 16, 17, "u"],
 			["Bram", 13, 17, "u"], ["Saffi", 29, 19, "r"], ["Kit", 29, 16, "r"]],
@@ -3085,54 +3419,45 @@ const EVENTS := {
 			["flag", "vzzket_open_mic"],
 		],
 	},
-	"vzzket_8": {
+	"nightwatch_8": {
 		"who": "Vzz'ket", "hearts": 8, "title": "Sentinels of Echo Landing",
 		"with": ["Rusk"],
-		# the cavern gate near midnight: Tikka's radar on S.A.R.A.'s old sensors, and Ix'ali's chitin-piercer traps.
-		# Vzz'ket won't trust the machine; he trusts Tar'Besh, who trusts her (Zachary, 23 Nov). Rusk brings a bottle
-		# from his Secret Reserve, and the two of them walk up to the bar, where Rusk hangs his sign at last:
-		# THE NIGHT WATCH. Nothing here waits for the story, so no backup is needed
+		# the side arc's last scene (23 Nov): the cavern gate near midnight, Ix'ali's chitin-piercer traps (Vzz'ket's
+		# design, her forge), and Rusk with one of the last bottles of his Secret Reserve. Ix'ali takes the watch, and
+		# the two of them walk up to the bar, where Rusk hangs his sign at last: THE NIGHT WATCH. (S.A.R.A.'s sensors
+		# are Vzz'ket's own 8 now.) Nothing here waits for the story, so no backup is needed
 		"area": "mine", "windows": [[null, "21:00", "23:30"]],
 		"player": [14, 24, "l"],
-		"cast": [["Vzz'ket", 8, 27, "r", "guard r"], ["Tikka", 6, 25, "l", "tinker l"], ["Tar'Besh", 10, 23, "l"], ["Rusk", 16, 28, "l"]],
+		"cast": [["Vzz'ket", 8, 27, "r", "guard r"], ["Ix'ali", 11, 28, "l", "spar l"], ["Rusk", 16, 28, "l"]],
 		"steps": [
 			["hide", "Rusk"],
 			["wait", 0.6],
-			["say", "", ["The cavern gate, near midnight. Tikka has bolted a squat grey box to the barricade, bristling with S.A.R.A.'s old station sensors.",
-				"Tar'Besh is watching with his hands folded in his sleeves."]],
+			["say", "", ["The cavern gate, near midnight. Ix'ali is fitting long black spikes into iron frames along the barricade.",
+				"Crawler traps, forged from the shells that came up the stair."]],
 			["walk", "player", 10, 26], ["face", "player", "l"],
-			["pose", "Tikka", ""], ["face", "Tikka", "player"],
-			["say", "Tikka", ["[happy] Motion, heat, and a sound pickup Zaas swears by. Anything bigger than a boot comes up that stair, the radar knows.",
-				"Ix'ali forged the spikes for the traps. Chitin-piercers. They'll hold a brood of crawlers till morning."]],
-			["say", "Tikka", ["...And the radar tells S.A.R.A., and S.A.R.A. wakes whoever's on watch. That's the part he doesn't like."]],
-			["pose", "Vzz'ket", ""], ["face", "Vzz'ket", "Tikka"],
-			["say", "Vzz'ket", ["[angry] I do not need a voice with no throat to tell me when to wake."]],
-			["sfx", "blip"],
-			["say", "Sara", ["[sad] I don't sleep either, Vzz'ket. I thought that might be something we had in common."], "S.A.R.A. (the radar)"],
-			["emote", "Vzz'ket", "no"],
-			["face", "Tar'Besh", "Vzz'ket"], ["pose", "Tar'Besh", "talk"],
-			["say", "Tar'Besh", ["Hunter. I have trusted her with every relic in the museum. She has not dropped one.",
-				"That is more than I can say for Pip. You may trust her with a door."]],
-			["pose", "Tar'Besh", ""],
-			["face", "Vzz'ket", "Tar'Besh"],
-			["say", "Vzz'ket", ["...You ask this, cleric? You?"]],
-			["say", "Tar'Besh", ["I do."]],
-			["wait", 1.2],
-			["say", "Vzz'ket", ["...Then I will try it. One night."]],
-			["emote", "Tar'Besh", "joy"],
+			["pose", "Ix'ali", ""], ["face", "Ix'ali", "player"], ["emote", "Ix'ali", "joy"],
+			["say", "Ix'ali", ["[happy] Chitin-piercers! Their own shells, made into their own teeth. Vzz'ket's design, my forge."]],
+			["pose", "Vzz'ket", ""], ["face", "Vzz'ket", "player"],
+			["say", "Vzz'ket", ["They will hold a brood until morning. Then I will have words with it."]],
+			["sfx", "hit"], ["wait", 0.3], ["sfx", "hit"],
 			["show", "Rusk"], ["sfx", "step"],
 			["walk", "Rusk", 11, 27], ["face", "Rusk", "Vzz'ket"], ["pose", "Rusk", "gift"],
-			["say", "Rusk", ["[happy] Gentlemen! Lady! ...Box! A toast. This bottle's older than the station.",
+			["say", "Rusk", ["[happy] Gentlemen! Lady! A toast. One of the last bottles of my Secret Reserve.",
 				"I've been saving it for something worth saving it for. This is it."]],
 			["pose", "Rusk", ""],
+			["say", "Rusk", ["And then, friend: one drink. At my bar. I've something to show you."]],
+			["emote", "Vzz'ket", "no"],
+			["face", "Ix'ali", "Vzz'ket"],
+			["if", {"flag": "vzzket_sensors"},
+				[["say", "Ix'ali", ["The machine's box and I have the gate tonight. Go, before I change my mind."]]],
+				[["say", "Ix'ali", ["I have the gate tonight. I hold it on Fridays already. Go, before I change my mind."]]]],
 			["face", "Rusk", "player"],
 			["say", "Rusk", ["You've known him longest, pilot. Who keeps the gate tonight?"]],
 			["choose", [
-				{"text": "The radar does. Vzz'ket's coming for a drink.", "friendship": 60, "steps": [
+				{"text": "Ix'ali does. Vzz'ket's coming for a drink.", "friendship": 60, "steps": [
 					["face", "Vzz'ket", "player"], ["wait", 0.8],
 					["say", "Vzz'ket", ["...One drink."]],
-					["say", "Sara", ["[happy] I've got it. Go on. I'll wake you if anything so much as sneezes."], "S.A.R.A. (the radar)"],
-					["say", "Vzz'ket", ["[angry] Crawlers do not sneeze. ...Thank you."]],
+					["say", "Ix'ali", ["[happy] Two. I am counting."]],
 					["friendship", "Rusk", 60],
 					["fade", 1.0, 0.8],
 					["go", "bar", 20, 29, "l"],
@@ -3146,21 +3471,21 @@ const EVENTS := {
 					["say", "Rusk", ["[happy] Had it in the back for a week. Every bar needs a name, and this one finally earned it."]],
 					["emote", "Vzz'ket", "surprise"],
 					["say", "Vzz'ket", ["...You named your bar after my work."]],
-					["say", "Rusk", ["[happy] After the folk who keep it. Sit down, friend. The stool doesn't bite you. It knows better."]],
+					["say", "Rusk", ["[happy] After the folk who keep it. You at your gate, me at mine. Sit down, friend. The stool knows better than to bite you."]],
 					["walk", "Vzz'ket", 25, 17], ["face", "Vzz'ket", "u"],
-					["say", "Vzz'ket", ["[happy] Sleep well, pilot. ...Tonight, that is what the box is for."]],
+					["say", "Vzz'ket", ["[happy] Sleep well, pilot. ...Tonight, that is what the armourer is for."]],
 					["emote", "Vzz'ket", "joy"]]},
 				{"text": "Vzz'ket should stay on watch. Just in case.", "steps": [
 					["face", "Vzz'ket", "player"], ["wait", 1.0],
 					["say", "Vzz'ket", ["...Yes. Just in case."]],
 					["face", "Vzz'ket", "r"], ["pose", "Vzz'ket", "guard r"],
-					["emote", "Tar'Besh", "sad"], ["emote", "Rusk", "sad"],
+					["emote", "Ix'ali", "sad"], ["emote", "Rusk", "sad"],
 					["say", "", ["Rusk pours three small glasses on top of the barricade and leaves the fourth beside Vzz'ket. He doesn't touch it."]],
 					["say", "Rusk", ["[sad] Next time, then. There's always a next time down here. That's rather the trouble."]],
 					["friendship", "Vzz'ket", -20]]}]],
-			["perk", "chitin_piercer_traps", "Perk: Chitin-Piercer Traps and the cavern monster radar"],
-			["perk", "secret_reserve", "New at Rusk's: the Secret Reserve"],
+			["perk", "chitin_piercer_traps", "Perk: Chitin-Piercer Traps at the cavern gate"],
 			["flag", "vzzket_sentinels"],
 		],
 	},
+
 }

@@ -620,6 +620,8 @@ const LOOKS = {
 	"Vzz'ket's bedroll": ["A thin bedroll on the bare rock, facing the cavern gate. Vzz'ket says he sleeps with one eye open. He has more than two."],
 	"Vzz'ket's kit chest": ["Spare blades, a whetstone, rations and a very old photograph, face down."],
 	"Camp stove": ["A little camp stove, still warm. Something is stewing in a dented pot."],
+	"Vzz'ket's hunting banner": ["A Zaa'sh hunting-lodge banner, sun-faded and patched. Two names are stitched along the bottom. One has been stitched over in black."],
+	"Spear rack": ["Three spears, oiled and sharp, and an empty peg where a fourth used to hang."],
 	"Barrels of who-knows-what": ["Sealed barrels with Bram's labels scratched off and relabelled 'LATER'."],
 	"Bram's stock shelves": ["Overflow from Bram's shop: rope, fuses, tins and a lot of single boots."],
 	"Post boxes": ["Three post boxes: Quill's, labelled neatly, Ix'ali's, dented, and Tar'Besh's, which has a small bell on it."],
@@ -770,13 +772,14 @@ const DAY_LINES := {
 			"Mondays I soak, I eat with Saffi and the boy, and I let Bram tell me his prices are fair. Then I open up.",
 			"[happy] No pouring till six. If you see Job at my door at noon, send him to the bath house."],
 	},
-	# Vzz'ket's nights off only start once he's earned them (his 6, then his 8): {"flag", "lines"} waits for the flag
+	# Vzz'ket's nights off only start once he's earned them (the side arc's 6, his own 8): {"flag", "lines"} waits for
+	# the flag
 	"Vzz'ket": {
 		4: {"flag": "vzzket_open_mic", "lines": [
 			"Friday. The armourer holds my gate tonight. I am to sit in the barman's chairs and listen to lies.",
 			"[happy] Story night. The small fox tells the same one every week. It is a good one. Do not tell him I said so."]},
-		6: {"flag": "vzzket_sentinels", "lines": [
-			"Sunday. The box watches the gate. I am... resting. I do not know what to do with my hands.",
+		6: {"flag": "vzzket_sensors", "lines": [
+			"Sunday. The machine's box watches the gate. I am... resting. I do not know what to do with my hands.",
 			"The cleric is teaching me the old Zaa'sh hymns. I knew them as a hatchling. I had forgotten I knew them."]},
 	},
 }

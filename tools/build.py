@@ -3021,14 +3021,19 @@ SCHEDULE_DAYS_RAW = {
             ("14:30", "bram", 4, 4, 26, "r", "idle", "rest"), ("17:00", "main", 121, 70, 26, "d", "eat", "eat"),
             ("18:00", *HOME_SPOTS["Rusk at work"], 36, "d", "work", "pour"), ("23:30", *HOME_SPOTS["Rusk"], 26, "d", "idle", "rest")]},
     ],
-    # Vzz'ket (23 Nov): no day off at first: that's his flaw. After his 6 (the Open-Mic) Friday nights are at the bar,
-    # with Ix'ali holding the gate (she spars there every evening anyway). After his 8 the radar and the traps keep
-    # watch, and Sunday is his: the museum with Tar'Besh in the morning, holo-darts at the bar, the Open-Mic seats.
+    # Vzz'ket (23 Nov): no day off at first: that's his flaw. After his own 8 (S.A.R.A.'s sensors on the stair) he
+    # stops guarding night and day: the gate by day, sparring with Ix'ali in the evening, a drink at the bar, and
+    # his bedroll by 23:00; Sundays are his (the museum with Tar'Besh, holo-darts, the stage seats). After the side
+    # arc's 6 (the Open-Mic) Friday nights are at the bar, with Ix'ali holding the gate.
     "Vzz'ket": [
+        {"when": {"days": [0, 1, 2, 3, 4, 5], "flags": ["vzzket_sensors"]}, "stops": [
+            ("06:00", "mine", 8, 27, 26, "r", "idle", "guard"), ("17:15", "main", 130, 70, 26, "d", "eat", "eat"),
+            ("19:00", "mine", 8, 27, 26, "r", "idle", "guard"), ("21:00", "bar", 25, 17, 26, "u", "idle", "eat"),
+            ("23:00", *HOME_SPOTS["Vzz'ket"], 26, "r", "idle", "guard")]},
         {"when": {"days": [4], "flags": ["vzzket_open_mic"]}, "stops": [
             ("06:00", "mine", 8, 27, 26, "r", "idle", "guard"), ("17:15", "main", 130, 70, 26, "d", "eat", "eat"),
             ("19:00", "bar", 29, 16, 26, "r", "idle", "eat"), ("23:30", *HOME_SPOTS["Vzz'ket"], 26, "r", "idle", "guard")]},
-        {"when": {"days": [6], "flags": ["vzzket_sentinels"]}, "stops": [
+        {"when": {"days": [6], "flags": ["vzzket_sensors"]}, "stops": [
             ("08:00", "main", 130, 70, 26, "d", "eat", "eat"), ("09:30", "museum", 52, 28, 26, "r", "idle", "walk_stop"),
             ("12:30", "main", 130, 70, 26, "d", "eat", "eat"), ("13:30", "bar", 7, 13, 26, "u", "idle", "walk_stop"),
             ("17:15", "main", 130, 70, 26, "d", "eat", "eat"), ("19:00", "bar", 29, 19, 26, "r", "idle", "eat"),
