@@ -4,8 +4,9 @@ extends CanvasLayer
 # (ui/ship_screen.gd): the map in the scope on the left, the next stop and your ship's stores on the right.
 # Mock-up: datapad_map_x2.png in the Drive folder.
 #
-# This first version shows a locked route (the first flight, ShipData.FIRST_FLIGHT): only the next stop can be
-# jumped to. The other stops on the rings are drawn greyed out; free ship runs with daily stops come in slice 2.
+# Two modes. open_route(): a locked route (the first flight, ShipData.FIRST_FLIGHT), only the next stop can be jumped
+# to and the other rings are drawn greyed out. open_run(): a free flight (scripts/ship_runs.gd), the day's stops
+# with their links; you pick any linked stop, and Fold home ends the run.
 # main.gd opens it with open_route() and gets on_jump.call(index) when the ship arrives at a stop; main.gd runs
 # that stop (dialogue, a fight) and the map waits.
 
@@ -37,6 +38,12 @@ var move_index := -1
 var screen: ShipScreen
 var dots: Array = []               # the other stops on the rings: [position, kind]
 var pulse := 0.0
+# Free flights (normal runs, scripts/ship_runs.gd): every stop linked to its neighbours; you pick where to go.
+var free := false
+var target := -1                   # the stop you've picked to jump to next
+var on_fold: Callable = Callable()
+var jumps := 0
+var max_ring := 5                  # rings past this are shut on this run (drawn dim)
 
 
 func _ready() -> void:
@@ -82,10 +89,36 @@ func open_route(new_route: Array, index: int, cb: Callable, reveal: bool = true,
 	screen.redraw()
 
 
+# A free flight: the day's stops (ShipRuns.make_run), starting at the Landing. cb.call(index) on arriving at a stop;
+# fold_cb.call() when you fold home.
+func open_run(stops: Array, cb: Callable, fold_cb: Callable, rings_open: int) -> void:
+	open_route(stops, -1, cb, true, "")
+	free = true
+	target = -1
+	jumps = 0
+	on_fold = fold_cb
+	max_ring = rings_open
+
+
 func close() -> void:
 	open = false
 	visible = false
 	on_jump = Callable()
+	on_fold = Callable()
+	free = false
+
+
+# The stops linked to the one you're at (from the Landing: the first ring).
+func linked() -> Array:
+	if not free:
+		return []
+	if at < 0:
+		var out: Array = []
+		for i in range(route.size()):
+			if int(route[i]["ring"]) == 1:
+				out.append(i)
+		return out
+	return route[at]["links"]
 
 
 func stop_pos(i: int) -> Vector2:
@@ -97,11 +130,17 @@ func stop_pos(i: int) -> Vector2:
 
 
 func next_index() -> int:
+	if free:
+		return target if linked().has(target) else -1
 	return at + 1 if at + 1 < route.size() else -1
 
 
 func can_jump() -> bool:
 	return open and visible and show_route and moving == 0.0 and next_index() >= 0 and not world.dialogue.active
+
+
+func can_fold() -> bool:
+	return free and open and visible and moving == 0.0 and not world.dialogue.active
 
 
 func jump() -> void:
@@ -113,6 +152,7 @@ func jump() -> void:
 		return
 	move_index = next_index()
 	moving = 0.001
+	jumps += 1
 	world.sfx("warp", 1.2, -4.0)
 
 
@@ -125,6 +165,7 @@ func _process(delta: float) -> void:
 		if moving >= 1.0:
 			moving = 0.0
 			at = move_index
+			target = -1
 			var cb: Callable = on_jump
 			if cb.is_valid():
 				cb.call(at)
@@ -142,6 +183,21 @@ func _click(id: String, _p: Vector2, button: int) -> void:
 		return
 	if world.dialogue.active:
 		world.dialogue.advance()
+		return
+	if id == "fold":
+		if can_fold():
+			var cb: Callable = on_fold
+			if cb.is_valid():
+				cb.call()
+		return
+	if id.begins_with("stop/"):
+		# free flight: click a linked stop to pick it, click it again (or Jump, or E) to go
+		var i: int = int(id.get_slice("/", 1))
+		if target == i:
+			jump()
+		else:
+			target = i
+			world.sfx("click", 1.3, -6.0)
 		return
 	if id == "jump" or id == "stop":
 		jump()
@@ -184,9 +240,13 @@ func _paint() -> void:
 		var half: float = s.width(label, "micro") / 2.0
 		var x: float = clampf(rim.x, MAP_WIN.position.x + 10.0 + half, MAP_WIN.end.x - 10.0 - half)
 		s.text_center(x, rim.y - 6.0, label, "micro", z["text"])
-	# the other stops: not on this route
+	# the other stops: not on this route (on a free flight, only the shut rings further out)
 	for d in dots:
 		var p: Vector2 = CENTER + (d[0] as Vector2) * zoom
+		if free:
+			if (d[0] as Vector2).length() > RING[max_ring] + 12.0:
+				s.circle(p, 2.0, Color(0.32, 0.35, 0.35))
+			continue
 		var near := false
 		for i in range(route.size()):
 			if stop_pos(i).distance_to(p) < 12.0:
@@ -198,7 +258,9 @@ func _paint() -> void:
 	s.ring(CENTER, 8.0, Color("f0f0f0"))
 	s.text_center(CENTER.x, CENTER.y - 8.0, "EL", "micro", Color("14203c"))
 	var n: int = next_index()
-	if show_route:
+	if free:
+		_paint_free()
+	elif show_route:
 		var prev: Vector2 = CENTER
 		for i in range(route.size()):
 			var here: Vector2 = stop_pos(i)
@@ -230,20 +292,59 @@ func _paint() -> void:
 	_paint_side(n)
 
 
+# A free flight: every link drawn faintly, the ones from where you are in gold; the stops you can reach pulse, the
+# one you've picked has a white ring; stops you've been to are dimmed. Names show for the picked or pointed-at stop.
+func _paint_free() -> void:
+	var s := screen
+	var reach: Array = linked()
+	for i in range(route.size()):
+		for j in route[i]["links"]:
+			if int(j) > i:
+				s.line(stop_pos(i), stop_pos(int(j)), Color(0.75, 0.8, 0.78, 0.22), 1.0)
+	for i in reach:
+		s.line(stop_pos(at), stop_pos(int(i)), Color(0.98, 0.86, 0.35, 0.7), 1.5)
+	var named := -1
+	for i in range(route.size()):
+		var stop: Dictionary = route[i]
+		var kind: Dictionary = ShipData.STOP_KINDS[stop["kind"]]
+		var here: Vector2 = stop_pos(i)
+		var rad: float = 6.0 if str(stop["kind"]) == "special" else 4.5
+		var col: Color = kind["color"]
+		if bool(stop.get("seen", false)):
+			col = col.darkened(0.45)
+		s.circle(here, rad, col)
+		s.ring(here, rad, Color("20262a"))
+		var hot := Rect2(here - Vector2(9, 9), Vector2(18, 18))
+		if reach.has(i) and moving == 0.0:
+			s.ring(here, rad + 3.0 + sin(pulse * 5.0), GOLD, 1.5)
+			s.hit("stop/%d" % i, hot)
+			if s.hovering(hot):
+				named = i
+		if i == target:
+			s.ring(here, rad + 6.0, Color("fff6ea"), 1.5)
+	for i in [target, named]:
+		if i >= 0:
+			var here2: Vector2 = stop_pos(i)
+			s.text_center(here2.x, here2.y - 21.0, str(route[i]["name"]).to_upper(), "micro", NAME_ON_MAP)
+
+
 func _paint_side(n: int) -> void:
 	var s := screen
 	s.shift(Vector2(s.page.x - 12.0 - 715.0, -6.0))   # the side column, as designed, against the right edge
 	# the next stop
 	var box := Rect2(480, 52, 235, 120)
 	s.panel(box, "map", "Next stop")
-	if show_route and n >= 0:
+	if free and n < 0:
+		s.text(488, 80, "Pick a stop with a gold ring." if not linked().is_empty() else "Nowhere left to jump.", "label", MUTED)
+	elif show_route and n >= 0:
 		var stop: Dictionary = route[n]
 		var kind: Dictionary = ShipData.STOP_KINDS[stop["kind"]]
 		s.text_fit(488, 78, 219, str(stop["name"]), "mid", INK)
 		s.circle(Vector2(491.5, 106.5), 3.5, kind["color"])
 		s.ring(Vector2(491.5, 106.5), 3.5, Color("20262a"))
 		var zone: Dictionary = ShipData.ZONES[_zone_index(float(stop["angle"]))]
-		s.text_fit(499, 102, 208, "%s, %s, RING %d" % [str(kind["label"]).to_upper(), str(zone["name"]).to_upper(), int(stop["ring"])], "micro", MUTED)
+		var been: String = "  (BEEN HERE)" if bool(stop.get("seen", false)) else ""
+		s.text_fit(499, 102, 208, "%s, %s, RING %d%s" % [str(kind["label"]).to_upper(), str(zone["name"]).to_upper(), int(stop["ring"]), been], "micro", MUTED)
 		var lines: Array = s.wrap_lines(str(stop["about"]), 219, "label")
 		for i in range(mini(3, lines.size())):
 			s.text(488, 117 + i * 15, lines[i], "label", INK)
@@ -270,14 +371,20 @@ func _paint_side(n: int) -> void:
 	# the buttons
 	var can: bool = can_jump()
 	s.button("jump", Rect2(480, 292, 115, 26), "Jump (1 fuel)", can, "label", can)
-	s.button("fold", Rect2(600, 292, 115, 26), "Fold home", false, "label", false)
+	s.button("fold", Rect2(600, 292, 115, 26), "Fold home", false, "label", can_fold())
 	# the flight
 	var flight := Rect2(480, 324, 235, 58)
 	s.panel(flight, "mark", title if title != "" else "Free flight")
-	if route.size() > 0:
+	if free:
+		s.text(488, 352, "DAY %d   JUMPS %d   RINGS 1-%d OPEN" % [int(world.day), jumps, max_ring], "micro", MUTED)
+	elif route.size() > 0:
 		s.text(488, 352, "STOP %d OF %d" % [clampi(at + 1, 0, route.size()), route.size()], "micro", MUTED)
 		s.pips(560, 352, route.size(), at + 1, 9.0, 7.0, 3.0)
 	var hint := "Pick the stop with the gold ring, or press E, to jump to it."
+	if free:
+		hint = "Click a gold-ringed stop to pick it, again (or Jump, or E) to go. Fold home ends the run."
+		if int(world.fuel) <= 0:
+			hint = "Out of fuel. Fold home to end the run."
 	if not show_route:
 		hint = "S.A.R.A. is calling."
 	elif n < 0:

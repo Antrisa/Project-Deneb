@@ -33,6 +33,7 @@ const MusicDirector = preload("res://scripts/music_director.gd")
 const EventScript = preload("res://scripts/ship_event.gd")
 const StoreScript = preload("res://scripts/ship_store.gd")
 const SpaceEvents = preload("res://scripts/space_events.gd")
+const ShipRuns = preload("res://scripts/ship_runs.gd")
 const ShipData = preload("res://scripts/ship_data.gd")
 const MakerScript = preload("res://scripts/player_maker.gd")
 const MessWindow = preload("res://scripts/mess_window.gd")
@@ -121,6 +122,7 @@ var missiles := 0
 var drone_parts := 0
 var ship_weapons: Array = ["burst_laser", ""]    # what's fitted in each weapon slot ("" = empty)
 var said_goodbye := false          # the send-off at launch has played
+var said_run_hint := false         # S.A.R.A. has explained free flights
 var ana_found_day := -1            # the day you pulled Ana out of her ship (the Wave 2 arrival counts from it)
 var garden_watered_day := -1
 var garden_busy := false
@@ -1819,7 +1821,126 @@ func _launch_console() -> void:
 	elif flights == 1:
 		_say("Launch control", ["The board shows your ship in green.", "Take her out?"], Callable(self, "_second_flight"), "Launch")
 	else:
-		_say("Launch control", ["The board shows your ship in green.", "(Ship runs into the neutral zone come in the next update.)"])
+		_say("Launch control", ["The board shows your ship in green. Fuel: %d cells." % fuel,
+			"Take her out into the neutral zone?"], Callable(self, "_start_run"), "Launch")
+
+
+# ---------------------------------------------------------------- free flights (normal runs, 22 Nov)
+# scripts/ship_runs.gd makes the day's map; here the ship goes stop to stop. A run ends when you fold home (free
+# outside a fight), or when your ship is beaten (the Medbay, as always).
+const RUN_FUEL := 3                  # Freya tops the tank up to this much when you launch with less
+var run_stops: Array = []
+var run_used: Array = []             # events already drawn this run
+var run_rng := RandomNumberGenerator.new()
+var run_stop := -1                   # the stop the ship is at
+
+
+func _start_run() -> void:
+	if fuel < RUN_FUEL:
+		_toast("Freya tops up the tank: %d fuel" % RUN_FUEL)
+		fuel = RUN_FUEL
+	run_stops = ShipRuns.make_run(day, ShipData.RING_STOPS)
+	run_used = []
+	run_rng.seed = 104729 * day + Time.get_ticks_msec()
+	run_stop = -1
+	sfx("warp")
+	ship_map.open_run(run_stops, Callable(self, "_arrive_run"), Callable(self, "_fold_home"), ShipRuns.MAX_RING)
+	if not bool(said_run_hint):
+		said_run_hint = true
+		_say("Sara", [
+			"Free flight. Today's stops are on your map, rings one to three. Further out stays shut until you've a bigger tank.",
+			"Each jump follows a gold line and uses one fuel cell. You choose the way.",
+			"[happy] And whenever you've had enough, fold home. It's free outside a fight, and you keep what you found.",
+		])
+
+
+# Arrived at a stop on a free flight.
+func _arrive_run(i: int) -> void:
+	fuel = maxi(0, fuel - 1)
+	run_stop = i
+	var stop: Dictionary = run_stops[i]
+	minutes = minf(minutes + 20.0, DAY_END - 1.0)
+	if bool(stop["seen"]):
+		_toast("Nothing new here.")
+		return
+	stop["seen"] = true
+	ship_map.visible = false
+	ship_event.show_backdrop(stop)
+	var ring: int = int(stop["ring"])
+	var zone: String = str(stop["zone"])
+	match str(stop["kind"]):
+		"store":
+			ship_store.open_store(ShipData.STORES["moogli_trader"].merged({"name": str(stop["name"])}, true), Callable(self, "_back_to_map"))
+		"special":
+			ship_event.close()
+			_run_fight("pirate_stronghold")
+		"distress":
+			_run_event("distress", zone, ring)
+		_:
+			if run_rng.randf() < float(ShipRuns.FIGHT_CHANCE[ring]):
+				ship_event.close()
+				_run_fight(ShipRuns.pick_enemy(zone, run_rng))
+			else:
+				_run_event("beacon", zone, ring)
+
+
+func _run_event(kind: String, zone: String, ring: int) -> void:
+	var id: String = ShipRuns.pick_event(kind, zone, ring, run_used, run_rng)
+	if id == "" and kind == "distress":
+		id = ShipRuns.pick_event("beacon", zone, ring, run_used, run_rng)
+	if id == "":
+		ship_event.open_event({"title": "Static", "text": "Nothing here but static and a long way to the next star.",
+			"choices": [{"text": "Move on.", "outcomes": [{"text": "You move on.", "effects": ["nothing"]}]}]},
+			Callable(self, "_after_run_event"))
+		return
+	run_used.append(id)
+	ship_event.open_event(SpaceEvents.EVENTS[id], Callable(self, "_after_run_event"))
+
+
+func _after_run_event(fight: String) -> void:
+	if fight != "":
+		ship_event.close()
+		_run_fight(fight)
+		return
+	_back_to_map()
+
+
+func _run_fight(enemy_id: String) -> void:
+	ship_map.visible = false
+	battle.start({"enemy": enemy_id, "story": false}, Callable(self, "_after_run_fight"), ship_hull)
+
+
+func _after_run_fight(result: String, hull_left: int) -> void:
+	ship_hull = hull_left
+	if result == "lost":
+		run_stops = []
+		_ship_lost()
+		return
+	battle.close()
+	if result == "won":
+		var stop: Dictionary = run_stops[run_stop] if run_stop >= 0 else {"ring": 1, "kind": "beacon"}
+		var got: Dictionary = apply_space_effects(ShipRuns.reward(int(stop["ring"]), str(stop["kind"]) == "special", run_rng))
+		var words: Array = []
+		for g in got["gains"]:
+			words.append(str(g[0]))
+		_toast("Salvage: " + ", ".join(words))
+	_back_to_map()
+
+
+# Fold home: the run ends and you're back in the Shuttle Bay with what you found.
+func _fold_home() -> void:
+	ship_map.close()
+	ship_event.close()
+	ship_store.close()
+	run_stops = []
+	sfx("warp")
+	minutes = minf(minutes + 60.0, DAY_END - 1.0)
+	_snap_residents()
+	var lines: Array = ["[happy] Welcome back. The fold drive's still warm."]
+	if ship_hull < int(ShipData.STARTER["hull"]):
+		lines.append("She's taken some knocks. Come and see me and I'll patch the hull.")
+	_say("Freya", lines)
+	_save_game()
 
 
 # What a resident says when you talk to them between finishing the ship and the first flight (once each).
@@ -3318,6 +3439,7 @@ func _save_game() -> void:
 	cfg.set_value("ship", "flights", flights)
 	cfg.set_value("ship", "artie_found_day", artie_found_day)
 	cfg.set_value("ship", "fuel", fuel)
+	cfg.set_value("ship", "said_run_hint", said_run_hint)
 	cfg.set_value("ship", "missiles", missiles)
 	cfg.set_value("ship", "drone_parts", drone_parts)
 	cfg.set_value("ship", "weapons", ship_weapons)
@@ -3374,6 +3496,7 @@ func _load_game() -> void:
 	flights = int(cfg.get_value("ship", "flights", 0))
 	artie_found_day = int(cfg.get_value("ship", "artie_found_day", -1))
 	fuel = int(cfg.get_value("ship", "fuel", 6))
+	said_run_hint = bool(cfg.get_value("ship", "said_run_hint", false))
 	missiles = int(cfg.get_value("ship", "missiles", 0))
 	drone_parts = int(cfg.get_value("ship", "drone_parts", 0))
 	var saved_weapons = cfg.get_value("ship", "weapons", ["burst_laser", ""])
