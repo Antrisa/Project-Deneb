@@ -678,8 +678,8 @@ func _sit_picture(face: int) -> Array:
 	var front: int = knees[knees.size() - 1] if not knees.is_empty() else fw / 2
 	for y in range(SIT_HIP, fh - 2):
 		for x in _opaque(stand, y):
-			if x < front - 4:
-				continue
+			if x < front - 4 and y < SIT_HIP + 6:
+				continue     # the back of the legs is out of sight; the whole boot shows
 			var nx: int = front - 1 + (y - SIT_HIP)
 			var ny: int = SIT_HIP + (front - x)
 			if ny >= 0 and ny < fh and nx >= 0 and nx < w:
