@@ -271,7 +271,7 @@ def interior(p, rooms, doors, cell=CELL, wall_mat="wall", bays=(), airlocks=None
                 return rid
         return ""
     wall = np.zeros((H, W), bool)
-    t = int(2 * k)
+    t = int(3 * k) if DETAIL else int(2 * k)        # half the wall, either side of the cell edge
     for rid, (cx, cy, cw, ch, _) in rooms.items():
         for x in range(cx, cx + cw):
             for y in range(cy, cy + ch):
@@ -305,10 +305,116 @@ def interior(p, rooms, doors, cell=CELL, wall_mat="wall", bays=(), airlocks=None
         p.mat[stripe] = "dark"; p.tone[stripe] = 1
         gap = p.mask(rect=(x0 + g0, y_out0, x0 + g1 - 1, y_out1)) & (p.tone >= 0)
         p.mat[gap] = "dark"; p.tone[gap] = 0
+    if DETAIL:
+        detail(p, rooms, doors, airlocks, cell, block, wall, frame, bays)
     for room in rooms.values():
         machine(p, room, rooms, doors, cell, k)
         floor_marks(p, room, cell, k)
     return p
+
+
+# Depth for the cut-aways (Zachary, 22 Nov: "the ship interiors need more detail and depth, mainly the walls").
+# Light comes from the top left, as on the hulls. Walls get a lit top edge and a dark lower edge, with a post
+# where walls meet; they cast a short shadow down and right across the floor. The frame round the rooms gets
+# a lit inner lip, panel seams and bolts. Door gaps get metal jambs. Floors get corner screws, a few vent grilles
+# and scuffs.
+DETAIL = True
+
+
+def detail(p, rooms, doors, airlocks, cell, block, wall, frame, bays=()):
+    from scipy import ndimage as nd
+    import random
+    k = cell / 24.0
+    H, W = p.h, p.w
+    rng = random.Random(7)
+    solid = wall | frame
+    floor = block & ~wall & (p.mat == "deck")
+    # shadows: floor just below and to the right of a wall or the frame, darker nearer
+    for d, drop in ((1, 2), (2, 2), (3, 1), (4, 1)):
+        if d > 2 * k:
+            break
+        sh = np.zeros_like(solid)
+        sh[d:, d:] = solid[:-d, :-d]
+        sh2 = np.zeros_like(solid)
+        sh2[d:, :] |= solid[:-d, :]
+        hit = floor & (sh | sh2) & ~solid
+        p.tone[hit] = np.maximum(0, np.minimum(p.tone[hit], 3 - drop))
+    # inner walls: lit top and left edges, dark bottom and right edges, a mid tone face, rivets down the middle
+    up = np.zeros_like(wall); up[1:, :] = wall[:-1, :]
+    dn = np.zeros_like(wall); dn[:-1, :] = wall[1:, :]
+    lf = np.zeros_like(wall); lf[:, 1:] = wall[:, :-1]
+    rt = np.zeros_like(wall); rt[:, :-1] = wall[:, 1:]
+    p.tone[wall] = 2
+    p.tone[wall & (~up | ~lf)] = 4
+    p.tone[wall & (~dn | ~rt)] = 0
+    yy, xx = np.mgrid[0:H, 0:W]
+    # posts where walls meet (every cell corner a wall touches)
+    for (cx, cy, cw, ch, _) in rooms.values():
+        for x in range(cx, cx + cw + 1):
+            for y in range(cy, cy + ch + 1):
+                px, py = x * cell, y * cell
+                box = p.mask(rect=(px - int(2 * k), py - int(2 * k), px + int(2 * k) - 1, py + int(2 * k) - 1))
+                if not (box & wall).any():
+                    continue
+                box &= block
+                p.mat[box] = "wall"; p.tone[box] = 3
+                p.tone[box & ~np.roll(box, 1, axis=0)] = 5
+                p.tone[box & ~np.roll(box, -1, axis=0)] = 0
+                if 0 <= py < H and 0 <= px < W and block[py, px]:
+                    p.tone[py, px] = 5
+    # the frame: a lit lip along its inner edge, seams every cell, bolts between the seams
+    lip = frame & nd.binary_dilation(block, iterations=1)
+    p.tone[lip & (p.tone >= 0)] = 4
+    for (cx, cy, cw, ch, _) in rooms.values():
+        for x in range(cx, cx + cw + 1):
+            seam = frame & (xx == x * cell)
+            p.tone[seam] = 1
+        for y in range(cy, cy + ch + 1):
+            seam = frame & (yy == y * cell)
+            p.tone[seam] = 1
+    mid = nd.binary_erosion(frame, iterations=max(1, int(2 * k) - 1))
+    bolt = mid & ((xx % cell) == cell // 2) & ((yy % int(3 * k)) == 0) | mid & ((yy % cell) == cell // 2) & ((xx % int(3 * k)) == 0)
+    p.tone[bolt & (p.tone >= 0)] = 5
+    # door jambs: a light post either side of every door gap
+    g0, g1 = int(7 * k), int(17 * k)
+    t = int(3 * k)
+    for (a, b) in list(doors):
+        (c1, r1), (c2, r2) = a, b
+        if r1 == r2:
+            x = max(c1, c2) * cell; y = r1 * cell
+            for jy in (y + g0 - 2, y + g1):
+                j = p.mask(rect=(x - t, jy, x + t - 1, jy + 1)) & block
+                p.mat[j] = "steel" if "steel" in RAMPS else "wall"; p.tone[j] = 5
+        else:
+            y = max(r1, r2) * cell; x = c1 * cell
+            for jx in (x + g0 - 2, x + g1):
+                j = p.mask(rect=(jx, y - t, jx + 1, y + t - 1)) & block
+                p.mat[j] = "steel" if "steel" in RAMPS else "wall"; p.tone[j] = 5
+    # floors: corner screws on every tile, the odd vent grille, scuffs
+    step = cell // 2
+    for rid, (cx, cy, cw, ch, sysname) in rooms.items():
+        if rid in bays:
+            continue
+        for tx in range(cx * cell, (cx + cw) * cell, step):
+            for ty in range(cy * cell, (cy + ch) * cell, step):
+                for (sx, sy) in ((tx + 2, ty + 2), (tx + step - 3, ty + 2), (tx + 2, ty + step - 3), (tx + step - 3, ty + step - 3)):
+                    if floor[sy, sx] and p.tone[sy, sx] >= 3:
+                        p.tone[sy, sx] = 2
+                r = rng.random()
+                if r < 0.12:
+                    gx0, gy0 = tx + int(3 * k), ty + int(3 * k)
+                    gx1, gy1 = tx + step - int(3 * k), ty + step - int(4 * k)
+                    g = p.mask(rect=(gx0, gy0, gx1, gy1)) & floor
+                    p.tone[g] = 1
+                    for gy in range(gy0 + 1, gy1, 2):
+                        p.tone[p.mask(rect=(gx0 + 1, gy, gx1 - 1, gy)) & floor] = 2
+                elif r < 0.3:
+                    for _ in range(3):
+                        sx, sy = tx + rng.randrange(3, step - 3), ty + rng.randrange(3, step - 3)
+                        if floor[sy, sx]:
+                            p.tone[sy, sx] = max(0, p.tone[sy, sx] - 1)
+                            if floor[sy, sx + 1]:
+                                p.tone[sy, sx + 1] = max(0, p.tone[sy, sx + 1] - 1)
 
 
 # Boarding (Zachary, 22 Nov; claude/echo-landing-boarding.md): a boarding pods room is only as big as its hatches,
