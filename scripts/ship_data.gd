@@ -74,11 +74,41 @@ const WEAPONS := {
 
 # Stores (Zachary, 21 Nov: a trading window like FTL's). Prices are first guesses: fuel, missiles and drone
 # parts each, hull repair per point. Weapons sell back for half.
+# By zone (23 Nov): each zone's store has its own weapons, prices and trade goods.
+#   "markup"  - weapon prices times this
+#   "goods"   - trade goods it sells (TRADE_VALUE x "sells_at")
+#   "buys"    - trade goods it buys: item -> times TRADE_VALUE ("*" = anything in TRADE_VALUE)
+# The pirate fence pays best for salvage, no questions asked; the Collective pays well for rare resources.
+# Ooma's ship is the special merchant (claude/echo-landing-ship-combat.md): met on runs on the days she isn't on
+# the station (not Wednesdays or Saturdays), selling the rare weapons.
 const STORES := {
-	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser", "missile_launcher", "cutting_beam", "heavy_beam",
-			"twin_missile", "ion_blast", "toxin_dart", "fire_beam", "flak_cannon", "chain_laser"],
-		"fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8},
+	"terran_depot": {"name": "Terran supply depot", "weapons": ["burst_laser", "heavy_laser", "missile_launcher", "cutting_beam"],
+		"markup": 1.0, "fuel": 5, "missiles": 10, "drone_parts": 9, "repair": 6, "sells_at": 2.0,
+		"goods": ["hull_plate", "coil_wire", "lithium_cell", "circuit_board"],
+		"buys": {"*": 0.9}},
+	"moogli_trader": {"name": "Moogli trader", "weapons": ["heavy_laser", "rabble_laser", "cutting_beam", "toxin_dart", "twin_missile"],
+		"markup": 1.0, "fuel": 6, "missiles": 12, "drone_parts": 10, "repair": 8, "sells_at": 1.8,
+		"goods": ["coil_wire", "lithium_cell", "rare_earths", "hull_plate"],
+		"buys": {"*": 1.0}},
+	"collective_market": {"name": "Collective market", "weapons": ["heavy_beam", "ion_blast", "missile_launcher", "burst_laser"],
+		"markup": 1.1, "fuel": 7, "missiles": 11, "drone_parts": 8, "repair": 9, "sells_at": 2.0,
+		"goods": ["helium_3", "rare_earths", "circuit_board", "lithium_cell"],
+		"buys": {"*": 1.0, "rare_earths": 1.3, "helium_3": 1.3, "cobalt_60": 1.3, "void_sapphire": 1.2}},
+	"pirate_fence": {"name": "Pirate fence", "weapons": ["rabble_laser", "flak_cannon", "missile_launcher", "heavy_laser"],
+		"markup": 1.2, "fuel": 8, "missiles": 9, "drone_parts": 12, "repair": 10, "sells_at": 2.5,
+		"goods": ["cobalt_60", "void_sapphire", "circuit_board"],
+		"buys": {"*": 1.5}},
+	"ooma": {"name": "Ooma's ship", "weapons": ["twin_missile", "ion_blast", "toxin_dart", "fire_beam", "flak_cannon", "chain_laser"],
+		"markup": 1.1, "fuel": 6, "missiles": 10, "drone_parts": 8, "repair": 8, "sells_at": 2.2,
+		"goods": ["void_sapphire", "helium_3", "cobalt_60", "circuit_board"],
+		"buys": {"*": 1.2}},
 }
+const ZONE_STORE := {"Terran": "terran_depot", "Zaa'sh": "moogli_trader", "Collective": "collective_market", "Reach": "pirate_fence"}
+
+# What trade goods are worth (Bram's price in main.gd SELL, where he buys them). Stores buy and sell around this.
+const TRADE_VALUE := {"scrap": 2, "hull_plate": 25, "coil_wire": 15, "circuit_board": 45, "lithium_cell": 35,
+	"rare_earths": 25, "helium_3": 80, "cobalt_60": 70, "void_sapphire": 100}
+
 
 # The starter fighter, redrawn after the intro movie and approved by Zachary (21 Nov): plane wings, engine pods out
 # behind, a 2 x 2 cockpit under a long canopy. 7 x 4 cells (168 x 96). Art by tools/dev/ship_art/starter.py:
@@ -570,6 +600,10 @@ const STOP_KINDS := {
 	"distress": {"label": "Distress signal", "color": Color("fadc5a")},
 	"store": {"label": "Store", "color": Color("c8a0ff")},
 	"special": {"label": "Special", "color": Color("ff8c3c")},
+	"nest": {"label": "The Nest", "color": Color("ff4a3a")},
+	"ooma": {"label": "Ooma's ship", "color": Color("ff9ad2")},
+	"wreck": {"label": "Wreck", "color": Color("9ab4c8")},
+	"quiet": {"label": "Quiet sector", "color": Color("8ee0c8")},
 }
 
 # The first flight (Zachary, 21 Nov): the route is locked. It heads off the Rabble and stops once at each kind

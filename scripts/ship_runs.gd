@@ -8,14 +8,20 @@
 #   beacon   - a fight (more likely further out) or a random event from the pool for that zone and ring
 #   distress - a distress event for that zone and ring
 #   store    - the store window
-#   special  - the pirate stronghold (a hard fight; the Nest raid and Ooma's ship come later)
+#   store    - the zone's store (ShipData.ZONE_STORE: Terran depot, Moogli trader, Collective market, pirate fence)
+#   nest     - the Rabble's Nest, until you've raided it: three fights in a row (main.gd _nest_*)
+#   special  - after the Nest falls, a smaller pirate stronghold on each run (a hard fight, better loot)
+#   ooma     - Ooma's ship, the special merchant, on the days she isn't on the station (not Wed or Sat)
+# Hidden stops (23 Nov): an event's "reveal: <name>" adds one next to where you are (add_hidden): a wreck or old
+# survey site to pick over, a quiet sector to rest in, a pirate market, or another stronghold.
 # Events come from SpaceEvents.EVENTS (the ones with "kind", "zones" and "rings", not "story"); none repeats in a
 # run. Fights draw the zone's own ships or Rabble raiders (a cutter or a repainted culture ship).
 
 const SpaceEvents = preload("res://scripts/space_events.gd")
+const ShipData = preload("res://scripts/ship_data.gd")
 const ItemData = preload("res://scripts/item_data.gd")
 
-const MAX_RING := 3                          # rings open on a run for now
+const MAX_RING := 3                          # rings open on a run with the starting tank (the tank upgrade opens 4 and 5)
 const ZONE_KEYS := ["Terran", "Zaa'sh", "Reach", "Collective"]   # ShipData.ZONES order; the events' zone names
 const FIGHT_CHANCE := [0.0, 0.25, 0.35, 0.45, 0.5, 0.55]          # a beacon being a fight, by ring
 const ZONE_SHIPS := {
@@ -34,6 +40,18 @@ const ABOUT := {
 	"distress": "Someone is calling for help on an open band.",
 	"store": "A trader. Repairs, fuel, missiles and weapons, for a price.",
 	"special": "A Rabble stronghold dug into an asteroid. Heavily armed.",
+	"nest": "The Rabble's Nest: their home base, guarded by pickets and a gun platform. One raid, if you dare.",
+	"ooma": "Ooma's ship, hung with lanterns. Rare goods for rare customers.",
+	"wreck": "Something worth picking over, if nobody beats you to it.",
+	"quiet": "A still patch of space, off every trade lane. Somewhere to rest and patch up.",
+}
+# What an event's "reveal: <name>" adds to the map: [kind, name, store id or ""]. Anything else is a wreck.
+const REVEALS := {
+	"wreck field": ["wreck", "Wreck field", ""],
+	"old survey site": ["wreck", "Old survey site", ""],
+	"pirate stronghold": ["special", "Pirate stronghold", ""],
+	"quiet sector": ["quiet", "Quiet sector", ""],
+	"pirate market": ["store", "Pirate market", "pirate_fence"],
 }
 
 
@@ -50,12 +68,12 @@ static func zone_of(angle: float) -> String:
 
 # A day's map: [{"kind", "name", "ring", "angle", "about", "zone", "links": [stop indices], "seen": false}].
 # Ring 1's stops are linked to the Landing (stop -1).
-static func make_run(day: int, ring_stops: Array) -> Array:
+static func make_run(day: int, ring_stops: Array, max_ring := MAX_RING, nest_done := false, ooma_out := false) -> Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7919 * day + 17
 	var stops: Array = []
 	var by_ring: Array = [[]]
-	for ring in range(1, MAX_RING + 1):
+	for ring in range(1, max_ring + 1):
 		var n: int = int(ring_stops[ring])
 		var turn: float = rng.randf() * 360.0 / n
 		var here: Array = []
@@ -66,7 +84,7 @@ static func make_run(day: int, ring_stops: Array) -> Array:
 		by_ring.append(here)
 	# what kind each stop is: mostly beacons; a store on every ring; a distress signal or two per ring; the
 	# stronghold on the outermost ring, in the Reach
-	for ring in range(1, MAX_RING + 1):
+	for ring in range(1, max_ring + 1):
 		var here: Array = by_ring[ring]
 		var order: Array = here.duplicate()
 		_shuffle(order, rng)
@@ -80,19 +98,26 @@ static func make_run(day: int, ring_stops: Array) -> Array:
 				stops[i]["kind"] = "distress"
 				distress -= 1
 	var reach: Array = []
-	for i in by_ring[MAX_RING]:
+	for i in by_ring[max_ring]:
 		if zone_of(float(stops[i]["angle"])) == "Reach" and str(stops[i]["kind"]) == "beacon":
 			reach.append(i)
 	if reach.size() > 0:
-		stops[reach[rng.randi() % reach.size()]]["kind"] = "special"
+		stops[reach[rng.randi() % reach.size()]]["kind"] = "special" if nest_done else "nest"
+	if ooma_out:
+		var plain: Array = []
+		for i in by_ring[mini(2, max_ring)]:
+			if str(stops[i]["kind"]) == "beacon":
+				plain.append(i)
+		if not plain.is_empty():
+			stops[plain[rng.randi() % plain.size()]]["kind"] = "ooma"
 	# links: neighbours on the same ring, and the nearest one or two on the next ring out
-	for ring in range(1, MAX_RING + 1):
+	for ring in range(1, max_ring + 1):
 		var here: Array = by_ring[ring]
 		var ordered: Array = here.duplicate()
 		ordered.sort_custom(func(a, b): return float(stops[a]["angle"]) < float(stops[b]["angle"]))
 		for k in range(ordered.size()):
 			_link(stops, ordered[k], ordered[(k + 1) % ordered.size()])
-		if ring < MAX_RING:
+		if ring < max_ring:
 			for i in here:
 				var out: Array = by_ring[ring + 1].duplicate()
 				out.sort_custom(func(a, b): return _gap(stops, i, a) < _gap(stops, i, b))
@@ -105,14 +130,49 @@ static func make_run(day: int, ring_stops: Array) -> Array:
 		match str(s["kind"]):
 			"store":
 				s["name"] = STORE_NAMES[z]
+				s["store"] = ShipData.ZONE_STORE[z]
 			"distress":
 				s["name"] = "Distress signal"
 			"special":
 				s["name"] = "Pirate stronghold"
+			"nest":
+				s["name"] = "The Rabble's Nest"
+			"ooma":
+				s["name"] = "Ooma's ship"
+				s["store"] = "ooma"
 			_:
 				s["name"] = "Beacon"
 		s["about"] = ABOUT[str(s["kind"])]
 	return stops
+
+
+# Adds the stop an event revealed, one ring further out than `from` (or on it, at the edge), between its
+# neighbours, linked to `from` and the two nearest stops on its ring. Returns its index.
+static func add_hidden(stops: Array, from: int, reveal: String, rng: RandomNumberGenerator, max_ring := MAX_RING) -> int:
+	var spec: Array = REVEALS.get(reveal.to_lower(), ["wreck", reveal.capitalize(), ""])
+	var base_ring: int = int(stops[from]["ring"]) if from >= 0 else 0
+	var ring: int = clampi(base_ring + 1, 1, max_ring)
+	var base_angle: float = float(stops[from]["angle"]) if from >= 0 else rng.randf() * 360.0
+	var spacing: float = 360.0 / float(ShipData.RING_STOPS[ring])
+	var angle: float = fposmod(base_angle + spacing * 0.5 * (1.0 if rng.randf() < 0.5 else -1.0), 360.0)
+	var z: String = zone_of(angle)
+	var stop := {"kind": str(spec[0]), "ring": ring, "angle": angle, "links": [], "seen": false, "zone": z,
+		"name": str(spec[1]), "hidden": true}
+	stop["about"] = ABOUT.get(str(spec[0]), "")
+	if str(spec[2]) != "":
+		stop["store"] = str(spec[2])
+	var i: int = stops.size()
+	stops.append(stop)
+	if from >= 0:
+		_link(stops, from, i)
+	var same: Array = []
+	for k in range(i):
+		if int(stops[k]["ring"]) == ring:
+			same.append(k)
+	same.sort_custom(func(a, b): return _gap(stops, i, a) < _gap(stops, i, b))
+	for k in range(mini(2, same.size())):
+		_link(stops, i, same[k])
+	return i
 
 
 static func _shuffle(a: Array, rng: RandomNumberGenerator) -> void:

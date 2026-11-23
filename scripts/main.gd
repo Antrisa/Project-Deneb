@@ -126,6 +126,7 @@ var drone_parts := 0
 var ship_weapons: Array = ["burst_laser", ""]    # what's fitted in each weapon slot ("" = empty)
 var said_goodbye := false          # the send-off at launch has played
 var said_run_hint := false         # S.A.R.A. has explained free flights
+var nest_done := false             # the Rabble's Nest has been raided (runs then have smaller strongholds)
 var relics_found: Array = []       # relic item ids you have ever held (so ships don't drop the same one twice)
 var museum_view                    # scripts/museum_donate.gd: choosing cases for relics
 var museum_gifts: Dictionary = {}  # museum case (index into MapData.MUSEUM_SLOTS, as a string) -> relic item id
@@ -1890,6 +1891,8 @@ const RUN_FUEL := 3                  # Freya tops the tank up to this much when 
 # 8pm, or when you left if that was later (Zachary, 23 Nov).
 const RETURN_TIME := 20 * 60
 var run_enemy := ""                  # the ship being fought on a run
+var nest_stage := 0                  # which of the Nest raid's fights you're on
+var nest_news := false               # the Nest fell on this run: Freya says so when you get home
 var run_stops: Array = []
 var run_used: Array = []             # events already drawn this run
 var run_rng := RandomNumberGenerator.new()
@@ -1900,16 +1903,16 @@ func _start_run() -> void:
 	if fuel < RUN_FUEL:
 		_toast("Freya tops up the tank: %d fuel" % RUN_FUEL)
 		fuel = RUN_FUEL
-	run_stops = ShipRuns.make_run(day, ShipData.RING_STOPS)
+	run_stops = ShipRuns.make_run(day, ShipData.RING_STOPS, _rings_open(), nest_done, _ooma_out())
 	run_used = []
 	run_rng.seed = 104729 * day + Time.get_ticks_msec()
 	run_stop = -1
 	sfx("warp")
-	ship_map.open_run(run_stops, Callable(self, "_arrive_run"), Callable(self, "_fold_home"), ShipRuns.MAX_RING)
+	ship_map.open_run(run_stops, Callable(self, "_arrive_run"), Callable(self, "_fold_home"), _rings_open())
 	if not bool(said_run_hint):
 		said_run_hint = true
 		_say("Sara", [
-			"Free flight. Today's stops are on your map, rings one to three. Further out stays shut until you've a bigger tank.",
+			"Free flight. Today's stops are on your map, rings one to %s. Further out stays shut until you've a bigger tank." % ["one", "two", "three", "four", "five"][_rings_open() - 1],
 			"Each jump follows a gold line and uses one fuel cell. You choose the way.",
 			"[happy] And whenever you've had enough, fold home. It's free outside a fight, and you keep what you found.",
 		])
@@ -1920,17 +1923,35 @@ func _arrive_run(i: int) -> void:
 	fuel = maxi(0, fuel - 1)
 	run_stop = i
 	var stop: Dictionary = run_stops[i]
-	if bool(stop["seen"]):
+	var kind: String = str(stop["kind"])
+	if bool(stop["seen"]) and not (kind == "store" or kind == "ooma" or (kind == "nest" and not nest_done)):
 		_toast("Nothing new here.")
 		return
+	var first_visit: bool = not bool(stop["seen"])
 	stop["seen"] = true
 	ship_map.visible = false
 	ship_event.show_backdrop(stop)
 	var ring: int = int(stop["ring"])
 	var zone: String = str(stop["zone"])
-	match str(stop["kind"]):
+	match kind:
 		"store":
-			ship_store.open_store(ShipData.STORES["moogli_trader"].merged({"name": str(stop["name"])}, true), Callable(self, "_back_to_map"))
+			var store_id: String = str(stop.get("store", ShipData.ZONE_STORE.get(zone, "moogli_trader")))
+			ship_store.open_store(ShipData.STORES[store_id].merged({"name": str(stop["name"])}, true), Callable(self, "_back_to_map"))
+		"ooma":
+			ship_store.open_store(ShipData.STORES["ooma"], Callable(self, "_back_to_map"))
+			if first_visit:
+				_say("Ooma", ["[happy] Well, look who's out past the lamp-posts! Off-station prices, off-station stock, dearie.",
+					"Rare guns, rare goods. Don't tell Bram where you saw me."])
+		"nest":
+			_nest_arrive()
+		"wreck":
+			var got: Dictionary = apply_space_effects(ShipRuns.reward(ring + 1, false, run_rng, "", relics_found).slice(1))
+			ship_event.show_result(str(stop["name"]), "Nobody's here but the dead hulls. Your drone goes over them for anything worth taking.",
+					got["gains"], Callable(self, "_after_salvage"))
+		"quiet":
+			var rest: Dictionary = apply_space_effects(["+1 fuel", "+3 hull"])
+			ship_event.show_result(str(stop["name"]), "Silence, and stars. You shut everything down for an hour, and the drone patches what it can.",
+					rest["gains"], Callable(self, "_after_salvage"))
 		"special":
 			ship_event.close()
 			_run_fight("pirate_stronghold")
@@ -1999,6 +2020,91 @@ func _home_at_eight() -> void:
 	minutes = clampf(maxf(minutes, float(RETURN_TIME)), float(DAY_START), DAY_END - 1.0)
 
 
+# Rings you can reach on a run: three with the starting tank (the fuel tank upgrade adds the rest).
+func _rings_open() -> int:
+	return ShipRuns.MAX_RING
+
+
+# Ooma is out on her ship on the days she isn't on the station (not Wednesdays or Saturdays).
+func _ooma_out() -> bool:
+	var weekday: int = (day - 1) % 7
+	return weekday != 2 and weekday != 5
+
+
+# ---------------------------------------------------------------- the Rabble's Nest (23 Nov)
+# A one-time raid (claude/echo-landing-ship-combat.md): the Nest stop on the outer ring of the Reach until it falls.
+# Three fights in a row, as Claude suggested: the picket, the gun platform, then the Nest itself, with only what
+# your drone can patch in between (2 hull). Fleeing or losing ends the raid; you can try again another day. When
+# it falls you get a big haul, and from then on each run has a smaller pirate stronghold instead.
+const NEST_FIGHTS := ["rabble_cutter", "pirate_stronghold", "rabble_nest"]
+const NEST_LINES := [
+	"Their picket turns to meet you: a cutter, guns already hot.",
+	"Behind it, the Nest's gun platform swings round. No time to rest.",
+	"The way is open. The Nest itself lights up every gun it has.",
+]
+
+func _nest_arrive() -> void:
+	nest_stage = 0
+	ship_event.open_event({"title": "The Rabble's Nest",
+		"text": "A hollowed asteroid ringed with lights and docking arms: the Rabble's home. Pickets circle it, and a gun platform hangs off its flank. Three fights, one after another, and no store between.",
+		"choices": [
+			{"text": "Attack the Nest.", "outcomes": [{"text": NEST_LINES[0], "effects": ["fight: " + NEST_FIGHTS[0]]}]},
+			{"text": "Not today. Pull back.", "outcomes": [{"text": "You turn away before their pickets notice you. The Nest will keep.", "effects": ["nothing"]}]},
+		]}, Callable(self, "_after_nest_choice"))
+
+
+func _after_nest_choice(fight: String) -> void:
+	if fight == "":
+		run_stops[run_stop]["seen"] = false      # you can come back to it this run
+		_back_to_map()
+		return
+	ship_event.close()
+	_nest_fight()
+
+
+func _nest_fight() -> void:
+	ship_map.visible = false
+	run_enemy = NEST_FIGHTS[nest_stage]
+	battle.start({"enemy": run_enemy, "story": false}, Callable(self, "_after_nest_fight"), ship_hull)
+
+
+func _after_nest_fight(result: String, hull_left: int) -> void:
+	ship_hull = hull_left
+	if result == "lost":
+		run_stops = []
+		_ship_lost()
+		return
+	battle.close()
+	var stop: Dictionary = run_stops[run_stop]
+	if result != "won":
+		stop["seen"] = false
+		_toast("You break off the raid. The Nest will keep.")
+		_back_to_map()
+		return
+	nest_stage += 1
+	ship_event.show_backdrop(stop)
+	if nest_stage < NEST_FIGHTS.size():
+		ship_hull = mini(ship_hull + 2, int(ShipData.STARTER["hull"]))
+		ship_event.show_result("The Nest: %d of %d" % [nest_stage, NEST_FIGHTS.size()],
+				NEST_LINES[nest_stage] + " Your drone patches what it can on the way in.", [["+2 hull", Color("5adc6e")]],
+				Callable(self, "_next_nest_fight"))
+		return
+	nest_done = true
+	nest_news = true
+	var loot: Array = ShipRuns.reward(int(stop["ring"]) + 2, true, run_rng, "rabble_nest", relics_found)
+	loot.append_array(["+150 Scrip", "+2 fuel", "item: void_sapphire x1"])
+	var got: Dictionary = apply_space_effects(loot)
+	ship_event.show_result("The Nest falls",
+			"The Nest goes dark, then breaks apart. What the Rabble hoarded for years drifts free, and your crew take all they can carry. Without their home, they'll scatter to smaller strongholds.",
+			got["gains"], Callable(self, "_after_salvage"))
+	_save_game()
+
+
+func _next_nest_fight(_f: String) -> void:
+	ship_event.close()
+	_nest_fight()
+
+
 # Fold home: the run ends and you're back in the Shuttle Bay with what you found.
 func _fold_home() -> void:
 	ship_map.close()
@@ -2009,6 +2115,10 @@ func _fold_home() -> void:
 	_home_at_eight()
 	_snap_residents()
 	var lines: Array = ["[happy] Welcome back. The fold drive's still warm."]
+	if nest_news:
+		nest_news = false
+		lines = ["[surprised] The Nest? The whole Nest? S.A.R.A.'s had every channel on the station playing it.",
+			"[happy] Welcome home. Nobody's going to call the Rabble a threat to the Landing for a while."]
 	if ship_hull < int(ShipData.STARTER["hull"]):
 		lines.append("She's taken some knocks. Come and see me and I'll patch the hull.")
 	_say("Freya", lines)
@@ -2194,7 +2304,12 @@ func apply_space_effects(effects: Array) -> Dictionary:
 					_give(relic_id, 1)
 				gains.append(["Relic: %s (for Tar'Besh's museum)" % relic_name, note])
 		elif t.begins_with("reveal: "):
-			gains.append(["Marked on your map: %s (later)" % t.trim_prefix("reveal: "), note])
+			var reveal: String = t.trim_prefix("reveal: ").strip_edges()
+			if not run_stops.is_empty():
+				ShipRuns.add_hidden(run_stops, run_stop, reveal, run_rng, _rings_open())
+				gains.append(["Marked on your map: %s" % reveal, note])
+			else:
+				gains.append(["Noted for another day: %s" % reveal, note])
 		elif parts.size() >= 2 and (parts[0].begins_with("+") or parts[0].begins_with("-")):
 			var amount: int = int(parts[0])
 			var what: String = " ".join(parts.slice(1)).to_lower()
@@ -3527,6 +3642,7 @@ func _save_game() -> void:
 	cfg.set_value("ship", "fuel", fuel)
 	cfg.set_value("ship", "said_run_hint", said_run_hint)
 	cfg.set_value("museum", "relics_found", relics_found)
+	cfg.set_value("ship", "nest_done", nest_done)
 	cfg.set_value("museum", "gifts", museum_gifts)
 	cfg.set_value("ship", "missiles", missiles)
 	cfg.set_value("ship", "drone_parts", drone_parts)
@@ -3585,6 +3701,7 @@ func _load_game() -> void:
 	artie_found_day = int(cfg.get_value("ship", "artie_found_day", -1))
 	fuel = int(cfg.get_value("ship", "fuel", 6))
 	said_run_hint = bool(cfg.get_value("ship", "said_run_hint", false))
+	nest_done = bool(cfg.get_value("ship", "nest_done", false))
 	var saved_relics = cfg.get_value("museum", "relics_found", [])
 	relics_found = saved_relics if saved_relics is Array else []
 	var saved_gifts = cfg.get_value("museum", "gifts", {})
