@@ -1727,6 +1727,8 @@ func space_need_met(needs: String) -> bool:
 		return true                      # the starter ship always carries its repair drone
 	if n == "missiles":
 		return missiles > 0
+	if n == "drone parts":
+		return drone_parts > 0
 	if n.ends_with(" Scrip"):
 		return credits >= int(n.trim_suffix(" Scrip"))
 	if n.begins_with("item: "):
@@ -1756,7 +1758,7 @@ func apply_space_effects(effects: Array) -> Dictionary:
 				spec = spec.substr(0, x)
 			_give(spec, n)
 			var item_name: String = str(ItemData.ITEMS[spec]["name"]) if ItemData.ITEMS.has(spec) else spec
-			gains.append(["+%d %s" % [n, item_name], good])
+			gains.append(["%s%d %s" % ["+" if n >= 0 else "", n, item_name], good if n >= 0 else bad])
 		elif t.begins_with("fight: "):
 			fight = t.trim_prefix("fight: ").strip_edges()
 			gains.append(["They attack!", bad])
