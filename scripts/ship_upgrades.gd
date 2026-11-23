@@ -505,9 +505,11 @@ func _paint_restore() -> void:
 	var done: int = int(world.covered_stage)
 	s.panel(Rect2(56, 54, 412, 328), "power", "Restoring the covered fighter")
 	s.text(330, 58, "STAGE %d OF %d" % [mini(done + 1, stages.size()), stages.size()], "micro", MUTED)
+	var row_y := 84.0
 	for i in range(stages.size()):
 		var st: Dictionary = stages[i]
-		var box := Rect2(60, 84 + i * 96, 404, 90)
+		var box := Rect2(60, row_y, 404, 30 if i < done else 90)     # finished stages fold down to one line
+		row_y += box.size.y + 6.0
 		var now: bool = i == done
 		s.frame(box, Color("f8f6ef") if now else Color("f0ede4"), ORANGE if now else Color("d0c9bb"))
 		if now:
