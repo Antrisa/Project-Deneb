@@ -64,6 +64,14 @@ FACES = {
                 colours=dict(skin="#acb34c", lid="#f6df97", white="#fdf4b4", pupil="#070008",
                              brow="#2b1f1a", tear="#93e6ea")),
     # Ana (23 Nov, for her heart events): eyes from tools/fix_eyes.py (two wide, under her fringe)
+    # Zaas and Merrow (23 Nov, for his heart events): eyes from tools/fix_eyes.py; Zaas's "skin" is his teal face,
+    # under the hat brim
+    "zaas": dict(eyes=((10, 20), (16, 20)),
+                 colours=dict(skin="#50978d", lid="#c9b47a", white="#e1cc8f", pupil="#200b17",
+                              brow="#251a24", tear="#93e6ea")),
+    "merrow": dict(eyes=((7, 12), (14, 12)),
+                   colours=dict(skin="#94bb9a", lid="#f6edc7", white="#fbf4d6", pupil="#18070e",
+                                brow="#444441", tear="#93e6ea")),
     # Tar'Besh (23 Nov, for his heart events): eyes from tools/fix_eyes.py (front left (8, 13), right (15, 13));
     # his "skin" is the scales round his eyes
     "tarbesh": dict(eyes=((8, 13), (15, 13)),

@@ -2998,6 +2998,21 @@ SCHEDULE_DAYS_RAW = {
             ("17:35", "main", 131, 75, 26, "d", "eat", "eat"), ("19:15", "lounge", 24, 14, 26, "u", "idle", "ponder"),
             ("23:00", *HOME_SPOTS["Tar'Besh"], 26, "d", "idle", "rest")]},
     ],
+    # Zaas (23 Nov): Sunday is his day off, and his expedition day: the North Cave with his hydrophone, listening
+    # for the sea; once the Leviathan is dead and the lake is open, the whole day at the Merrow Deep (the south
+    # beach, a packed lunch, the end of the west pier). Stargazing in the lounge every evening, as always.
+    "Zaas": [
+        {"when": {"days": [6]}, "stops": [
+            ("08:00", "main", 126, 75, 26, "d", "eat", "eat"), ("09:00", "tunnels", 44, 28, 26, "d", "idle", "survey"),
+            ("12:15", "main", 126, 75, 26, "d", "eat", "eat"), ("13:30", "tunnels", 48, 8, 26, "u", "idle", "survey"),
+            ("17:05", "main", 126, 75, 26, "d", "eat", "eat"), ("19:15", "lounge", 37, 9, 26, "u", "idle", "stargaze"),
+            ("23:00", *HOME_SPOTS["Zaas"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["leviathan_slain"]}, "stops": [
+            ("08:00", "main", 126, 75, 26, "d", "eat", "eat"), ("09:00", "lake", 30, 40, 26, "u", "idle", "survey"),
+            ("12:15", "lake", 24, 40, 26, "u", "idle", "eat"), ("13:30", "lake", 14, 29, 26, "r", "idle", "observe"),
+            ("17:05", "main", 126, 75, 26, "d", "eat", "eat"), ("19:15", "lounge", 37, 9, 26, "u", "idle", "stargaze"),
+            ("23:00", *HOME_SPOTS["Zaas"], 26, "d", "idle", "rest")]},
+    ],
 }
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():

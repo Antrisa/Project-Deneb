@@ -2,6 +2,7 @@ extends Node2D
 # Little effects drawn in code for heart-event scenes (scripts/cutscene.gd "fx", 23 Nov 2026), so what the
 # narration says can be seen: bees buzzing round a spot, fireflies drifting and blinking over a wide one, steam
 # curling up from a pot or a mug, and the station's heartbeats as little lights rising round S.A.R.A.'s dais.
+# Zaas's scenes add water: spray from a burst pipe, and bubbles rising where something is under the water.
 # Stand-ins until there's art for them (Art Fix List, "Heart events").
 
 var kind := "bees"
@@ -20,7 +21,7 @@ func setup(what: String, at: Vector2, radius: float) -> void:
 	z_index = 40                # over the people standing in the scene
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(what)
-	var count: int = {"bees": 22, "fireflies": 28, "steam": 7, "heartbeats": 26}.get(what, 12)
+	var count: int = {"bees": 22, "fireflies": 28, "steam": 7, "heartbeats": 26, "spray": 30, "bubbles": 14}.get(what, 12)
 	for _i in count:
 		var speed: float = rng.randf_range(2.0, 4.5) if what == "bees" else rng.randf_range(0.3, 0.9)
 		_motes.append([rng.randf() * TAU, speed, rng.randf_range(0.3, 1.0), rng.randf() * TAU])
@@ -70,6 +71,22 @@ func _draw() -> void:
 				p = p.round()
 				draw_rect(Rect2(p - Vector2(1, 1), Vector2(3, 3)), Color(0.55, 0.85, 1.0, 0.2 * pulse))
 				draw_rect(Rect2(p, Vector2(1, 1)), Color(0.75, 0.95, 1.0, pulse))
+			"spray":
+				# drops thrown up and out from the spot, falling back in arcs, over and over
+				var life: float = fmod(_t * (0.9 + sp) + ph, 1.0)
+				var side: float = cos(float(m[3]))
+				var p: Vector2 = _here + Vector2(side * reach * life, -14.0 * float(m[2]) * life + 26.0 * life * life)
+				draw_rect(Rect2(p.round(), Vector2(1, 2)), Color(0.62, 0.85, 1.0, 0.85 * (1.0 - life * 0.6)))
+			"bubbles":
+				# little rings wobbling upward and popping, over a spot under the water
+				var life: float = fmod(_t * sp * 0.45 + ph, 1.0)
+				var p: Vector2 = _here + Vector2((float(m[2]) - 0.65) * spread + sin(_t * 3.0 + ph) * 1.5, -life * 22.0)
+				var r: float = 1.0 if float(m[2]) < 0.7 else 2.0
+				p = p.round()
+				draw_rect(Rect2(p - Vector2(r, 0), Vector2(1, 1)), Color(0.8, 0.95, 1.0, 0.8 * (1.0 - life)))
+				draw_rect(Rect2(p + Vector2(r, 0), Vector2(1, 1)), Color(0.8, 0.95, 1.0, 0.8 * (1.0 - life)))
+				draw_rect(Rect2(p - Vector2(0, r), Vector2(1, 1)), Color(0.9, 1.0, 1.0, 0.9 * (1.0 - life)))
+				draw_rect(Rect2(p + Vector2(0, r), Vector2(1, 1)), Color(0.6, 0.85, 1.0, 0.6 * (1.0 - life)))
 			"steam":
 				# puffs rise, sway and fade, then start again at the bottom
 				var life: float = fmod(_t * sp * 0.35 + ph, 1.0)

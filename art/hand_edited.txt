@@ -585,3 +585,5 @@ lunar/laundry_basket_side_empty.png
 lunar/laundry_basket_side_full.png
 npc_ana_event.png
 npc_tarbesh_event.png
+npc_zaas_event.png
+npc_merrow_event.png

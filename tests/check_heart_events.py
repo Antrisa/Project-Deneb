@@ -56,7 +56,7 @@ EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
          "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy", "fx", "sara"}
-FX = {"bees", "fireflies", "steam", "heartbeats"}   # scripts/scene_fx.gd
+FX = {"bees", "fireflies", "steam", "heartbeats", "spray", "bubbles"}   # scripts/scene_fx.gd
 SARA_CLIPS = set(re.findall(r'"name": "(\w+)"', (ROOT / 'sara/animations_data.gd').read_text()))
 SPECIAL = {"Sara"}   # S.A.R.A.: a hologram on her pads (MapData.PEOPLE), not a walking resident
 SEASONS = {"Spring", "Summer", "Autumn", "Winter"}
@@ -172,7 +172,8 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         elif op == "fx":
             if s[1] not in FX: bad(ev_id, "fx: no effect %r" % s[1])
             f = A[area]['floor']
-            if not (0 <= s[3] < len(f) and 0 <= s[2] < len(f[0])): bad(ev_id, "fx: (%d,%d) is off the map" % (s[2], s[3]))
+            if s[2:] == ["off"]: pass   # stops it
+            elif not (0 <= s[3] < len(f) and 0 <= s[2] < len(f[0])): bad(ev_id, "fx: (%d,%d) is off the map" % (s[2], s[3]))
         elif op == "energy":
             if not (isinstance(s[1], int) and s[1] < 0): bad(ev_id, "energy: %r should be a small cost, a negative number" % s[1])
         elif op == "sky":

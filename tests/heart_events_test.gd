@@ -42,7 +42,7 @@ func run() -> void:
 		for r in s.residents:
 			assert(not r.in_scene, id + ": " + r.who + " is back on their schedule")
 		assert(not s.player.scene_walking)
-		assert(s.cutscene._fx.is_empty(), id + ": its bees, fireflies and steam are gone")
+		assert(s.cutscene._fx.is_empty(), id + ": its bees, fireflies, steam, spray and bubbles are gone")
 		assert(s.cutscene._holo == null, id + ": S.A.R.A.'s portable projection is gone")
 		if id == "evarra_10":
 			assert(s.current_area == "east", "Evarra's 10 ends in the little park")
@@ -50,6 +50,8 @@ func run() -> void:
 			assert(s.sky_override == "", "the lounge's window goes back to the day's own sky after Ana's 8")
 		if id == "siblings_10":
 			assert(["Autumn", "Winter"].has(str(BridgeScript.season_date(s.day)[0])), "the siblings' banquet is in autumn or winter")
+		if id == "zaas_6":
+			assert(s.leviathan_slain, "Zaas's 6 is at the lake, so F3 kills the Leviathan first")
 		if id == "ana_10":
 			assert(s.player.visible, "you step back out of your ship after Ana's 10")
 			assert(s.wreck_sprite.modulate.a == 1.0, "your ship is back on its pad after Ana's 10")
@@ -67,7 +69,8 @@ func run() -> void:
 			"siblings_bechamel", "siblings_pod_story", "perk_wildflower_honey", "siblings_bees", "perk_starlight_souffle",
 			"siblings_practice_run", "perk_family_table", "keepsake_family_photo", "siblings_feast",
 			"sara_lost_property", "sara_concierge", "sara_emitter", "sara_rest", "perk_concierge", "sara_night_shift",
-			"tarbesh_astrolabe", "tarbesh_assignment", "tarbesh_summons", "tarbesh_plaque", "perk_relic_appraisal"]:
+			"tarbesh_astrolabe", "tarbesh_assignment", "tarbesh_summons", "tarbesh_plaque", "perk_relic_appraisal",
+			"zaas_helmet", "zaas_heartbeat", "merrow_deep", "zaas_captain", "perk_deep_sea_sonar_lure"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)

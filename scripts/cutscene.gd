@@ -32,8 +32,9 @@ extends Node
 #   ["sky", event]                     the Observation Lounge's window shows that sky event ("meteors", "aurora",
 #                                      "comet"...; scripts/lounge_sky.gd) until the scene ends
 #   ["energy", -points]                a small cost for a wrong choice (a bee sting): takes that much energy
-#   ["fx", kind, x, y, spread]         bees, fireflies, steam or heartbeats drawn round that tile (scripts/scene_fx.gd); the
-#                                      same kind again moves it there (bees settling on a hand); all gone when the scene ends
+#   ["fx", kind, x, y, spread]         bees, fireflies, steam, heartbeats, spray or bubbles drawn round that tile
+#                                      (scripts/scene_fx.gd); the same kind again moves it there (bees settling on a hand);
+#                                      ["fx", kind, "off"] stops it (the pipe is mended); all gone when the scene ends
 #   ["sara", clip]                     S.A.R.A. plays one of her hologram clips (sara/animations_data.gd: greeting, laugh,
 #                                      glitch_hand, standby, wake...): her portable projection if the scene placed one,
 #                                      else her pad in this area. "emote" and "say" work for "Sara" too.
@@ -248,7 +249,12 @@ func _step(s: Array) -> void:
 		"sara":
 			_sara(s)
 		"fx":
-			_show_fx(str(s[1]), Vector2i(int(s[2]), int(s[3])), float(s[4]) if s.size() > 4 else 14.0)
+			if s.size() == 3 and str(s[2]) == "off":
+				if _fx.has(str(s[1])):
+					_fx[str(s[1])].queue_free()
+					_fx.erase(str(s[1]))
+			else:
+				_show_fx(str(s[1]), Vector2i(int(s[2]), int(s[3])), float(s[4]) if s.size() > 4 else 14.0)
 		_:
 			push_warning("cutscene: unknown step " + op)
 

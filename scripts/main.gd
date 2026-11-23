@@ -1396,6 +1396,8 @@ func _debug_next_heart_event() -> void:
 		for f in ev.get("flags", []):
 			if f == "ship_flown":
 				flights = maxi(flights, 1)
+			elif f == "leviathan_slain":
+				leviathan_slain = true       # Zaas's 6 (the game keeps this one itself, not in story_flags)
 			else:
 				story_flags[f] = true
 		if bool(ev.get("partner", false)):

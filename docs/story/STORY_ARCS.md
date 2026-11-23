@@ -13,6 +13,8 @@ The full scripts that exist are copied next to this file: [`ROMANCE_SCRIPTS.md`]
 
 **The Sky-Weavers are a sentient nebula** (Zachary, 23 Nov): the main story's ending reveals it, and that should end the Zaa'sh hatred of AI, since their own gods were never ordinary living things either. "Sky-Weavers" is only the Zaa'sh name for them. Still open: their true name (Claude's ideas: the Choir, the Lumen, or a name the Custodians translate at the end) and whether "Starborn" stays the scholars' word. Tar'Besh, the exiled cleric who first guessed it, is the thread that leads there (section 5.2).
 
+**The Scyldar are an ocean people** (Zachary, 23 Nov), and Zaas names the underground sea **the Merrow Deep**, after Merrow (section 5.3).
+
 **How far each scene is written:**
 
 - **Script:** a full scene: setting, dialogue, choices and what they give.
@@ -43,7 +45,7 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2. (Ana's part settled 23 Nov: the game's version, with her crew always calling her weak for never firing on transports.)
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana; so are the Jasper & Evarra side arc and S.A.R.A.'s and Tar'Besh's platonic arcs.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana; so are the Jasper & Evarra side arc and the platonic arcs of S.A.R.A., Tar'Besh and Zaas.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3. (All settled: the hotel opens after Ivan's fall, before Stu arrives, and the siblings' 8 plays in the mess hall until then.)
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
@@ -120,7 +122,7 @@ Also in the docs but not on this list: the yearly Grand Hotel Inspection (sectio
 - Each resident has their own hearts; a shared event says whose hearts it needs. Pair arcs need **both** at the level; family arcs name the one member whose hearts trigger each event.
 - Platonic residents cap at 8 hearts; romance candidates at 8, or 10 while you're dating them.
 - At 8 hearts a candidate confesses; you accept or stay friends. While dating someone, every other candidate's 8 plays its **friendship ending**: same scene, no confession, same perk. Perks come at 8 either way; 10-heart events give a keepsake.
-- **Hard-lock rule:** 8- and 10-heart events never wait for story progress (they use a backup place). 2–6-heart events wait only when the unlock is what they're about. A scene that needs a resident who hasn't arrived plays without them. Exception: Zaas 6 and 8 wait for the Harbinger.
+- **Hard-lock rule:** 8- and 10-heart events never wait for story progress (they use a backup place). 2–6-heart events wait only when the unlock is what they're about. A scene that needs a resident who hasn't arrived plays without them. Zaas 6 waits for the Leviathan (the lake is what it's about); his 8 has a backup like every other 8 (23 Nov).
 
 ---
 
@@ -186,7 +188,7 @@ A quiet man finding home on a moon he never chose. **Reviewed with Zachary on 22
 
 - **Decided (Zachary, 22 Nov):** weekends off, with lines for those days; 6 gets a backup; 10's backup is the Shuttle Bay windows.
 - 8's backup moved from the break room (already his 2) to his porch. 4 plays in the mine because cavern floors are random.
-- **Still open:** the skiff needs art; his skiff and Zaas's research skiff (Zaas 8) could be the same boat.
+- **Still open:** the skiff needs art. (Zaas 8 is a diving bell now, not a skiff, so the two no longer repeat.)
 
 ### 3.5 Quill (Vuultam, Medical Assistant)
 
@@ -291,7 +293,7 @@ Needs **both** at the level. All five are full scripts ([ROMANCE_SCRIPTS.md](ROM
 
 ## 5. Platonic arcs
 
-All 40 are outlines. Text is from the NPC Master; where the Master has only a word or two, the older bible's outline is used.
+All 40 were outlines; S.A.R.A.'s, Tar'Besh's and Zaas's are written and in the game now (23 Nov). Text is from the NPC Master; where the Master has only a word or two, the older bible's outline is used.
 
 ### 5.1 S.A.R.A. (AI, Steward & Concierge)
 
@@ -325,16 +327,19 @@ The heretic who was sent here to die. **Reviewed with Zachary on 23 Nov; all fou
 
 ### 5.3 Zaas (Scyldar, Water Reclamation Officer); Merrow appears
 
+The water officer who was right about the ocean, and gave it to the one who kept the water running while he looked. **Reviewed with Zachary on 23 Nov; all four are written and playable.** Full scenes and his week: [`characters/ZAAS.md`](characters/ZAAS.md).
+
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Clipboard & Diving Helmet | East Agridome | Merrow fixes leaks while Zaas fits a diving helmet to an ice drill; you help Merrow. | Outline |
-| 4 | Sonar Echoes | Upper caverns | His hydrophone hears real tides below. | Outline |
-| 6 | First Splash | Sea of Echoes; waits for the Harbinger | Joyful tears; he hands Merrow the water officer badge. | Outline |
-| 8 | Captain of the Deep | Sea of Echoes; waits for the Harbinger | They christen a research skiff. Reward: Deep-Sea Sonar Lure. | Outline |
+| 2 | Clipboard & Diving Helmet | The East Complex reclamation plant, any day but Sunday | A pipe bursts while he tries his diving helmet on over his hat; you help Merrow shut the valve (or help him with the helmet, and everyone's soaked). | In game (Claude) |
+| 4 | Sonar Echoes | The sealed hatch of the mine's flooded stair, in the evening | His hydrophone hears tide, and under it a heartbeat (thread F). Merrow brings soup; he misses the sea of home. | In game (Claude) |
+| 6 | First Splash | The lake's south beach; waits for the Leviathan | He dives in, hat and all, and names the sea: the Merrow Deep. | In game (Claude) |
+| 8 | Captain of the Deep | The end of the lake's west pier; **backup:** a test dive in the plaza fountain, with Nub | A diving bell from his helmet, a porthole and Job's spare drill motor. Merrow dives first; he pins the water officer's badge on her. Reward: Deep-Sea Sonar Lure. | In game (Claude) |
 
-- 6 and 8 wait for the Harbinger by design, so Zaas can sit at 4 for most of Year 1.
-- **Idea:** 4's tides, the Chitin Exodus and Vzz'ket's carapace all point at the same thing below. Saying so links three arcs to the floor-45 boss (thread F).
-- **Repeat:** the skiff (section 3.4).
+- **Decided (Zachary, 23 Nov):** the Scyldar are an ocean people, so his search is homesickness, not a hobby; the sea is the Merrow Deep. Claude's rework of the places and the bell (it was a research skiff) was accepted. Wrong choices: soaked and nothing gained (2, −10 energy), −20 friendship (4, 6, 8).
+- **His week:** Sunday is his day off and his expedition day: the North Cave with his hydrophone, or the lake once it's open.
+- **Linked:** 4's heartbeat, the Chitin Exodus and Vzz'ket's carapace all point at the same thing below (thread F). Job's "I'll dig him a tunnel" pays off in the bell's drill motor.
+- **Gap (still):** Merrow's own 8 (section 5.8) should be about her; this arc gives her the badge but not her story.
 
 ### 5.4 Vzz'ket & Rusk (both)
 
@@ -507,4 +512,4 @@ Answer by number; anything left open stays as it is.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A. and Tar'Besh; Zaas is next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh and Zaas; Vzz'ket & Rusk are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
