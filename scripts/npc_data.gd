@@ -51,6 +51,8 @@ const PEOPLE = {
 			"[angry] People say Moogli only care about money. Untrue. I also care about lunch.",
 			"Nobody owns this zone, so everybody wants a discount.",
 			"[happy] Sara listens to everything, you know. I find it restful.",
+			"Seeds, fertiliser, fittings, the odd recipe. If it grows or it bolts together, I sell it. If not, I know a Moogli who does.",
+			"Your crate goes up in my cargo pod every night, to my cousins on the trade lanes. They buy anything. They complain about everything.",
 		],
 	},
 	"Jasper": {
@@ -651,7 +653,8 @@ const LOOKS = {
 # tools/build.py SCHEDULE_DAYS_RAW; the station calendar lists them. Jasper and Evarra stagger theirs, so one
 # of them always keeps the mess hall.
 const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6], "Quill": [0, 5], "Maren": [3, 6],
-	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3], "Tar'Besh": [0], "Zaas": [6], "Rusk": [0]}
+	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3], "Tar'Besh": [0], "Zaas": [6], "Rusk": [0],
+	"Bram": [3]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -766,6 +769,15 @@ const DAY_LINES := {
 		6: ["[happy] Sunday! Expedition day. Merrow has the plant, and I have a hydrophone and a packed lunch.",
 			"Sundays I listen. The rock hums, the pumps knock, and under all of it, if you are patient, something answers.",
 			"[happy] Day off. Which is to say, day on, for the ocean. Report any ice."],
+	},
+	# Bram (Zachary, 23 Nov): Thursdays off, and a half day on Sunday
+	"Bram": {
+		3: ["[happy] Thursday! My day off. People ask me, why Thursday? Only a fool closes on a Wednesday. So: Thursday.",
+			"No counter today. Today I am a customer. Jasper already sold me a bun I did not need. Excellent technique.",
+			"Thursday. The stall is shut and the pod is quiet. Tell me what you need, and I will sell it to you tomorrow."],
+		6: ["Sunday. A half day. The morning is for customers, the afternoon is for lunch and a long soak.",
+			"My cousins say a Moogli who closes at noon dies poor. [happy] My cousins have never had Jasper's Sunday lunch.",
+			"Half day today. If you need seed, buy it before noon. After noon I am a frog in a hot bath."],
 	},
 	"Rusk": {
 		0: ["Monday. The bar opens at six, and until then I'm a man of leisure. [happy] A man of leisure with a bad back.",

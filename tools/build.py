@@ -3013,6 +3013,22 @@ SCHEDULE_DAYS_RAW = {
             ("17:05", "main", 126, 75, 26, "d", "eat", "eat"), ("19:15", "lounge", 37, 9, 26, "u", "idle", "stargaze"),
             ("23:00", *HOME_SPOTS["Zaas"], 26, "d", "idle", "rest")]},
     ],
+    # Bram (Zachary, 23 Nov): the general store keeps going six and a half days. Thursdays off ("only a dumb person
+    # would close wednesday... thats why i am closed on thursday!": a nod to a certain other general store), and a
+    # half day on Sunday. Thursday: a late breakfast, the common room, lunch on the plaza watching who needs what,
+    # the afternoon at Tobbin's bench (Moogli talk), dinner, the bar. Sunday: the stall until noon, lunch, a long soak
+    # at the bath house, dinner, the bar. His stall stop is the "restock" activity, like his usual day.
+    "Bram": [
+        {"when": {"days": [3]}, "stops": [
+            ("09:00", "mess", 9, 7, 26, "d", "eat", "eat"), ("10:30", "common", 12, 6, 26, "l", "idle", "rest"),
+            ("12:30", "main", 102, 58, 26, "l", "eat", "eat"), ("14:30", "main", 79, 84, 26, "l", "idle", "rest"),
+            ("17:35", "mess", 9, 7, 26, "d", "eat", "eat"), ("19:15", *HOME_SPOTS["Bram at the bar"], 26, "u", "idle", "drink"),
+            ("22:00", *HOME_SPOTS["Bram"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6]}, "stops": [
+            ("07:00", "main", 114, 52, 26, "l", "restock", "restock"), ("12:15", "mess", 9, 7, 26, "d", "eat", "eat"),
+            ("13:30", "bathhouse", 30, 12, 26, "r", "idle", "rest"), ("17:35", "mess", 9, 7, 26, "d", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Bram at the bar"], 26, "u", "idle", "drink"), ("22:00", *HOME_SPOTS["Bram"], 26, "d", "idle", "rest")]},
+    ],
     # Rusk (23 Nov): Monday mornings off, the bar opens at six in the evening: a soak at the bath house, lunch by
     # the fountain with Saffi and Kit (not family, but he's always been there for them), Bram's in the afternoon.
     "Rusk": [
@@ -3054,7 +3070,8 @@ for who, days_ in SCHEDULE_DAYS_RAW.items():
         out = []
         for (hm, a, x, y, r, face_, act, key) in rows:
             a, x, y = moved(a, x, y)
-            assert face_ in "dulr" and act in ("work", "eat", "idle", "sleep"), (who, face_, act)
+            # "restock": Bram at his stall (tools/concourse.py gives his usual day the same activity)
+            assert face_ in "dulr" and act in ("work", "eat", "idle", "sleep", "restock"), (who, face_, act)
             row = -1
             if key:
                 label = key + " " + face_

@@ -1880,6 +1880,11 @@ func _interact(t: Dictionary) -> void:
 	elif kind == "market":
 		var company := _activity_near(t.pos,64.0,["restock"])
 		if company.has("Bram"): _talk("Bram")
+		elif (day - 1) % 7 == 3:
+			# his day off (Zachary, 23 Nov: "only a dumb person would close wednesday... thats why i am closed on thursday!")
+			_say("Bram’s supplies",["A sign on the counter: CLOSED THURSDAYS.","Underneath, in smaller letters: \"Only a fool closes on a Wednesday.\""])
+		elif (day - 1) % 7 == 6 and minutes >= 12 * 60:
+			_say("Bram’s supplies",["A sign on the counter: CLOSED SUNDAY AFTERNOONS. BACK MONDAY AT SEVEN."])
 		else: _say("Bram’s supplies",["Sealed provisions, spare fittings and seed packets. Bram handles work requests and metal sales when he is at the counter."])
 	elif kind == "repair":
 		_say("Public repair bench",["Clamped tools, labelled parts drawers and a clean cutting mat. The hub crew keeps this bench ready for small repairs."])
@@ -2114,15 +2119,19 @@ func _special_day(who: String) -> bool:
 	return str(facts[2]) == "%s %d" % [date[0], date[1]]
 
 
-# Whether a resident is at their place of work: near the first "work" stop of today's schedule.
-# People who don't walk about (S.A.R.A.), or have no work stop, always count as at work.
+# Whether a resident is at their place of work: near the first "work" stop of today's schedule (Bram's stall is
+# "restock"). People who don't walk about (S.A.R.A.), or never have a work stop, always count as at work; someone
+# who usually works but has no work stop today is on their day off (Bram's Thursdays, 23 Nov), so their shop is shut.
 func _at_workplace(who: String) -> bool:
 	var r = _resident_named(who)
 	if r == null:
 		return true
 	for e in r.schedule:
-		if e.size() > 6 and str(e[6]) == "work":
+		if e.size() > 6 and (str(e[6]) == "work" or str(e[6]) == "restock"):
 			return str(r.area) == str(e[1]) and Vector2(r.tile).distance_to(Vector2(float(e[2]), float(e[3]))) <= 10.0
+	for e in MapData.SCHEDULES.get(who, []):
+		if e.size() > 6 and (str(e[6]) == "work" or str(e[6]) == "restock"):
+			return false
 	return true
 
 
@@ -4156,7 +4165,7 @@ func _shipping_crate() -> void:
 		_ship(held, _count(held))
 		_toast("Shipped %d %s  (Bram pays %d cr in the morning)" % [int(shipping[held]), _item_name(held).to_lower(), _shipping_value()])
 		return
-	var lines: Array = ["Bram empties this crate overnight and pays full value for whatever is in it."]
+	var lines: Array = ["Bram empties this crate overnight into his cargo pod, for the Moogli traders, and pays full value for whatever is in it."]
 	if not shipping.is_empty():
 		lines.append("In it so far: %d credits' worth." % _shipping_value())
 	if _bars_value() > 0:
