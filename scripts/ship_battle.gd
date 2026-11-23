@@ -288,7 +288,8 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	# your ship: the starter, or another from the fight (boarding test, F6; later Freya's quest and Tally's captures)
 	crew_mode = fight.has("crew") and fight.has("player_ship")
 	var on_starter: bool = str(fight.get("player_ship", "")) != "covered_fighter"
-	var my_def: Dictionary = ShipData.STARTER if on_starter else ShipData.COVERED_FIGHTER
+	# main.gd passes the ship with its upgrades applied ("player_def"; 23 Nov)
+	var my_def: Dictionary = fight.get("player_def", ShipData.STARTER if on_starter else ShipData.COVERED_FIGHTER)
 	me_ship = ShipData.build(my_def)
 	ship_tex = _load_tex(str(my_def.get("art", "")))
 	interior_tex = _load_tex(str(my_def.get("interior", "")))
@@ -685,6 +686,13 @@ func _my_evasion() -> int:
 	if crew_mode and not _boosting("pilot"):
 		return 0                     # nobody in the cockpit
 	var base: int = _evasion(sys)
+	if crew_mode and base > 0:
+		# a pilot (Ana) at the cockpit's console adds her bonus
+		for c in my_crew:
+			if _standing(c) and int(c.get("pilot_bonus", 0)) > 0 and str(c["ship"]) == "me" and not bool(c["walking"]) \
+					and str(_room(me_ship["rooms"], str(c["room"])).get("sys", "")) == "pilot":
+				base += int(c["pilot_bonus"])
+				break
 	return base + 5 if base > 0 and _boosting("engines") else base
 
 
@@ -1731,6 +1739,9 @@ func _make_my_crew() -> void:
 			rid = str(me_ship["rooms"][0]["id"])
 		my_crew.append({"name": str(d.get("name", "Crew")), "kind": str(d.get("kind", "human")),
 			"named": bool(d.get("named", false)), "you": bool(d.get("you", false)), "hp": CREW_HP, "ship": "me",
+			# traits (23 Nov; ShipData.HIRE_KINDS, Freya and Ana): how hard they fight, repair and heal, and piloting
+			"fight_x": float(d.get("fight_x", 1.0)), "repair_x": float(d.get("repair_x", 1.0)),
+			"heal_x": float(d.get("heal_x", 1.0)), "pilot_bonus": int(d.get("pilot_bonus", 0)), "id": str(d.get("id", "")),
 			"room": rid, "last": rid, "target": rid, "path": [], "path_to": rid, "walking": false,
 			"face": Vector2.DOWN, "brawl": false, "foe_x": 0.0, "work": 0.0, "gone": false, "pos": Vector2.ZERO,
 			"cell": Vector2i(-1, -1), "cells": []})
@@ -2066,7 +2077,7 @@ func _tick_fights(delta: float) -> void:
 			continue
 		for e in e_crew_list:
 			if float(e["hp"]) > 0.0 and not bool(e.get("walking", false)) and str(e.get("ship", "foe")) == str(c["ship"]) and str(e["room"]) == str(c["room"]):
-				e["hp"] = maxf(0.0, float(e["hp"]) - FIGHT_DPS * delta)
+				e["hp"] = maxf(0.0, float(e["hp"]) - FIGHT_DPS * float(c.get("fight_x", 1.0)) * delta)
 				c["brawl"] = true
 				c["foe_x"] = (e["pos"] as Vector2).x
 				c["foe_pos"] = e["pos"]
@@ -2123,14 +2134,14 @@ func _my_crew_tick(delta: float) -> void:
 			if my_fires.has(rid):
 				continue
 			if sys.has(sname) and int(sys[sname]["damage"]) > 0:
-				c["work"] = float(c["work"]) + delta
+				c["work"] = float(c["work"]) + delta * float(c.get("repair_x", 1.0))
 				if float(c["work"]) >= REPAIR_TIME:
 					c["work"] = 0.0
 					sys[sname]["damage"] = int(sys[sname]["damage"]) - 1
 					_pop(_on_page(true, c["pos"]) + Vector2(0, -10), "Fixed", GOOD)
 					world.sfx("click", 1.6, -4.0)
 			elif sname == "medbay" and _eff(sys, "medbay") > 0 and float(c["hp"]) < CREW_HP:
-				c["hp"] = minf(CREW_HP, float(c["hp"]) + HEAL_RATE * _eff(sys, "medbay") * delta)
+				c["hp"] = minf(CREW_HP, float(c["hp"]) + HEAL_RATE * _eff(sys, "medbay") * float(c.get("heal_x", 1.0)) * delta)
 				c["work"] = 0.0
 			else:
 				c["work"] = 0.0

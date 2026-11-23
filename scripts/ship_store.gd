@@ -237,7 +237,7 @@ func _deal() -> void:
 
 
 func _repair(all: bool) -> void:
-	var full: int = int(ShipData.STARTER["hull"])
+	var full: int = world._hull_max()
 	var missing: int = full - int(world.ship_hull)
 	if missing <= 0:
 		status = "Your hull is fine."
@@ -392,7 +392,7 @@ func _paint_supplies() -> void:
 func _paint_repair() -> void:
 	var s := screen
 	s.panel(Rect2(56, 290, 659, 92), "power", "Hull repair")
-	var full: int = int(ShipData.STARTER["hull"])
+	var full: int = world._hull_max()
 	var hull: int = int(world.ship_hull)
 	var each: int = int(stock.get("repair", 8))
 	s.text(66, 320, "HULL %d / %d" % [hull, full], "micro", INK if hull >= full else Color("a43a2a"))

@@ -622,3 +622,79 @@ const FIRST_FLIGHT := [
 		"about": "The Rabble's main force, on its way to the Landing. Ivan leads it himself."},
 ]
 const FIRST_FLIGHT_FUEL := 6          # you set off with at least this much
+
+
+# ---------------------------------------------------------------- upgrades (23 Nov; mock-up approved by Zachary)
+# At Freya's workbench before you set out, or from the map in space (a field refit). Each ship keeps its own
+# levels (main.gd ship_ups[ship id]). Costs are first guesses: Scrip plus salvage.
+const SHIP_DEFS := {"starter": STARTER, "covered_fighter": COVERED_FIGHTER}
+const SHIP_NAMES := {"starter": "Your fighter", "covered_fighter": "Covered fighter"}
+# system -> [highest level, Scrip for the first upgrade, Scrip added per level after]
+const SYSTEM_UPGRADES := {
+	"shields": [6, 60, 30], "engines": [6, 50, 30], "weapons": [6, 60, 30], "life": [3, 40, 30],
+	"pilot": [3, 45, 30], "drones": [3, 45, 30], "pods": [3, 50, 30], "medbay": [3, 50, 30],
+}
+const SYSTEM_LABELS := {"shields": "Shields", "engines": "Engines", "weapons": "Weapons", "life": "Oxygen",
+	"pilot": "Cockpit", "drones": "Drone bay", "pods": "Boarding pods", "medbay": "Medbay"}
+const SYSTEM_EFFECTS := {"shields": "a shield layer for every two bars", "engines": "+1 bar of engines: more evasion",
+	"weapons": "power for more or bigger guns", "life": "air refills faster", "pilot": "more evasion, a faster fold",
+	"drones": "the drone repairs faster", "pods": "pods recharge faster", "medbay": "crew heal faster"}
+const SYSTEM_ABOUT := {
+	"shields": "Each layer stops one shot. A layer needs two bars of power.",
+	"engines": "Engines give evasion and charge the fold drive. Every bar powered helps.",
+	"weapons": "Each gun needs bars of weapons power to fire. More bars, more guns at once.",
+	"life": "Oxygen refills the rooms' air. Matters when fires, breaches or airlocks thin it.",
+	"pilot": "The cockpit gives evasion while crewed and charges the fold drive faster.",
+	"drones": "The drone bay powers your repair drone. Higher levels make it work faster.",
+	"pods": "Boarding pods carry your crew across. Higher levels recharge them faster.",
+	"medbay": "The medbay heals crew standing in it. Higher levels heal faster.",
+}
+const REACTOR_MAX_ADD := 6                   # reactor bars you can add
+const HULL_STEP := 2                         # hull added per plating level
+const HULL_LEVELS := 4
+const TANK_LEVELS := 2                       # each opens one more ring on runs, and one more fuel at launch
+const TANK_COSTS := [[250, {"helium_3": 2, "hull_plate": 2}], [400, {"helium_3": 3, "hull_plate": 3, "cobalt_60": 1}]]
+const TETHER_COST := [180, {"coil_wire": 4, "circuit_board": 1}]
+
+
+# What a system upgrade to `level` costs: [Scrip, {item: count}].
+static func system_cost(key: String, level: int) -> Array:
+	var row: Array = SYSTEM_UPGRADES[key]
+	var base: int = int(STARTER["systems"].get(key, COVERED_FIGHTER["systems"].get(key, [1, 1]))[0])
+	var step: int = maxi(0, level - base - 1)
+	var scrip: int = int(row[1]) + int(row[2]) * step
+	var items := {}
+	match level:
+		2: items = {"coil_wire": 1}
+		3: items = {"circuit_board": 1}
+		4: items = {"circuit_board": 1, "coil_wire": 2}
+		5: items = {"circuit_board": 2, "rare_earths": 1}
+		_: items = {"circuit_board": 2, "cobalt_60": 1}
+	return [scrip, items]
+
+
+static func reactor_cost(added: int) -> Array:      # the cost of the (added+1)th extra bar
+	var items := {"coil_wire": 1, "lithium_cell": 1}
+	if added >= 2:
+		items["circuit_board"] = 1
+	return [40 + 15 * added, items]
+
+
+static func hull_cost(level: int) -> Array:         # level 0 -> 1 is the first plating upgrade
+	return [50 + 20 * level, {"hull_plate": 2 + level / 2}]
+
+
+# Hired crew (23 Nov): Tally pins hirelings to the crew board in the Shuttle Bay. Each kind has a trait, as FTL's
+# races do. [signing fee, trait text, fight_x, repair_x, heal_x]. Names are drawn for each board.
+const HIRE_KINDS := {
+	"human": [50, "Steady: no weak spots", 1.0, 1.0, 1.0],
+	"zaash": [75, "Fierce: fights half again as hard", 1.5, 1.0, 1.0],
+	"arachnay": [70, "Four hands: repairs faster", 1.0, 1.6, 1.0],
+	"moogli": [60, "Hardy: heals faster in the medbay", 1.0, 1.0, 1.6],
+	"vuultam": [65, "Patient: repairs and heals a little faster", 1.0, 1.25, 1.25],
+	"ervani": [60, "Quick: fights and repairs a little better", 1.2, 1.2, 1.0],
+	"scyldar": [70, "Tough: fights and heals better", 1.25, 1.0, 1.3],
+}
+const HIRE_NAMES := ["Dax", "Rook", "Mira", "Tesh", "Orrin", "Kell", "Sabe", "Juno", "Pell", "Vex", "Nim", "Harrow",
+	"Lio", "Brask", "Ottie", "Quen", "Zarra", "Fen", "Wick", "Talla"]
+const CREW_SEATS := {"starter": 0, "covered_fighter": 3}   # crew besides you

@@ -184,6 +184,10 @@ func _click(id: String, _p: Vector2, button: int) -> void:
 	if world.dialogue.active:
 		world.dialogue.advance()
 		return
+	if id == "refit":
+		if world.ship_upgrades != null and moving == 0.0:
+			world.ship_upgrades.open_at("field")
+		return
 	if id == "fold":
 		if can_fold():
 			var cb: Callable = on_fold
@@ -355,12 +359,14 @@ func _paint_side(n: int) -> void:
 	# your ship's stores, and the key
 	var ship_box := Rect2(480, 176, 235, 110)
 	s.panel(ship_box, "bolt", "Ship")
-	var full: int = int(ShipData.STARTER["hull"])
+	var full: int = world._hull_max()
 	s.text(488, 203, "FUEL %d" % int(world.fuel), "micro", INK if int(world.fuel) > 0 else ShipScreen.PIP_RED)
 	s.text(600, 203, "HULL %d / %d" % [int(world.ship_hull), full], "micro", INK if int(world.ship_hull) * 3 > full else ShipScreen.PIP_RED)
 	s.text(488, 217, "MISSILES %d" % int(world.missiles), "micro", INK)
 	s.text(600, 217, "PARTS %d" % int(world.drone_parts), "micro", INK)
 	s.text(488, 231, "SCRIP %d" % int(world.credits), "micro", INK)
+	if free:
+		s.button("refit", Rect2(600, 227, 108, 18), "Refit ship", false, "micro", moving == 0.0)
 	for i in range(KEY_KINDS.size()):
 		var kind2: Dictionary = ShipData.STOP_KINDS[KEY_KINDS[i]]
 		var x: float = 488.0 + (i % 2) * 110.0

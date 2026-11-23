@@ -41,6 +41,7 @@ const BayWindow = preload("res://scripts/bay_window.gd")
 const LoungeSky = preload("res://scripts/lounge_sky.gd")
 const CalendarScript = preload("res://scripts/station_calendar.gd")
 const MuseumScript = preload("res://scripts/museum_donate.gd")
+const UpgradesScript = preload("res://scripts/ship_upgrades.gd")
 var station_calendar
 
 const CreatorScript = preload("res://scripts/creator.gd")
@@ -60,6 +61,15 @@ const SAVE_PATH := "user://save.cfg"
 const JOB_CRATES := 3
 const JOB_PAY_EACH := 15
 const JOB_BONUS := 15
+
+# The covered fighter in the bay (Freya's quest, Zachary 23 Nov): she restores it in stages for Scrip and salvage,
+# like Tikka's repairs on your first ship. Open once you've made your first two flights.
+const CREW_BOARD := Vector2i(11, 27)   # tile of the crew board in the Shuttle Bay booth (2 x 3 tiles)
+const COVERED_REPAIRS := [
+	{"name": "new plating where the tarp hid the holes", "cost": 120, "needs": {"hull_plate": 6}},
+	{"name": "the wiring and the consoles", "cost": 150, "needs": {"coil_wire": 4, "circuit_board": 2}},
+	{"name": "a power core to run it all", "cost": 200, "needs": {"cobalt_60": 1, "lithium_cell": 2}},
+]
 
 # Ship repairs, in order. Tikka does them for credits and parts (crafted from the menu).
 const REPAIRS := [
@@ -127,11 +137,24 @@ var fuel := 6
 var missiles := 0
 var drone_parts := 0
 var ship_weapons: Array = ["burst_laser", ""]    # what's fitted in each weapon slot ("" = empty)
+# Ships (23 Nov): the ones you own, the one that flies, and each one's upgrades, hull and guns. ship_hull and
+# ship_weapons are always the flying ship's; the others wait in ship_hulls / ship_loadouts.
+var ships_owned: Array = ["starter"]
+var active_ship := "starter"
+var ship_ups: Dictionary = {}       # ship id -> {"systems": {system: level}, "reactor", "hull", "tank", "tether"}
+var ship_hulls: Dictionary = {}
+var ship_loadouts: Dictionary = {}
+var covered_stage := 0              # Freya's repairs on the covered fighter done (COVERED_REPAIRS)
+var said_covered := false           # Freya has told you about it
+var crew_roster: Array = []         # hired crew: {"id", "name", "kind"}
+var crew_taking: Dictionary = {"Freya": false, "Ana": false}   # at 6 hearts they can come along
+var board_hired: Array = []         # names hired off the current board
 var said_goodbye := false          # the send-off at launch has played
 var said_run_hint := false         # S.A.R.A. has explained free flights
 var nest_done := false             # the Rabble's Nest has been raided (runs then have smaller strongholds)
 var relics_found: Array = []       # relic item ids you have ever held (so ships don't drop the same one twice)
 var museum_view                    # scripts/museum_donate.gd: choosing cases for relics
+var ship_upgrades                  # scripts/ship_upgrades.gd: the ship screen (upgrades, ships, crew)
 var museum_gifts: Dictionary = {}  # museum case (index into MapData.MUSEUM_SLOTS, as a string) -> relic item id
 var ana_found_day := -1            # the day you pulled Ana out of her ship (the Wave 2 arrival counts from it)
 var garden_watered_day := -1
@@ -354,6 +377,9 @@ func _ready() -> void:
 	museum_view = MuseumScript.new()
 	museum_view.world = self
 	add_child(museum_view)
+	ship_upgrades = UpgradesScript.new()
+	ship_upgrades.world = self
+	add_child(ship_upgrades)
 	_load_game()
 	wreck_sprite.frame = repair_stage
 	_go_home()
@@ -478,6 +504,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if datapad != null and datapad.blocking():
 		return                     # a datapad page is open; it takes its own keys
 	if travelling or garden_busy: return
+	if ship_upgrades != null and ship_upgrades.open:
+		if dialogue.active:
+			if event.is_action_pressed("interact") or event.is_action_pressed("use"):
+				dialogue.advance()
+		else:
+			ship_upgrades.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
 	if ship_store != null and ship_store.open:
 		if dialogue.active:
 			if event.is_action_pressed("interact") or event.is_action_pressed("use"):
@@ -542,7 +576,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F4 and OS.is_debug_build():
 		if battle != null and not battle.open and not ship_map.open:
 			if ship_hull <= 0:
-				ship_hull = int(ShipData.STARTER["hull"])
+				ship_hull = _hull_max()
 			_start_run()
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10:
@@ -967,6 +1001,10 @@ func _spawn_things() -> void:
 			"kind": item[0], "name": item[1], "hint": item[2], "area": item[3],
 			"pos": Vector2(float(pos[0]), float(pos[1])), "radius": float(item[5]), "who": "",
 		})
+
+	# Tally's crew board in the Shuttle Bay's booth (23 Nov), with a board picture standing there (CREW_BOARD).
+	things.append({"kind": "look", "name": "Crew board", "hint": "Read the board", "area": "bay",
+		"pos": Vector2(CREW_BOARD.x * 16 + 16, (CREW_BOARD.y + 3) * 16), "radius": 24.0, "who": ""})
 
 	# Ore veins and rocks. Each art file has 2 frames: full, worked out.
 	for entry in MapData.NODES:
@@ -1504,6 +1542,12 @@ func _interact(t: Dictionary) -> void:
 		_offer_relic("Tar'Besh's desk")
 	elif current_area == "museum" and kind == "look" and _look_museum_case(t.pos):
 		pass
+	elif current_area == "bay" and kind == "repair" and t.name == "Freya's workbench" and repair_stage >= REPAIRS.size():
+		ship_upgrades.open_at("bench")
+	elif current_area == "bay" and t.name == "Crew board":
+		_crew_board()
+	elif current_area == "bay" and kind == "look" and t.name == "Covered fighter" and flights >= 2:
+		_covered_fighter()
 	elif current_area == "bay" and kind == "look" and t.name == "Hangar windows":
 		_say(t.name, [BayWindow.OBSERVATIONS[BayWindow.view_for(day)]])
 	elif current_area == "lounge" and (kind == "observe" or (kind == "look" and t.name == "Panoramic window")):
@@ -1656,7 +1700,12 @@ func _talk(who: String) -> void:
 		_job_quest_talk()
 	elif who == "Vzz'ket" and job_quest == 3:
 		_vzzket_weapon()
-	elif who == "Freya" and repair_stage >= REPAIRS.size() and ship_hull < ShipData.STARTER["hull"]:
+	elif who == "Freya" and flights >= 2 and not said_covered:
+		said_covered = true
+		_say("Freya", ["Now you're flying for real, there's something under that tarp at the back of the bay you should see.",
+			"An old fighter with a crew deck. She's been there since before me. Bring me parts and I'll bring her back.",
+			"And my bench is yours: anything you want fitted to your ship, that's where we do it."])
+
 		_freya_ship_repair()
 	elif int(st.get("talks_today", 0)) >= TALKS_PER_DAY and not _special_day(who):
 		# Two chats a day, as in Stardew; business (jobs, shops, quests) and birthdays are not counted.
@@ -1812,7 +1861,7 @@ func _look_at_ship() -> void:
 		lines = ["The fold drive hums when you put a hand on it. It still doesn't know where it is."]
 	else:
 		lines = ["She's whole. You could leave.", "Launch control is in the booth by the south-west wall."]
-		if ship_hull < int(ShipData.STARTER["hull"]):
+		if ship_hull < _hull_max():
 			lines = ["Scorched plates and a dent in the engine bay. Freya can patch her up."]
 	_say("Your ship", lines)
 
@@ -1837,7 +1886,7 @@ const SHIP_LOSS_SHARE := 10        # percent of your credits lost when the ship 
 func _debug_ship_ready() -> void:
 	repair_stage = REPAIRS.size()
 	wreck_sprite.frame = repair_stage
-	ship_hull = int(ShipData.STARTER["hull"])
+	ship_hull = _hull_max()
 	fuel = maxi(fuel, ShipData.FIRST_FLIGHT_FUEL)
 	_go_to("bay", Vector2i(8, 29))
 	_snap_residents()
@@ -1903,9 +1952,10 @@ var run_stop := -1                   # the stop the ship is at
 
 
 func _start_run() -> void:
-	if fuel < RUN_FUEL:
-		_toast("Freya tops up the tank: %d fuel" % RUN_FUEL)
-		fuel = RUN_FUEL
+	var full_tank: int = RUN_FUEL + int(_ups().get("tank", 0))
+	if fuel < full_tank:
+		_toast("Freya tops up the tank: %d fuel" % full_tank)
+		fuel = full_tank
 	run_stops = ShipRuns.make_run(day, ShipData.RING_STOPS, _rings_open(), nest_done, _ooma_out())
 	run_used = []
 	run_rng.seed = 104729 * day + Time.get_ticks_msec()
@@ -1992,11 +2042,12 @@ func _after_run_event(fight: String) -> void:
 func _run_fight(enemy_id: String) -> void:
 	ship_map.visible = false
 	run_enemy = enemy_id
-	battle.start({"enemy": enemy_id, "story": false}, Callable(self, "_after_run_fight"), ship_hull)
+	battle.start(_my_fight({"enemy": enemy_id, "story": false}), Callable(self, "_after_run_fight"), ship_hull)
 
 
 func _after_run_fight(result: String, hull_left: int) -> void:
 	ship_hull = hull_left
+	_crew_after_fight()
 	if result == "lost":
 		run_stops = []
 		_ship_lost()
@@ -2023,9 +2074,166 @@ func _home_at_eight() -> void:
 	minutes = clampf(maxf(minutes, float(RETURN_TIME)), float(DAY_START), DAY_END - 1.0)
 
 
-# Rings you can reach on a run: three with the starting tank (the fuel tank upgrade adds the rest).
+# Rings you can reach on a run: three with the starting tank; each fuel tank upgrade adds one.
 func _rings_open() -> int:
-	return ShipRuns.MAX_RING
+	return mini(5, ShipRuns.MAX_RING + int(_ups().get("tank", 0)))
+
+
+# ---------------------------------------------------------------- ships and upgrades (23 Nov)
+
+# A ship's upgrade levels (the flying ship's if no id), made on first use.
+func _ups(id := "") -> Dictionary:
+	var sid: String = active_ship if id == "" else id
+	if not ship_ups.has(sid):
+		ship_ups[sid] = {"systems": {}, "reactor": 0, "hull": 0, "tank": 0, "tether": false}
+	return ship_ups[sid]
+
+
+# The ship as it flies: its definition with its upgrades applied.
+func _ship_def(id := "") -> Dictionary:
+	var sid: String = active_ship if id == "" else id
+	var d: Dictionary = (ShipData.SHIP_DEFS[sid] as Dictionary).duplicate(true)
+	var u: Dictionary = _ups(sid)
+	d["reactor"] = int(d["reactor"]) + int(u["reactor"])
+	d["hull"] = int(d["hull"]) + ShipData.HULL_STEP * int(u["hull"])
+	var systems: Dictionary = d["systems"]
+	for key in u["systems"]:
+		if systems.has(key):
+			var pair: Array = systems[key]
+			systems[key] = [maxi(int(pair[0]), int(u["systems"][key])), int(pair[1])]
+	return d
+
+
+func _hull_max() -> int:
+	return int(_ship_def()["hull"])
+
+
+func _system_level(key: String, id := "") -> int:
+	var d: Dictionary = _ship_def(id)
+	return int((d["systems"] as Dictionary).get(key, [0, 0])[0])
+
+
+# Change which ship flies. Its hull and guns come out of storage; the other's go in.
+func switch_ship(id: String) -> void:
+	if id == active_ship or not ships_owned.has(id):
+		return
+	ship_hulls[active_ship] = ship_hull
+	ship_loadouts[active_ship] = ship_weapons
+	active_ship = id
+	ship_hull = int(ship_hulls.get(id, int(_ship_def(id)["hull"])))
+	ship_weapons = ship_loadouts.get(id, (ShipData.SHIP_DEFS[id]["weapons"] as Array).duplicate())
+
+
+# Tally's crew board (Zachary 23 Nov: hire at a board in the Shuttle Bay until the Dispatch has a room).
+func _crew_board() -> void:
+	if not _arrived("Tally"):
+		_say("Crew board", ["An empty board with a hand-written card: POST & PRIVATEER DISPATCH. CREW FOR HIRE. OPENING SOON."])
+		return
+	ship_upgrades.open_at("board")
+
+
+# Today's hirelings: three names, new every three days, minus anyone you've already signed from this board.
+func crew_board_offers() -> Array:
+	var block: int = (day - 1) / 3
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 6151 * block + 3
+	var kinds: Array = ShipData.HIRE_KINDS.keys()
+	var out: Array = []
+	var names: Array = ShipData.HIRE_NAMES.duplicate()
+	for i in 3:
+		var nm: String = str(names.pop_at(rng.randi() % names.size()))
+		var kind: String = str(kinds[rng.randi() % kinds.size()])
+		var row: Array = ShipData.HIRE_KINDS[kind]
+		if board_hired.has(nm) or crew_roster.any(func(c): return str(c["name"]) == nm):
+			continue
+		out.append({"id": "%s_%d" % [nm.to_lower(), block], "name": nm, "kind": kind, "fee": int(row[0]), "trait": str(row[1])})
+	return out
+
+
+# The covered fighter: Freya's restoration, stage by stage.
+func _covered_fighter() -> void:
+	if ships_owned.has("covered_fighter"):
+		_say("Covered fighter", ["Uncovered now, and yours. Pick which ship flies at Freya's bench."])
+		return
+	var r: Dictionary = COVERED_REPAIRS[covered_stage]
+	var what: String = "%d credits and %s" % [int(r["cost"]), _needs_text(r["needs"])]
+	var lead: String = "The tarp's off the front. Next is %s." % r["name"] if covered_stage > 0 else "Under the tarp: an old fighter with a crew deck. Freya's chalked a list on the hull. First, %s." % r["name"]
+	if credits >= int(r["cost"]) and _has_all(r["needs"]):
+		_say("Freya", [lead, "That's %s. Shall I?" % what], Callable(self, "_pay_covered"), "Hand it over")
+	else:
+		_say("Freya", [lead, "I'll need %s." % what])
+
+
+func _pay_covered() -> void:
+	var r: Dictionary = COVERED_REPAIRS[covered_stage]
+	_money(-int(r["cost"]), "Covered fighter repairs")
+	var needs: Dictionary = r["needs"]
+	for item in needs:
+		_give(item, -int(needs[item]))
+	covered_stage += 1
+	sfx("quest")
+	if covered_stage >= COVERED_REPAIRS.size():
+		ships_owned.append("covered_fighter")
+		ship_hulls["covered_fighter"] = int(_ship_def("covered_fighter")["hull"])
+		_say("Freya", ["[happy] She's done. A real ship, crew deck and all. Boarding pods, a medbay...",
+			"Choose which one flies at my bench. And you'll want hands aboard: Tally pins hirelings on the crew board."])
+	else:
+		_say("Freya", ["Done. %d of %d. She's starting to look like a ship again." % [covered_stage, COVERED_REPAIRS.size()]])
+	_save_game()
+
+
+# Adds what this ship brings to a fight's settings: its upgraded definition, and on a crewed ship the crew, the
+# tether and enemy boarders from Rabble ships.
+func _my_fight(base: Dictionary) -> Dictionary:
+	var f: Dictionary = base.duplicate()
+	f["player_def"] = _ship_def()
+	if active_ship != "starter":
+		f["player_ship"] = active_ship
+		f["crew"] = _crew_for_run()
+		f["tether"] = bool(_ups().get("tether", false))
+		f["foe_pods"] = str(base.get("enemy", "")).contains("rabble") or str(base.get("enemy", "")) == "pirate_stronghold"
+	return f
+
+
+# Who flies with you on a crewed ship: Freya and Ana first if you're taking them (6 hearts; better at 8), then
+# hired crew, up to the ship's seats.
+func _crew_for_run() -> Array:
+	var seats: int = int(ShipData.CREW_SEATS.get(active_ship, 0))
+	var out: Array = []
+	for who in ["Freya", "Ana"]:
+		if out.size() < seats and bool(crew_taking.get(who, false)) and _crew_hearts(who) >= 6:
+			var eight: bool = _crew_hearts(who) >= 8
+			if who == "Freya":
+				out.append({"name": "Freya", "kind": "freya", "named": true, "id": "Freya", "repair_x": 2.5 if eight else 2.0})
+			else:
+				out.append({"name": "Ana", "kind": "ana", "named": true, "id": "Ana", "room": "cockpit", "pilot_bonus": 15 if eight else 10})
+	for c in crew_roster:
+		if out.size() >= seats:
+			break
+		var k: Array = ShipData.HIRE_KINDS.get(str(c["kind"]), ShipData.HIRE_KINDS["human"])
+		out.append({"name": str(c["name"]), "kind": str(c["kind"]), "id": str(c["id"]),
+			"fight_x": float(k[2]), "repair_x": float(k[3]), "heal_x": float(k[4])})
+	return out
+
+
+func _crew_hearts(who: String) -> int:
+	if not persons.has(who) or (who == "Ana" and not _arrived("Ana")):
+		return 0
+	return int(persons[who].get("friendship", 0)) / 5
+
+
+# After a fight on a crewed ship: hired crew who didn't make it are gone; Freya or Ana knocked out go home.
+func _crew_after_fight() -> void:
+	if battle == null or not battle.crew_mode:
+		return
+	for c in battle.my_crew:
+		if not bool(c.get("gone", false)) or bool(c.get("you", false)):
+			continue
+		var cid: String = str(c.get("id", ""))
+		if bool(c.get("named", false)):
+			crew_taking[cid] = false
+		else:
+			crew_roster = crew_roster.filter(func(r): return str(r["id"]) != cid)
 
 
 # Ooma is out on her ship on the days she isn't on the station (not Wednesdays or Saturdays).
@@ -2068,11 +2276,12 @@ func _after_nest_choice(fight: String) -> void:
 func _nest_fight() -> void:
 	ship_map.visible = false
 	run_enemy = NEST_FIGHTS[nest_stage]
-	battle.start({"enemy": run_enemy, "story": false}, Callable(self, "_after_nest_fight"), ship_hull)
+	battle.start(_my_fight({"enemy": run_enemy, "story": false}), Callable(self, "_after_nest_fight"), ship_hull)
 
 
 func _after_nest_fight(result: String, hull_left: int) -> void:
 	ship_hull = hull_left
+	_crew_after_fight()
 	if result == "lost":
 		run_stops = []
 		_ship_lost()
@@ -2087,7 +2296,7 @@ func _after_nest_fight(result: String, hull_left: int) -> void:
 	nest_stage += 1
 	ship_event.show_backdrop(stop)
 	if nest_stage < NEST_FIGHTS.size():
-		ship_hull = mini(ship_hull + 2, int(ShipData.STARTER["hull"]))
+		ship_hull = mini(ship_hull + 2, _hull_max())
 		ship_event.show_result("The Nest: %d of %d" % [nest_stage, NEST_FIGHTS.size()],
 				NEST_LINES[nest_stage] + " Your drone patches what it can on the way in.", [["+2 hull", Color("5adc6e")]],
 				Callable(self, "_next_nest_fight"))
@@ -2122,7 +2331,7 @@ func _fold_home() -> void:
 		nest_news = false
 		lines = ["[surprised] The Nest? The whole Nest? S.A.R.A.'s had every channel on the station playing it.",
 			"[happy] Welcome home. Nobody's going to call the Rabble a threat to the Landing for a while."]
-	if ship_hull < int(ShipData.STARTER["hull"]):
+	if ship_hull < _hull_max():
 		lines.append("She's taken some knocks. Come and see me and I'll patch the hull.")
 	_say("Freya", lines)
 	_save_game()
@@ -2321,7 +2530,7 @@ func apply_space_effects(effects: Array) -> Dictionary:
 			elif what.begins_with("fuel"):
 				fuel = maxi(0, fuel + amount)
 			elif what.begins_with("hull"):
-				ship_hull = clampi(ship_hull + amount, 0, int(ShipData.STARTER["hull"]))
+				ship_hull = clampi(ship_hull + amount, 0, _hull_max())
 			elif what.begins_with("missile"):
 				missiles = maxi(0, missiles + amount)
 			elif what.begins_with("drone part"):
@@ -2334,7 +2543,7 @@ func apply_space_effects(effects: Array) -> Dictionary:
 
 func _stop_fight(stop: Dictionary) -> void:
 	ship_map.visible = false
-	battle.start({"enemy": str(stop["enemy"]), "story": true, "tutorial": true}, Callable(self, "_after_picket"), ship_hull)
+	battle.start({"enemy": str(stop["enemy"]), "story": true, "tutorial": true, "player_def": _ship_def("starter")}, Callable(self, "_after_picket"), ship_hull)
 	_say("Sara", [
 		"That's a Rabble Cutter, scouting ahead of the others. You'll have to go through it.",
 		"Space pauses the fight. You can give every order while it's paused.",
@@ -2379,7 +2588,7 @@ func _after_picket(result: String, hull_left: int) -> void:
 
 func _stop_ivan(stop: Dictionary) -> void:
 	ship_map.visible = false
-	battle.start({"enemy": str(stop["enemy"]), "story": true, "uplink": true}, Callable(self, "_after_ivan"), ship_hull)
+	battle.start({"enemy": str(stop["enemy"]), "story": true, "uplink": true, "player_def": _ship_def("starter")}, Callable(self, "_after_ivan"), ship_hull)
 	_say("Ivan", [
 		"[angry] You. The one who got away from me at the jump.",
 		"I'll take that station apart plate by plate, and you can watch from what's left of your ship.",
@@ -2435,7 +2644,7 @@ func _land_after_first_flight() -> void:
 		"[happy] You came back! With company, by the look of it.",
 		"Maren and Quill are taking the pod up to the Medbay. Whoever's inside, they'll be asleep a while yet.",
 	]
-	if ship_hull < int(ShipData.STARTER["hull"]):
+	if ship_hull < _hull_max():
 		lines.append("She's scorched, though. Come and see me and I'll patch the hull.")
 	_say("Freya", lines)
 	_save_game()
@@ -2473,7 +2682,7 @@ func _ship_lost() -> void:
 
 func _second_flight() -> void:
 	sfx("warp")
-	battle.start({"enemy": "ana_corsair", "story": true}, Callable(self, "_after_ana"), ship_hull)
+	battle.start({"enemy": "ana_corsair", "story": true, "player_def": _ship_def("starter")}, Callable(self, "_after_ana"), ship_hull)
 	_say("Sara", [
 		"You're clear of the crater. Where are we headed today?",
 		"[surprised] Wait. Something just dropped out of fold right on top of you. Rabble colours.",
@@ -2512,7 +2721,7 @@ func _loyalists_speak() -> void:
 
 
 func _loyalist_fight() -> void:
-	battle.start({"enemy": "loyalist_gunship", "story": true}, Callable(self, "_after_loyalists"), ship_hull)
+	battle.start({"enemy": "loyalist_gunship", "story": true, "player_def": _ship_def("starter")}, Callable(self, "_after_loyalists"), ship_hull)
 	_say("Sara", [
 		"[surprised] A gunship just undocked from her. They've shot out her engines and they're coming for you.",
 		"Ana's ship is adrift. Deal with them first.",
@@ -2562,7 +2771,7 @@ func _land_after_second_flight() -> void:
 
 
 func _freya_ship_repair() -> void:
-	var full: int = int(ShipData.STARTER["hull"])
+	var full: int = _hull_max()
 	var missing: int = full - ship_hull
 	var cost: int = missing * HULL_REPAIR_PRICE
 	var needs_plate: bool = ship_hull <= 0
@@ -2573,7 +2782,7 @@ func _freya_ship_repair() -> void:
 
 
 func _do_freya_repair() -> void:
-	var full: int = int(ShipData.STARTER["hull"])
+	var full: int = _hull_max()
 	var cost: int = (full - ship_hull) * HULL_REPAIR_PRICE
 	var needs_plate: bool = ship_hull <= 0
 	if credits < cost:
@@ -3422,10 +3631,10 @@ func _toast(msg: String) -> void:
 func _process(delta: float) -> void:
 	if music_director != null:
 		music_director.update(delta)
-	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (datapad != null and datapad.blocking())
+	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (ship_upgrades != null and ship_upgrades.open) or (datapad != null and datapad.blocking())
 	if datapad != null:
 		# The datapad leaves the keys alone while one of the game's own windows is open.
-		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or travelling or garden_busy)
+		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (ship_upgrades != null and ship_upgrades.open) or travelling or garden_busy)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	if not seasonal_props.is_empty():
@@ -3566,8 +3775,8 @@ func journal() -> Array:
 		else:
 			out.append(["Take her out", ["You turned back for the Landing, and Ivan went down with his ship.",
 				"Something was in his wreck: a stasis pod, and a man asleep inside it. He is in the Medbay."], true])
-		if ship_hull < int(ShipData.STARTER["hull"]):
-			out.append(["Patch up the ship", ["Hull %d of %d. Freya can repair it for credits (and a hull plate if she's wrecked)." % [ship_hull, int(ShipData.STARTER["hull"])]], false])
+		if ship_hull < _hull_max():
+			out.append(["Patch up the ship", ["Hull %d of %d. Freya can repair it for credits (and a hull plate if she's wrecked)." % [ship_hull, _hull_max()]], false])
 	# Job's chain
 	if job_quest == 0:
 		out.append(["A hand in the mine", ["Job, the miner, could use some help. He is in the main dig, down the south lift and past Engineering."], false])
@@ -3665,6 +3874,16 @@ func _save_game() -> void:
 	cfg.set_value("ship", "said_run_hint", said_run_hint)
 	cfg.set_value("museum", "relics_found", relics_found)
 	cfg.set_value("ship", "nest_done", nest_done)
+	cfg.set_value("ships", "owned", ships_owned)
+	cfg.set_value("ships", "active", active_ship)
+	cfg.set_value("ships", "ups", ship_ups)
+	cfg.set_value("ships", "hulls", ship_hulls)
+	cfg.set_value("ships", "loadouts", ship_loadouts)
+	cfg.set_value("ships", "taking", crew_taking)
+	cfg.set_value("ships", "covered_stage", covered_stage)
+	cfg.set_value("ships", "said_covered", said_covered)
+	cfg.set_value("ships", "crew", crew_roster)
+	cfg.set_value("ships", "board_hired", board_hired)
 	cfg.set_value("museum", "gifts", museum_gifts)
 	cfg.set_value("ship", "missiles", missiles)
 	cfg.set_value("ship", "drone_parts", drone_parts)
@@ -3718,7 +3937,26 @@ func _load_game() -> void:
 	if saved_farm is Dictionary:
 		farm = saved_farm
 	seeds_taken_day = int(cfg.get_value("farm", "seeds_taken_day", -1))
-	ship_hull = clampi(int(cfg.get_value("ship", "hull", int(ShipData.STARTER["hull"]))), 0, int(ShipData.STARTER["hull"]))
+	var saved_owned = cfg.get_value("ships", "owned", ["starter"])
+	ships_owned = saved_owned if saved_owned is Array and not (saved_owned as Array).is_empty() else ["starter"]
+	active_ship = str(cfg.get_value("ships", "active", "starter"))
+	if not ships_owned.has(active_ship):
+		active_ship = "starter"
+	for key in ["ups", "hulls", "loadouts", "taking"]:
+		var v = cfg.get_value("ships", key, {})
+		if v is Dictionary:
+			match key:
+				"ups": ship_ups = v
+				"hulls": ship_hulls = v
+				"loadouts": ship_loadouts = v
+				"taking": crew_taking = v
+	covered_stage = int(cfg.get_value("ships", "covered_stage", 0))
+	said_covered = bool(cfg.get_value("ships", "said_covered", false))
+	var saved_roster = cfg.get_value("ships", "crew", [])
+	crew_roster = saved_roster if saved_roster is Array else []
+	var saved_hired = cfg.get_value("ships", "board_hired", [])
+	board_hired = saved_hired if saved_hired is Array else []
+	ship_hull = clampi(int(cfg.get_value("ship", "hull", _hull_max())), 0, _hull_max())
 	flights = int(cfg.get_value("ship", "flights", 0))
 	artie_found_day = int(cfg.get_value("ship", "artie_found_day", -1))
 	fuel = int(cfg.get_value("ship", "fuel", 6))
@@ -3732,8 +3970,10 @@ func _load_game() -> void:
 	missiles = int(cfg.get_value("ship", "missiles", 0))
 	drone_parts = int(cfg.get_value("ship", "drone_parts", 0))
 	var saved_weapons = cfg.get_value("ship", "weapons", ["burst_laser", ""])
-	if saved_weapons is Array and saved_weapons.size() == ShipData.STARTER["weapons"].size():
+	if saved_weapons is Array and saved_weapons.size() == (ShipData.SHIP_DEFS[active_ship]["weapons"] as Array).size():
 		ship_weapons = saved_weapons
+	else:
+		ship_weapons = (ShipData.SHIP_DEFS[active_ship]["weapons"] as Array).duplicate()
 	said_goodbye = bool(cfg.get_value("ship", "said_goodbye", false))
 	ana_found_day = int(cfg.get_value("ship", "ana_found_day", -1))
 	if farm_view != null: farm_view.sync_crops()
@@ -3802,6 +4042,7 @@ func _spawn_concourse() -> void:
 	for area_name in MapData.AREA_PROPS:
 		for p in MapData.AREA_PROPS[area_name]:
 			_spawn_prop(p,area_name)
+	_spawn_prop(["star_chart", CREW_BOARD.x, CREW_BOARD.y, 2, 3, "Crew board"], "bay")   # stand-in picture for the board
 	# What the museum's cases hold (Tar'Besh's own pieces to start with); donations add more with show_exhibit().
 	for i in MapData.MUSEUM_SLOTS.size():
 		var slot: Array = MapData.MUSEUM_SLOTS[i]
