@@ -147,7 +147,7 @@ func _paint() -> void:
 	_paint_repair(d, showing)
 	# the bottom row
 	s.shift(s.bottom_left())
-	s.status(message if message != "" else "Pick a repair. S.A.R.A.'s drones do the work overnight. Esc or E puts this away.")
+	s.status(message if message != "" else "Pick a repair. S.A.R.A.'s drones do the work overnight. Esc or right-click puts this away.")
 	s.shift(s.bottom_right())
 	s.solid_button("close", Rect2(625, 388, 82, 22), "Close")
 	s.shift(Vector2.ZERO)

@@ -15,6 +15,7 @@ signal discard_requested(item_id: String, amount: int)
 signal quit_requested
 signal resume_requested
 signal slots_swapped(a: int, b: int)
+signal storage_moved(item_id: String, to_chest: bool)
 
 const Art = preload("res://datapad/art.gd")
 const Sample = preload("res://datapad/catalog.gd")
@@ -109,6 +110,13 @@ var bag_slots: Array = []
 var _held := -1              # the bag slot whose item is being carried by the pointer (-1: none)
 var _mouse_ui := Vector2.ZERO
 var shop_stock: Array = []
+# A chest you built (23 Nov): the Storage page lists your bag and the chest side by side, four rows a page;
+# Store / Take move a whole stack across (main.gd chest_move).
+var storage_name := ""
+var storage_chest: Array = []     # [[item id, count], ...]
+var storage_bag: Array = []
+var storage_page_bag := 0
+var storage_page_chest := 0
 var shop_page := 0
 var shop_name := "Station supplies"
 var dialogue: Dictionary = {}
@@ -205,7 +213,7 @@ func add_item_definition(id: String, name_text: String, category: String, kind: 
 
 func show_page(key: String) -> void:
 	key = {"Quests":"Journal","NPC relations":"Crew","Settings":"System"}.get(key,key)
-	if key != "HUD" and key!="Relics" and not key in TABS and not key in ["Shop","Recap","Dialogue","Pause","Emotes"]:
+	if key != "HUD" and key!="Relics" and not key in TABS and not key in ["Shop","Storage","Recap","Dialogue","Pause","Emotes"]:
 		return
 	_overlay=""
 	_pressed_item=""
@@ -229,6 +237,21 @@ func show_shop(merchant: String, stock: Array) -> void:
 	shop_stock = stock.duplicate(true)
 	shop_page=0
 	show_page("Shop")
+
+func show_storage(title: String, chest_list: Array, bag_list: Array) -> void:
+	_return_page = page if (page in TABS or page=="Relics") else "HUD"
+	storage_name = title
+	storage_page_bag = 0
+	storage_page_chest = 0
+	set_storage(chest_list, bag_list)
+	show_page("Storage")
+
+func set_storage(chest_list: Array, bag_list: Array) -> void:
+	storage_chest = chest_list.duplicate(true)
+	storage_bag = bag_list.duplicate(true)
+	storage_page_bag = clampi(storage_page_bag, 0, maxi(0, ceili(storage_bag.size()/4.0)-1))
+	storage_page_chest = clampi(storage_page_chest, 0, maxi(0, ceili(storage_chest.size()/4.0)-1))
+	if page == "Storage": refresh()
 
 func show_recap(day_label: String, earned: int, spent: int) -> void:
 	_return_page = page if (page in TABS or page=="Relics") else "HUD"
@@ -281,6 +304,7 @@ func refresh() -> void:
 			"Crew": _crew()
 			"System": _system()
 			"Shop": _shop()
+			"Storage": _storage()
 			"Recap": _recap()
 	if _toast != "" and page != "Dialogue" and _overlay=="":
 		var tw := mini(500,_width(_toast,"label")+26)
@@ -1130,6 +1154,29 @@ func _shop() -> void:
 		_bevel(69,y,627,40,"#fffdf5","#d8d1c3")
 		_img(v[0],80,y+3,33,33);_txt(126,y+9,catalog[v[0]][0],"strong");_right(554,y+10,str(v[1])+" scrip","label",MUTED)
 		_btn("buy/"+str(i),576,y+7,108,25,"Buy",true,station_scrip>=int(v[1]))
+func _storage() -> void:
+	_heading(storage_name,"STORAGE")
+	_txt(70,146,"YOUR BAG","micro",MUTED)
+	_txt(392,146,"IN THE CHEST","micro",MUTED)
+	_storage_column(storage_bag,storage_page_bag,69,"store","Store","store_pages")
+	_storage_column(storage_chest,storage_page_chest,391,"take","Take","take_pages")
+
+func _storage_column(list: Array, current: int, x: int, action: String, label: String, pager: String) -> void:
+	_pager(pager,x,350,list.size(),current,305)
+	if list.is_empty():
+		_txt(x+4,170,"Nothing here","body",MUTED)
+		return
+	var first:=current*4
+	for i in range(first,mini(first+4,list.size())):
+		var v:Array=list[i]
+		var y:=166+(i-first)*45
+		_rect(x,y,305,40,"#f0eee7")
+		_bevel(x,y,305,40,"#fffdf5","#d8d1c3")
+		_img(str(v[0]),x+9,y+3,33,33)
+		_txt(x+50,y+9,str(catalog[v[0]][0]) if catalog.has(v[0]) else str(v[0]),"strong")
+		_right(x+226,y+10,"x"+str(int(v[1])),"label",MUTED)
+		_btn(action+"/"+str(i),x+232,y+7,64,25,label,true)
+
 func _recap() -> void:
 	_heading("Day summary",recap.get("day","").to_upper())
 	_txt(71,150,"STATION ACCOUNT","micro",MUTED)
@@ -1193,7 +1240,7 @@ func _back() -> void:
 		"System":show_page(_system_parent);_system_parent="HUD"
 		"Pause","Emotes":show_page("HUD")
 		"Dialogue": _advance()
-		"Shop": show_page(_return_page)
+		"Shop","Storage": show_page(_return_page)
 		"Recap":
 			show_page(_return_page)
 			recap_closed.emit()
@@ -1372,6 +1419,12 @@ func _activate(id: String) -> void:
 			gift_page=0
 			crew_index=clampi((floori(crew_index/4.0)+(1 if arg=="next" else -1))*4,0,crew.size()-1)
 		"shop_pages":shop_page=clampi(shop_page+(1 if arg=="next" else -1),0,maxi(0,ceili(shop_stock.size()/4.0)-1))
+		"store_pages":storage_page_bag=clampi(storage_page_bag+(1 if arg=="next" else -1),0,maxi(0,ceili(storage_bag.size()/4.0)-1))
+		"take_pages":storage_page_chest=clampi(storage_page_chest+(1 if arg=="next" else -1),0,maxi(0,ceili(storage_chest.size()/4.0)-1))
+		"store","take":
+			var lst:Array=storage_bag if pair[0]=="store" else storage_chest
+			var si:=arg.to_int()
+			if si>=0 and si<lst.size():storage_moved.emit(str(lst[si][0]),pair[0]=="store")
 		"materials": material_page+=1 if arg=="next" else -1
 		"recipe":
 			recipe_index=arg.to_int()
@@ -1485,7 +1538,7 @@ func _input(event: InputEvent) -> void:
 		if page=="HUD" and event.keycode in [KEY_ENTER,KEY_SPACE] and not hud_use_shortcut:return
 		match event.keycode:
 			KEY_TAB:
-				if _overlay!="" or page in ["Dialogue","Shop","Recap"]: _back()
+				if _overlay!="" or page in ["Dialogue","Shop","Storage","Recap"]: _back()
 				else: show_page("Inventory" if page=="HUD" else "HUD")
 			KEY_ESCAPE: _back()
 			KEY_V:

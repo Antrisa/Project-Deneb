@@ -112,6 +112,7 @@ func setup(game) -> bool:
 	pad.discard_requested.connect(_on_discard)
 	pad.quit_requested.connect(_on_quit)
 	pad.slots_swapped.connect(_on_slots_swapped)
+	pad.storage_moved.connect(_on_storage_moved)
 	return true
 
 
@@ -168,6 +169,13 @@ func sync(modal: bool) -> void:
 	if int(world.credits) != int(_sent.get("credits", -1)):
 		_sent["credits"] = int(world.credits)
 		pad.station_scrip = int(world.credits)
+	# Crafting stations within reach (main.gd nearby_stations): station recipes are only made beside them.
+	var stations: Array = world.nearby_stations()
+	if stations != _sent.get("stations"):
+		_sent["stations"] = stations
+		pad.nearby_crafting_stations = stations
+		if str(pad.page) == "Crafting":
+			changed = true
 	var place: String = _place_for(str(world.current_area))
 	if place != str(_sent.get("place", "")):
 		_sent["place"] = place
@@ -175,6 +183,42 @@ func sync(modal: bool) -> void:
 		changed = true
 	if changed:
 		pad.refresh()
+
+
+# A chest's Storage page (main.gd _open_chest): your bag and the chest, as [item id, count] lists.
+func open_storage(title: String) -> void:
+	if pad != null:
+		pad.show_storage(title, _chest_list(), _bag_list())
+
+
+func _chest_list() -> Array:
+	var out: Array = []
+	var c: Dictionary = world.chest_items(world.open_chest)
+	var ids: Array = c.keys()
+	ids.sort()
+	for id in ids:
+		if ItemData.ITEMS.has(id) and int(c[id]) > 0:
+			out.append([str(id), int(c[id])])
+	return out
+
+
+func _bag_list() -> Array:
+	var out: Array = []
+	var seen := {}
+	for id in world.slots:
+		if str(id) != "" and int(world.items.get(id, 0)) > 0 and not seen.has(id):
+			seen[id] = true
+			out.append([str(id), int(world.items[id])])
+	for id in world.items:                 # anything that did not fit a slot
+		if not seen.has(id) and int(world.items[id]) > 0 and ItemData.ITEMS.has(id):
+			out.append([str(id), int(world.items[id])])
+	return out
+
+
+func _on_storage_moved(id: String, to_chest: bool) -> void:
+	world.chest_move(world.open_chest, id, to_chest)
+	world.sfx("click", 1.1 if to_chest else 0.9)
+	pad.set_storage(_chest_list(), _bag_list())
 
 
 func notify(message: String) -> void:
@@ -270,13 +314,13 @@ func _kind(id: String, info: Dictionary) -> String:
 
 
 # The game's recipes ({"makes", "n", "needs"}) in the datapad's form: [output, first material, its amount,
-# amount made, station, all materials]. Everything is made from the Crafting page itself ("Pocket").
+# amount made, station, all materials]. "Pocket" = made anywhere; otherwise at that station (main.gd nearby_stations).
 func _recipes() -> Array:
 	var out: Array = []
 	for recipe in ItemData.RECIPES:
 		var needs: Dictionary = recipe["needs"]
 		var first: String = needs.keys()[0]
-		out.append([str(recipe["makes"]), first, int(needs[first]), int(recipe["n"]), "Pocket", needs.duplicate()])
+		out.append([str(recipe["makes"]), first, int(needs[first]), int(recipe["n"]), str(recipe.get("station", "Pocket")), needs.duplicate()])
 	return out
 
 

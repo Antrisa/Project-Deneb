@@ -58,6 +58,46 @@ const ITEMS = {
 			"desc": "From Maren in the medbay. Select it and press Space to mend every heart."},
 	"hoe": {"name": "Hoe", "icon": 23, "use": "hoe",
 			"desc": "Evarra's spare. Select it and press Space on the field in the Agri dome to dig a tile for planting."},
+	"aluminium_ore": {"name": "Aluminium ore", "icon": 52, "use": "",
+			"desc": "Pale anorthite from floors 5-30 of the caverns. Smelt it into aluminium bars."},
+	"aluminium_bar": {"name": "Aluminium bar", "icon": 53, "use": "",
+			"desc": "Light, strong metal for frames and hull plates."},
+	"glass_pane": {"name": "Glass pane", "icon": 54, "use": "",
+			"desc": "Silica sand fired clear. For windows, jars, lamps and display cases."},
+	"refined_silicon": {"name": "Refined silicon", "icon": 55, "use": "",
+			"desc": "Silica and quartz, purified. Every circuit board starts here."},
+	"brick": {"name": "Brick", "icon": 56, "use": "",
+			"desc": "Fired stone. Paths, planters and a sturdy base for machines."},
+	"magnet": {"name": "Magnet", "icon": 57, "use": "",
+			"desc": "Rare earths bonded to iron. The heart of a motor."},
+	"motor": {"name": "Motor", "icon": 58, "use": "",
+			"desc": "Wire, steel and a magnet. Machines, fans and better mining lasers need one."},
+	"precision_lens": {"name": "Precision lens", "icon": 59, "use": "",
+			"desc": "Ground from thermal quartz. Lasers, optics and the sonar rod."},
+	"high_density_core": {"name": "High-density core", "icon": 60, "use": "",
+			"desc": "Cobalt-60 packed into basalt. Ship thrusters and the heaviest machines."},
+	"thermal_quartz": {"name": "Thermal quartz", "icon": 61, "use": "",
+			"desc": "Warm amber crystal from the deep steam vents. Ground into precision lenses."},
+	"sulphur": {"name": "Sulphur", "icon": 62, "use": "",
+			"desc": "Yellow crust from the deep vents. For charges and fertiliser."},
+	"basalt_core": {"name": "Basalt core", "icon": 63, "use": "",
+			"desc": "Dense black rock from floors 35-45. Only a titanium laser cuts it."},
+	"ice": {"name": "Ice", "icon": 64, "use": "",
+			"desc": "Clean ice from the deep cavern pools. Drinks, ice cream and the cold store."},
+	"geode": {"name": "Geode", "icon": 65, "use": "",
+			"desc": "A plain rock with a hollow heart. Cut it open for what grew inside."},
+	"moon_opal": {"name": "Moon opal", "icon": 66, "use": "",
+			"desc": "A milky gem from the upper caverns. Lovely as a gift."},
+	"crater_garnet": {"name": "Crater garnet", "icon": 67, "use": "",
+			"desc": "A deep red gem from the middle caverns."},
+	"titanium_laser": {"name": "Titanium mining laser", "icon": 68, "use": "mine", "tier": 3,
+			"desc": "Bright titanium with teal light strips. Cuts fastest of all, and the only laser that cuts basalt and cobalt-60."},
+	"arc_smelter": {"name": "Furnace", "icon": 69, "use": "build",
+			"desc": "An electric furnace for your own workshop. Set it down in the Agri complex or your hotel rooms, hold ore and right-click it to load it: 4 copper ore cook into a copper bar. Also bricks, glass, steel and cells."},
+	"manufacturing_hub": {"name": "Manufacturing hub", "icon": 70, "use": "build",
+			"desc": "A bench of tools and a little fabricator. Set it down at home; at it, the Crafting page can make magnets, motors, circuit boards, lenses and laser upgrades."},
+	"storage_chest": {"name": "Storage chest", "icon": 71, "use": "build",
+			"desc": "A sturdy chest for your things. Set it down at home and open it to store and take items."},
 	"hydro_bed": {"name": "Hydroponic bed", "icon": 49, "use": "place",
 			"desc": "A self-watering growing tray. Select it and press Space on open soil in the Agri dome to set it down; plant seeds in it like a dug tile. It waters itself every night."},
 	"watering_can": {"name": "Watering can", "icon": 24, "use": "water",
@@ -140,14 +180,41 @@ static func relic_named(relic_name: String) -> String:
 			return id
 	return ""
 
-# What a furnace makes from each ore you can hold.
-const SMELTS = {"iron_ore": "iron_bar", "copper_ore": "copper_bar", "gold_ore": "gold_bar", "titanium_ore": "titanium_bar"}
+# Furnaces, Stardew-style (23 Nov, Zachary): hold the input and use a furnace to load it. It takes "n" of what you hold
+# (plus anything in "also"), cooks for "mins" game minutes (1.5 real seconds each), then you collect one "makes".
+# One load at a time per furnace; anything still cooking at bedtime is done by morning. The furnaces in Engineering
+# and the ones you build (main.gd PLACEABLE arc_smelter) both use this.
+const FURNACE = {
+	"copper_ore": {"n": 4, "makes": "copper_bar", "mins": 40},
+	"iron_ore": {"n": 4, "makes": "iron_bar", "mins": 60},
+	"aluminium_ore": {"n": 4, "makes": "aluminium_bar", "mins": 60},
+	"gold_ore": {"n": 5, "makes": "gold_bar", "mins": 90},
+	"titanium_ore": {"n": 5, "makes": "titanium_bar", "mins": 120},
+	"iron_bar": {"n": 2, "also": {"carbon": 1}, "makes": "steel_bar", "mins": 120},
+	"stone": {"n": 5, "makes": "brick", "mins": 30},
+	"silica_sand": {"n": 3, "makes": "glass_pane", "mins": 40},
+	"quartz": {"n": 1, "also": {"silica_sand": 2}, "makes": "refined_silicon", "mins": 90},
+	"lithium_salts": {"n": 3, "makes": "lithium_cell", "mins": 90},
+	"cobalt_60": {"n": 2, "also": {"basalt_core": 2}, "makes": "high_density_core", "mins": 240},
+}
 
-# What the Crafting page offers. "needs" is item -> how many.
+# What the Crafting page offers. "needs" is item -> how many. "station" is where it is made (23 Nov): "Manufacturing Hub" at a
+# hub you build; no station = from the Crafting page anywhere. Bars, bricks, glass and the like come from furnaces
+# (FURNACE above), not this page. Ranges and uses follow the items sheet (tools/econ/data.py).
 const RECIPES = [
+	# anywhere
 	{"makes": "hull_plate", "n": 1, "needs": {"iron_bar": 3}},
 	{"makes": "coil_wire", "n": 1, "needs": {"copper_bar": 2}},
-	{"makes": "steel_bar", "n": 1, "needs": {"iron_bar": 2, "carbon": 1}},
 	{"makes": "steel_laser", "n": 1, "needs": {"laser": 1, "steel_bar": 3, "coil_wire": 1}},
 	{"makes": "hydro_bed", "n": 1, "needs": {"iron_bar": 1, "copper_bar": 1}},
+	{"makes": "arc_smelter", "n": 1, "needs": {"iron_ore": 10, "stone": 5}},
+	{"makes": "storage_chest", "n": 1, "needs": {"iron_bar": 2, "stone": 10}},
+	{"makes": "manufacturing_hub", "n": 1, "needs": {"iron_bar": 4, "copper_bar": 2, "brick": 4}},
+	# at a manufacturing hub
+	{"makes": "magnet", "n": 1, "needs": {"rare_earths": 1, "iron_bar": 1}, "station": "Manufacturing Hub"},
+	{"makes": "motor", "n": 1, "needs": {"coil_wire": 2, "steel_bar": 1, "magnet": 1}, "station": "Manufacturing Hub"},
+	{"makes": "circuit_board", "n": 1, "needs": {"copper_bar": 2, "refined_silicon": 2}, "station": "Manufacturing Hub"},
+	{"makes": "hull_plate", "n": 1, "needs": {"aluminium_bar": 2}, "station": "Manufacturing Hub"},
+	{"makes": "precision_lens", "n": 1, "needs": {"thermal_quartz": 2, "copper_bar": 1, "refined_silicon": 1}, "station": "Manufacturing Hub"},
+	{"makes": "titanium_laser", "n": 1, "needs": {"steel_laser": 1, "titanium_bar": 3, "motor": 1, "circuit_board": 1}, "station": "Manufacturing Hub"},
 ]

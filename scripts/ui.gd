@@ -11,8 +11,8 @@ const COLS := 8
 const TABS := ["Pack", "Crafting", "Map", "Friends", "Journal"]
 const TAB_W := 59.0
 const HELP := [
-	"Click or E: pick up, then again to put down or swap.    Click a page name or press 1-5.    Esc: close",
-	"Click a recipe or press E to craft it.    Click a page name or press 1-5.    Esc: close",
+	"Click: pick up, then again to put down or swap.    Click a page name or press 1-5.    Esc: close",
+	"Click a recipe to craft it.    Click a page name or press 1-5.    Esc: close",
 	"Point at a dot to see what is there.    You: red.  Residents: blue.    Esc: close",
 	"One heart is 5 friendship. Talk each day and do requests.    Esc or click outside: close",
 	"J opens this page.    Esc or click outside: close",
@@ -382,7 +382,7 @@ func _draw_recap() -> void:
 	_txt(Vector2(206, 138), str(int(_recap["total"])), GOLD)
 	_txt(Vector2(82, 147), "You talked to %d residents." % int(_recap["talked"]), DIM, 6)
 	if int(_blink * 2.0) % 2 == 0:
-		_txt(Vector2(190, 154), "E or click", DIM, 6)
+		_txt(Vector2(190, 154), "Click", DIM, 6)
 
 
 func _draw_inventory() -> void:
@@ -404,7 +404,7 @@ func _draw_inventory() -> void:
 		var desc: String = info["desc"]
 		draw_multiline_string(_font, Vector2(16, 132), desc, HORIZONTAL_ALIGNMENT_LEFT, 288, 6, 3, Color.WHITE)
 	elif held != -1:
-		_txt(Vector2(16, 122), "Choose where to put it, then press E.", DIM, 6)
+		_txt(Vector2(16, 122), "Click where to put it.", DIM, 6)
 
 
 func _draw_crafting() -> void:

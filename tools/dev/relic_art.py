@@ -171,7 +171,29 @@ NEW_ICONS = [
     ("relic_gold_tooth", gold_tooth), ("relic_captain_log", captain_log),
     ("hydro_bed", None),                                                     # slot 49 (23 Nov): the hydroponic bed
     ("silica_sand", None), ("lithium_salts", None),                          # slots 50-51 (23 Nov): new cavern ores
+    ("aluminium_ore", None),
+    ("aluminium_bar", None),
+    ("glass_pane", None),
+    ("refined_silicon", None),
+    ("brick", None),
+    ("magnet", None),
+    ("motor", None),
+    ("precision_lens", None),
+    ("high_density_core", None),
+    ("thermal_quartz", None),
+    ("sulphur", None),
+    ("basalt_core", None),
+    ("ice", None),
+    ("geode", None),
+    ("moon_opal", None),
+    ("crater_garnet", None),
+    ("titanium_laser", None),
+    ("arc_smelter", None),
+    ("manufacturing_hub", None),
+    ("storage_chest", None),
 ]
+# Item ids whose icon file in art/items/ has another name.
+ICON_FILE = {"titanium_laser": "mining_laser_titanium", "arc_smelter": "home_furnace", "manufacturing_hub": "home_hub", "storage_chest": "home_chest"}
 
 
 def main():
@@ -186,7 +208,7 @@ def main():
         if name.startswith("relic_"):
             pic = Image.open(os.path.join(ART, "museum", name.replace("relic_", "") + ".png")).convert("RGBA")
         else:
-            pic = Image.open(os.path.join(ART, "items", name + ".png")).convert("RGBA")
+            pic = Image.open(os.path.join(ART, "items", ICON_FILE.get(name, name) + ".png")).convert("RGBA")
         if pic.size != (cell, cell):
             pic = pic.resize((cell, cell), Image.NEAREST)
         out.paste(pic, ((FIRST_SLOT + i) * cell, 0))

@@ -209,7 +209,7 @@ func _paint() -> void:
 			var g: Array = gains[gi]
 			var gx: float = left + 11.0 + (wide * 0.5 if gi >= rows else 0.0)
 			s.text_fit(gx, y + (gi % rows) * LINE, wide * 0.5 - 16.0 if gains.size() > 6 else wide - 22.0, str(g[0]), "label", Color(g[1]).darkened(0.35))
-		_status("Press E, or click Continue.")
+		_status("Click Continue.")
 		s.shift(s.bottom_right())
 		s.solid_button("continue", Rect2(625, 388, 82, 22), "Continue")
 		s.shift(Vector2.ZERO)

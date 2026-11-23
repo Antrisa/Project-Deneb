@@ -87,7 +87,10 @@ const SELL := {"iron_bar": 12, "copper_bar": 18, "chitin": 6, "hide": 10, "stone
 		"carbon": 6, "steel_bar": 30, "gold_bar": 90, "titanium_bar": 60,
 		"crater_potato": 18, "moon_wheat": 10, "star_tomato": 30,
 		"scrap": 2, "circuit_board": 45, "lithium_cell": 35, "rare_earths": 25, "helium_3": 80, "cobalt_60": 70,
-		"void_sapphire": 100}      # what Bram pays (relics are for the museum, not for sale)
+		"void_sapphire": 100,
+		"aluminium_ore": 10, "aluminium_bar": 35, "thermal_quartz": 45, "sulphur": 15, "ice": 6, "basalt_core": 60,
+		"geode": 10, "moon_opal": 60, "crater_garnet": 90, "glass_pane": 12, "refined_silicon": 30, "brick": 5,
+		"magnet": 50, "motor": 140, "precision_lens": 160, "high_density_core": 600}      # what Bram pays (relics are for the museum, not for sale)
 const MAX_HP := 10
 const WEAPON_DAMAGE := 2
 const TUNNEL_GOAL := 6             # creatures Job asks you to clear out of the north tunnels
@@ -95,8 +98,9 @@ const MAX_ENERGY := 270            # Stardew-style energy: cuts cost it, food to
 const CUT_ENERGY := 2              # energy per laser cut
 # Seconds of holding the laser per cut: harder rock takes longer. Anything not listed takes DEFAULT_CUT_TIME.
 const CUT_TIME := {"boulder": 3.0, "stone": 0.5, "copper_ore": 0.8, "iron_ore": 1.2, "quartz": 1.0, "carbon": 1.0, "gold_ore": 1.6, "titanium_ore": 2.0,
-		"silica_sand": 0.7, "lithium_salts": 1.4}
-const NEEDS_TIER := {"titanium_ore": 2, "boulder": 2}   # too hard for the basic laser
+		"silica_sand": 0.6, "lithium_salts": 1.5, "aluminium_ore": 1.2, "rare_earths": 1.8, "thermal_quartz": 2.0,
+		"sulphur": 0.8, "ice": 1.0, "basalt_core": 3.0, "cobalt_60": 3.0, "geode": 1.0}
+const NEEDS_TIER := {"titanium_ore": 2, "boulder": 2, "basalt_core": 3, "cobalt_60": 3}   # 2 = steel laser, 3 = titanium
 # Cavern rocks come in three looks per band (art/stone*.png); boulders (2 x 2 tiles) give BOULDER_STONE stone.
 const CAV_STONES := {"rock": ["stone", "stone_rock_1", "stone_rock_2"], "lush": ["stone_lush_0", "stone_lush_1", "stone_lush_2"],
 		"steam": ["stone_steam_0", "stone_steam_1", "stone_steam_2"]}
@@ -104,7 +108,6 @@ const BOULDER_STONE := 10
 const TIER_SPEED := {1: 1.0, 2: 0.6}      # cut time multiplier for each laser tier
 const DEFAULT_CUT_TIME := 1.0
 const NODE_HITS := 2               # cuts per ore vein each time it refills (daily, or every few days: MapData.NODES)
-const ORE_PER_BAR := 2
 const JOB_IRON := 5                # what Job asks for in his first request
 const JOB_COPPER := 3
 
@@ -235,11 +238,19 @@ var cut_time := 0.0                # seconds held on it so far
 var cut_buzz := 0.0                # seconds until the next laser sound
 var cut_bar: Node2D                # the little progress bar over what you are cutting
 # The Caverns (tools/caverns.py): floors under the mine, a new layout each visit.
-const CAV_ORES := {                # what veins each depth band has, with weights
-	"rock": [["copper_ore", 5], ["iron_ore", 3], ["carbon", 2], ["quartz", 1], ["silica_sand", 2]],
-	"lush": [["iron_ore", 4], ["copper_ore", 2], ["carbon", 1], ["quartz", 2], ["gold_ore", 1], ["silica_sand", 1], ["lithium_salts", 1]],
-	"steam": [["quartz", 2], ["gold_ore", 2], ["titanium_ore", 2], ["iron_ore", 1], ["lithium_salts", 2]],
-}
+# Which veins each cavern floor has (23 Nov, Zachary picked these ranges): [item, first floor, last floor, weight].
+# A vein's weight tapers over its first and last three floors, so ores fade in and out instead of switching at the
+# band edges. Copper, iron, carbon, silica and quartz feed steel and glass early; aluminium and rare earths the
+# middle (hull plates, magnets for motors); titanium needs the steel laser; the deep vents give lithium, thermal
+# quartz, sulphur and ice; basalt and cobalt-60 need the titanium laser. Geodes turn up on any floor.
+const CAV_VEINS := [
+	["copper_ore", 1, 18, 5], ["iron_ore", 1, 30, 4], ["carbon", 1, 20, 3], ["silica_sand", 1, 15, 3], ["quartz", 1, 15, 2],
+	["aluminium_ore", 5, 30, 3], ["gold_ore", 16, 45, 1], ["titanium_ore", 16, 45, 3], ["rare_earths", 20, 45, 2],
+	["lithium_salts", 31, 45, 3], ["thermal_quartz", 31, 45, 2], ["sulphur", 31, 45, 3], ["ice", 31, 45, 2],
+	["basalt_core", 35, 45, 2], ["cobalt_60", 40, 45, 1], ["geode", 1, 45, 1],
+]
+const GEODE_GEMS := {"rock": ["moon_opal", "moon_opal", "quartz"], "lush": ["crater_garnet", "moon_opal", "crater_garnet"],
+		"steam": ["void_sapphire", "crater_garnet", "thermal_quartz"]}        # what a cut geode gives, by band
 const CAV_MOBS := {"rock": ["bug", "lizard", "echo_bat"], "lush": ["spore_crawler", "spore_crawler", "bug", "lizard", "echo_bat"], "steam": ["vent_crab", "vent_crab", "lizard", "echo_bat"]}
 const CAV_POWER := {"rock": [1.0, 0, 1.0], "lush": [2.0, 1, 1.3], "steam": [3.5, 2, 1.6]}   # creature health x, extra bite, size
 var cav_floor := 0                 # the floor you are on, 0 when not in the caverns
@@ -256,7 +267,6 @@ var harbinger_slain := false
 var hurt_cd := 0.0                 # seconds until the player can be hurt again
 var swing_cd := 0.0                # seconds until the player can swing again
 var tunnel_kills := 0
-var smelt_pos := Vector2.ZERO      # the furnace being used
 var area_sprites: Array = []       # [sprite, area name] for everyone and everything placed in an area
 var anim_props: Array = []         # [sprite, frames, phase] for machinery with a looping strip in art/lunar/anim/
 const PROP_ANIM_FPS := 8.0
@@ -445,7 +455,7 @@ func _setup_input() -> void:
 	_add_keys("move_right", [KEY_D, KEY_RIGHT])
 	_add_keys("move_up", [KEY_W, KEY_UP])
 	_add_keys("move_down", [KEY_S, KEY_DOWN])
-	_add_keys("interact", [KEY_E, KEY_ENTER])
+	_add_keys("interact", [KEY_ENTER])   # no E (Zachary, 23 Nov): right-click to use and talk, Enter on the keyboard
 	_add_keys("use", [KEY_SPACE, KEY_F])
 	_add_keys("menu", [KEY_TAB, KEY_I])
 	_add_keys("journal", [KEY_J])
@@ -749,7 +759,9 @@ func _mouse_button(button: int) -> void:
 		else:
 			_interact_clicked()
 	elif button == MOUSE_BUTTON_RIGHT:
-		_interact_clicked()
+		# Something under the mouse first; otherwise a crop under the mouse or in front of you (as E did).
+		if _thing_under_mouse() != null or not _try_harvest():
+			_interact_clicked()
 
 
 # ---------------------------------------------------------------- areas and map
@@ -1604,6 +1616,8 @@ func _interact(t: Dictionary) -> void:
 		_enter_portal(t)
 	elif kind == "sealed":
 		repair_view.open_at(str(t["repair"]))
+	elif kind == "placed":
+		_use_placed(t)
 	elif kind == "garden":
 		_water_garden(t)
 	elif kind == "farm_tools":
@@ -1668,17 +1682,13 @@ func _interact(t: Dictionary) -> void:
 	elif kind == "shaft":
 		_enter_cavern(cav_floor + 1)
 	elif kind == "furnace":
-		# Any furnace smelts whatever ore you are holding (the selected hotbar slot).
-		smelt_pos = t["pos"]
-		var in_hand: String = slots[selected]
-		if ItemData.SMELTS.has(in_hand):
-			_smelt(in_hand, ItemData.SMELTS[in_hand])
-		elif job_quest < 2:
+		# Engineering's furnaces work like the ones you build: hold ore and use one to load it (_furnace_use).
+		if job_quest < 2:
 			sfx("deny")
 			_say("Furnace", ["The furnaces are cold. Job runs ore processing. Ask him about it."])
 		else:
-			sfx("deny")
-			_say("Furnace", ["Hold the ore you want to smelt: pick it on your hotbar, then use the furnace."])
+			var fp: Vector2 = t["pos"]
+			_furnace_use("%s:f%d:%d" % [current_area, int(fp.x), int(fp.y)], current_area, fp)
 	elif kind == "sign":
 		var sign_name: String = t["name"]
 		_say("Sign", [sign_name])
@@ -1988,7 +1998,7 @@ func _debug_ship_ready() -> void:
 	fuel = maxi(fuel, ShipData.FIRST_FLIGHT_FUEL)
 	_go_to("bay", Vector2i(8, 29))
 	_snap_residents()
-	_toast("Debug: ship repaired. Launch control is right here (E).")
+	_toast("Debug: ship repaired. Launch control is right here.")
 
 
 # F6 (editor and debug builds only): the boarding test (Zachary, 22 Nov). The covered fighter with Freya and two
@@ -2649,7 +2659,7 @@ func _head_them_off() -> void:
 		"Distress signals are someone asking for help. Whether that goes well depends on what you choose.",
 		"Stores sell repairs and fuel. Special sectors are... special. You'll know one when you see it.",
 		"I've scanned ahead today, so you know what's waiting. Normally you won't, and you'd pick your own way.",
-		"Follow my course. Click the next stop, or press E, to jump.",
+		"Follow my course. Click the next stop to jump.",
 	])
 
 
@@ -3161,6 +3171,10 @@ func _needs_text(needs: Dictionary) -> String:
 func craft(index: int) -> bool:
 	var recipe: Dictionary = ItemData.RECIPES[index]
 	var needs: Dictionary = recipe["needs"]
+	var station: String = str(recipe.get("station", ""))
+	if station != "" and not nearby_stations().has(station):
+		sfx("deny")
+		return false
 	if not _has_all(needs):
 		sfx("deny")
 		return false
@@ -3230,6 +3244,8 @@ func _use_tool() -> void:
 		_eat(item)
 	elif use in ["hoe", "water", "plant", "place"]:
 		_farm_use(use, item)
+	elif use == "build":
+		_build(item)
 
 
 # The tool art folder for an item (art/tools/<id>), for the hand animations. "" if it has none.
@@ -3268,7 +3284,8 @@ func _can_cut(t: Dictionary) -> bool:
 		return false
 	if _laser_tier() < int(NEEDS_TIER.get(str(node["item"]), 1)):
 		sfx("deny")
-		_toast("Too hard for the basic laser. Steel would cut it: see the Crafting page.")
+		_toast("Too hard for this laser. A titanium laser would cut it (Manufacturing Hub)." if int(NEEDS_TIER.get(str(node["item"]), 1)) >= 3
+				else "Too hard for the basic laser. Steel would cut it: see the Crafting page.")
 		return false
 	if int(node["hits"]) <= 0:
 		sfx("deny")
@@ -3328,6 +3345,9 @@ func _mine(t: Dictionary) -> void:
 	var node: Dictionary = ore_nodes[int(t["node"])]
 	var item: String = str(node.get("give", node["item"]))
 	var amount: int = int(node.get("yield", 1))
+	if item == "geode":
+		var gems: Array = GEODE_GEMS.get(_cav_band(maxi(cav_floor, 1)), ["moon_opal"])
+		item = str(gems[randi() % gems.size()])          # cut open, a geode gives what grew inside
 	node["hits"] = int(node["hits"]) - 1
 	if int(node["hits"]) <= 0:
 		var s: Sprite2D = node["sprite"]
@@ -3351,6 +3371,300 @@ func _mine(t: Dictionary) -> void:
 	_toast("+%d %s  (%d)" % [amount, _item_name(item), _count(item)])
 	if energy < CUT_ENERGY:
 		_toast("You're worn out. Eat something, or call it a day.")
+
+
+# ---------------------------------------------------------------- things you build at home (23 Nov)
+# A furnace (arc smelter), a manufacturing hub and storage chests are crafted, then set down from the hotbar (Space)
+# on the tile in front of you, in your Agri complex or your hotel rooms. They block their tiles, are saved, and
+# can be picked up again (a chest only when empty, a furnace only when idle). At a hub the Crafting page makes the
+# hub's recipes (ItemData.RECIPES "station"). A furnace is a machine, Stardew-style: see _furnace_use.
+const PLACEABLE := {
+	"arc_smelter": {"art": "home_furnace", "w": 2, "h": 1, "name": "Furnace", "station": ""},
+	"manufacturing_hub": {"art": "home_hub", "w": 3, "h": 1, "name": "Manufacturing hub", "station": "Manufacturing Hub"},
+	"storage_chest": {"art": "home_chest", "w": 1, "h": 1, "name": "Storage chest", "station": ""},
+}
+const BUILD_AREAS := ["agri", "hotel"]
+const STATION_REACH := 40.0         # how near a station you must stand to use its recipes (world units)
+var placed: Array = []              # [{"item", "area", "x", "y"}], saved
+var chests := {}                    # "area:x:y" -> {item: count}, saved
+var placed_nodes := {}              # "area:x:y" -> {"sprite", "thing", "tiles"}
+var open_chest := ""
+
+
+func _placed_key(e: Dictionary) -> String:
+	return "%s:%d:%d" % [str(e["area"]), int(e["x"]), int(e["y"])]
+
+
+func _build(item: String) -> void:
+	if not current_area in BUILD_AREAS:
+		sfx("deny")
+		_toast("Set it up at home: your Agri complex, or your rooms in the hotel")
+		return
+	var spec: Dictionary = PLACEABLE[item]
+	var t0: Vector2i = farm_target()
+	var here: Vector2i = _player_tile()
+	for dy in int(spec["h"]):
+		for dx in int(spec["w"]):
+			var tt := t0 + Vector2i(dx, dy)
+			if tt == here or farm.has(tt) or beds.get(current_area, {}).has(tt) \
+					or solid_at(Vector2(tt.x * TILE + 8, tt.y * TILE + 8)):
+				sfx("deny")
+				_toast("No room there (it needs %d x %d clear tiles, going right)" % [int(spec["w"]), int(spec["h"])])
+				return
+	var e := {"item": item, "area": current_area, "x": t0.x, "y": t0.y}
+	placed.append(e)
+	_spawn_placed(e)
+	_give(item, -1)
+	sfx("click", 0.7)
+	_toast("%s set down. Right-click it to use it." % str(spec["name"]))
+
+
+func _spawn_placed(e: Dictionary) -> void:
+	var spec: Dictionary = PLACEABLE[str(e["item"])]
+	var area: String = str(e["area"])
+	var x: int = int(e["x"])
+	var y: int = int(e["y"])
+	var w: int = int(spec["w"])
+	var h: int = int(spec["h"])
+	_spawn_prop([str(spec["art"]), x, y, w, h, str(spec["name"])], area)
+	var sprite: Sprite2D = area_sprites.back()[0]
+	sprite.visible = area == current_area
+	var tiles: Array = []
+	for dy in h:
+		for dx in w:
+			var tt := Vector2i(x + dx, y + dy)
+			tiles.append(tt)
+			blocked[area][tt] = true
+	var th := {"kind": "placed", "name": str(spec["name"]), "hint": "Use", "area": area,
+		"pos": Vector2(x * TILE + w * 8, y * TILE + h * 8), "radius": 26.0 + 8.0 * (w - 1), "who": "", "key": _placed_key(e),
+		"item": str(e["item"])}
+	things.append(th)
+	placed_nodes[_placed_key(e)] = {"sprite": sprite, "thing": th, "tiles": tiles}
+	if str(e["item"]) == "arc_smelter":
+		_furnace_look(_placed_key(e))
+
+
+func _use_placed(t: Dictionary) -> void:
+	var key: String = str(t["key"])
+	var spec: Dictionary = PLACEABLE[str(t["item"])]
+	if str(t["item"]) == "arc_smelter":
+		var in_hand: String = slots[selected]
+		if machines.has(key) or ItemData.FURNACE.has(in_hand):
+			_furnace_use(key, str(t["area"]), t["pos"])
+		else:
+			_say("Furnace", ["Cold and empty. Hold ore (or stone, sand, salts) and use the furnace to load it."],
+					Callable(self, "_pick_up").bind(key), "Pick it up")
+		return
+	if str(spec["station"]) != "":
+		_say(str(spec["name"]), ["The %s hums, ready for work." % str(spec["name"]).to_lower()],
+				Callable(self, "_open_station"), "Craft here", Callable(self, "_pick_up").bind(key), "Pick it up")
+	else:
+		var n: int = 0
+		for id in chest_items(key): n += int(chest_items(key)[id])
+		_say(str(spec["name"]), ["Empty." if n == 0 else "%d thing%s inside." % [n, "" if n == 1 else "s"]],
+				Callable(self, "_open_chest").bind(key), "Open", Callable(self, "_pick_up").bind(key), "Pick it up")
+
+
+func _open_station() -> void:
+	if datapad != null:
+		datapad.open_page("Crafting")
+
+
+func _open_chest(key: String) -> void:
+	open_chest = key
+	if datapad != null:
+		datapad.open_storage("Storage chest")
+	else:
+		_toast("The chest needs the datapad (datapad/ folder)")
+
+
+func _pick_up(key: String) -> void:
+	if not placed_nodes.has(key):
+		return
+	var info: Dictionary = placed_nodes[key]
+	var th: Dictionary = info["thing"]
+	var item: String = str(th["item"])
+	if item == "storage_chest" and not chest_items(key).is_empty():
+		sfx("deny")
+		_toast("Empty the chest first")
+		return
+	if machines.has(key):
+		sfx("deny")
+		_toast("Wait for the furnace to finish, then take out what's inside")
+		return
+	var sprite: Sprite2D = info["sprite"]
+	area_sprites = area_sprites.filter(func(pair): return pair[0] != sprite)
+	anim_props = anim_props.filter(func(a): return a[0] != sprite)
+	prop_glows = prop_glows.filter(func(g): return g.get_parent() != sprite)
+	sprite.queue_free()
+	things.erase(th)
+	var area: String = str(th["area"])
+	for tt in info["tiles"]:
+		blocked[area].erase(tt)
+	placed_nodes.erase(key)
+	placed = placed.filter(func(e): return _placed_key(e) != key)
+	chests.erase(key)
+	_give(item, 1)
+	sfx("click", 1.2)
+	_toast("Picked up: %s" % _item_name(item))
+
+
+# The crafting stations within reach of the player: "Manufacturing Hub" beside a hub you built. The datapad's Crafting page reads this (datapad_bridge.gd).
+func nearby_stations() -> Array:
+	var out: Array = []
+	if player == null:
+		return out
+	var p: Vector2 = player.position
+	for t in things:
+		if str(t.get("area", "")) != current_area or p.distance_to(t["pos"]) > STATION_REACH + float(t.get("radius", 26.0)) - 26.0:
+			continue
+		var st := ""
+		if t["kind"] == "placed":
+			st = str(PLACEABLE[str(t["item"])]["station"])
+		if st != "" and not out.has(st):
+			out.append(st)
+	out.sort()
+	return out
+
+
+# ---------------------------------------------------------------- furnaces as machines (23 Nov, Zachary)
+# Stardew-style: hold what you want smelted and use a furnace. It takes ItemData.FURNACE[input]["n"] (4 copper ore
+# for a copper bar, and so on, plus any "also"), cooks for "mins" game minutes, then shows the bar over the furnace
+# until you use it again to take it out. One load at a time. The clock is day * 1440 + minutes, so a night's sleep
+# finishes anything cooking. Saved in [home] machines: key -> {"makes", "ready", "area", "pos"}.
+var machines := {}
+var machine_icons := {}             # key -> Sprite2D of the finished item, bobbing over the furnace
+const FURNACE_ON := "res://art/lunar/home_furnace_on.png"   # three lit frames side by side; home_furnace.png is cold
+
+
+func clock_now() -> float:
+	return float(day) * 1440.0 + minutes
+
+
+func _furnace_use(key: String, area: String, at: Vector2) -> void:
+	if machines.has(key):
+		var m: Dictionary = machines[key]
+		var left: float = float(m["ready"]) - clock_now()
+		if left > 0.0:
+			sfx("deny")
+			var mins := int(ceil(left))
+			_toast("Cooking %s: %s left" % [_item_name(str(m["makes"])).to_lower(),
+					("%d min" % mins) if mins < 60 else ("%dh %02dm" % [mins / 60, mins % 60])])
+			return
+		var made: String = str(m["makes"])
+		machines.erase(key)
+		_give(made, 1)
+		sfx("smelt")
+		_flash(at + Vector2(0, 2), Color(1.0, 0.6, 0.25), 1.6)
+		_pop_item(made, at + Vector2(0, -22))
+		_toast("+1 %s  (%d)" % [_item_name(made), _count(made)])
+		if job_quest == 2:
+			job_quest = 3
+			sfx("quest")
+		_furnace_look(key)
+		return
+	var in_hand: String = slots[selected]
+	if not ItemData.FURNACE.has(in_hand):
+		sfx("deny")
+		_toast("Hold ore, stone, sand or salts to load the furnace")
+		return
+	var r: Dictionary = ItemData.FURNACE[in_hand]
+	var needs := {in_hand: int(r["n"])}
+	var also: Dictionary = r.get("also", {})
+	for id in also:
+		needs[id] = int(needs.get(id, 0)) + int(also[id])
+	if not _has_all(needs):
+		sfx("deny")
+		var parts: Array = []
+		for id in needs:
+			parts.append("%d %s" % [int(needs[id]), _item_name(id).to_lower()])
+		_toast("%s needs %s" % [_item_name(str(r["makes"])), " + ".join(parts)])
+		return
+	for id in needs:
+		_give(id, -int(needs[id]))
+	machines[key] = {"makes": str(r["makes"]), "ready": clock_now() + float(r["mins"]), "area": area, "pos": at}
+	sfx("smelt", 0.8)
+	_flash(at + Vector2(0, 2), Color(1.0, 0.55, 0.2), 1.2)
+	_toast("Smelting %s, ready in %d min" % [_item_name(str(r["makes"])).to_lower(), int(r["mins"])])
+	_furnace_look(key)
+
+
+# A furnace you built shows lit and animated while it cooks, cold when idle.
+func _furnace_look(key: String) -> void:
+	if not placed_nodes.has(key):
+		return
+	var sprite: Sprite2D = placed_nodes[key]["sprite"]
+	var on: bool = machines.has(key)
+	anim_props = anim_props.filter(func(a): return a[0] != sprite)
+	if on and ResourceLoader.exists(FURNACE_ON):
+		var strip: Texture2D = load(FURNACE_ON)
+		var frames: int = 3
+		sprite.texture = strip
+		sprite.hframes = frames
+		anim_props.append([sprite, frames, randf() * frames])
+	else:
+		sprite.hframes = 1
+		sprite.frame = 0
+		sprite.texture = load("res://art/lunar/home_furnace.png")
+	for g in prop_glows:
+		if is_instance_valid(g) and g.get_parent() == sprite:
+			g.visible = on
+
+
+# Each frame: a finished load shows its item bobbing over the furnace (in the area you're in).
+func _machines_tick() -> void:
+	var now: float = clock_now()
+	for key in machines:
+		var m: Dictionary = machines[key]
+		var done: bool = now >= float(m["ready"])
+		if done and not machine_icons.has(key):
+			var info: Dictionary = ItemData.ITEMS.get(str(m["makes"]), {})
+			if info.is_empty():
+				continue
+			var s := Sprite2D.new()
+			s.texture = items_tex
+			s.region_enabled = true
+			var sz: float = items_tex.get_height()
+			s.region_rect = Rect2(int(info["icon"]) * sz, 0, sz, sz)
+			s.scale = Vector2.ONE * (14.0 / sz)
+			s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			top_fx.add_child(s)
+			machine_icons[key] = s
+	for key in machine_icons.keys():
+		var s: Sprite2D = machine_icons[key]
+		if not machines.has(key):
+			s.queue_free()
+			machine_icons.erase(key)
+			continue
+		var m: Dictionary = machines[key]
+		var p: Vector2 = m["pos"]
+		s.visible = str(m["area"]) == current_area
+		s.position = p + Vector2(0, -34 + sin(Time.get_ticks_msec() / 260.0) * 1.5)
+
+
+func chest_items(key: String) -> Dictionary:
+	var c = chests.get(key, {})
+	return c if c is Dictionary else {}
+
+
+# Move a whole stack between the bag and a chest.
+func chest_move(key: String, item: String, to_chest: bool) -> void:
+	if key == "" or not placed_nodes.has(key):
+		return
+	var c: Dictionary = chest_items(key).duplicate()
+	if to_chest:
+		var n: int = _count(item)
+		if n <= 0:
+			return
+		_give(item, -n)
+		c[item] = int(c.get(item, 0)) + n
+	else:
+		var n: int = int(c.get(item, 0))
+		if n <= 0:
+			return
+		c.erase(item)
+		_give(item, n)
+	chests[key] = c
 
 
 # One ore vein or rock: its sprite, its tile blocked, and a thing to cut. Cavern ones (cav) go when you leave the floor.
@@ -3418,32 +3732,6 @@ func _reset_nodes() -> void:
 		s.frame = 0
 
 
-func _smelt(ore: String, bar: String) -> void:
-	if job_quest < 2:
-		sfx("deny")
-		_say("Furnace", ["The furnaces are cold. Job runs ore processing. Ask him about it."])
-		return
-	if _count(ore) < ORE_PER_BAR:
-		sfx("deny")
-		_say("Furnace", ["You need %d %s to pour a bar. You have %d." % [ORE_PER_BAR, _item_name(ore).to_lower(), _count(ore)]])
-		return
-	_say("Furnace", ["Smelt %d %s into 1 %s?" % [ORE_PER_BAR, _item_name(ore).to_lower(), _item_name(bar).to_lower()]],
-			Callable(self, "_do_smelt").bind(ore, bar), "Smelt")
-
-
-func _do_smelt(ore: String, bar: String) -> void:
-	_give(ore, -ORE_PER_BAR)
-	_give(bar, 1)
-	minutes += 20.0
-	sfx("smelt")
-	_flash(smelt_pos + Vector2(0, 2), Color(1.0, 0.6, 0.25), 2.2)
-	_pop_item(bar, smelt_pos + Vector2(0, -14))
-	_toast("+1 %s  (%d)" % [_item_name(bar), _count(bar)])
-	if job_quest == 2:
-		job_quest = 3
-		sfx("quest")
-
-
 # ---------------------------------------------------------------- Job's quest and the weapon
 
 func _job_quest_talk() -> void:
@@ -3460,7 +3748,7 @@ func _job_quest_talk() -> void:
 			_toast("Job's request done  +40 cr")
 			_say("Job", [
 				"[happy] Well look at that. Clean cuts, too. Here, 40 credits, and you keep the ore, cher.",
-				"Smelter's up in ore processing, engineering level, far left. Two ore pours one bar. Bram buys bars.",
+				"Smelter's up in ore processing, engineering level, far left. Hold your ore and load a furnace: four ore cooks down to one bar, give it an hour. Bram buys bars.",
 				"Once you poured your first, go see Vzz'ket down at the gate. There's old tunnels north of here I want opened, and you ain't goin' in bare-handed.",
 			])
 		else:
@@ -3482,7 +3770,7 @@ func _job_quest_talk() -> void:
 		else:
 			_say("Job", ["Way up's at the top of the dig, north wall. Thin them critters out some. You got %d of %d." % [tunnel_kills, TUNNEL_GOAL]])
 	else:
-		_say("Job", ["Smelter's in ore processing, engineering level, far left. Two ore, one bar. Then go see Vzz'ket at the gate."])
+		_say("Job", ["Smelter's in ore processing, engineering level, far left. Four ore, one bar, and it takes a while. Then go see Vzz'ket at the gate."])
 
 
 func _take_laser() -> void:
@@ -4096,6 +4384,7 @@ func _process(delta: float) -> void:
 	_animate()
 	_update_pops(delta)
 	_animate_props()
+	_machines_tick()
 	_update_cut(delta, paused or travelling or garden_busy)
 	_update_inner_doors(delta)
 
@@ -4145,13 +4434,8 @@ func _process(delta: float) -> void:
 		if toast_time <= 0.0:
 			hud_toast.text = ""
 
-	var t = null
-	if not paused:
-		t = _nearest_thing()
-	if t != null:
-		hud_hint.text = "[E]  %s" % t["hint"]
-	else:
-		hud_hint.text = ""
+	# No "[E] ..." prompt on screen (Zachary, 23 Nov): you right-click things to use them.
+	hud_hint.text = ""
 
 
 # The time as people say it: 12-hour clock, counted in ten-minute steps ("6:10 am").
@@ -4375,6 +4659,9 @@ func _save_game() -> void:
 		cfg.set_value(section, "intro_due", bool(st.get("intro_due", false)))
 	cfg.set_value("access", "garden_watered_day", garden_watered_day)
 	cfg.set_value("farm", "tiles", farm)
+	cfg.set_value("home", "placed", placed)
+	cfg.set_value("home", "chests", chests)
+	cfg.set_value("home", "machines", machines)
 	cfg.set_value("farm", "seeds_taken_day", seeds_taken_day)
 	cfg.set_value("access", "doors", door_locks)
 	cfg.set_value("ship", "hull", ship_hull)
@@ -4465,6 +4752,17 @@ func _load_game() -> void:
 	if saved_farm is Dictionary:
 		farm = saved_farm
 	seeds_taken_day = int(cfg.get_value("farm", "seeds_taken_day", -1))
+	var saved_placed = cfg.get_value("home", "placed", [])
+	var saved_chests = cfg.get_value("home", "chests", {})
+	chests = saved_chests if saved_chests is Dictionary else {}
+	var saved_machines = cfg.get_value("home", "machines", {})
+	machines = saved_machines if saved_machines is Dictionary else {}
+	placed.clear()
+	if saved_placed is Array:
+		for e in saved_placed:
+			if e is Dictionary and PLACEABLE.has(str(e.get("item", ""))) and MapData.AREAS.has(str(e.get("area", ""))):
+				placed.append(e)
+				_spawn_placed(e)
 	var saved_owned = cfg.get_value("ships", "owned", ["starter"])
 	ships_owned = saved_owned if saved_owned is Array and not (saved_owned as Array).is_empty() else ["starter"]
 	active_ship = str(cfg.get_value("ships", "active", "starter"))
@@ -4994,7 +5292,7 @@ func _water_garden(t: Dictionary) -> void:
 
 # ---------------------------------------------------------------- farming (21 Nov)
 # Stardew-style, one tile at a time on the field in the Agri dome (MapData.FARM_FIELDS): dig a tile with the hoe,
-# plant seeds on it, water it, and each night a watered crop grows a day. Press E on a ripe crop to pick it.
+# plant seeds on it, water it, and each night a watered crop grows a day. Right-click a ripe crop to pick it.
 # One tile is one character wide. The crops are placeholders until the economy chat's crop list.
 const FARM_ENERGY := 2              # energy per dig or watering, as in Stardew
 const SEED_HANDFUL := 5             # what the seed rack gives of each kind, once a day (until shops open)
@@ -5283,14 +5581,19 @@ func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
 	var spots: Array = info["spots"].duplicate()
 	spots.shuffle()
 	var mobs: int = mini(3 + n / 8, 8)
-	var veins: int = randi_range(5, 8)
+	var veins: int = randi_range(6, 10)
 	cav_rocks = randi_range(40, 55)
 	cav_rocks_left = cav_rocks
 	cav_shaft = false
-	var weights: Array = CAV_ORES[band]
-	var total := 0
-	for w in weights:
-		total += int(w[1])
+	var weights: Array = []                 # [item, weight] for this floor (CAV_VEINS)
+	var total := 0.0
+	for v in CAV_VEINS:
+		if n < int(v[1]) or n > int(v[2]):
+			continue
+		var edge: float = float(mini(n - int(v[1]), int(v[2]) - n) + 1)
+		var w: float = float(v[3]) * clampf(edge / 3.0, 0.34, 1.0)
+		weights.append([str(v[0]), w])
+		total += w
 	var power: Array = CAV_POWER[band]
 	var i := 0
 	for s in spots:
@@ -5305,11 +5608,11 @@ func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
 			cav_enemies.append(en)
 			en.visible = true
 		elif i < mobs + veins:
-			var roll: int = randi() % total
+			var roll: float = randf() * total
 			var item := "stone"
 			for w in weights:
-				roll -= int(w[1])
-				if roll < 0:
+				roll -= float(w[1])
+				if roll < 0.0:
 					item = str(w[0])
 					break
 			_add_node(item, key, tile, 1, true)
@@ -5453,7 +5756,7 @@ func _update_inner_doors(delta: float) -> void:
 			d.set_meta("warned", true)
 			if d.room_owner.begins_with("repair:"):
 				var rep: Dictionary = StationRepair.REPAIRS.get(d.room_owner.substr(7), {})
-				_toast("Sealed: %s. S.A.R.A. can repair it (E)." % str(rep.get("name", "broken")).to_lower())
+				_toast("Sealed: %s. Right-click it: S.A.R.A. can repair it." % str(rep.get("name", "broken")).to_lower())
 			else:
 				var names: String = d.room_owner.replace("|", " and ")
 				_toast("%s's room — locked. Get to know %s better first." % [names, "them" if "|" in d.room_owner else names])

@@ -386,9 +386,9 @@ func _paint_side(n: int) -> void:
 	elif route.size() > 0:
 		s.text(488, 352, "STOP %d OF %d" % [clampi(at + 1, 0, route.size()), route.size()], "micro", MUTED)
 		s.pips(560, 352, route.size(), at + 1, 9.0, 7.0, 3.0)
-	var hint := "Pick the stop with the gold ring, or press E, to jump to it."
+	var hint := "Click the stop with the gold ring to jump to it."
 	if free:
-		hint = "Click a gold-ringed stop to pick it, again (or Jump, or E) to go. Fold home ends the run."
+		hint = "Click a gold-ringed stop to pick it, again (or Jump) to go. Fold home ends the run."
 		if int(world.fuel) <= 0:
 			hint = "Out of fuel. Fold home to end the run."
 	if not show_route:

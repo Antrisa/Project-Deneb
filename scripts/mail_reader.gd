@@ -151,7 +151,7 @@ func _paint() -> void:
 	_paint_letter(paper, showing)
 	# the bottom row
 	s.shift(s.bottom_left())
-	s.status("Click a letter to read it. Esc or E puts them away.")
+	s.status("Click a letter to read it. Esc or right-click puts them away.")
 	s.shift(s.bottom_right())
 	s.solid_button("close", Rect2(625, 388, 82, 22), "Close")
 	s.shift(Vector2.ZERO)

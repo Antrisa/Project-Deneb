@@ -118,7 +118,7 @@ func start(speaker: String, lines: Array, on_yes: Callable = Callable(), yes_tex
 	_on_yes = on_yes
 	_on_no = on_no
 	_speaker.text = speaker
-	_choice.text = "[E] %s     [Q] %s" % [yes_text, no_text]
+	_choice.text = "Click: %s     Right-click: %s" % [yes_text, no_text]
 	active = true
 	visible = true
 	_show_line()
