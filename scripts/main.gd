@@ -2103,8 +2103,9 @@ func _after_run_fight(result: String, hull_left: int) -> void:
 				paid["gains"], Callable(self, "_after_salvage"))
 		return
 	if result == "escaped":
-		_toast("They jumped away before you could finish them.")
-		_back_to_map()
+		ship_event.show_backdrop(stop)
+		ship_event.show_result("They got away", "Their fold drive flares and they're gone, with everything they were carrying.",
+				[["Nothing to salvage", Color("a8a69e")]], Callable(self, "_after_salvage"))
 		return
 	if result == "won":
 		var special: bool = str(stop["kind"]) == "special"
@@ -2291,13 +2292,21 @@ func _covered_fighter() -> void:
 	if ships_owned.has("covered_fighter"):
 		_say("Covered fighter", ["Uncovered now, and yours. Pick which ship flies at Freya's bench."])
 		return
+	ship_upgrades.open_at("restore")
+
+
+# The restoration page's Hand it over: pays for the next stage. Returns the status line.
+func restore_covered() -> String:
+	if covered_stage >= COVERED_REPAIRS.size():
+		return ""
 	var r: Dictionary = COVERED_REPAIRS[covered_stage]
-	var what: String = "%d credits and %s" % [int(r["cost"]), _needs_text(r["needs"])]
-	var lead: String = "The tarp's off the front. Next is %s." % r["name"] if covered_stage > 0 else "Under the tarp: an old fighter with a crew deck. Freya's chalked a list on the hull. First, %s." % r["name"]
-	if credits >= int(r["cost"]) and _has_all(r["needs"]):
-		_say("Freya", [lead, "That's %s. Shall I?" % what], Callable(self, "_pay_covered"), "Hand it over")
-	else:
-		_say("Freya", [lead, "I'll need %s." % what])
+	if credits < int(r["cost"]) or not _has_all(r["needs"]):
+		sfx("deny")
+		return "Freya: \"Not yet. I need everything on the list.\""
+	_pay_covered()
+	if ships_owned.has("covered_fighter"):
+		return "Freya: \"She's done. Pick which ship flies at my bench.\""
+	return "Freya: \"Stage %d done. She's starting to look like a ship again.\"" % covered_stage
 
 
 func _pay_covered() -> void:
@@ -2313,8 +2322,6 @@ func _pay_covered() -> void:
 		ship_hulls["covered_fighter"] = int(_ship_def("covered_fighter")["hull"])
 		_say("Freya", ["[happy] She's done. A real ship, crew deck and all. Boarding pods, a medbay...",
 			"Choose which one flies at my bench. And you'll want hands aboard: Eshu pins hirelings on the crew board."])
-	else:
-		_say("Freya", ["Done. %d of %d. She's starting to look like a ship again." % [covered_stage, COVERED_REPAIRS.size()]])
 	_save_game()
 
 

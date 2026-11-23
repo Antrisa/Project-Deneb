@@ -171,6 +171,7 @@ var e_hull_max := 0
 # 23 Nov: captures, surrender, fleeing, hazards and augments (all set from the fight's settings by main.gd)
 var captured := false              # won by downing their crew with the ship still whole
 var surrender_asked := false
+var offer_open := false            # the surrender window is up over the fight (datapad style)
 var e_flee := -1.0                 # their fold drive charging to escape, 0..100 (-1: not trying)
 var hazard := ""                   # "asteroids", "flare", "nebula", "ion_storm" or ""
 var hazard_t := 0.0
@@ -294,6 +295,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	tutorial_said = {}
 	captured = false
 	surrender_asked = false
+	offer_open = false
 	e_flee = -1.0
 	hazard = str(fight.get("hazard", ""))
 	hazard_t = randf_range(6.0, 10.0)
@@ -1585,6 +1587,12 @@ func handle_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
 		return
+	if offer_open:
+		if key.physical_keycode == KEY_ESCAPE:
+			_decline_surrender()
+		elif key.physical_keycode == KEY_ENTER or key.physical_keycode == KEY_E:
+			_accept_surrender()
+		return
 	match key.physical_keycode:
 		KEY_SPACE, KEY_P:
 			_toggle_pause()
@@ -1646,6 +1654,12 @@ func _click(id: String, p: Vector2, button: int) -> void:
 	if world.dialogue.active:
 		if button == MOUSE_BUTTON_LEFT:
 			world.dialogue.advance()
+		return
+	if offer_open:
+		if button == MOUSE_BUTTON_LEFT and id == "offer_yes":
+			_accept_surrender()
+		elif button == MOUSE_BUTTON_LEFT and id == "offer_no":
+			_decline_surrender()
 		return
 	if result != "":
 		return
@@ -2076,12 +2090,8 @@ func _tick_space(delta: float) -> void:
 	if not surrender_asked and not offer.is_empty() and e_hull > 0 and e_hull * 10 <= e_hull_max * 3:
 		surrender_asked = true
 		paused = true
-		var words: Array = []
-		for o in offer:
-			words.append(str(o).replace("item: ", "").replace("_", " "))
-		world._say(str(foe.get("name", "They")), ["\"Enough! We yield. Take %s and let us go.\"" % ", ".join(words)],
-				Callable(self, "_accept_surrender"), "Let them go")
-		world._say_then(Callable(self, "_after_offer"))
+		offer_open = true
+		world.sfx("sh_ready", 0.7, -4.0)
 		return
 	if bool(fight.get("flee", false)) and e_hull > 0 and e_hull * 2 <= e_hull_max:
 		if e_flee < 0.0:
@@ -2117,6 +2127,8 @@ func _tick_space(delta: float) -> void:
 
 
 func _accept_surrender() -> void:
+	offer_open = false
+	paused = false
 	if result != "":
 		return
 	result = "spared"
@@ -2126,8 +2138,26 @@ func _accept_surrender() -> void:
 	world.sfx("coin")
 
 
-func _after_offer() -> void:
+func _decline_surrender() -> void:
+	offer_open = false
 	paused = false
+	_pop(_on_page(false, Vector2((foe["size"] as Vector2).x / 2.0, 0)), "Offer refused", GOLD)
+
+
+# The surrender window, over the middle of the page: who, what they offer, and two buttons.
+func _paint_offer() -> void:
+	var s := screen
+	var r := Rect2(((s.page - Vector2(330, 150)) / 2.0).floor(), Vector2(330, 150))
+	s.rect(Rect2(Vector2.ZERO, s.page), Color(0.06, 0.08, 0.1, 0.45))
+	s.panel(r, "blaster", "Hail from the %s" % str(foe.get("name", "enemy")).to_lower())
+	var y: float = s.wrap_text(r.position.x + 12, r.position.y + 32, r.size.x - 24, "\"Enough! We yield. Take this and let us go.\"", "label", MUTED, 16.0)
+	y += 4.0
+	for o in fight.get("surrender", []):
+		var t: String = str(o)
+		s.text(r.position.x + 16, y, "+ " + t.trim_prefix("+").replace("item: ", "").replace("_", " "), "label", GOOD.darkened(0.35))
+		y += 15.0
+	s.solid_button("offer_yes", Rect2(r.position.x + 12, r.end.y - 34, 150, 24), "Let them go")
+	s.button("offer_no", Rect2(r.end.x - 162, r.end.y - 34, 150, 24), "Fight on", false)
 
 
 # The ship's alarm (23 Nov): a two-tone beep every few seconds while your ship burns, a room's air is thin, or
@@ -2809,6 +2839,8 @@ func _paint() -> void:
 	_paint_aboard()
 	screen.shift(Vector2.ZERO)
 	_paint_status()
+	if offer_open:
+		_paint_offer()
 
 
 # Your ship's readings, along the top of the case.

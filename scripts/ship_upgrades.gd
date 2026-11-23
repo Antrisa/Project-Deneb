@@ -28,7 +28,8 @@ const ROSTER_MAX := 4
 
 var world                          # main.gd
 var open := false
-var where := "bench"               # "bench" (Freya's workbench), "board" (the crew board), "field" (from the map)
+var where := "bench"               # "bench" (Freya's workbench), "board" (the crew board), "field" (from the map),
+                                   # "restore" (the covered fighter under its tarp: Freya's restoration, stage by stage)
 var tab := 0
 var view_ship := "starter"
 var picked := 0
@@ -58,7 +59,8 @@ func open_at(place: String, cb: Callable = Callable()) -> void:
 	picked = 0
 	status = {"bench": "Freya: \"Bring me parts and Scrip and I'll fit anything.\"",
 		"board": "Eshu's notice: CREW WANTED, CREW AVAILABLE. Signing fee up front.",
-		"field": "Field refit: your drone fits what you've got on board."}.get(place, "")
+		"field": "Field refit: your drone fits what you've got on board.",
+		"restore": "Freya: \"She's a good hull under all that dust. Bring me the parts.\""}.get(place, "")
 	open = true
 	visible = true
 	screen.redraw()
@@ -136,6 +138,8 @@ func _click(id: String, _p: Vector2, button: int) -> void:
 			world.sfx("click")
 		"leave":
 			_leave()
+		"restore":
+			status = world.restore_covered()
 
 
 # ---------------------------------------------------------------- rows and costs
@@ -281,8 +285,16 @@ func _hire(i: int) -> void:
 
 func _paint() -> void:
 	var s := screen
-	s.case_fill({"bench": "Freya's bench", "board": "Crew board", "field": "Field refit"}.get(where, "Ship"))
+	s.case_fill({"bench": "Freya's bench", "board": "Crew board", "field": "Field refit", "restore": "Covered fighter"}.get(where, "Ship"))
 	s.shift(((s.page - ShipScreen.DESIGN) / 2.0).floor() + Vector2(0, -16))
+	if where == "restore":
+		_paint_restore()
+		s.shift(s.bottom_left())
+		s.status(status)
+		s.shift(s.bottom_right())
+		s.solid_button("leave", Rect2(625, 388, 82, 22), "Leave")
+		s.shift(Vector2.ZERO)
+		return
 	for i in range(TABS.size()):
 		s.button("tab/%d" % i, Rect2(56 + i * 100, 54, 96, 24), str(TABS[i]), tab == i)
 	# the ship selector (only once you have more than one)
@@ -382,6 +394,12 @@ func _paint_details(rows: Array) -> void:
 	var hull_now: int = int(world.ship_hull) if flying else int(world.ship_hulls.get(view_ship, int(d["hull"])))
 	s.text(sc.position.x + 8, sc.position.y + 6, str(ShipData.SHIP_NAMES[view_ship]).to_upper() + ("  (FLYING)" if flying else ""), "micro", ShipScreen.SCOPE_TEXT)
 	s.text_right(sc.end.x - 8, sc.position.y + 6, "HULL %d / %d" % [hull_now, int(d["hull"])], "micro", ShipScreen.SCOPE_TEXT)
+	# fitted augments (they stay with whichever ship flies)
+	var aug_names: Array = []
+	for a in world.augments:
+		aug_names.append(str(ShipData.AUGMENTS[a]["name"]))
+	s.text_fit(sc.position.x + 8, sc.end.y - 14, sc.size.x - 16,
+			("AUGMENTS: " + ", ".join(aug_names)).to_upper() if not aug_names.is_empty() else "NO AUGMENTS (STORES SELL THEM)", "micro", ShipScreen.SCOPE_TEXT)
 	var box := Rect2(476, 202, 239, 180)
 	if rows.is_empty():
 		s.panel(box, "power", "Nothing here")
@@ -477,6 +495,60 @@ func _paint_crew() -> void:
 		s.text(490, oy + 64, "%d SCRIP" % int(o["fee"]), "micro", OCHRE)
 		s.button("hire/%d" % i, Rect2(card.end.x - 64, oy + 60, 58, 18), "Hire", false, "micro", int(world.credits) >= int(o["fee"]))
 		oy += 90.0
+
+
+# Freya's restoration of the covered fighter: the three stages (done, next, still to come) with what each needs and
+# what you have, the ship in a scope, and Hand it over for the next stage (main.gd COVERED_REPAIRS).
+func _paint_restore() -> void:
+	var s := screen
+	var stages: Array = world.COVERED_REPAIRS
+	var done: int = int(world.covered_stage)
+	s.panel(Rect2(56, 54, 412, 328), "power", "Restoring the covered fighter")
+	s.text(330, 58, "STAGE %d OF %d" % [mini(done + 1, stages.size()), stages.size()], "micro", MUTED)
+	for i in range(stages.size()):
+		var st: Dictionary = stages[i]
+		var box := Rect2(60, 84 + i * 96, 404, 90)
+		var now: bool = i == done
+		s.frame(box, Color("f8f6ef") if now else Color("f0ede4"), ORANGE if now else Color("d0c9bb"))
+		if now:
+			s.outline(box, ORANGE, 2.0)
+		var head: String = "%d. %s" % [i + 1, str(st["name"]).capitalize()]
+		s.text_fit(box.position.x + 10, box.position.y + 6, 300, head, "strong", INK if i <= done else GREY)
+		if i < done:
+			s.text_right(box.end.x - 10, box.position.y + 8, "DONE", "micro", ShipScreen.PIP_ON)
+			continue
+		var y: float = box.position.y + 30
+		var needs: Dictionary = st["needs"]
+		for item in needs:
+			_item_icon(item, Rect2(box.position.x + 12, y - 2, 12, 12))
+			var have: int = int(world._count(item))
+			s.text(box.position.x + 28, y, "%d %s   YOU HAVE %d" % [int(needs[item]), _item_name(item).to_upper(), have],
+					"micro", (INK if have >= int(needs[item]) else BAD) if now else GREY)
+			y += 14.0
+		s.text(box.position.x + 12, y, "%d SCRIP   YOU HAVE %d" % [int(st["cost"]), int(world.credits)], "micro", OCHRE if now else GREY)
+	# the ship
+	var sc := Rect2(476, 54, 239, 150)
+	s.scope(sc, 2)
+	var d: Dictionary = ShipData.COVERED_FIGHTER
+	var hull_tex: Texture2D = load(str(d["art"])) if ResourceLoader.exists(str(d["art"])) else null
+	if hull_tex != null:
+		var xf: Transform2D = s.fit_into(Vector2(hull_tex.get_size()), Rect2(sc.position + Vector2(8, 18), sc.size - Vector2(16, 26)))
+		s.texture_xf(hull_tex, xf, Rect2(), Color(1, 1, 1, 0.35 + 0.65 * float(done) / float(stages.size())))
+	s.text(sc.position.x + 8, sc.position.y + 6, "COVERED FIGHTER", "micro", ShipScreen.SCOPE_TEXT)
+	s.text_right(sc.end.x - 8, sc.position.y + 6, "%d CREW SEATS, PODS, MEDBAY" % int(ShipData.CREW_SEATS["covered_fighter"]), "micro", ShipScreen.SCOPE_TEXT)
+	var box2 := Rect2(476, 210, 239, 172)
+	if done >= stages.size():
+		s.panel(box2, "power", "She's yours")
+		s.wrap_text(486, 238, 219, "Choose which ship flies at Freya's workbench.", "label", MUTED, 16.0)
+		return
+	var st2: Dictionary = stages[done]
+	s.panel(box2, "power", "Next: stage %d" % (done + 1))
+	s.wrap_text(486, 238, 219, "Freya fits %s once you bring what's on the list. The rest of the ship waits under the tarp." % str(st2["name"]), "label", MUTED, 16.0)
+	var can: bool = int(world.credits) >= int(st2["cost"]) and world._has_all(st2["needs"])
+	if can:
+		s.solid_button("restore", Rect2(486, 346, 219, 26), "Hand it over (%d)" % int(st2["cost"]))
+	else:
+		s.button("restore", Rect2(486, 346, 219, 26), "Not enough yet", false, "label", false)
 
 
 func _paint_contracts() -> void:
