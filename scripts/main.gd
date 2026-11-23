@@ -853,6 +853,8 @@ func _light_color() -> Color:
 		c = c * Color(0.62, 0.6, 0.74)
 	elif current_area.begins_with("cav_"):
 		c = Color(0.58, 0.58, 0.7)          # no day and night down there
+	elif current_area == "lake":
+		c = Color(0.66, 0.74, 0.86)         # nor at the underground lake: cool, blue-green dark
 	return c
 
 
@@ -2893,6 +2895,11 @@ func _process(delta: float) -> void:
 				player.position += Vector2(0, 24)
 				_toast("Job: \"Not up there bare-handed, cher. See Vzz'ket first.\"")
 				sfx("deny")
+			elif dest_area == "lake" and not harbinger_slain:
+				# The old flooded stair stays sealed until the Harbinger is dead: step back up.
+				player.position += Vector2(0, -24)
+				_toast("Sealed — the old stair to the flooded galleries. Not while the Harbinger lives.")
+				sfx("deny")
 			else:
 				_go_to(dest_area, Vector2i(int(dest[1]), int(dest[2])))
 
@@ -3766,7 +3773,8 @@ func _harbinger_slain() -> void:
 	_money(500, "The Harbinger, defeated")
 	_say("Underground ocean", ["The Harbinger sinks back into the dark water, and does not rise again.",
 		"For the first time, the ocean is quiet. Zaas is going to want to see this.",
-		"You pull a scale the size of a dinner plate from the shingle. (+500 credits)"])
+		"You pull a scale the size of a dinner plate from the shingle. (+500 credits)",
+		"Somewhere above, water drains away. The old flooded stair under the copper bay will be open now: there is a lake down there, and fish."])
 
 
 # Doors between rooms: open for whoever is near, shut again behind them. A bedroom with an owner stays

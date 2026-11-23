@@ -444,6 +444,17 @@ const FAREWELL_ANYONE = ["[sad] Leaving? I heard your ship was finished.", "Safe
 
 
 const LOOKS = {
+	# The flooded stair and the underground lake (tools/caves.py, 22 Nov)
+	"Flooded stair": ["Rough steps cut down into the rock under the copper bay, and a chain across them.", "A tag in Job's hand: 'SEALED. Not while that thing is down there.'"],
+	"The Underground Lake": ["A wide, still lake under the mine. The water is black and perfectly clear, and things glow at the bottom of it.", "Every so often a ring spreads across the surface where something has come up to look at you."],
+	"Old fishing camp": ["A camp from before the flood: a stove, a bench, crates of tackle gone green, a rack of old rods.", "Someone used to come down here a lot. The bench is worn smooth."],
+	"Fishing spot: deep water": ["The end of the long dock. The water drops away into the dark.", "Pale cave fish turn slowly far below, the big ones keep to the deep."],
+	"Fishing spot: west dock": ["The short dock. Little silver blind fish dart round the posts."],
+	"Fishing spot: the shallows": ["Clear shallows over the shingle. Glow-finned fish nose about between the stones."],
+	"Glow crystals": ["Crystals the colour of violets, faintly warm. They light the water round them."],
+	"Fishing crates": ["Crates of hooks, line and floats, packed in rotten straw. The hooks are still sharp."],
+	"Rod rack": ["Old fishing rods, bamboo and carbon fibre, a few of them still sound."],
+	"Signpost: long dock, west dock, fishing camp": ["A hand-painted signpost: LONG DOCK (straight on), WEST DOCK (left), CAMP (right).", "Someone has added, underneath: MIND THE BIG ONE."],
 	# Survey Level (tools/survey.py)
 	"Empty display": ["An empty case with a blank label. Tar'Besh has left a card in it: 'Waiting for something wonderful.'", "Things you find on the station and in the mine could go here."],
 	"Audio guide": ["A little guide terminal. Press it and Tar'Besh's recorded voice begins, very slowly, at the beginning of time."],

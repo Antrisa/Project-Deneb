@@ -2,7 +2,7 @@
 
 eng  option E (Zachary, 17 Nov): a rectangular works hall looping round the geothermal power core, sunk in
      its own pit (stairs down at both ends, panels and coolant tanks inside). Rooms bulge out on 45-degree walls:
-     ore processing (two rooms, conveyor belts from the mine tunnel in the south-west), Tikka's big engineering bay
+     ore processing (two rooms, a conveyor belt from the mine's ore chute in the south-west; the mine tunnel runs west off the hall), Tikka's big engineering bay
      with her office and a drone pad (north), lift, stores, cargo staging and the corridor to the shuttle bay (east),
      a big crew break room, cooling & life support piped up into the pit, and two spare workshops (south).
 bay  the shuttle bay, its own map: a hangar cut into the crater wall, with big windows along the north wall
@@ -67,12 +67,12 @@ def build(g):
     chamfer_room(F, 48, 30, 92, 46, 'q', 5)                    # the drop round the pit (railed, not walkable)
     chamfer_room(F, 52, 33, 88, 43, 'k', 4)                    # the pit floor
     fill(48, 37, 51, 39, 'j'); fill(89, 37, 92, 39, 'j')       # stairs down, west and east
-    # --- ore processing: two rooms and a short hall between them, the mine tunnel in the south-west
+    # --- ore processing: two rooms and a short hall between them; the mine tunnel carries straight on west
     poly([(6, 33), (6, 18), (16, 8), (34, 8), (39, 13), (39, 33)], 'o')
     fill(6, 34, 39, 38, '.')
     poly([(6, 40), (39, 40), (39, 52), (31, 60), (6, 60)], 'o')
     for x in (13, 14, 15, 25, 26, 27): F[33][x] = F[39][x] = 'o'
-    fill(1, 54, 5, 57, 'R')
+    fill(1, 34, 5, 38, 'R')                                    # the mine tunnel runs straight on west from the hall (Zachary, 22 Nov)
     # --- Tikka's engineering bay: the whole north side; her office in the north-east corner, a drone pad
     poly([(48, 23), (48, 12), (54, 6), (90, 6), (96, 12), (96, 23)], 't')
     for x in range(68, 73): F[23][x] = '.'
@@ -112,11 +112,11 @@ def build(g):
                     ['Crew break room', 32, 54, 56, 73], ['Cooling & life support', 58, 54, 82, 69], ['Spare workshop', 85, 54, 96, 64],
                     ['Engineering works hall', 40, 24, 100, 52], ['Engineering works hall', 6, 34, 39, 38]]
     eng.t.warp('U', [lift], 'main', 115, 169)                   # tools/concourse.py makes this a lift door
-    eng.t.warp('R', [(1, y) for y in range(54, 58)], 'mine', 66, 25)   # tools/caves.py ENG_LANDING
+    eng.t.warp('R', [(1, y) for y in range(34, 39)], 'mine', 66, 25)   # tools/caves.py ENG_LANDING
     bay_door = (3, 18)
     # keep the walking lanes of the hall and every doorway clear
     eng.keep_clear(40, 24, 100, 27); eng.keep_clear(40, 49, 100, 52); eng.keep_clear(40, 24, 45, 52); eng.keep_clear(95, 24, 100, 52)
-    eng.keep_clear(6, 35, 39, 37); eng.keep_clear(1, 54, 9, 57); eng.keep_clear(101, 37, 117, 39)
+    eng.keep_clear(6, 35, 39, 37); eng.keep_clear(1, 34, 9, 38); eng.keep_clear(101, 37, 117, 39)
     for (x0, y0, x1, y1) in ((12, 31, 16, 41), (24, 31, 28, 41), (67, 21, 73, 26), (97, 21, 101, 26), (99, 27, 103, 31), (99, 44, 103, 48),
                              (45, 51, 49, 56), (68, 51, 72, 56), (88, 51, 92, 56), (102, 58, 106, 63), (89, 13, 92, 16), (46, 36, 54, 40), (86, 36, 94, 40)):
         eng.keep_clear(x0, y0, x1, y1)
@@ -128,7 +128,7 @@ def build(g):
     N('terminal', 18, 27.5, 'Belt control'); N('pump', 9, 21.5, 'Dust extractor', None); N('cargo', 36, 30.5, 'Ingot crates', None)
     N('parts_rack', 20, 46.5, 'Ore bins', None); N('parts_rack', 30, 46.5, 'Ore bins', None); N('ore_cart', 22, 55.5, 'Ore cart', None)
     N('ore_cart', 10, 44.5, 'Ore cart', None); N('console', 33, 52.5, 'Sorting console'); N('cargo', 9, 50.5, 'Rock samples', None)
-    # more for the ore rooms: the hopper at the tunnel mouth, the sorter on the belt, heaps of ore, ingots, slag
+    # more for the ore rooms: the hopper where the ore chute from the mine comes through the wall, the sorter on the belt, heaps of ore, ingots, slag
     N('hopper', 9.5, 52.5, 'Ore hopper', 'look', 'Look'); N('sorting_machine', 15, 46.5, 'Ore sorter', 'look', 'Look')
     N('ore_pile', 25, 52.5, 'Heap of ore', None); N('ore_pile', 22, 57.5, 'Heap of ore', None); N('slag_bin', 34, 56.5, 'Slag bin', None)
     N('hazard_sign', 18, 42.5, 'Warning: moving belt', None); N('barrel_stack', 36, 42.5, 'Flux barrels', None)
@@ -181,7 +181,7 @@ def build(g):
     for (x0, y0, x1, y1) in ((85, 54, 96, 64), (98, 62, 110, 71)):
         N('cargo', x0 + 3, y0 + 4.5, 'Spare crates', None); N('workbench', x1 - 3, y0 + 4.5, 'Empty workbench', 'inspect', 'Inspect')
     # conveyor belts, coolant pipes and power cables, painted into the floor
-    belts = [[(1, 55.5), (14.5, 55.5), (14.5, 23), (19, 18.5)], [(23, 18.5), (27, 18.5), (27, 13), (29, 12)],
+    belts = [[(6, 55.5), (14.5, 55.5), (14.5, 23), (19, 18.5)], [(23, 18.5), (27, 18.5), (27, 13), (29, 12)],
              [(31.5, 13), (31.5, 23)]]                                     # furnaces to the ingot stacks; nothing leaves the ore rooms
     pipes = [[(65.5, 63), (65.5, 44)], [(74.5, 63), (74.5, 44)]]
     cables = [[(70.5, 33), (70.5, 24.5), (100.5, 24.5), (100.5, 52.5)], [(48, 38.5), (40.5, 38.5), (40.5, 24.5)], [(40.5, 36), (6.5, 36)]]

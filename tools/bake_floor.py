@@ -267,6 +267,13 @@ def bake(rows, art_dir, style="new", strip=128):
         color = np.where(b[..., None], np.where((fore < 0.0625)[..., None], hexc("a99579"), hexc("f1dfbc")), color)
         b = on_route & (route < 3) & (np.floor(radius).astype(np.int64) % 96 < 4) & (radius > 175)
         color = np.where(b[..., None], hexc("c7ad70"), color)
+        if style != "v11":
+            # The walks and forecourts sit a little proud of the plaza: a soft shadow falls off their edges.
+            off = ~on_route
+            ds = np.where(radius < 480, np.minimum(np.where(radius >= 174, route - 40, 99), np.maximum(radius - 174, 0) + 99 * (radius < 174)), route - 40)
+            ds = np.minimum(ds, np.where(fore > -9, -fore * 16, 99))
+            k = np.clip(1 - ds / 8.0, 0, 1) * off
+            color = color * (1 - .2 * k[..., None] ** 1.5)
         rgb = np.clip(color * 255.0, 0, 255).astype(np.uint8)
         img[Yn, Xn, :3] = rgb; img[Yn, Xn, 3] = 255
     return Image.fromarray(img, "RGBA")
@@ -298,7 +305,8 @@ AREA_FLOORS = {
              "u": ("sp_terminal", None), "O": ("agri/water", ("70c8d0", 0.25)), "Y": ("agri/water", None)},
     "east": {".": ("sp_plaza", None), "s": ("ea_grass", None), "h": ("ea_deck", None), "a": ("sp_soil", None), "f": ("ea_rubber", None),
              "k": ("ea_court", None), "o": ("ea_deck", None), "t": ("ea_tile", None), "e": ("eng_floor_grate", None), "u": ("sp_terminal", None),
-             "A": ("sp_terminal", None)},
+             "A": ("sp_terminal", None), "Y": ("agri/water", None), "O": ("agri/water", ("70c8d0", 0.25)), "p": ("east/dock", None),
+             "j": ("east/stones", None)},
     "hotel": {
         "u": ("hotel/warm_deck_mix", None), "i": ("hotel/warm_deck_mix", None),
         "O": ("sp_water", ("70c8d0", 0.25)), "p": ("hotel/dining_mineral_mix", None),
@@ -355,6 +363,19 @@ def bake_area(key, rows, art_dir, extras=None):
     if key == "hotel":
         _hotel_finishes(img, art_dir)
     extras = extras or {}
+    for rc, pts, among in extras.get("regions", []):
+        # A floor kind laid on a true outline rather than by tiles (the lake's shingle shore): pixels of the
+        # listed floor kinds inside the outline get rc, those outside it get the first other kind listed.
+        X, Y = (Xn + .5) / PX, (Yn + .5) / PX
+        m = np.zeros((H, W), dtype=bool); n = len(pts)
+        for i in range(n):
+            (x1, y1), (x2, y2) = pts[i], pts[(i + 1) % n]
+            if y1 == y2: continue
+            m ^= ((y1 > Y) != (y2 > Y)) & (X < x1 + (Y - y1) * (x2 - x1) / (y2 - y1))
+        area = np.zeros((H, W), dtype=bool)
+        for c in among: area |= ch == ord(c)
+        other = [c for c in among if c != rc][0]
+        paint(rc, area & m); paint(other, area & ~m)
     if "holes" in extras:
         # Pits and pools drawn on their true 45-degree outlines (the tiles only say where you cannot walk):
         # hole tiles outside the outline get the cave floor, floor tiles inside it get the hole, and a dark lip
@@ -379,7 +400,10 @@ def bake_area(key, rows, art_dir, extras=None):
         for dx, dy in ((2, 0), (-2, 0), (0, 2), (0, -2), (1, 1), (-1, -1), (1, -1), (-1, 1)):
             sh &= np.roll(np.roll(inside, dy, 0), dx, 1)
         lip = inside & ~sh & area
-        img[lip, :3] = (img[lip, :3] * .35).astype(np.uint8)
+        if extras.get("lake"):
+            _lake_water(img, inside, area, ch, ord(fc), Xn, Yn)
+        else:
+            img[lip, :3] = (img[lip, :3] * .35).astype(np.uint8)
     if "data_lines" in extras:
         # Glowing lines in S.A.R.A.'s floor, from her dais out to each memory core, and a ring round the dais.
         glow = np.zeros((H, W), dtype=bool)
@@ -393,6 +417,10 @@ def bake_area(key, rows, art_dir, extras=None):
         glow |= (np.abs(rr - 46) < 1.2) | (np.abs(rr - 58) < 0.8)
         glow &= ch == ord("i")
         img[glow, :3] = (92, 214, 222)
+    if "rails" in extras:
+        _rail_extras(img, ch, x, y, extras)
+    if "stairs" in extras:
+        _stair_extras(img, Xn, Yn, extras["stairs"])
     if "core" in extras:
         _engineering_extras(img, ch, x, y, extras)
     elif "belts" in extras:
@@ -450,6 +478,79 @@ def _hotel_finishes(img, art_dir):
     for tx, name in ((29, "sill_a"), (89, "sill_b")):
         tex = texture(name)
         img[63*PX:63*PX+tex.shape[0], tx*PX:tx*PX+tex.shape[1], :3] = tex
+
+
+def _lake_water(img, inside, area, ch, shore, Xn, Yn):
+    """The underground lake (22 Nov): deeper and darker towards the middle, a pale shallow rim, a thin wet line
+    where the water meets the shingle, darker wet stones along the shore, and faint glints on the surface."""
+    from scipy.ndimage import distance_transform_edt, gaussian_filter
+    rgb = img[..., :3].astype(np.float32)
+    water = inside & area
+    din = distance_transform_edt(water)
+    dout = distance_transform_edt(~water)
+    deep = np.clip(din / 70.0, 0, 1)
+    rgb[water] *= (1 - .5 * deep[water])[:, None]
+    rim = water & (din < 12)
+    k = (1 - din[rim] / 12.0) ** 1.5 * .38
+    rgb[rim] = rgb[rim] * (1 - k[:, None]) + np.array([96, 170, 178])[None, :] * k[:, None]
+    edge = water & (din < 2.2)
+    rgb[edge] = rgb[edge] * .35 + np.array([170, 226, 222]) * .65
+    wet = (ch == shore) & ~water & (dout < 14)
+    rgb[wet] *= (.62 + .38 * np.clip(dout[wet] / 14.0, 0, 1) ** .8)[:, None]
+    dock = ch == ord("p")
+    sh = np.zeros_like(water)
+    for k in range(1, 7): sh |= np.roll(np.roll(dock, k, 0), k // 2, 1)
+    sh &= water & ~dock
+    rgb[sh] *= .55
+    rnd = np.random.default_rng(45)
+    gl = water & (din > 10) & (rnd.random(water.shape) < .0016)
+    for dx in (0, 1, 2):
+        g2 = np.roll(gl, dx, 1) & water
+        rgb[g2] = rgb[g2] * .3 + np.array([150, 230, 235]) * .7
+    img[..., :3] = np.clip(rgb, 0, 255).astype(np.uint8)
+
+
+def _stair_extras(img, Xn, Yn, stairs):
+    """Rough steps cut in the rock (22 Nov): a lit nose and a dark riser every few pixels, fading into the
+    dark towards the end that leaves the map. stairs: [(x0, y0, x1, y1, 'n' or 's')] in tiles, inclusive."""
+    rgb = img[..., :3].astype(np.float32)
+    for x0, y0, x1, y1, way in stairs:
+        m = (Xn >= x0 * PX) & (Xn < (x1 + 1) * PX) & (Yn >= y0 * PX) & (Yn < (y1 + 1) * PX)
+        ys = Yn - y0 * PX
+        step = ys % 10
+        rgb[m & (step == 0)] = rgb[m & (step == 0)] * .45
+        rgb[m & (step == 1)] = rgb[m & (step == 1)] * .7
+        rgb[m & (step == 2)] = np.clip(rgb[m & (step == 2)] * 1.25 + 12, 0, 255)
+        span = (y1 + 1 - y0) * PX
+        f = np.clip(ys / float(span), 0, 1) if way == "s" else np.clip(1 - ys / float(span), 0, 1)
+        rgb[m] *= (1 - .7 * f[m] ** 1.5)[:, None]
+        edge = m & ((Xn - x0 * PX < 3) | ((x1 + 1) * PX - Xn <= 3))         # dark edges where the steps meet the rock
+        rgb[edge] *= .55
+    img[..., :3] = np.clip(rgb, 0, 255).astype(np.uint8)
+
+
+def _rail_extras(img, ch, x, y, extras):
+    """Mine rails (22 Nov): timber sleepers across the walkway, two steel rails along it, lit on top."""
+    walk = (ch != ord("#")) & (ch != ord("~"))
+    rgb = img[..., :3].astype(np.float32)
+    for ax, ay, bx, by in _segments(extras["rails"]):
+        vx, vy = bx - ax, by - ay
+        L = max(1e-6, (vx * vx + vy * vy) ** .5)
+        ux, uy = vx / L, vy / L
+        along = (x - ax) * ux + (y - ay) * uy
+        side = (x - ax) * -uy + (y - ay) * ux                  # signed distance across the track
+        on = walk & (along >= 0) & (along <= L)
+        ties = on & (np.abs(side) < 7.5) & ((along % 7) < 3.2)
+        tie_top = ties & ((along % 7) < 1.0)
+        tie_lo = ties & ((along % 7) > 2.4)
+        rgb[on & (np.abs(side) < 8.5) & ((along % 7) >= 3.2) & ((along % 7) < 3.9)] *= .72   # shadow behind each sleeper
+        rgb[ties] = (104, 74, 50); rgb[tie_top] = (138, 104, 72); rgb[tie_lo] = (70, 48, 34)
+        for off in (-4.5, 4.5):
+            r_ = on & (np.abs(side - off) < 1.1)
+            rgb[r_] = (92, 94, 104)
+            rgb[r_ & (side - off < -0.2)] = (176, 182, 192)
+            rgb[on & (side - off >= 1.1) & (side - off < 2.0)] *= .6
+    img[..., :3] = np.clip(rgb, 0, 255).astype(np.uint8)
 
 
 def _belt_extras(img, ch, x, y, extras):
@@ -561,8 +662,10 @@ def lounge_window_strip(map_width, art_dir):
 # floor (scripts/lunar_ground.gd); repainting material_1.png (roof) or material_2.png (wall face) still works.
 SOLID = "#Wzw"
 # Levels with their own wall materials: (roof, wall face), files in art/lunar. Others use material_1 / material_2.
-SECTOR_WALLS = {"eng": ("eng_roof", "eng_wall"), "bay": ("eng_roof", "eng_wall"),
-                "hotel": ("hotel/cap_mix", "hotel/hotel_enamel_mix")}
+SECTOR_WALLS = {"eng": ("eng_roof", "eng_wall"), "bay": ("eng_roof", "eng_wall"), "main": ("promenade/roof", "promenade/wall"),
+                "hotel": ("hotel/cap_mix", "hotel/hotel_enamel_mix"), "west": ("arrivals/roof", "arrivals/wall"), "east": ("east/roof", "east/wall"),
+                "agri": ("agri/roof", "agri/wall"), "top": ("material_1", "material_2"), "museum": ("material_1", "material_2"),
+                "lounge": ("material_1", "material_2"), "sanctum": ("material_1", "material_2")}
 WALL_TINTS = ["ffffff", "e1e7ec", "ede2d5"]
 ROOF_TINTS = ["ffffff", "dbe4ee", "f0e9df", "c6d3e2"]
 
@@ -585,6 +688,53 @@ def _roof_zone(key, tx, ty):
             zone = np.where(np.hypot(tx - 115 - sx * 39.6, ty - 95 - sy * 39.6) <= 14.0, 24, zone)
     return zone
 
+
+# Edge colours for the baked walls. Homes use the warm set that matches the cozy props (22 Nov 2026).
+COOL_EDGES = dict(seam="36434f", seam_hi="a9b6c2", left="394756", right="7c828a", top="2b3442", top_hi="b8c4cf",
+                  lip="dcc1a1", lip_lo="59667b", foot="2b3442")
+HOME_EDGES = dict(seam="3b2a2e", seam_hi="8c7470", left="4a3634", right="8a6f66", top="3a2626", top_hi="9c8278",
+                  lip="e8d2b0", lip_lo="7a5640", foot="3a2626")
+PROM_EDGES = dict(seam="1f3434", seam_hi="6f9a92", left="243c3c", right="5f8580", top="1c2c2e", top_hi="7fa49c",
+                  lip="f0dcb8", lip_lo="5a7470", foot="2a2622")
+ENG_EDGES = dict(seam="16242a", seam_hi="5f7d86", left="1c2e34", right="557178", top="141c22", top_hi="6a8088",
+                 lip="9fc4c0", lip_lo="2a3c40", foot="1e1a18")
+CAVE_EDGES = dict(seam="241a16", seam_hi="6e5a4c", left="2c211c", right="6a5648", top="1e1612", top_hi="7a6450",
+                  lip="b49a7c", lip_lo="3a2c24", foot="1a1210")
+LUSH_EDGES = dict(seam="17221a", seam_hi="5a7454", left="1c2a1e", right="58704e", top="121a14", top_hi="6a8460",
+                  lip="9ab486", lip_lo="2a3a2a", foot="141a12")
+STEAM_EDGES = dict(seam="161e2a", seam_hi="5a6e86", left="1a2432", right="566a84", top="121820", top_hi="6a7e98",
+                   lip="a8bcd0", lip_lo="2a3646", foot="12161e")
+LAKE_EDGES = dict(seam="0e1820", seam_hi="4a6a7c", left="101c26", right="4a6676", top="0a1218", top_hi="5e8294",
+                  lip="9cc8d4", lip_lo="1e3440", foot="0a1016")
+def cave_edges(key):
+    """Mine, tunnels, caverns and the underground lake: rock edges by cavern kind."""
+    if key.startswith("cav_"):
+        return LUSH_EDGES if "lush" in key else STEAM_EDGES if ("steam" in key or key == "cav_45") else CAVE_EDGES
+    if key == "lake":
+        return LAKE_EDGES
+    return CAVE_EDGES if key in ("mine", "tunnels") else None
+
+# Cave atmosphere (22 Nov): the colour of the deep shadow, of the haze that hangs in the air, and of the light
+# from the wall lanterns; which floor characters are bare rock (rubble and grit go only there); and the lights
+# placed by the map builders, CAVE_LIGHTS[key] = [(x, y in tiles, kind, radius in tiles)].
+CAVE_MOOD = {"mine": dict(ao=(.12, .07, .05), mist=(.62, .5, .38), mist_a=.16, dark=.24, lamp=(1.0, .78, .46), rock="mkuR"),
+             "tunnels": dict(ao=(.05, .05, .09), mist=(.36, .4, .56), mist_a=.2, dark=.3, lamp=(1.0, .8, .5), rock="muo"),
+             "rock": dict(ao=(.08, .05, .06), mist=(.5, .42, .4), mist_a=.2, dark=.28, lamp=(1.0, .78, .48), rock="m"),
+             "lush": dict(ao=(.03, .08, .05), mist=(.42, .7, .5), mist_a=.22, dark=.26, lamp=(.7, 1.0, .72), rock="m"),
+             "steam": dict(ao=(.04, .06, .1), mist=(.74, .84, .94), mist_a=.26, dark=.24, lamp=(.7, .9, 1.0), rock="m"),
+             "lake": dict(ao=(.02, .05, .08), mist=(.4, .66, .74), mist_a=.24, dark=.26, lamp=(.55, .95, 1.0), rock="ms")}
+LIGHT_COLOURS = {"warm": ((1.0, .8, .5), .48), "fire": ((1.0, .62, .32), .5), "cyan": ((.45, 1.0, .95), .34),
+                 "violet": ((.82, .62, 1.0), .34), "green": ((.6, 1.0, .55), .32)}
+CAVE_LIGHTS = {}
+def cave_mood(key):
+    if key.startswith("cav_"):
+        return CAVE_MOOD["lush" if "lush" in key else "steam" if ("steam" in key or key == "cav_45") else "rock"]
+    return CAVE_MOOD.get(key)
+COZY_EDGES = {"main": PROM_EDGES, "eng": ENG_EDGES, "bay": ENG_EDGES, "hotel": HOME_EDGES, "west": ENG_EDGES, "east": HOME_EDGES,
+              "agri": ENG_EDGES, "top": PROM_EDGES, "museum": HOME_EDGES, "lounge": HOME_EDGES, "sanctum": PROM_EDGES}          # areas re-done in the cozy style that are not homes, with their own edge set
+def is_home(key):
+    """Homes, apartments, flats and the bar: wallpapered rooms with the warm wall set."""
+    return key.startswith(("home", "apt", "flat")) or key in ("bar", "bathhouse")
 
 def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     from scipy.ndimage import gaussian_filter
@@ -651,11 +801,13 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
         bottom[y] = last
     yy, xx = np.mgrid[0:H, 0:W]
     out = np.zeros((H, W, 4), dtype=np.float32)
-    roof_name, wall_name = SECTOR_WALLS.get(key, ("material_1", "material_2"))
+    home = is_home(key)
+    cozy = home or key in COZY_EDGES or cave_edges(key) is not None              # warm shading: AO, room falloff, lamp light
+    roof_name, wall_name = SECTOR_WALLS.get(key, ("home/roof", "home/wall") if home else ("material_1", "material_2"))
     mat_roof = np.asarray(Image.open(os.path.join(art_dir, roof_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
     mat_wall = np.asarray(Image.open(os.path.join(art_dir, wall_name + ".png")).convert("RGB"), dtype=np.float32) / 255.0
-    plain = key == "main" or key in SECTOR_WALLS                                   # sector materials are used as painted, no tints
-    varied_walls = key in ("main", "eng", "bay", "mine") or roof_name in ("lush/roof", "steam/roof")
+    plain = key == "main" or key in SECTOR_WALLS or home                           # sector materials are used as painted, no tints
+    varied_walls = key in ("main", "eng", "bay", "mine") or roof_name in ("lush/roof", "steam/roof", "home/roof", "promenade/roof", "hotel/cap_mix", "arrivals/roof", "east/roof", "agri/roof", "material_1", "mine_roof", "lake/roof")
     # roof: the material, tinted by roof plate
     zone = ROOF_ZONE_FN[key](xx / float(PX), (yy + PX) / float(PX)) if key in ROOF_ZONE_FN else _roof_zone(key, xx // PX, (yy + PX) // PX)
     tint = np.stack([hexc(h) for h in (["ffffff"] * 4 if plain else ROOF_TINTS)])[zone % 4]
@@ -684,6 +836,7 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
         indices = ((xx // (2*PX))*7 + (by // PX)*3) % 11
         for index, suffix in ((3, "_a"), (8, "_b")):
             mask = face & (indices == index)
+            if key == "hotel": mask &= ~wing                         # no paintings or sconces on the bare ribs
             tile = np.asarray(Image.open(os.path.join(art_dir, wall_name + suffix + ".png"))) / 255.
             fc[mask] = tile[v[mask], xx[mask] % (2*PX)]
     if window is not None:
@@ -691,24 +844,166 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
         is_win = chars[np.clip(fty, 0, th - 1), np.clip(ftx, 0, tw - 1)] == ord("w")
         wc = win[np.clip(v, 0, win.shape[0] - 1), np.clip(xx, 0, win.shape[1] - 1)]
         fc = np.where(is_win[..., None], wc, fc)
+    if cozy:
+        # Cozy depth on the wall face: lit just under the cornice, darker towards the floor, with a soft
+        # occlusion where a face runs into a wall that comes forward at either end.
+        if cave_edges(key) is not None:
+            # Rock faces: an overhang shadow just under the lip, then darker the lower the face goes.
+            g = np.clip(1.02 - (v / (2.0 * PX - 1)) * .42, .58, 1.02) * (.7 + .3 * np.clip((v - 2) / 7.0, 0, 1))
+        else:
+            g = np.clip(1.08 - (v / (2.0 * PX - 1)) * .3, .78, 1.08)
+        fc = fc * g[..., None]
+        from scipy.ndimage import distance_transform_edt
+        side = np.zeros((H, W), np.float32)
+        for k in range(1, 7):
+            side = np.maximum(side, ((right(Wl & ~face, k) | left(Wl & ~face, k)) & face) * (1 - (k - 1) / 6.0))
+        fc = fc * (1 - .3 * side[..., None])
     out[face, :3] = fc[face]
     out[Wl, 3] = 1.0
     # seams between roof plates
+    E = HOME_EDGES if home else COZY_EDGES.get(key) or cave_edges(key) or COOL_EDGES
     zr = left(zone.astype(np.int32)); seam_x = roof & left(roof) & (zone != zr)
-    out[seam_x, :3] = hexc("36434f"); out[right(seam_x), :3] = np.where(right(roof)[right(seam_x)][:, None], hexc("a9b6c2"), out[right(seam_x), :3])
+    out[seam_x, :3] = hexc(E["seam"]); out[right(seam_x), :3] = np.where(right(roof)[right(seam_x)][:, None], hexc(E["seam_hi"]), out[right(seam_x), :3])
     zd = up(zone.astype(np.int32), 1); seam_y = roof & up(roof, 1) & (zone != zd)
-    out[seam_y, :3] = hexc("36434f")
+    out[seam_y, :3] = hexc(E["seam"])
     # edges: dark on the left side of a wall, light on the right, an outline round the roof's top, a lip
     # where roof meets face, and a dark line where the face meets the floor
-    lft = Wl & ~right(Wl); out[lft | (Wl & right(lft)), :3] = hexc("394756")
-    rgt = Wl & ~left(Wl); out[rgt | (Wl & left(rgt)), :3] = hexc("7c828a")
-    top = roof & ~down(Wl, 1); out[top, :3] = hexc("2b3442"); out[roof & down(top, 1), :3] = hexc("b8c4cf")
-    lip = face & down(roof, 1); out[lip, :3] = hexc("dcc1a1"); out[face & down(lip, 1), :3] = hexc("59667b")
-    foot = face & ~up(face, 1) & up(~Wl, 1); out[foot, :3] = hexc("2b3442")
+    lft = Wl & ~right(Wl); out[lft | (Wl & right(lft)), :3] = hexc(E["left"])
+    rgt = Wl & ~left(Wl); out[rgt | (Wl & left(rgt)), :3] = hexc(E["right"])
+    top = roof & ~down(Wl, 1); out[top, :3] = hexc(E["top"]); out[roof & down(top, 1), :3] = hexc(E["top_hi"])
+    lip = face & down(roof, 1); out[lip, :3] = hexc(E["lip"]); out[face & down(lip, 1), :3] = hexc(E["lip_lo"])
+    foot = face & ~up(face, 1) & up(~Wl, 1); out[foot, :3] = hexc(E["foot"])
     # soft shadow on the floor in front of each wall face
-    shadow = ~Wl & (down(B, 1) | down(B, 2) | down(B, 3) | down(B, 4))
-    out[shadow, :3] = (0.1, 0.12, 0.18); out[shadow, 3] = 0.22
+    if cozy:
+        # Cozy shading on the floor: ambient occlusion that fades out from every wall, deeper in front of the
+        # wall faces, a gentle darkening towards the edges of each room, and warm pools of light under the lamps.
+        from scipy.ndimage import distance_transform_edt
+        floor = ~Wl & (chars[np.clip(yy // PX, 0, th - 1), np.clip(xx // PX, 0, tw - 1)] != ord("~"))
+        d = distance_transform_edt(~B)
+        mood = cave_mood(key)
+        below = np.zeros((H, W), np.float32)
+        for k in range(1, 21):
+            below = np.maximum(below, down(B, k) * (1 - (k - 1) / 20.0) ** 1.5)
+        if mood:
+            # Caves: deeper, cooler occlusion that reaches further from the rock, and the dark of the cave itself.
+            a = .46 * np.exp(-d / 14.0) + .26 * np.clip(1 - d / 64.0, 0, 1) + mood["dark"] + .3 * below
+            a = np.where(floor, np.clip(a, 0, .8), 0)
+            out[floor, :3] = mood["ao"]; out[floor, 3] = a[floor]
+        else:
+            a = .42 * np.exp(-d / 7.0) + .16 * np.clip(1 - d / 72.0, 0, 1)
+            a = a + .24 * below
+            a = np.where(floor, np.clip(a, 0, .62), 0)
+            out[floor, :3] = (0.22, 0.1, 0.08); out[floor, 3] = a[floor]
+        # light pools: under the wall lamps (the _b wall variant), a warm glow on the floor
+        lamp = face & (((xx // (2*PX))*7 + (by // PX)*3) % 11 == 8)
+        foot_lamp = lamp & ~up(face, 1) & up(~Wl, 1)
+        ly, lx = np.nonzero(foot_lamp)
+        if len(lx):
+            cols = {}
+            for y_, x_ in zip(ly, lx): cols.setdefault((x_ // (2*PX), y_), []).append(x_)
+            dry = chars[np.clip(yy // PX, 0, th - 1), np.clip(xx // PX, 0, tw - 1)] != ord("Y")
+            for (_, y_), xs_ in cols.items():
+                if max(xs_) - min(xs_) < 30: continue                # straight walls only, not the 45-degree ones
+                cx = (min(xs_) + max(xs_)) / 2.0
+                r_ = ((xx - cx) / 26.0) ** 2 + ((yy - (y_ + 8)) / 14.0) ** 2
+                glow = floor & (r_ < 1) & (yy > y_) & dry
+                k_ = (1 - r_[glow]) * .3
+                base = out[glow, :3] * out[glow, 3][:, None]
+                warm = np.array(mood["lamp"] if mood else (1.0, .82, .52))
+                na = np.clip(out[glow, 3] * (1 - k_) + k_, 0, 1)
+                out[glow, :3] = (base * (1 - k_)[:, None] + warm * k_[:, None]) / np.maximum(na, 1e-6)[:, None]
+                out[glow, 3] = na
+        if mood:
+            _cave_atmosphere(key, out, floor, face, B, d, chars, E, mood, xx, yy, th, tw)
+    else:
+        shadow = ~Wl & (down(B, 1) | down(B, 2) | down(B, 3) | down(B, 4))
+        out[shadow, :3] = (0.1, 0.12, 0.18); out[shadow, 3] = 0.22
     return Image.fromarray(np.clip(out * 255.0, 0, 255).astype(np.uint8), "RGBA")
+
+
+def _over(out, m, col, k):
+    """Lay colour col over the overlay pixels m with strength k (per pixel), keeping it a proper alpha blend."""
+    a0 = out[m, 3]; kk = np.clip(k, 0, 1)
+    na = a0 + kk * (1 - a0)
+    out[m, :3] = (out[m, :3] * (a0 * (1 - kk))[:, None] + np.asarray(col)[None, :] * kk[:, None]) / np.maximum(na, 1e-6)[:, None]
+    out[m, 3] = na
+
+
+def _cave_atmosphere(key, out, floor, face, B, d, chars, E, mood, xx, yy, th, tw):
+    """Caves (22 Nov): a coloured haze drifting over the bare rock, rubble and grit piled at the foot of the walls,
+    loose stones over the open floor, and pools of light round the lamps, fungus and crystals."""
+    from scipy.ndimage import gaussian_filter, zoom
+    H, W = floor.shape
+    rnd = np.random.default_rng(abs(hash_key(key)) % (2 ** 31))
+    tch = chars[np.clip(yy // PX, 0, th - 1), np.clip(xx // PX, 0, tw - 1)]
+    rock = np.zeros((H, W), bool)
+    for c in mood["rock"]:
+        rock |= tch == ord(c)
+    rock &= floor
+    soft_rock = gaussian_filter(rock.astype(np.float32), 10)
+    # haze: slow blotches of coloured air, thicker away from the lights (added below, after the lights)
+    n = rnd.random((H // 24 + 3, W // 24 + 3)).astype(np.float32)
+    n = gaussian_filter(n, 1.2)
+    n = zoom(n, 24, order=1)[:H, :W]
+    n = (n - n.min()) / max(1e-6, float(n.max() - n.min()))
+    haze = np.clip((n - .15) / .85, 0, 1) ** 1.2 * mood["mist_a"] * soft_rock
+    # rubble at the wall foot and grit over the open rock
+    rock_hi, rock_lo, rock_mid = hexc(E["top_hi"]), hexc(E["foot"]), hexc(E["right"])
+    def stone(x, y, w, h, base):
+        if y + h + 1 >= H or x + w + 1 >= W or x < 1 or y < 1: return
+        if not floor[y:y + h + 1, x:x + w + 1].all(): return
+        out[y:y + h, x:x + w, :3] = base; out[y:y + h, x:x + w, 3] = 1.0
+        out[y, x:x + w - 1, :3] = np.clip(base * .55 + rock_hi * .6, 0, 1)            # lit top
+        out[y + h - 1, x + 1:x + w, :3] = base * .62                                    # shaded underside
+        out[y + h, x + 1:x + w + 1, :3] = rock_lo; out[y + h, x + 1:x + w + 1, 3] = .55  # cast shadow
+        out[y + 1:y + h, x + w, :3] = rock_lo; out[y + 1:y + h, x + w, 3] = np.maximum(out[y + 1:y + h, x + w, 3], .45)
+    foot_band = rock & (d > 0.5) & (d < 13)
+    ys, xs = np.nonzero(foot_band)
+    if len(xs):
+        pick = rnd.choice(len(xs), size=min(len(xs), len(xs) // 18), replace=False)
+        for i in pick:
+            near = d[ys[i], xs[i]] < 6
+            w = int(rnd.integers(3, 7 if near else 5)); h = max(2, w - int(rnd.integers(1, 3)))
+            base = np.clip(rock_mid * rnd.uniform(.62, .95), 0, 1)
+            stone(int(xs[i]), int(ys[i]), w, h, base)
+    open_rock = rock & (d >= 9)
+    ys, xs = np.nonzero(open_rock)
+    if len(xs):
+        pick = rnd.choice(len(xs), size=len(xs) // 700, replace=False)
+        for i in pick:
+            stone(int(xs[i]), int(ys[i]), int(rnd.integers(2, 4)), 2, np.clip(rock_mid * rnd.uniform(.6, .9), 0, 1))
+    # light: lantern variants on the walls are done above; here the map's own lamps, fungus and crystals
+    lit = np.zeros((H, W), np.float32)
+    for (lx, ly, kind, rad) in CAVE_LIGHTS.get(key, []):
+        col, strength = LIGHT_COLOURS[kind]
+        cx, cy = lx * PX, ly * PX
+        R = rad * PX
+        y0, y1 = int(max(0, cy - R)), int(min(H, cy + R + 1)); x0, x1 = int(max(0, cx - R)), int(min(W, cx + R + 1))
+        if y0 >= y1 or x0 >= x1: continue
+        sub = (slice(y0, y1), slice(x0, x1))
+        r_ = np.hypot(xx[sub] - cx, (yy[sub] - cy) * 1.25) / R
+        k = np.clip(1 - r_, 0, 1) ** 1.7
+        lit[sub] = np.maximum(lit[sub], k)
+        fl = floor[sub] & (k > 0)
+        if fl.any():
+            o = out[sub]
+            o[fl, 3] *= (1 - .92 * k[fl])                        # lift the dark
+            _over(o, fl, col, k[fl] * strength)
+            out[sub] = o
+        fa = face[sub] & (k > 0)                                # and light the rock face beside it
+        if fa.any():
+            o = out[sub]
+            o[fa, :3] = np.clip(o[fa, :3] * (1 + .55 * k[fa, None]) + np.asarray(col)[None, :] * .12 * k[fa, None], 0, 1)
+            out[sub] = o
+    haze *= (1 - .7 * np.clip(lit, 0, 1))
+    m = floor & (haze > .004)
+    _over(out, m, mood["mist"], haze[m])
+
+
+def hash_key(key):
+    h = 7
+    for c in key: h = (h * 131 + ord(c)) % 1000003
+    return h
 
 
 def wall_border_chars(rows):

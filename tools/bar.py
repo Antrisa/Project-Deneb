@@ -17,7 +17,7 @@ from spaceport import fill
 from residences import Home, free_spot, DECK, KITCHEN, BATH, CARPET, SLATE
 
 SIZES.update({'front_bar_1': (3, 3, 1), 'front_bar_2': (3, 3, 1)})
-STAGE = ('hotel/hearth_slate_mix', None)
+STAGE = ('home/hearth', None)
 
 
 class Bar(Home):

@@ -2877,7 +2877,7 @@ print("all people, things and warps reachable;", len(seen), "walkable tiles;", _
 
 # ---------------------------------------------------------------- station map (for the Map page of the menu)
 # Every area drawn small on one picture. MAP_LAYOUT says where each area sits: [x, y, pixels per tile].
-MAP_LAYOUT = {"west": [0, 30, 0.5], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 1.0 / 3.0], "top": [80, 0, 0.75], "eng": [84, 90, 0.48], "mine": [34, 90, 0.5],
+MAP_LAYOUT = {"west": [0, 30, 0.5], "main": [60, 24, 1.0 / 3.0], "east": [142, 38, 0.27], "top": [80, 0, 0.75], "eng": [84, 90, 0.48], "mine": [34, 90, 0.5],
               "tunnels": [0, 92, 0.5]}
 MAP_TITLES = [["Survey Level", 123, 9], ["Spaceport District", 0, 28], ["Main Level", 104, 28], ["East Complex", 144, 36], ["Engineering", 146, 104], ["Mine", 36, 88], ["Tunnels", 0, 90]]
 MAP_MARKS = [

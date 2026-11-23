@@ -29,13 +29,13 @@ WALKABLE = '.shafkoteuj'
 SIZES.update({'textiles': (3, 2, 1), 'clothes': (3, 2, 1), 'medical': (2, 3, 1), 'hologame': (2, 2, 1),
               'chess': (2, 2, 1), 'play_piece': (3, 2, 1), 'mailbox': (1, 2, 1), 'bench_s': (2, 2, 1)})
 
-DECK = ('hotel/warm_deck_mix', None)
-KITCHEN = ('hotel/kitchen_ceramic_mix', None)
-BATH = ('residential/bath_ceramic_mix', None)
-CARPET = 'residential/red_carpet_mix'
-NAVY = 'hotel/navy_mix'
-SLATE = 'residential/slate_deck_mix'
-MINERAL = 'hotel/dining_mineral_mix'
+DECK = ('home/deck', None)
+KITCHEN = ('home/kitchen', None)
+BATH = ('home/bath', None)
+CARPET = 'home/carpet'
+NAVY = 'home/navy'
+SLATE = 'home/slate'
+MINERAL = 'home/dining'
 
 
 def free_spot(room, fx, fy, taken, doors):
