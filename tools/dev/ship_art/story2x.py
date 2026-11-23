@@ -383,10 +383,14 @@ INSIDES = {
     # fuselage (engines, oxygen, the crew deck, a hold, the 2 x 1 cockpit), weapons in the top wing root, shields in
     # the bottom one.
     "covered_fighter": (
-        {"engines": (1, 2, 1, 1, "engines"), "life": (2, 2, 1, 1, "life"), "pods": (3, 2, 2, 1, "pods"),
+        # the pod room is just as big as its hatches (Zachary, 22 Nov): one cell, four floor tiles, four hatches;
+        # the cell beside it is a small crew deck
+        {"engines": (1, 2, 1, 1, "engines"), "life": (2, 2, 1, 1, "life"), "pods": (3, 2, 1, 1, "pods"),
+         "crew": (4, 2, 1, 1, ""),
          "weapons": (3, 1, 2, 1, "weapons"), "shields": (3, 3, 2, 1, "shields"), "medbay": (5, 2, 1, 1, "medbay"),
          "pilot": (6, 2, 2, 1, "pilot")},
-        [((1, 2), (2, 2)), ((2, 2), (3, 2)), ((3, 2), (3, 1)), ((3, 2), (3, 3)), ((4, 2), (5, 2)), ((5, 2), (6, 2))],
+        [((1, 2), (2, 2)), ((2, 2), (3, 2)), ((3, 2), (3, 1)), ((3, 2), (3, 3)), ((3, 2), (4, 2)), ((4, 2), (5, 2)),
+         ((5, 2), (6, 2))],
     ),
     # Ana's corsair, 7 x 5: a corridor down the needle (crew, shields, weapons, the chart room under the star dome,
     # the cockpit under the canopy), engines in the top nacelle and oxygen in the bottom one.

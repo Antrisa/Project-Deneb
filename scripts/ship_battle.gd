@@ -2179,12 +2179,22 @@ func _lost_line() -> String:
 	return "" if lost_words.is_empty() else ". " + "; ".join(lost_words)
 
 
+# The pod room's launch hatches (Zachary, 22 Nov): one on every floor tile, the room being only as big as its
+# hatches; the covered fighter's one-cell pod room carries 4. Only crew standing on a hatch go.
+func _hatch_tiles() -> Array:
+	return _room_cells(_room(me_ship["rooms"], _pods_room()))
+
+
+func _on_hatch(c: Dictionary) -> bool:
+	return _standing(c) and str(c["ship"]) == "me" and not bool(c["walking"]) and str(c["room"]) == _pods_room() \
+		and _hatch_tiles().has(c.get("cell", Vector2i(-1, -1)))
+
+
 func _can_launch() -> bool:
 	if result != "" or _eff(sys, "pods") <= 0 or pod_charge < POD_TIME:
 		return false
-	var pr: String = _pods_room()
 	for c in my_crew:
-		if _standing(c) and str(c["ship"]) == "me" and str(c["room"]) == pr:
+		if _on_hatch(c):
 			return true
 	return false
 
@@ -2202,7 +2212,7 @@ func _launch_pod(target: String) -> void:
 	var pr: String = _pods_room()
 	var team: Array = []
 	for c in my_crew:
-		if _standing(c) and str(c["ship"]) == "me" and str(c["room"]) == pr:
+		if _on_hatch(c):
 			team.append(c)
 	if team.is_empty():
 		return
@@ -2385,7 +2395,7 @@ func _launch_why() -> String:
 		return "The pods need power"
 	if pod_charge < POD_TIME:
 		return "Still recharging"
-	return "Put crew in the pod room first"
+	return "Put crew on the pod room's hatches first"
 
 
 func _pick_crew(i: int) -> void:

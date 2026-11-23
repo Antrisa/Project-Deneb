@@ -311,37 +311,38 @@ def interior(p, rooms, doors, cell=CELL, wall_mat="wall", bays=(), airlocks=None
     return p
 
 
-# Boarding (Zachary, 22 Nov; claude/echo-landing-boarding.md): a boarding pods room has a launch hatch in every cell,
-# one per crew member (a dark well in a yellow-and-black striped ring, four orange lights); a medbay has a green
-# cross on the floor of every cell.
+# Boarding (Zachary, 22 Nov; claude/echo-landing-boarding.md): a boarding pods room is only as big as its hatches,
+# one launch hatch on every floor tile (a dark well in a yellow-and-black striped ring); a one-cell pod room has four,
+# and the pod carries that many. A medbay has a green cross on the floor of every cell.
 def floor_marks(p, room, cell, k):
     cx, cy, cw, ch, sysname = room
     if sysname not in ("pods", "medbay"):
         return
     yy, xx = np.mgrid[0:p.h, 0:p.w]
+    if sysname == "pods":
+        tile = cell // 2
+        for n in range(cw * 2 * ch * 2):
+            mx = cx * cell + (n % (cw * 2)) * tile + tile // 2
+            my = cy * cell + (n // (cw * 2)) * tile + tile // 2
+            r = 5.0 * k
+            ring = p.mask(ellipse=(mx - r, my - r, mx + r, my + r))
+            p.mat[ring] = "yellow"; p.tone[ring] = 3
+            ang = (np.degrees(np.arctan2(yy - my, xx - mx)) + 360.0) % 360.0
+            stripe = ring & ((ang // 30) % 2 == 1)
+            p.mat[stripe] = "dark"; p.tone[stripe] = 1
+            well = p.mask(ellipse=(mx - 3.5 * k, my - 3.5 * k, mx + 3.5 * k, my + 3.5 * k))
+            p.mat[well] = "dark"; p.tone[well] = 0
+            inner = p.mask(ellipse=(mx - 2.5 * k, my - 2.5 * k, mx + 2.5 * k, my + 2.5 * k))
+            p.mat[inner] = "bay"; p.tone[inner] = 2
+        return
     for x in range(cx, cx + cw):
         for y in range(cy, cy + ch):
             mx, my = x * cell + cell // 2, y * cell + cell // 2
-            r = 7.5 * k
-            if sysname == "pods":
-                ring = p.mask(ellipse=(mx - r, my - r, mx + r, my + r))
-                p.mat[ring] = "yellow"; p.tone[ring] = 3
-                ang = (np.degrees(np.arctan2(yy - my, xx - mx)) + 360.0) % 360.0
-                stripe = ring & ((ang // 30) % 2 == 1)
-                p.mat[stripe] = "dark"; p.tone[stripe] = 1
-                well = p.mask(ellipse=(mx - 5.5 * k, my - 5.5 * k, mx + 5.5 * k, my + 5.5 * k))
-                p.mat[well] = "dark"; p.tone[well] = 0
-                inner = p.mask(ellipse=(mx - 4.5 * k, my - 4.5 * k, mx + 4.5 * k, my + 4.5 * k))
-                p.mat[inner] = "bay"; p.tone[inner] = 2
-                for a in (45, 135, 225, 315):
-                    lx, ly = int(mx + 6 * k * np.cos(np.radians(a))), int(my + 6 * k * np.sin(np.radians(a)))
-                    p.glow(p.mask(rect=(lx - 1, ly - 1, lx, ly)), "glow", 3)
-            else:
-                a, b = int(4 * k), int(8 * k)
-                cross = p.mask(rect=(mx - a, my - b, mx + a - 1, my + b - 1)) | p.mask(rect=(mx - b, my - a, mx + b - 1, my + a - 1))
-                p.mat[cross] = "green"; p.tone[cross] = 4
-                inner = p.mask(rect=(mx - a + 2, my - b + 2, mx + a - 3, my + b - 3)) | p.mask(rect=(mx - b + 2, my - a + 2, mx + b - 3, my + a - 3))
-                p.tone[inner] = 5
+            a, b = int(4 * k), int(8 * k)
+            cross = p.mask(rect=(mx - a, my - b, mx + a - 1, my + b - 1)) | p.mask(rect=(mx - b, my - a, mx + b - 1, my + a - 1))
+            p.mat[cross] = "green"; p.tone[cross] = 4
+            inner = p.mask(rect=(mx - a + 2, my - b + 2, mx + a - 3, my + b - 3)) | p.mask(rect=(mx - b + 2, my - a + 2, mx + b - 3, my + a - 3))
+            p.tone[inner] = 5
 
 
 # Rooms where crew stand at a console and boost the system (Zachary, 21 Nov: "the rooms should just have consoles

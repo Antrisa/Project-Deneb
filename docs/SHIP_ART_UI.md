@@ -736,8 +736,9 @@ Ideas with residents behind them:
 - Smarter enemies switch targets to finish off a damaged system.
 
 **Boarding (decided 22 Nov; full rules in `claude/echo-landing-boarding.md`):**
-- **Boarding pods** instead of a teleporter: a room you install (2 crew on small ships, 3–4 on bigger), one
-  launch hatch per crew place. LAUNCH on the system bar, then click an enemy room: the pod flies across like a
+- **Boarding pods** instead of a teleporter: a room you install, only as big as its hatches (Zachary, 22 Nov): one
+  launch hatch on every floor tile, and only crew standing on a hatch go. The covered fighter's is one cell, four
+  hatches, so its pod carries 4; the cell beside it is a small crew deck. LAUNCH on the system bar, then click an enemy room: the pod flies across like a
   missile that always hits, and your crew appear in that room and fight. RECALL brings them back once the room has
   recharged. Tabs: `art/ui/ship/pod_tabs.png`; pods: `art/ships/shots/pod.png`, `pod_rabble.png`
   (`tools/dev/ship_art/pods2x.py`); icon `pods` (last in `icons_systems.png`).

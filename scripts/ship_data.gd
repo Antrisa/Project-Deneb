@@ -127,7 +127,8 @@ const COVERED_FIGHTER := {
 	"systems": {"shields": [2, 2], "engines": [2, 1], "weapons": [3, 2], "life": [1, 1], "pilot": [1, 1],
 		"pods": [2, 1], "medbay": [1, 1]},
 	"rooms": [
-		{"id": "pods", "label": "Boarding pods", "sys": "pods", "cells": Rect2i(3, 2, 2, 1), "crew": true},
+		{"id": "pods", "label": "Boarding pods", "sys": "pods", "cells": Rect2i(3, 2, 1, 1), "crew": true},
+		{"id": "crew", "label": "Crew deck", "sys": "", "cells": Rect2i(4, 2, 1, 1), "crew": true},
 		{"id": "engines", "label": "Engines", "sys": "engines", "cells": Rect2i(1, 2, 1, 1), "crew": true},
 		{"id": "life", "label": "Oxygen", "sys": "life", "cells": Rect2i(2, 2, 1, 1), "crew": true},
 		{"id": "weapons", "label": "Weapons", "sys": "weapons", "cells": Rect2i(3, 1, 2, 1), "crew": true},
@@ -137,7 +138,8 @@ const COVERED_FIGHTER := {
 	],
 	"doors": [
 		[Vector2i(1, 2), Vector2i(2, 2)], [Vector2i(2, 2), Vector2i(3, 2)], [Vector2i(3, 2), Vector2i(3, 1)],
-		[Vector2i(3, 2), Vector2i(3, 3)], [Vector2i(4, 2), Vector2i(5, 2)], [Vector2i(5, 2), Vector2i(6, 2)],
+		[Vector2i(3, 2), Vector2i(3, 3)], [Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(4, 2), Vector2i(5, 2)],
+		[Vector2i(5, 2), Vector2i(6, 2)],
 	],
 }
 
