@@ -2719,29 +2719,59 @@ SCHEDULE_DAYS_RAW = {
             ("13:00", "east", 177, 63, 26, "r", "idle", "rest"),
             ("17:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Freya"], 26, "d", "idle", "rest")]},
     ],
-    # Jasper (22 Nov): a chef's week. Wednesday's break is at Ooma's stall. Saturday is market day: Ooma's stall,
-    # the library (Owen's old Earth cookbooks), lunch as a customer, his usual break, then the dinner service
-    # only. Sunday is his day off (Evarra keeps the mess hall): a late breakfast, the fountain bench where he
-    # sketches his café, the common room, then dinner for Evarra on his own range at home. Once the garden dome
-    # is open, Sunday mornings are spent picking herbs beside Evarra in the greenhouse.
+    # Jasper (22 Nov): Tuesdays and Saturdays off, staggered with Evarra's (Wednesday, Sunday) so one of them
+    # always keeps the mess hall. Wednesday: his break at Ooma's stall. Tuesday: breakfast as a customer, herbs
+    # beside Evarra in the greenhouse, the library, his usual break, then dinner on his own stove for when Evarra
+    # gets home. Saturday: Ooma's stall (market day), the library, lunch as a customer, the fountain bench where he
+    # sketches his café, then cooking at home. Once the garden dome is open, the library or the fountain gives
+    # way to the dome.
     "Jasper": [
         {"when": {"days": [2]}, "stops": [
             ("06:00", "mess", 21, 4, 36, "d", "work", "cook"), ("14:30", "main", 95, 71, 26, "d", "idle", "relax"),
             ("16:30", "mess", 21, 4, 36, "d", "work", "cook"), ("18:40", "mess", 25, 7, 26, "d", "eat", "eat"),
             ("19:15", "mess", 21, 4, 36, "d", "work", "cook"), ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [1]}, "stops": [
+            ("08:30", "mess", 25, 7, 26, "d", "eat", "eat"), ("10:00", "east", 50, 17, 26, "u", "idle", "relax"),
+            ("12:30", "library", 5, 11, 26, "u", "idle", "rest"), ("14:30", "common", 7, 8, 26, "d", "idle", "relax"),
+            ("17:00", "aptA", 5, 15, 26, "u", "work", "cook"), ("20:30", "aptA", 11, 19, 26, "d", "eat", "eat"),
+            ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5]}, "stops": [
             ("07:00", "main", 95, 71, 26, "d", "idle", "relax"), ("09:00", "library", 5, 11, 26, "u", "idle", "rest"),
-            ("12:00", "mess", 25, 7, 26, "d", "eat", "eat"), ("13:00", "common", 7, 8, 26, "d", "idle", "relax"),
-            ("16:30", "mess", 21, 4, 36, "d", "work", "cook"), ("18:40", "mess", 25, 7, 26, "d", "eat", "eat"),
-            ("19:15", "mess", 21, 4, 36, "d", "work", "cook"), ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
-        {"when": {"days": [6]}, "stops": [
-            ("08:30", "mess", 25, 7, 26, "d", "eat", "eat"), ("10:00", "main", 80, 66, 26, "l", "idle", "rest"),
-            ("13:00", "common", 7, 8, 26, "d", "idle", "relax"), ("16:00", "aptA", 5, 15, 26, "u", "work", "cook"),
-            ("19:00", "aptA", 11, 19, 26, "d", "eat", "eat"), ("21:00", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
-        {"when": {"days": [6], "flags": ["east_dome"]}, "stops": [
+            ("12:00", "mess", 25, 7, 26, "d", "eat", "eat"), ("13:30", "main", 80, 66, 26, "l", "idle", "rest"),
+            ("17:00", "aptA", 5, 15, 26, "u", "work", "cook"), ("20:30", "aptA", 11, 19, 26, "d", "eat", "eat"),
+            ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [1], "flags": ["east_dome"]}, "stops": [
             ("08:30", "mess", 25, 7, 26, "d", "eat", "eat"), ("10:00", "east", 50, 17, 26, "u", "idle", "relax"),
-            ("13:00", "main", 80, 66, 26, "l", "idle", "rest"), ("16:00", "aptA", 5, 15, 26, "u", "work", "cook"),
-            ("19:00", "aptA", 11, 19, 26, "d", "eat", "eat"), ("21:00", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
+            ("12:30", "east", 146, 44, 26, "r", "idle", "relax"), ("14:30", "common", 7, 8, 26, "d", "idle", "relax"),
+            ("17:00", "aptA", 5, 15, 26, "u", "work", "cook"), ("20:30", "aptA", 11, 19, 26, "d", "eat", "eat"),
+            ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "flags": ["east_dome"]}, "stops": [
+            ("07:00", "main", 95, 71, 26, "d", "idle", "relax"), ("09:00", "library", 5, 11, 26, "u", "idle", "rest"),
+            ("12:00", "mess", 25, 7, 26, "d", "eat", "eat"), ("13:30", "east", 146, 44, 26, "r", "idle", "relax"),
+            ("17:00", "aptA", 5, 15, 26, "u", "work", "cook"), ("20:30", "aptA", 11, 19, 26, "d", "eat", "eat"),
+            ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
+    ],
+    # Evarra (22 Nov): Wednesdays and Sundays off. Wednesday: her herb bed at home, Ooma's stall for seeds (it's one
+    # of Ooma's days), lunch, the little park, the promenade flower beds, dinner with everyone. Sunday: breakfast,
+    # the flower beds, the little park, her herb bed, dinner. Once the garden dome is open she spends those
+    # afternoons, and all of Sunday, in its meadow.
+    "Evarra": [
+        {"when": {"days": [2]}, "stops": [
+            ("08:00", "aptA", 27, 21, 26, "d", "work", "garden"), ("10:00", "main", 96, 71, 26, "d", "idle", "rest"),
+            ("12:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("13:30", "east", 54, 44, 26, "d", "idle", "rest"),
+            ("16:30", "main", 83, 39, 26, "u", "work", "garden"), ("18:00", "mess", 15, 7, 26, "d", "eat", "eat"),
+            ("19:30", *HOME_SPOTS["Evarra"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6]}, "stops": [
+            ("08:30", "mess", 15, 7, 26, "d", "eat", "eat"), ("10:00", "main", 83, 39, 26, "u", "work", "garden"),
+            ("12:30", "east", 54, 44, 26, "d", "idle", "rest"), ("15:30", "aptA", 27, 21, 26, "d", "work", "garden"),
+            ("18:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Evarra"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [2], "flags": ["east_dome"]}, "stops": [
+            ("08:00", "aptA", 27, 21, 26, "d", "work", "garden"), ("10:00", "main", 96, 71, 26, "d", "idle", "rest"),
+            ("12:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("13:30", "east", 122, 45, 26, "d", "work", "garden"),
+            ("17:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Evarra"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["east_dome"]}, "stops": [
+            ("08:30", "mess", 15, 7, 26, "d", "eat", "eat"), ("10:00", "east", 122, 45, 26, "d", "work", "garden"),
+            ("17:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Evarra"], 26, "d", "idle", "rest")]},
     ],
 }
 SCHEDULE_DAYS = {}

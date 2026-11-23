@@ -3,6 +3,7 @@
 Every event: its area exists; the player's start, the cast's spots and every walk target are open floor that can
 be reached from the station; every pose is drawn (a row of the resident's heart-event sheet, or of their action
 sheet); every step is one the cutscene knows; emotes and portrait tags exist; lines fit the dialogue box.
+An event with a backup place is checked at both places; a "go" step moves the check to its map.
 Run from the repo: python3 tests/check_heart_events.py
 """
 import ast
@@ -53,7 +54,7 @@ EVENTS, ORDER = he['EVENTS'], he['ORDER']
 EVENT_ROWS = ["talk", "laugh", "sad", "jump", "gift", "bench", "wave"]
 EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "ready", "no", "wait", "help", "follow", "cute"}
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
-STEPS = {"say", "place", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
+STEPS = {"say", "place", "go", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
          "if", "flag", "friendship", "perk", "keepsake", "partner", "toast"}
 SOUNDS = {p.stem for p in (ROOT / 'audio').glob('*.wav')}
 DIRS = {"d", "u", "l", "r"}
@@ -106,8 +107,11 @@ def check_pose(ev_id, who, pose):
         bad(ev_id, "%s has no pose %r (no heart-event sheet row or action row)" % (who, pose))
 
 
-def check_steps(ev_id, ev, steps):
-    area = ev['area']
+def check_steps(ev_id, ev, steps, area=None, known=None):
+    """known: story flags taken as set (True) or not (False) when an "if" tests them, e.g. the flag a backup place
+    stands in for; the other branch is then not checked here. Returns the area the steps end in ("go")."""
+    area = area or ev['area']
+    known = known or {}
     for s in steps:
         count["steps"] += 1
         op = s[0]
@@ -127,6 +131,13 @@ def check_steps(ev_id, ev, steps):
                 text = line[m.end():] if m else line
                 if len(text) > 150:
                     bad(ev_id, "line over 150 characters: %r" % text[:60])
+        elif op == "go":
+            if s[1] not in A:
+                bad(ev_id, "go: no area %r" % s[1])
+                continue
+            area = s[1]
+            check_spot(ev_id, area, s[2], s[3], "the player's place after go")
+            if s[4] not in DIRS: bad(ev_id, "go: facing %r" % s[4])
         elif op == "place":
             check_spot(ev_id, area, s[2], s[3], "%s's place" % s[1])
             if s[4] not in DIRS: bad(ev_id, "place: facing %r" % s[4])
@@ -148,12 +159,19 @@ def check_steps(ev_id, ev, steps):
             if not 2 <= len(s[1]) <= 4: bad(ev_id, "a choice needs 2 to 4 options")
             for o in s[1]:
                 if len(o.get("text", "")) > 64: bad(ev_id, "choice text too long for the menu: %r" % o["text"])
-                check_steps(ev_id, ev, o.get("steps", []))
+                check_steps(ev_id, ev, o.get("steps", []), area, known)
         elif op == "if":
             if not set(s[1]) <= {"flag", "not_flag", "arrived", "partner", "dating_other"}:
                 bad(ev_id, "if: unknown condition %r" % s[1])
-            check_steps(ev_id, ev, s[2])
-            if len(s) > 3: check_steps(ev_id, ev, s[3])
+            f = s[1].get("flag", s[1].get("not_flag"))
+            if f in known:
+                taken = known[f] if "flag" in s[1] else not known[f]
+                if taken: check_steps(ev_id, ev, s[2], area, known)
+                elif len(s) > 3: check_steps(ev_id, ev, s[3], area, known)
+                continue
+            check_steps(ev_id, ev, s[2], area, known)
+            if len(s) > 3: check_steps(ev_id, ev, s[3], area, known)
+    return area
 
 
 for ev_id in ORDER:
@@ -172,16 +190,28 @@ for ev_id, ev in EVENTS.items():
     for w in ev.get('windows', []):
         if not (re.match(r'^\d\d:\d\d$', w[1]) and re.match(r'^\d\d:\d\d$', w[2]) and w[1] < w[2]):
             bad(ev_id, "window %r" % (w,))
-    p = ev.get('player')
-    if p: check_spot(ev_id, ev['area'], p[0], p[1], "the player's start")
-    taken = {}
-    for c in ev.get('cast', []):
-        check_spot(ev_id, ev['area'], c[1], c[2], "%s's start" % c[0])
-        if (c[1], c[2]) in taken or (p and (c[1], c[2]) == (p[0], p[1])):
-            bad(ev_id, "%s starts on a tile someone else has" % c[0])
-        taken[(c[1], c[2])] = c[0]
-        if len(c) > 4: check_pose(ev_id, c[0], c[4])
-    check_steps(ev_id, ev, ev['steps'])
+    # an event with a backup place is checked twice: at its own place with the backup's flag set, and at the
+    # backup place without it
+    places = [(ev, {})]
+    if 'backup' in ev:
+        b = ev['backup']
+        if b.get('area') not in A:
+            bad(ev_id, "backup: no area %r" % b.get('area'))
+            continue
+        merged = dict(ev)
+        merged.update({k: v for k, v in b.items() if k != 'unless'})
+        places = [(ev, {b['unless']: True}), (merged, {b['unless']: False})]
+    for pev, known in places:
+        p = pev.get('player')
+        if p: check_spot(ev_id, pev['area'], p[0], p[1], "the player's start")
+        taken = {}
+        for c in pev.get('cast', []):
+            check_spot(ev_id, pev['area'], c[1], c[2], "%s's start" % c[0])
+            if (c[1], c[2]) in taken or (p and (c[1], c[2]) == (p[0], p[1])):
+                bad(ev_id, "%s starts on a tile someone else has" % c[0])
+            taken[(c[1], c[2])] = c[0]
+            if len(c) > 4: check_pose(ev_id, c[0], c[4])
+        check_steps(ev_id, pev, pev['steps'], pev['area'], known)
 
 if problems:
     print("\n".join("FAIL: " + p for p in problems))

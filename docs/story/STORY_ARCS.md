@@ -39,9 +39,9 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2.
-3. **Every 10-heart romance scene and every platonic scene is an outline**, and Evarra's own arc has no dialogue at all. (Freya's and Jasper's are now written and in the game.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's and Evarra's arcs are now written and in the game.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3.
-5. **Two "first bees" scenes** (Evarra 6 and side-arc 6), and Evarra's own 6 can't play until Jasper is at 6 hearts as well.
+5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
 7. **Eleven scenes are in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars.
 
@@ -130,31 +130,28 @@ The Paris dream was really a dream of sharing a table. **Reviewed with Zachary o
 |---|---|---|---|---|
 | 2 | The Butter Tin (was Burnt Ration Soufflé) | Ooma's stall, Wednesday 14:30–16:30 or Saturday 07:00–09:00 | He's 400 Scrip short of a tin of real Terran butter; he leaves his savings with Ooma as a deposit for the season. | In game (Claude) |
 | 4 | Paris on a Screen | Common room on his break | The cooking-show holo-vid came in the pod with them; even his accent is borrowed from it. Evarra teases him. | In game (Claude) |
-| 6 | Taste of Paris | Mess hall 06:00–08:30, Monday to Saturday; once you've harvested Moon wheat | The first real croissant: Ooma's butter and your wheat. Unlocks the Parisian Bistro Menu. | In game (Claude, from Zachary's outline) |
-| 8 | A Table of My Own (confession; was Candlelight in the Mess Hall) | His home on a Sunday, 17:00–20:30 | He sets his own table for the first time; the dream was never the city. Friendship ending: Evarra comes home to a third plate. Perk: Sous-Chef's Blessing. | In game (Claude, from Zachary's outline) |
+| 6 | Taste of Paris | Mess hall 06:00–08:30, Monday, Thursday or Friday; once you've harvested Moon wheat | The first real croissant: Ooma's butter and your wheat. Unlocks the Parisian Bistro Menu. | In game (Claude, from Zachary's outline) |
+| 8 | A Table of My Own (confession; was Candlelight in the Mess Hall) | His home on his day off (Tuesday or Saturday), 17:00–20:30 | He sets his own table for the first time; the dream was never the city. Friendship ending: Evarra comes home to a third plate. Perk: Sous-Chef's Blessing. | In game (Claude, from Zachary's outline) |
 | 10 | Café Étoile | The fountain, 07:00–11:00 (a morning scene, unlike the siblings' evening banquet there) | Opening morning of his café terrace; you're the first customer. Keepsake: an apron with both your names. | In game (Claude, from Zachary's outline) |
 
-- **Decided:** more variety of place (only 6 in the mess hall); butter is Ooma's tin, not an item; the holo-vid came in the pod; a chef's week with Sundays off while Evarra keeps the mess hall.
+- **Decided:** more variety of place (only 6 in the mess hall); butter is Ooma's tin, not an item; the holo-vid came in the pod; days off staggered with Evarra's (he's off Tuesdays and Saturdays, she's off Wednesdays and Sundays), with lines for those days.
 - **Still open:** the café terrace needs drawing on the plaza for after 10 (`cafe_etoile` is set); the bistro menu and his perk need cooking and food buffs in the game.
-- **For Evarra and the side arc:** her 6 and 10 and the siblings' 2 and 8 are also in the mess hall; spread them out the same way.
+- **For the side arc:** the siblings' 2 and 8 are also in the mess hall; spread them out when we get to it.
 
 ### 3.2 Evarra (Vuultam, Chief Baker & Gardener)
 
-A gardener without a garden, until there is one.
+A gardener without a garden, until there is one. **Reviewed with Zachary on 22 Nov; all five are written and playable.** Full scenes and her week: [`characters/EVARRA.md`](characters/EVARRA.md).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | The Window-Box Herb | East Agridome, morning | Her one lavender plant under a grow-lamp in the dead dome. | Outline |
-| 4 | First Blossom | East Agridome; waits for the Sovereign | Real soil and wildflowers; she dances barefoot. | Outline |
-| 6 | Honey & Brioche | Mess hall kitchen; waits for her first honey (after side arc 6) | They bake with the first honey. Unlocks Honey-Lavender Brioche. | Outline (Claude) |
-| 8 | Wildflower Crown (confession) | East orchard at sunset | She weaves a blossom crown and confesses. Perk: Green Thumb. | Outline |
-| 10 | The Moonlit Bakery | Mess hall, night | A tiered honey cake. Keepsake: a kept slice (Claude: a pressed-flower frame?). | Outline |
+| 2 | The Window-Box Herb | Her herb bench in the mess hall's greenhouse, 09:30–13:00 on a working day | One pot of lavender is the only thing she grows for herself. (Was "in the dead dome": the game has no dead version of the dome.) | In game (Claude, from Zachary's outline) |
+| 4 | First Blossom | The garden dome's meadow on her day off; waits for the dome | Real soil, the first wildflowers; she dances barefoot. | In game (Claude, from Zachary's outline) |
+| 6 | A Hem of Wildflowers (was Honey & Brioche) | Your field, Wednesday or Sunday morning | She plants Ooma's wildflower seeds round your field for the bees to come. Unlocks Honey-Lavender Brioche. | In game (Claude) |
+| 8 | Wildflower Crown (confession) | The orchard at sunset; **backup** before the dome opens: the promenade flower beds | A crown of every flower she's grown. Perk: Green Thumb. Friendship ending has its own line if you're dating Jasper. | In game (Claude, from Zachary's outline) |
+| 10 | The Moonlit Bakery | Your kitchen in the hotel, 20:30–23:30, then the little park | You bake a three-tier honey cake together, then picnic with it. Keepsake: the pressed flowers from her crown, framed. | In game (Claude, from Zachary's outline) |
 
-- **Gap:** no dialogue for any of the five.
-- **Lock / Repeat:** 6 waits for side arc 6 (Operation Honeybee), which needs Jasper at 6 too, so her own event hangs on his hearts. And two scenes are about the first bees: side-arc 6 brings the hive, and the older bible had Evarra 6 bring it. Decision 8.
-- **Lock:** 8 is in the East orchard, which only exists after the Sovereign, and 8s must not wait. Needs a backup (her window-box in the East Agridome would echo her 2).
-- **Gap:** a slice of cake doesn't keep. Decision 14.
-- **Repeat:** her single herb box is already the opening image of side-arc 2. Fine as continuity, but her 2 needs something of its own.
+- **Decided:** the first bees are the siblings' 6, so her 6 doesn't wait on Jasper's hearts (Decision 8); 10 is baking then a picnic; she's off Wednesdays and Sundays, Jasper Tuesdays and Saturdays, with lines for those days; her 8 has a backup place (Decision 11, her part); her keepsake is the pressed-flower frame (Decision 14, her part).
+- **Still open:** the wildflower border on your field after 6 needs drawing (`evarra_wildflowers` is set); the brioche and Green Thumb need cooking and crop quality in the game.
 
 ### 3.3 Freya (Human, Junior Shipwright)
 
@@ -461,9 +458,9 @@ Each of the nine 8-heart scenes ends "Accept confession or stay friends", with n
 | Jasper & Evarra 8 (and so 8+) | Waits for the hotel; 8s never wait | Exception, or a no-hotel version (Decision 9) |
 | Stu 8 | Hotel lobby; no backup | Reception (Decision 10) |
 | Stu 2, 6 | Hotel; Stu arrives long before it may open | Reception; East Home 2 (Decision 10) |
-| Evarra 8 | East orchard; no backup | East Agridome (Decision 11) |
+| Evarra 8 | East orchard; no backup | Done 22 Nov: the promenade flower beds until the garden dome opens |
 | Artie 8, 10 | East orchard; no backup | Plaza fountain (Decision 11) |
-| Evarra 6 | Waits on side arc 6, which needs Jasper's hearts | Decision 8 |
+| Evarra 6 | Waits on side arc 6, which needs Jasper's hearts | Done 22 Nov: her 6 no longer needs honey |
 
 ### 7.4 Places in the scripts that aren't the game's maps
 
@@ -498,13 +495,13 @@ Answer by number; anything left open stays as it is.
 5. **Who took Artie in 2036**, and why was his pod in Ivan's hold?
 6. **Where threads A and B end:** at the Neutral Zone Summit, or elsewhere?
 7. **Pip's parents:** found, a letter only, or left open?
-8. **The first bees:** Evarra 6 or side-arc 6? Whichever doesn't get them needs a new beat.
+8. **The first bees:** decided 22 Nov: side-arc 6. Evarra 6 is now a wildflower border round your field.
 9. **Jasper & Evarra 8 waiting for the hotel:** allow it as an exception, or write a version without the hotel?
 10. **Stu before the hotel opens:** his job, and backup places for 2, 6 and 8.
-11. **Backups for the East orchard** (Evarra 8, Artie 8 and 10).
+11. **Backups for the East orchard** (Artie 8 and 10). Evarra 8's is done: the promenade flower beds. The engine now has backup places (`"backup"` in `scripts/heart_events.gd`).
 12. **Ix'ali's star pendant** at 8: an Oath-Crest you could propose with, or something else?
 13. **Freya's father:** decided 22 Nov: **Jorvik**, who died testing an earlier version of the stabilizer. Still open: how long ago.
-14. **Keepsakes marked (Claude):** Jasper's apron, Evarra's cake slice or pressed-flower frame, Job's oar charm.
+14. **Keepsakes marked (Claude):** Job's oar charm. (Jasper's apron and Evarra's pressed-flower frame are in the game.)
 15. **Hearts:** 100 points a heart, as in the NPC Master? Then the code is changed to match.
 16. **"The Nest":** rename the cavern event or the pirate stronghold.
 17. **Which Observation Lounge scenes move**, and where to.

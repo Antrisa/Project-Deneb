@@ -643,3 +643,38 @@ const LOOKS = {
 	"Supply shelves": ["Glasses, coasters, napkins, and a box marked 'BAR FIGHT SPARES'."],
 	"Crates of glasses": ["Spare glasses, packed in straw from the Agri dome."]
 }
+
+
+# Days off (22 Nov, Zachary): weekday numbers, 0 = Monday ... 6 = Sunday. The schedules for those days are in
+# tools/build.py SCHEDULE_DAYS_RAW; the station calendar lists them. Jasper and Evarra stagger theirs, so one
+# of them always keeps the mess hall.
+const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6]}
+
+# What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
+# the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
+const DAY_LINES := {
+	"Jasper": {
+		1: ["[happy] Tuesday! My day off. I am not cooking. I am only thinking about cooking, which is completely different.",
+			"Evarra has the kitchen today. If the soup tastes of lavender, that is why. Be brave.",
+			"Tuesdays I sketch. Little tables, striped awnings, a chalkboard. One day, mon ami."],
+		5: ["[happy] Saturday! Ooma's stall, the library, and nobody asking me for ration pack number six.",
+			"A day off, and I spent the morning reading about soufflés. I regret nothing.",
+			"[happy] Tonight I cook at home, for Evarra and me. No tickets, no rush. Bliss."],
+		2: ["[sad] Evarra is off today, so I am also the baker. Pray for the bread.",
+			"No Evarra today. I keep reaching for herbs that are not there."],
+		6: ["[sad] Sunday, and Evarra is off. The bread is mine today. It is... rustic.",
+			"[happy] Evarra is out in the soil somewhere, humming. The kitchen is mine. Mwahaha."],
+	},
+	"Evarra": {
+		2: ["[happy] My day off. I'm going to put my hands in some soil and not think about bread at all.",
+			"Ooma's in today. She has seed packets from worlds I can't pronounce. Dangerous.",
+			"Wednesdays are mine. The herbs at home get a proper talking-to."],
+		6: ["[happy] Sunday. No ovens. Just me and whatever's growing.",
+			"Jasper does the bread on Sundays, which is a kind way of saying Jasper does something.",
+			"[happy] I slept past the morning bake. It felt criminal. I'd do it again."],
+		1: ["Jasper's off today, so it's my soup. If it's a bit green, that's on purpose.",
+			"[happy] With Jasper off, the kitchen is very quiet. Nobody is singing to the onions."],
+		5: ["Saturday, so Jasper's out haunting Ooma's stall. I have the kitchen to myself.",
+			"[happy] Jasper's day off. He'll come in at lunch and criticise my sauce. Lovingly."],
+	},
+}

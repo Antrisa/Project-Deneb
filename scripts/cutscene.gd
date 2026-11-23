@@ -12,6 +12,8 @@ extends Node
 #   ["say", who, [lines], label]      lines with [happy]-style portrait tags; who "" is narration; label
 #                                      (optional) is shown instead of the name, e.g. "Tikka (comms)"
 #   ["place", who, x, y, dir]          dir "d", "u", "l", "r"
+#   ["go", area, x, y, dir]            the scene moves to another map: the player goes to that tile (fade first;
+#                                      place the cast there after it)
 #   ["walk", who, x, y]                walks there and waits; ["walks", [[who, x, y], ...]] walks several at once
 #   ["face", who, dir_or_name]         a direction, or another person's name to turn toward them
 #   ["pose", who, pose]                "talk" "laugh" "sad" "jump" "gift" "bench" "wave", or an action row like
@@ -80,7 +82,7 @@ func play(id: String) -> void:
 	if running or not HeartEvents.EVENTS.has(id):
 		return
 	event_id = id
-	event = HeartEvents.EVENTS[id]
+	event = world._event_place(HeartEvents.EVENTS[id])     # its backup place, if the story hasn't opened its own
 	running = true
 	_actors = {}
 	_walkers = []
@@ -125,6 +127,11 @@ func _step(s: Array) -> void:
 			await _say(label, s[2], who)
 		"place":
 			_place(str(s[1]), int(s[2]), int(s[3]), str(s[4]))
+		"go":
+			# the scene moves to another map (best done under a fade): the player goes there; place the cast after
+			world._go_to(str(s[1]), Vector2i(int(s[2]), int(s[3])), false)
+			world._event_area = world.current_area
+			world.player.scene_face(int(DIRS.get(str(s[4]), 0)))
 		"walk":
 			_start_walk(str(s[1]), Vector2i(int(s[2]), int(s[3])))
 			await _wait_walkers()

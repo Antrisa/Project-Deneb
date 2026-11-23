@@ -10,13 +10,17 @@ extends RefCounted
 #   seen            events that must have played first
 #   partner         true: only while you're dating them
 #   player          where you stand when it starts: [x, y, facing]
+#   backup          {"unless": flag, "area", "player", "cast", ...}: where it plays instead while that story flag
+#                   isn't set (8s and 10s never wait for the story). Steps then can't walk to fixed tiles, except
+#                   inside ["if", {"flag": <that flag>}, ...] branches.
 #   cast            who is there when it starts: [[who, x, y, facing, pose], ...] (pose optional)
 #   steps           what happens (the step list is at the top of scripts/cutscene.gd)
 # A resident who hasn't arrived on the station yet is left out, and their lines are skipped.
 
 # The order they're checked in (and the order F4 plays them in debug builds).
 const ORDER := ["freya_2", "freya_4", "freya_6", "freya_8", "freya_10",
-	"jasper_2", "jasper_4", "jasper_6", "jasper_8", "jasper_10"]
+	"jasper_2", "jasper_4", "jasper_6", "jasper_8", "jasper_10",
+	"evarra_2", "evarra_4", "evarra_6", "evarra_8", "evarra_10"]
 
 const EVENTS := {
 	# ---------------------------------------------------------------- Freya (docs/story/characters/FREYA.md)
@@ -273,8 +277,8 @@ const EVENTS := {
 	},
 	"jasper_4": {
 		"who": "Jasper", "hearts": 4, "title": "Paris on a Screen",
-		# the common room on his afternoon break (Wednesdays he's at Ooma's)
-		"area": "common", "windows": [[[0, 1, 3, 4], "14:30", "16:30"], [[5, 6], "13:00", "16:00"]],
+		# the common room on his afternoon break (Wednesdays he's at Ooma's; on Tuesdays, his day off, he goes anyway)
+		"area": "common", "windows": [[[0, 1, 3, 4, 6], "14:30", "16:30"]],
 		"seen": ["jasper_2"],
 		"player": [12, 15, "u"],
 		"cast": [["Jasper", 7, 8, "d", "relax d"]],
@@ -319,8 +323,8 @@ const EVENTS := {
 	},
 	"jasper_6": {
 		"who": "Jasper", "hearts": 6, "title": "Taste of Paris",
-		# the mess hall at dawn, before breakfast; once you've grown Moon wheat (main.gd _flag())
-		"area": "mess", "windows": [[[0, 1, 2, 3, 4, 5], "06:00", "08:30"]],
+		# the mess hall at dawn, before breakfast, on a day they're both working; once you've grown Moon wheat
+		"area": "mess", "windows": [[[0, 3, 4], "06:00", "08:30"]],
 		"flags": ["moon_wheat_harvested"], "seen": ["jasper_4"],
 		"player": [14, 17, "u"],
 		"cast": [["Jasper", 20, 2, "u", "cook u"], ["Evarra", 26, 4, "d", "mix d"]],
@@ -362,8 +366,8 @@ const EVENTS := {
 	},
 	"jasper_8": {
 		"who": "Jasper", "hearts": 8, "title": "A Table of My Own",
-		# at home on his Sunday off, while Evarra keeps the mess hall
-		"area": "aptA", "windows": [[[6], "17:00", "20:30"]],
+		# at home on his day off (Tuesday or Saturday), while Evarra keeps the mess hall
+		"area": "aptA", "windows": [[[1, 5], "17:00", "20:30"]],
 		"player": [16, 22, "u"],
 		"cast": [["Jasper", 5, 15, "u", "cook u"]],
 		"steps": [
@@ -452,6 +456,211 @@ const EVENTS := {
 			["emote", "Jasper", "love"], ["emote", "player", "love"],
 			["flag", "cafe_etoile"],
 			["keepsake", "jasper_apron", "Keepsake: an apron with both your names"],
+		],
+	},
+	# ---------------------------------------------------------------- Evarra (docs/story/characters/EVARRA.md)
+	"evarra_2": {
+		"who": "Evarra", "hearts": 2, "title": "The Window-Box Herb",
+		# her herb bench in the mess hall's greenhouse (East complex), on her working mornings
+		"area": "east", "windows": [[[0, 1, 3, 4, 5], "09:30", "13:00"]],
+		"player": [52, 20, "u"],
+		"cast": [["Evarra", 48, 17, "u", "herbs u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The mess hall's greenhouse: rows of basil, thyme and chives for the kitchen.",
+				"In the corner, one small pot sits apart under its own grow-lamp."]],
+			["walk", "player", 50, 17], ["face", "player", "l"],
+			["pose", "Evarra", ""], ["face", "Evarra", "player"], ["emote", "Evarra", "surprise"],
+			["say", "Evarra", ["[surprised] Oh! I didn't hear you come in. The fans in here are louder than people."]],
+			["pose", "Evarra", "talk"],
+			["say", "Evarra", ["Everything in these beds belongs to the kitchen. Jasper's basil. Jasper's thyme. Jasper's very important chives."]],
+			["pose", "Evarra", ""],
+			["say", "Evarra", ["[happy] That pot is mine. Lavender. It doesn't feed anyone. I grow it because it smells like somewhere I've never been."]],
+			["say", "", ["Her cheek blotches shift to a soft violet, the colour of the flowers."]],
+			["pose", "Evarra", "sad"],
+			["say", "Evarra", ["[sad] A small farm. Flowers, and bees to go with them. I used to think that wasn't much to ask of a galaxy. It is."]],
+			["pose", "Evarra", ""], ["emote", "Evarra", "question"],
+			["say", "Evarra", ["Do you want to smell it? Rub a leaf. Gently."]],
+			["choose", [
+				{"text": "[Rub a leaf]", "friendship": 60, "steps": [
+					["say", "", ["It smells of warm stone and summer evenings, somewhere very far away."]],
+					["emote", "Evarra", "joy"],
+					["say", "Evarra", ["[happy] There. Now you've been there too."]]]},
+				{"text": "Why not grow more of it?", "friendship": 30, "steps": [
+					["say", "Evarra", ["Space. Water. Jasper's basil. One pot is what a station can spare.",
+						"[happy] One pot is enough to remember what I want."]]]}]],
+			["say", "Evarra", ["[happy] If you ever find a garden going spare, you'll tell me first?"]],
+			["face", "Evarra", "u"], ["pose", "Evarra", "herbs u"],
+		],
+	},
+	"evarra_4": {
+		"who": "Evarra", "hearts": 4, "title": "First Blossom",
+		# the garden dome's meadow, once it's open (that's what it's about); she spends her days off there
+		"area": "east", "windows": [[[6], "10:00", "17:00"], [[2], "13:30", "16:30"]],
+		"flags": ["east_dome"], "seen": ["evarra_2"],
+		"player": [122, 48, "u"],
+		"cast": [["Evarra", 122, 45, "d"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Real soil under the dome lights. Between the young trees the first wildflowers are open. Evarra's shoes lie in the grass."]],
+			["pose", "Evarra", "jump"], ["wait", 0.9], ["pose", "Evarra", "laugh"], ["emote", "Evarra", "joy"], ["wait", 0.9],
+			["pose", "Evarra", ""], ["emote", "Evarra", "surprise"],
+			["say", "Evarra", ["[surprised] Oh! You saw that. There was a dance happening. I wasn't in charge of it."]],
+			["pose", "Evarra", "talk"],
+			["say", "Evarra", ["[happy] Feel this. Go on, it's soil. Real soil, not grow-gel. It's cold, and it's alive, and there are worms. Worms!",
+				"I've been a gardener my whole life without a garden. Pots. Window boxes. One lavender plant under a lamp."]],
+			["pose", "Evarra", ""],
+			["say", "Evarra", ["[bashful] You woke this dome. I don't know how you thank someone for that."]],
+			["choose", [
+				{"text": "Dance with me, then.", "friendship": 60, "steps": [
+					["walk", "player", 122, 46], ["face", "player", "u"],
+					["pose", "Evarra", "laugh"], ["emote", "player", "joy"],
+					["say", "", ["You dance badly, barefoot, among the first flowers on the moon. Neither of you cares."]],
+					["pose", "Evarra", ""]]},
+				{"text": "You look happy here.", "friendship": 30, "steps": [
+					["say", "Evarra", ["[happy] I am. I didn't know anyone could be this happy about dirt."]]]}]],
+			["say", "Evarra", ["[happy] Next it needs bees. Then it's a real garden. Then you'll never get me out of here."]],
+		],
+	},
+	"evarra_6": {
+		"who": "Evarra", "hearts": 6, "title": "A Hem of Wildflowers",
+		# your field in the West Agridome, on her morning off (Wednesday or Sunday). The first bees are the
+		# siblings' 6 (Zachary, 22 Nov), so this doesn't wait for honey, or for the garden dome.
+		"area": "agri", "windows": [[[2, 6], "08:00", "12:00"]],
+		"seen": ["evarra_2"],
+		"player": [45, 12, "l"],
+		"cast": [["Evarra", 42, 12, "r"]],
+		"steps": [
+			["wait", 0.5],
+			["face", "Evarra", "player"], ["emote", "Evarra", "hello"],
+			["say", "Evarra", ["[happy] There's the farmer. I've been admiring your rows. They're very straight. Jasper's never would be."]],
+			["pose", "Evarra", "talk"],
+			["say", "Evarra", ["I bought these from Ooma. Wildflower seeds from six different worlds. She swears only half of them bite."]],
+			["pose", "Evarra", ""],
+			["if", {"flag": "east_dome"},
+				[["say", "Evarra", ["The garden dome will feed a hive one day, but bees roam. They'll want flowers out here too."]]],
+				[["say", "Evarra", ["There's nowhere for bees on this moon yet. But when they come, I want flowers waiting for them."]]]],
+			["emote", "Evarra", "question"],
+			["say", "Evarra", ["[bashful] May I plant a border round your field? Just the edges. Bees like a farm with a hem on it."]],
+			["choose", [
+				{"text": "Plant them anywhere you like.", "friendship": 60, "steps": [
+					["pose", "Evarra", "jump"], ["emote", "Evarra", "joy"],
+					["say", "Evarra", ["[happy] Anywhere! You'll regret that in spring. I won't."]],
+					["pose", "Evarra", ""]]},
+				{"text": "Just the edges. I need room for wheat.", "friendship": 60, "steps": [
+					["pose", "Evarra", "laugh"],
+					["say", "Evarra", ["[happy] Spoken like a farmer. The edges it is."]],
+					["pose", "Evarra", ""]]}]],
+			["fade", 0.7, 1.0],
+			["say", "", ["You dig. She sows. By noon there's a thin line of seed all the way round your field, and soil up to both your elbows."]],
+			["clock", 60],
+			["fade", 0.0, 1.0],
+			["face", "Evarra", "player"], ["pose", "Evarra", "talk"],
+			["say", "Evarra", ["[happy] When the first honey comes, it goes in a brioche. Lavender, honey, and butter if Jasper's ever found any.",
+				"You get the first one. That's the rule now."]],
+			["pose", "Evarra", ""],
+			["flag", "evarra_wildflowers"],
+			["perk", "honey_lavender_brioche", "New recipe: Honey-Lavender Brioche (once there's honey)"],
+		],
+	},
+	"evarra_8": {
+		"who": "Evarra", "hearts": 8, "title": "Wildflower Crown",
+		# the garden dome's orchard at sunset; until the dome is open, the promenade flower beds where she gardens
+		# every afternoon (8s never wait). No walking: the steps work in both places.
+		"area": "east", "windows": [[null, "17:30", "19:30"]],
+		"player": [124, 43, "u"],
+		"cast": [["Evarra", 124, 41, "d"]],
+		"backup": {"unless": "east_dome", "area": "main", "player": [108, 72, "d"], "cast": [["Evarra", 108, 74, "u"]]},
+		"steps": [
+			["wait", 0.6],
+			["if", {"flag": "east_dome"},
+				[["say", "", ["Sunset light through the dome. Blossom drifts down from the orchard trees."]]],
+				[["say", "", ["The promenade lamps are turning gold. The flower beds smell of evening."]]]],
+			["face", "Evarra", "player"],
+			["say", "Evarra", ["[happy] There you are. Don't move. Bow your head a little."]],
+			["say", "", ["She sets something on your head: a crown, woven from every kind of flower she has ever grown."]],
+			["pose", "Evarra", "laugh"],
+			["say", "Evarra", ["[happy] It suits you. I knew it would. I've been practising on Jasper. He looks like a salad."]],
+			["pose", "Evarra", "talk"],
+			["say", "Evarra", ["When we came out of that pod, all we had was each other. A garden was the one thing I wanted that was only mine.",
+				"Then you came, and things started growing. The dome. The flowers. Me, a little."]],
+			["pose", "Evarra", ""],
+			["if", {"dating_other": "Evarra"},
+				# the friendship ending: you're dating someone else
+				[["if", {"partner": "Jasper"},
+					[["say", "Evarra", ["[happy] You're dating my brother, so I'm obliged to like you. Luckily I'd have done it anyway."]]],
+					[["say", "Evarra", ["[happy] You're the best friend I've ever had who wasn't my brother. He doesn't count. Keep the crown."]]]],
+				 ["emote", "Evarra", "joy"]],
+				[["say", "Evarra", ["[bashful] I've grown a lot of things. I've never grown this. I like you. More than as a friend, I mean.",
+					"[love] Would you let me be more than the baker who grows your flowers?"]],
+				 ["emote", "Evarra", "love"],
+				 ["choose", [
+					{"text": "I'd love that, Evarra.", "steps": [
+						["partner", "Evarra"],
+						["emote", "Evarra", "surprise"],
+						["say", "Evarra", ["[surprised] You would? Oh. My blotches have gone all pink. Don't look."]],
+						["pose", "Evarra", "laugh"], ["emote", "Evarra", "joy"], ["wait", 0.8], ["pose", "Evarra", ""],
+						["fade", 0.7, 1.0],
+						["say", "", ["You stay until the lights dim, and the crown slips down over one ear."]],
+						["fade", 0.0, 1.0]]},
+					{"text": "You mean a lot to me, as a friend.", "steps": [
+						["pose", "Evarra", "sad"], ["emote", "Evarra", "sad"],
+						["say", "Evarra", ["[sad] All right. I'm glad I said it. Gardeners plant things that don't come up. That's part of it."]],
+						["pose", "Evarra", ""],
+						["say", "Evarra", ["[happy] Keep the crown anyway. It was made for you."]]]}]]]],
+			["pose", "Evarra", "talk"],
+			["say", "Evarra", ["[happy] And come and find me whenever you're planting. I'll teach you how to get the best out of your soil."]],
+			["pose", "Evarra", ""],
+			["perk", "green_thumb", "Perk: Green Thumb (better-quality crops)"],
+		],
+	},
+	"evarra_10": {
+		"who": "Evarra", "hearts": 10, "title": "The Moonlit Bakery",
+		# Zachary (22 Nov): baking first, then a picnic with what you baked. Your kitchen in the hotel, after her
+		# shift; then the little park in the East complex.
+		"area": "hotel", "windows": [[null, "20:30", "23:30"]],
+		"partner": true,
+		"player": [22, 42, "l"],
+		"cast": [["Evarra", 15, 40, "u", "mix u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Your kitchen smells of honey and warm bread. Every bowl you own is out. Evarra is floury to the elbows."]],
+			["pose", "Evarra", ""], ["face", "Evarra", "player"], ["emote", "Evarra", "hello"],
+			["say", "Evarra", ["[happy] S.A.R.A. let me in. She said you wouldn't mind, and that your oven had never been used. Both true, I see."]],
+			["walk", "player", 17, 40], ["face", "player", "l"], ["face", "Evarra", "r"],
+			["pose", "Evarra", "talk"],
+			["say", "Evarra", ["Roll this out for me? Not too thin. It's going to be a honey cake. Three tiers, if we're lucky."]],
+			["pose", "Evarra", ""],
+			["choose", [
+				{"text": "Like this?", "friendship": 60, "steps": [
+					["say", "", ["You roll it far too thin. She laughs and folds it back up without a word."]],
+					["say", "Evarra", ["[happy] Perfect. Again."]]]},
+				{"text": "I'll do the icing. I'm an artist.", "friendship": 60, "steps": [
+					["emote", "Evarra", "joy"],
+					["say", "Evarra", ["[happy] An artist. All right. Pink stars only."]]]}]],
+			["fade", 0.7, 1.0], ["sfx", "click"],
+			["say", "", ["Flour everywhere. The oven ticks and hums. For once the whole hotel smells like a bakery."]],
+			["clock", 90],
+			["fade", 0.0, 1.0],
+			["pose", "Evarra", "laugh"], ["emote", "Evarra", "joy"],
+			["say", "Evarra", ["[happy] Three tiers! A bit lopsided. Jasper will say it leans. Let him."]],
+			["pose", "Evarra", ""],
+			["say", "Evarra", ["[happy] Now we take it somewhere with grass. You carry the basket. I carry the cake. Nobody runs."]],
+			["fade", 1.0, 0.8],
+			["go", "east", 55, 46, "r"],
+			["place", "Evarra", 57, 46, "l"],
+			["clock", 30],
+			["fade", 0.0, 1.0],
+			["say", "", ["A blanket in the little park. Two lanterns. The cake, only slightly squashed from the walk."]],
+			["pose", "Evarra", "talk"],
+			["say", "Evarra", ["[love] I used to dream of a farm with flowers and bees. I nearly have it now. But this is the part I didn't know to dream about.",
+				"You. A blanket. Something we made together, going soft in the lamplight."]],
+			["pose", "Evarra", ""], ["face", "Evarra", "player"], ["pose", "Evarra", "gift"],
+			["say", "Evarra", ["[bashful] And this. I pressed the flowers from the crown. Every one. I couldn't let them go."]],
+			["say", "", ["A small wooden frame. Inside, flat and bright, are the flowers from your crown."]],
+			["pose", "Evarra", ""],
+			["emote", "Evarra", "love"], ["emote", "player", "love"],
+			["keepsake", "pressed_flower_frame", "Keepsake: the pressed flowers from Evarra's crown"],
 		],
 	},
 }

@@ -43,6 +43,12 @@ func run() -> void:
 		assert(not s.player.scene_walking)
 	assert(s.story_flags.get("freya_plans", false) and s.story_flags.get("freya_crew", false))
 	assert(s.story_flags.get("perk_master_mechanic", false) and s.story_flags.get("keepsake_wrench_pendant", false))
-	assert(s.partner == "Freya")
+	for f in ["jasper_butter_deposit", "perk_parisian_bistro_menu", "perk_sous_chefs_blessing", "keepsake_jasper_apron",
+			"evarra_wildflowers", "perk_honey_lavender_brioche", "perk_green_thumb", "keepsake_pressed_flower_frame"]:
+		assert(s.story_flags.get(f, false), f)
+	# F4 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
+	# after the first 10 play their friendship endings)
+	assert(s.partner == "Evarra")
+	assert(s.current_area == "east", "Evarra's 10 ends in the little park")
 	print("PASS: ", HeartEvents.ORDER.size(), " heart events played to the end, choices picked, flags set.")
 	quit()

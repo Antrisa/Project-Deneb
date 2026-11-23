@@ -1308,10 +1308,22 @@ func _check_heart_events() -> void:
 	for id in HeartEvents.ORDER:
 		if events_seen.has(id):
 			continue
-		var ev: Dictionary = HeartEvents.EVENTS[id]
+		var ev: Dictionary = _event_place(HeartEvents.EVENTS[id])
 		if str(ev["area"]) == current_area and _event_ready(ev):
 			cutscene.play(id)
 			return
+
+
+# Where an event plays today: its own place, or its backup place while the story flag its own place needs
+# (backup "unless") isn't set yet. 8- and 10-heart events never wait for the story (NPC Master 3.7).
+func _event_place(ev: Dictionary) -> Dictionary:
+	if not ev.has("backup") or _flag(str(ev["backup"]["unless"])):
+		return ev
+	var out: Dictionary = ev.duplicate()
+	for k in ev["backup"]:
+		if k != "unless":
+			out[k] = ev["backup"][k]
+	return out
 
 
 func _event_ready(ev: Dictionary) -> bool:
@@ -1371,6 +1383,7 @@ func _debug_next_heart_event() -> void:
 			partner = who
 		var st: Dictionary = persons[who]
 		st["friendship"] = maxi(int(st["friendship"]), int(ev["hearts"]) * FRIEND_PER_HEART)
+		ev = _event_place(ev)
 		var w: Array = ev.get("windows", [[null, "06:00", "26:00"]])[0]
 		if w[0] != null:
 			day += posmod(int(w[0][0]) - (day - 1) % 7, 7)
@@ -1934,6 +1947,7 @@ func _say_then(cb: Callable) -> void:
 
 func _talk(who: String) -> void:
 	var st: Dictionary = persons[who]
+	var first_today: bool = st["met"] and not st["talked_today"]
 	if who == "Sara":
 		sfx("sara_holo", 1.0, -4.0)
 		_sara_play("greeting" if not st["met"] else ["explain", "talk_both", "nod", "head_tilt", "laugh"].pick_random())
@@ -2007,6 +2021,9 @@ func _chat(who: String) -> void:
 	if int(st.get("talks_today", 0)) >= TALKS_PER_DAY and not _special_day(who):
 		_emote(who, &"wait")
 		_toast("%s has said all there is to say today." % who)
+	elif first_today and _day_line(who) != "":
+		st["talks_today"] = int(st.get("talks_today", 0)) + 1
+		_say(who, [_day_line(who)])
 	else:
 		st["talks_today"] = int(st.get("talks_today", 0)) + 1
 		var activity_line := _activity_dialogue(who)
@@ -2063,6 +2080,16 @@ func _plain_intro(who: String) -> String:
 	var facts: Array = BridgeScript.RESIDENTS.get(who, [])
 	var role: String = str(facts[0]).to_lower() if not facts.is_empty() else "one of the crew"
 	return "[happy] You're the pilot Sara pulled out of the wreck! I'm %s, %s. Come and find me at work some time and I'll say hello properly." % [who, role]
+
+
+# What they say first on a day of the week that's different for them: their days off, or the days they
+# cover for someone who's off (NpcData.DAY_LINES). A different line each week.
+func _day_line(who: String) -> String:
+	var weekday: int = (day - 1) % 7
+	var lines: Array = NpcData.DAY_LINES.get(who, {}).get(weekday, [])
+	if lines.is_empty():
+		return ""
+	return str(lines[floori((day - 1) / 7.0) % lines.size()])
 
 
 func _next_repeat(who: String) -> String:

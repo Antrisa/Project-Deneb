@@ -86,6 +86,13 @@ static func events_for(day: int) -> Array[String]:
 	for who in MapData.VISITOR_DAYS:
 		if weekday in MapData.VISITOR_DAYS[who]:
 			events.append("%s visiting market" % who)
+	var off: Array[String] = []
+	var days_off: Dictionary = preload("res://scripts/npc_data.gd").DAYS_OFF
+	for who in days_off:
+		if weekday in days_off[who]:
+			off.append(who)
+	if not off.is_empty():
+		events.append("Day off: %s" % ", ".join(PackedStringArray(off)))
 	var sky = preload("res://scripts/lounge_sky.gd")
 	var view: String = sky.sky_for(day)
 	if sky.LABELS.has(view):

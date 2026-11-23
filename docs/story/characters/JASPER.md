@@ -6,7 +6,7 @@
 - **Butter** comes from Ooma: a rare tin of real Terran butter he saves up a whole season for. There is no Butter item.
 - **The holo-vid** of Chef Laurent's cooking show came in the escape pod with Jasper and Evarra (with "a tin of ration cubes", as the siblings' 8+ says). It's his only link to where they came from.
 - 10 is a morning scene, so it doesn't repeat the siblings' evening banquet at the same fountain.
-- A chef's week: Saturday is a market morning and the dinner service only; Sunday is his day off, and **Evarra keeps the mess hall on Sundays**.
+- **Days off are staggered with Evarra's**, so one of them always keeps the mess hall: Jasper is off **Tuesdays and Saturdays**, Evarra **Wednesdays and Sundays**. Both have their own lines on those days.
 
 **The arc:** he thinks he's dreaming of Paris, but what he really wants is a table with someone across from him.
 - 2: he can't afford the one thing his cooking is missing.
@@ -23,13 +23,13 @@
 
 | Day | Where he goes |
 |---|---|
-| Monday, Tuesday, Thursday, Friday (unchanged) | The mess hall kitchen from 06:00; his break in the common room 14:30–16:30; back to the kitchen; dinner 18:40; cooks until 21:30; home; bed at 22:30 |
-| Wednesday | The same, but his break is at Ooma's stall (she's on the station Wednesdays and Saturdays) |
-| Saturday | Ooma's stall 07:00; the library 09:00 (Owen's old Earth cookbooks); lunch at the mess as a customer 12:00; the common room 13:00; the dinner service from 16:30 until 21:30 |
-| Sunday (day off) | A late breakfast at the mess 08:30; the bench by the fountain 10:00, sketching his café; the common room 13:00; cooking at his own stove at home 16:00; dinner at home 19:00 |
-| Sunday, once the garden dome is open | The same, but 10:00 is picking herbs beside Evarra in the greenhouse, and the fountain bench moves to 13:00 |
+| Monday, Thursday, Friday, Sunday (unchanged) | The mess hall kitchen from 06:00; his break in the common room 14:30–16:30; back to the kitchen; dinner 18:40; cooks until 21:30; home; bed at 22:30. On Sundays Evarra is off, so he's the baker too. |
+| Wednesday | The same, but his break is at Ooma's stall (she's on the station Wednesdays and Saturdays). Evarra is off. |
+| Tuesday (day off) | Breakfast at the mess as a customer 08:30; picking herbs beside Evarra in the greenhouse 10:00; the library 12:30 (Owen's old Earth cookbooks); the common room 14:30, out of habit; cooking at his own stove at home 17:00; dinner at home with Evarra 20:30 |
+| Saturday (day off) | Ooma's stall 07:00 (market day); the library 09:00; lunch at the mess as a customer 12:00; the bench by the fountain 13:30, sketching his café; cooking at home 17:00; dinner with Evarra 20:30 |
+| Tuesday or Saturday, once the garden dome is open | The same, but the library (Tuesday) or the fountain bench (Saturday) gives way to the dome, by the stream |
 
-Evarra already works the mess hall every day, so Sundays need no change to her schedule yet. Her own week is for her review.
+**What he says on those days** (`scripts/npc_data.gd`, `DAY_LINES`; the first time you talk to him that day, a different line each week): on his days off, about not cooking, Ooma's stall and his sketches; on Evarra's days off, about being the baker too ("Pray for the bread."). The station calendar on the board lists who's off each day.
 
 **Flags this arc sets:** `jasper_butter_deposit` (2), `cafe_etoile` (10), the perks `perk_parisian_bistro_menu` (6) and `perk_sous_chefs_blessing` (8), the keepsake `keepsake_jasper_apron` (10), and `partner` = Jasper if you accept at 8. 6 needs `moon_wheat_harvested`, which is set the first time you harvest Moon wheat (older saves count Moon wheat you're carrying).
 
@@ -37,7 +37,7 @@ Evarra already works the mess hall every day, so Sundays need no change to her s
 
 All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts/cutscene.gd`, like Freya's. Jasper and Evarra now have heart-event sheets (`art/npc_jasper_event.png`, `art/npc_evarra_event.png`: talk, laugh, sad, jump, gift, bench, wave). Ooma, Rusk and Pip only walk, turn and get emote bubbles. Not run in Godot yet.
 
-- **To test:** in a debug build, **F4** plays the next event in order (Freya's five come first, so press it five times to reach Jasper's; it sets the hearts, day, time and place each needs); **Shift+F4** forgets the ones you've seen.
+- **To test:** in a debug build, **F4** plays the next event in order (Freya's five come first, so Jasper's 2 is the sixth press; it sets the hearts, day, time and place each needs); **Shift+F4** forgets the ones you've seen.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **Not in yet:** what the Parisian Bistro Menu and Sous-Chef's Blessing do in play (there's no cooking or food buffs yet, so they're recorded as perks); the café terrace on the map after 10 (it needs tables, an awning and a sign drawn for the plaza; `cafe_etoile` is set so a map version can switch on); the apron as an item you can hold.
 
@@ -72,7 +72,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
 
 ## ♥4 Paris on a Screen
 
-**Trigger:** enter the common room during his break (14:30–16:30 Monday, Tuesday, Thursday and Friday; 13:00–16:00 at the weekend) with Jasper at 4 hearts, after The Butter Tin.
+**Trigger:** enter the common room 14:30–16:30 on any day but Wednesday and Saturday (his break; on Tuesdays, his day off, he goes anyway) with Jasper at 4 hearts, after The Butter Tin.
 
 **Setting:** the common room, empty but for Jasper and a cracked holo-projector. Evarra comes in near the end.
 
@@ -101,7 +101,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
 
 ## ♥6 Taste of Paris
 
-**Trigger:** enter the mess hall 06:00–08:30, Monday to Saturday, with Jasper at 6 hearts, once you've harvested Moon wheat, after Paris on a Screen.
+**Trigger:** enter the mess hall 06:00–08:30 on a Monday, Thursday or Friday (when both siblings are working) with Jasper at 6 hearts, once you've harvested Moon wheat, after Paris on a Screen.
 
 **Setting:** the mess hall before breakfast. Jasper is at the oven; Evarra is mixing at her counter.
 
@@ -129,7 +129,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
 
 ## ♥8 A Table of My Own (confession; was "Candlelight in the Mess Hall")
 
-**Trigger:** enter Residences A (his and Evarra's home) on a Sunday 17:00–20:30 with Jasper at 8 hearts. Evarra is at the mess hall, which she keeps on Sundays. It needs no story progress.
+**Trigger:** enter Residences A (his and Evarra's home) 17:00–20:30 on his day off (Tuesday or Saturday) with Jasper at 8 hearts. Evarra is working at the mess hall. It needs no story progress.
 
 **Setting:** his home. Something is on his stove; the dining table is set for two with a candle.
 
