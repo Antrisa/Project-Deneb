@@ -50,7 +50,7 @@ def palette(frames, k, iters=30, seed=5):
 
 
 def warm(rgb):
-    sys.path.insert(0, "/home/claude/project-deneb/tools")
+    import os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
     import warm_shift
     a = np.zeros((1, len(rgb), 4), np.uint8); a[0, :, :3] = rgb; a[0, :, 3] = 255
     return warm_shift.warm_array(a, 0.35)[0, :, :3].astype(int)
