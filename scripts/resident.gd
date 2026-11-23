@@ -30,7 +30,13 @@ var _act_tex: Texture2D = null   # optional art/npc_<id>_act.png: 4 frames acros
 var _act_row := -1           # which row of the action sheet to play at this stop (-1 = none)
 var _act_rows := 1           # how many rows the action sheet has
 var _facing := 0             # which way they face once they have arrived
-var _act := "idle"           # what they do there: work, eat or idle
+# The row of their eyes in the standing frame (art pixels; from tools/poses.py): in bed the eyes go to the
+# middle of the pillow, so children, Moogli and the tall alike show their face over the covers.
+const EYE_ROW := {"evarra": 14, "rusk": 13, "ooma": 14, "tobbin": 17, "merrow": 12, "nub": 23, "garrick": 10,
+	"saffi": 15, "tally": 18, "stu": 12, "ana": 13, "sara": 12, "artie": 14, "vzzket": 12, "tarbesh": 13,
+	"zaas": 20, "job": 13, "freya": 13, "tikka": 16, "bram": 17, "sesska": 14, "pip": 23, "kit": 23,
+	"ixali": 12, "maren": 13, "quill": 13, "owen": 14, "jasper": 14}
+var _act := "idle"           # what they do there: work, eat, idle or sleep
 var _idle_time := 0.0
 var activity_pose: Node2D
 var away := false            # a visitor who is not on the station today: not shown, cannot be talked to
@@ -205,6 +211,13 @@ func _settle() -> void:
 	_dir = _facing
 	_idle_time = randf() * 6.0
 	frame_coords = Vector2i(_facing, 0)
+	if _act == "sleep":
+		# In bed, under the covers: the spot in the bed rather than the middle of the tile.
+		var eyes: int = int(EYE_ROW.get(who.to_lower().replace("'", ""), 13))
+		var slot = world.bed_slot(area, tile, eyes, _base_scale)
+		if slot != null:
+			position = slot
+			_sync_thing()
 
 
 # What a resident does while standing at their spot.
@@ -260,6 +273,8 @@ func _unsettle() -> void:
 	if _settled:
 		var here: Dictionary = world.blocked[area]
 		here.erase(tile)
+		if _act == "sleep":
+			position = _spot(tile)     # out of bed, back on the tile
 	_settled = false
 	# Back to the walking sheet, standing straight.
 	if texture != _walk_tex:

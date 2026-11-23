@@ -2618,6 +2618,58 @@ ARRIVAL_ACTION_ROWS = {
     'Tally': ['mail d', 'crate d', 'eat d', 'rest d', 'mail u', 'eat u'],
     'Ana': ['tune u', 'chart u', 'eat d', 'drink l', 'rest d', 'eat u', 'recover u'],
 }
+# Bedtime (22 Nov): everyone with a bed of their own gets into it, Stardew-style, and sleeps under the covers
+# ("sleep d" on their action sheet) until their first stop of the morning. A bed's title names who sleeps
+# in it; in a double bed the first named takes the left side. Times can run past midnight (24:00 and on).
+BEDTIMES = {"Nub": "20:30", "Kit": "20:30", "Pip": "21:00", "Job": "22:45", "Zaas": "23:30", "Tar'Besh": "23:30",
+            "Rusk": "23:55"}
+BEDTIME = "22:30"
+BED_GUESTS = {"Tally": ("aptB", "Guest bed")}
+BED_NAMES = ("bed", "bed_double", "bed_double_steel")
+
+
+def sleep_spot(who):
+    """The foot-row tile of their bed where they lie: [area, x, y], or None if they have no bed."""
+    for area_, props_ in AREA_PROPS.items():
+        for p_ in props_:
+            if p_[0] not in BED_NAMES:
+                continue
+            title = p_[5]
+            names = []
+            if BED_GUESTS.get(who) == (area_, title):
+                names = [who]
+            elif title.endswith("'s bed"):
+                names = title[:-len("'s bed")].split(" and ")
+            if who not in names:
+                continue
+            x0, y0, w_, h_ = p_[1], p_[2], p_[3], p_[4]
+            if len(names) == 1:
+                x = x0 + w_ // 2 if w_ >= 3 else x0
+            else:
+                x = x0 if names.index(who) == 0 else x0 + w_ - 1
+            return [area_, x, y0 + h_ - 1]
+    return None
+
+
+def act_sheet_rows(who):
+    """Every row of their action sheet, top to bottom (art/npc_<id>_act_rows.txt), if it has been drawn."""
+    path = os.path.join(OUT, "art", "npc_%s_act_rows.txt" % who.lower().replace("'", ""))
+    if not os.path.exists(path):
+        return None
+    with open(path) as fh:
+        return [line.strip() for line in fh if line.strip()]
+
+
+for who_ in list(SCHEDULES_RAW):
+    spot_ = sleep_spot(who_)
+    if spot_ is None:
+        continue
+    when = BEDTIMES.get(who_, BEDTIME)
+    assert when > SCHEDULES_RAW[who_][-1][0], ("bedtime before their last stop", who_)
+    SCHEDULES_RAW[who_].append((when, *spot_, 26, "d", "sleep"))
+    if who_ in ACTIONS:
+        ACTIONS[who_].append("sleep")
+
 SCHEDULES = {}
 ACTION_ROWS = {}                 # who -> ["action facing", ...]: the rows of their action sheet, top to bottom
 for who, rows in SCHEDULES_RAW.items():
@@ -2625,9 +2677,15 @@ for who, rows in SCHEDULES_RAW.items():
     keys = ACTIONS.get(who, [])
     assert not keys or len(keys) == len(rows), ("ACTIONS must have one entry per schedule stop", who)
     sheet_rows = list(ARRIVAL_ACTION_ROWS.get(who, []))
+    drawn = act_sheet_rows(who)
+    if drawn is not None:
+        # the redone sheets keep the published rows at the top and add every other direction and sleep
+        # below them: list them all, so any row can be named
+        assert drawn[:len(sheet_rows)] == sheet_rows, ("action sheet rows moved", who)
+        sheet_rows = list(drawn)
     for n, (hm, a, x, y, r, face_, act) in enumerate(rows):
         a, x, y = moved(a, x, y)
-        assert face_ in "dulr" and act in ("work", "eat", "idle"), (who, face_, act)
+        assert face_ in "dulr" and act in ("work", "eat", "idle", "sleep"), (who, face_, act)
         row = -1
         if keys and keys[n]:            # None: no action at this stop (they just stand there)
             label = keys[n] + " " + face_
@@ -2638,6 +2696,8 @@ for who, rows in SCHEDULES_RAW.items():
         out.append([int(hm[:2]) * 60 + int(hm[3:]), a, x, y, r, face_, act, row])
     ACTION_ROWS[who] = sheet_rows
     assert out == sorted(out, key=lambda e: e[0]), who
+    if drawn is not None:
+        assert all(e[7] < len(drawn) for e in out), ("a stop names a row the sheet does not have", who)
     SCHEDULES[who] = out
 
 
@@ -2651,8 +2711,11 @@ for who, start, end, seat in [
     route = SCHEDULES[who]
     resume = list(next(stop for stop in reversed(route) if stop[0] <= start))
     resume[0] = end
-    meal_row = len(ACTION_ROWS[who])
-    ACTION_ROWS[who].append("eat d")
+    if "eat d" in ACTION_ROWS[who]:
+        meal_row = ACTION_ROWS[who].index("eat d")
+    else:
+        meal_row = len(ACTION_ROWS[who])
+        ACTION_ROWS[who].append("eat d")
     route.extend([[start, "mess", *seat, 26, "d", "eat", meal_row], resume])
     route.sort(key=lambda stop: stop[0])
 
@@ -2663,12 +2726,13 @@ for who, start, end, seat in [
 SCHEDULES_ALT_RAW = {
     "Artie": [("00:00", "main", 136, 51, 26, "u", "idle")],
     "Ana": [("00:00", "main", 140, 51, 26, "u", "idle")],
-    "Stu": [("00:00", "west", 31, 38, 26, "d", "idle"), ("19:30", *HOME_SPOTS["Stu"], 26, "d", "idle")],
+    "Stu": [("00:00", "west", 31, 38, 26, "d", "idle"), ("19:30", *HOME_SPOTS["Stu"], 26, "d", "idle"),
+            (BEDTIMES.get("Stu", BEDTIME), *sleep_spot("Stu"), 26, "d", "sleep")],
 }
 ALT_ACTIONS = {
     'Artie': ['recover'],
     'Ana': ['recover'],
-    'Stu': ['luggage', 'rest'],
+    'Stu': ['luggage', 'rest', 'sleep'],
 }
 SCHEDULES_ALT = {}
 for who, rows in SCHEDULES_ALT_RAW.items():
@@ -2848,7 +2912,11 @@ for (kind, a, x, y) in ENEMIES:
 spots = {}
 for who, rows in SCHEDULES.items():
     for (t_, a, x, y, r, face_, act, row_) in rows:
-        assert (a, x, y) in seen, ("schedule spot not reachable", who, a, x, y)
+        if act == "sleep":
+            # in bed: the foot row of a bed is a prop's solid tile, got into from the floor beside it
+            assert any((a, x + dx, y + dy) in seen for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))), ("cannot get into bed", who, a, x, y)
+        else:
+            assert (a, x, y) in seen, ("schedule spot not reachable", who, a, x, y)
         assert not any(w[0] == x and w[1] == y for w in A[a].warps), ("schedule spot on a pad", who)
         assert spots.setdefault((a, x, y), who) == who, ("two residents share a spot", who, spots[(a, x, y)], a, x, y)
         if r > 26:
@@ -2873,7 +2941,7 @@ def walk_length(src, dst):
             if (wx, wy) == (x, y):
                 nxt = [(dest, tx, ty)]
         for nb in nxt:
-            if nb not in seen_ and walkable(*nb):
+            if nb not in seen_ and (walkable(*nb) or nb == dst):      # dst may be a bed's foot row
                 seen_[nb] = seen_[cur] + 1
                 q_.append(nb)
     raise AssertionError(("no way between", src, dst))

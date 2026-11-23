@@ -223,6 +223,12 @@ var job_done_today := false
 
 var sounds := {}                   # sound name -> AudioStreamPlayer
 var fixed := {}                    # area name -> {Vector2i tile: true} (things residents must walk around)
+# Stardew-style beds: area name -> {Vector2i tile: Vector2 where a sleeper stands}. The foot row of each
+# bed can be walked into; whoever stands there is under the covers (art/lunar/<bed>_blanket.png in front).
+var beds := {}
+const BED_PROPS := ["bed", "bed_double", "bed_double_steel"]
+const BED_SLEEPER_Y := 7.0          # your feet this far above the bed's bottom edge: eyes mid-pillow, covers to the shoulders
+var bed_prompted := false           # asked "Sleep?" since you got into your bed
 var ore_nodes: Array = []          # ore veins: {item, hits, sprite}
 var ui                             # hotbar and menu (scripts/ui.gd)
 var items := {}                    # item id -> how many the player carries
@@ -269,6 +275,7 @@ func _ready() -> void:
 		area_nodes[area_name] = node
 		blocked[area_name] = {}
 		fixed[area_name] = {}
+		beds[area_name] = {}
 		var w := {}
 		var links := {}
 		var list: Array = data["warps"]
@@ -663,12 +670,15 @@ func solid_at(p: Vector2) -> bool:
 	var fch: String = frow[tx]
 	if MapData.SOLID_FLOOR.contains(fch):
 		return true
+	var here: Dictionary = blocked[current_area]
+	var bed_here: Dictionary = beds.get(current_area, {})
+	if bed_here.has(Vector2i(tx, ty)):
+		return here.has(Vector2i(tx, ty))      # into bed, unless someone is already asleep there
 	var obj_rows: Array = data["obj"]
 	var orow: String = obj_rows[ty]
 	var och: String = orow[tx]
 	if och != " " and not MapData.OPEN_OBJ.contains(och):
 		return true
-	var here: Dictionary = blocked[current_area]
 	return here.has(Vector2i(tx, ty))
 
 
@@ -861,6 +871,16 @@ func _go_home() -> void:
 	var start: Array = MapData.START
 	var area_name: String = start[0]
 	_go_to(area_name, Vector2i(int(start[1]), int(start[2])), false)
+	# You wake in your own bed, under the covers, facing the room.
+	for p in MapData.AREA_PROPS.get(area_name, []):
+		if p[0] in BED_PROPS and str(p[5]) == "Your bed":
+			var t := Vector2i(int(p[1]), int(p[2]) + int(p[4]) - 1)
+			var slot = bed_slot(area_name, t)
+			if slot != null:
+				player.position = slot
+				player._dir = 0
+				bed_prompted = true     # no "Sleep?" until you have got out and back in
+			break
 
 
 func _zone_name() -> String:
@@ -1121,6 +1141,10 @@ func _npc_walkable(area_name: String, t: Vector2i, goal_set: Dictionary) -> bool
 	var fch: String = frow[t.x]
 	if MapData.SOLID_FLOOR.contains(fch):
 		return false
+	# Residents only get into a bed to sleep in it, never to cut across it.
+	var bed_here: Dictionary = beds.get(area_name, {})
+	if bed_here.has(t):
+		return goal_set.has(t)
 	var obj_rows: Array = data["obj"]
 	var orow: String = obj_rows[t.y]
 	var och: String = orow[t.x]
@@ -1296,7 +1320,11 @@ func _interact(t: Dictionary) -> void:
 	elif kind == "menu_terminal":
 		_say("Mess hall menu", ["Community dinner • 18:00\nWarm meals and a place for everyone.", "Head inside to meet the mess hall crew. Patio seating is open all day."])
 	elif kind == "person":
-		_talk(t["who"])
+		var sleeper = _resident_named(str(t["who"]))
+		if sleeper != null and sleeper._settled and sleeper._act == "sleep":
+			_toast("%s is asleep." % t["who"])
+		else:
+			_talk(t["who"])
 	elif kind == "ore":
 		if _can_cut(t):
 			_toast("Hold Space (or the left button) with the laser to cut it")
@@ -2901,6 +2929,7 @@ func _process(delta: float) -> void:
 				sfx("deny")
 			else:
 				_go_to(dest_area, Vector2i(int(dest[1]), int(dest[2])))
+		_check_bed()
 
 	var m := int(minutes)
 	hud_clock.text = "Day %d   %s   %d cr" % [day, clock_text(m), credits]
@@ -3265,6 +3294,8 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 		# The back of a chair sorts behind its occupant without moving the artwork.
 		sprite.position.y -= 12
 		sprite.offset.y += 24
+	if p[0] in BED_PROPS:
+		_spawn_bed(sprite, p, area_name)
 	sprite.visible = false
 	actors.add_child(sprite)
 	area_sprites.append([sprite,area_name])
@@ -3282,6 +3313,82 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 	var glow: Sprite2D = PropFx.decorate(sprite, p[0], fw, sprite.texture.get_height())
 	if glow != null:
 		prop_glows.append(glow)
+
+# A bed ([name, x, y, w, h, title] in tiles): the whole bed sorts behind whoever is in it and its covers
+# (<name>_blanket.png) in front, so a sleeper shows from the chest up, as in Stardew Valley. The foot
+# row of tiles can be walked into; each tile there has the spot a sleeper stands on (one in the middle of
+# a single bed, two side by side in a double).
+func _spawn_bed(sprite: Sprite2D, p: Array, area_name: String) -> void:
+	var bottom: float = float(int(p[2]) + int(p[4])) * TILE
+	# sort the bed itself a little above any sleeper's feet (the artwork does not move)
+	sprite.position.y -= 20.0
+	sprite.offset.y += 20.0 / ART
+	var path := "res://art/lunar/%s_blanket.png" % p[0]
+	if ResourceLoader.exists(path):
+		var covers := Sprite2D.new()
+		covers.texture = load(path)
+		covers.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		covers.centered = false
+		covers.scale = Vector2.ONE * ART
+		covers.position = Vector2(sprite.position.x, bottom + 2.0)
+		covers.offset = Vector2(0, -covers.texture.get_height() - 2.0 / ART)
+		covers.visible = false
+		actors.add_child(covers)
+		area_sprites.append([covers, area_name])
+	var x0: int = int(p[1])
+	var w: int = int(p[3])
+	var row: int = int(p[2]) + int(p[4]) - 1
+	var middle: float = x0 * TILE + w * TILE * 0.5
+	var bed_here: Dictionary = beds[area_name]
+	for x in range(x0, x0 + w):
+		var cx: float = x * TILE + TILE * 0.5
+		var sx: float = middle
+		if w >= 3 and absf(cx - middle) > 1.0:
+			sx = middle + (8.0 if cx > middle else -8.0)
+		bed_here[Vector2i(x, row)] = Vector2(sx, bottom - BED_SLEEPER_Y)
+
+
+func _resident_named(who: String):
+	for r in residents:
+		if r.who == who:
+			return r
+	return null
+
+
+# Where a sleeper stands in the bed at this tile, or null if it is not a bed. The spot suits your own
+# height; eye_row (the row of someone's eyes in their 48-high standing frame, at `art_scale` world units
+# per art pixel) moves anyone else so their eyes land in the same place, the middle of the pillow.
+func bed_slot(area_name: String, t: Vector2i, eye_row: int = 13, art_scale: float = ART):
+	var bed_here: Dictionary = beds.get(area_name, {})
+	if not bed_here.has(t):
+		return null
+	var slot: Vector2 = bed_here[t]
+	return slot + Vector2(0, BED_SLEEPER_Y - (eye_row - 3) * art_scale)
+
+
+# Your own bed: getting in asks whether to sleep (once each time you get in).
+func _check_bed() -> void:
+	var t: Vector2i = _player_tile()
+	var slot = bed_slot(current_area, t)
+	if slot == null:
+		bed_prompted = false
+		return
+	if bed_prompted:
+		return
+	var start: Array = MapData.START
+	if current_area != str(start[0]) or not _is_own_bed(t):
+		return
+	bed_prompted = true
+	_say("Your bunk", ["Sleep until morning?"], Callable(self, "_end_day"), "Sleep")
+
+
+func _is_own_bed(t: Vector2i) -> bool:
+	for p in MapData.AREA_PROPS.get(current_area, []):
+		if p[0] in BED_PROPS and str(p[5]) == "Your bed":
+			if t.x >= int(p[1]) and t.x < int(p[1]) + int(p[3]) and t.y == int(p[2]) + int(p[4]) - 1:
+				return true
+	return false
+
 
 # Spring uses the plain picture; summer, autumn and winter use <name>_<season>.png when it exists.
 func _apply_prop_season() -> void:
