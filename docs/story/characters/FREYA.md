@@ -31,7 +31,15 @@
 
 Her home is a long walk from everything: about 45 minutes to the mess hall, and 90 from the Star dome to the hot springs.
 
-**Flags this arc sets:** `freya_plans` (4), `freya_parts` (the parts request, Claude), `freya_crew` (6).
+**Flags this arc sets:** `freya_plans` (4), `freya_crew` (6), and the perks `perk_pioneer_stabilizer` (6) and `perk_master_mechanic` (8), the keepsake `keepsake_wrench_pendant` (10), and `partner` = Freya if you accept at 8.
+
+## In the game (22 Nov)
+
+All five are playable cutscenes: `scripts/heart_events.gd` (the data, written from this doc) played by `scripts/cutscene.gd`. Freya walks, turns and poses from her heart-event sheet (`art/npc_freya_event.png`: talk, laugh, sad, jump, gift, bench, wave, made with `tools/events.py`) and her action sheet; emote bubbles, fades, shakes and a choice menu do the rest. Not run in Godot yet.
+
+- **To test:** in a debug build, **F4** plays the next event (it sets the hearts, day, time and place it needs); **Shift+F4** forgets the ones you've seen; **F5** opens the story places (for 10: the restored Suite).
+- **Checked offline:** `python3 tests/check_heart_events.py` (every place reachable, every pose drawn, every line short enough).
+- **Not in yet:** the parts request before 6 (you haven't said whether to keep it, so 4 now ends "Give me a few days with these"); what the Pioneer Stabilizer and Master Mechanic actually do in play (they're recorded as perks); the keepsake as an item you can hold.
 
 ---
 
@@ -81,17 +89,17 @@ Her home is a long walk from everything: about 45 minutes to the mess hall, and 
   - **"You don't have to finish his work, you know."** (+High Friendship)
     - **FREYA:** "[sad] I know. Nobody's ever actually said that to me."
     - **FREYA:** "[happy] That's kind of why I want to. Because now it's my choice."
-- **FREYA:** "[happy] I'll need titanium for a floating mount, and a couple of good cells. Bring me what you can, and I'll do the rest."
+- **FREYA:** "[happy] Give me a few days with these. Next time your ship's in the bay, it's getting a floating mount."
 
 **Sets:** `freya_plans`.
 
-**Parts request (Claude):** bring Freya 3 Titanium Ingots and 2 Lithium Cells (both are on her loves list). That sets `freya_parts`. Test Flight waits for it, which the hard-lock rule allows because the stabilizer is what 6 is about.
+**Parts request (Claude, not in the game until you say):** bring Freya 3 Titanium Ingots and 2 Lithium Cells (both are on her loves list) before Test Flight. Her last line would then be: "I'll need titanium for a floating mount, and a couple of good cells. Bring me what you can, and I'll do the rest."
 
 ---
 
 ## ♥6 Test Flight
 
-**Trigger:** enter the Shuttle Bay at dusk (18:00–20:00) with Freya at 6 hearts, once your ship has flown and `freya_parts` is set.
+**Trigger:** enter the Shuttle Bay at dusk (18:00–20:00) with Freya at 6 hearts, once your ship has flown and you've seen 4.
 
 **Setting:** your ship on the clamps, a new housing bolted under the drive. Freya is in a flight suit with her helmet under her arm. Tikka is in launch control.
 
@@ -139,11 +147,11 @@ Her home is a long walk from everything: about 45 minutes to the mess hall, and 
 - **FREYA** *(Zachary's line, changed now that she flies with you)*: "[bashful] And honestly? When we're out there together, I forget to be scared. When you fly without me, I count the minutes till you dock."
 - **FREYA** *(Zachary)*: "[love] I like you—more than just as my favorite test pilot."
 - **CHOICE:**
-  - **Accept**
+  - **"I like you too, Freya."** (accept)
     - **FREYA:** "[surprised] Wait. Really? You're not just being nice?"
     - **FREYA:** "[love] Okay. Okay! Um. I don't know what you do now. Sit with me a while?"
     - *[You sit with her on the bench and watch the stars wheel past the glass until the lamps dim.]*
-  - **Stay friends**
+  - **"You mean a lot to me, as a friend."** (stay friends)
     - **FREYA:** "[sad] Yeah. Okay. I had to say it, or I'd be asking 'what if' forever."
     - **FREYA:** "[happy] You're still my favorite test pilot. That doesn't change."
 - **FREYA:** "[happy] Oh, and from now on, anything you want upgraded, you bring it to me. Family rate."
@@ -181,6 +189,6 @@ Her home is a long walk from everything: about 45 minutes to the mess hall, and 
 ## Still open
 
 - How long ago Jorvik died. The scenes avoid a number.
-- Whether the parts request before 6 stays.
+- Whether the parts request before 6 goes in.
 - Lines for Freya when you come home badly damaged (not an event). They'd play when she repairs your hull after a loss.
 - An event sheet for her (the status doc already lists event sheets as art still to draw).

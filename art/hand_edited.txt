@@ -563,6 +563,7 @@ npc_sara_solid_idle.png
 npc_tally.png
 npc_tally_act.png
 npc_tally_event.png
+npc_freya_event.png
 portrait_ana.png
 portrait_artie.png
 portrait_ivan.png

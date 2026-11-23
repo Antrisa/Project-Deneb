@@ -538,6 +538,8 @@ func _process(delta: float) -> void:
 
 
 func _move_player(delta: float) -> void:
+	if scene_walking:
+		return              # a heart-event scene is walking the player (scene_step)
 	if frozen or eating or sitting:
 		_stop_walking()
 		return
@@ -736,3 +738,35 @@ func _opaque(img: Image, y: int) -> Array:
 func _middle(img: Image, y: int) -> float:
 	var xs := _opaque(img, y)
 	return img.get_width() / 2.0 if xs.is_empty() else (float(xs[0]) + float(xs[xs.size() - 1])) / 2.0
+
+
+# ---------------------------------------------------------------- heart-event scenes (scripts/cutscene.gd)
+var scene_walking := false
+
+
+# Face 0 down, 1 up, 2 left, 3 right.
+func scene_face(dir: int) -> void:
+	_dir = dir
+	_sprite.frame_coords = Vector2i(_dir, 0)
+
+
+# Walk one frame's worth toward a point, with the walking animation and footsteps. True on arrival.
+func scene_step(target: Vector2, delta: float) -> bool:
+	var heading: Vector2 = target - position
+	if heading.length() <= 0.5:
+		position = target
+		_stop_walking()
+		return true
+	if absf(heading.x) > absf(heading.y):
+		_dir = 2 if heading.x < 0.0 else 3
+	else:
+		_dir = 1 if heading.y < 0.0 else 0
+	var start := position
+	position = position.move_toward(target, SPEED * delta)
+	_walk_distance = fmod(_walk_distance + start.distance_to(position), WalkCycle.STRIDE)
+	var beat := WalkCycle.phase(_walk_distance)
+	_sprite.frame_coords = Vector2i(_dir, WalkCycle.pose(beat, _sprite.vframes))
+	if beat != _last_phase and beat % 2 == 0:
+		world.sfx("step", randf_range(0.85, 1.15), -9.0)
+	_last_phase = beat
+	return false

@@ -13,7 +13,7 @@ const PAD_SCENE := "res://datapad/datapad.tscn"
 const ItemData = preload("res://scripts/item_data.gd")
 const ShopData = preload("res://scripts/shop_data.gd")
 const MapDataRef = preload("res://scripts/map_data.gd")
-const HEART_POINTS := 5            # friendship points per heart, as on the old Friends page
+const HEART_POINTS := 100          # friendship points per heart (main.gd FRIEND_PER_HEART, 22 Nov)
 const SEASONS := [["Spring", 28], ["Summer", 31], ["Autumn", 31], ["Winter", 31]]   # NPC master doc, section 2
 
 # From the NPC master doc's roster: role, a short note, birthday (Claude's placeholder birthdays).

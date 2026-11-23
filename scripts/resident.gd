@@ -110,6 +110,8 @@ func tick(delta: float, minutes: float) -> void:
 	if away:
 		visible = false
 		return
+	if in_scene:
+		return
 	var want: int = _entry_for(minutes)
 	if want != _entry:
 		_entry = want
@@ -297,3 +299,145 @@ func _unsettle() -> void:
 func _sync_thing() -> void:
 	thing["area"] = area
 	thing["pos"] = position + Vector2(0, -6)
+
+
+# ---------------------------------------------------------------- heart-event scenes (scripts/cutscene.gd)
+# A scene takes a resident over: they leave their schedule, stand, walk and pose where the scene says, and
+# main.gd puts everyone back where their day says once it ends (_snap_residents).
+# Poses: "talk", "laugh", "sad", "jump", "gift", "bench", "wave" are rows of art/npc_<id>_event.png (the heart-
+# event sheet, art handoff 4b); anything else names a row of their action sheet ("hammer u", "rest d").
+const EVENT_ROWS := ["talk", "laugh", "sad", "jump", "gift", "bench", "wave"]
+
+var in_scene := false
+var _scene_path: Array = []
+var _scene_pose_tex: Texture2D = null
+var _scene_pose_row := -1
+var _scene_pose_rows := 1
+var _scene_time := 0.0
+var _event_tex: Texture2D = null
+
+
+func scene_begin() -> void:
+	_unsettle()
+	in_scene = true
+	_scene_path = []
+	_scene_pose_tex = null
+	if _event_tex == null:
+		var id: String = who.to_lower().replace("'", "").replace(".", "")
+		var path := "res://art/npc_%s_event.png" % id
+		if ResourceLoader.exists(path):
+			_event_tex = load(path)
+
+
+func scene_end() -> void:
+	in_scene = false
+	_scene_path = []
+	_scene_stand()
+
+
+# Put them on a tile of the area the player is in, facing 0 down, 1 up, 2 left, 3 right.
+func scene_place(area_name: String, t: Vector2i, dir: int) -> void:
+	area = area_name
+	tile = t
+	position = _spot(t)
+	_dir = dir
+	_scene_path = []
+	_scene_stand()
+	visible = area == world.current_area
+	_sync_thing()
+
+
+func scene_face(dir: int) -> void:
+	_dir = dir
+	if _scene_pose_tex == null:
+		frame_coords = Vector2i(_dir, 0)
+
+
+# Walk to a tile in this area; scene_step() moves them each frame until it returns true.
+func scene_walk_to(t: Vector2i) -> void:
+	_scene_stand()
+	_scene_path = world.find_path(area, tile, [t])
+	if _scene_path.is_empty() and tile != t:
+		_scene_path = [t]
+
+
+func scene_step(delta: float) -> bool:
+	if _scene_path.is_empty():
+		frame_coords = Vector2i(_dir, 0)
+		return true
+	var next: Vector2i = _scene_path[0]
+	var dest: Vector2 = _spot(next)
+	var step: float = SPEED * delta
+	var heading: Vector2 = dest - position
+	if heading.length() > 0.5:
+		if absf(heading.x) > absf(heading.y):
+			_dir = 2 if heading.x < 0.0 else 3
+		else:
+			_dir = 1 if heading.y < 0.0 else 0
+	if position.distance_to(dest) <= step:
+		position = dest
+		tile = next
+		_scene_path.remove_at(0)
+	else:
+		position = position.move_toward(dest, step)
+	var distance := minf(heading.length(), step)
+	_walk_distance = fmod(_walk_distance + distance, WalkCycle.STRIDE)
+	frame_coords = Vector2i(_dir, WalkCycle.pose(WalkCycle.phase(_walk_distance), _walk_rows) if distance > 0.0 else 0)
+	_sync_thing()
+	return _scene_path.is_empty()
+
+
+# Play a pose until the next one (or "" to stand). Returns false if they have no art for it.
+func scene_pose(pose: String) -> bool:
+	_scene_stand()
+	if pose == "":
+		return true
+	var tex: Texture2D = null
+	var row := -1
+	var rows := 1
+	var flip := false
+	var pose_name: String = pose.get_slice(" ", 0)
+	if EVENT_ROWS.has(pose_name) and _event_tex != null:
+		tex = _event_tex
+		rows = maxi(1, roundi(_event_tex.get_height() / 48.0))
+		row = EVENT_ROWS.find(pose_name)
+		flip = pose_name == "gift" and (_dir == 2 or pose.ends_with(" l"))
+	elif _act_tex != null:
+		var labels: Array = preload("res://scripts/map_data.gd").ACTION_ROWS.get(who, [])
+		row = labels.find(pose)
+		tex = _act_tex
+		rows = _act_rows
+	if tex == null or row < 0 or row >= rows:
+		return false
+	_scene_pose_tex = tex
+	_scene_pose_row = row
+	_scene_pose_rows = rows
+	_scene_time = 0.0
+	texture = tex
+	hframes = 4
+	vframes = rows
+	flip_h = flip
+	scale = Vector2(_base_scale, _base_scale)
+	offset = Vector2(-tex.get_width() / 8.0, -float(tex.get_height()) / rows)
+	frame_coords = Vector2i(0, row)
+	return true
+
+
+func scene_tick(delta: float) -> void:
+	_scene_time += delta
+	if _scene_pose_tex != null:
+		frame_coords = Vector2i(int(_scene_time * 3.0) % 4, _scene_pose_row)
+
+
+func _scene_stand() -> void:
+	_scene_pose_tex = null
+	flip_h = false
+	self_modulate.a = 1.0
+	if activity_pose != null: activity_pose.visible = false
+	texture = _walk_tex
+	hframes = 4
+	vframes = _walk_rows
+	offset = _foot_offset
+	scale = Vector2(_base_scale, _base_scale)
+	rotation = 0.0
+	frame_coords = Vector2i(_dir, 0)

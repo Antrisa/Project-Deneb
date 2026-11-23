@@ -160,18 +160,18 @@ A gardener without a garden, until there is one.
 
 ### 3.3 Freya (Human, Junior Shipwright)
 
-Stepping out of her late father's shadow. **Reviewed with Zachary on 22 Nov; full scenes in [`characters/FREYA.md`](characters/FREYA.md)** (Claude drafts around his lines).
+Stepping out of her late father's shadow. **Reviewed with Zachary on 22 Nov; full scenes in [`characters/FREYA.md`](characters/FREYA.md)** (Claude drafts around his lines). **All five play in the game as cutscenes** (`scripts/heart_events.gd`, `scripts/cutscene.gd`; debug F4).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
 | 2 | The Stubborn Heating Pump | Engineering, 16:30–17:30 | A jammed valve; Jorvik could tune them by ear. | Script |
 | 4 | Dad's Workbench | Her home (East Home 4), at her bench on a weekend | She opens Jorvik's toolbox: his stabilizer plans and the notes on what went wrong. | Script (Claude) |
-| 6 | Test Flight | Shuttle Bay at dusk, then past the launch doors; after her parts request | The same wobble starts; his note saves it. She joins your crew. Unlocks the Pioneer Stabilizer. | Script (Claude) |
+| 6 | Test Flight | Shuttle Bay at dusk, then past the launch doors; after 4 | The same wobble starts; his note saves it. She joins your crew. Unlocks the Pioneer Stabilizer. | Script (Claude) |
 | 8 | Under the Star Dome (confession) | Star dome bench after 20:00 | Jorvik's bench. Perk: Master Mechanic. Accept, decline and friendship endings written. | Script |
 | 10 | Christening the Suite | The Suite, opened for the first time since Jorvik died (or outside its sealed door) | ECHO LANDING SHIPWRIGHTS, JORVIK & FREYA; a pendant from his wrench. | Script (Claude) |
 
 - **Decided (Zachary, 22 Nov):** her father, **Jorvik**, died testing an earlier version of the same stabilizer; the Suite has been locked since. She joins your crew after Test Flight. Her events move off the job. She has weekends off, and her week changes as places open: weekend days are in the game (`SCHEDULE_DAYS_RAW` in `tools/build.py`).
-- Still open: how long ago Jorvik died, and whether to keep the parts request before 6.
+- Still open: how long ago Jorvik died, and whether to add the parts request before 6 (not in the game yet).
 
 ### 3.4 Job (Human, Heavy Miner)
 

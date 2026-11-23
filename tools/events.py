@@ -30,6 +30,11 @@ FACES = {
     "tally": dict(eyes=((9, 18), (15, 18)),
                   colours=dict(skin="#926172", lid="#d39c64", white="#f2c26e", pupil="#1d1019",
                                brow="#341d2a", tear="#93e6ea")),
+    # Freya (22 Nov, for her heart events): her eyes are two by two at (10, 13) and (15, 13) with the brows on
+    # row 12 (tools/fix_eyes.py); the faces here use the eye rows and the skin row under them
+    "freya": dict(eyes=((10, 13), (15, 13)),
+                  colours=dict(skin="#f2c29a", lid="#e8d9bd", white="#e6fbff", pupil="#1f3a32",
+                               brow="#86593f", tear="#93e6ea")),
 }
 
 L_, R_ = "L", "R"

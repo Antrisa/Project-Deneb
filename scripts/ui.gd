@@ -14,12 +14,12 @@ const HELP := [
 	"Click: pick up, then again to put down or swap.    Click a page name or press 1-5.    Esc: close",
 	"Click a recipe to craft it.    Click a page name or press 1-5.    Esc: close",
 	"Point at a dot to see what is there.    You: red.  Residents: blue.    Esc: close",
-	"One heart is 5 friendship. Talk each day and do requests.    Esc or click outside: close",
+	"One heart is 100 friendship. Talk each day and do requests.    Esc or click outside: close",
 	"J opens this page.    Esc or click outside: close",
 ]
 const PANEL := Rect2(10, 10, 300, 162)
 const MAP_ORIGIN := Vector2(16, 32)
-const HEART_POINTS := 5
+const HEART_POINTS := 100          # friendship points per heart (main.gd FRIEND_PER_HEART)
 const DIM := Color(0.6, 0.7, 0.85)
 const GOLD := Color(1.0, 0.824, 0.498)
 const EDGE := Color(0.4, 0.5, 0.7)

@@ -54,6 +54,8 @@ const BridgeScript = preload("res://scripts/datapad_bridge.gd")
 const ShopsScript = preload("res://scripts/shops.gd")   # the shops, Job's geode bench, cooking, drinks, gear (23 Nov)
 const ShopData = preload("res://scripts/shop_data.gd")
 var shops                          # scripts/shops.gd
+const HeartEvents = preload("res://scripts/heart_events.gd")
+const CutsceneScript = preload("res://scripts/cutscene.gd")
 var datapad                        # the Terran datapad HUD and pages (scripts/datapad_bridge.gd); null = old UI
 const EMOTE_SCENE := "res://overhead_emotes/overhead_emote.tscn"     # bubbles over residents' heads (20 Nov)
 var title                          # the title screen (scripts/title_screen.gd) until Play is pressed, then null
@@ -270,7 +272,7 @@ var leviathan_slain := false     # the sea monster on floor 45 (the Harbinger is
 var story_flags := {}
 # Places the story opens. Nothing opens them in play yet (the Custodians' bundles will); in debug builds F5
 # opens or closes them all, to test residents' days (22 Nov).
-const PLACE_FLAGS := ["east_dome"]
+const PLACE_FLAGS := ["east_dome", "suite_restored"]
 var hurt_cd := 0.0                 # seconds until the player can be hurt again
 var swing_cd := 0.0                # seconds until the player can swing again
 var tunnel_kills := 0
@@ -287,7 +289,15 @@ var persons := {}                  # person name -> their state (friendship, lin
 var things: Array = []             # everything you can talk to or use
 var residents: Array = []          # residents who walk around on a schedule
 var inner_doors: Array = []        # doors between rooms of one map (scripts/inner_door.gd)
-const FRIEND_PER_HEART := 10       # friendship points per heart, until the hearts system replaces this
+const FRIEND_PER_HEART := 100      # friendship points per heart (NPC Master 3.1, 22 Nov; was 10 here and 5 on the menu)
+const TALK_POINTS := 20            # the first talk each day
+const REQUEST_POINTS := 60         # a finished board request
+const HEART_CAP := 8               # everyone caps at 8 hearts, the person you're dating at 10 (NPC Master 3.1)
+const PARTNER_CAP := 10
+var partner := ""                  # who you're dating ("" for no one): set when you accept a confession
+var events_seen: Array = []        # heart events already played (scripts/heart_events.gd)
+var cutscene                       # plays them (scripts/cutscene.gd)
+var _event_area := ""              # the area heart events were last checked for
 const BEDROOM_HEARTS := 3          # a resident's bedroom opens to you from this many hearts (Zachary, 17 Nov)
 var area_links := {}               # area name -> {neighbouring area: [pad tiles that lead there]}
 var current_area := ""
@@ -558,6 +568,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		title.handle_input(event)
 		get_viewport().set_input_as_handled()
 		return
+	if cutscene != null and cutscene.running:
+		var scene_click := event as InputEventMouseButton
+		if scene_click != null:
+			if scene_click.pressed:
+				cutscene.handle_click(scene_click.button_index)
+		else:
+			cutscene.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
 	if datapad != null and datapad.blocking():
 		return                     # a datapad page is open; it takes its own keys
 	if travelling or garden_busy: return
@@ -639,6 +658,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			if ship_hull <= 0:
 				ship_hull = _hull_max()
 			_start_run()
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F3 and OS.is_debug_build():
+		# Debug: play the next heart event now (Shift+F3 forgets the ones you've seen). F4 is a free flight.
+		if (event as InputEventKey).shift_pressed:
+			events_seen.clear()
+			partner = ""
+			_toast("Debug: heart events forgotten, no partner")
+		else:
+			_debug_next_heart_event()
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F5 and OS.is_debug_build():
 		# Debug: open or close every place in PLACE_FLAGS, and put the residents where today's schedule says.
@@ -1254,6 +1282,106 @@ func _flag(flag_name: String) -> bool:
 	return bool(story_flags.get(flag_name, false))
 
 
+# ---------------------------------------------------------------- hearts and heart events
+# Hearts (NPC Master 3.1): 100 points a heart; everyone caps at 8, the person you're dating at 10.
+func _hearts(who: String) -> int:
+	if not persons.has(who):
+		return 0
+	return int(persons[who]["friendship"]) / FRIEND_PER_HEART
+
+
+func _add_friendship(who: String, points: int) -> void:
+	if not persons.has(who):
+		return
+	var st: Dictionary = persons[who]
+	var now: int = int(st["friendship"])
+	var cap: int = (PARTNER_CAP if who == partner else HEART_CAP) * FRIEND_PER_HEART
+	st["friendship"] = clampi(now + points, 0, maxi(cap, now))
+
+
+# Checked each time you arrive in an area: the first event in HeartEvents.ORDER whose trigger fits plays.
+func _check_heart_events() -> void:
+	if cutscene == null or cutscene.running:
+		return
+	for id in HeartEvents.ORDER:
+		if events_seen.has(id):
+			continue
+		var ev: Dictionary = HeartEvents.EVENTS[id]
+		if str(ev["area"]) == current_area and _event_ready(ev):
+			cutscene.play(id)
+			return
+
+
+func _event_ready(ev: Dictionary) -> bool:
+	var who: String = ev["who"]
+	if not _arrived(who) or _hearts(who) < int(ev["hearts"]):
+		return false
+	if bool(ev.get("partner", false)) and partner != who:
+		return false
+	for s in ev.get("seen", []):
+		if not events_seen.has(s):
+			return false
+	for f in ev.get("flags", []):
+		if not _flag(f):
+			return false
+	for f in ev.get("not", []):
+		if _flag(f):
+			return false
+	var weekday: int = (day - 1) % 7
+	for w in ev.get("windows", [[null, "06:00", "26:00"]]):
+		var days = w[0]
+		if days != null and not (days.has(weekday) or days.has(float(weekday))):
+			continue
+		if minutes >= _hm(str(w[1])) and minutes < _hm(str(w[2])):
+			return true
+	return false
+
+
+func _hm(t: String) -> float:
+	return float(int(t.get_slice(":", 0)) * 60 + int(t.get_slice(":", 1)))
+
+
+# The cutscene calls this as it ends: remember the event, and put everyone back where their day says.
+func _heart_event_done(id: String) -> void:
+	if not events_seen.has(id):
+		events_seen.append(id)
+	_snap_residents()
+
+
+# Debug (F4): meet the next event's trigger (hearts, flags, partner, weekday, time, place) and play it.
+func _debug_next_heart_event() -> void:
+	for id in HeartEvents.ORDER:
+		if events_seen.has(id):
+			continue
+		var ev: Dictionary = HeartEvents.EVENTS[id]
+		var who: String = ev["who"]
+		if not _arrived(who):
+			continue
+		for s in ev.get("seen", []):
+			if not events_seen.has(s):
+				events_seen.append(s)
+		for f in ev.get("flags", []):
+			if f == "ship_flown":
+				flights = maxi(flights, 1)
+			else:
+				story_flags[f] = true
+		if bool(ev.get("partner", false)):
+			partner = who
+		var st: Dictionary = persons[who]
+		st["friendship"] = maxi(int(st["friendship"]), int(ev["hearts"]) * FRIEND_PER_HEART)
+		var w: Array = ev.get("windows", [[null, "06:00", "26:00"]])[0]
+		if w[0] != null:
+			day += posmod(int(w[0][0]) - (day - 1) % 7, 7)
+		minutes = maxf(_hm(str(w[1])), float(DAY_START))
+		var p: Array = ev.get("player", [0, 0, "d"])
+		_go_to(str(ev["area"]), Vector2i(int(p[0]), int(p[1])))
+		_event_area = current_area
+		_snap_residents()
+		cutscene.play(id)
+		return
+	_toast("Debug: no heart events left to play (Shift+F4 forgets the ones seen)")
+
+
 # Wave 1 arrives after Ivan (artie_found_day = D): Artie wakes in the Medbay on D+1, the first visitor transport
 # brings Stu on D+2, Tally comes on D+4. Wave 2 is Ana, the day after you pull her out of her ship.
 func _arrived(who: String) -> bool:
@@ -1780,14 +1908,16 @@ func _interact(t: Dictionary) -> void:
 # Opens the dialogue box, with a portrait and a voice when the speaker is a person.
 # on_yes makes the last line a question; on_no (optional) runs if the player declines.
 func _say(who: String, lines: Array, on_yes: Callable = Callable(), yes_text: String = "",
-		on_no: Callable = Callable(), no_text: String = "Not now") -> void:
+		on_no: Callable = Callable(), no_text: String = "Not now", face_of: String = "") -> void:
+	# face_of: whose portrait and voice to use when the name shown is a label, e.g. "Tikka (comms)"
+	var face: String = face_of if face_of != "" else who
 	var portrait: Texture2D = null
 	dialogue.voice_pitch = 1.0
-	if persons.has(who):
-		portrait = persons[who]["portrait"]
-		dialogue.voice_pitch = float(persons[who]["pitch"])
-	elif ResourceLoader.exists("res://art/portrait_%s.png" % who.to_lower()):
-		portrait = load("res://art/portrait_%s.png" % who.to_lower())
+	if persons.has(face):
+		portrait = persons[face]["portrait"]
+		dialogue.voice_pitch = float(persons[face]["pitch"])
+	elif face != "" and ResourceLoader.exists("res://art/portrait_%s.png" % face.to_lower()):
+		portrait = load("res://art/portrait_%s.png" % face.to_lower())
 	# Swap {they}, {them}, {their}... for the player's pronouns (see scripts/player_maker.gd).
 	var said: Array = []
 	for line in lines:
@@ -1811,11 +1941,11 @@ func _talk(who: String) -> void:
 		_emote(who, &"joy")
 	if not st["talked_today"]:
 		st["talked_today"] = true
-		st["friendship"] = int(st["friendship"]) + 1
-		_toast("%s  +1 friendship (%d)" % [who, st["friendship"]])
+		_add_friendship(who, TALK_POINTS)
+		_toast("%s  +%d friendship (%d hearts)" % [who, TALK_POINTS, _hearts(who)])
 		if who == "Jasper":
 			_give("ration", 1)
-			_toast("Jasper  +1 friendship, and he hands you a ration pack")
+			_toast("Jasper  +%d friendship, and he hands you a ration pack" % TALK_POINTS)
 
 	if not st["met"]:
 		st["met"] = true
@@ -4081,10 +4211,9 @@ func _board_delivery(who: String) -> bool:
 	_give(item, -n)
 	_money(pay, "Requests")
 	board_done_day = day
-	var st: Dictionary = persons[who]
-	st["friendship"] = int(st["friendship"]) + 2
+	_add_friendship(who, REQUEST_POINTS)
 	sfx("quest")
-	_toast("Request done  +%d cr, +2 friendship" % pay)
+	_toast("Request done  +%d cr, +%d friendship" % [pay, REQUEST_POINTS])
 	var thanks: String = req["thanks"]
 	_say(who, [thanks])
 	return true
@@ -4355,6 +4484,9 @@ func _build_ui() -> void:
 
 	dialogue = DialogueScript.new()
 	add_child(dialogue)
+	cutscene = CutsceneScript.new()
+	cutscene.world = self
+	add_child(cutscene)
 
 	var ui_layer := CanvasLayer.new()
 	ui_layer.layer = 8
@@ -4433,10 +4565,10 @@ func _toast(msg: String) -> void:
 func _process(delta: float) -> void:
 	if music_director != null:
 		music_director.update(delta)
-	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (repair_view != null and repair_view.open) or (ship_upgrades != null and ship_upgrades.open) or (datapad != null and datapad.blocking())
+	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (repair_view != null and repair_view.open) or (ship_upgrades != null and ship_upgrades.open) or (datapad != null and datapad.blocking()) or (cutscene != null and cutscene.running)
 	if datapad != null:
 		# The datapad leaves the keys alone while one of the game's own windows is open.
-		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (repair_view != null and repair_view.open) or (ship_upgrades != null and ship_upgrades.open) or travelling or garden_busy)
+		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (repair_view != null and repair_view.open) or (ship_upgrades != null and ship_upgrades.open) or travelling or garden_busy or (cutscene != null and cutscene.running))
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	if not seasonal_props.is_empty():
@@ -4451,6 +4583,11 @@ func _process(delta: float) -> void:
 	_update_cut(delta, paused or travelling or garden_busy)
 	_update_inner_doors(delta)
 
+	if not paused and not travelling and not garden_busy and current_area != _event_area:
+		# Heart events are checked each time you arrive somewhere (Stardew-style).
+		_event_area = current_area
+		_check_heart_events()
+		paused = cutscene != null and cutscene.running
 	if not paused and not travelling and not garden_busy:
 		shops.tick(delta)
 		if _welcome_due():
@@ -4702,6 +4839,9 @@ func _save_game() -> void:
 	cfg.set_value("game", "cav_deepest", cav_deepest)
 	cfg.set_value("game", "leviathan_slain", leviathan_slain)
 	cfg.set_value("game", "story_flags", story_flags)
+	cfg.set_value("game", "events_seen", events_seen)
+	cfg.set_value("game", "partner", partner)
+	cfg.set_value("game", "hearts_scale", FRIEND_PER_HEART)
 	cfg.set_value("game", "board_taken_day", board_taken_day)
 	cfg.set_value("game", "board_done_day", board_done_day)
 	cfg.set_value("game", "caverns_open", caverns_open)
@@ -4795,6 +4935,9 @@ func _load_game() -> void:
 	# saves from before 22 Nov called the floor-45 monster the Harbinger
 	leviathan_slain = bool(cfg.get_value("game", "leviathan_slain", cfg.get_value("game", "harbinger_slain", false)))
 	story_flags = cfg.get_value("game", "story_flags", {})
+	var saved_seen = cfg.get_value("game", "events_seen", [])
+	events_seen = saved_seen if saved_seen is Array else []
+	partner = str(cfg.get_value("game", "partner", ""))
 	board_taken_day = int(cfg.get_value("game", "board_taken_day", 0))
 	board_done_day = int(cfg.get_value("game", "board_done_day", 0))
 	# Saves from before Vzz'ket's letter (23 Nov): if you had cleared the tunnels, the gate was already open.
@@ -4821,6 +4964,10 @@ func _load_game() -> void:
 		st["friendship"] = int(cfg.get_value(section, "friendship", 0))
 		st["next"] = int(cfg.get_value(section, "next", 0))
 		st["intro_due"] = bool(cfg.get_value(section, "intro_due", false))
+		# Saves from before 22 Nov counted 10 points a heart; hearts are 100 points now.
+		var scale_was: int = int(cfg.get_value("game", "hearts_scale", 10))
+		if scale_was != FRIEND_PER_HEART and scale_was > 0:
+			st["friendship"] = int(st["friendship"]) * FRIEND_PER_HEART / scale_was
 
 	garden_watered_day = int(cfg.get_value("access", "garden_watered_day", -1))
 	var saved_farm = cfg.get_value("farm", "tiles", {})
