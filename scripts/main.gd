@@ -1410,9 +1410,9 @@ const SEATS := {
 	"cafe_table": [1, [Vector2(15, 26)], -1],
 	"chair_e": [3, [Vector2(9, 17)], -1],
 	"chair_w": [2, [Vector2(8, 17)], -1],
-	"bench_e": [3, [Vector2(13, 26), Vector2(13, 44)], -1],
-	"bench_w": [2, [Vector2(16, 26), Vector2(16, 44)], -1],
-	"waiting_seat_w": [2, [Vector2(13, 16), Vector2(13, 35)], -1],
+	"bench_e": [3, [Vector2(18, 24), Vector2(18, 38)], -1],
+	"bench_w": [2, [Vector2(11, 24), Vector2(11, 38)], -1],
+	"waiting_seat_w": [2, [Vector2(14, 19), Vector2(14, 37)], -1],
 }
 
 

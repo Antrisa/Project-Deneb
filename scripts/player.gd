@@ -663,7 +663,9 @@ func _sit_picture(face: int) -> Array:
 	if face < 2:
 		var out := Image.create(fw, fh, false, Image.FORMAT_RGBA8)
 		out.blit_rect(stand, Rect2i(0, 0, fw, SIT_HIP + 2), Vector2i.ZERO)
-		out.blit_rect(stand, Rect2i(0, SIT_HIP + 4, fw, fh - SIT_HIP - 4), Vector2i(0, SIT_HIP + 2))
+		# from behind, the legs go forward under the seat or table, out of sight
+		if face == 0:
+			out.blit_rect(stand, Rect2i(0, SIT_HIP + 4, fw, fh - SIT_HIP - 4), Vector2i(0, SIT_HIP + 2))
 		return [out, _middle(stand, SIT_HIP)]
 	# Sideways: worked out facing right, then mirrored for left.
 	if face == 2:
