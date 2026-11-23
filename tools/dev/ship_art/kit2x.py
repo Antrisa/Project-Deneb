@@ -324,15 +324,19 @@ def floor_marks(p, room, cell, k):
         for n in range(cw * 2 * ch * 2):
             mx = cx * cell + (n % (cw * 2)) * tile + tile // 2
             my = cy * cell + (n // (cw * 2)) * tile + tile // 2
-            r = 5.0 * k
+            # nudged toward the room's middle, so the hatches clear the walls round the edge
+            rx, ry = (cx + cw / 2.0) * cell, (cy + ch / 2.0) * cell
+            mx += int(np.sign(rx - mx) * 1.5 * k)
+            my += int(np.sign(ry - my) * 1.5 * k)
+            r = 3.8 * k                       # well inside its tile, clear of the walls
             ring = p.mask(ellipse=(mx - r, my - r, mx + r, my + r))
             p.mat[ring] = "yellow"; p.tone[ring] = 3
             ang = (np.degrees(np.arctan2(yy - my, xx - mx)) + 360.0) % 360.0
             stripe = ring & ((ang // 30) % 2 == 1)
             p.mat[stripe] = "dark"; p.tone[stripe] = 1
-            well = p.mask(ellipse=(mx - 3.5 * k, my - 3.5 * k, mx + 3.5 * k, my + 3.5 * k))
+            well = p.mask(ellipse=(mx - 2.6 * k, my - 2.6 * k, mx + 2.6 * k, my + 2.6 * k))
             p.mat[well] = "dark"; p.tone[well] = 0
-            inner = p.mask(ellipse=(mx - 2.5 * k, my - 2.5 * k, mx + 2.5 * k, my + 2.5 * k))
+            inner = p.mask(ellipse=(mx - 1.8 * k, my - 1.8 * k, mx + 1.8 * k, my + 1.8 * k))
             p.mat[inner] = "bay"; p.tone[inner] = 2
         return
     for x in range(cx, cx + cw):
