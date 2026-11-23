@@ -39,7 +39,7 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2.
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's and Evarra's arcs are now written and in the game.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's and Job's arcs are now written and in the game.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3.
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
@@ -170,20 +170,19 @@ Stepping out of her late father's shadow. **Reviewed with Zachary on 22 Nov; ful
 
 ### 3.4 Job (Human, Heavy Miner)
 
-A quiet man finding home on a moon he never chose.
+A quiet man finding home on a moon he never chose. **Reviewed with Zachary on 22 Nov; all five are written and playable.** Full scenes and his week: [`characters/JOB.md`](characters/JOB.md).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Gumbo in the Breakroom | Engineering break room, 16:00–19:00 | His granddaddy's Louisiana spice blend. | Script |
-| 4 | Cave-In on Shaft Four | Cavern floor 4 | He braces a beam while you pull Zaas's gear free. Unlocks the Reinforced Mining Rig quest with Tikka. | Short |
-| 6 | Lanterns by the Cavern Sea | Sea of Echoes shore; waits for the Harbinger | Zaas was right; the wildest dreams are under your boots. | Short |
-| 8 | Quiet Ground (confession) | Hot springs at dusk; backup: Engineering break room | Perk: Bedrock Strength. | Script |
-| 10 | Bayou Under the Stars | Sea of Echoes dock at night; backup (Claude): the Shuttle Bay windows | Rows you across the lake in a skiff he built with Tobbin. Keepsake (Claude): a carved oar charm. | Outline |
+| 2 | Gumbo in the Breakroom | Engineering crew break room, 16:00–19:00 on a weekday | His granddaddy's Louisiana spice blend. | In game (Zachary's script, replies to the choice by Claude) |
+| 4 | Cave-In on Shaft Four | The mine's iron bay, during his shift | He holds the roof up while you dig out Zaas's crate (a choice now). Unlocks the Reinforced Mining Rig quest (flag only). | In game (Zachary's lines, scene by Claude) |
+| 6 | Lanterns by the Cavern Sea | The underground lake's shore once the Leviathan is dead; **backup:** the sealed hatch of the mine's flooded stair | Zaas was right. A choice added. | In game (Zachary's lines, scene by Claude) |
+| 8 | Quiet Ground (confession) | Hot springs at dusk once the garden dome is open; **backup:** his porch outside East Home 6 | Perk: Bedrock Strength. Accept, decline and friendship endings written. | In game (Zachary's speeches, replies by Claude) |
+| 10 | Bayou Under the Stars | The lake's long dock at night; **backup:** the Shuttle Bay windows, with the half-built skiff | Rowing out in the skiff he built with Tobbin. Keepsake: a carved oar charm. | In game (Claude) |
 
-- **Clash:** the script's triggers still name old places: 2 "the Mines entrance breakroom", 4 "Mine Level 3" (the title says "Shaft Four"; the Master says cavern floor 4).
-- **Gap:** 4 and 6 have no choice.
-- 6 waits for the Harbinger (late Autumn), so it will often play after his 8. The rule allows it.
-- **Repeat:** his skiff (10) and Zaas's research skiff (Zaas 8) are two boats on the same sea. They could be one: Job builds it with Tobbin, Zaas christens it.
+- **Decided (Zachary, 22 Nov):** weekends off, with lines for those days; 6 gets a backup; 10's backup is the Shuttle Bay windows.
+- 8's backup moved from the break room (already his 2) to his porch. 4 plays in the mine because cavern floors are random.
+- **Still open:** the skiff needs art; his skiff and Zaas's research skiff (Zaas 8) could be the same boat.
 
 ### 3.5 Quill (Vuultam, Medical Assistant)
 
@@ -464,7 +463,7 @@ Each of the nine 8-heart scenes ends "Accept confession or stay friends", with n
 
 ### 7.4 Places in the scripts that aren't the game's maps
 
-Job 2 "Mines entrance breakroom" (Engineering break room); Job 4 "Mine Level 3" (cavern floor 4); Quill 8 "Library / Medbay garden bench" (pick one); Stu 6 "West Wing Residential Corridor" (East Home 2?); Artie 10 "Library / Concourse" (East orchard); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 "Shuttle Bay training mat" (no mat prop yet).
+Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill 8 "Library / Medbay garden bench" (pick one); Stu 6 "West Wing Residential Corridor" (East Home 2?); Artie 10 "Library / Concourse" (East orchard); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 "Shuttle Bay training mat" (no mat prop yet).
 
 ### 7.5 Choices with no outcome, or the wrong kind
 

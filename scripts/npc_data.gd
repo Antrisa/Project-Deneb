@@ -648,7 +648,7 @@ const LOOKS = {
 # Days off (22 Nov, Zachary): weekday numbers, 0 = Monday ... 6 = Sunday. The schedules for those days are in
 # tools/build.py SCHEDULE_DAYS_RAW; the station calendar lists them. Jasper and Evarra stagger theirs, so one
 # of them always keeps the mess hall.
-const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6]}
+const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -676,5 +676,13 @@ const DAY_LINES := {
 			"[happy] With Jasper off, the kitchen is very quiet. Nobody is singing to the onions."],
 		5: ["Saturday, so Jasper's out haunting Ooma's stall. I have the kitchen to myself.",
 			"[happy] Jasper's day off. He'll come in at lunch and criticise my sauce. Lovingly."],
+	},
+	"Job": {
+		5: ["[happy] Saturday, cher. Drill's off, boots are off. Mostly.",
+			"Gonna sit on my porch a while and do nothin'. I'm real good at it on Saturdays.",
+			"[happy] Bram's got a box of old bolts he swears are vintage. I'm only goin' to look."],
+		6: ["[happy] Sunday. Pot of gumbo on the stove by noon. Smell it from the street by two.",
+			"Mama always said Sunday's for slow food and slower talk. I keep to it.",
+			"[happy] No pick, no lift, no quota. Just me and a wooden spoon."],
 	},
 }

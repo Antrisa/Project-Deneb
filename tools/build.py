@@ -2773,6 +2773,35 @@ SCHEDULE_DAYS_RAW = {
             ("08:30", "mess", 15, 7, 26, "d", "eat", "eat"), ("10:00", "east", 122, 45, 26, "d", "work", "garden"),
             ("17:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Evarra"], 26, "d", "idle", "rest")]},
     ],
+    # Job (22 Nov): weekdays as before, plus a thermos break in the Engineering break room after his shift (his 2).
+    # Weekends off. Saturday: a late breakfast, Bram's, lunch, his porch (outside East Home 6), dinner, the bar.
+    # Sunday: breakfast, the porch, gumbo at home, the bar. Once the garden dome is open his Saturday afternoon is
+    # at the hot springs; once the Leviathan is dead and the lake is open, Sunday is fishing at the old camp.
+    "Job": [
+        {"when": {"days": [0, 1, 2, 3, 4]}, "stops": [
+            ("06:30", "mine", 55, 22, 26, "u", "work", "mine"), ("12:00", "main", 120, 70, 26, "d", "eat", "eat"),
+            ("13:30", "mine", 55, 22, 26, "u", "work", "mine"), ("15:45", "eng", 43, 64, 26, "d", "idle", "rest"),
+            ("17:15", "main", 120, 70, 26, "d", "eat", "eat"), ("19:15", *HOME_SPOTS["Job at the bar"], 26, "u", "idle", "drink"),
+            ("22:00", *HOME_SPOTS["Job"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5]}, "stops": [
+            ("09:00", "main", 120, 70, 26, "d", "eat", "eat"), ("10:30", "bram", 5, 6, 26, "r", "idle", "rest"),
+            ("12:30", "main", 120, 70, 26, "d", "eat", "eat"), ("14:00", "east", 73, 40, 26, "d", "idle", "rest"),
+            ("17:15", "main", 120, 70, 26, "d", "eat", "eat"), ("19:15", *HOME_SPOTS["Job at the bar"], 26, "u", "idle", "drink"),
+            ("22:00", *HOME_SPOTS["Job"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6]}, "stops": [
+            ("09:00", "main", 120, 70, 26, "d", "eat", "eat"), ("10:30", "east", 73, 40, 26, "d", "idle", "rest"),
+            ("14:00", "home6", 20, 9, 26, "d", "idle", "rest"), ("19:15", *HOME_SPOTS["Job at the bar"], 26, "u", "idle", "drink"),
+            ("22:00", *HOME_SPOTS["Job"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "flags": ["east_dome"]}, "stops": [
+            ("09:00", "main", 120, 70, 26, "d", "eat", "eat"), ("10:30", "bram", 5, 6, 26, "r", "idle", "rest"),
+            ("12:30", "main", 120, 70, 26, "d", "eat", "eat"), ("14:00", "east", 179, 60, 26, "u", "idle", "rest"),
+            ("17:15", "main", 120, 70, 26, "d", "eat", "eat"), ("19:15", *HOME_SPOTS["Job at the bar"], 26, "u", "idle", "drink"),
+            ("22:00", *HOME_SPOTS["Job"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["leviathan_slain"]}, "stops": [
+            ("09:00", "main", 120, 70, 26, "d", "eat", "eat"), ("10:00", "lake", 40, 18, 26, "d", "idle", "rest"),
+            ("16:00", "home6", 20, 9, 26, "d", "idle", "rest"), ("19:15", *HOME_SPOTS["Job at the bar"], 26, "u", "idle", "drink"),
+            ("22:00", *HOME_SPOTS["Job"], 26, "d", "idle", "rest")]},
+    ],
 }
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():

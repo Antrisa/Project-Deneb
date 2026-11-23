@@ -43,6 +43,10 @@ FACES = {
     "evarra": dict(eyes=((10, 14), (15, 14)),
                    colours=dict(skin="#d6a2c3", lid="#d4c8e2", white="#f6f0ff", pupil="#2d1f45",
                                 brow="#6d4250", tear="#93e6ea")),
+    # Job (22 Nov): eyes under his hard-hat brim, brows on row 12 (tools/fix_eyes.py)
+    "job": dict(eyes=((8, 13), (14, 13)),
+                colours=dict(skin="#b66037", lid="#e0c297", white="#f4d3a5", pupil="#1a0b10",
+                             brow="#2c111c", tear="#93e6ea")),
 }
 
 L_, R_ = "L", "R"

@@ -566,6 +566,7 @@ npc_tally_event.png
 npc_freya_event.png
 npc_jasper_event.png
 npc_evarra_event.png
+npc_job_event.png
 portrait_ana.png
 portrait_artie.png
 portrait_ivan.png
