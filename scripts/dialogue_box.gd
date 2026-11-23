@@ -74,8 +74,10 @@ func _ready() -> void:
 	_choice = _make_label(Vector2(6, 59), Vector2(292, 11), Color("ffd27f"))
 	_choice.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_blip = AudioStreamPlayer.new()
-	_blip.stream = load("res://audio/blip.wav")
-	_blip.volume_db = -8.0
+	# One soft note per text box (Zachary, 23 Nov: the per-letter blips were "a bit annoying"). A real sound saved
+	# as audio/talk.ogg replaces the made-up one.
+	_blip.stream = load("res://audio/talk.ogg") if ResourceLoader.exists("res://audio/talk.ogg") else load("res://audio/talk.wav")
+	_blip.volume_db = -10.0
 	add_child(_blip)
 	visible = false
 
@@ -174,6 +176,9 @@ func _show_line() -> void:
 	_shown = 0.0
 	_blipped = 0
 	_text.visible_characters = 0
+	if line != "":
+		_blip.pitch_scale = voice_pitch          # each resident's note at their own pitch
+		_blip.play()
 	_choice.visible = _on_yes.is_valid() and _index == _lines.size() - 1
 
 
@@ -184,10 +189,5 @@ func _process(delta: float) -> void:
 	if int(_shown) < line.length():
 		_shown += delta * 45.0
 		_text.visible_characters = int(_shown)
-		# A short blip every third letter, like a voice.
-		if int(_shown) >= _blipped + 3:
-			_blipped = int(_shown)
-			_blip.pitch_scale = voice_pitch * randf_range(0.95, 1.05)
-			_blip.play()
 	else:
 		_text.visible_characters = -1

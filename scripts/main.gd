@@ -115,7 +115,7 @@ const BOARD := [
 			"thanks": "[love] Thank you. The beans will have something to climb now. I'll save you the first ones."},
 ]
 const WEEKDAYS := ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-const SOUND_NAMES := ["step", "click", "coin", "zap", "smelt", "warp", "quest", "deny", "swing", "hit", "hurt", "die", "eat"]
+const SOUND_NAMES := ["step", "step_soft", "click", "coin", "zap", "smelt", "warp", "quest", "deny", "swing", "hit", "hurt", "die", "eat"]
 # Space-battle sounds (tools/dev/ship_sounds.py). Each gets a few players so quick repeats overlap.
 const SHIP_SOUNDS := ["sh_laser", "sh_missile", "sh_beam", "sh_ion", "sh_flak", "sh_dart", "sh_shield", "sh_hull", "sh_hit",
 	"sh_miss", "sh_explode", "sh_fire", "sh_alarm", "sh_vent", "sh_fold", "sh_ready", "sh_blaster", "sh_pod", "sh_door"]
@@ -2967,7 +2967,9 @@ func _do_freya_repair() -> void:
 func _setup_sounds() -> void:
 	for sound_name in SOUND_NAMES:
 		var p := AudioStreamPlayer.new()
-		p.stream = load("res://audio/%s.wav" % sound_name)
+		# a real sound dropped in as audio/<name>.ogg wins over the made-up .wav
+		p.stream = load("res://audio/%s.ogg" % sound_name) if ResourceLoader.exists("res://audio/%s.ogg" % sound_name) \
+				else load("res://audio/%s.wav" % sound_name)
 		add_child(p)
 		sounds[sound_name] = p
 	for sound_name in SHIP_SOUNDS:
