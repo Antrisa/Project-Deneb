@@ -888,6 +888,9 @@ ROOF_TINTS = ["ffffff", "dbe4ee", "f0e9df", "c6d3e2"]
 
 
 ROOF_ZONE_FN = {}             # level key -> fn(tx, ty) giving roof zones, set by tools/east.py and others
+# Buildings that stand inside a map and are drawn in their own materials, not the map's walls (23 Nov: your
+# apartment on the agri complex's front porch): key -> [(x0, y0, x1, y1, roof, wall face)], tiles inclusive.
+HOUSE_FRONTS = {}
 
 
 def _roof_zone(key, tx, ty):
@@ -1038,6 +1041,11 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
             mask = roof & (indices == index)
             tile = np.asarray(Image.open(os.path.join(art_dir, roof_name + suffix + ".png"))) / 255.
             rc[mask] = tile[(yy[mask]+PX) % (2*PX), xx[mask] % (2*PX)]
+    for (hx0, hy0, hx1, hy1, h_roof, _) in HOUSE_FRONTS.get(key, []):
+        mr_ = np.asarray(Image.open(os.path.join(art_dir, h_roof + ".png")).convert("RGB"), dtype=np.float32) / 255.0
+        rty_, rtx_ = (yy + PX) // PX, xx // PX
+        in_ = roof & (rtx_ >= hx0) & (rtx_ <= hx1) & (rty_ >= hy0) & (rty_ <= hy1)
+        rc[in_] = _tex_lookup(mr_, yy + PX, xx)[in_]
     out[roof, :3] = rc[roof]
     # wall face: the material stretched over 32 pixels, or the window view where the wall is a window
     by = np.clip(bottom, 0, H - 1)
@@ -1059,6 +1067,11 @@ def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
             if key == "hotel": mask &= ~wing                         # no paintings or sconces on the bare ribs
             tile = np.asarray(Image.open(os.path.join(art_dir, wall_name + suffix + ".png"))) / 255.
             fc[mask] = tile[v[mask], xx[mask] % (2*PX)]
+    for (hx0, hy0, hx1, hy1, _, h_wall) in HOUSE_FRONTS.get(key, []):
+        mw_ = np.asarray(Image.open(os.path.join(art_dir, h_wall + ".png")).convert("RGB"), dtype=np.float32) / 255.0
+        in_ = face & (ftx >= hx0) & (ftx <= hx1) & (fty >= hy0) & (fty <= hy1 + 1)
+        fw_ = mw_[(v * mw_.shape[0]) // (2 * PX), ((xx % (2 * PX)) * mw_.shape[1]) // (2 * PX)]
+        fc[in_] = fw_[in_]
     if window is not None:
         win = np.asarray(window.convert("RGB"), dtype=np.float32) / 255.0
         is_win = chars[np.clip(fty, 0, th - 1), np.clip(ftx, 0, tw - 1)] == ord("w")

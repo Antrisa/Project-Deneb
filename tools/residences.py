@@ -424,7 +424,7 @@ def player_home(g):
     hm.put('plants', 13, 8.5, 'Plant')
     hm.put('shower', 18, 5.5, 'Shower'); hm.put('toilet', 22.5, 4.5, 'Toilet'); hm.put('bath_sink', 25.5, 4.5, 'Washbasin')
     hm.put('kitchenette', 5, 14.5, 'Kitchenette', 'inspect'); hm.put('fridge', 8, 14.5, 'Fridge')
-    hm.put('cafe_table', 6, 19.5, 'Little table', 'look')
+    hm.put('table', 6.5, 19.5, 'Dining table', 'seat')          # and its two chairs (Zachary, 23 Nov)
     hm.put('sofa', 20.5, 17.5, 'Sofa', 'seat'); hm.put('cafe_table', 20.5, 20.5, 'Coffee table')
     hm.put('armchair', 24.5, 18.5, 'Armchair', 'seat'); hm.put('books', 24.5, 13.5, 'Old bookshelf', 'look')
     hm.put('curator_desk', 17, 13.5, 'Writing desk', 'look'); hm.put('tree_tub', 3.5, 22.5, 'Potted tree')

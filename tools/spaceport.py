@@ -124,25 +124,33 @@ def build(g):
     # aptPlayer) and the glass link up to your agri dome; west, the workshop; east, the hot springs; south, a short
     # walkway to the junction (the map is 84 tiles tall now, was 90, so the walk in from the junction is 6 tiles
     # instead of 28). The shed's seed rack, tools and stores stand on the porch.
+    # Then (Zachary, 23 Nov: "make the circle smaller it doesnt need to be that big, so the house can be a bit
+    # bigger"): the porch is 23 x 19 (was 27 x 26) and your apartment is a building of its own at its north-east
+    # corner, standing forward onto the deck, with a plank roof and a sided front (bake_floor.HOUSE_FRONTS).
     a = Room(g, 'agri', 'Agri Complex', 110, 84)
     F = a.F
     fill(F, 1, 1, 108, 82, '#')
     disc(F, 55, 23, 19, 'a')                                     # your agri dome
     disc(F, 24, 64, 13, 'f')                                     # your workshop
     disc(F, 86, 64, 15, 's')                                     # hot springs and fish ponds
-    porch = (42, 50, 68, 75)
+    porch = (43, 55, 65, 73)
     chamfer_room(F, porch[0], porch[1], porch[2], porch[3], 'k', 4)   # the front porch: wooden decking
     chamfer_room(F, 77, 54, 89, 63, 'O', 3)                      # the hot spring
     chamfer_room(F, 89, 65, 97, 72, 'Y', 2); chamfer_room(F, 77, 67, 85, 74, 'Y', 2)   # fish ponds
     band(F, (55, 23), (24, 64), 1.6, 'u'); band(F, (55, 23), (86, 64), 1.6, 'u'); band(F, (24, 64), (86, 64), 1.6, 'u')
-    band(F, (55, 40), (55, 51), 1.6, 'u')                        # porch up to the agri dome
-    fill(F, 54, 76, 56, 81, 'u')                                 # the way in, from the junction
+    band(F, (55, 40), (55, 56), 1.6, 'u')                        # porch up to the agri dome
+    fill(F, 54, 74, 56, 81, 'u')                                 # the way in, from the junction
     agri_in = (55, 82); F[agri_in[1]][agri_in[0]] = 'u'
-    home_door = (60, 49); F[home_door[1]][home_door[0]] = 'k'   # your front door, in the porch's north wall
+    # Your apartment: a building between the link up to your field and the hot springs link, its front standing
+    # forward over the porch's north-east corner (x 57-65 down to y 58), its door in the middle of that front.
+    house_front = (57, 43, 65, 58)
+    fill(F, 57, porch[1], 65, house_front[3], '#')
+    home_door = (61, house_front[3]); F[home_door[1]][home_door[0]] = 'k'
     g['PLAYER_HOME_DOOR'] = ('agri', home_door)
-    # Behind the door, between the glass links, the apartment block: kept as roof rather than bare moon, so the
-    # door opens into a building.
-    house = {(x, y) for x in range(57, 74) for y in range(34, 49)}
+    import bake_floor
+    bake_floor.HOUSE_FRONTS['agri'] = [house_front + ('hotel/cap_mix', 'east/wall')]
+    # The rest of the block behind it, between the glass links, stays roof rather than bare moon.
+    house = {(x, y) for x in range(57, 71) for y in range(34, 59)}
     # Outside the domes and links is bare moon, with a two-tile station wall round everything inside.
     inside = {(x, y) for y in range(84) for x in range(110) if F[y][x] not in '#Q~'}
     for y in range(1, 83):
@@ -151,10 +159,10 @@ def build(g):
                 F[y][x] = 'Q'
     a.t.zones += [['Agri dome', 36, 4, 74, 42], ['Front porch', porch[0], porch[1], porch[2], porch[3]], ['Your workshop', 11, 51, 37, 77],
                   ['Hot springs & fish ponds', 71, 49, 101, 79], ['Glass link', 1, 1, 108, 82]]
-    a.keep_clear(52, 38, 57, 54)          # the link up to the dome, and its mouth
+    a.keep_clear(52, 38, 57, 58)          # the link up to the dome, and its mouth
     a.keep_clear(53, 70, 57, 82)          # the way in
     a.keep_clear(36, 61, 74, 66)          # workshop - porch - hot springs
-    a.keep_clear(59, 49, 61, 54)          # your front door, and the way to it
+    a.keep_clear(60, 58, 62, 62)          # your front door, and the way to it
     # Your field (21 Nov): 10 x 12 tiles in the west of the dome, farmed one tile at a time like Stardew (till,
     # plant, water, harvest; scripts/main.gd and scripts/agri_terrain.gd). One tile is one character wide.
     # Its x, y, w, h start on even tiles, so the soil art's 2 x 2-tile frame pieces line up round it.
@@ -176,18 +184,17 @@ def build(g):
     # pad mailbox thing, and a shipping bin to sell stuff to bram"). By your front door, as on a Stardew farm: your
     # message pad (the mailbox: scripts/mail_reader.gd) and the shipping crate that Bram empties overnight. By the
     # link up to your field: the seed rack and garden tools. West: a little work space (a workbench that opens the
-    # Crafting page, a tool cart) and the old shed's shelving, barrels and crates. East: a bench, a table and a
-    # planter. Flower boxes either side of the way in, and a lamp at each corner.
-    P('terminal', 62, 50, 'Message pad', 'mail', 'Read your mail')
-    P('shipping_bin', 63, 50, 'Shipping crate', 'ship', 'Ship to Bram')
-    N('tree_tub', 58.5, 51.5, 'Potted tree', None)
-    N('seed_rack', 47, 52, 'Seed rack', 'seeds', 'Take seeds'); N('garden_tools', 50, 52, 'Garden tools', 'farm_tools', 'Take')
-    N('workbench', 46.5, 57, 'Porch workbench', 'craft', 'Craft'); N('tool_cart', 44.5, 60, 'Tool cart', None)
-    N('storage_shelf', 45.5, 70, 'Porch shelving', None); N('barrel_stack', 45, 73, 'Feed barrels', None); N('cargo', 48, 72, 'Crates', None)
-    N('bench_s', 64, 56.5, 'Porch bench [S]', 'seat', 'Sit'); N('table', 63, 69.5, 'Porch table', 'seat', 'Sit')
-    N('plants', 65.5, 72, 'Porch planter', 'look', 'Look')
-    N('flowers', 50.5, 74.5, 'Flower box', 'look', 'Look'); N('flowers', 60, 74.5, 'Flower box', 'look', 'Look')
-    for fx, fy in ((47.5, 55), (63.5, 59.5), (47.5, 68), (63.5, 73)): N('lamp_post', fx, fy, 'Lamp', None)
+    # Crafting page, a tool cart) and the old shed's shelving, barrels and crates. South-east: a table and chairs
+    # and a planter. Flower boxes either side of the way in, and lamps.
+    P('terminal', 63, 59, 'Message pad', 'mail', 'Read your mail')
+    P('shipping_bin', 64, 59, 'Shipping crate', 'ship', 'Ship to Bram')
+    N('tree_tub', 59, 60.5, 'Potted tree', None)
+    N('seed_rack', 47.5, 57.5, 'Seed rack', 'seeds', 'Take seeds'); N('garden_tools', 50.5, 57.5, 'Garden tools', 'farm_tools', 'Take')
+    N('workbench', 46.5, 60.5, 'Porch workbench', 'craft', 'Craft'); N('tool_cart', 49.5, 60.5, 'Tool cart', None)
+    N('storage_shelf', 45.5, 69.5, 'Porch shelving', None); N('barrel_stack', 48.5, 70.5, 'Feed barrels', None); N('cargo', 46.5, 72, 'Crates', None)
+    N('table', 61.5, 68.5, 'Porch table', 'seat', 'Sit'); N('plants', 63.5, 71, 'Porch planter', 'look', 'Look')
+    N('flowers', 50.5, 72.5, 'Flower box', 'look', 'Look'); N('flowers', 59.5, 72.5, 'Flower box', 'look', 'Look')
+    for fx, fy in ((45, 58.5), (45, 67.5), (64, 67.5), (57, 60.5)): N('lamp_post', fx, fy, 'Lamp', None)
     # your workshop
     N('workbench', 19.5, 58.5, 'Workbench', 'look', 'Look'); N('workbench', 27.5, 58.5, 'Workbench', None)
     N('tool_cart', 15, 65, 'Tool cart', None); N('welding_rig', 32, 67, 'Welding rig'); N('parts_rack', 20, 72.5, 'Parts rack', None)

@@ -524,7 +524,6 @@ const LOOKS = {
 	# Your apartment (tools/residences.py aptPlayer) and the hotel's manager's suite, 23 Nov. Claude's placeholder lines.
 	"Writing desk": ["A plain desk with a cup of pens that all still work.", "Someone scratched a row of tally marks into the corner, a long time ago, and then stopped."],
 	"Old bookshelf": ["The agri keeper's books, left behind: crop manuals, two thrillers and a seed catalogue from the year the dome broke.", "Owen at the library would trade you for the thrillers."],
-	"Little table": ["A table for one. Two, if the second doesn't mind elbows."],
 	"Flower box": ["Marigolds in a box of recycled soil. The first flowers out here in years."],
 	"Porch planter": ["Leafy greens in a planter, doing better than they have any right to."],
 	"Suite bed": ["The manager's suite, made up and waiting for a manager.", "You sleep at your own place now, out by the farm."],
