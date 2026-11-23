@@ -1385,10 +1385,12 @@ func _nearest_thing():
 	return best
 
 
-# Where to sit on each kind of seat (22 Nov), in its own art pixels: the facing (0 down, 1 up, 2 left,
-# 3 right), each place's hip position, and for a seat whose back is between the sitter and the camera,
-# the art row below which the sitter is hidden (-1: none). Several places on a bench or sofa: the one
-# nearest the player is taken.
+# Where to sit on each kind of seat (22-23 Nov), in its own art pixels: the facing (0 down, 1 up, 2 left,
+# 3 right), each place's hip position, and whether the seat's back is between the sitter and the
+# camera (SEAT_BEHIND: the sitter is drawn behind the seat, whose solid back hides all but head and
+# shoulders; tools/solid_bench_backs.py filled the gaps between the slats). Several places on a bench
+# or sofa: the one nearest the player is taken.
+const SEAT_BEHIND := 1
 const SEAT_SORT := 12.0
 const SEATS := {
 	"bench_s": [0, [Vector2(17, 28), Vector2(39, 28)], -1],
@@ -1398,15 +1400,15 @@ const SEATS := {
 	"sofa": [0, [Vector2(18, 18), Vector2(38, 18)], -1],
 	"armchair": [0, [Vector2(16, 19)], -1],
 	"chair_s": [0, [Vector2(11, 17)], -1],
-	"bench_n": [1, [Vector2(17, 18), Vector2(39, 18)], 22],
-	"chair_n": [1, [Vector2(11, 12)], 3],
+	"bench_n": [1, [Vector2(17, 17), Vector2(39, 17)], SEAT_BEHIND],
+	"chair_n": [1, [Vector2(11, 12)], SEAT_BEHIND],
 	"bar_stool": [1, [Vector2(8, 9)], -1],
 	"cafe_table": [1, [Vector2(15, 26)], -1],
-	"chair_e": [3, [Vector2(9, 13)], -1],
-	"chair_w": [2, [Vector2(8, 13)], -1],
-	"bench_e": [3, [Vector2(13, 22), Vector2(13, 40)], -1],
-	"bench_w": [2, [Vector2(16, 22), Vector2(16, 40)], -1],
-	"waiting_seat_w": [2, [Vector2(13, 12), Vector2(13, 31)], -1],
+	"chair_e": [3, [Vector2(9, 17)], -1],
+	"chair_w": [2, [Vector2(8, 17)], -1],
+	"bench_e": [3, [Vector2(13, 26), Vector2(13, 44)], -1],
+	"bench_w": [2, [Vector2(16, 26), Vector2(16, 44)], -1],
+	"waiting_seat_w": [2, [Vector2(13, 16), Vector2(13, 35)], -1],
 }
 
 
@@ -1450,11 +1452,11 @@ func _sit_on(t: Dictionary) -> void:
 		if d < nearest:
 			nearest = d
 			hip = at
-	# the sitter sorts just in front of the seat; a seat back between them and the camera hides the rest
+	# the sitter sorts just in front of the seat, or just behind it when its back faces the camera
 	var sort_y: float = bottom - (SEAT_SORT if kind == "game_chair" or kind == "bar_stool" or kind.begins_with("chair_") or kind.begins_with("bench_") else 0.0)
-	player.position = Vector2(round(hip.x), sort_y + 1.0)
-	var hide_below: float = top + float(info[2]) * ART if int(info[2]) >= 0 else INF
-	player.set_sitting(true, int(info[0]), hip, hide_below)
+	var behind: bool = int(info[2]) == SEAT_BEHIND
+	player.position = Vector2(round(hip.x), sort_y + (-1.0 if behind else 1.0))
+	player.set_sitting(true, int(info[0]), hip)
 
 
 func _stand_from_seat() -> void:
