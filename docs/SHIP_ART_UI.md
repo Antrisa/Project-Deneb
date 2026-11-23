@@ -820,7 +820,21 @@ Tick what you want. **Built** means it's in the game now; **Agreed** means you'v
 
 ## 8. Salvage and relics (23 Nov)
 - Time stands still in space. Coming home (folding back, losing the ship, the story landings) sets the clock to 8pm, or leaves it if you left later.
-- A won fight on a run opens a **Salvage** window over the stop: Scrip, maybe fuel, missiles and drone parts, plus items for the player: scrap every time; hull plate, coil wire, circuit boards and lithium cells often; rare earths and helium-3 from ring 2; cobalt-60 on ring 3; a void sapphire now and then (half the time at the stronghold). Numbers: `ShipRuns.reward()`.
-- **Pirate relics:** a Rabble ship (any id with `rabble`) can carry one you haven't found yet (8% on ring 1, +4% a ring); the stronghold always has one while any are left. Six pirate relics plus the five from events (`relic: <name>`). A relic you already found, met again in an event, is sold for 40 Scrip.
-- **Museum:** give relics to Tar'Besh, or leave them at his desk. Each fills the first empty case in its gallery (`"gallery"` in `scripts/item_data.gd`), or any empty case. Pirate relics go beside the old pirate cutlass. Saved as `[museum] gifts`.
-- **Art:** the relic pictures in `art/museum/<name>.png` (24x24) and their inventory icons (slots 38-48 of `art/items.png`) are placeholders drawn by `tools/dev/relic_art.py`; replace them freely. Salvage icons (slots 31-37) are the artist's own from `art/items/`.
+- A won fight on a run opens a **Salvage** window over the stop: Scrip, maybe fuel, missiles and drone parts, scrap every time, and a roll for each salvage item. **Every item can drop on every ring; rare ones get likelier further out** (Zachary, 23 Nov). Chances on rings 1 / 2 / 3 (`ShipRuns.SALVAGE`):
+
+| Item | Ring 1 | Ring 2 | Ring 3 |
+|---|---|---|---|
+| Hull plate | 35% | 40% | 45% |
+| Coil wire (1-2) | 30% | 35% | 40% |
+| Circuit board | 12% | 18% | 24% |
+| Lithium cell (1-2) | 12% | 17% | 22% |
+| Rare earths (1-2) | 6% | 13% | 20% |
+| Helium-3 | 4% | 10% | 16% |
+| Cobalt-60 | 2% | 6% | 10% |
+| Void sapphire | 1% | 4% | 7% |
+| Pirate relic (Rabble ships only) | 4% | 9% | 14% |
+
+  The stronghold rolls as if two rings further out, always gives 2 hull plates and a circuit board, and always has a pirate relic while any are left.
+- **Relics:** six pirate relics (Rabble ships) and five from events (`relic: <name>`). You never get one twice; a repeat event relic is sold for 40 Scrip.
+- **Museum:** you choose the case (Zachary: "you should pick which box it goes in so you can group objects together"). Use any empty case while carrying a relic to put it in (the one selected on the hotbar, else the first in your bag). Use one of your cases to read it or take it out to move it. Tar'Besh and his desk explain this. His own pieces stay put. Saved as `[museum] gifts`.
+- **Art:** the relic pictures in `art/museum/<name>.png` (24x24) and their inventory icons (slots 38-48 of `art/items.png`) are placeholders drawn by `tools/dev/relic_art.py`; the brief for real art is `claude/echo-landing-relic-art.md` in the Project. Salvage icons (slots 31-37) are the artist's own from `art/items/`.

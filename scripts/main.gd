@@ -1488,10 +1488,8 @@ func _interact(t: Dictionary) -> void:
 		else: community_game.start()
 	elif current_area == "museum" and kind == "look" and t.name == "Tar'Besh's desk" and _first_relic() != "":
 		_offer_relic("Tar'Besh's desk")
-	elif current_area == "museum" and kind == "look" and _gift_case_at(t.pos) != "":
-		var gift: String = _gift_case_at(t.pos)
-		_say(str(ItemData.ITEMS[gift]["name"]), [str(ItemData.ITEMS[gift]["desc"]).trim_suffix(" For Tar'Besh's museum."),
-				"The card under it reads: 'Found out in the Reach, and given to the Landing.'"])
+	elif current_area == "museum" and kind == "look" and _use_museum_case(t.pos):
+		pass
 	elif current_area == "bay" and kind == "look" and t.name == "Hangar windows":
 		_say(t.name, [BayWindow.OBSERVATIONS[BayWindow.view_for(day)]])
 	elif current_area == "lounge" and (kind == "observe" or (kind == "look" and t.name == "Panoramic window")):
@@ -3815,10 +3813,19 @@ func _apply_prop_season() -> void:
 		sp.offset.y = -sp.texture.get_height()
 
 # ---------------------------------------------------------------- museum donations (23 Nov)
-# Relics from space (item_data.gd, "relic") go to Tar'Besh: talk to him, or use his desk when he's out. Each
-# fills the first empty case in its gallery (any empty case once that wing is full) and stays there.
+# Relics from space (item_data.gd, "relic") go in Tar'Besh's museum. You choose the case (Zachary: "you should pick
+# which box it goes in so you can group objects together"): use any empty case while you carry a relic. The relic
+# selected on your hotbar goes in, or else the first one in your bag. Using a case with your relic in it shows it
+# and lets you take it out again to move it. Tar'Besh and his desk explain this. Tar'Besh's own pieces stay put.
 
-# The first relic in your bag, or "".
+# The relic to place: the one selected on the hotbar, or the first in the bag, or "".
+func _relic_to_place() -> String:
+	var held: String = slots[selected] if selected < slots.size() else ""
+	if held != "" and ItemData.ITEMS.has(held) and ItemData.ITEMS[held].has("relic") and _count(held) > 0:
+		return held
+	return _first_relic()
+
+
 func _first_relic() -> String:
 	for id in ItemData.relics():
 		if _count(id) > 0:
@@ -3827,49 +3834,67 @@ func _first_relic() -> String:
 
 
 func _offer_relic(speaker: String) -> void:
-	var id: String = _first_relic()
-	var relic_name: String = str(ItemData.ITEMS[id]["name"])
-	if _free_case(id) < 0:
-		_say(speaker, ["Every case in the museum is full. Tar'Besh will have to build more."])
-		return
-	var lines: Array
+	var relic_name: String = str(ItemData.ITEMS[_relic_to_place()]["name"]).to_lower()
 	if speaker == "Tar'Besh":
-		lines = ["[happy] Is that... a %s? Where did you find it? No, tell me later. May the museum keep it?" % relic_name.to_lower()]
+		_say("Tar'Besh", ["[happy] Is that... a %s? Where did you find it? No, tell me later." % relic_name,
+			"Choose a case for it, any empty one, and put it in yourself. Group things however you like; I trust your eye."])
 	else:
-		lines = ["Tar'Besh isn't here. A tray on the desk is labelled DONATIONS in three languages.",
-			"Leave your %s for the museum?" % relic_name.to_lower()]
-	_say(speaker, lines, Callable(self, "_donate_relic").bind(id, speaker), "Donate")
+		_say(speaker, ["Tar'Besh isn't here. A card on the desk says: DONATIONS: choose any empty case and place your find inside.",
+			"Use an empty case to put your %s there." % relic_name])
 
 
-func _donate_relic(id: String, speaker: String) -> void:
-	var slot: int = _free_case(id)
-	if slot < 0 or _count(id) <= 0:
+# A case was used: place a relic in an empty one, or look at (and maybe take out) one of yours. Returns false if
+# this isn't a case the museum code handles, so the ordinary Look text shows.
+func _use_museum_case(at: Vector2) -> bool:
+	var slot: int = _case_at(at)
+	if slot < 0:
+		return false
+	var key := str(slot)
+	if museum_gifts.has(key):
+		var gift: String = str(museum_gifts[key])
+		_say(str(ItemData.ITEMS[gift]["name"]), [str(ItemData.ITEMS[gift]["desc"]).trim_suffix(" For Tar'Besh's museum."),
+				"The card under it reads: 'Found out in the Reach, and given to the Landing.'",
+				"Take it out, to put it in another case?"], Callable(self, "_take_relic_out").bind(slot), "Take out")
+		return true
+	if str(MapData.MUSEUM_SLOTS[slot][4]) != "":
+		return false                      # one of Tar'Besh's own pieces
+	var id: String = _relic_to_place()
+	if id == "":
+		return false
+	var lines: Array = ["An empty case in %s." % str(MapData.MUSEUM_SLOTS[slot][2]),
+		"Put your %s in this case?" % str(ItemData.ITEMS[id]["name"]).to_lower()]
+	var kinds := 0
+	for r in ItemData.relics():
+		if _count(r) > 0:
+			kinds += 1
+	if kinds > 1:
+		lines.append("(To place a different relic, select it on your hotbar first.)")
+	_say("Empty display", lines, Callable(self, "_place_relic").bind(id, slot), "Place it")
+	return true
+
+
+func _place_relic(id: String, slot: int) -> void:
+	if _count(id) <= 0 or museum_gifts.has(str(slot)):
 		return
 	_give(id, -1)
 	museum_gifts[str(slot)] = id
 	show_exhibit(slot, str(ItemData.ITEMS[id]["relic"]))
 	sfx("quest")
-	var label: String = str(MapData.MUSEUM_SLOTS[slot][2])
-	if speaker == "Tar'Besh":
-		_say("Tar'Besh", ["[happy] It goes in %s, where everyone can see it. Thank you, truly." % label])
-	else:
-		_toast("Donated: %s. It's on show in %s." % [str(ItemData.ITEMS[id]["name"]), label])
+	_toast("Donated: %s" % str(ItemData.ITEMS[id]["name"]))
 	_save_game()
 
 
-# The case a relic goes in: the first empty one in its gallery, else the first empty one anywhere; -1 if none.
-func _free_case(id: String) -> int:
-	var gallery: String = str(ItemData.ITEMS[id].get("gallery", ""))
-	var any := -1
-	for i in MapData.MUSEUM_SLOTS.size():
-		var slot: Array = MapData.MUSEUM_SLOTS[i]
-		if str(slot[4]) != "" or museum_gifts.has(str(i)):
-			continue
-		if str(slot[2]) == gallery:
-			return i
-		if any < 0:
-			any = i
-	return any
+func _take_relic_out(slot: int) -> void:
+	var key := str(slot)
+	if not museum_gifts.has(key):
+		return
+	var id: String = str(museum_gifts[key])
+	museum_gifts.erase(key)
+	_give(id, 1)
+	_clear_exhibit(slot)
+	sfx("click")
+	_toast("%s back in your bag. Use an empty case to put it somewhere else." % str(ItemData.ITEMS[id]["name"]))
+	_save_game()
 
 
 func _show_museum_gifts() -> void:
@@ -3879,13 +3904,20 @@ func _show_museum_gifts() -> void:
 			show_exhibit(int(key), str(ItemData.ITEMS[id]["relic"]))
 
 
-# The donated relic in the case whose Look spot is at `at` (THINGS puts it at the case's tile + (16, 24)), or "".
-func _gift_case_at(at: Vector2) -> String:
-	for key in museum_gifts:
-		var slot: Array = MapData.MUSEUM_SLOTS[int(key)]
+# The museum case whose Look spot is at `at` (THINGS puts it at the case's tile + (16, 24)), or -1.
+func _case_at(at: Vector2) -> int:
+	for i in MapData.MUSEUM_SLOTS.size():
+		var slot: Array = MapData.MUSEUM_SLOTS[i]
 		if at.distance_to(Vector2(int(slot[0]) * 16 + 16, int(slot[1]) * 16 + 24)) < 6.0:
-			return str(museum_gifts[key])
-	return ""
+			return i
+	return -1
+
+
+func _clear_exhibit(slot: int) -> void:
+	var at: Array = MapData.MUSEUM_SLOTS[slot]
+	var case_sprite: Sprite2D = museum_cases.get("%d:%d" % [int(at[0]), int(at[1])])
+	if case_sprite != null and case_sprite.get_node_or_null("Exhibit") != null:
+		case_sprite.get_node("Exhibit").queue_free()
 
 
 # Puts a picture (art/museum/<picture>.png, 24x24) on the cushion inside museum case number `slot`

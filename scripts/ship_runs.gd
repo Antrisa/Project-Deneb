@@ -169,11 +169,28 @@ static func pick_enemy(zone: String, rng: RandomNumberGenerator) -> String:
 
 # What a won fight pays, as event effects (main.gd apply_space_effects): Scrip growing with the ring, a chance of
 # fuel, missiles or a drone part, and the ship's salvage for the player (23 Nov, Zachary: "ships should also give
-# loot for player like hull plating, rare resources. And rare pirate relics for musem."): scrap every time, hull
-# plate and wire often, rarer things further out. Rabble ships (ids with "rabble", and the stronghold) can carry a
-# pirate relic you haven't found yet; the stronghold always does while any are left. `found` lists the relic ids
-# the player already has or has given to the museum.
-const RELIC_CHANCE := [0.0, 0.08, 0.12, 0.16, 0.2, 0.24]     # a Rabble ship carrying a relic, by ring
+# loot for player like hull plating, rare resources. And rare pirate relics for musem."). Every item can turn up on
+# every ring; the further out, the likelier the rare ones ("All rings should have a chance. But it increases the
+# likelihood of rare loot further you go."). Rabble ships (ids with "rabble", and the stronghold) can carry a pirate
+# relic you haven't found yet; the stronghold always does while any are left. `found` lists the relic ids the
+# player already has or has given to the museum.
+# item: [chance on ring 1, added per ring further out, fewest, most]
+const SALVAGE := {
+	"hull_plate": [0.35, 0.05, 1, 1],
+	"coil_wire": [0.30, 0.05, 1, 2],
+	"circuit_board": [0.12, 0.06, 1, 1],
+	"lithium_cell": [0.12, 0.05, 1, 2],
+	"rare_earths": [0.06, 0.07, 1, 2],
+	"helium_3": [0.04, 0.06, 1, 1],
+	"cobalt_60": [0.02, 0.04, 1, 1],
+	"void_sapphire": [0.01, 0.03, 1, 1],
+}
+const RELIC_CHANCE := [0.04, 0.05]          # a Rabble ship carrying a relic: on ring 1, added per ring
+
+static func salvage_chance(item: String, ring: int) -> float:
+	var row: Array = SALVAGE[item]
+	return float(row[0]) + float(row[1]) * (clampi(ring, 1, 5) - 1)
+
 
 static func reward(ring: int, special: bool, rng: RandomNumberGenerator, enemy_id := "", found: Array = []) -> Array:
 	var r: int = clampi(ring, 1, 5)
@@ -184,31 +201,21 @@ static func reward(ring: int, special: bool, rng: RandomNumberGenerator, enemy_i
 		out.append("+%d missiles" % rng.randi_range(1, 2))
 	if rng.randf() < 0.25:
 		out.append("+1 drone parts")
-	# salvage
+	# salvage: scrap every time, then each item on its own roll (the stronghold counts as two rings further out)
 	out.append("item: scrap x%d" % rng.randi_range(2, 3 + r))
-	if special:
-		out.append("item: hull_plate x2")
-	elif rng.randf() < 0.35:
-		out.append("item: hull_plate x1")
-	if rng.randf() < 0.3:
-		out.append("item: coil_wire x%d" % rng.randi_range(1, 2))
-	if rng.randf() < 0.1 + 0.05 * r or special:
-		out.append("item: circuit_board x1")
-	if rng.randf() < 0.15:
-		out.append("item: lithium_cell x1")
-	if r >= 2 and rng.randf() < 0.2:
-		out.append("item: rare_earths x%d" % rng.randi_range(1, 2))
-	if r >= 2 and rng.randf() < 0.08 * r:
-		out.append("item: helium_3 x1")
-	if r >= 3 and rng.randf() < 0.1:
-		out.append("item: cobalt_60 x1")
-	if rng.randf() < (0.5 if special else 0.04):
-		out.append("item: void_sapphire x1")
+	var roll_ring: int = r + (2 if special else 0)
+	for item in SALVAGE:
+		var row: Array = SALVAGE[item]
+		var guaranteed: bool = special and (item == "hull_plate" or item == "circuit_board")
+		if guaranteed or rng.randf() < salvage_chance(item, roll_ring):
+			var n: int = rng.randi_range(int(row[2]), int(row[3])) + (1 if special and item == "hull_plate" else 0)
+			out.append("item: %s x%d" % [item, n])
 	if special or enemy_id.contains("rabble"):
 		var left: Array = []
 		for id in ItemData.pirate_relics():
 			if not found.has(id):
 				left.append(id)
-		if not left.is_empty() and (special or rng.randf() < float(RELIC_CHANCE[r])):
+		var chance: float = float(RELIC_CHANCE[0]) + float(RELIC_CHANCE[1]) * (r - 1)
+		if not left.is_empty() and (special or rng.randf() < chance):
 			out.append("item: %s x1" % str(left[rng.randi() % left.size()]))
 	return out
