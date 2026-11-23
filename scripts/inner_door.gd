@@ -48,19 +48,26 @@ func _draw() -> void:
 		# The 16-pixel passage is centered on the 20-pixel frame.
 		var shown := roundf(8.0 * (1.0 - opening))
 		if shown > 0.0:
-			var source := Rect2(16 - shown * 2, 0, shown * 2, 56)
-			var leaf := Rect2(0, -12, shown, 28)
+			var lk: float = FRONT_LEAF.get_width() / 8.0          # the leaf picture's pixels per unit
+			var source := Rect2(FRONT_LEAF.get_width() - shown * lk, 0, shown * lk, FRONT_LEAF.get_height())
+			var leaf := Rect2(0, -11, shown, 27)
 			draw_texture_rect_region(FRONT_LEAF, leaf, source)
 			draw_set_transform(Vector2(16, 0), 0.0, Vector2(-1, 1))
 			draw_texture_rect_region(FRONT_LEAF, leaf, source)
 			draw_set_transform(Vector2.ZERO)
-		draw_texture_rect(FRONT_FRAME, Rect2(-2, -21, 20, 37), false)
-		draw_texture_rect(light, Rect2(6, -17, 4, 2), false)
+		# Fills the wall face exactly, from its foot (the bottom of the door tile) up to its lip.
+		draw_texture_rect(FRONT_FRAME, Rect2(-2, -16, 20, 32), false)
+		draw_texture_rect(light, Rect2(6, -15, 4, 2), false)
 	else:
 		# The panel rises into the housing. Only its visible portion is drawn.
-		var shown := roundf(35.0 * (1.0 - opening))
+		# Fills the gap in the wall's top exactly: the full width of the wall, down to where the next wall's
+		# top starts (4 units short of the door's tiles).
+		var gap := size_px.y - 4.0
+		var room := gap - 4.0
+		var shown := roundf(room * (1.0 - opening))
 		if shown > 0.0:
-			draw_texture_rect_region(SIDE_LEAF, Rect2(6, -6, 5, shown),
-				Rect2(0, 70 - shown * 2, 10, shown * 2))
-		draw_texture_rect(SIDE_FRAME, Rect2(4, -14, 8, 46), false)
-		draw_texture_rect(light, Rect2(6, -11, 4, 2), false)
+			var lk: float = SIDE_LEAF.get_height() / room
+			draw_texture_rect_region(SIDE_LEAF, Rect2(3, 2, 10, shown),
+				Rect2(0, SIDE_LEAF.get_height() - shown * lk, SIDE_LEAF.get_width(), shown * lk))
+		draw_texture_rect(SIDE_FRAME, Rect2(0, 0, 16, gap), false)
+		draw_texture_rect(light, Rect2(6, 0.5, 4, 2), false)
