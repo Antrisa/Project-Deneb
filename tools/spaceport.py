@@ -171,12 +171,6 @@ def build(g):
         for x in range(1, 109):
             if F[y][x] == '#' and (x, y) not in house and not any((x + dx, y + dy) in inside for dx in range(-2, 3) for dy in range(-2, 3)):
                 F[y][x] = 'Q'
-    # A light well in each house's outer side, so the house has windows (Zachary: "if we do have gaps put them where
-    # the green marker is"): open to the moon, with the glass wall at its north edge.
-    for wx0 in (42, 66):
-        for y in range(47, 51):
-            for x in range(wx0, wx0 + 3):
-                F[y][x] = 'Q'
     a.t.zones += [['Agri dome', 36, 4, 74, 42], ['Front porch', porch[0], porch[1], porch[2], porch[3]], ['Your workshop', 11, 51, 37, 77],
                   ['Hot springs & fish ponds', 71, 49, 101, 79], ['Glass link', 1, 1, 108, 82]]
     a.keep_clear(53, 38, 57, 60)          # the link up to the dome, and its mouth
