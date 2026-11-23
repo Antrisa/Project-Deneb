@@ -48,10 +48,20 @@ var _attack_dir := Vector2.DOWN
 const ATTACK_LEN := 0.26
 const HAND := Vector2(0, -11)
 
-# The eating animation (player_eating/, from the 20 Nov player pack). It is made the first time it is needed.
-const EAT_SCENE := "res://player_eating/eating.tscn"
+# Eating, as in Stardew: facing the screen, the food is held up over the head (the carry pose), dropped
+# into the open mouth, and swallowed. The food and mouth sprites are made the first time they are needed.
+const EAT_FOOD := "res://player_eating/ration_6.png"   # the ration has no inventory picture of its own
+const EAT_HOLD := 0.45       # held up
+const EAT_DROP := 0.15       # falling into the mouth
+const EAT_CHEW := 0.12       # mouth still open
+const EAT_GULP := 0.30       # mouth shut, a small nod as it goes down
+const EAT_HELD_Y := -31.0    # centre of the food held up between the hands
+const EAT_MOUTH := [Vector2i(11, 18), Vector2i(11, 17)]   # top-left art pixel of the open mouth, per body
 var eating := false
-var _eat_anim = null         # player_eating/eating.gd
+var _eat_time := 0.0
+var _eat_food: Sprite2D
+var _eat_mouth: Sprite2D
+var _eat_size := 1.0
 
 
 func _ready() -> void:
@@ -386,37 +396,60 @@ func set_carrying(value: bool) -> void:
 	_refresh_body_pose()
 
 
-# Plays the eating animation: the food is lifted to the mouth, eaten, and the hand comes back down (0.58 s).
-# look is the character-screen choices (scripts/player_maker.gd), so the animation wears the player's own
-# hair, clothes and colours. food is the item's picture; null uses the pack's own small ration picture.
+# Plays the eating animation, facing the screen (1.02 s). look is the character-screen choices
+# (scripts/player_maker.gd), used for the body (the mouth sits a pixel higher on body 2). food is the
+# item's picture; null uses the ration's.
 # Returns false, changing nothing, if it can't play just now (sitting, carrying, or already eating).
 func play_eating(look: Dictionary, food: Texture2D = null) -> bool:
-	if eating or sitting or carrying or look.is_empty() or not ResourceLoader.exists(EAT_SCENE):
+	if eating or sitting or carrying or _action_body.texture == null:
 		return false
-	if _eat_anim == null:
-		_eat_anim = load(EAT_SCENE).instantiate()
-		_eat_anim.scale = Vector2.ONE * (2.0 / 3.0)       # 24-pixel art, like the walk sheet
-		# Its cells (48x68, feet at 24,63) put the feet one art pixel higher than the walk sheet does.
-		_eat_anim.position = Vector2(0, 2.0 / 3.0)
-		add_child(_eat_anim)
-		_eat_anim.eating_finished.connect(_eating_done)
-	_eat_anim.body_type = 2 if int(look.get("body", 0)) == 1 else 1       # Female uses body 2, as in player_maker
-	_eat_anim.hair_style = clampi(int(look.get("hair", 0)), 0, 9)
-	_eat_anim.face_style = clampi(int(look.get("faces", 0)), 0, 9)
-	_eat_anim.top_style = clampi(int(look.get("tops", 0)), 0, 9)
-	_eat_anim.bottom_style = clampi(int(look.get("bottoms", 0)), 0, 9)
-	_eat_anim.hair_color = _look_colour(look, "hairColor")
-	_eat_anim.skin_color = _look_colour(look, "skinColor")
-	_eat_anim.eye_color = _look_colour(look, "eyeColor")
-	_eat_anim.top_color = _look_colour(look, "topColor")
-	_eat_anim.bottom_color = _look_colour(look, "bottomColor")
-	var facings: Array = [&"south", &"north", &"west", &"east"]
-	var started: bool = _eat_anim.play_eating(facings[_dir]) if food == null else _eat_anim.play_eating(facings[_dir], food)
-	if not started:
-		return false
+	if food == null and ResourceLoader.exists(EAT_FOOD):
+		food = load(EAT_FOOD)
+	if _eat_food == null:
+		_eat_mouth = Sprite2D.new()
+		var img := Image.create(2, 2, false, Image.FORMAT_RGBA8)
+		img.set_pixel(0, 0, Color("3b1e22"))
+		img.set_pixel(1, 0, Color("3b1e22"))
+		img.set_pixel(0, 1, Color("b4505a"))
+		img.set_pixel(1, 1, Color("9c3f4a"))
+		_eat_mouth.texture = ImageTexture.create_from_image(img)
+		_eat_mouth.centered = false
+		_eat_mouth.scale = Vector2.ONE * Poses.ART_SCALE
+		_eat_mouth.visible = false
+		add_child(_eat_mouth)
+		_eat_food = Sprite2D.new()
+		_eat_food.visible = false
+		add_child(_eat_food)
+	var at: Vector2i = EAT_MOUTH[1 if int(look.get("body", 0)) == 1 else 0]
+	_eat_mouth.position = Vector2(-8, -30) + Vector2(at) * Poses.ART_SCALE
+	_eat_food.texture = food
+	_eat_size = Poses.ART_SCALE
+	if food != null:
+		var size := food.get_size()
+		_eat_size *= minf(1.0, minf(12.0 / size.x, 12.0 / size.y))
+	_dir = 0
+	_sprite.frame_coords = Vector2i(0, 0)
 	eating = true
-	_refresh_body_pose()
+	_eat_time = 0.0
+	_animate_eating()
 	return true
+
+
+func _animate_eating() -> void:
+	var t := _eat_time
+	var mouth := _eat_mouth.position + Vector2(1, 1) * Poses.ART_SCALE
+	var held := Vector2(0, EAT_HELD_Y)
+	_eat_food.visible = _eat_food.texture != null and t < EAT_HOLD + EAT_DROP
+	# let go at the end of the hold: it falls, shrinking into the mouth
+	var k := clampf((t - EAT_HOLD) / EAT_DROP, 0.0, 1.0)
+	_eat_food.position = held.lerp(mouth, k * k)
+	_eat_food.scale = Vector2.ONE * _eat_size * lerpf(1.0, 0.45, k * k)
+	_eat_mouth.visible = t >= EAT_HOLD and t < EAT_HOLD + EAT_DROP + EAT_CHEW
+	var gulp := t >= EAT_HOLD + EAT_DROP + EAT_CHEW and t < EAT_HOLD + EAT_DROP + EAT_CHEW + 0.12
+	_sprite.position = Vector2(-8, -30) + (Vector2(0, Poses.ART_SCALE) if gulp else Vector2.ZERO)
+	_eat_mouth.modulate = _sprite.modulate
+	_eat_food.modulate = _sprite.modulate
+	_refresh_body_pose()
 
 
 # The gear page takes its standing picture from the first row of the active walk sheet.
@@ -443,6 +476,9 @@ func _look_colour(look: Dictionary, key: String) -> Color:
 
 func _eating_done() -> void:
 	eating = false
+	_eat_food.visible = false
+	_eat_mouth.visible = false
+	_sprite.position = Vector2(-8, -30)
 	_refresh_body_pose()
 
 
@@ -472,13 +508,17 @@ func _process(delta: float) -> void:
 	if _flash_time > 0.0:
 		_flash_time -= delta
 		_sprite.modulate = Color(1.0, 0.45, 0.45) if int(_flash_time * 16.0) % 2 == 0 and _flash_time > 0.0 else Color.WHITE
-		if _eat_anim != null:
-			_eat_anim.modulate = _sprite.modulate
 	if _beam_time > 0.0:
 		_beam_time -= delta
 		_beam.default_color = Color(1.0, 0.35, 0.3) if int(_beam_time * 40.0) % 2 == 0 else Color(1.0, 0.85, 0.8)
 		if _beam_time <= 0.0:
 			_beam.visible = false
+	if eating:
+		_eat_time += delta
+		if _eat_time >= EAT_HOLD + EAT_DROP + EAT_CHEW + EAT_GULP:
+			_eating_done()
+		else:
+			_animate_eating()
 	_move_player(delta)
 	_refresh_body_pose()
 
@@ -528,11 +568,16 @@ func _stop_walking() -> void:
 
 # The walk sprite remains the source of direction, contact row, and the datapad picture.
 func _refresh_body_pose() -> void:
-	var visible_body := not sitting and not eating
+	var visible_body := not sitting
 	var can_pose := visible_body and _action_body.texture != null
 	var row := -1
 	var dir := _dir
-	if can_pose and carrying:
+	if can_pose and eating:
+		# the hands stay up while the food falls
+		if _eat_time < EAT_HOLD + EAT_DROP:
+			row = 0
+			dir = 0
+	elif can_pose and carrying:
 		row = _sprite.frame_coords.y
 	elif can_pose and _held_time > 0.0:
 		row = _held_pose()

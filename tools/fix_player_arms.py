@@ -6,8 +6,9 @@ Usage: python3 -I tools/fix_player_arms.py [GAME_DIR]
   rows of tops.png (and its mask) are now the standing frame's top, dropped a pixel with the body as
   on the residents' walk: arms at the sides, hands by the hips.
 - Carrying, seen from the side, both arms were drawn up beside the head. Only the near arm shows
-  now: the far one (behind the head) is taken out of action_tops.png's carry rows (0-4) above the
-  shoulders, so the hair shows there. The right column stays the mirror of the left.
+  now, straight up from the middle of the shoulders: the far one (behind the head) is taken out of
+  action_tops.png's carry rows (0-4) above the shoulders, so the hair shows there, and each row of
+  the near one is centred over the top of the body. The right column stays the mirror of the left.
 """
 import os, sys
 import numpy as np
@@ -48,6 +49,28 @@ def carry_side(folder):
             joined = next(y for y in range(FH) if cell[y, 11, 3] and cell[y, 12, 3])
             cell[:joined, 12:] = 0
             mcell[:joined, 12:] = 0
+            # and the near arm goes straight up from the shoulder: the raised forearm (rows above 16)
+            # slides back over the middle of the body, and the upper arm, which slanted forward to
+            # the shoulder, is drawn again as a straight sleeve underneath it
+            sl = [(y, x) for y in range(16, joined) for x in range(FW) if cell[y, x, 3]]
+            sleeve = sorted(((int(cell[y, x, :3].astype(int).sum()), tuple(cell[y, x]), tuple(mcell[y, x]))
+                             for y, x in sl if mcell[y, x, 0] > 128), key=lambda t: t[0])
+            dark, mid, light = sleeve[0][1:], sleeve[len(sleeve) // 2][1:], sleeve[-1][1:]
+            body = np.nonzero(cell[joined + 3, :, 3])[0]
+            cx = (body.min() + body.max()) / 2.0
+            arm = np.nonzero(cell[15, :, 3])[0]
+            shift = int(round(cx - (arm.min() + arm.max()) / 2.0))
+            top, mtop = cell[:16].copy(), mcell[:16].copy()
+            cell[:joined] = 0
+            mcell[:joined] = 0
+            cell[:16, shift:] = top[:, :FW - shift]
+            mcell[:16, shift:] = mtop[:, :FW - shift]
+            cols = list(range(arm.min() + shift, arm.max() + shift + 1))
+            shades = [dark] + [light] * ((len(cols) - 1) // 2) + [mid] * (len(cols) - 1 - (len(cols) - 1) // 2)
+            for y in range(16, joined):
+                for x, (px, mc) in zip(cols, shades):
+                    cell[y, x] = px
+                    mcell[y, x] = mc
             art[ys, x0 + RIGHT * FW:x0 + (RIGHT + 1) * FW] = cell[:, ::-1]
             mask[ys, x0 + RIGHT * FW:x0 + (RIGHT + 1) * FW] = mcell[:, ::-1]
     Image.fromarray(art).save(art_path)

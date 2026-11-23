@@ -2675,7 +2675,7 @@ func _eat(item: String) -> void:
 	hp = mini(MAX_HP, hp + int(info.get("heal", 5)))
 	energy = mini(MAX_ENERGY, energy + gives_energy)
 	sfx("eat")
-	# The eating animation (player_eating/) needs the layered player art; the medpack is held up instead.
+	# Food is eaten with the Stardew-style animation (player.play_eating); the medpack is held up instead.
 	var animated := false
 	if gives_energy > 0 and creator != null:
 		animated = player.play_eating(appearance if not appearance.is_empty() else maker.defaults(), _held_item_picture(item))
@@ -2688,7 +2688,7 @@ func _eat(item: String) -> void:
 
 
 # Meals and hand-picked crops use their inventory icon cropped to its painted pixels.
-# Returning null for the ration selects the eating scene's hand-drawn ration.
+# Returning null for the ration selects its hand-drawn picture (player_eating/ration_6.png).
 func _held_item_picture(item: String) -> Texture2D:
 	if item == "ration":
 		return null
