@@ -1,0 +1,17 @@
+build d
+eat u
+sketch d
+rest d
+build u
+build l
+build r
+eat d
+eat l
+eat r
+sketch u
+sketch l
+sketch r
+rest u
+rest l
+rest r
+sleep d

@@ -1,0 +1,17 @@
+draw u
+play d
+eat u
+rest d
+draw d
+draw l
+draw r
+play u
+play l
+play r
+eat d
+eat l
+eat r
+rest u
+rest l
+rest r
+sleep d

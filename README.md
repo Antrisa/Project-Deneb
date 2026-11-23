@@ -68,8 +68,9 @@ One exception, for `tiles.png` only: when the game gains a new tile, the generat
 
 | Files | Layout |
 |---|---|
-| `npc_*.png`, `player.png` | Walk sheet: 4 columns (down, up, left, right) by 3 rows (standing, step A, step B). Any frame size with a 1:2 shape works; the game scales a frame to 16 wide. The NPC sheets are 32x64 per frame. `player.png` is only used if the layered player art below is missing. |
-| `player/tops.png`, `bottoms.png`, `faces.png`, `hair.png` and their `_mask.png` | The layered player for the character screen: 4 directions across (down, up, left, right), 10 choices with 3 pose rows each (standing, step A, step B), 32x64 cells; each file is 128x1920. In the mask, red = takes the layer's main colour, green = skin, blue = eyes. `scripts/player_maker.gd` builds the walk sheet from these; the names and colour lists are at the top of that file. Replace the eight files and `player_maker.gd` together. `tools/fix_player_masks.py` can clean masks where grey details were marked as skin; the current art does not need it. |
+| `npc_<id>.png`, `player.png` | A walk sheet is 96×240. Each 24×48 cell faces down, up, left, or right. Rows 0–4 hold standing, contact A, contact B, passing A, and passing B. Movement plays rows 1, 3, 2, 4. Three-row legacy sheets also load. The fallback player uses `player.png`. |
+| `player/{tops,bottoms,faces,hair}.png` and matching `_mask.png` | Both body folders hold 96×2400 atlases. Each of the ten choices has the five walk rows. Red selects the main layer colour, green selects skin, and blue selects the iris. `scripts/player_maker.gd` composites the four layers. |
+| `player/action_tops.png` and its mask, also in `player/body2/` | Eight rows per outfit for carrying and using tools. The fitted arm and clothing layers share the walk model’s face, hair and legs. |
 | `portrait_*.png` | 6 square pictures in a row: neutral, happy, sad, surprised, love, angry. Any size; shown in a 64x64 box. Currently 128x128 each. |
 | `tiles.png` | 140 columns, each one cell wide and two cells tall (currently 32x64). The lower half is the tile; the upper half is the top of tall objects. A tile is always drawn 16x16 in the world. Slot names are in `tools/build.py`. |
 | `items.png` | 16x16 icons in a row; the order must match `icon` in `scripts/item_data.gd`. |

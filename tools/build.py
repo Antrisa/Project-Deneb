@@ -2581,14 +2581,18 @@ SCHEDULES_RAW = {
             ("20:30", *HOME_SPOTS["Ana"], 26, "d", "idle")],
 }
 # What each resident is doing at each stop of their schedule, in the same order as SCHEDULES_RAW.
-# Each different (action, facing) pair is one row of their action sheet art/npc_<id>_act.png, in order of first use.
+# Each (action, facing) pair names a row in art/npc_<id>_act.png. The original sheets follow first-use order.
 ACTIONS = {
+    'Artie': ['read', 'eat', 'rest'],
+    'Stu': ['luggage', 'eat', 'rest'],
+    'Tally': ['mail', 'eat', 'rest'],
+    'Ana': ['tune', 'eat', 'rest'],
     'Maren': ['treat', 'eat', 'treat', 'rest'],
     'Quill': ['sort', 'eat', 'read', 'rest'],
     'Owen': ['shelve', 'eat', 'bench', 'rest'],
     'Pip': ['study', 'play', 'wave', 'eat', 'play', 'rest'],
     'Sesska': ['weave', 'eat', 'chat', 'rest'],
-    'Rusk': ['wipe', 'eat', 'pour', None],          # None: his sheet has no rest row yet
+    'Rusk': ['wipe', 'eat', 'pour', 'rest'],
     'Ooma': ['beckon'],
     'Tobbin': ['build', 'eat', 'sketch', 'rest'],
     'Merrow': ['valve_d', 'tend', 'valve_l', 'eat', 'rest'],
@@ -2607,13 +2611,20 @@ ACTIONS = {
     "Tar'Besh": ['study', 'eat', 'ponder', 'rest'],
     "Vzz'ket": ['guard', 'eat', 'guard', 'walk_stop', 'guard'],
 }
+# Arrival sheets also include poses used outside the regular route. Preserve their published row order.
+ARRIVAL_ACTION_ROWS = {
+    'Artie': ['knots d', 'read u', 'campfire d', 'eat d', 'rest d', 'eat u', 'recover u'],
+    'Stu': ['luggage d', 'bell d', 'sweep d', 'eat d', 'rest d', 'eat u'],
+    'Tally': ['mail d', 'crate d', 'eat d', 'rest d', 'mail u', 'eat u'],
+    'Ana': ['tune u', 'chart u', 'eat d', 'drink l', 'rest d', 'eat u', 'recover u'],
+}
 SCHEDULES = {}
 ACTION_ROWS = {}                 # who -> ["action facing", ...]: the rows of their action sheet, top to bottom
 for who, rows in SCHEDULES_RAW.items():
     out = []
     keys = ACTIONS.get(who, [])
     assert not keys or len(keys) == len(rows), ("ACTIONS must have one entry per schedule stop", who)
-    sheet_rows = []
+    sheet_rows = list(ARRIVAL_ACTION_ROWS.get(who, []))
     for n, (hm, a, x, y, r, face_, act) in enumerate(rows):
         a, x, y = moved(a, x, y)
         assert face_ in "dulr" and act in ("work", "eat", "idle"), (who, face_, act)
@@ -2630,6 +2641,22 @@ for who, rows in SCHEDULES_RAW.items():
     SCHEDULES[who] = out
 
 
+# The cooks take turns after service. Ooma leaves her stall for dinner on visiting days.
+# Append the new eating rows so published work and rest indices stay stable.
+for who, start, end, seat in [
+    ("Ooma", 16 * 60 + 55, 18 * 60 + 35, (9, 12)),
+    ("Jasper", 18 * 60 + 40, 19 * 60 + 15, (25, 7)),
+    ("Evarra", 19 * 60 + 15, 19 * 60 + 50, (15, 7)),
+]:
+    route = SCHEDULES[who]
+    resume = list(next(stop for stop in reversed(route) if stop[0] <= start))
+    resume[0] = end
+    meal_row = len(ACTION_ROWS[who])
+    ACTION_ROWS[who].append("eat d")
+    route.extend([[start, "mess", *seat, 26, "d", "eat", meal_row], resume])
+    route.sort(key=lambda stop: stop[0])
+
+
 # Days that run differently (21 Nov): main.gd swaps these in. Artie and Ana spend their first days in the
 # Medbay, by the beds either side of where you wake; Stu spends his arrival day at the terminal, where the
 # transport docked, before going home.
@@ -2638,12 +2665,18 @@ SCHEDULES_ALT_RAW = {
     "Ana": [("00:00", "main", 140, 51, 26, "u", "idle")],
     "Stu": [("00:00", "west", 31, 38, 26, "d", "idle"), ("19:30", *HOME_SPOTS["Stu"], 26, "d", "idle")],
 }
+ALT_ACTIONS = {
+    'Artie': ['recover'],
+    'Ana': ['recover'],
+    'Stu': ['luggage', 'rest'],
+}
 SCHEDULES_ALT = {}
 for who, rows in SCHEDULES_ALT_RAW.items():
     out = []
-    for hm, a, x, y, r, face_, act in rows:
+    for n, (hm, a, x, y, r, face_, act) in enumerate(rows):
         a, x, y = moved(a, x, y)
-        out.append([int(hm[:2]) * 60 + int(hm[3:]), a, x, y, r, face_, act, -1])
+        row = ACTION_ROWS[who].index(ALT_ACTIONS[who][n] + " " + face_)
+        out.append([int(hm[:2]) * 60 + int(hm[3:]), a, x, y, r, face_, act, row])
     SCHEDULES_ALT[who] = out
 
 
@@ -3030,9 +3063,10 @@ if PREV:
     def piece(index, upper):
         return tiles_img.crop((index * cell, 0 if upper else cell, index * cell + cell, cell if upper else 2 * cell))
 
-    def frame(name, cols, rows_, col=0, r=0, wide=1):
+    def frame(name, cols, rows_=None, col=0, r=0, wide=1):
         im = Image.open(art(name)).convert("RGBA")
-        fw, fh = im.width // cols, im.height // rows_
+        fw = im.width // cols
+        fh = im.height // rows_ if rows_ else fw * 2
         f_ = im.crop((col * fw, r * fh, col * fw + fw, r * fh + fh))
         return f_.resize((cell * wide, cell * wide * fh // fw), Image.NEAREST)
 
@@ -3040,7 +3074,7 @@ if PREV:
            "Tikka": "tikka", "Freya": "freya", "Job": "job", "Zaas": "zaas", "Vzz'ket": "vzzket",
            "Maren": "maren", "Owen": "owen", "Pip": "pip", "Quill": "quill", "Sesska": "sesska",
            "Rusk": "rusk", "Ooma": "ooma", "Tobbin": "tobbin", "Merrow": "merrow", "Nub": "nub", "Garrick": "garrick",
-           "Saffi": "saffi", "Kit": "kit", "Ix'ali": "ixali"}
+           "Saffi": "saffi", "Kit": "kit", "Ix'ali": "ixali", "Artie": "artie", "Stu": "stu", "Tally": "tally", "Ana": "ana"}
     fx_obj = {"k": ("fx_console.png", True), "K": ("fx_display.png", True), "F": ("fx_furnace.png", False), "G": ("fx_core.png", False)}
     for k, ar in A.items():
         im = Image.new("RGBA", (ar.w * cell, ar.h * cell), (11, 16, 38, 255))
@@ -3063,12 +3097,12 @@ if PREV:
         first = [[who, rows[0][1], rows[0][2], rows[0][3], 0] for who, rows in SCHEDULES.items()]
         for (name, a, x, y, r) in PEOPLE + first:
             if a == k:
-                im.alpha_composite(frame("npc_%s.png" % ids[name], 4, 3), (x * cell, (y - 1) * cell))
+                im.alpha_composite(frame("npc_%s.png" % ids[name], 4), (x * cell, (y - 1) * cell))
         if WRECK[0] == k:
             w_ = frame("wreck.png", 4, 1, wide=4)
             im.alpha_composite(w_, (WRECK[1] * cell // 16 - w_.width // 2, WRECK[2] * cell // 16 - w_.height))
         if START[0] == k:
-            im.alpha_composite(frame("player.png", 4, 3), (START[1] * cell, (START[2] - 1) * cell))
+            im.alpha_composite(frame("player.png", 4), (START[1] * cell, (START[2] - 1) * cell))
         for y in range(1, ar.h):
             for x in range(ar.w):
                 for ch, table in ((ar.floor[y][x], TILE_FLOOR), (ar.obj[y][x], TILE_OBJ)):

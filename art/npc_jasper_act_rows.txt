@@ -1,0 +1,17 @@
+cook d
+relax d
+rest d
+eat d
+cook u
+cook l
+cook r
+relax u
+relax l
+relax r
+rest u
+rest l
+rest r
+eat u
+eat l
+eat r
+sleep d

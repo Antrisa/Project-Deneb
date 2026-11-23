@@ -3,6 +3,8 @@ extends Sprite2D
 # taking the lifts, airlock or mine ramp if the spot is in another area.
 # Schedules live in tools/build.py (SCHEDULES) and are written to scripts/map_data.gd.
 
+const WalkCycle = preload("res://scripts/walk_cycle.gd")
+
 const TILE := 16
 const SPEED := 48.0      # pixels per second (the player walks at 70)
 
@@ -18,12 +20,13 @@ var _target_area := ""
 var _target_tile := Vector2i.ZERO
 var _path: Array = []        # tiles still to walk in the current area
 var _settled := false        # standing at their spot (and blocking that tile)
-var _walk_time := 0.0
+var _walk_distance := 0.0
+var _walk_rows := 3
 var _dir := 0                # column in the sprite sheet: 0 down, 1 up, 2 left, 3 right
 var _foot_offset := Vector2(-8, -32)
 var _base_scale := 1.0
 var _walk_tex: Texture2D
-var _act_tex: Texture2D = null   # optional art/npc_<id>_act.png: 4 frames across (48x64 each), one row per action
+var _act_tex: Texture2D = null   # optional art/npc_<id>_act.png: 4 frames across (36x48 each), one row per action
 var _act_row := -1           # which row of the action sheet to play at this stop (-1 = none)
 var _act_rows := 1           # how many rows the action sheet has
 var _facing := 0             # which way they face once they have arrived
@@ -41,15 +44,16 @@ func setup(main, person_name: String, tex: Texture2D, entries: Array, entry_thin
 	world = main
 	who = person_name
 	_walk_tex = tex
+	_walk_rows = WalkCycle.rows(tex)
 	_act_tex = activity_tex
 	texture = tex
-	hframes = 4              # sheets are 4 directions x 3 walking frames
-	vframes = 3
+	hframes = 4
+	vframes = _walk_rows
 	centered = false
 	# Sheets can be drawn at any size (16x32 frames, or larger for more detail):
 	# the sprite is scaled so a frame is always 16 wide in the world, with the feet at the bottom centre.
 	var frame_w: float = tex.get_width() / 4.0
-	var frame_h: float = tex.get_height() / 3.0
+	var frame_h: float = tex.get_height() / float(_walk_rows)
 	_base_scale = 16.0 / frame_w
 	scale = Vector2(_base_scale, _base_scale)
 	_foot_offset = Vector2(-frame_w / 2.0, -frame_h)
@@ -145,6 +149,7 @@ func _move(delta: float) -> void:
 	if _settled:
 		return
 	if _path.is_empty():
+		_walk_distance = 0.0
 		if area == _target_area and tile == _target_tile:
 			# Arrived. Wait for the player to step off the spot before standing on it.
 			frame_coords = Vector2i(_dir, 0)
@@ -179,10 +184,10 @@ func _move(delta: float) -> void:
 	else:
 		position = position.move_toward(dest, step)
 
-	# Walk cycle: step A, standing, step B, standing.
-	_walk_time += delta
-	var cycle: Array = [1, 0, 2, 0]
-	var row: int = cycle[int(_walk_time * 6.0) % 4]
+	# Only the distance walked on this tile counts. A lift can move the actor across maps.
+	var distance := minf(heading.length(), step)
+	_walk_distance = fmod(_walk_distance + distance, WalkCycle.STRIDE)
+	var row := WalkCycle.pose(WalkCycle.phase(_walk_distance), _walk_rows) if distance > 0.0 else 0
 	frame_coords = Vector2i(_dir, row)
 	_sync_thing()
 
@@ -209,12 +214,13 @@ func _idle(delta: float) -> void:
 	_idle_time += delta
 	if _act in ["garden","chess","hologame","observe","read","browse","restock"]:
 		texture = _walk_tex
-		hframes = 4; vframes = 3
+		hframes = 4
+		vframes = _walk_rows
 		frame_coords = Vector2i(_facing,0)
 		offset = _foot_offset
 		scale = Vector2.ONE * _base_scale
 		rotation = 0.0   # no tilting pixel art (it breaks pixels at 1080p and 1440p)
-		self_modulate.a = 0.0 if _act in ["chess","hologame"] else 1.0
+		self_modulate.a = 0.0 if activity_pose.has_painted_pose() or _act in ["chess","hologame"] else 1.0
 		return
 	if _act_tex != null and _act_row >= 0 and _act_row < _act_rows:
 		if texture != _act_tex:
@@ -248,6 +254,7 @@ func _idle(delta: float) -> void:
 
 
 func _unsettle() -> void:
+	_walk_distance = 0.0
 	self_modulate.a = 1.0
 	if activity_pose != null: activity_pose.visible = false
 	if _settled:
@@ -259,7 +266,7 @@ func _unsettle() -> void:
 		frame_coords = Vector2i.ZERO
 		texture = _walk_tex
 		hframes = 4
-		vframes = 3
+		vframes = _walk_rows
 	rotation = 0.0
 	offset = _foot_offset
 	scale = Vector2(_base_scale, _base_scale)

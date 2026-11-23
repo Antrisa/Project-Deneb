@@ -13,6 +13,7 @@ const TILE := 16
 # pixels a tile and 24x48 for characters, so art is shown at two-thirds scale. The screen is 640x360 and the
 # camera zooms 1.5x, so one art pixel is one screen pixel of the 640x360 picture: exactly 3 real pixels at
 # 1080p and 4 at 1440p. About 27 x 15 tiles are on screen. The interface keeps its 320x180 layout, doubled.
+const WalkCycle = preload("res://scripts/walk_cycle.gd")
 const ART := 2.0 / 3.0             # world units per art pixel
 const CAMERA_ZOOM := 1.5
 const UI_SCALE := 2.0
@@ -121,8 +122,6 @@ var drone_parts := 0
 var ship_weapons: Array = ["burst_laser", ""]    # what's fitted in each weapon slot ("" = empty)
 var said_goodbye := false          # the send-off at launch has played
 var ana_found_day := -1            # the day you pulled Ana out of her ship (the Wave 2 arrival counts from it)
-# Residents with no walk sheet yet borrow someone else's until theirs is drawn (art/npc_<id>.png).
-const STAND_IN_ART := {"artie": "owen", "stu": "tobbin"}
 var garden_watered_day := -1
 var garden_busy := false
 # Farming (21 Nov), one tile at a time like Stardew. tile -> {"crop": id or "", "age": watered days grown,
@@ -343,7 +342,7 @@ func _ready() -> void:
 		if appearance.is_empty():
 			creator.show_for(maker.defaults(), true)
 		else:
-			player.set_sheet(maker.sheet(appearance))
+			player.set_sheet(maker.sheet(appearance), maker.action_sheet(appearance))
 	# The title screen covers everything (the character screen included) until Play is pressed.
 	title = TitleScript.new()
 	title.world = self
@@ -502,7 +501,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11 and OS.is_debug_build():
 		if creator != null: creator.open = false; creator.visible = false
 		if appearance.is_empty():
-			appearance = maker.defaults(); player.set_sheet(maker.sheet(appearance))
+			appearance = maker.defaults(); player.set_sheet(maker.sheet(appearance), maker.action_sheet(appearance))
 		minutes = 875.0
 		review_stop = (review_stop+1)%10
 		_go_to("main",[Vector2i(115,100),Vector2i(106,80),Vector2i(122,110),Vector2i(54,81),Vector2i(139,91),Vector2i(150,64),Vector2i(150,126),Vector2i(80,126),Vector2i(115,23),Vector2i(115,167)][review_stop])
@@ -961,7 +960,7 @@ func _add_resident(who: String, entries: Array) -> void:
 		act_tex = load(act_path)
 	var walk_id: String = id
 	if not ResourceLoader.exists("res://art/npc_%s.png" % id):
-		walk_id = str(STAND_IN_ART.get(id, "owen"))
+		walk_id = "owen"
 	r.setup(self, who, load("res://art/npc_%s.png" % walk_id), entries, t, act_tex)
 	r.visible = false
 	actors.add_child(r)
@@ -1087,12 +1086,12 @@ func _add_person(who: String, area_name: String, tile: Vector2i, radius: float) 
 	var id: String = _ensure_person(who)
 	var s := Sprite2D.new()
 	s.texture = load("res://art/npc_%s.png" % id)
-	s.hframes = 4            # sheets are 4 directions x 3 walking frames; frame 0 faces down
-	s.vframes = 3
+	s.hframes = 4
+	s.vframes = WalkCycle.rows(s.texture)
 	s.centered = false
 	# Scaled so one frame is 16 wide in the world whatever size the art was drawn at.
 	var frame_w: float = s.texture.get_width() / 4.0
-	var frame_h: float = s.texture.get_height() / 3.0
+	var frame_h: float = s.texture.get_height() / float(s.vframes)
 	s.scale = Vector2(16.0 / frame_w, 16.0 / frame_w)
 	s.offset = Vector2(-frame_w / 2.0, -frame_h)
 	if who == "Sara":
@@ -2651,7 +2650,7 @@ func _eat(item: String) -> void:
 	# The eating animation (player_eating/) needs the layered player art; the medpack is held up instead.
 	var animated := false
 	if gives_energy > 0 and creator != null:
-		animated = player.play_eating(appearance if not appearance.is_empty() else maker.defaults(), _food_picture(item))
+		animated = player.play_eating(appearance if not appearance.is_empty() else maker.defaults(), _held_item_picture(item))
 	if not animated:
 		player.show_tool(_item_icon(item))
 	if item == "medpack":
@@ -2660,9 +2659,9 @@ func _eat(item: String) -> void:
 		_toast("Ration pack six. It restores you, and that is all that can be said for it.")
 
 
-# The picture the eating animation holds: the ration has its own small hand-drawn one in player_eating/
-# (null asks for it); anything else uses its inventory icon cropped to the drawn part.
-func _food_picture(item: String) -> Texture2D:
+# Meals and hand-picked crops use their inventory icon cropped to its painted pixels.
+# Returning null for the ration selects the eating scene's hand-drawn ration.
+func _held_item_picture(item: String) -> Texture2D:
 	if item == "ration":
 		return null
 	var size: int = items_tex.get_height()
@@ -2831,7 +2830,7 @@ func _open_wardrobe() -> void:
 # Called by the character screen when the player is happy with their look.
 func set_appearance(look: Dictionary) -> void:
 	appearance = maker.tidy(look)
-	player.set_sheet(maker.sheet(appearance))
+	player.set_sheet(maker.sheet(appearance), maker.action_sheet(appearance))
 	_save_game()
 
 
@@ -3430,7 +3429,6 @@ func _water_garden(t: Dictionary) -> void:
 	actors.add_child(effect)
 	_toast("Watering the crop beds…" if current_area == "agri" else "Watering the community flowers…")
 	await get_tree().create_timer(1.4).timeout
-	effect.queue_free()
 	garden_watered_day=day
 	garden_busy=false
 	player.frozen=false
@@ -3484,7 +3482,7 @@ func crop_stage(t: Dictionary) -> int:
 
 # Like Stardew, the hoe and the can always swing (and cost their energy), whatever they hit; only a dug field
 # tile changes. Seeds go in only where they can grow, and otherwise nothing happens. (Zachary, 21 Nov: "just let
-# the action play".) The swing is the tool held out for now; proper hoe and watering animations come later.
+# the action play".) The equipped tool follows the hands through its action poses.
 func _farm_use(use: String, item: String) -> void:
 	var tile: Vector2i = farm_target()
 	var on_field: bool = farm_field().has_point(tile)
@@ -3501,7 +3499,8 @@ func _farm_use(use: String, item: String) -> void:
 	swing_cd = 0.4
 	if not _farm_energy(): return
 	player.face(Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
-	if not player.tool_action(_tool_art(item), "hoe" if use == "hoe" else "water"):
+	var animated: bool = player.tool_action(_tool_art(item), "hoe" if use == "hoe" else "water")
+	if not animated:
 		player.show_tool(_item_icon(item))
 	if use == "hoe":
 		sfx("step", 0.7)
@@ -3511,8 +3510,9 @@ func _farm_use(use: String, item: String) -> void:
 		sfx("blip", 0.6)
 		var splash := preload("res://scripts/watering_effect.gd").new()
 		splash.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 4)
+		if animated:
+			splash.spout = player.watering_spout
 		actors.add_child(splash)
-		get_tree().create_timer(0.6).timeout.connect(splash.queue_free)
 		if on_field and farm.has(tile):
 			farm[tile]["watered"] = day
 	if farm_view != null: farm_view.sync_crops()
@@ -3538,6 +3538,11 @@ func _try_harvest() -> bool:
 		_toast("Not ready yet: %d more watered day%s" % [int(c["days"]) - int(t["age"]), "" if int(c["days"]) - int(t["age"]) == 1 else "s"])
 		return true
 	var got: String = str(c["item"])
+	player.face(Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
+	if got == "moon_wheat":
+		player.tool_action("scythe", "scythe")
+	else:
+		player.show_pickup(_held_item_picture(got))
 	_give(got, 1)
 	sfx("coin", 1.2)
 	_toast("+1 %s" % _item_name(got))

@@ -1,0 +1,17 @@
+wipe d
+eat d
+pour d
+rest d
+wipe u
+wipe l
+wipe r
+eat u
+eat l
+eat r
+pour u
+pour l
+pour r
+rest u
+rest l
+rest r
+sleep d

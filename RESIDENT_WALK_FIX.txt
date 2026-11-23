@@ -1,0 +1,44 @@
+Resident side-walk fix (21 Nov 2026)
+
+All 31 resident walk sheets (art/npc_<id>.png), left and right walks only.
+
+Legs. Contact strides (rows 2 and 3): the thin stick legs are repainted as solid legs five
+pixels wide (four on the smallest legs), cut from each resident's own standing legs: one steps
+three pixels forward and the other three back from the hip, the far one in shade. Each leg
+runs straight from its hip, and its foot sits under its own ankle, so the foot always
+travels with the leg. The body drops one pixel. Passing poses (rows 4 and 5): the standing
+legs, with the lifted foot hidden behind the planted one. Tails, robes and bags follow the
+standing pose. The Arachnay (Sesska, Tally, Tikka)
+keep their painted many-legged strides; only their passing poses changed.
+
+Arms. Every resident except the Arachnay swings the near arm from the shoulder: five pixels
+forward or four back on the strides, two on the passing steps. No far hand is drawn.
+- Evarra and Jasper use rig parts (see below): an arm sprite cut or drawn separately from the
+  body, so nothing is left behind when it swings.
+- Ana (both uniforms), Artie, Freya, Garrick, Ix'ali, Job, Maren (weekend), Owen, Stu and Zaas
+  swing their own painted arm, outlined against the body.
+- The others get a sleeve drawn over the body in their cloth colours with a mitten hand.
+  These are the ones to move to rig parts next.
+
+Rig parts. art/rig/npc_<id>_side.png holds two 24 x 48 cells facing left: the body (head,
+torso, tail and standing legs, with the torso painted in where the arm hangs) and the near
+arm at rest, in the same registration. npc_<id>_side.txt gives the shoulder pivot, the top
+row of the hand and the hip row. tools/rig_walk.py builds the four side-walk rows from them;
+tools/rig_parts.py cuts or draws the parts. Repainting a part in a pixel editor and running
+rig_walk.py again updates the walk.
+
+Merrow: four pixels taller (37 instead of 33), now taller than Bram and Tobbin. Rows of her
+overalls through the chest, waist and upper legs are repeated with her feet fixed, in every
+cell of npc_merrow.png (all four directions) and npc_merrow_act.png.
+
+Garrick: his jaw in profile steps back over its last rows, in the walk and in the
+left-facing drink pose of npc_garrick_act.png.
+
+Standing frames (except Garrick's chin and Merrow's height), front and back walks and all other activity rows are
+unchanged. Every sheet keeps four distinct walk drawings per direction, and all of these files
+are already in art/hand_edited.txt.
+
+tools/fix_npc_walk.py rebuilds the walk rows from the standing pose; its CAST table holds each
+resident's hip row and either a hand box or a shoulder point. Run tools/stretch_merrow.py on
+Merrow's sheets before it and tools/fix_chin.py on Garrick after it.
+tools/fix_npc_passing.py (with --no-heel) rebuilds the Arachnay's passing poses.

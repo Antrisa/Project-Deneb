@@ -1,0 +1,9 @@
+beckon u
+eat d
+beckon d
+beckon l
+beckon r
+eat u
+eat l
+eat r
+sleep d

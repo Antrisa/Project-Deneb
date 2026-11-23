@@ -1,0 +1,23 @@
+Player side-walk fix (21 Nov 2026)
+
+Left and right walks, all ten outfits on both bodies.
+
+Contact strides (rows 2 and 3): the painted legs, head and hair are kept. The arms, which
+stuck straight out from the waist with no upper arm, are redrawn: the near arm is outlined
+against the jacket and swings from the shoulder, its hand six pixels ahead of the hip
+(rising two) or five behind it (rising one), and the far arm swings the other way behind the
+body, one shade darker. The jacket sits one pixel behind the hips under the painted head.
+
+Passing poses (rows 4 and 5), which had collapsed legs, a stacked second boot and a buried
+arm, are rebuilt from each outfit's standing profile: the planted leg keeps the standing
+silhouette, the other boot lifts two pixels and tucks three behind the calf so only its heel
+shows, and the arm is two pixels into its swing. The carry poses match.
+
+Changed: art/player/{tops,bottoms,faces,hair,action_tops}(_mask).png and the same files in
+art/player/body2/, plus the fallbacks art/player.png and art/player_actions.png. Front and
+back views, standing frames, every action row from grip onwards, eating, watering and the
+resident sheets are untouched. Right-facing frames stay exact mirrors of the left.
+
+tools/fix_player_side_walk.py regenerates these rows from the standing frames:
+    python3 tools/fix_player_side_walk.py art/player <output>/player --keep-strides
+Without --keep-strides it also redraws the contact legs as shorter steps.

@@ -6,15 +6,29 @@ func _process(delta: float) -> void:
 	if resident==null:return
 	visible=resident._settled and resident._act in ["garden","chess","hologame","observe","read","browse","restock"]
 	queue_redraw()
+func has_painted_pose() -> bool:
+	if resident._act_tex == null or resident._act_row < 0 or resident._act_row >= resident._act_rows:
+		return false
+	var labels: Array = preload("res://scripts/map_data.gd").ACTION_ROWS.get(resident.who, [])
+	var row: int = resident._act_row
+	return row < labels.size() and str(labels[row]).begins_with(str(resident._act) + " ")
+
 func _draw() -> void:
 	if not visible:return
 	var act: String=resident._act
+	if has_painted_pose():
+		var tex: Texture2D = resident._act_tex
+		var cell := Vector2(tex.get_width() / 4.0, tex.get_height() / float(resident._act_rows))
+		var size: Vector2 = cell * resident._base_scale
+		var frame := int(resident._idle_time * 3.0) % 4
+		draw_texture_rect_region(tex, Rect2(Vector2(-size.x / 2.0, -size.y), size), Rect2(Vector2(frame, resident._act_row) * cell, cell))
+		return
 	var direction: int=resident._facing
 	var side: float=-1 if direction==2 else 1
 	if act in ["chess","hologame"]:
 		var tex: Texture2D=resident._walk_tex
 		var fw: float=tex.get_width()/4.0
-		var fh: float=tex.get_height()/3.0
+		var fh: float=tex.get_height()/float(resident._walk_rows)
 		# Preserve each alien's head and upper-body art; bend the lower legs at the seat.
 		draw_texture_rect_region(tex,Rect2(-8,-29,16,21),Rect2(direction*fw,0,fw,fh*21/32))
 		draw_texture_rect_region(tex,Rect2(-5,-9,10,7),Rect2(direction*fw+fw*.2,fh*.66,fw*.6,fh*.22))

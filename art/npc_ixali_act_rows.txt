@@ -1,0 +1,17 @@
+polish d
+eat d
+spar l
+rest d
+polish u
+polish l
+polish r
+eat u
+eat l
+eat r
+spar d
+spar u
+spar r
+rest u
+rest l
+rest r
+sleep d

@@ -15,7 +15,8 @@ func run() -> void:
 	for p in Map.CONCOURSE_PROPS:
 		assert(p[0] != "board") # Attached to fountain, never a second freestanding object.
 	var seats: Array = scene.things.filter(func(t): return t.kind=="seat" and t.area=="main")
-	assert(seats.size()==25)
+	var mapped_seats: Array = Map.THINGS.filter(func(t): return t[0]=="seat" and t[3]=="main")
+	assert(not seats.is_empty() and seats.size()==mapped_seats.size())
 	for t in seats:
 		scene._go_to("main",Vector2i(115,108),false)
 		var start: Vector2 = scene.player.position
@@ -41,12 +42,17 @@ func run() -> void:
 		assert(scene.portals[key].opening==0)
 		visits+=1
 	assert(visits==18)
+	var return_lifts := 0
 	for t in scene.things:
 		if t.kind == "portal" and t.area in ["top","eng"]:
 			scene._go_to(t.area,Vector2i(t.entry[1],t.entry[2]+2),false)
 			await scene._enter_portal(t)
-			assert(scene.current_area=="main" and not scene.travelling)
-	print("PASS: 18 animated portals, locks reject entry, two lift rides, 25 seats and return poses.")
+			assert(scene.current_area==t.entry[3] and not scene.travelling)
+			if scene.portals[t.key].kind=="lift":
+				assert(scene.current_area=="main")
+				return_lifts+=1
+	assert(return_lifts==2)
+	print("PASS: 18 animated portals, locks reject entry, two lift rides, ", seats.size(), " seats and return poses.")
 	for n in scene.find_children("*","AudioStreamPlayer",true,false):n.stop();n.stream=null
 	await create_timer(1.0).timeout
 	scene.queue_free()

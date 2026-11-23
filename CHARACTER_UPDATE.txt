@@ -1,0 +1,55 @@
+Echo Landing
+Player and resident animation update
+
+Installation
+
+Apply this cumulative update to Project-Deneb's art24 checkout at 6c4345cd82d4.
+Extract the folders alongside project.godot and open the project in Godot 4.
+The updated files come from revision 9abf32e7214b. On a newer or independently
+edited checkout, merge the changed scripts before running the project.
+
+The cast
+
+All 27 scheduled residents wear their Soft Indie designs while walking, eating,
+and working or studying. Each walk sheet has four 24 × 48 directions. The five
+rows are standing, contact A, contact B, passing A and passing B. Playback uses
+rows 1, 3, 2 and 4. Sprites share a foot anchor 2 pixels above the bottom of
+each frame, including the smaller children and Moogli.
+
+Activities use four 36 × 48 frames per row. The wider cells accommodate hands
+and tools. Work follows each resident's role. Freya welds, Jasper cooks, Sesska
+weaves, Stu carries luggage and the children study or draw. The same character
+art also appears at garden, chess, hologame and other scheduled social stops.
+Artie, Stu, Tally and Ana follow their regular routines after their arrivals.
+Ooma visits on Wednesday and Saturday and breaks for supper during her visit.
+Jasper and Evarra take turns eating after kitchen service. The alternate
+outfits and event poses match the redesign.
+
+S.A.R.A. appears at the station projectors. All 33 of her gestures and
+projection clips use her updated hologram. The summoned screen, teacup,
+flower and other object layers retain their own timing. See sara/README.md
+and sara/SARA_Animation_Sampler.gif.
+
+Player
+
+Both character creator models and their customizable layers are included,
+along with the earlier player action updates. The watering can stays in front
+of the chest on the pour, with the near hand on the handle and a level head.
+See docs/ART_HANDOFF_CHARACTERS.md for the native layouts and player poses.
+
+Preview and verify
+
+The previews folder shows the in-game art at integer scale. It contains the
+lineup, the four-direction walks, and a side-by-side cast view of work and meals.
+Project tests can be run from the game directory.
+
+    godot --headless --editor --import --quit
+    godot --headless --script res://tests/resident_day_test.gd
+    godot --headless --script res://tests/walk_cycle_test.gd
+    godot --headless --script res://tests/social_test.gd
+    godot --headless --script res://sara/test_animations.gd
+    godot --headless --script res://tests/player_model_test.gd
+
+The full-day test starts on a Wednesday after both rescues. It checks that each
+resident actually plays all four phases of walking, a meal, and a role activity
+during their ordinary schedule.

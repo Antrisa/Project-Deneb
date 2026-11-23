@@ -1,0 +1,13 @@
+treat d
+eat d
+rest d
+treat u
+treat l
+treat r
+eat u
+eat l
+eat r
+rest u
+rest l
+rest r
+sleep d

@@ -1,0 +1,17 @@
+sort d
+eat d
+read u
+rest d
+read l
+sort u
+sort l
+sort r
+eat u
+eat l
+eat r
+read d
+read r
+rest u
+rest l
+rest r
+sleep d

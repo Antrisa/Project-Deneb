@@ -1,10 +1,10 @@
 # S.A.R.A. hologram animation module
 
-33 selectable clips, each 24 frames, built from 16 illustrated key poses plus baked pixel animation effects. This is a front-facing stationary hologram actor, not a four-direction walking NPC sheet. Her lower body fades into dithered light, with no feet. Body and projected objects are separate transparent PNG strips. These are shaded 2D sprites, not 3D meshes.
+33 selectable clips, each 24 frames, with Soft Indie body art, animated gestures and baked pixel projection effects. This is a front-facing stationary hologram actor, not a four-direction walking NPC sheet. Her lower body fades into dithered light, with no feet. Body and projected objects are separate transparent PNG strips. These are shaded 2D sprites, not 3D meshes.
 
 ## Preview first
 
-Open `SARA_Animation_Preview.html` in a browser. It works offline and lets you select all clips, pause, replay and hide object effects. The pack's root `project.godot` is a standalone Godot 4 demo. Import it as a separate project; do not overwrite your game's project.godot.
+Open [SARA_Animation_Sampler.gif](SARA_Animation_Sampler.gif) to view all 33 clips with their projected objects. To preview a single clip at its gameplay speed, play it on `res://sara/sara_hologram.tscn`.
 
 ## Add to the current game
 
@@ -34,10 +34,10 @@ Idle has occasional automatic blinking, glances and gestures. Set `automatic_idl
 
 Body frames are 80 × 96; object frames are 128 × 96. Both use 24 horizontal frames, centered on the same bottom-center anchor. Body strip: 1920 × 96; object strip: 3072 × 96. `animations.json` contains FPS, loop flags and filenames. Alpha transparency and scanlines are baked into the frames. Keep the two layers at the same position; do not stretch them to the same width.
 
-These clips use held expressive key poses, not hand-drawn in-betweens for every frame. The preview shows exactly how they play. The reusable scene includes visuals and playback; it does not install collision, interaction hotspots, dialogue triggers or map placement in the revised game. The latest full game project was not available for integration testing.
+These clips use held expressive key poses, not hand-drawn in-betweens for every frame. The preview shows exactly how they play. The reusable scene includes visuals and playback; it does not install collision, interaction hotspots, dialogue triggers or map placement in the revised game. The station instantiates this scene at its projector locations.
 
 ## Validation
 
-Tested with Godot 4.6.3: import, all 33 playback clips, frame dimensions, one-shot/hidden transitions and eight paired object events. To repeat:
+Godot 4.7.2 verified all 33 clips, their frame dimensions, one-shot and hidden transitions, and eight paired object events.
 
 `godot --headless --path . --script res://sara/test_animations.gd`

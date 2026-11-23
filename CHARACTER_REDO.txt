@@ -1,0 +1,484 @@
+Character redo, one resident at a time (21 Nov 2026)
+
+Done: Evarra. In progress: Jasper (side walk done; front, back and activities next).
+
+Evarra
+- Face: front eyes 2 wide by 3 tall (a white column beside pupil, iris and a darker iris),
+  side eye 2 by 2, a two-pixel brow directly above each eye, a pink blush pixel on each
+  cheek. The old taller eyes, their dark edges and the pale blue spots under them are gone.
+- Coat: three pixels shorter in every direction; her trousers meet it.
+- Walk (npc_evarra.png): every direction rebuilt from body parts. Side: separate arm that
+  swings from the shoulder with the elbow bending forward on the forward swing, solid legs
+  that step four pixels each way at most (scaled to leg length), the lifted foot trailing
+  behind on the passing steps. Front and back: one leg steps while the other trails a
+  shade darker, one foot lifts on the passing steps. Stardew-style arms and bob: hands are
+  simple fists at the cuffs overlapping the coat edge; on each step both fists tuck a
+  pixel in, the arm swinging toward the camera hangs a pixel longer and the other a pixel
+  shorter (walking away, the forward hand is hidden behind the body). The body drops a
+  pixel on the steps and the head lifts a pixel when the feet pass. Boots squared off.
+- Activities (npc_evarra_act.png): mix, herbs, rest, eat and garden in all four directions,
+  20 rows of four 36 x 48 frames. The five rows the game already uses keep their places at
+  the top; npc_evarra_act_rows.txt lists every row's "action facing" label. The game only
+  plays the first five until map_data's ACTION_ROWS for Evarra is extended with the rest.
+
+Jasper
+- Face: eyes two wide and three tall (white column outside), brows on the row above,
+  a blush pixel on each cheek, the small mouth under the nose painted out (nose kept).
+  Side eye two by two with a brow.
+- Walk (npc_jasper.png): side walk from rig parts (as before); front and back walks as
+  Evarra's, with orange paw fists. From behind, the tail stays with the body and the legs
+  under it are the front view's trousers and boots, so they move without dragging tail
+  pixels.
+- Activities (npc_jasper_act.png): cook (pan, tossed morsel, spatula), relax (paw at the
+  chin; scratching the head from behind), rest and eat, in all four directions: 16 rows.
+  The four rows the game uses keep their places at the top.
+
+Rusk
+- Face: eyes two wide and three tall with brows above, blush on the cheeks, the smile line
+  under the nose painted out. Side eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_rusk_side.png): his near arm (white rolled sleeve,
+  furred forearm and paw) is drawn as its own piece; the shirt and apron behind it are
+  repainted plain. The sleeve is a shade darker than the shirt so it reads against it.
+- Front and back walks as Evarra's and Jasper's, with orange paw fists. His right leg was
+  a pixel narrower than his left (widened); from behind, his left boot's heel stuck out a
+  pixel (squared off).
+- Activities (npc_rusk_act.png): wipe (rag on the counter; from the side the forearm lies
+  level along the counter), pour (glass held low, the bottle tipped over it and the drink
+  running in; from behind his raised elbow and the bottle neck show at his side, the
+  pouring itself out of sight in front of him), rest, eat, in all four directions, plus sleep: 17 rows. The four rows the
+  game uses keep their places at the top.
+
+Ooma
+- Face: her yellow eyes one row taller (yellow outside, dark inside) with brows above and a
+  blush pixel on each cheek; her tentacles untouched. Side eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_ooma_side.png): a robe sleeve with a gold cuff and a
+  pink tentacle hand swings from the shoulder; the robe behind the old hand is repainted.
+- Front and back walks: the wide sleeves stay put and the hands become pink fists that tuck
+  in and rise and fall a pixel; from behind her hands are inside her sleeves. Her feet
+  shuffle under the robe (the feet are too short for a shin, so a lifted foot is the foot
+  alone). The two feet were joined by a pixel at the bottom (separated). Head bob as the rest.
+- Activities (npc_ooma_act.png): beckon (a hand raised and curling in; from behind it shows
+  beside her hood) and eat, in all four directions, plus sleep: 9 rows. The two rows the
+  game uses keep their places at the top.
+
+Tobbin
+- Face: eyes (two wide, three tall, with brows) under his goggle bumps, where the painted
+  face had only faint slits; blush on the cheeks. His wide toad mouth line is kept (it is
+  his jaw). Side eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_tobbin_side.png): his puffed shirt sleeve and tan
+  hand swing as one piece; the overalls behind are repainted.
+- Front and back walks as the others, with tan fists under the puffed sleeves; short legs
+  (handled like Ooma's feet).
+- Activities (npc_tobbin_act.png): build (plank in one hand, hammer raised and brought
+  down; from behind the hammer shows over his shoulder), sketch (pad and pencil; from
+  behind the pad is held out to the side), eat and rest, in all four directions, plus
+  sleep: 17 rows. The four rows the game uses keep their places at the top. His activity
+  arms are drawn a pixel wider than the others' to match the puffed sleeves.
+
+Merrow
+- Face: his big frog eyes keep their cream outer column; the inner two columns are the
+  house-style eye (white beside pupil, iris, darker iris) with brows above; blush on the
+  cheeks; his smile line kept (like Tobbin's jaw). Side eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_merrow_side.png): short cream sleeve and long green
+  forearm swing as one piece; shirt and overalls behind repainted.
+- Front and back walks as the others, with green fists. Stray sleeve-outline pixels beside
+  the old hands cleared.
+- Activities (npc_merrow_act.png): valve (both hands on a wheel going round; the spokes
+  turn; from behind his elbows work at his sides), tend (reaching low with a leaf; from
+  behind one hand reaches to a plant beside him), eat, rest and garden, in all four
+  directions, plus sleep: 21 rows. The six rows the game uses keep their places at the top.
+  valve_d and valve_l are the same valve: the missing directions are added once, as
+  "valve_d u" and "valve_d r" (the side view is "valve_l l").
+
+Nub
+- Face: his eyes looked off to one side; they now look ahead, two wide and three tall with
+  brows above (cream outer bulge kept), blush on the cheeks, his smile kept. Side eye two
+  by two with a brow.
+- Side walk from rig parts (art/rig/npc_nub_side.png): a little sleeve and pale hand.
+- Front and back walks as the others, with pale fists; stubby legs (as Ooma's feet).
+- Activities (npc_nub_act.png): draw (paper and crayon; from behind the crayon hand is up
+  beside his head, drawing on the wall), play (bouncing a ball beside him: in the hand,
+  dropping, on the floor, coming back up), eat and rest, in all four directions, plus
+  sleep: 17 rows. The four rows the game uses keep their places at the top.
+
+Garrick
+- Face: his eyes one row taller under his brows (the right one a pixel further in, so both
+  sit the same distance from the middle), blush on the cheeks, the mouth painted out.
+  Side eye two by two with a brow, the pupil at the front of the eye; the chin steps back a
+  pixel so it no longer juts out (it read as an underbite).
+- Side walk from rig parts (art/rig/npc_garrick_side.png): a navy uniform sleeve with the
+  hand at the cuff; the hand and belt area behind repainted as coat.
+- Front and back walks as the others. His left boot was a pixel narrower than his right on
+  its top and bottom rows (squared); the dark edges under the old hands cleared.
+- Activities (npc_garrick_act.png): ledger (book held open, writing; from behind the book is
+  out of sight and his writing hand works out at his side), patrol (hands clasped behind his
+  back: from the front only the elbows show, from behind the hands show on his back),
+  drink (a mug to the mouth), eat and rest, in all four directions, plus sleep: 21 rows.
+  The five rows the game uses keep their places at the top.
+
+Saffi
+- Face: her green eyes one row taller with brows above, blush on the cheeks, the dark
+  flecks at the eye corners and the little mouth line painted out (nose kept). Side eye
+  two by two with a brow.
+- Side walk from rig parts (art/rig/npc_saffi_side.png): green puff sleeve and brown furred
+  forearm with the paw; the dress behind repainted.
+- Front and back walks as the others, with paw fists; at her hips, behind where her hands
+  hung, the top of her skirt is painted in (so nothing is missing when the hands move).
+  From behind her tail ends above her
+  legs, so it simply stays with the body.
+- Activities (npc_saffi_act.png): sweep (both hands on the broom, its head swept side to
+  side; from behind the broom head shows past her side), browse (reaching up to the
+  shelves, then looking at what she took down), watch (hands folded in front), eat and
+  rest, in all four directions, plus sleep: 21 rows. The six rows the game uses keep their
+  places at the top.
+
+Kit
+- Face: eyes one row taller with brows above, blush on the cheeks, the dark flecks at the
+  inner eye corners and the little mouth line painted out. Side eye two by two with a
+  brow, the pupil at the front.
+- Side walk from rig parts (art/rig/npc_kit_side.png): short yellow sleeve and furred arm.
+- Front and back walks as the others, with pale paw fists (brown ones vanished against his
+  shorts); the leftover hand pixels below them from behind cleared. From behind his tail reaches down to
+  row 42, so there his legs start a row lower, under it.
+- Activities (npc_kit_act.png): study (the same drawing as Garrick's ledger: book and
+  pencil), play (bouncing a ball), toy (a toy robot held up and turned; from behind it is
+  held out at his side), hologame (a hand-held game with a flickering glow; from behind
+  only the glow shows over his shoulder), eat and rest, in all four directions, plus
+  sleep: 25 rows. The six rows the game uses keep their places at the top.
+
+Ix'ali
+- Face: her eyes keep their columns (pale outside), one row taller, brows above (the dark
+  flecks beside her left eye painted out), blush on
+  the cheeks, the little mouth painted out. Side eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_ixali_side.png): a tunic sleeve and gold hand, the
+  hand beside her tail repainted as tunic.
+- Front and back walks as the others, with gold fists; stray hand-outline pixels cleared.
+- Activities (npc_ixali_act.png): polish (a blade held level, a cloth run along it; from
+  behind her polishing elbow works at her side), spar (a practice blade on guard, raised,
+  struck, back to guard; from behind the raised blade shows over her shoulder), eat and
+  rest, in all four directions, plus sleep: 17 rows. The four rows the game uses keep
+  their places at the top.
+
+Maren (lab coat; weekend and winter outfits below)
+- Face: eyes one row taller with brows above, blush, the little mouth painted out. Side eye
+  two by two with a brow.
+- Side walk from rig parts (art/rig/npc_maren_side.png): a white coat sleeve with her hand.
+- Front and back walks: her long hair lies over her shoulders and sleeves, so the sleeves
+  stay put (as Ooma's) and her hands are fists at the coat's sides, front and back; her
+  painted hands are repainted as coat so the moving fists leave nothing behind.
+- Activities (npc_maren_act.png): treat (a scanner passed slowly over a patient, its light
+  flickering; from behind her elbows work at her sides), eat and rest, in all four
+  directions, plus sleep: 13 rows. The three rows the game uses keep their places at the
+  top. From behind her arms are hidden entirely, so eating lifts her elbow out to the side.
+
+Maren's weekend and winter outfits (npc_maren_weekend*.png, npc_maren_winter*.png)
+- The same face as her lab-coat sheet.
+- Weekend (red top, long trousers): the side arm is a short red sleeve and bare forearm;
+  front and back, the forearms swing a pixel and end in fists; the legs run from row 32.
+- Winter (teal coat): the side arm is a coat sleeve with her hand; front and back, her hair
+  lies over the coat's shoulders, so the sleeves stay put and the hands (fists) move; the
+  painted hands and rust mittens are repainted as coat so nothing is left behind.
+- Activities for both: treat, eat and rest in all four directions, plus sleep (13 rows each),
+  the three rows the game uses at the top.
+- In the lab-coat and winter activities, the coat's side panels behind her arms are carried
+  up from below when the painted arms come off, so the coat has no notches at her sides.
+
+Quill
+- Face: eyes one row taller with brows above, blush, the little mouth painted out. Side
+  eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_quill_side.png): a coat sleeve and green forearm.
+- Front and back walks as the others, with green fists. One leg was a pixel narrower than
+  the other (his left from the front, his right from behind): widened. Behind his hands
+  the coat is carried up from the hem, so the moving fists leave no gaps or leftover pixels.
+- Activities (npc_quill_act.png): sort (a book passed from hand to hand and set down; from
+  behind a hand reaches up to the shelf), read (a book open at the chest, a page turned;
+  from behind his elbows show at his sides), eat and rest, in all four directions, plus
+  sleep: 17 rows. The five rows the game uses keep their places at the top. His coat
+  carries on behind his arms (no notches), and from behind his arms at his sides are drawn
+  over it; only a hand brought in front of him goes out of sight.
+
+Owen
+- Face: eyes one row taller with brows above, blush, the little mouth painted out. Side
+  eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_owen_side.png): an orange jacket sleeve and hand.
+- Front and back walks as the others, with skin fists. His right leg (from the front) was a
+  pixel narrower and a stray boot pixel stuck out: both fixed. Behind his hands the jacket
+  narrows to its hem in its shadow tone, so a moving or hidden fist leaves no notch or gap.
+- Activities (npc_owen_act.png): shelve (a book lifted up and pushed onto a high shelf),
+  bench (both hands working low with a spanner; from behind his elbows move at his sides),
+  chess (thinking, reaching to the board, moving a piece, sitting back), eat and rest, in all
+  four directions, plus sleep: 21 rows. The five rows the game uses keep their places at the
+  top. His drawn arms hang where his old sleeves were, at the jacket's outer edge, and the
+  jacket behind them is trimmed to a narrow side panel in its shadow tone (so nothing of
+  the old sleeve shows as a second arm); from behind his arms at his sides are drawn over it.
+
+Pip
+- Face: eyes one row taller with brows above, blush, the little mouth painted out. Side
+  eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_pip_side.png): a red tunic sleeve and small hand;
+  the tunic and shorts behind it are painted in.
+- Front and back walks as the others, with skin fists. Leftover pixels under his old hands
+  are cleared, and a one-pixel bulge on his left sleeve (and on his right from behind) that
+  was left sticking out as the arms swing is taken off.
+- Activities (npc_pip_act.png): study, play, wave (a hand up beside his head, swung side to
+  side; from the side held out in front), eat, rest and hologame, in all four directions,
+  plus sleep: 25 rows. The six rows the game uses keep their places at the top.
+
+Sesska
+- Face: eyes two wide and three tall (pale outside, dark inside) with brows above and a blush
+  pixel on each cheek; the old outward-looking pupils cleared; her pale fangs kept. Side eye
+  two by two with a brow.
+- Walk (tools/spider_walk.py): she keeps all eight of her own limbs and her own walk, which
+  already had four different frames and the drop on the contact frames. The passing frames
+  now lift her head a pixel, and a limb tip from behind that only touched its limb at a
+  corner is joined back on.
+- Activities (npc_sesska_act.png): she works with a thin pair of hands that comes from under
+  the front of her poncho (from behind, from her sides), with her pale limb tips. Weave (a
+  hand loom in front of her, the shuttle passed from hand to hand across the warp), eat,
+  chat (one hand turning over in the air as she talks, the other at her chest) and rest
+  (hands tucked away, only her breath moving), in all four directions, plus sleep: 17 rows.
+  The four rows the game uses keep their places at the top.
+
+Bram
+- Face: his eyes looked off to his left; they are set to look ahead (two wide, three tall,
+  pale outside, dark inside), the cream outer edge of each eye bump kept, a brow above each,
+  blush on the cheeks. His long frog smile and cheek spots are kept. Side eye two by two
+  with a brow.
+- Side walk from rig parts (art/rig/npc_bram_side.png): his puffed cream sleeve and green
+  hand swing as one piece; the vest and trousers behind are repainted.
+- Front and back walks as the others, with green fists under the puffed sleeves; short legs.
+  Under his right hand the vest edge had no outline of its own, so it is closed as the hand
+  moves away, and a shortened sleeve no longer leaves a gap above the vest.
+- Activities (npc_bram_act.png): counter (both hands resting on the shop counter, fingers
+  drumming in turn), eat, drink (both brought up to his low, wide mouth), rest and restock (a
+  jar of supplies lifted from low down onto a shelf, the hand coming back for the next), in
+  all four directions, plus sleep: 21 rows. The five rows the game uses keep their places at
+  the top.
+
+Tikka
+- Face: her gold eyes looked off to one side; they are set to look ahead (two wide, three
+  tall, the gold kept as the pale of the eye, dark inside), a brow above each, blush on the
+  cheeks; her head spots and mouth tentacles kept. Side eye two by two with a brow.
+- Walk (tools/spider_walk.py): like Sesska she keeps all eight of her own limbs and her own
+  walk (four different frames, the drop on the contact frames); the passing frames now lift
+  her head a pixel.
+- Activities (npc_tikka_act.png): she works with a thin pair of hands from under her chest
+  (from behind, from her sides). Console (hands tapping in turn on a desk of lit keys; from
+  behind the desk shows either side of her), eat, tinker (a gadget held in one hand, poked at
+  with a spanner in the other) and rest (only her breath moving), in all four directions,
+  plus sleep: 17 rows. The four rows the game uses keep their places at the top.
+
+Freya
+- Face: eyes one row taller with her brows above, blush, the little mouth painted out. Side
+  eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_freya_side.png): her bare arm with its leather
+  bracer swings as one piece; her top and baggy trousers behind are repainted.
+- Front and back walks as the others, with skin fists below the bracers; the pixels under her
+  old hands are cleared and the trousers carried through behind them. Her right leg and
+  boot were wider than her left and the boot was cut off at a slant; from the front and
+  from behind the right is now the left mirrored, so her feet match.
+- Activities (npc_freya_act.png): weld (the torch held to the work, sparks spitting from it;
+  from behind the sparks show either side of her), hammer (at the anvil, the hammer raised
+  high and brought down), eat, drink and rest, in all four directions, plus sleep: 21 rows.
+  The five rows the game uses keep their places at the top. For the activities only her
+  bare upper arm and bracer are taken off the body; her belt and baggy trousers beside them
+  stay whole.
+
+Job
+- Face: eyes under his hard-hat brim one row taller with brows above, blush, the little
+  mouth painted out. Side eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_job_side.png): his chunky orange sleeve and bare
+  forearm swing as one piece; the shirt and overalls behind are repainted and the old
+  sleeve's edge behind him is cleared.
+- Front and back walks as the others, with fists at the ends of his forearms; the overalls
+  are carried through behind his old hands.
+- Activities (npc_job_act.png): mine (the pickaxe swung up over his shoulder and brought down
+  into the rock; from behind it shows over his shoulder when raised), eat, drink and rest, in
+  all four directions, plus sleep: 17 rows. The four rows the game uses keep their places at
+  the top. His arms are long, so hanging and low-held hands sit four pixels lower than the
+  others' and the arms come from just inside his shoulders: they hang straight down his
+  sides instead of bowing out, and hang straight (no kink at the wrist). Only his sleeves
+  and forearms are taken off the body, and the overalls' sides run straight up behind his
+  arms to the top of the overalls.
+
+Zaas
+- Face: eyes under the hat brim one row taller (pale outside, dark inside) with brows above
+  and blush; the little orange beak among the face tentacles is kept. Side eye two by two
+  with a brow.
+- Side walk from rig parts (art/rig/npc_zaas_side.png): the thin teal arm and tentacled hand
+  swing as one piece; the brown vest behind is repainted.
+- Front and back walks as the others, with teal fists; short legs. The passing frames lift
+  the head and its face tentacles together.
+- Activities (npc_zaas_act.png): survey (a scanner held out and swept slowly ahead, its
+  screen flickering), eat (up to the beak), stargaze (a spyglass raised to the eye and turned
+  across the sky; from behind its far end shows above the hat), rest and observe (the
+  spyglass held level, looking out ahead), in all four directions, plus sleep: 21 rows. The
+  five rows the game uses keep their places at the top. The drawn arms sit flush against the
+  vest, front and back.
+
+Tar'Besh
+- Face: his orange eyes one row taller (pale outside, orange iris and dark pupil inside) with
+  brows above and blush; the little mouth line on his snout painted out. Side eye two by two
+  with a brow.
+- Side walk from rig parts (art/rig/npc_tarbesh_side.png): his wide robe sleeve with its gold
+  cuff and small hand swing as one piece; the robe behind is repainted.
+- Front and back walks: the wide sleeves stay put and only his hands move, as fists below the
+  gold cuffs; the robe is carried up behind where the old hands were. Short legs under the
+  robe.
+- Activities (npc_tarbesh_act.png): study, eat, ponder (a hand at his chin, tapping, the
+  other arm across under it; from behind the thinking hand is out of sight), rest and chess,
+  in all four directions, plus sleep: 21 rows. The five rows the game uses keep their places
+  at the top. The robe's own edge carries up behind the drawn sleeves. From behind, when a
+  hand is in front of him (eating, pondering, at the chessboard) its wide sleeve still hangs
+  at his side, so no arm looks tucked behind his back.
+
+Vzz'ket
+- Face: his eyes keep their columns (pale outside), one row taller, brows above, blush; the
+  little mouth painted out. Side eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_vzzket_side.png): below the shoulder plate his
+  leather upper arm, pale bracer and gold hand swing as one piece; the tunic behind is
+  repainted (his tail tip is left alone).
+- Front and back walks as the others, with gold fists below the bracers.
+- Activities (npc_vzzket_act.png): guard (the spear held upright at his side; from the side
+  out in front of him, clear of his face; a small shift of weight and grip), eat and
+  walk_stop (on patrol, the spear lifted and its butt planted on the floor), in all four
+  directions, plus sleep: 13 rows. The three rows the game uses keep their places at the
+  top. The tunic's edge carries up behind the drawn arms.
+
+Artie
+- Face: eyes one row taller with brows above, blush, the little mouth painted out. Side eye
+  two by two with a brow.
+- Side walk from rig parts (art/rig/npc_artie_side.png): his sleeve rolled to an orange cuff,
+  bare forearm and hand swing as one piece; the shirt and trousers behind are repainted,
+  the old arm's front edge included, so no dark line is left down his side.
+- Front and back walks as the others, with fists at the ends of his bare forearms; the
+  trousers' edge carries up behind his old hands.
+- Activities (npc_artie_act.png): knots (both hands working a length of rope, pulling it
+  tight), read, campfire (hands held out to the warmth and rubbed together, firelight
+  flickering on them), eat, rest and recover (getting his breath back, hands braced low,
+  shoulders heaving), in all four directions, plus sleep: 25 rows. The seven rows the game
+  uses keep their places at the top. From behind, a hand out of sight in front of him keeps
+  its upper arm at his side.
+
+Stu
+- Face: like Bram, the cream outer edge of each eye bump kept and the eyes set to look ahead
+  (two wide, three tall, pale outside, dark inside), a brow above each, blush; his wide frog
+  smile is kept. Side eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_stu_side.png): his bellhop coat sleeve and green
+  frog hand swing as one piece; the coat behind is repainted.
+- Front and back walks as the others, with green fists below the cuffs; the coat's edge
+  carries on behind where the old hands were.
+- Activities (npc_stu_act.png): luggage (a suitcase held by its handle at his side, lifted a
+  little with each step), bell (the hand raised over a desk bell and brought down on top),
+  sweep, eat (brought well up to his high wide mouth), rest, in all four directions, plus
+  sleep: 21 rows. The six rows the game uses keep their places at the top. The drawn arms
+  are slim and sit flush against the coat; the coat's edge carries up behind them, and from behind a hand out of sight in front of him
+  keeps its sleeve at his side.
+
+Tally
+- Face: her eyes set to look ahead (two wide, three tall, gold outside, dark inside), a brow
+  above each, blush on the cheeks; her post cap kept. Side eye two by two with a brow.
+- Walk (tools/spider_walk.py): like Sesska and Tikka she keeps all eight of her own limbs and
+  her own walk; the passing frames now lift her head a pixel.
+- Activities (npc_tally_act.png): she works with a thin pair of hands from under her chest
+  (from behind, from her sides). Mail (a pale envelope taken from her satchel, held up and
+  sorted), crate (a parcel crate lifted from low to chest height and set down again), eat
+  and rest (only her breath moving), in all four directions, plus sleep: 17 rows. The six
+  rows the game uses keep their places at the top. From behind, her working hands are in
+  front of her and only show past her sides (the letter held up beside her head, the crate
+  lifted over her cap); nothing is drawn across her back.
+
+Ana
+- Face: her half-lidded eyes opened to look ahead (two wide, three tall, pale outside, dark
+  inside), a brow above each under her fringe, blush; the little mouth painted out. The dark
+  pixels beside her left eye on the nose side are skin now, so both eyes are two wide. Side
+  eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_ana_side.png): her pilot's jacket sleeve with its red
+  cuff and her hand swing as one piece; the jacket and trousers behind are repainted.
+- Front and back walks as the others, with skin fists below the sleeves; the trousers' edge
+  carries up behind where the old hands were.
+- Activities (npc_ana_act.png): tune (a spanner turned at a thruster fitting; from behind the
+  fitting is above her and both hands reach up beside her head), chart (at a console, one
+  hand on the keys, the other tracing the route across the glowing chart), eat, drink, rest
+  and recover (hands braced low, getting her breath back), in all four directions, plus
+  sleep: 25 rows. The seven rows the game uses keep their places at the top. The old sleeves
+  come off the jacket's sides and the cloth behind is filled in its own tone, so the drawn
+  arms sit flush against it.
+
+Tally's event sheet (npc_tally_event.png, tools/events.py)
+- The seven shared heart-event rows, rebuilt with his new face and the same thin working
+  hands as his activities: talk with hands (the pair gesturing in turn), laugh (hands on his
+  middle, shoulders bouncing, eyes squeezed shut), sad (head bowed, hands together low, the
+  outer brows dropped, a tear running down), surprised jump (a crouch, a jump with both hands
+  thrown up and wide eyes, the landing), hold out a gift (right; a wrapped parcel held out),
+  sit on a bench (a bench under him, hands resting on the seat) and wave. Same format as
+  before: 144 wide, 7 rows of four 36 x 48 frames.
+
+Ana in her Chernog clothes (npc_ana_chernog.png)
+- Face as her everyday sheet (the same head).
+- Side walk from rig parts (art/rig/npc_ana_chernog_side.png): her striped sweater sleeve
+  (red at the shoulder, an orange cuff) and her hand swing as one piece; the sweater behind
+  is repainted with its red stripe and orange belt carried across.
+- Front and back walks as the others, with skin fists below the cuffs; the sweater's edge
+  carries up behind where the old hands were. From behind, the collar lifts with her head
+  on the passing frames.
+- No action sheet (there was none before).
+
+S.A.R.A.'s solid body (npc_sara_solid.png, npc_sara_solid_idle.png, npc_sara_solid_act.png)
+- Face: her eyes set to look ahead (two wide, three tall), a brow above each, a soft blush,
+  the little mouth painted out. The dark pixels between her left eye and her nose are skin
+  now, so the two eyes match. Side eye two by two with a brow.
+- Side walk from rig parts (art/rig/npc_sara_solid_side.png): her slim suit arm and pale
+  hand swing as one piece, in front of the hair down her back; the suit behind is repainted
+  with its light belt carried across.
+- Front and back walks as the others, with pale fists below the sleeves; the suit's edge
+  carries up behind where the old hands were. The idle frame is the new standing frame.
+- Activities (npc_sara_solid_act.png): the old sheet's eight rows had no names; they are kept
+  in their order as wave, read, explain (a hand held out to the side, palm open), rest, talk
+  (a hand held out in front, palm up), clasp (hands clasped at her chest), eat and greet (a
+  hand raised high with a small bow), all facing down, with every other direction and sleep
+  added below: 33 rows (names in npc_sara_solid_act_rows.txt). Her arms are drawn from below
+  her hair, so nothing is drawn over it from the front; a hanging arm is shorter so the hand
+  rests where hers did, and from behind a raised hand shows past the side of her hair.
+- The game doesn't use these sheets yet.
+
+S.A.R.A.'s projector hologram (sara/animations/*_body.png, tools/holo_build.py)
+- All 33 clips are rebuilt from her solid body: the same figure, face and slim arms (drawn by
+  the activity rig, hanging close at her sides), fizzing out into dithered light below the
+  knee. The arms are drawn whole from her shoulders, in front of her hair, so every gesture
+  moves from the shoulder. Her old hologram had a large head on a short body with arms bowed out wide.
+- Each clip keeps the original's timing, read frame by frame from the old strip: how far
+  each frame moved toward its held pose moves the new hands the same way; the eyes (open,
+  closed, glancing), the nod, the tilt and the float up and down follow it; and so does the
+  projection: each row's brightness and tint (scanline bands, standby's dimming, the
+  reconnect flicker, glitch colours), its transparency, the rows that are gone (dissolve,
+  materialize) and, in the glitches, rows jogged sideways.
+- The gestures: clasp hands, stretch (arms up), greeting (a wave), explain (a hand out,
+  palm open), talk both (both hands out in turn), shrug, laugh (hands to her middle, eyes
+  shut), thinking (a hand at her chin). In the eight clips with projected objects
+  (summon_screen, swipe_panels, rotate_moon, unfold_map, warning, conjure_teacup,
+  admire_flower, paris_daydream) her hand goes where the old hand was, so the objects
+  (separate strips in the game, not in this pack) should still sit on it; check them in
+  the game.
+- Same format as before: 24 frames of 80 x 96 per strip, each pixel a 2 x 2 block, the
+  figure on the same bottom-centre anchor. sara/SARA_Rebuild_Sampler.gif shows all 33
+  (bodies only; the older SARA_Animation_Sampler.gif still shows the old hologram).
+
+Sleep (every redone resident)
+- A "sleep d" row at the bottom of each activity sheet (Evarra row 21, Jasper row 17):
+  lying in bed seen from above: the whole front frame with the eyes closed (a lash line
+  across each eye); no sheet, the game's bed and blanket go over them. Breathing: the
+  chest rises a pixel, the head follows a frame later. Down only (beds are seen from above).
+- The game does not send residents to bed yet: their schedules end standing at home.
+  Using it needs a bed stop in tools/build.py SCHEDULES and "sleep d" in ACTION_ROWS.
+
+How it is built (tools/)
+- fix_eyes.py: redraws a resident's eyes, brows and blush in the house style.
+- rig_parts.py: cuts the side view into a body and an arm (art/rig/npc_<id>_side.png).
+- rig_walk.py: builds the side walk from those parts.
+- rig_front.py: builds the front and back walks from the standing frames.
+- poses.py: the shared pose system. Each activity is defined once (hand targets per frame,
+  props: bowl, spoon, food, herb, watering can, water drops, pan, morsel, spatula, rag, glass, bottle, pour, hammer, plank, pad, pencil, valve wheel, crayon, paper, ball, ledger, mug, broom, toy, hand-held game, blade, scanner) and drawn for any rigged
+  resident in all four directions, with arms in the resident's own sleeve and skin colours
+  and the head from the standing frame. Right is the mirror of left.
+Order: fix_eyes.py, rig_parts.py, rig_walk.py, rig_front.py, poses.py.

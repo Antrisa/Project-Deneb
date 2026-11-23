@@ -348,8 +348,7 @@ const PEOPLE = {
 			"[angry] Do not call it 'just a spear'. It has a balance point. It has a history. It has a name, which I will not tell you.",
 		],
 	},
-	# Wave 1 and 2 arrivals (21 Nov). Their lines are Claude placeholders for Zachary to replace. Artie and Stu
-	# have no walk sheets yet; main.gd STAND_IN_ART borrows another resident's until they are drawn.
+	# Wave 1 and 2 arrivals (21 Nov). Their lines are Claude placeholders for Zachary to replace.
 	"Artie": {
 		"id": "artie",
 		"pitch": 1.0,

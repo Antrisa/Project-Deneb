@@ -480,11 +480,19 @@ def rebuild(g):
         rows=g['SCHEDULES'][who]
         resume=list([e for e in rows if e[0]<=end][-1]);resume[0]=end
         rows[:]=[e for e in rows if not start<=e[0]<=end]
-        rows.extend([[start,'main',x,y,26,facing,act,-1],resume]);rows.sort(key=lambda e:e[0])
+        label=act+' '+facing
+        sheet=g['ACTION_ROWS'][who]
+        if label not in sheet:sheet.append(label)
+        rows.extend([[start,'main',x,y,26,facing,act,sheet.index(label)],resume]);rows.sort(key=lambda e:e[0])
     for who,rows in g['SCHEDULES'].items():
         for e in rows:
             if who in outdoor and e[6]=='work' and (e[1] in {'bram','weaver','furn','fab'} or who=='Ooma'):e[1]='main';e[2],e[3]=outdoor[who];e[4]=26
-            if who=='Bram' and e[1]=='main' and e[6]=='work':e[6]='restock';e[7]=-1
+            if who=='Bram' and e[1]=='main' and e[6]=='work':
+                e[6]='restock'
+                label='restock '+e[5]
+                sheet=g['ACTION_ROWS'][who]
+                if label not in sheet:sheet.append(label)
+                e[7]=sheet.index(label)
             if e[1]=='main':e[2],e[3]=nearest(e[2],e[3],who)
     g['THINGS']=things;m.zones.append(['Fountain plaza',103,84,127,108])
     assert len(doors)==16

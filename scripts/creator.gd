@@ -3,6 +3,7 @@ extends Control
 # Shown at the start of a new game, and again from the locker in your quarters.
 # main.gd passes key presses and clicks here while it is open.
 
+const WalkCycle = preload("res://scripts/walk_cycle.gd")
 const MakerScript = preload("res://scripts/player_maker.gd")
 
 # What each line of the screen changes: [key in the look, label]
@@ -14,8 +15,9 @@ const PANEL := Rect2(4, 4, 312, 172)
 const ROW_X := 156.0
 const ROW_Y := 34.0
 const ROW_H := 12.0
-const SHUFFLE := Rect2(16, 112, 64, 15)
-const START := Rect2(84, 112, 64, 15)
+const SHUFFLE := Rect2(16, 112, 43, 15)
+const STARTER := Rect2(61, 112, 51, 15)
+const START := Rect2(114, 112, 34, 15)
 const DIM := Color(0.6, 0.7, 0.85)
 const GOLD := Color(1.0, 0.824, 0.498)
 
@@ -89,7 +91,11 @@ func _change(index: int, by: int) -> void:
 		look[key] = (int(look[key]) + by + 10) % 10
 	elif MakerScript.OPTIONS.has(key):
 		var n: int = maker.option_count(key)
-		look[key] = (int(look[key]) + by + n) % n
+		var next: int = (int(look[key]) + by + n) % n
+		if key == "body" and first_time and look == maker.defaults(int(look[key])):
+			look = maker.defaults(next)
+		else:
+			look[key] = next
 	else:
 		var colours: Array = MakerScript.PALETTES[key]
 		var at: int = colours.find(look[key])
@@ -104,6 +110,12 @@ func _shuffle() -> void:
 	look = maker.random_look()
 	look["body"] = keep_body
 	world.sfx("click", 0.9)
+	_refresh()
+
+
+func _use_starter() -> void:
+	look = maker.defaults(int(look.body))
+	world.sfx("click", 1.2, -6.0)
 	_refresh()
 
 
@@ -129,8 +141,12 @@ func handle_input(event: InputEvent) -> void:
 		_finish()
 	else:
 		var key_event := event as InputEventKey
-		if key_event != null and key_event.pressed and not key_event.echo and key_event.physical_keycode == KEY_R:
-			_shuffle()
+		if key_event != null and key_event.pressed and not key_event.echo:
+			match key_event.physical_keycode:
+				KEY_R:
+					_shuffle()
+				KEY_HOME:
+					_use_starter()
 
 
 func _row_at(at: Vector2) -> int:
@@ -152,6 +168,8 @@ func handle_click(button: int) -> void:
 				return
 	if SHUFFLE.has_point(at):
 		_shuffle()
+	elif STARTER.has_point(at):
+		_use_starter()
 	elif START.has_point(at):
 		_finish()
 	else:
@@ -202,16 +220,17 @@ func _draw() -> void:
 
 	# Four views, walking on the spot.
 	if _sheet != null:
-		var cycle: Array = [1, 0, 2, 0]
-		var step: int = cycle[int(_time * 5.0) % 4]
+		var rows := WalkCycle.rows(_sheet)
+		var step := WalkCycle.pose(int(_time * 8.0), rows)
 		for d in 4:
 			# One art pixel to one interface unit (two screen pixels): sharp at any frame size.
 			var fw: float = _sheet.get_width() / 4.0
-			var fh: float = _sheet.get_height() / 3.0
+			var fh: float = _sheet.get_height() / float(rows)
 			draw_texture_rect_region(_sheet, Rect2(18 + d * 33 + (32 - fw) * 0.5, 38 + 64 - fh, fw, fh), Rect2(d * fw, step * fh, fw, fh))
 	_txt(Vector2(22, 34), "Front       Back        Left        Right", DIM, 6)
 
-	_button(SHUFFLE, "Shuffle  R", 0)
+	_button(SHUFFLE, "Shuffle", 0)
+	_button(STARTER, "Starter look", 0)
 	_button(START, "Start" if first_time else "Done", 1)
 
 	for i in _rows.size():

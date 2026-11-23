@@ -143,6 +143,11 @@ npc_vzzket_act.png
 npc_zaas.png
 npc_zaas_act.png
 player.png
+player_actions.png
+player/action_tops.png
+player/action_tops_mask.png
+player/body2/action_tops.png
+player/body2/action_tops_mask.png
 player/body2/bottoms.png
 player/body2/bottoms_mask.png
 player/body2/faces.png
@@ -543,7 +548,11 @@ later/ivan_idle.png
 later/portrait_eshu_neutral_alt.png
 later/stu_idle.png
 npc_ana.png
+npc_artie.png
+npc_stu.png
 npc_ana_act.png
+npc_artie_act.png
+npc_stu_act.png
 npc_ana_chernog.png
 npc_maren_weekend.png
 npc_maren_weekend_act.png

@@ -197,7 +197,7 @@ func set_player_picture(sheet: Texture2D) -> void:
 		return
 	var front := AtlasTexture.new()
 	front.atlas = sheet
-	front.region = Rect2(0, 0, sheet.get_width() / 4.0, sheet.get_height() / 3.0)
+	front.region = Rect2(0, 0, sheet.get_width() / 4.0, sheet.get_width() / 2.0)
 	pad.set_player_portrait(front)
 
 

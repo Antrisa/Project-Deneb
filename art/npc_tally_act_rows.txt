@@ -1,0 +1,17 @@
+mail d
+crate d
+eat d
+rest d
+mail u
+eat u
+mail l
+mail r
+crate u
+crate l
+crate r
+eat l
+eat r
+rest u
+rest l
+rest r
+sleep d

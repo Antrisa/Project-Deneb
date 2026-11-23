@@ -1,0 +1,3 @@
+pivot 12 30
+hand_top 35
+hip 40

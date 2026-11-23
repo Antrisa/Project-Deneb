@@ -1,6 +1,8 @@
 extends Node2D
 # The player. Position is the point between the feet.
 
+const Poses = preload("res://scripts/player_poses.gd")
+const WalkCycle = preload("res://scripts/walk_cycle.gd")
 const MapData = preload("res://scripts/map_data.gd")
 
 const SPEED := 70.0
@@ -11,9 +13,11 @@ var frozen := false
 var carrying := false
 
 var _sprite: Sprite2D
+var _action_body: Sprite2D
+var _water_arm: Sprite2D
 var _crate: Sprite2D
 var _cam: Camera2D
-var _walk_time := 0.0
+var _walk_distance := 0.0
 var _dir := 0            # column in the sprite sheet
 var _last_phase := -1
 var _slash: Sprite2D
@@ -22,15 +26,15 @@ var _beam: Line2D
 var _beam_time := 0.0
 var _tool: Sprite2D
 var _tool_time := 0.0
-# Farm and mining tools in the hand (21 Nov): the held poses from the tool pack (art/tools/<tool>_<tier>/<view>.png,
-# 96 x 96 with the grip at the centre), moved in code: the hoe lifts and chops, the can tips and pours, the laser
-# kicks back. Painted hand-and-tool frames can replace this later.
+# Tool textures have their grip at the centre. Each pose supplies a native hand position.
 var _held: Sprite2D
 var _held_kind := ""
 var _held_time := 0.0
+var _held_facing := 0
+var _held_length := 0.42
 const HELD_LEN := 0.42
 const HELD_VIEWS := ["south", "north", "west", "east"]                 # by _dir
-const HELD_GRIP := [Vector2(1, -9), Vector2(0, -12), Vector2(-4, -11), Vector2(4, -11)]   # hand, by _dir
+const HELD_GRIP := [Vector2(1, -9), Vector2(0, -12), Vector2(-4, -11), Vector2(4, -11)]   # hand on legacy 8-row sheets, by _dir
 # Where the beam leaves the laser, from grips.csv, relative to the grip in art pixels (same for every tier).
 const LASER_EMITTER := [Vector2(0, 12), Vector2(0, -13), Vector2(-17, -6), Vector2(17, -6)]
 var _flash_time := 0.0
@@ -56,11 +60,24 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = load("res://art/player.png")
 	_sprite.hframes = 4      # columns: down, up, left, right
-	_sprite.vframes = 3      # rows: standing, step A, step B
 	_sprite.centered = false
 	_sprite.position = Vector2(-8, -30)     # sprite frames are 16x32
-	set_sheet(_sprite.texture)
 	add_child(_sprite)
+	_action_body = Sprite2D.new()
+	_action_body.centered = false
+	_action_body.hframes = 4
+	_action_body.vframes = Poses.LEGACY_COUNT
+	add_child(_action_body)
+	_water_arm = Sprite2D.new()
+	_water_arm.centered = false
+	_water_arm.hframes = 4
+	_water_arm.vframes = Poses.WATER_ROWS.size()
+	_water_arm.visible = false
+	add_child(_water_arm)
+	var fallback_actions: Texture2D = null
+	if ResourceLoader.exists("res://art/player_actions.png"):
+		fallback_actions = load("res://art/player_actions.png")
+	set_sheet(_sprite.texture, fallback_actions)
 
 	# The crate shown over the head while carrying (crate tile from tiles.png).
 	_crate = Sprite2D.new()
@@ -142,11 +159,25 @@ func _icon_rect(icon: int) -> Rect2:
 	return Rect2(icon * cell, 0, cell, cell)
 
 
-# Swaps the walk sheet (4 columns x 3 rows, any size) - used by the character screen.
-func set_sheet(tex: Texture2D) -> void:
+# The character screen replaces the whole walk sheet when a look changes.
+func set_sheet(tex: Texture2D, actions: Texture2D = null) -> void:
+	_sprite.frame = 0
 	_sprite.texture = tex
+	_sprite.vframes = WalkCycle.rows(tex)
+	_sprite.frame_coords = Vector2i(_dir, 0)
 	var frame_w: float = tex.get_width() / 4.0
 	_sprite.scale = Vector2.ONE * (16.0 / frame_w)
+	_action_body.frame = 0
+	_action_body.texture = actions
+	_water_arm.texture = null
+	if actions is Poses.ActionSheet:
+		_water_arm.texture = actions.watering_arms
+	elif actions != null and actions.resource_path == "res://art/player_actions.png" and ResourceLoader.exists("res://art/player_watering_arms.png"):
+		_water_arm.texture = load("res://art/player_watering_arms.png")
+	if actions != null:
+		_action_body.vframes = WalkCycle.rows(actions)
+	_action_body.scale = _sprite.scale
+	_refresh_body_pose()
 
 
 # Holds an item out for a moment. icon is its position in art/items.png.
@@ -208,21 +239,14 @@ func fire_laser(target: Vector2, icon: int, tool_id: String = "") -> void:
 	_beam_time = 0.18
 
 
-# Plays a tool action facing the way the player faces. tool_id is a folder in art/tools ("hoe_basic"); kind is
-# "hoe", "water" or "laser". Returns false if there is no art for it (the caller shows the icon instead).
+# Held tool art has its grip in the centre of the texture.
 func tool_action(tool_id: String, kind: String, beam_to: Vector2 = Vector2.INF) -> bool:
 	var path := "res://art/tools/%s/%s.png" % [tool_id, HELD_VIEWS[_dir]]
 	if not ResourceLoader.exists(path):
 		return false
-	_tool.visible = false
-	_held.texture = load(path)
-	_held_kind = kind
-	_held_time = HELD_LEN
-	_held.visible = true
-	_behind(_held, _dir == 1)
-	_animate_held()
+	_start_held(load(path), kind, 0.49 if kind == "scythe" else HELD_LEN)
 	if kind == "laser":
-		var from: Vector2 = HELD_GRIP[_dir] + LASER_EMITTER[_dir] * (2.0 / 3.0)
+		var from: Vector2 = _held.position + LASER_EMITTER[_held_facing] * Poses.ART_SCALE
 		_beam.clear_points()
 		_beam.add_point(from)
 		_beam.add_point(beam_to - position if beam_to != Vector2.INF else from + facing() * 10.0)
@@ -231,39 +255,85 @@ func tool_action(tool_id: String, kind: String, beam_to: Vector2 = Vector2.INF) 
 	return true
 
 
+func show_pickup(picture: Texture2D) -> void:
+	if picture != null:
+		_start_held(picture, "pickup", 0.62)
+
+
+func _start_held(picture: Texture2D, kind: String, duration: float) -> void:
+	_tool.visible = false
+	_held.texture = picture
+	_held_kind = kind
+	_held_facing = _dir
+	_held_length = duration
+	_held_time = duration
+	_held.scale = Vector2.ONE * Poses.ART_SCALE
+	_held.offset = Vector2.ZERO
+	if kind == "pickup":
+		var size := picture.get_size()
+		_held.scale *= minf(1.0, minf(14.0 / size.x, 14.0 / size.y))
+	_held.visible = true
+	_behind(_held, _held_facing == 1 and kind != "pickup")
+	if kind == "water" and _held_facing != 1:
+		move_child(_water_arm, -1)
+	_animate_held()
+	_refresh_body_pose()
+
+
+func _held_pose() -> int:
+	return Poses.tool_row(_held_kind, 1.0 - _held_time / _held_length, _action_body.vframes if _action_body.texture != null else 0)
+
+
 func _animate_held() -> void:
-	var k: float = clampf(1.0 - _held_time / HELD_LEN, 0.0, 1.0)      # 0 at the start, 1 at the end
-	var grip: Vector2 = HELD_GRIP[_dir]
-	var side: float = -1.0 if _dir == 2 else 1.0
-	_held.position = grip
+	var t := clampf(1.0 - _held_time / _held_length, 0.0, 1.0)
+	var row := _held_pose()
+	var side := -1.0 if _held_facing == 2 else 1.0
+	var rows := _action_body.vframes if _action_body.texture != null else 0
+	if rows >= Poses.PREVIOUS_COUNT:
+		_held.position = Poses.world_grip(row, _held_facing, rows)
+	else:
+		var old_row: int = Poses.LEGACY_ROWS[row]
+		_held.position = HELD_GRIP[_held_facing] + Vector2(0, -6 if old_row == 6 else 2 if old_row == 7 else 0)
 	_held.rotation = 0.0
 	_held.flip_v = false
 	match _held_kind:
 		"hoe":
-			if _dir >= 2:
-				# Side view: raise the blade back over the shoulder, then chop down into the tile ahead.
-				var a: float
-				if k < 0.35:
-					a = lerpf(0.0, -1.3, sin(k / 0.35 * PI / 2.0))
-				elif k < 0.6:
-					a = lerpf(-1.3, 0.35, pow((k - 0.35) / 0.25, 2.0))
-				else:
-					a = 0.35
-				_held.rotation = a * side
+			if _held_facing >= 2:
+				# Lift slowly, accelerate through contact, then ease out.
+				var angle := -1.48 * smoothstep(0.0, 0.31, t) + 1.91 * smoothstep(0.35, 0.53, t) - 0.43 * smoothstep(0.79, 1.0, t)
+				_held.rotation = angle * side
 			else:
-				# Front or back: lift (facing us, blade up overhead), then bring it down.
-				var lift: float = -6.0 * sin(k / 0.35 * PI / 2.0) if k < 0.35 else lerpf(-6.0, 2.0, minf(1.0, (k - 0.35) / 0.25))
-				_held.position = grip + Vector2(0, lift)
-				_held.flip_v = _dir == 0 and k < 0.35
+				_held.flip_v = _held_facing == 0 and row == Poses.LIFT
 		"water":
-			# Tip the can over the tile ahead, hold while it pours, tip it back.
-			var tilt: float = smoothstep(0.0, 0.25, k) * (1.0 - smoothstep(0.8, 1.0, k))
-			if _dir >= 2:
-				_held.rotation = 0.7 * tilt * side
-			else:
-				_held.position = grip + Vector2(0, 2.0 * tilt * (1.0 if _dir == 0 else -1.0))
+			_held.offset = -Poses.CAN_RIM[_held_facing] if rows == Poses.COUNT else Vector2.ZERO
+			if rows == Poses.COUNT:
+				var tip := smoothstep(0.43, 0.55, t) * (1.0 - smoothstep(0.73, 0.90, t))
+				if _held_facing >= 2:
+					var lift := smoothstep(0.10, 0.27, t) * (1.0 - smoothstep(0.38, 0.50, t))
+					_held.rotation = side * (0.97 * tip - 0.12 * lift)
+				else:
+					_held.rotation = tip * (0.22 if _held_facing == 0 else -0.18)
+			elif _held_facing >= 2:
+				var tilt := smoothstep(0.06, 0.27, t) * (1.0 - smoothstep(0.76, 0.99, t))
+				_held.rotation = 0.68 * tilt * side
+		"scythe":
+			var sweep := -0.86 + 2.71 * smoothstep(0.20, 0.62, t) - 0.78 * smoothstep(0.78, 1.0, t)
+			_held.rotation = sweep * (-side if _held_facing == 1 else side)
+		"pickup":
+			_held.visible = row == Poses.SHOW_ITEM
+			var grip := Vector2(12.0 if _held_facing < 2 else (10.0 if _held_facing == 2 else 13.0), 5.0)
+			_held.position = (grip - Vector2(Poses.FOOT)) * Poses.ART_SCALE
+			_held.position.y -= _held.texture.get_height() * _held.scale.y * 0.5
 		"laser":
-			_held.position = grip - facing() * 1.5 * (1.0 - smoothstep(0.0, 0.3, k))
+			if _beam.visible and _beam.get_point_count() == 2:
+				_beam.set_point_position(0, _held.position + LASER_EMITTER[_held_facing] * Poses.ART_SCALE)
+
+
+# World position on the actual rotated can, sampled as each droplet leaves the spout.
+func watering_spout() -> Vector2:
+	if _held_kind != "water" or _held_time <= 0.0 or not _held.visible:
+		return Vector2.INF
+	return _held.to_global(_held.offset + Poses.CAN_SPOUT[_held_facing])
 
 
 # Draws a held item behind the body (when facing away) or in front of it.
@@ -313,6 +383,7 @@ func _animate_attack() -> void:
 func set_carrying(value: bool) -> void:
 	carrying = value
 	_crate.visible = value
+	_refresh_body_pose()
 
 
 # Plays the eating animation: the food is lifted to the mouth, eaten, and the hand comes back down (0.58 s).
@@ -344,11 +415,11 @@ func play_eating(look: Dictionary, food: Texture2D = null) -> bool:
 	if not started:
 		return false
 	eating = true
-	_sprite.visible = false
+	_refresh_body_pose()
 	return true
 
 
-# The walk sheet (4 directions x 3 poses), for pictures of the player elsewhere: the datapad's gear page.
+# The gear page takes its standing picture from the first row of the active walk sheet.
 func front_sheet() -> Texture2D:
 	return _sprite.texture
 
@@ -372,7 +443,7 @@ func _look_colour(look: Dictionary, key: String) -> Color:
 
 func _eating_done() -> void:
 	eating = false
-	_sprite.visible = not sitting
+	_refresh_body_pose()
 
 
 func _process(delta: float) -> void:
@@ -408,14 +479,18 @@ func _process(delta: float) -> void:
 		_beam.default_color = Color(1.0, 0.35, 0.3) if int(_beam_time * 40.0) % 2 == 0 else Color(1.0, 0.85, 0.8)
 		if _beam_time <= 0.0:
 			_beam.visible = false
-	if frozen or eating:
-		_sprite.frame_coords = Vector2i(_dir, 0)
+	_move_player(delta)
+	_refresh_body_pose()
+
+
+func _move_player(delta: float) -> void:
+	if frozen or eating or sitting:
+		_stop_walking()
 		return
 
 	var dir: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if dir == Vector2.ZERO:
-		_walk_time = 0.0
-		_sprite.frame_coords = Vector2i(_dir, 0)
+		_stop_walking()
 		return
 
 	if absf(dir.x) > absf(dir.y):
@@ -423,6 +498,7 @@ func _process(delta: float) -> void:
 	else:
 		_dir = 1 if dir.y < 0.0 else 0
 
+	var start := position
 	var speed: float = CARRY_SPEED if carrying else SPEED
 	var step: Vector2 = dir * speed * delta
 	var next_x: Vector2 = position + Vector2(step.x, 0)
@@ -432,16 +508,54 @@ func _process(delta: float) -> void:
 	if not _blocked(next_y):
 		position = next_y
 
-	# Walk cycle: step A, standing, step B, standing.
-	_walk_time += delta
-	var cycle: Array = [1, 0, 2, 0]
-	var phase: int = int(_walk_time * 8.0) % 4
-	var row: int = cycle[phase]
-	_sprite.frame_coords = Vector2i(_dir, row)
-	# A footstep each time a foot comes down.
-	if phase != _last_phase and row != 0:
+	var distance := start.distance_to(position)
+	if is_zero_approx(distance):
+		_stop_walking()
+		return
+	_walk_distance = fmod(_walk_distance + distance, WalkCycle.STRIDE)
+	var beat := WalkCycle.phase(_walk_distance)
+	_sprite.frame_coords = Vector2i(_dir, WalkCycle.pose(beat, _sprite.vframes))
+	if beat != _last_phase and beat % 2 == 0:
 		world.sfx("step", randf_range(0.85, 1.15), -9.0)
-	_last_phase = phase
+	_last_phase = beat
+
+
+func _stop_walking() -> void:
+	_walk_distance = 0.0
+	_last_phase = -1
+	_sprite.frame_coords = Vector2i(_dir, 0)
+
+
+# The walk sprite remains the source of direction, contact row, and the datapad picture.
+func _refresh_body_pose() -> void:
+	var visible_body := not sitting and not eating
+	var can_pose := visible_body and _action_body.texture != null
+	var row := -1
+	var dir := _dir
+	if can_pose and carrying:
+		row = _sprite.frame_coords.y
+	elif can_pose and _held_time > 0.0:
+		row = _held_pose()
+		dir = _held_facing
+		if _action_body.vframes == Poses.LEGACY_COUNT:
+			row = Poses.LEGACY_ROWS[row]
+	_action_body.visible = row >= 0
+	_sprite.visible = visible_body and row < 0
+	if row >= 0:
+		_action_body.frame_coords = Vector2i(dir, row)
+		_action_body.position = _sprite.position
+		_action_body.modulate = _sprite.modulate
+	var water_index := Poses.WATER_ROWS.find(row) if _held_kind == "water" else -1
+	_water_arm.visible = water_index >= 0 and dir != 1 and _water_arm.texture != null
+	if _water_arm.visible:
+		_water_arm.transform = _action_body.transform
+		_water_arm.modulate = _action_body.modulate
+		_water_arm.frame_coords = Vector2i(dir, water_index)
+	if carrying and _crate != null:
+		var bob := 2.0 / 3.0 if row in [1, 2] else 0.0
+		var weight := (1 if row == 3 else -1 if row == 4 else 0) * (1 if dir == 0 else -1)
+		_crate.position.x = -8.0 + (weight * Poses.ART_SCALE if dir < 2 and can_pose else 0.0)
+		_crate.position.y = -42.0 + bob if can_pose else -44.0
 
 
 func _blocked(p: Vector2) -> bool:
@@ -480,7 +594,7 @@ func set_sitting(value: bool, direction: int = 0) -> void:
 	if value:
 		seat_pants = _seat_palette(21,26,seat_pants)
 		seat_boots = _seat_palette(27,32,seat_boots)
-	_sprite.visible = not value
+	_refresh_body_pose()
 	z_index = 1 if value else 0
 	if not value: sit_blend = 0.0
 	queue_redraw()

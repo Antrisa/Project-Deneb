@@ -1,0 +1,13 @@
+guard r
+eat d
+walk_stop d
+guard d
+guard u
+guard l
+eat u
+eat l
+eat r
+walk_stop u
+walk_stop l
+walk_stop r
+sleep d

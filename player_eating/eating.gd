@@ -34,15 +34,15 @@ const ATLAS := [
 ]
 
 @export_range(1, 2, 1) var body_type := 1
-@export_range(0, 9, 1) var hair_style := 4
+@export_range(0, 9, 1) var hair_style := 0
 @export_range(0, 9, 1) var face_style := 0
-@export_range(0, 9, 1) var top_style := 0
-@export_range(0, 9, 1) var bottom_style := 0
-@export var hair_color := Color8(95, 63, 43)
-@export var skin_color := Color8(165, 125, 91)
-@export var eye_color := Color8(72, 156, 167)
-@export var top_color := Color8(80, 129, 140)
-@export var bottom_color := Color8(93, 102, 118)
+@export_range(0, 9, 1) var top_style := 2
+@export_range(0, 9, 1) var bottom_style := 1
+@export var hair_color := Color8(130, 72, 46)
+@export var skin_color := Color8(245, 184, 138)
+@export var eye_color := Color8(66, 97, 58)
+@export var top_color := Color8(88, 104, 106)
+@export var bottom_color := Color8(81, 69, 75)
 
 var is_eating := false
 var _facing := 0
@@ -73,7 +73,7 @@ func play_eating(direction: StringName, item_icon: Texture2D = EXAMPLE_FOOD) -> 
 		return false
 	if body_type < 1 or body_type > 2:
 		return false
-	var styles := [bottom_style, face_style, top_style, hair_style, 0]
+	var styles := [bottom_style, face_style, top_style, hair_style, top_style]
 	for style in styles:
 		if style < 0 or style > 9:
 			return false
@@ -84,13 +84,14 @@ func play_eating(direction: StringName, item_icon: Texture2D = EXAMPLE_FOOD) -> 
 		var pair: Array = ATLAS[body_type - 1][i]
 		part.texture = pair[0]
 		part.hframes = 4
-		part.vframes = 4 if i == 4 else 40
+		part.vframes = int(part.texture.get_height() / 68)
 		var mat := part.material as ShaderMaterial
 		mat.set_shader_parameter("tint_mask",pair[1])
 		mat.set_shader_parameter("fabric",fabrics[i])
 		mat.set_shader_parameter("skin",skin_color)
 		mat.set_shader_parameter("eyes",eye_color)
-		part.frame_coords = Vector2i(_facing, styles[i]*4)
+		var style: int = styles[i] if part.vframes > 4 else 0
+		part.frame_coords = Vector2i(_facing, style * 4)
 	# Echo Landing: the layers are stacked by drawing order instead of z_index (the pack used 0, 2, 4, 6, 8 and
 	# 10 for the food), because a z_index lifts the animation above the y-sorted residents and the roof edges
 	# that should cover the player. Bottoms, face, top, hair, arm, food; from behind, the arm goes under the hair.

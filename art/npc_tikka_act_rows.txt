@@ -1,0 +1,17 @@
+console u
+eat d
+tinker d
+rest r
+console d
+console l
+console r
+eat u
+eat l
+eat r
+tinker u
+tinker l
+tinker r
+rest d
+rest u
+rest l
+sleep d

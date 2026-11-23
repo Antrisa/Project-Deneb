@@ -18,7 +18,7 @@ func run() -> void:
 			if r.area=="main" and r._act in ["garden","chess","hologame","observe","read","restock"]:
 				assert(r._settled)
 				r._idle(0.1)
-				assert(r.activity_pose!=null)
+				assert(r.activity_pose!=null and r.activity_pose.has_painted_pose())
 				if r._act in ["chess","hologame"]:
 					assert(r.self_modulate.a==0)
 					r._unsettle()

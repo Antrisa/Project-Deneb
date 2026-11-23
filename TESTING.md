@@ -7,6 +7,8 @@ python3 tests/check_routes.py
 godot --headless --editor --import --quit
 godot --headless --script res://tests/concourse_test.gd
 godot --headless --script res://tests/player_art_test.gd
+godot --headless --script res://tests/player_model_test.gd
+godot --headless --script res://tests/walk_cycle_test.gd
 godot --headless --script res://tests/social_test.gd
 godot --headless --script res://tests/paving_test.gd
 ```

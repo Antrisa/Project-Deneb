@@ -1,0 +1,17 @@
+weave d
+eat d
+chat l
+rest l
+weave u
+weave l
+weave r
+eat u
+eat l
+eat r
+chat d
+chat u
+chat r
+rest d
+rest u
+rest r
+sleep d

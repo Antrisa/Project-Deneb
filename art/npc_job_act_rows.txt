@@ -1,0 +1,17 @@
+mine u
+eat d
+drink u
+rest d
+mine d
+mine l
+mine r
+eat u
+eat l
+eat r
+drink d
+drink l
+drink r
+rest u
+rest l
+rest r
+sleep d

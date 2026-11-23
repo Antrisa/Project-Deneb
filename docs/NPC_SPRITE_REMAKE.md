@@ -1,13 +1,15 @@
 # Echo Landing: NPC sprite remake at 24×48
 
+The playable roster in `art/` now uses Freya’s approved Soft Indie treatment across all 27 scheduled residents. Every regular route includes an animated meal and an occupation. The supplementary clothing sheets and S.A.R.A.’s stationary hologram have matching world sprites. The reference pack and its starter templates below describe the earlier conversion stage.
+
 Echo Landing's residents are being redrawn at **24×48 pixels** (Stardew Valley's are 16×32; we're aiming for about 1.5× its detail). The designs stay the same. This pack has everything ChatGPT, or any image tool, needs to remake each resident's **walk sheet** and **action sheet** at the new size.
 
 | | |
 |---|---|
 | `NPC_LIST.csv` | All 24 residents: who they are, the exact file names, the sizes, and each one's action rows in order. |
 | `<id>/references/` | The current art at the old size: walk sheet (32×64 frames), action sheet (48×64 frames) and portrait. **Match these designs.** |
-| `<id>/starters/` | The same sheets shrunk automatically to the new size. **This is what the game shows right now.** It has the exact layout and size, but the shrinking blurs faces and drops thin lines. Redraw over it, or use it as a size guide. |
-| `TEMPLATE_walk_96x144_at8x.png` | The walk sheet's grid at 8× zoom, with each frame's label, the centre line and the feet line. |
+| `<id>/starters/` | The same sheets shrunk automatically to the new size. These are the original three-row starters. The current walk format appears below. Redraw over it, or use it as a size guide. |
+| `TEMPLATE_walk_96x144_at8x.png` | The original three-row guide at 8×. Use the current five-row PNG in `art/` for new walk frames. |
 | `TEMPLATE_actions_144xN_at8x.png` | The same for action sheets. |
 
 Portraits (128×128, six moods) are **not** being remade: they belong to the interface and keep their size. Use them as the reference for each face. The player character isn't in this pack (it's built from layers; see Art Handoff 1).
@@ -16,10 +18,10 @@ Portraits (128×128, six moods) are **not** being remade: they belong to the int
 
 ## The two sheets
 
-### Walk sheet: `art/npc_<id>.png`, exactly **96 × 144**
-- **4 columns × 3 rows**, each frame **24 × 48**.
+### Walk sheet: `art/npc_<id>.png`, exactly **96 × 240**
+- **4 columns × 5 rows**, each frame **24 × 48**.
 - **Columns, left to right:** facing **down** (toward the viewer), **up** (back to the viewer), **left**, **right**.
-- **Rows, top to bottom:** **standing**, **step A** (left foot forward), **step B** (right foot forward). The game plays step A, standing, step B, standing.
+- **Rows, top to bottom:** **standing**, **contact A**, **contact B**, **passing A**, **passing B**. Walking plays rows **1, 3, 2, 4**. On each contact the opposite arm swings forward. During the next passing pose the body rises one pixel over the planted foot and the trailing knee lifts.
 - **Height:** adults stand about **40–44 px** tall; children about **30–34 px**. Small species like the Moogli are shorter; tall ones like the Zaa'sh can reach about 46. Leave room for hair, ears and hats.
 - **Feet:** on the bottom-centre of every frame, **2 px above the bottom edge** (the blue line in the template). Keep them in the same spot in every frame, so the character doesn't jitter.
 
@@ -44,11 +46,11 @@ Portraits (128×128, six moods) are **not** being remade: they belong to the int
 ---
 
 ## Making a sheet with ChatGPT
-1. **One resident per chat.** Paste their `references/walk_old_32x64.png`, `references/portrait.png` and the walk template.
+1. **One resident per chat.** Use the current five-row walk PNG with the resident’s `references/portrait.png`.
 2. **Prompt** (fill in from `NPC_LIST.csv`):
-   > Pixel art sprite sheet for a cozy sci-fi life sim, about 1.5× Stardew Valley's level of detail, original design (not a copy). Redraw the attached character exactly, same design and colours, at the new size. Layout: 4 columns × 3 rows of 24×48-pixel frames. Columns: facing down, up, left, right. Rows: standing, left foot forward, right foot forward. Feet at the bottom centre of each frame, 2 px above the bottom, the same in every frame. Big head, 1-px dark blue-grey outline, light from top-left, 3–5 shades per colour, hard pixels, no anti-aliasing, flat #FF00FF background. Draw each art pixel as an 8×8 block. Character: **[who they are, from the list]**.
+   > Pixel art sprite sheet for a cozy sci-fi life sim, about 1.5× Stardew Valley's level of detail, original design (not a copy). Redraw the attached character exactly, same design and colours, at the new size. Layout: 4 columns × 5 rows of 24×48-pixel frames. Columns: facing down, up, left, right. Rows: standing, contact A, contact B, passing A, passing B. Swing opposite arms and legs. Lift the trailing foot in each passing pose. Feet at the bottom centre of each frame, 2 px above the bottom, the same in every frame. Big head, 1-px dark blue-grey outline, light from top-left, 3–5 shades per colour, hard pixels, no anti-aliasing, flat #FF00FF background. Draw each art pixel as an 8×8 block. Character: **[who they are, from the list]**.
 3. **Then:**
-   > Using Python, downscale to exactly 96×144 with nearest-neighbour, turn #FF00FF transparent, and give me the PNG.
+   > Using Python, downscale to exactly 96×240 with nearest-neighbour, turn #FF00FF transparent, and give me the PNG.
 4. **For the action sheet,** paste `references/actions_old_48x64.png` and the action template:
    > Same character, action sheet: 4 frames across of 36×48 pixels, one row per action, in this order: **[action rows from the list]**. Each row is a short loop of that action, facing as listed.
 
