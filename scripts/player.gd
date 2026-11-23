@@ -597,9 +597,10 @@ func _refresh_body_pose() -> void:
 		_water_arm.modulate = _action_body.modulate
 		_water_arm.frame_coords = Vector2i(dir, water_index)
 	if carrying and _crate != null:
-		var bob := 2.0 / 3.0 if row in [1, 2] else 0.0
-		var weight := (1 if row == 3 else -1 if row == 4 else 0) * (1 if dir == 0 else -1)
-		_crate.position.x = -8.0 + (weight * Poses.ART_SCALE if dir < 2 and can_pose else 0.0)
+		# walking toward or away from the camera the body drops a pixel on the contact steps and
+		# rises one on the passing steps (tools/fix_player_walk.py); from the side it only drops
+		var bob := Poses.ART_SCALE if row in [1, 2] else (-Poses.ART_SCALE if row in [3, 4] and dir < 2 else 0.0)
+		_crate.position.x = -8.0
 		_crate.position.y = -42.0 + bob if can_pose else -44.0
 
 
