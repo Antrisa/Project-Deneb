@@ -27,6 +27,10 @@ for ar in d['AREAS'].values():
 for who,stops in d['SCHEDULES'].items():
     for e in stops:
         if e[1]=='main':assert (e[2],e[3]) in seen,('unreachable resident',who,e)
+for who,days in d.get('SCHEDULE_DAYS',{}).items():
+    for when,stops in days:
+        for e in stops:
+            if e[1]=='main':assert (e[2],e[3]) in seen,('unreachable resident on a special day',who,when,e)
 print('PASS: final map doorways, return landings and resident stops are connected;',len(seen),'reachable concourse tiles.')
 # Buildings must never stamp rectangular solids across the residential ring.
 import math

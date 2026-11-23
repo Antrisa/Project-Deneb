@@ -2685,8 +2685,77 @@ for who, rows in SCHEDULES_ALT_RAW.items():
     SCHEDULES_ALT[who] = out
 
 
+# Days that run differently by weekday, season or what the story has opened (22 Nov; Zachary: residents need
+# time off work, "Saturday and Sunday no work", and their weeks change as new places unlock, like the east
+# garden dome). main.gd starts each morning from the resident's usual day (SCHEDULES) and takes the LAST entry
+# here whose "when" fits today, so list the plain days first and the ones that need a story flag after them.
+#   when:  "days": weekdays (0 = Monday ... 5 = Saturday, 6 = Sunday); "seasons": ["Spring", "Summer", ...];
+#          "flags": story flags that must be set (main.gd _flag()); "not": flags that must not be set.
+#          Leave a key out to match any day.
+#   stops: as in SCHEDULES_RAW, plus the row of their action sheet to play there (tests want one at every stop).
+#   bed:   bedtime that day (default: their BEDTIMES entry, or BEDTIME). They sleep in their own bed.
+# Spots on the main level are written in the OLD main-level coordinates, like SCHEDULES_RAW.
+SCHEDULE_DAYS_RAW = {
+    # Freya (22 Nov): weekends off. Saturday: a lie-in, her own bench at home, Bram's shop, the fountain and a
+    # late night at the bar. Sunday: a late breakfast, the Star dome bench (her father Jorvik's spot), the
+    # fountain, her bench, home early. Once the garden dome is open her afternoons go there instead: the meadow
+    # on Saturday, the hot springs on Sunday. (Her home is a long walk from everything: about 45 minutes to the
+    # mess hall, 90 from the Star dome to the hot springs.)
+    "Freya": [
+        {"when": {"days": [5]}, "bed": "23:00", "stops": [
+            ("08:30", "home4", 13, 5, 26, "u", "work", "hammer"), ("11:00", "bram", 5, 4, 26, "r", "idle", "rest"),
+            ("12:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("14:00", "main", 81, 60, 26, "r", "idle", "rest"),
+            ("17:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("19:15", *HOME_SPOTS["Freya at the bar"], 26, "u", "idle", "drink")]},
+        {"when": {"days": [6]}, "bed": "22:00", "stops": [
+            ("09:00", "mess", 24, 7, 26, "d", "eat", "eat"), ("10:45", "west", 56, 10, 26, "u", "idle", "rest"),
+            ("13:30", "main", 81, 60, 26, "r", "idle", "rest"), ("15:30", "home4", 13, 5, 26, "u", "work", "hammer"),
+            ("17:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Freya"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "flags": ["east_dome"]}, "bed": "23:00", "stops": [
+            ("08:30", "home4", 13, 5, 26, "u", "work", "hammer"), ("11:00", "bram", 5, 4, 26, "r", "idle", "rest"),
+            ("12:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("14:00", "east", 126, 36, 26, "u", "idle", "rest"),
+            ("17:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("19:15", *HOME_SPOTS["Freya at the bar"], 26, "u", "idle", "drink")]},
+        {"when": {"days": [6], "flags": ["east_dome"]}, "bed": "22:00", "stops": [
+            ("09:00", "mess", 24, 7, 26, "d", "eat", "eat"), ("10:45", "west", 56, 10, 26, "u", "idle", "rest"),
+            ("13:00", "east", 177, 63, 26, "r", "idle", "rest"),
+            ("17:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Freya"], 26, "d", "idle", "rest")]},
+    ],
+}
+SCHEDULE_DAYS = {}
+for who, days_ in SCHEDULE_DAYS_RAW.items():
+    SCHEDULE_DAYS[who] = []
+    for v_ in days_:
+        assert set(v_["when"]) <= {"days", "seasons", "flags", "not"}, ("unknown key in when", who, v_["when"])
+        rows = list(v_["stops"])
+        spot_ = sleep_spot(who)
+        if spot_ is not None:
+            bed_ = v_.get("bed", BEDTIMES.get(who, BEDTIME))
+            assert bed_ > rows[-1][0], ("bedtime before their last stop", who, v_["when"])
+            rows.append((bed_, *spot_, 26, "d", "sleep", "sleep"))
+        out = []
+        for (hm, a, x, y, r, face_, act, key) in rows:
+            a, x, y = moved(a, x, y)
+            assert face_ in "dulr" and act in ("work", "eat", "idle", "sleep"), (who, face_, act)
+            row = -1
+            if key:
+                label = key + " " + face_
+                assert label in ACTION_ROWS[who], ("no such row on their action sheet", who, label)
+                row = ACTION_ROWS[who].index(label)
+            out.append([int(hm[:2]) * 60 + int(hm[3:]), a, x, y, r, face_, act, row])
+        assert out == sorted(out, key=lambda e: e[0]), ("stops out of order", who, v_["when"])
+        SCHEDULE_DAYS[who].append([v_["when"], out])
+
+
+def every_day():
+    """Every day a resident can have: (who, stops) for their usual day and each of their SCHEDULE_DAYS."""
+    for who_, rows_ in SCHEDULES.items():
+        yield who_, rows_
+    for who_, days_ in SCHEDULE_DAYS.items():
+        for when_, rows_ in days_:
+            yield who_, rows_
+
+
 # Beds are two tiles long: wherever there is room, the foot ("B") goes on the tile below the head ("b").
-_keep_clear = {(e[1], e[2], e[3]) for rows_ in SCHEDULES.values() for e in rows_} | {(p[1], p[2], p[3]) for p in PEOPLE} | {tuple(START)}
+_keep_clear = {(e[1], e[2], e[3]) for _w, rows_ in every_day() for e in rows_} | {(p[1], p[2], p[3]) for p in PEOPLE} | {tuple(START)}
 _keep_clear |= {(e[1], e[2], e[3]) for rows_ in SCHEDULES_ALT.values() for e in rows_}
 _keep_clear |= {(wp[2], wp[3], wp[4]) for ar_ in A.values() for wp in ar_.warps}
 for k_, ar_ in A.items():
@@ -2729,7 +2798,7 @@ WRECK = WRECK_SPOT                    # bottom-centre of the ship sprite (tools/
 # ---------------------------------------------------------------- set dressing, second pass
 # New furniture and clutter (the DRESS objects), placed by rule so nothing can block a way through:
 # a thing against a wall needs open floor on its other sides; a thing in the open needs open floor all round.
-_keep = {(e[1], e[2], e[3]) for rows_ in SCHEDULES.values() for e in rows_} | {(p[1], p[2], p[3]) for p in PEOPLE} | {tuple(START)}
+_keep = {(e[1], e[2], e[3]) for _w, rows_ in every_day() for e in rows_} | {(p[1], p[2], p[3]) for p in PEOPLE} | {tuple(START)}
 _keep |= {(k_, w_[0], w_[1]) for k_, ar_ in A.items() for w_ in ar_.warps} | {(w_[2], w_[3], w_[4]) for ar_ in A.values() for w_ in ar_.warps}
 _keep |= {(t_[3], t_[4][0] // 16, t_[4][1] // 16) for t_ in THINGS}
 DRESSED = []
@@ -2851,7 +2920,7 @@ for (item, a, x, y, *_) in NODES:
 for (kind, a, x, y) in ENEMIES:
     assert (a, x, y) in seen, ("creature on a bad tile", kind, a, x, y)
 spots = {}
-for who, rows in SCHEDULES.items():
+for who, rows in every_day():
     for (t_, a, x, y, r, face_, act, row_) in rows:
         if act == "sleep":
             # in bed: the foot row of a bed is a prop's solid tile, got into from the floor beside it
@@ -2889,7 +2958,7 @@ def walk_length(src, dst):
 
 
 LONGEST_WALK = ["", 0]
-for who, rows in SCHEDULES.items():
+for who, rows in every_day():
     for i, e in enumerate(rows):
         prev = rows[i - 1]
         steps = walk_length((prev[1], prev[2], prev[3]), (e[1], e[2], e[3]))
@@ -3051,6 +3120,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const MAP_MARKS = " + json.dumps(MAP_MARKS) + "\n")
     f.write("const SCHEDULES = {\n" + "".join("\t" + json.dumps(k) + ": " + json.dumps(v) + ",\n" for k, v in SCHEDULES.items()) + "}\n")
     f.write("const SCHEDULES_ALT = " + json.dumps(SCHEDULES_ALT) + "\n")
+    f.write("const SCHEDULE_DAYS = " + json.dumps(SCHEDULE_DAYS) + "\n")
     f.write("const THINGS = " + json.dumps(THINGS) + "\n")
     f.write("const AREAS = {\n")
     for k, d in areas.items():

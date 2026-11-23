@@ -94,6 +94,8 @@ func run() -> void:
 			works = works or stop[6] == "work" or pose in ["restock", "guard"]
 		check(eats and works, "%s has a playable meal and occupation on the regular route" % who)
 		var stops: Array = MapData.SCHEDULES[who] + MapData.SCHEDULES_ALT.get(who, [])
+		for v in MapData.SCHEDULE_DAYS.get(who, []):
+			stops += v[1]
 		for stop in stops:
 			var row := int(stop[7])
 			check(row >= 0 and row < labels.size() and str(labels[row]).ends_with(" " + str(stop[5])), "%s has a matching pose at %s" % [who, stop[1]])

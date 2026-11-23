@@ -160,20 +160,18 @@ A gardener without a garden, until there is one.
 
 ### 3.3 Freya (Human, Junior Shipwright)
 
-Stepping out of her late father's shadow.
+Stepping out of her late father's shadow. **Reviewed with Zachary on 22 Nov; full scenes in [`characters/FREYA.md`](characters/FREYA.md)** (Claude drafts around his lines).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | The Stubborn Heating Pump | Engineering, 10:00–15:00 | A jammed valve; her father could tune them by ear. | Script |
-| 4 | Blueprints in the Attic | Shipwright's Suite; backup: her father's locker in the bay | His unfinished FTL stabilizer plans. | Short |
-| 6 | Test Flight | Shuttle Bay at dusk; waits for your ship to fly | EVA test of the stabilizer. Unlocks the Pioneer Stabilizer. | Short |
-| 8 | Stargazing on the Hull (confession) | Shuttle Bay catwalk after 20:00 | She counts the minutes until you dock. Perk: Master Mechanic. | Script |
-| 10 | Christening the Suite | Shipwright's Suite; backup: her work area in the bay | The "Echo Landing Shipwrights" sign, with Tikka, Sesska and Ana (if arrived). Keepsake: wrench pendant. | Outline |
+| 2 | The Stubborn Heating Pump | Engineering, 16:30–17:30 | A jammed valve; Jorvik could tune them by ear. | Script |
+| 4 | Dad's Workbench | Her home (East Home 4), at her bench on a weekend | She opens Jorvik's toolbox: his stabilizer plans and the notes on what went wrong. | Script (Claude) |
+| 6 | Test Flight | Shuttle Bay at dusk, then past the launch doors; after her parts request | The same wobble starts; his note saves it. She joins your crew. Unlocks the Pioneer Stabilizer. | Script (Claude) |
+| 8 | Under the Star Dome (confession) | Star dome bench after 20:00 | Jorvik's bench. Perk: Master Mechanic. Accept, decline and friendship endings written. | Script |
+| 10 | Christening the Suite | The Suite, opened for the first time since Jorvik died (or outside its sealed door) | ECHO LANDING SHIPWRIGHTS, JORVIK & FREYA; a pendant from his wrench. | Script (Claude) |
 
-- **Decided (Zachary, 22 Nov):** her father, **Jorvik**, died testing an earlier version of the same stabilizer. She joins your crew after Test Flight (6). Event 4 is renamed (no attic). Her 2 happens in Engineering.
-- **Gap:** 4 and 6 have one line each and no choice.
-- **Idea:** the status doc has Freya joining your crew at 6 hearts; no scene marks it. "Test Flight" is the natural moment for her to ask to fly with you.
-- **Clash:** the script's 2 says "Engineering / Shuttle Bay"; the Master says Engineering. 4's title says "Attic", but there's no attic.
+- **Decided (Zachary, 22 Nov):** her father, **Jorvik**, died testing an earlier version of the same stabilizer; the Suite has been locked since. She joins your crew after Test Flight. Her events move off the job. She has weekends off, and her week changes as places open: weekend days are in the game (`SCHEDULE_DAYS_RAW` in `tools/build.py`).
+- Still open: how long ago Jorvik died, and whether to keep the parts request before 6.
 
 ### 3.4 Job (Human, Heavy Miner)
 

@@ -264,6 +264,13 @@ var cav_static_nodes := 0          # ore_nodes from MapData; the floor's own com
 var cav_sprites: Array = []
 var cav_enemies: Array = []
 var harbinger_slain := false
+# What the story has opened that has no state of its own yet (saved): "east_dome" (the garden dome in the East
+# Complex), and later the Shipwright's Suite, the hotel and so on. _flag() reads these and the ones the game
+# already keeps. Residents' weekly days (MapData.SCHEDULE_DAYS) change with them.
+var story_flags := {}
+# Places the story opens. Nothing opens them in play yet (the Custodians' bundles will); in debug builds F5
+# opens or closes them all, to test residents' days (22 Nov).
+const PLACE_FLAGS := ["east_dome"]
 var hurt_cd := 0.0                 # seconds until the player can be hurt again
 var swing_cd := 0.0                # seconds until the player can swing again
 var tunnel_kills := 0
@@ -632,6 +639,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			if ship_hull <= 0:
 				ship_hull = _hull_max()
 			_start_run()
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F5 and OS.is_debug_build():
+		# Debug: open or close every place in PLACE_FLAGS, and put the residents where today's schedule says.
+		var now_open := not _flag(PLACE_FLAGS[0])
+		for f in PLACE_FLAGS:
+			story_flags[f] = now_open
+		_snap_residents()
+		_toast("Debug: story places %s (%s)" % ["open" if now_open else "closed", ", ".join(PackedStringArray(PLACE_FLAGS))])
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10:
 		overview = not overview
@@ -1198,11 +1213,45 @@ func _snap_residents() -> void:
 			var days: Array = MapData.VISITOR_DAYS[r.who]
 			gone = gone or not (days.has(weekday) or days.has(float(weekday)))
 		r.away = gone
-		if MapData.SCHEDULES_ALT.has(r.who):
-			r.schedule = MapData.SCHEDULES_ALT[r.who] if _first_days(r.who) else MapData.SCHEDULES[r.who]
-		elif WELCOME_SCHEDULE.has(r.who):
-			r.schedule = _welcome_schedule(r.who) if (day == 1 and not welcomed) else MapData.SCHEDULES[r.who]
+		if MapData.SCHEDULES_ALT.has(r.who) and _first_days(r.who):
+			r.schedule = MapData.SCHEDULES_ALT[r.who]
+		elif WELCOME_SCHEDULE.has(r.who) and day == 1 and not welcomed:
+			r.schedule = _welcome_schedule(r.who)
+		else:
+			r.schedule = _day_schedule(r.who)
 		r.snap(minutes)
+
+
+# A resident's day: their usual one (MapData.SCHEDULES), or the last of their MapData.SCHEDULE_DAYS that fits
+# today: weekends off, seasons, places the story has opened (tools/build.py SCHEDULE_DAYS_RAW).
+func _day_schedule(who: String) -> Array:
+	var pick: Array = MapData.SCHEDULES[who]
+	var weekday: int = (day - 1) % 7
+	var season: String = str(BridgeScript.season_date(day)[0])
+	for v in MapData.SCHEDULE_DAYS.get(who, []):
+		var cond: Dictionary = v[0]
+		if cond.has("days") and not (cond["days"].has(weekday) or cond["days"].has(float(weekday))):
+			continue
+		if cond.has("seasons") and not cond["seasons"].has(season):
+			continue
+		var fits := true
+		for f in cond.get("flags", []):
+			fits = fits and _flag(f)
+		for f in cond.get("not", []):
+			fits = fits and not _flag(f)
+		if fits:
+			pick = v[1]
+	return pick
+
+
+# A story flag: the ones the game already keeps, or story_flags.
+func _flag(flag_name: String) -> bool:
+	match flag_name:
+		"ship_flown": return flights > 0
+		"ivan_defeated": return artie_found_day >= 0
+		"ana_rescued": return ana_found_day >= 0
+		"harbinger_slain": return harbinger_slain
+	return bool(story_flags.get(flag_name, false))
 
 
 # Wave 1 arrives after Ivan (artie_found_day = D): Artie wakes in the Medbay on D+1, the first visitor transport
@@ -4652,6 +4701,7 @@ func _save_game() -> void:
 	cfg.set_value("game", "cav_lift", cav_lift)
 	cfg.set_value("game", "cav_deepest", cav_deepest)
 	cfg.set_value("game", "harbinger_slain", harbinger_slain)
+	cfg.set_value("game", "story_flags", story_flags)
 	cfg.set_value("game", "board_taken_day", board_taken_day)
 	cfg.set_value("game", "board_done_day", board_done_day)
 	cfg.set_value("game", "caverns_open", caverns_open)
@@ -4736,6 +4786,7 @@ func _load_game() -> void:
 	cav_lift = int(cfg.get_value("game", "cav_lift", 0))
 	cav_deepest = int(cfg.get_value("game", "cav_deepest", 0))
 	harbinger_slain = bool(cfg.get_value("game", "harbinger_slain", false))
+	story_flags = cfg.get_value("game", "story_flags", {})
 	board_taken_day = int(cfg.get_value("game", "board_taken_day", 0))
 	board_done_day = int(cfg.get_value("game", "board_done_day", 0))
 	# Saves from before Vzz'ket's letter (23 Nov): if you had cleared the tunnels, the gate was already open.
