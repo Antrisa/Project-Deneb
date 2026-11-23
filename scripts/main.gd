@@ -40,6 +40,7 @@ const MessWindow = preload("res://scripts/mess_window.gd")
 const BayWindow = preload("res://scripts/bay_window.gd")
 const LoungeSky = preload("res://scripts/lounge_sky.gd")
 const CalendarScript = preload("res://scripts/station_calendar.gd")
+const MuseumScript = preload("res://scripts/museum_donate.gd")
 var station_calendar
 
 const CreatorScript = preload("res://scripts/creator.gd")
@@ -126,6 +127,7 @@ var ship_weapons: Array = ["burst_laser", ""]    # what's fitted in each weapon 
 var said_goodbye := false          # the send-off at launch has played
 var said_run_hint := false         # S.A.R.A. has explained free flights
 var relics_found: Array = []       # relic item ids you have ever held (so ships don't drop the same one twice)
+var museum_view                    # scripts/museum_donate.gd: choosing cases for relics
 var museum_gifts: Dictionary = {}  # museum case (index into MapData.MUSEUM_SLOTS, as a string) -> relic item id
 var ana_found_day := -1            # the day you pulled Ana out of her ship (the Wave 2 arrival counts from it)
 var garden_watered_day := -1
@@ -345,6 +347,9 @@ func _ready() -> void:
 	add_child(ship_store)
 	station_calendar = CalendarScript.new()
 	add_child(station_calendar)
+	museum_view = MuseumScript.new()
+	museum_view.world = self
+	add_child(museum_view)
 	_load_game()
 	wreck_sprite.frame = repair_stage
 	_go_home()
@@ -548,6 +553,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if station_calendar != null and station_calendar.open:
 		station_calendar.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
+	if museum_view != null and museum_view.open:
+		if not dialogue.active:
+			museum_view.handle_input(event)
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("new_game"):
@@ -1486,9 +1496,9 @@ func _interact(t: Dictionary) -> void:
 		if not company.is_empty():
 			_say(t.name,["%s are using this table. You watch their next move; the other table may be free." % ", ".join(company)])
 		else: community_game.start()
-	elif current_area == "museum" and kind == "look" and t.name == "Tar'Besh's desk" and _first_relic() != "":
+	elif current_area == "museum" and kind == "look" and t.name == "Tar'Besh's desk" and (_first_relic() != "" or not museum_gifts.is_empty()):
 		_offer_relic("Tar'Besh's desk")
-	elif current_area == "museum" and kind == "look" and _use_museum_case(t.pos):
+	elif current_area == "museum" and kind == "look" and _look_museum_case(t.pos):
 		pass
 	elif current_area == "bay" and kind == "look" and t.name == "Hangar windows":
 		_say(t.name, [BayWindow.OBSERVATIONS[BayWindow.view_for(day)]])
@@ -3275,10 +3285,10 @@ func _toast(msg: String) -> void:
 func _process(delta: float) -> void:
 	if music_director != null:
 		music_director.update(delta)
-	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (datapad != null and datapad.blocking())
+	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (datapad != null and datapad.blocking())
 	if datapad != null:
 		# The datapad leaves the keys alone while one of the game's own windows is open.
-		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or travelling or garden_busy)
+		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or travelling or garden_busy)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	if not seasonal_props.is_empty():
@@ -3813,12 +3823,12 @@ func _apply_prop_season() -> void:
 		sp.offset.y = -sp.texture.get_height()
 
 # ---------------------------------------------------------------- museum donations (23 Nov)
-# Relics from space (item_data.gd, "relic") go in Tar'Besh's museum. You choose the case (Zachary: "you should pick
-# which box it goes in so you can group objects together"): use any empty case while you carry a relic. The relic
-# selected on your hotbar goes in, or else the first one in your bag. Using a case with your relic in it shows it
-# and lets you take it out again to move it. Tar'Besh and his desk explain this. Tar'Besh's own pieces stay put.
+# Relics from space (item_data.gd, "relic") go in Tar'Besh's museum. Talking to Tar'Besh in the museum with a relic,
+# or using his desk, opens the placing view (scripts/museum_donate.gd), as in Stardew Valley: the camera pulls back
+# over the cases and you choose where each relic goes, and can move your own around to group them (Zachary, 23 Nov).
+# Tar'Besh's own pieces stay put. Looking at a case with one of your relics in it shows what it is.
 
-# The relic to place: the one selected on the hotbar, or the first in the bag, or "".
+# The relic to start with: the one selected on the hotbar, or the first in the bag, or "".
 func _relic_to_place() -> String:
 	var held: String = slots[selected] if selected < slots.size() else ""
 	if held != "" and ItemData.ITEMS.has(held) and ItemData.ITEMS[held].has("relic") and _count(held) > 0:
@@ -3833,68 +3843,54 @@ func _first_relic() -> String:
 	return ""
 
 
+# Tar'Besh (or his desk) offers the placing view.
 func _offer_relic(speaker: String) -> void:
-	var relic_name: String = str(ItemData.ITEMS[_relic_to_place()]["name"]).to_lower()
+	var have: String = _first_relic()
+	if current_area != "museum":
+		_say(speaker, ["[happy] Is that a %s? Bring it to the museum and find me there. Or leave it at my desk." % str(ItemData.ITEMS[have]["name"]).to_lower()])
+		return
+	var lines: Array
 	if speaker == "Tar'Besh":
-		_say("Tar'Besh", ["[happy] Is that... a %s? Where did you find it? No, tell me later." % relic_name,
-			"Choose a case for it, any empty one, and put it in yourself. Group things however you like; I trust your eye."])
+		lines = ["[happy] Is that... a %s? Where did you find it? No, tell me later." % str(ItemData.ITEMS[have]["name"]).to_lower(),
+			"Choose a case for it yourself. Group things however you like; I trust your eye."]
+	elif have != "":
+		lines = ["Tar'Besh isn't here. A card on the desk says: DONATIONS: choose any empty case and place your find inside."]
 	else:
-		_say(speaker, ["Tar'Besh isn't here. A card on the desk says: DONATIONS: choose any empty case and place your find inside.",
-			"Use an empty case to put your %s there." % relic_name])
+		lines = ["Tar'Besh's desk. A card says: DONORS MAY ARRANGE THEIR OWN PIECES.", "Move the relics you've given?"]
+	_say(speaker, lines, Callable(self, "_open_museum_view"), "Choose a case" if have != "" else "Arrange")
 
 
-# A case was used: place a relic in an empty one, or look at (and maybe take out) one of yours. Returns false if
-# this isn't a case the museum code handles, so the ordinary Look text shows.
-func _use_museum_case(at: Vector2) -> bool:
-	var slot: int = _case_at(at)
-	if slot < 0:
-		return false
-	var key := str(slot)
-	if museum_gifts.has(key):
-		var gift: String = str(museum_gifts[key])
-		_say(str(ItemData.ITEMS[gift]["name"]), [str(ItemData.ITEMS[gift]["desc"]).trim_suffix(" For Tar'Besh's museum."),
-				"The card under it reads: 'Found out in the Reach, and given to the Landing.'",
-				"Take it out, to put it in another case?"], Callable(self, "_take_relic_out").bind(slot), "Take out")
-		return true
-	if str(MapData.MUSEUM_SLOTS[slot][4]) != "":
-		return false                      # one of Tar'Besh's own pieces
-	var id: String = _relic_to_place()
-	if id == "":
-		return false
-	var lines: Array = ["An empty case in %s." % str(MapData.MUSEUM_SLOTS[slot][2]),
-		"Put your %s in this case?" % str(ItemData.ITEMS[id]["name"]).to_lower()]
-	var kinds := 0
-	for r in ItemData.relics():
-		if _count(r) > 0:
-			kinds += 1
-	if kinds > 1:
-		lines.append("(To place a different relic, select it on your hotbar first.)")
-	_say("Empty display", lines, Callable(self, "_place_relic").bind(id, slot), "Place it")
-	return true
+func _open_museum_view() -> void:
+	museum_view.start()
 
 
-func _place_relic(id: String, slot: int) -> void:
-	if _count(id) <= 0 or museum_gifts.has(str(slot)):
+# Called by the placing view.
+func museum_place(id: String, slot: int) -> void:
+	if _count(id) <= 0 or museum_gifts.has(str(slot)) or str(MapData.MUSEUM_SLOTS[slot][4]) != "":
 		return
 	_give(id, -1)
 	museum_gifts[str(slot)] = id
 	show_exhibit(slot, str(ItemData.ITEMS[id]["relic"]))
-	sfx("quest")
-	_toast("Donated: %s" % str(ItemData.ITEMS[id]["name"]))
-	_save_game()
 
 
-func _take_relic_out(slot: int) -> void:
+func museum_take(slot: int) -> void:
 	var key := str(slot)
 	if not museum_gifts.has(key):
 		return
-	var id: String = str(museum_gifts[key])
+	_give(str(museum_gifts[key]), 1)
 	museum_gifts.erase(key)
-	_give(id, 1)
 	_clear_exhibit(slot)
-	sfx("click")
-	_toast("%s back in your bag. Use an empty case to put it somewhere else." % str(ItemData.ITEMS[id]["name"]))
-	_save_game()
+
+
+# Looking at a case that holds one of your relics.
+func _look_museum_case(at: Vector2) -> bool:
+	var slot: int = _case_at(at)
+	if slot < 0 or not museum_gifts.has(str(slot)):
+		return false
+	var gift: String = str(museum_gifts[str(slot)])
+	_say(str(ItemData.ITEMS[gift]["name"]), [str(ItemData.ITEMS[gift]["desc"]).trim_suffix(" For Tar'Besh's museum."),
+			"The card under it reads: 'Found out in the Reach, and given to the Landing.'"])
+	return true
 
 
 func _show_museum_gifts() -> void:
