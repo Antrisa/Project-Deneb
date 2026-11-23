@@ -39,7 +39,7 @@ Written 17 Nov 2026 so that a new chat can carry on the resident work: friendshi
 - **In the bible but not the game:** these are unlockable later.
   - Arthur "Artie" Vance (Wave 1): the frozen 2030s human found after the pirate base, who becomes the Junior Scouts leader. He is "the teacher" in older notes.
   - Stowaway Stu (Wave 1): the hotel lobby boy.
-  - Tally (Wave 1): an Arachnay courier.
+  - Eshu (Wave 1): an Arachnay courier.
   - Anastasia "Ana" (Wave 2): a reformed pirate heir, sister of Ivan.
 - **Romance candidates (9):** Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu, Ana.
 - **Differences to reconcile in the game's text** (the bible wins):
@@ -101,7 +101,7 @@ Written 17 Nov 2026 so that a new chat can carry on the resident work: friendshi
    - Start with the ones the bible ties to places that exist now, e.g. S.A.R.A.'s "Croissant Protocol" at Reception at night, Job's breakroom gumbo, Freya's heating pump in Engineering.
 5. **Romance:** an item to start dating at 8 hearts (the bible's confession), and a partner milestone at 10. Rewards are applied as perks.
 6. **Tension quests:** the seven pairings, each resolved by a chain of events and requests.
-7. **Arrivals:** Wave 1 (Artie, Stu, Tally) after the pirate base and the space fight, then Wave 2 (Ana).
+7. **Arrivals:** Wave 1 (Artie, Stu, Eshu) after the pirate base and the space fight, then Wave 2 (Ana).
 8. **More dialogue:** lines that vary by hearts, weekday, weather and events, and by what the player has done.
 
 ## 6. Open questions for Zachary

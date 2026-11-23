@@ -28,7 +28,7 @@ const EVENTS := {
 	"patient_wren": {
 		"kind": "distress", "zones": ["any"], "rings": [2, 2], "story": true,
 		"title": "Distress signal: freighter Patient Wren",
-		"text": "\"Collective freighter Patient Wren, drive dead, three aboard. The Rabble shot us up on their way past. They were heading for some moon station. Can you spare anything? A spark for the drive would do it.\"",
+		"text": "\"Collective freighter Patient Wren, drive dead, three aboard. Chernobog pirates shot us up on their way past. They were heading for some moon station. Can you spare anything? A spark for the drive would do it.\"",
 		"choices": [
 			{"text": "Send the drone across to fix their drive.", "needs": "drone", "outcomes": [
 				{"text": "The drone crawls into their engine bay and comes back singed but pleased. The Wren's drive turns over. The captain sends across fuel cells and a thank-you.",
@@ -45,7 +45,7 @@ const EVENTS := {
 		"choices": [
 			{"text": "Pull alongside and take them aboard.", "outcomes": [
 				{"chance": 60, "text": "They are what they look like. The elder presses a bell into your hands.", "effects": ["relic: Pilgrim's bell", "+1 fuel"]},
-				{"chance": 40, "text": "The third one is Rabble. The \"pilgrims\" draw too.", "effects": ["fight: rabble_cutter"]}]},
+				{"chance": 40, "text": "The third one is Chernobog. The \"pilgrims\" draw too.", "effects": ["fight: rabble_cutter"]}]},
 			{"text": "Send the drone to patch their hull from outside.", "needs": "drone", "outcomes": [
 				{"text": "The drone seals the split. They limp off toward the shrines, singing.", "effects": ["+30 Scrip"]}]},
 			{"text": "Hail the third one first.", "outcomes": [
@@ -113,7 +113,7 @@ const EVENTS := {
 		"choices": [
 			{"text": "Take the job.", "outcomes": [
 				{"chance": 60, "text": "A quiet run. The company pays on arrival, and the captain throws in a crate of plating.", "effects": ["+45 Scrip", "item: hull_plate x1"]},
-				{"chance": 40, "text": "Halfway there, a Rabble cutter drops out of fold right on top of you.", "effects": ["+20 Scrip", "fight: rabble_cutter"]},
+				{"chance": 40, "text": "Halfway there, a Chernobog cutter drops out of fold right on top of you.", "effects": ["+20 Scrip", "fight: rabble_cutter"]},
 			]},
 			{"text": "Ask for the pay up front.", "outcomes": [
 				{"text": "The captain laughs, then pays half. You fly the lane. Nothing happens.", "effects": ["+25 Scrip"]},
@@ -213,8 +213,8 @@ const EVENTS := {
 	},
 	"toll_gate": {
 		"kind": "beacon", "zones": ["Reach"], "rings": [2, 5],
-		"title": "Rabble toll",
-		"text": "Two Rabble cutters block the lane, guns out. \"Toll's forty. Or we take it off your hull.\"",
+		"title": "Chernobog toll",
+		"text": "Two Chernobog cutters block the lane, guns out. \"Toll's forty. Or we take it off your hull.\"",
 		"choices": [
 			{"text": "Pay the toll.", "needs": "40 Scrip", "outcomes": [
 				{"text": "They wave you through, laughing.", "effects": ["-40 Scrip"]},
@@ -231,9 +231,9 @@ const EVENTS := {
 	"captive_tow": {
 		"kind": "distress", "zones": ["Reach"], "rings": [3, 5],
 		"title": "A cargo pod on a tow line",
-		"text": "A Rabble ship tows a sealed cargo pod. Something inside is knocking on the hull in a pattern: three short, three long, three short.",
+		"text": "A Chernobog ship tows a sealed cargo pod. Something inside is knocking on the hull in a pattern: three short, three long, three short.",
 		"choices": [
-			{"text": "Attack the Rabble ship.", "outcomes": [
+			{"text": "Attack the Chernobog ship.", "outcomes": [
 				{"text": "They cut the pod loose and turn to fight.", "effects": ["fight: arachnay_weaver_rabble"]},
 			]},
 			{"text": "Have the drone cut the tow line quietly.", "needs": "drone", "outcomes": [
@@ -248,7 +248,7 @@ const EVENTS := {
 	"pirate_market": {
 		"kind": "beacon", "zones": ["Reach"], "rings": [2, 5],
 		"title": "A pirate market",
-		"text": "A hollowed asteroid strung with lights. Rabble, Ervani couriers and a Moogli or two haggle under a sign that reads NO SHOOTING INSIDE.",
+		"text": "A hollowed asteroid strung with lights. Chernobog pirates, Ervani couriers and a Moogli or two haggle under a sign that reads NO SHOOTING INSIDE.",
 		"choices": [
 			{"text": "Buy hull plating.", "needs": "25 Scrip", "outcomes": [
 				{"text": "Stolen, but it's good plating.", "effects": ["-25 Scrip", "item: hull_plate x2"]},
@@ -257,7 +257,7 @@ const EVENTS := {
 				{"text": "A Moogli tinkerer buys it for more than it's worth.", "effects": ["-1 drone parts", "+30 Scrip"]},
 			]},
 			{"text": "Ask about the Nest.", "needs": "15 Scrip", "outcomes": [
-				{"text": "An Ervani courier, for a price, tells you where the Rabble keep a stronghold.", "effects": ["-15 Scrip", "reveal: pirate stronghold"]},
+				{"text": "An Ervani courier, for a price, tells you where the Chernobog keep a stronghold.", "effects": ["-15 Scrip", "reveal: pirate stronghold"]},
 			]},
 			{"text": "Leave before anyone remembers your face.", "outcomes": [
 				{"text": "Probably wise.", "effects": ["nothing"]},
@@ -304,7 +304,7 @@ const EVENTS := {
 		"choices": [
 			{"text": "Send the drone inside.", "needs": "drone", "outcomes": [
 				{"chance": 60, "text": "Nobody aboard. The drone strips what it can carry.", "effects": ["+2 drone parts", "+1 fuel"]},
-				{"chance": 40, "text": "Somebody was aboard. Rabble, waiting.", "effects": ["fight: scyldar_lantern_rabble"]},
+				{"chance": 40, "text": "Somebody was aboard. Chernobog, waiting.", "effects": ["fight: scyldar_lantern_rabble"]},
 			]},
 			{"text": "Scan it from a distance.", "outcomes": [
 				{"text": "The blinking light is a beacon tag, worth something to its owners.", "effects": ["+20 Scrip"]},

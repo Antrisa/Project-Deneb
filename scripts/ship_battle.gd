@@ -300,7 +300,7 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	hazard = str(fight.get("hazard", ""))
 	hazard_t = randf_range(6.0, 10.0)
 	augments = fight.get("augments", [])
-	# your ship: the starter, or another from the fight (boarding test, F6; later Freya's quest and Tally's captures)
+	# your ship: the starter, or another from the fight (boarding test, F6; later Freya's quest and Eshu's captures)
 	crew_mode = fight.has("crew") and fight.has("player_ship")
 	var on_starter: bool = str(fight.get("player_ship", "")) != "covered_fighter"
 	# main.gd passes the ship with its upgrades applied ("player_def"; 23 Nov)

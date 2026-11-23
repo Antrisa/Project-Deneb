@@ -92,7 +92,7 @@ The rows on their current action sheets, kept in this order:
 | Vzz'ket | guard (right), eat (down), walk-stop (down) |
 | Zaas | survey (up), eat (down), stargaze (up), rest (down), observe (left) |
 
-Jasper and Evarra take staggered suppers after service. Ooma takes a meal break on visiting days. The concourse garden, chess, hologame, reading, observation, browsing and restocking stops use painted poses for the attending resident. Maren’s weekend and winter clothing, Ana’s alternate uniform, Tally’s event poses and S.A.R.A.’s solid appearance follow the same cast artwork.
+Jasper and Evarra take staggered suppers after service. Ooma takes a meal break on visiting days. The concourse garden, chess, hologame, reading, observation, browsing and restocking stops use painted poses for the attending resident. Maren’s weekend and winter clothing, Ana’s alternate uniform, Eshu’s event poses and S.A.R.A.’s solid appearance follow the same cast artwork.
 
 When you add rows to an existing sheet, add them **at the bottom** so the existing row numbers don't change.
 
@@ -108,7 +108,7 @@ The four arrival characters use the same walk and activity formats as the origin
 |---|---|
 | Artie | Tie knots (down), read (up), sit at a campfire (down), eat (down), rest (down), eat (up), recover (up) |
 | Stu | Carry luggage (down), ring a bell (down), sweep (down), eat (down), rest (down), eat (up) |
-| Tally | Sort mail (down), carry a crate (down), eat (down), rest (down), sort mail (up), eat (up) |
+| Eshu | Sort mail (down), carry a crate (down), eat (down), rest (down), sort mail (up), eat (up) |
 | Ana | Tune thrusters (up), chart a route (up), eat (down), drink (left), rest (down), eat (up), recover (up) |
 
 ### 4b. Heart-event poses (event sheet per character)

@@ -379,17 +379,17 @@ const PEOPLE = {
 			"[love] A lobby! With a desk! Do you know what I could do with a desk?",
 		],
 	},
-	"Tally": {
+	"Eshu": {
 		"id": "tally",
 		"pitch": 1.6,
 		"first": [
-			"[happy] Tally, of the Post and Privateer Dispatch. Mail, cargo, and the odd bounty. Four hands, no waiting.",
-			"The lanes are open again now the Rabble have lost their head. Somebody has to carry the post.",
+			"[happy] Eshu, of the Post and Privateer Dispatch. Mail, cargo, and the odd bounty. Four hands, no waiting.",
+			"The lanes are open again now the Chernobog have lost their head. Somebody has to carry the post.",
 			"I'll be posting contracts soon. Capture jobs, mostly: bring the ship back with the hull still on.",
 		],
 		"repeat": [
 			"Two sacks of letters for one small station. Somebody out there misses you lot.",
-			"[angry] What's left of the Rabble hit a mail skiff last week. Bad for business, worse for the post.",
+			"[angry] What's left of the Chernobog hit a mail skiff last week. Bad for business, worse for the post.",
 			"Courier's rule: never ask what's in the parcel. Bounty hunter's rule: always ask. I've done both jobs.",
 		],
 	},
@@ -398,7 +398,7 @@ const PEOPLE = {
 		"pitch": 1.15,
 		"first": [
 			"[angry] Don't look at me like that. I know whose sister I am.",
-			"Ana. I navigated for the Rabble since I was fourteen. My brother's people turned their guns on me for missing his last fight.",
+			"Ana. I navigated for the Chernobog since I was fourteen. Ivan's crew turned my own guns on me. They always said I was soft.",
 			"[sad] You pulled me out anyway. I haven't decided what that makes you yet.",
 		],
 		"repeat": [
@@ -434,7 +434,7 @@ const FAREWELLS = {
 	"Vzz'ket": ["You leave with the tunnels half cleared. The tunnels will wait.",
 		"Fly the way you fight. Straight at it."],
 	"Ix'ali": ["Your guard has improved. Keep it up, out there.", "Go well, pilot."],
-	"Garrick": ["Clear skies. If you see Rabble markings out there, run first and be brave later."],
+	"Garrick": ["Clear skies. If you see Chernobog markings out there, run first and be brave later."],
 	"Rusk": ["[happy] Off, are you? One for the road, on the house. Don't tell anyone, it'll ruin me."],
 	"Zaas": ["Out to the stars, then. I'd have liked to show you the sea, if we ever find it.", "Safe travels."],
 	"Sesska": ["Tikka has been humming at your drive for days. She will miss it. And you, I think.", "Safe travels."],
@@ -649,7 +649,7 @@ const LOOKS = {
 # tools/build.py SCHEDULE_DAYS_RAW; the station calendar lists them. Jasper and Evarra stagger theirs, so one
 # of them always keeps the mess hall.
 const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6], "Quill": [0, 5], "Maren": [3, 6],
-	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2]}
+	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -739,5 +739,16 @@ const DAY_LINES := {
 			"Guests are in. Somebody brought a pet. I don't know what it is. Neither do they."],
 		6: ["Last day of the weekend. I'll see them off at the terminal. I always wave until the ship's gone.",
 			"[sad] I used to be the one on the ship. Now I'm the one waving. I think I like waving better."],
+	},
+	# Ana (23 Nov): Monday and Thursday off; she covers the Shuttle Bay alone on Freya's weekends.
+	"Ana": {
+		0: ["Monday. Day off. I'm going to sit in the lounge and redraw jump charts nobody asked me to redraw.",
+			"[sad] Days off are strange. On Chernobog ships there weren't any. Just days nobody shot at you."],
+		3: ["Thursday off. Rusk says if I sit at his bar one more night he'll start charging me rent.",
+			"[happy] Star charts in the lounge, then Rusk's. Don't tell Garrick I have a routine. He'll think it's a plot."],
+		5: ["Freya's off, so the bay's mine till Monday. If you hear swearing, that's me and the stabilizer negotiating.",
+			"[happy] Saturday shift. Quiet bay, loud engines. Best kind of day."],
+		6: ["Sunday. Freya left me a note: 'Don't touch my bench.' I touched her bench.",
+			"Still covering the bay. Somebody has to keep your ship pointed the right way."],
 	},
 }

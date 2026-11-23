@@ -1137,7 +1137,7 @@ func _spawn_things() -> void:
 			"pos": Vector2(float(pos[0]), float(pos[1])), "radius": float(item[5]), "who": "",
 		})
 
-	# Tally's crew board in the Shuttle Bay's booth (23 Nov), with a board picture standing there (CREW_BOARD).
+	# Eshu's crew board in the Shuttle Bay's booth (23 Nov), with a board picture standing there (CREW_BOARD).
 	things.append({"kind": "look", "name": "Crew board", "hint": "Read the board", "area": "bay",
 		"pos": Vector2(CREW_BOARD.x * 16 + 16, (CREW_BOARD.y + 3) * 16), "radius": 24.0, "who": ""})
 
@@ -1282,6 +1282,8 @@ func _flag(flag_name: String) -> bool:
 		"ship_flown": return flights > 0
 		"ivan_defeated": return artie_found_day >= 0
 		"ana_rescued": return ana_found_day >= 0
+		# Ana 0: she's still in the Medbay (her first two days after the rescue); afterwards it plays in the bay
+		"ana_in_medbay": return ana_found_day >= 0 and day <= ana_found_day + 2
 		"leviathan_slain": return leviathan_slain
 		# Jasper 6: you've grown Moon wheat (set at the first harvest; older saves count wheat you're carrying)
 		"moon_wheat_harvested": return bool(story_flags.get(flag_name, false)) or _count("moon_wheat") > 0
@@ -1406,12 +1408,12 @@ func _debug_next_heart_event() -> void:
 
 
 # Wave 1 arrives after Ivan (artie_found_day = D): Artie wakes in the Medbay on D+1, the first visitor transport
-# brings Stu on D+2, Tally comes on D+4. Wave 2 is Ana, the day after you pull her out of her ship.
+# brings Stu on D+2, Eshu comes on D+4. Wave 2 is Ana, the day after you pull her out of her ship.
 func _arrived(who: String) -> bool:
 	match who:
 		"Artie": return artie_found_day >= 0 and day >= artie_found_day + 1
 		"Stu": return artie_found_day >= 0 and day >= artie_found_day + 2
-		"Tally": return artie_found_day >= 0 and day >= artie_found_day + 4
+		"Eshu": return artie_found_day >= 0 and day >= artie_found_day + 4
 		"Ana": return ana_found_day >= 0 and day >= ana_found_day + 1
 	return true
 
@@ -1433,7 +1435,7 @@ func _morning_news() -> void:
 			1: news = "S.A.R.A.: the man from the stasis pod is awake. He's in the Medbay."
 			2: news = "S.A.R.A.: the first visitor transport docked at the terminal overnight. Our first visitors in years."
 			3: news = "S.A.R.A.: Artie is well enough to leave the Medbay. He has moved into East Home 1."
-			4: news = "S.A.R.A.: a courier asked for a berth. Tally, of the Post and Privateer Dispatch."
+			4: news = "S.A.R.A.: a courier asked for a berth. Eshu, of the Post and Privateer Dispatch."
 	if ana_found_day >= 0:
 		match day - ana_found_day:
 			1: news = "S.A.R.A.: Ana is awake in the Medbay. Garrick has posted himself by the door."
@@ -2167,8 +2169,8 @@ func _look_at_ship() -> void:
 # jump map scripts/ship_map.gd; ships, weapons, the route and rewards are in scripts/ship_data.gd.
 # First flight (Zachary, 21 Nov): once the ship is repaired the residents say goodbye when you talk to them
 # (NpcData.FAREWELLS), and Tikka, Freya and S.A.R.A. see you off at launch. As you leave, the station alert goes:
-# Rabble ships heading for the Landing, and S.A.R.A. pleads for help. The jump map's route is locked: an ice field
-# (salvage), a drifting freighter (distress call), a Rabble picket (the combat tutorial, where the drone teaches
+# Chernobog ships heading for the Landing, and S.A.R.A. pleads for help. The jump map's route is locked: an ice field
+# (salvage), a drifting freighter (distress call), a Chernobog picket (the combat tutorial, where the drone teaches
 # ordering crew), a Moogli trader (repairs and fuel), then Ivan's flagship. Ivan goes down with his ship and you
 # tow home a stasis pod from the wreck: Artie. Losing wakes you in the Medbay with the ship wrecked; Freya repairs
 # the hull. Free ship runs and Ana's fight (on the second flight) come in slice 2.
@@ -2190,8 +2192,8 @@ func _debug_ship_ready() -> void:
 
 
 # F6 (editor and debug builds only): the boarding test (Zachary, 22 Nov). The covered fighter with Freya and two
-# hired hands against a Rabble cutter that boards back. Each press flips the emergency tether on or off. In the
-# real game other ships come from Freya's quest and Tally's capture contracts.
+# hired hands against a Chernobog cutter that boards back. Each press flips the emergency tether on or off. In the
+# real game other ships come from Freya's quest and Eshu's capture contracts.
 var debug_tether := false
 
 
@@ -2222,7 +2224,7 @@ func _launch_console() -> void:
 			"Once you go, you're gone. Have you said your goodbyes?", "Take her out?"],
 			Callable(self, "_send_off"), "Launch")
 	elif flights == 0:
-		_say("Launch control", ["The Rabble are still out there, and the Landing is still in their way.", "Take her out again?"],
+		_say("Launch control", ["The Chernobog are still out there, and the Landing is still in their way.", "Take her out again?"],
 			Callable(self, "_lift_off"), "Launch")
 	elif flights == 1:
 		_say("Launch control", ["The board shows your ship in green.", "Take her out?"], Callable(self, "_second_flight"), "Launch")
@@ -2536,10 +2538,9 @@ func switch_ship(id: String) -> void:
 	ship_weapons = ship_loadouts.get(id, (ShipData.SHIP_DEFS[id]["weapons"] as Array).duplicate())
 
 
-# The courier Eshu (was Tally; the resident is still "Tally" in this code until the rename lands) is here from
-# four days after Artie is found. Checked directly so it works whichever name the resident has.
+# The courier Eshu is here from four days after Artie is found (_arrived; upstream's helper, kept for its callers).
 func _courier_here() -> bool:
-	return artie_found_day >= 0 and day >= artie_found_day + 4
+	return _arrived("Eshu")
 
 
 # Eshu's crew board (Zachary 23 Nov: hire at a board in the Shuttle Bay until the Dispatch has a room).
@@ -2697,7 +2698,7 @@ const NEST_LINES := [
 func _nest_arrive() -> void:
 	nest_stage = 0
 	ship_event.open_event({"title": "The Rabble's Nest",
-		"text": "A hollowed asteroid ringed with lights and docking arms: the Chernobog's home. Pickets circle it, and a gun platform hangs off its flank. Three fights, one after another, and no store between.",
+		"text": "A hollowed asteroid ringed with lights and docking arms: home of the Chernobog pirates, and Ivan's own. Pickets circle it, and a gun platform hangs off its flank. Three fights, one after another, and no store between.",
 		"choices": [
 			{"text": "Attack the Nest.", "outcomes": [{"text": NEST_LINES[0], "effects": ["fight: " + NEST_FIGHTS[0]]}]},
 			{"text": "Not today. Pull back.", "outcomes": [{"text": "You turn away before their pickets notice you. The Nest will keep.", "effects": ["nothing"]}]},
@@ -2820,7 +2821,7 @@ func _lift_off() -> void:
 	ship_map.open_route(ShipData.FIRST_FLIGHT, -1, Callable(self, "_arrive"), false, "First flight")
 	_say("Sara", [
 		"You're clear of the crater. The fold drive is spinning up. Safe travels...",
-		"[surprised] Station alert. Station alert. Ships coming round the gas giant, Rabble markings, a whole pack of them.",
+		"[surprised] Station alert. Station alert. Ships coming round the gas giant, Chernobog markings, a whole pack of them.",
 		"[sad] They're heading for the Landing. We have no guns here worth the name.",
 		"[sad] I know you were leaving. I know this isn't your fight. But you're the only ship we have.",
 		"Please. Will you help us?",
@@ -2888,7 +2889,7 @@ func _after_ice_field(_fight: String) -> void:
 func _after_patient_wren(_fight: String) -> void:
 	_back_to_map()
 	_say("Sara", ["Distress signals are like that: someone needs something, and what you do about it is up to you.",
-		"Sometimes it's a trap. Not this time. Next stop: the Rabble's picket ship."])
+		"Sometimes it's a trap. Not this time. Next stop: the Chernobog picket ship."])
 
 
 func _after_trader() -> void:
@@ -2987,7 +2988,7 @@ func _stop_fight(stop: Dictionary) -> void:
 	ship_map.visible = false
 	battle.start({"enemy": str(stop["enemy"]), "story": true, "tutorial": true, "player_def": _ship_def("starter")}, Callable(self, "_after_picket"), ship_hull)
 	_say("Sara", [
-		"That's a Rabble Cutter, scouting ahead of the others. You'll have to go through it.",
+		"That's a Chernobog Cutter, scouting ahead of the others. You'll have to go through it.",
 		"Space pauses the fight. You can give every order while it's paused.",
 		"The bars at the bottom left move power from the reactor to shields, engines, weapons and oxygen.",
 		"Click your Burst laser, then a room on their ship. Hit their Shields room first, then the rest.",
@@ -3127,7 +3128,7 @@ func _second_flight() -> void:
 	battle.start({"enemy": "ana_corsair", "story": true, "player_def": _ship_def("starter")}, Callable(self, "_after_ana"), ship_hull)
 	_say("Sara", [
 		"You're clear of the crater. Where are we headed today?",
-		"[surprised] Wait. Something just dropped out of fold right on top of you. Rabble colours.",
+		"[surprised] Wait. Something just dropped out of fold right on top of you. Chernobog colours.",
 	])
 	_say_then(Callable(self, "_ana_hail"))
 
@@ -3157,6 +3158,7 @@ func _ana_betrayed() -> void:
 func _loyalists_speak() -> void:
 	_say("Loyalist", [
 		"[angry] You weren't there when he needed you. You don't give orders any more.",
+		"We always knew you were weak. Never once fired on a transport. Ivan covered for you. Ivan's gone.",
 		"And you, Terran. You're next.",
 	])
 	_say_then(Callable(self, "_loyalist_fight"))

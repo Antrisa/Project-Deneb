@@ -8,7 +8,7 @@ three pixels forward and the other three back from the hip, the far one in shade
 runs straight from its hip, and its foot sits under its own ankle, so the foot always
 travels with the leg. The body drops one pixel. Passing poses (rows 4 and 5): the standing
 legs, with the lifted foot hidden behind the planted one. Tails, robes and bags follow the
-standing pose. The Arachnay (Sesska, Tally, Tikka)
+standing pose. The Arachnay (Sesska, Eshu, Tikka)
 keep their painted many-legged strides; only their passing poses changed.
 
 Arms. Every resident except the Arachnay swings the near arm from the shoulder: five pixels

@@ -7,7 +7,9 @@ Every story beat and heart event in one place, with how much of each is written 
 
 The full scripts that exist are copied next to this file: [`ROMANCE_SCRIPTS.md`](ROMANCE_SCRIPTS.md) and [`PROLOGUE_SCRIPT.md`](PROLOGUE_SCRIPT.md). The Drive docs stay the source of truth until Zachary says otherwise.
 
-**The courier is Eshu** in every Drive doc since 19 Nov (the NPC Master, Lore V4 and the romance scripts). The game still calls him Tally (`npc_data.gd`, the morning news, his schedule), and so does the Project's older copy of the NPC Master. His file id `tally` can stay.
+**The courier is Eshu.** The Drive docs renamed him on 19 Nov, and on 23 Nov (Zachary) the game, the repo docs, the Project and the rest of the Drive followed. His file id `tally` stays (art and saves).
+
+**The pirates are the Chernobog** (Zachary, 23 Nov). **Ivan himself is "the Rabble"**, so the Rabble's Reach and the Rabble's Nest keep their names. Ids and files stay `rabble_*`.
 
 **How far each scene is written:**
 
@@ -38,12 +40,12 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 **The biggest findings:**
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
-2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2.
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's, Job's, Quill's, Ix'ali's, Artie's and Stu's arcs are now written and in the game.)
+2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2. (Ana's part settled 23 Nov: the game's version, with her crew always calling her weak for never firing on transports.)
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (All nine romance arcs are now written and in the game: Freya, Jasper, Evarra, Job, Quill, Ix'ali, Artie, Stu and Ana.)
 4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3. (All but Jasper & Evarra 8 are settled: the hotel opens after Ivan's fall, before Stu arrives.)
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
-7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Eight now: Quill 10 moved to the little park, Ix'ali 10 to the museum and Stu 10 to the terminal airlock; Artie 6 stays.)
+7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Eight now: Quill 10 moved to the little park, Ix'ali 10 to the museum and Stu 10 to the terminal airlock; Artie 6 and Ana 8 stay.)
 
 ---
 
@@ -58,9 +60,9 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 | 3 | **Prologue 3: Medbay cutscene, then Reception.** Maren and Quill; S.A.R.A. puts you in quarantine in the old barracks (the future hotel). | | Script | Quill notes "a brief electromagnetic spike" in your scans. Nothing picks this up later (Gap). |
 | 4 | **Prologue 4: the Reliquary.** Touching the crystal wakes the Chancellor, the Sovereign and the Forgemaster at once. Tar'Besh asks you to keep it secret from the Junta. | | Script | See the note on "awaken" below. |
 | 5 | **Quarantine, settling in, repairing the ship in stages.** | Day 1 on | In game | |
-| 6 | **First flight:** ice field, the Patient Wren, the Rabble picket, the Moogli trader, Ivan's flagship. Ivan goes down with his ship; a stasis pod tumbles out of his hold and you tow it home. | Ship repaired | In game | Clash: the docs say Artie is found "at the pirate base" and that Wave 1 comes "after the pirate base raid". |
+| 6 | **First flight:** ice field, the Patient Wren, the Chernobog picket, the Moogli trader, Ivan's flagship. Ivan goes down with his ship; a stasis pod tumbles out of his hold and you tow it home. | Ship repaired | In game | Clash: the docs say Artie is found "at the pirate base" and that Wave 1 comes "after the pirate base raid". |
 | 7 | **Wave 1:** Artie wakes in the Medbay (D+1), the first visitor transport brings Stu (D+2), Artie moves into East Home 1 (D+3), Eshu asks for a berth (D+4). D is the day Ivan falls. | Ivan's fall | In game (placeholder lines) | |
-| 8 | **Second flight:** Ana drops out of fold to avenge Ivan; at half hull her crew turn her turrets on her own bridge; you beat their gunship and pull her out. | Next flight | In game | Clash with Ana 2 (section 3.9). |
+| 8 | **Second flight:** Ana drops out of fold to avenge Ivan; at half hull her crew turn her turrets on her own bridge; you beat their gunship and pull her out. Her loyalists: "We always knew you were weak. Never once fired on a transport." | Next flight | In game | Settled 23 Nov (Decision 2). |
 | 9 | **Wave 2:** Ana in the Medbay, Garrick at the door; East Home 3 two days later. | Rescue | In game | |
 | 10 | **Restoring the first three Custodians** (any order; Sovereign and Chancellor tuned for Spring and Summer, Forgemaster for Summer). | Bundles | Outline (bundles doc) | |
 | 11 | **Echoes in the Violet Static.** S.A.R.A. links the nano-fluid to the dead Mother-Drone. | First Custodian | Outline | |
@@ -78,8 +80,8 @@ Also in the docs but not on this list: the yearly Grand Hotel Inspection (sectio
 ### 1.2 Review notes
 
 - **Clash: how Ivan falls and where Artie comes from.** The game: Ivan dies when his flagship splits, and Artie's pod is in his cargo hold; Wave 1 counts from that day. The docs (NPC Master roster, Custodian Bundles, Lore V4, Stu's script header, Artie 2's trigger): Artie is found "at the pirate base", and Stu comes "after the pirate base raid". The old Relationship Map has a third version: Ivan raids Echo Landing and Garrick and Ix'ali lead the defence. The space-combat plan also has a one-time "Nest raid" on a pirate stronghold, which could be the pirate base. Decision 1.
-- **Clash: Ana's mutiny.** In the game she comes for revenge, and her crew turn on her ("You weren't there when he needed you"). In Ana 2 she says her second-in-command shot her "the second I ordered them not to fire on a civilian freighter", and the player can answer "You tried to protect innocent people." Decision 2.
-- **Clash: what the pirates are called.** The scripts say the Chernobog Clan; the game says the Rabble (Rabble cutter, Rabble colours). Both can stand (the Chernobog Clan, nicknamed the Rabble after Ivan), but scenes should agree. Decision 3.
+- ~~**Clash: Ana's mutiny.**~~ Settled 23 Nov (Decision 2): the game's version stands (revenge, then her crew turn on her), and the crew always "knew" she was weak because she never once fired on a transport. Ivan covered for her. Her first scene (the old Ana 2, now her 0) says so, and so do the loyalists in the second flight.
+- ~~**Clash: what the pirates are called.**~~ Settled 23 Nov (Decision 3): the pirates are the Chernobog; Ivan is the Rabble. The game's text says Chernobog cutter, Chernobog colours and so on; the Rabble's Reach and the Rabble's Nest are named after Ivan.
 - **Clash: "awaken" or "restore".** Prologue scene 4 wakes all three crystals at once and they talk. The bundles doc and the story-event triggers then speak of "awakening" each Custodian ("1st Custodian Awakened"). Suggest: the prologue wakes them, bundles **restore** their wings, and triggers say "first Custodian restored". Decision 19.
 - **Clash: the player's ship.** The prologue's *Wandering Star* loses its rear half in the blind jump; the game has a fighter repaired in the Shuttle Bay. If the fighter is what's left of the *Wandering Star*, one line from Freya or Tikka would settle it. Decision 4.
 - **Repeat: S.A.R.A.'s secret.** S.A.R.A. 2 has her tell you she let her self-destruct timer run out; The Secret of Annex 4 then reveals the same thing as a discovery. Suggest she jokes around it at 2 and the tape gives the full truth.
@@ -247,20 +249,21 @@ A drifter who can't remember his name learns that staying isn't a trap.
 
 ### 3.9 Anastasia "Ana" (Human, Wave 2)
 
-Ivan's sister unlearns that fear is loyalty.
+Ivan's sister unlearns that fear is loyalty. **Reviewed with Zachary on 23 Nov; all six (with a new 0) are written and playable.** Full scenes and her week: [`characters/ANA.md`](characters/ANA.md).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | No Brig, Just Soup | Medbay | Saffi's carrot-ginger soup; why did you pull her out? | Script |
-| 4 | Grease & Second Chances | Shuttle Bay, 14:00–17:00 | Thrusters with Freya; Garrick says she's earning her berth. | Script |
-| 6 | Ghost of the Crown | Rusk's bar after 20:00 | Ivan before he was a monster. | Script |
-| 8 | Co-Pilot's Promise (confession) | Observation Lounge, night | She wants to be your navigator. Perk: Wingmate. | Script |
-| 10 | True North | Board the ship at sunset | A star-chart console with both your initials; an orbit over the crater. Keepsake: the console and a flight jacket. | Outline |
+| 0 | No Brig, Just Soup (was her 2) | The Medbay the first time you visit after her fight; the Shuttle Bay if you missed her there | Saffi's carrot-ginger soup; why did you pull her out? Her crew always called her weak. | In game (Zachary's script, the lore by Claude) |
+| 2 | A Seat at the Table (new) | The mess hall at dinner | Nobody will sit with her until you do; then Freya follows. | In game (Claude, from Zachary's idea) |
+| 4 | Grease & Second Chances | Shuttle Bay, 14:00–17:00, Tuesday, Wednesday or Friday | Thrusters with Freya; Garrick says she's earning her berth. | In game (Zachary's script, a choice by Claude) |
+| 6 | Ghost of the Crown | Rusk's bar after 20:00 | Ivan before he was a monster. She asks to fly with you as crew. | In game (Zachary's script, replies by Claude) |
+| 8 | Co-Pilot's Promise (confession) | Observation Lounge, night | She wants to be your navigator. Perk: Wingmate. Accept, decline and friendship endings written. | In game (Zachary's lines, replies by Claude) |
+| 10 | True North | Shuttle Bay at sunset, then a narrated orbit over the crater | A star-chart console with both your initials. Keepsake: a flight jacket. | In game (Claude, from Zachary's outline) |
 
-- **Clash:** 2's story of her mutiny doesn't match the game's second flight (section 1.2). Decision 2.
-- **Gap:** 6's choices give "+High Romance/Friendship"; there are no romance points (hearts are friendship only), so "+High Friendship".
-- **Idea:** the status doc has Ana joining your crew at 6 hearts, but her 6 is at the bar. Her 4 (in the bay, with Freya) is the better place for the offer, or 6 ends with it.
-- **Repeat:** 4 has her charting the old ambush corridors for Eshu's skiffs; Eshu 6 "Safe Routes" is the same work. Make Eshu 6 the follow-on.
+- **Decided (Zachary, 23 Nov):** her 2 plays the first time you meet her after her fight (now her 0); a new 2 in the mess hall where nobody will talk to her until you sit with her; the pirates always "knew" she was weak for not firing on transports (Decision 2); the pirates are the Chernobog and Ivan is the Rabble (Decision 3). Her week, the crew ask in 6, keeping 8 in the lounge and 10's shape were Claude's suggestions, not answered: change any of them.
+- 6's choices now give +High Friendship (there are no romance points).
+- **Still open:** the console in 10 could become a real upgrade on your ship (`ana_true_north_console` is set); Wingmate needs hooking into ship battles.
+- **Repeat (for later):** 4 has her charting the old ambush corridors for Eshu's skiffs; Eshu 6 "Safe Routes" is the same work. Make Eshu 6 the follow-on.
 
 ---
 
@@ -409,7 +412,7 @@ All 40 are outlines. Text is from the NPC Master; where the Master has only a wo
 | 6 | Safe Routes | Shuttle Bay, with Ana; backup: with Garrick | Safe trade routes with Ana. | Outline |
 | 8 | (no title) | Reception | Rewards only: Express Export Crates; high-tier bounties. | Gap |
 
-- **Clash:** the game still calls him Tally (decision 18). His shop room and home are still undecided; 2 and 8 should move to the Post & Privateer Dispatch once it has a room.
+- Renamed from Tally in the game on 23 Nov (Decision 18). His shop room and home are still undecided; 2 and 8 should move to the Post & Privateer Dispatch once it has a room.
 - **Idea:** make 4's letter the next step in Pip's thread (a letter to his parents, or from them).
 - **Repeat:** 6 and Ana 4 (section 3.9).
 
@@ -460,7 +463,7 @@ Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill
 
 ### 7.5 Choices with no outcome, or the wrong kind
 
-Jasper & Evarra 8 option B; Ana 6 ("+High Romance"); the nine confessions (7.1).
+Jasper & Evarra 8 option B; ~~Ana 6 ("+High Romance")~~ (fixed 23 Nov); the nine confessions (7.1).
 
 ### 7.6 What the event engine will have to check
 
@@ -468,7 +471,7 @@ From the triggers above: map and time window; weekday (Wed or Sat); season; hear
 
 ### 7.7 Eleven scenes in the Observation Lounge
 
-Jasper & Evarra 4, Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, S.A.R.A. 8, Tikka & Sesska 6, Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open. (Moved: Quill 10 to the little park, Ix'ali 10 to the museum, Stu 10 to the terminal airlock.)
+Jasper & Evarra 4, Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, S.A.R.A. 8, Tikka & Sesska 6, Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open. (Moved: Quill 10 to the little park, Ix'ali 10 to the museum, Stu 10 to the terminal airlock. Ana 8 stays: it's a navigator's scene.)
 
 ### 7.8 Art the scenes need that doesn't exist yet
 
@@ -481,8 +484,8 @@ Heart-event sheets (already on the status list); props: a training mat, the apia
 Answer by number; anything left open stays as it is.
 
 1. **Wave 1:** keep it on Ivan's fall (as built), or move it to a pirate-base raid (as the docs say)? If Ivan's fall, the docs and scripts change to "Ivan's wreck".
-2. **Ana's mutiny:** add a civilian ship she refuses to fire on to the second flight, or rewrite Ana 2 to match revenge followed by mutiny?
-3. **Rabble or Chernobog** for the pirates (or the Chernobog Clan, nicknamed the Rabble)?
+2. **Ana's mutiny:** decided 23 Nov: the game's version, and her crew always "knew" she was weak for never firing on transports.
+3. **Rabble or Chernobog:** decided 23 Nov: the pirates are the Chernobog; Ivan is the Rabble.
 4. **Your ship:** is the game's fighter what's left of the *Wandering Star*?
 5. **Who took Artie in 2036**, and why was his pod in Ivan's hold?
 6. **Where threads A and B end:** at the Neutral Zone Summit, or elsewhere?
@@ -497,6 +500,6 @@ Answer by number; anything left open stays as it is.
 15. **Hearts:** 100 points a heart, as in the NPC Master? Then the code is changed to match.
 16. **"The Nest":** rename the cavern event or the pirate stronghold.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock).
-18. **Eshu:** rename Tally in the game's text (lines, morning news, schedule name; the file id stays `tally`).
+18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
 20. **Which scenes Claude writes first.** Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).

@@ -31,10 +31,10 @@ Nothing here is final until you say so. Anything marked **(Claude)** is a sugges
 
 ## Order of work (Claude's suggestion)
 1. The starter fighter's cut-away interior, and the repair drone (`1_SHIP_ART.md` section 3, `2_CREW_ART.md` section 3).
-2. The four story ships: the Rabble Cutter, Ivan's flagship, Ana's corsair and the loyalist gunship. Each needs a hull and an interior.
+2. The four story ships: the Chernobog Cutter, Ivan's flagship, Ana's corsair and the loyalist gunship. Each needs a hull and an interior.
 3. ~~The battle UI kit~~: not needed now; the ship screens use the datapad's parts (section 4).
 4. Weapons, shots, hits, fire and explosions (`3_WEAPONS_AND_EFFECTS.md`).
-5. Crew sprites: a human crew member and a Rabble pirate first.
+5. Crew sprites: a human crew member and a Chernobog pirate first.
 6. ~~The event window and the store window~~: built in the datapad style; only store pictures (section 3.5) are wanted.
 7. Backdrops for the four zones.
 8. Your new ship, weapon and system designs, written with the templates in files 5 and 6.
@@ -115,10 +115,10 @@ Sizes are Claude suggestions. Design each one with the template in file 5.
 | Ship id | Who | Size (cells) | Notes |
 |---|---|---|---|
 | `starter` | you | 7 × 4 | Interior only (section 1.3) |
-| `rabble_cutter` | Rabble raider | 5 × 4 | Small, patched, spiky. The first fight. |
+| `rabble_cutter` | Chernobog raider | 5 × 4 | Small, patched, spiky. The first fight. |
 | `ivan_flagship` | Ivan (boss) | 9 × 6 | Big and ugly. A heavy gun mount for his overcharged cannon. (Was 9 × 7; 6 rows keeps it at 1×.) |
 | `ana_corsair` | Ana (boss) | 7 × 5 | Sleek and fast, a navigator's ship: big engines, small guns. |
-| `loyalist_gunship` | Ivan's loyalists | 5 × 4 | A Rabble cutter variant with more guns |
+| `loyalist_gunship` | Ivan's loyalists | 5 × 4 | A Chernobog cutter variant with more guns |
 | `covered_fighter` | you (Freya's quest) | 9 × 5 | The tarp-covered fighter in the bay (`reference/tarp_fighter_x3.png`). Your first bigger ship, with a crew deck and walkable rooms. |
 | `terran_patrol` | Terran patrol | 7 × 5 | Clean white and blue, by the book |
 | `zaash_skiff` | Zaa'sh pilgrims / duellists | 6 × 4 | Bone and bronze, ribbed, a shrine mast |
@@ -135,15 +135,15 @@ Zachary: "lets double the pixels", then "lets do all the ships before we add to 
 | Script (`tools/dev/ship_art/`) | Ships |
 |---|---|
 | `kit2x.py` | Shared helpers: plates, nozzles, turrets, windows, stencils, wear, the lineup sheet |
-| `rabble_cutter_2x.py` | Rabble cutter, 6 × 4 (approved) |
+| `rabble_cutter_2x.py` | Chernobog cutter, 6 × 4 (approved) |
 | `fleet2x.py` | Terran patrol 7 × 4, Zaa'sh skiff 6 × 4, Vuultam garden ship 7 × 4, Moogli trader 6 × 4, Ervani courier 6 × 4, Scyldar lantern ship (Ooma) 7 × 4, Arachnay weaver 6 × 4, Collective freighter 8 × 5 |
 | `story2x.py` | Starter fighter 7 × 4 (same approved shape), Ivan's flagship 9 × 6, Ana's corsair 7 × 5, loyalist gunship 5 × 4, covered fighter 9 × 5 |
-| `bases2x.py` | Pirate stronghold 8 × 6, the Rabble Nest 10 × 6, and `piratize2x()`: a Rabble repaint of every culture ship |
+| `bases2x.py` | Pirate stronghold 8 × 6, the Rabble's Nest 10 × 6, and `piratize2x()`: a Chernobog repaint of every culture ship |
 
 Run any of them from the repo root: `python3 -I tools/dev/ship_art/fleet2x.py <out dir>`.
 
 **In the game (21 Nov):** the battle screen takes a per-ship `"art_scale"` (2 for these) and `"art"`/`"interior"`
-paths; ships with art are mirrored to face you. The **Rabble cutter** is the first one in: 6 × 4 cells with six rooms
+paths; ships with art are mirrored to face you. The **Chernobog cutter** is the first one in: 6 × 4 cells with six rooms
 (engines, crew, shields, weapons, oxygen, a 1 × 2 cockpit) and eight doors, cut away by `kit2x.interior()`; its
 `ROOMS` and `DOORS` in `rabble_cutter_2x.py` must match `ShipData.ENEMIES["rabble_cutter"]`.
 Rooms hold **consoles, not furniture** (Zachary, 21 Nov): one console in each shields, weapons, engines and cockpit
@@ -174,8 +174,8 @@ from it. Every ship gets enough mounts for the most guns it can carry.
 
 **All the ships are in (21 Nov):** the four story enemies (`ENEMIES` and `ANA_SHIPS`, rooms in `story2x.py`
 INSIDES) and the eight culture ships (`ShipData.CULTURE_SHIPS`, generated from `fleet2x.py` INSIDES, with first-guess
-stats). Every culture ship also comes Rabble-repainted (`hull_rabble.png`, `interior_rabble.png`, same rooms):
-`ShipData.enemy("<id>_rabble")` flies it as a pirate with Rabble lasers.
+stats). Every culture ship also comes Chernobog-repainted (`hull_rabble.png`, `interior_rabble.png`, same rooms):
+`ShipData.enemy("<id>_rabble")` flies it as a pirate with Chernobog lasers.
 Your fighter's battle art is double resolution too (sealed dark bays, the cockpit; `starter.py` now only makes the
 Shuttle Bay's 1x repair stages). The covered fighter has walkable rooms (`ShipData.COVERED_FIGHTER`, not wired in
 until crews come). The pirate stronghold and the Nest are in `ENEMIES` (rooms inside the fortress walls, guns on the
@@ -203,7 +203,8 @@ units. At 1080p a 2x ship shows at 1 screen pixel per art pixel, so it looks the
 
 ### 1.5 Style by faction (Claude)
 - **Terran:** white hull, orange or blue trim, 45-degree plates, like your fighter.
-- **The Rabble:** rust and gunmetal, welded patches, red stripes, spikes and trophies.
+- **The Chernobog:** rust and gunmetal, welded patches, red stripes, spikes and trophies.
+  (Zachary, 23 Nov: the pirates are the **Chernobog**; Ivan himself is "the Rabble", so the Rabble's Reach and the Rabble's Nest keep their names. Ids and files stay `rabble_*`.)
 - **Zaa'sh:** bone-white and bronze, ribbed like a carapace, small bells and banners.
 - **Collective:** green-grey, utilitarian, bolted-together modules that don't quite match.
 - **Moogli:** rounded, cheerful colours, lots of cargo racks and hanging goods.
@@ -226,7 +227,7 @@ her NPC: dark hair with a red streak, black jacket over a white shirt), `rabble_
 person's top half on spider legs), `moogli` (green, round, frog eyes), `ervani` (fox ears, muzzle and tail),
 `vuultam` (dark green hair with leaves), `scyldar` (a fin). In battle each crew member walks facing the way they go, works their
 console facing its wall, repairs with the wrench, sprays a burning room with the extinguisher, and lies down when
-knocked out; you stand at your cockpit console. The fighting row is ready for boarding, which isn't in the game yet. Rabble ships and Rabble repaints are crewed by `rabble_pirate`, Terran patrols by
+knocked out; you stand at your cockpit console. The fighting row is ready for boarding, which isn't in the game yet. Chernobog ships and Chernobog repaints are crewed by `rabble_pirate`, Terran patrols by
 `terran_marine`, each culture ship by its own people, and the Collective freighter by a mix. The plan below is the
 original brief.
 
@@ -303,7 +304,7 @@ Everything faces or flies **right**. The game mirrors pictures for enemies.
 
 | Type | Look (Claude) |
 |---|---|
-| `laser` | A short bright bolt; colour per faction: yours orange-red, Rabble green |
+| `laser` | A short bright bolt; colour per faction: yours orange-red, Chernobog green |
 | `heavy_laser` | A thicker, longer bolt |
 | `ion` | A blue crackling orb |
 | `missile` | A small missile with a flame trail |
@@ -431,7 +432,7 @@ Copy the template below for each ship. Claude turns it into game data (`scripts/
 ```
 SHIP: <name>
 Id: <short id, lowercase, no spaces, e.g. rabble_cutter>
-Faction: Terran | Rabble | Zaa'sh | Collective | Moogli | Scyldar | other
+Faction: Terran | Chernobog | Zaa'sh | Collective | Moogli | Scyldar | other
 Used by: player | enemy | both (an enemy you can capture and fly)
 How you get it: shipyard (price) | quest | capture | not flyable
 Size: <cells across> x <cells down>        (player max 15 x 8, enemy max 10 x 6; nose pointing right)
@@ -448,7 +449,7 @@ Doors: between cells, e.g. (2,1)-(3,1). Airlocks (doors to space): cell and edge
 Weapon mounts: 1 = cell (x,y) top edge, 2 = ...      (one per weapon slot)
 Engine flames: cell (x,y) left edge, ...
 
-Hull: <points>                      (starter 12, Rabble Cutter 8, Ivan 14)
+Hull: <points>                      (starter 12, Chernobog Cutter 8, Ivan 14)
 Reactor: <bars>                     (starter 6)
 Systems, max bars / starting bars:  e.g. Shields 4/2, Engines 3/1, Weapons 4/2, Oxygen 2/1
 Subsystems:                         e.g. Cockpit 1, Sensors 1, Doors 1
@@ -505,11 +506,11 @@ Quirk: sealed bays, so the drone is the only one who can repair; nobody can boar
 Look: the existing white-and-orange fighter. The interior is tight machinery bays, ducts and one seat.
 ```
 
-### Example 2: a Rabble Cutter (a proposal; the game uses an outline for it now)
+### Example 2: a Chernobog Cutter (a proposal; the game uses an outline for it now)
 ```
-SHIP: Rabble Cutter
+SHIP: Chernobog Cutter
 Id: rabble_cutter
-Faction: Rabble
+Faction: Chernobog
 Used by: both (capturable)
 How you get it: capture contract
 Size: 5 x 3
@@ -584,7 +585,7 @@ Description: <one line for the store>
 | Id | Type | Power | Charge (s) | Shots | Damage | Notes |
 |---|---|---|---|---|---|---|
 | `burst_laser` | laser | 2 | 9 | 2 | 1 | Yours |
-| `rabble_laser` | laser | 1 | 11 | 1 | 1 | Rabble |
+| `rabble_laser` | laser | 1 | 11 | 1 | 1 | Chernobog |
 | `heavy_laser` | laser | 1 | 14 | 1 | 2 | Ivan, Ana |
 | `ivan_cannon` | special | 0 | 16 | 1 | 3 | Ivan's second phase; a hit on his weapons room drains it |
 | `missile_launcher` | missile | 1 | 12 | 1 | 2 | Straight through shields; uses one of your missiles a shot (enemies have their own). Terran patrols carry one |
@@ -750,7 +751,7 @@ Ideas with residents behind them:
 - The covered fighter's crew deck is now its pods room and its hold its medbay. Enemies with pods board you the
   same way. Knock out every enemy crew member and the ship is yours: a capture.
 - **In battle now (22 Nov), tried with F6** in editor or debug builds: the covered fighter with you, Freya and two
-  hired hands against a Rabble cutter that boards back; each press flips the tether on or off. Click a crew member
+  hired hands against a Chernobog cutter that boards back; each press flips the tether on or off. Click a crew member
   (on either ship, or their name in the Crew panel), then a room, to send them there. At home they repair, put out
   fires, heal in the medbay and man stations (shields, weapons, engines, and the cockpit for evasion); over there
   they knock a bar off the room's system every 4 seconds while nobody stops them. Anyone sharing a room with the

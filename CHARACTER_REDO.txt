@@ -375,7 +375,7 @@ Stu
   are slim and sit flush against the coat; the coat's edge carries up behind them, and from behind a hand out of sight in front of him
   keeps its sleeve at his side.
 
-Tally
+Eshu
 - Face: her eyes set to look ahead (two wide, three tall, gold outside, dark inside), a brow
   above each, blush on the cheeks; her post cap kept. Side eye two by two with a brow.
 - Walk (tools/spider_walk.py): like Sesska and Tikka she keeps all eight of her own limbs and
@@ -405,7 +405,7 @@ Ana
   come off the jacket's sides and the cloth behind is filled in its own tone, so the drawn
   arms sit flush against it.
 
-Tally's event sheet (npc_tally_event.png, tools/events.py)
+Eshu's event sheet (npc_tally_event.png, tools/events.py)
 - The seven shared heart-event rows, rebuilt with his new face and the same thin working
   hands as his activities: talk with hands (the pair gesturing in turn), laugh (hands on his
   middle, shoulders bouncing, eyes squeezed shut), sad (head bowed, hands together low, the

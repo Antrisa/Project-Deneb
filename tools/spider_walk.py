@@ -1,4 +1,4 @@
-"""The eight-limbed residents (Sesska, Tikka, Tally) keep their own walks. The passing frames lift
+"""The eight-limbed residents (Sesska, Tikka, Eshu) keep their own walks. The passing frames lift
 the head a pixel (the row under the chin is doubled), and any limb tip that only touched its
 limb at a corner is joined back on. The right-facing column is the left mirrored.
 usage: spider_walk.py SRC_DIR OUT_DIR NAME"""

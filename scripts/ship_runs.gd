@@ -15,7 +15,7 @@
 # Hidden stops (23 Nov): an event's "reveal: <name>" adds one next to where you are (add_hidden): a wreck or old
 # survey site to pick over, a quiet sector to rest in, a pirate market, or another stronghold.
 # Events come from SpaceEvents.EVENTS (the ones with "kind", "zones" and "rings", not "story"); none repeats in a
-# run. Fights draw the zone's own ships or Rabble raiders (a cutter or a repainted culture ship).
+# run. Fights draw the zone's own ships or Chernobog raiders (a cutter or a repainted culture ship).
 
 const SpaceEvents = preload("res://scripts/space_events.gd")
 const ShipData = preload("res://scripts/ship_data.gd")
@@ -39,8 +39,8 @@ const ABOUT := {
 	"beacon": "An ordinary beacon. Salvage, travellers or pirates: you find out when you get there.",
 	"distress": "Someone is calling for help on an open band.",
 	"store": "A trader. Repairs, fuel, missiles and weapons, for a price.",
-	"special": "A Rabble stronghold dug into an asteroid. Heavily armed.",
-	"nest": "The Rabble's Nest: their home base, guarded by pickets and a gun platform. One raid, if you dare.",
+	"special": "A Chernobog stronghold dug into an asteroid. Heavily armed.",
+	"nest": "The Rabble's Nest: the Chernobog home base, Ivan's own, guarded by pickets and a gun platform. One raid, if you dare.",
 	"ooma": "Ooma's ship, hung with lanterns. Rare goods for rare customers.",
 	"wreck": "Something worth picking over, if nobody beats you to it.",
 	"quiet": "A still patch of space, off every trade lane. Somewhere to rest and patch up.",
@@ -257,7 +257,7 @@ static func pick_event(kind: String, zone: String, ring: int, used: Array, rng: 
 	return pool[rng.randi() % pool.size()]
 
 
-# Who you fight at a beacon: half the time the zone's own ships (the Reach's are pirates anyway), otherwise Rabble
+# Who you fight at a beacon: half the time the zone's own ships (the Reach's are pirates anyway), otherwise Chernobog
 # raiders, in a cutter or someone else's repainted ship.
 static func pick_enemy(zone: String, rng: RandomNumberGenerator) -> String:
 	if rng.randf() < 0.5:

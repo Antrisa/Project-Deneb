@@ -22,7 +22,7 @@ const RESIDENTS := {
 	"Freya": ["Junior shipwright", "Human.", "Summer 2"],
 	"Artie": ["Stasis survivor", "Human. Frozen for centuries; found in Ivan's wreck.", "Autumn 18"],
 	"Stu": ["Hotel lobby boy", "Moogli. Stowed away on the first visitor transport.", "Spring 17"],
-	"Tally": ["Courier and bounty pilot", "Arachnay. Runs the Post & Privateer Dispatch.", "Spring 27"],
+	"Eshu": ["Courier and bounty pilot", "Arachnay. Runs the Post & Privateer Dispatch.", "Spring 27"],
 	"Ana": ["Flight navigator", "Human. Ivan's sister.", "Winter 23"],
 	"Tikka": ["Chief engineer", "Arachnay. Married to Sesska.", "Winter 9"],
 	"Sesska": ["Master weaver", "Arachnay. Married to Tikka.", "Autumn 10"],

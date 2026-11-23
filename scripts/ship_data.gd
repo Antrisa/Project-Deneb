@@ -27,8 +27,8 @@ const DRONE_BOOST := {"shields": "shields recharge 25% faster", "weapons": "weap
 const WEAPONS := {
 	"burst_laser": {"name": "Burst laser", "type": "laser", "shots": 2, "damage": 1, "charge": 9.0, "power": 2, "color": Color("ff6a5a"),
 		"price": 70, "about": "Two quick shots. The first strips a shield layer; the second gets through."},
-	"rabble_laser": {"name": "Rabble laser", "type": "laser", "shots": 1, "damage": 1, "charge": 11.0, "power": 1, "color": Color("7dff8a"),
-		"price": 35, "about": "Cheap, light, and everywhere the Rabble go. Better in pairs."},
+	"rabble_laser": {"name": "Chernobog laser", "type": "laser", "shots": 1, "damage": 1, "charge": 11.0, "power": 1, "color": Color("7dff8a"),
+		"price": 35, "about": "Cheap, light, and everywhere the Chernobog go. Better in pairs."},
 	"heavy_laser": {"name": "Heavy laser", "type": "laser", "shots": 1, "damage": 2, "charge": 14.0, "power": 1, "color": Color("b6ff5a"),
 		"price": 90, "about": "One slow, hard-hitting shot. Best once their shields are down."},
 	# Missiles (Zachary, 21 Nov: lasers, missiles and beams): straight through shields, but each shot uses one of
@@ -182,7 +182,7 @@ const ENEMIES := {
 	"rabble_cutter": {
 		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
 		"airlocks": [[Vector2i(2, 1), Vector2i(2, 0)]],
-		"name": "Rabble Cutter", "size": Vector2(144, 96), "hull": 8, "crew": 3,
+		"name": "Chernobog Cutter", "size": Vector2(144, 96), "hull": 8, "crew": 3,
 		"art": "res://art/ships/rabble_cutter/hull.png", "interior": "res://art/ships/rabble_cutter/interior.png", "art_scale": 2,
 		"weapons": ["rabble_laser", "rabble_laser"],
 		# Where guns attach to the hull's sides near the front, FTL-style (Zachary, 21 Nov): just outside the hull edge,
@@ -330,7 +330,7 @@ const ANA_SHIPS := {
 
 # The culture ships (Claude, 21 Nov; art approved by Zachary), at double resolution (art_scale 2). Generated from
 # tools/dev/ship_art/fleet2x.py INSIDES (rooms, doors, mounts), so art and game agree; stats are first guesses to
-# tune. Each also comes Rabble-repainted: enemy("<id>_rabble") flies it as a pirate (hull_rabble.png art).
+# tune. Each also comes Chernobog-repainted: enemy("<id>_rabble") flies it as a pirate (hull_rabble.png art).
 const CULTURE_SHIPS := {
 	"terran_patrol": {
 		# airlocks to space, for venting fires (tools/dev/ship_art/kit2x.py pick_airlocks)
@@ -497,12 +497,12 @@ static func enemy(id: String) -> Dictionary:
 		return build(ENEMIES[id])
 	if CULTURE_SHIPS.has(id):
 		return build(CULTURE_SHIPS[id])
-	# Rabble pirates fly other peoples' ships, haphazardly repainted (Zachary, 21 Nov): the same rooms, the repainted
-	# art, and Rabble guns.
+	# Chernobog pirates fly other peoples' ships, haphazardly repainted (Zachary, 21 Nov): the same rooms, the repainted
+	# art, and Chernobog guns.
 	if id.ends_with("_rabble") and CULTURE_SHIPS.has(id.trim_suffix("_rabble")):
 		var base: String = id.trim_suffix("_rabble")
 		var def: Dictionary = CULTURE_SHIPS[base].duplicate(true)
-		def["name"] = "Rabble %s" % str(def["name"]).to_lower()
+		def["name"] = "Chernobog %s" % str(def["name"]).to_lower()
 		def["art"] = "res://art/ships/%s/hull_rabble.png" % base
 		def["interior"] = "res://art/ships/%s/interior_rabble.png" % base
 		var guns: Array = []
@@ -607,7 +607,7 @@ const STOP_KINDS := {
 	"contract": {"label": "Wanted ship", "color": Color("ffd84a")},
 }
 
-# The first flight (Zachary, 21 Nov): the route is locked. It heads off the Rabble and stops once at each kind
+# The first flight (Zachary, 21 Nov): the route is locked. It heads off the Chernobog and stops once at each kind
 # of stop on the way, as a tutorial for exploring and fighting. S.A.R.A. has scanned ahead, so the beacons say
 # what they hold. Ring and angle place each stop on the map; "event" is what main.gd runs there.
 const FIRST_FLIGHT := [
@@ -615,12 +615,12 @@ const FIRST_FLIGHT := [
 		"about": "Wreckage frozen into a drift of ice. Something might still be worth cutting free."},
 	{"kind": "distress", "event": "patient_wren", "name": "Drifting freighter", "ring": 2, "angle": 15.0,
 		"about": "A distress call on a Collective band. Scorch marks on the hull."},
-	{"kind": "beacon", "event": "picket", "name": "Rabble picket", "ring": 3, "angle": 55.0, "enemy": "rabble_cutter",
-		"about": "A Rabble Cutter scouting ahead of the others."},
+	{"kind": "beacon", "event": "picket", "name": "Chernobog picket", "ring": 3, "angle": 55.0, "enemy": "rabble_cutter",
+		"about": "A Chernobog Cutter scouting ahead of the others."},
 	{"kind": "store", "event": "moogli_trader", "name": "Moogli trader", "ring": 2, "angle": 125.0,
 		"about": "A trader's skiff, keeping out of the way. Repairs and fuel, for a price."},
 	{"kind": "special", "event": "ivan", "name": "Ivan's flagship", "ring": 3, "angle": 95.0, "enemy": "ivan_flagship",
-		"about": "The Rabble's main force, on its way to the Landing. Ivan leads it himself."},
+		"about": "The Chernobog main force, on its way to the Landing. Ivan the Rabble leads it himself."},
 ]
 const FIRST_FLIGHT_FUEL := 6          # you set off with at least this much
 

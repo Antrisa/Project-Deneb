@@ -16,7 +16,7 @@ func run() -> void:
 	station.set_process(false)
 	station.player.set_process(false)
 
-	# Wednesday after both rescues brings Ooma, Artie, Stu, Tally and Ana onto their regular schedules.
+	# Wednesday after both rescues brings Ooma, Artie, Stu, Eshu and Ana onto their regular schedules.
 	station.artie_found_day = 1
 	station.ana_found_day = 1
 	station.day = 10

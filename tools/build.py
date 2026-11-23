@@ -2516,8 +2516,8 @@ SCHEDULES_RAW = {
               ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle")],
     "Stu": [("07:00", "hotel", 60, 37, 26, "d", "work"), ("17:35", "main", 136, 72, 26, "u", "eat"),
             ("19:30", *HOME_SPOTS["Stu"], 26, "d", "idle")],
-    "Tally": [("07:30", "west", 53, 28, 26, "u", "work"), ("17:35", "main", 141, 72, 26, "u", "eat"),
-              ("20:00", *HOME_SPOTS["Tally"], 26, "d", "idle")],
+    "Eshu": [("07:30", "west", 53, 28, 26, "u", "work"), ("17:35", "main", 141, 72, 26, "u", "eat"),
+              ("20:00", *HOME_SPOTS["Eshu"], 26, "d", "idle")],
     "Ana": [("07:00", "bay", 40, 16, 26, "u", "work"), ("17:35", "main", 140, 72, 26, "u", "eat"),
             ("20:30", *HOME_SPOTS["Ana"], 26, "d", "idle")],
 }
@@ -2526,7 +2526,7 @@ SCHEDULES_RAW = {
 ACTIONS = {
     'Artie': ['read', 'eat', 'rest'],
     'Stu': ['luggage', 'eat', 'rest'],
-    'Tally': ['mail', 'eat', 'rest'],
+    'Eshu': ['mail', 'eat', 'rest'],
     'Ana': ['tune', 'eat', 'rest'],
     'Maren': ['treat', 'eat', 'treat', 'rest'],
     'Quill': ['sort', 'eat', 'read', 'rest'],
@@ -2556,7 +2556,7 @@ ACTIONS = {
 ARRIVAL_ACTION_ROWS = {
     'Artie': ['knots d', 'read u', 'campfire d', 'eat d', 'rest d', 'eat u', 'recover u'],
     'Stu': ['luggage d', 'bell d', 'sweep d', 'eat d', 'rest d', 'eat u'],
-    'Tally': ['mail d', 'crate d', 'eat d', 'rest d', 'mail u', 'eat u'],
+    'Eshu': ['mail d', 'crate d', 'eat d', 'rest d', 'mail u', 'eat u'],
     'Ana': ['tune u', 'chart u', 'eat d', 'drink l', 'rest d', 'eat u', 'recover u'],
 }
 # Bedtime (22 Nov): everyone with a bed of their own gets into it, Stardew-style, and sleeps under the covers
@@ -2565,7 +2565,7 @@ ARRIVAL_ACTION_ROWS = {
 BEDTIMES = {"Nub": "20:30", "Kit": "20:30", "Pip": "21:00", "Job": "22:45", "Zaas": "23:30", "Tar'Besh": "23:30",
             "Rusk": "23:55"}
 BEDTIME = "22:30"
-BED_GUESTS = {"Tally": ("aptB", "Guest bed")}
+BED_GUESTS = {"Eshu": ("aptB", "Guest bed")}
 BED_NAMES = ("bed", "bed_double", "bed_double_steel")
 
 
@@ -2972,6 +2972,19 @@ SCHEDULE_DAYS_RAW = {
             ("07:00", "hotel", 60, 37, 26, "d", "work", "luggage"), ("15:00", "west", 31, 38, 26, "l", "work", "luggage"),
             ("17:30", "mess", 20, 9, 26, "d", "eat", "eat"),
             ("19:30", "home2", 10, 6, 26, "d", "idle", "rest")]},
+    ],
+    # Ana (23 Nov, Claude's suggestion): she works the Shuttle Bay and covers it alone on Freya's weekends, with
+    # Monday and Thursday off: star charts in the Observation Lounge, then Rusk's bar. She eats in the mess hall,
+    # at the last table (her 2).
+    "Ana": [
+        {"when": {"days": [1, 2, 4, 5, 6]}, "stops": [
+            ("07:00", "bay", 40, 16, 26, "u", "work", "tune"), ("12:30", "mess", 4, 12, 26, "d", "eat", "eat"),
+            ("13:30", "bay", 40, 16, 26, "u", "work", "tune"), ("17:30", "mess", 4, 12, 26, "d", "eat", "eat"),
+            ("19:30", *HOME_SPOTS["Ana"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [0, 3]}, "bed": "23:00", "stops": [
+            ("09:30", "lounge", 45, 15, 26, "r", "idle", "chart"), ("12:30", "mess", 4, 12, 26, "d", "eat", "eat"),
+            ("14:00", "lounge", 45, 15, 26, "r", "idle", "chart"), ("17:30", "mess", 4, 12, 26, "d", "eat", "eat"),
+            ("19:30", "bar", 9, 25, 26, "r", "idle", "drink"), ("22:15", *HOME_SPOTS["Ana"], 26, "d", "idle", "rest")]},
     ],
 }
 SCHEDULE_DAYS = {}
@@ -3408,7 +3421,7 @@ if PREV:
            "Tikka": "tikka", "Freya": "freya", "Job": "job", "Zaas": "zaas", "Vzz'ket": "vzzket",
            "Maren": "maren", "Owen": "owen", "Pip": "pip", "Quill": "quill", "Sesska": "sesska",
            "Rusk": "rusk", "Ooma": "ooma", "Tobbin": "tobbin", "Merrow": "merrow", "Nub": "nub", "Garrick": "garrick",
-           "Saffi": "saffi", "Kit": "kit", "Ix'ali": "ixali", "Artie": "artie", "Stu": "stu", "Tally": "tally", "Ana": "ana"}
+           "Saffi": "saffi", "Kit": "kit", "Ix'ali": "ixali", "Artie": "artie", "Stu": "stu", "Eshu": "tally", "Ana": "ana"}
     fx_obj = {"k": ("fx_console.png", True), "K": ("fx_display.png", True), "F": ("fx_furnace.png", False), "G": ("fx_core.png", False)}
     for k, ar in A.items():
         im = Image.new("RGBA", (ar.w * cell, ar.h * cell), (11, 16, 38, 255))
