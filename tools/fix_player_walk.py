@@ -11,7 +11,9 @@ the way the residents' walks are:
 - passing steps (rows 3 and 4): everything above the shins rises a pixel; the same foot lifts two.
 
 Rows 1 and 3 lift the screen-right foot walking down and the screen-left foot walking up; rows 2
-and 4 the other one. Every layer (bottoms, faces, tops, hair) and its mask gets the same change,
+and 4 the other one. The arms swing: on each contact step the arm on the side of the lifted foot's
+opposite swings forward (its hand rises two pixels and comes in one) and the other swings back (its
+hand rises one); on the passing steps that forward hand is still a pixel up on its way back down. Every layer (bottoms, faces, tops, hair) and its mask gets the same change,
 for every choice on both bodies. The carry rows 1-4 of action_tops.png, which are drawn over these
 walk frames, become carry row 0 moved up or down by the same pixel.
 """
@@ -26,6 +28,41 @@ SHIN = 40                          # rows from here down stay put (the feet stan
 SPLIT = 12                         # x below this is the screen-left leg
 BOB = {1: 1, 2: 1, 3: -1, 4: -1}   # contact steps drop, passing steps rise
 LIFT = {1: 1, 2: 1, 3: 2, 4: 2}
+# arm swing per row, walking down: (rise, inward) for the screen-left hand, then the screen-right one
+SWING = {1: ((2, 1), (1, 0)), 2: ((1, 0), (2, 1)), 3: ((1, 0), (0, 0)), 4: ((0, 0), (1, 0))}
+
+
+ELBOW = 27   # arm rows from here down move; the shoulders above stay put
+
+
+def hands(mask):
+    """The inner edges of the hands (skin hanging at the sides below the elbows)."""
+    skin = (mask[..., 3] > 0) & (mask[..., 1] > 128)
+    skin[:ELBOW] = False
+    ys, xs = np.nonzero(skin)
+    return xs[xs < 9].max(), xs[xs > 14].min()
+
+
+def swing(cell, inner_l, inner_r, row, d):
+    """Each arm (the columns out from its hand's inner edge, below the elbow) is shortened by its
+    rise, as if swung toward or away from the camera, and the forward one comes in over the body."""
+    left, right = SWING[row]
+    if d == 1:
+        left, right = right, left
+    out = cell.copy()
+    for (rise, inward), cols, sign in ((left, range(0, inner_l + 1), 1), (right, range(inner_r, FW), -1)):
+        if not rise and not inward:
+            continue
+        arm = cell[:, list(cols)].copy()
+        out[ELBOW:, list(cols)] = 0
+        for i, x in enumerate(cols):
+            for y in range(ELBOW, FH - rise):
+                px = arm[y + rise, i]
+                # the top rise rows below the elbow stay where they were; the rest come in
+                nx = x + sign * inward if y >= ELBOW + 2 else x
+                if px[3] and 0 <= nx < FW:
+                    out[y, nx] = px
+    return out
 
 
 def shifted(cell, dy):
@@ -39,8 +76,10 @@ def shifted(cell, dy):
     return out
 
 
-def step(stand, row, d, legs):
+def step(stand, row, d, legs, arms=None):
     dy = BOB[row]
+    if arms is not None:
+        stand = swing(stand, *arms, row, d)
     out = shifted(stand, dy)
     if not legs:
         return out
@@ -55,6 +94,7 @@ def step(stand, row, d, legs):
 
 
 def walk(folder):
+    tops = np.array(Image.open(os.path.join(GAME, folder, "tops_mask.png")).convert("RGBA"))
     for name in ("bottoms", "faces", "tops", "hair"):
         for suffix in ("", "_mask"):
             path = os.path.join(GAME, folder, name + suffix + ".png")
@@ -64,8 +104,9 @@ def walk(folder):
                 for d in DIRS:
                     xs = slice(d * FW, (d + 1) * FW)
                     stand = a[y0:y0 + FH, xs].copy()
+                    arms = hands(tops[y0:y0 + FH, xs]) if name == "tops" else None
                     for row in range(1, ROWS):
-                        a[y0 + row * FH:y0 + (row + 1) * FH, xs] = step(stand, row, d, name == "bottoms")
+                        a[y0 + row * FH:y0 + (row + 1) * FH, xs] = step(stand, row, d, name == "bottoms", arms)
             Image.fromarray(a).save(path)
 
 
