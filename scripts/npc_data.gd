@@ -649,7 +649,7 @@ const LOOKS = {
 # tools/build.py SCHEDULE_DAYS_RAW; the station calendar lists them. Jasper and Evarra stagger theirs, so one
 # of them always keeps the mess hall.
 const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6], "Quill": [0, 5], "Maren": [3, 6],
-	"Ix'ali": [1, 3], "Garrick": [5, 6]}
+	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -725,5 +725,19 @@ const DAY_LINES := {
 			"[happy] No Ix'ali today, so nobody's asked me to sign for a sword with a name."],
 		3: ["Ix'ali's at the museum again. Tar'Besh will send her back when she starts naming the exhibits.",
 			"Quiet shift. I've done the ledger twice. It balanced both times. Suspicious."],
+	},
+	# Stu's hotel week (23 Nov): guests Friday to Sunday, cleaning Monday, Tuesday and Wednesday off, getting
+	# ready Thursday. Thursday and Saturday have no day line, so his own lines get a turn.
+	"Stu": {
+		0: ["Monday. The guests are gone, and they left me eleven towels, a sock, and one very confused houseplant.",
+			"[happy] Cleaning day! I've named the mop. Her name is Gloria. We're very close."],
+		1: ["[happy] Day off! I came down to the terminal to watch the ships. Just to watch. Old habit.",
+			"Tuesday. Nobody needs their bags carried. I don't know what to do with my arms."],
+		2: ["[happy] Another day off. Ooma's in. I'm going to look at her lost-and-found crate and imagine whose it all was.",
+			"Wednesday. Sara says I'm to 'rest'. I've rested twice already. Is that enough?"],
+		4: ["[happy] Transport day! Bags, bags, bags. I carry them beautifully. Have I mentioned?",
+			"Guests are in. Somebody brought a pet. I don't know what it is. Neither do they."],
+		6: ["Last day of the weekend. I'll see them off at the terminal. I always wave until the ship's gone.",
+			"[sad] I used to be the one on the ship. Now I'm the one waving. I think I like waving better."],
 	},
 }

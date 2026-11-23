@@ -39,11 +39,11 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 
 1. **Four big story threads open and never close:** the Terran hardliners who want S.A.R.A. back or destroyed, the Junta and the waking Custodians, Pip's missing parents, and who took Artie in 2036. Section 1.3.
 2. **The docs and the game tell Ivan's ending and Ana's mutiny differently** (pirate base raid vs Ivan's flagship; a civilian freighter vs revenge). Section 1.2.
-3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's, Job's, Quill's, Ix'ali's and Artie's arcs are now written and in the game.)
-4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3.
+3. **Every 10-heart romance scene and every platonic scene is an outline.** (Freya's, Jasper's, Evarra's, Job's, Quill's, Ix'ali's, Artie's and Stu's arcs are now written and in the game.)
+4. **Five events break the hard-lock rule** (8s must never wait): Jasper & Evarra 8 waits for the hotel; Stu 8 needs the hotel lobby; Evarra 8 and Artie 8 and 10 need the East orchard. Stu's 2 and 6 need the hotel too. Section 7.3. (All but Jasper & Evarra 8 are settled: the hotel opens after Ivan's fall, before Stu arrives.)
 5. ~~**Two "first bees" scenes**~~ Settled 22 Nov: the bees are the siblings' 6; Evarra's 6 is a wildflower border.
 6. **The code counts hearts three ways:** `main.gd` says 10 points a heart, `ui.gd` says 5, the NPC Master says 100. Section 7.2.
-7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Nine now: Quill 10 moved to the little park and Ix'ali 10 to the museum; Artie 6 stays.)
+7. **Eleven scenes were in the Observation Lounge**, including three 10-heart milestones and Ana's confession, all at night under the stars. (Eight now: Quill 10 moved to the little park, Ix'ali 10 to the museum and Stu 10 to the terminal airlock; Artie 6 stays.)
 
 ---
 
@@ -236,16 +236,14 @@ A drifter who can't remember his name learns that staying isn't a trap.
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Packed Bags by the Airlock | Hotel lobby, morning | His duffel bag is packed; he doesn't remember his real name. | Script |
-| 4 | The Burgundy Suit | Weaver's shop | Sesska fits his bellhop uniform. | Script |
-| 6 | A Name on the Door | Hotel staff room | Tobbin's STU nameplate; he has unpacked. | Short |
-| 8 | After-Hours Lobby Shift (confession) | Hotel lobby after 21:00 | Cocoa on the lobby sofa. Perk: Five-Star Partner. | Script |
-| 10 | Suite for Two | Observation Lounge, night | A candlelit picnic; a silver hotel bell. Keepsake: the bell. | Outline |
+| 2 | Packed Bags by the Airlock | Hotel lobby on a guest morning (Friday after the transport; Saturday or Sunday from when you wake) | His duffel bag is packed and hidden behind the fern; he doesn't remember his real name. | In game (Zachary's lines, closing beat by Claude) |
+| 4 | The Burgundy Suit | Sesska's weaver shop on his day off (Tuesday or Wednesday) | Sesska fits his bellhop uniform. | In game (Zachary's lines, replies by Claude) |
+| 6 | A Name on the Door | Outside East Home 2 (his home), Sunday evening | Tobbin's STU nameplate; he has unpacked. | In game (Zachary's lines, Tobbin and a choice by Claude) |
+| 8 | After-Hours Lobby Shift (confession) | Hotel lobby after 21:00 on a Friday or Saturday | Cocoa on the lobby sofa. Perk: Five-Star Partner. Accept, decline and friendship endings written. | In game (Zachary's lines, replies by Claude) |
+| 10 | Suite for Two | The terminal airlock at night, where his bag used to wait | A candlelit picnic with S.A.R.A.'s and Jasper's help; a freighter leaves without him; a silver bell. Keepsake: the bell. | In game (Claude, from Zachary's outline) |
 
-- **Lock (the biggest in the cast):** Stu arrives right after Ivan, but 2, 6 and 8 happen in the hotel, which only opens with the Chancellor. 8 must not wait, and nothing says what Stu does before the hotel exists (in the game he waits at the terminal, then lives in East Home 2). **Idea:** he carries bags at the terminal and Reception for S.A.R.A. until the hotel opens; backups: Reception for 2 and 8, East Home 2's door for 6. Decision 10.
-- **Clash:** in 2 the bag is "hidden behind the potted fern", then S.A.R.A. says it's "sitting by the terminal airlock".
-- **Clash:** 6 is "the West Wing Residential Corridor" in the script and "the hotel staff room" in the Master; in the game he lives in East Home 2. The nameplate could go on that door.
-- **Gap:** 6 has no choice. Does the game ever give him his name back? (Optional.)
+- **Decided (Zachary, 23 Nov):** the hotel opens after the Ivan fight, so it's open by the time Stu arrives (Decision 10). Guests come Friday to Sunday and stay three days. Monday he cleans the hotel; Tuesday and Wednesday are his days off. "Change what you think is best": the fern for the bag in 2, East Home 2's door for 6, the terminal airlock for 10, and the rest of his week (`docs/story/characters/STU.md`).
+- **Still open (optional):** does the game ever give him his real name back? His 8 says "Being Stu is plenty".
 
 ### 3.9 Anastasia "Ana" (Human, Wave 2)
 
@@ -301,7 +299,7 @@ All 40 are outlines. Text is from the NPC Master; where the Master has only a wo
 
 - **Repeat:** 2 and The Secret of Annex 4 (section 1.2).
 - **Gap:** 6 opens thread A, and nothing closes it.
-- The brass bell from 4 turns up in Stu 2 and on Landing Day. Is it at Reception or in the hotel lobby?
+- The brass bell from 4 turns up in Stu 2 and on Landing Day. Is it at Reception or in the hotel lobby? (Stu 2 has it on the hotel's front desk, 23 Nov.)
 - Two secrets kept from two empires (hers in 6, the Custodians in the prologue). Good material for the Summit.
 
 ### 5.2 Tar'Besh (Zaa'sh, Cleric & Curator)
@@ -423,8 +421,8 @@ All outlines; none has a scene yet.
 
 | Day | Event | Notes |
 |---|---|---|
-| Spring 20 | **Landing Day** (station) | Saffi's potluck, ringing the lobby bell, the fountain photo. In Year 1 the hotel isn't open: the bell is at Reception. |
-| Spring 24 | Grand Hotel Inspection | Needs the hotel open, so realistically Year 2 first. Ties to Jasper & Evarra 8 and Stu. |
+| Spring 20 | **Landing Day** (station) | Saffi's potluck, ringing the lobby bell, the fountain photo. If Ivan hasn't fallen yet, the hotel isn't open (it opens after his fall, 23 Nov) and the bell is at Reception. |
+| Spring 24 | Grand Hotel Inspection | Needs the hotel open (it opens after Ivan's fall, decided 23 Nov). Ties to Jasper & Evarra 8 and Stu. |
 | Summer 22 | Midsummer Star-Gaze | Observation Lounge; a wish with a friend or partner. The one partner beat in the calendar. |
 | Summer 29 | **Chivalry & Forge Tourney** (Junta) | Shuttle Bay; Ix'ali 6 can set it up. |
 | Autumn 21 | Station Potluck Cook-Off | Judged by Rusk, Maren and Jasper. |
@@ -449,16 +447,16 @@ Each of the nine 8-heart scenes ends "Accept confession or stay friends", with n
 
 | Event | Problem | Fix |
 |---|---|---|
-| Jasper & Evarra 8 (and so 8+) | Waits for the hotel; 8s never wait | Exception, or a no-hotel version (Decision 9) |
-| Stu 8 | Hotel lobby; no backup | Reception (Decision 10) |
-| Stu 2, 6 | Hotel; Stu arrives long before it may open | Reception; East Home 2 (Decision 10) |
+| Jasper & Evarra 8 (and so 8+) | Waits for the hotel; 8s never wait | Now only waits for Ivan's fall (the hotel opens then). Exception, or a no-hotel version (Decision 9) |
+| Stu 8 | Hotel lobby; no backup | Done 23 Nov: the hotel opens after Ivan, before Stu arrives, so no backup is needed |
+| Stu 2, 6 | Hotel; Stu arrives long before it may open | Done 23 Nov: as above; 6 moved to East Home 2's door |
 | Evarra 8 | East orchard; no backup | Done 22 Nov: the promenade flower beds until the garden dome opens |
 | Artie 8, 10 | East orchard; no backup | Done 23 Nov: the dome's woods, backup the little park |
 | Evarra 6 | Waits on side arc 6, which needs Jasper's hearts | Done 22 Nov: her 6 no longer needs honey |
 
 ### 7.4 Places in the scripts that aren't the game's maps
 
-Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill 8 is the library; Stu 6 "West Wing Residential Corridor" (East Home 2?); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 is settled (the cavern gate).
+Job 2 and 4 are settled (the Engineering break room; the mine's iron bay); Quill 8 is the library; Stu 6 is settled (East Home 2's door); the Chitin Exodus "Mine Level 5" (floors 16–24); Ix'ali 6 is settled (the cavern gate).
 
 ### 7.5 Choices with no outcome, or the wrong kind
 
@@ -466,11 +464,11 @@ Jasper & Evarra 8 option B; Ana 6 ("+High Romance"); the nine confessions (7.1).
 
 ### 7.6 What the event engine will have to check
 
-From the triggers above: map and time window; weekday (Wed or Sat); season; hearts (one resident, both of a pair, or "as partners"); flags (Custodian restored, Harbinger woken, hotel open, ship has flown, resident arrived, an earlier event seen); and an automatic cutscene (Jasper & Evarra 8+). "Dusk", "sunset" and "night" need fixed clock windows, and "sunny" needs a meaning.
+From the triggers above: map and time window; weekday (Wed or Sat); season; hearts (one resident, both of a pair, or "as partners"); flags (Custodian restored, Harbinger woken, hotel open (= Ivan's fall), ship has flown, resident arrived, an earlier event seen); and an automatic cutscene (Jasper & Evarra 8+). "Dusk", "sunset" and "night" need fixed clock windows, and "sunny" needs a meaning.
 
 ### 7.7 Eleven scenes in the Observation Lounge
 
-Jasper & Evarra 4, Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, S.A.R.A. 8, Tikka & Sesska 6, Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open.
+Jasper & Evarra 4, Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, S.A.R.A. 8, Tikka & Sesska 6, Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open. (Moved: Quill 10 to the little park, Ix'ali 10 to the museum, Stu 10 to the terminal airlock.)
 
 ### 7.8 Art the scenes need that doesn't exist yet
 
@@ -490,15 +488,15 @@ Answer by number; anything left open stays as it is.
 6. **Where threads A and B end:** at the Neutral Zone Summit, or elsewhere?
 7. **Pip's parents:** found, a letter only, or left open?
 8. **The first bees:** decided 22 Nov: side-arc 6. Evarra 6 is now a wildflower border round your field.
-9. **Jasper & Evarra 8 waiting for the hotel:** allow it as an exception, or write a version without the hotel?
-10. **Stu before the hotel opens:** his job, and backup places for 2, 6 and 8.
+9. **Jasper & Evarra 8 waiting for the hotel:** allow it as an exception, or write a version without the hotel? Since the hotel now opens after Ivan's fall (23 Nov), it only waits for that.
+10. **Stu before the hotel opens:** decided 23 Nov: the hotel opens after the Ivan fight, before Stu arrives, so he needs no job before it and no backup places. Guests come Friday to Sunday.
 11. **Backups for the East orchard:** done. Evarra 8: the promenade flower beds; Artie 8 and 10: the little park (they moved to the garden dome's woods). The engine now has backup places (`"backup"` in `scripts/heart_events.gd`).
 12. **Ix'ali's star pendant** at 8: an Oath-Crest you could propose with, or something else?
 13. **Freya's father:** decided 22 Nov: **Jorvik**, who died testing an earlier version of the stabilizer. Still open: how long ago.
 14. **Keepsakes marked (Claude):** Job's oar charm. (Jasper's apron and Evarra's pressed-flower frame are in the game.)
 15. **Hearts:** 100 points a heart, as in the NPC Master? Then the code is changed to match.
 16. **"The Nest":** rename the cavern event or the pirate stronghold.
-17. **Which Observation Lounge scenes move**, and where to.
+17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock).
 18. **Eshu:** rename Tally in the game's text (lines, morning news, schedule name; the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
 20. **Which scenes Claude writes first.** Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).

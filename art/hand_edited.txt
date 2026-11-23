@@ -570,6 +570,7 @@ npc_job_event.png
 npc_quill_event.png
 npc_ixali_event.png
 npc_artie_event.png
+npc_stu_event.png
 portrait_ana.png
 portrait_artie.png
 portrait_ivan.png

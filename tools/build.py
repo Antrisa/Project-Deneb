@@ -2940,6 +2940,39 @@ SCHEDULE_DAYS_RAW = {
             ("09:00", "east", 164, 47, 26, "u", "idle", "play"), ("17:35", "mess", 9, 9, 26, "u", "eat", "eat"),
             ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
     ],
+    # Stu (23 Nov, Zachary): the hotel opens after Ivan's fall and takes guests Friday to Sunday (they stay three
+    # days). Monday he cleans the hotel; Tuesday and Wednesday are his days off; Thursday he gets it ready (the
+    # bell polished, the beds made); Friday he meets the transport at the terminal and runs the lobby, with a late
+    # shift; Saturday the lobby and a late shift; Sunday the lobby, then he sees the guests off at the terminal.
+    "Stu": [
+        {"when": {"days": [0]}, "stops": [
+            ("07:00", "hotel", 30, 74, 26, "d", "work", "sweep"), ("11:00", "hotel", 90, 74, 26, "d", "work", "sweep"),
+            ("13:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("14:00", "hotel", 58, 30, 26, "d", "work", "sweep"),
+            ("17:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("19:30", "home2", 10, 6, 26, "d", "idle", "rest")]},
+        {"when": {"days": [1]}, "stops": [
+            ("09:00", "west", 31, 38, 26, "l", "idle", "rest"), ("11:00", "main", 95, 64, 26, "d", "idle", "rest"),
+            ("13:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("14:30", "common", 13, 7, 26, "d", "idle", "rest"),
+            ("17:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("19:30", "home2", 10, 6, 26, "d", "idle", "rest")]},
+        {"when": {"days": [2]}, "stops": [
+            ("09:30", "bram", 2, 4, 26, "r", "idle", "rest"), ("11:30", "east", 50, 52, 26, "d", "idle", "rest"),
+            ("13:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("15:00", "main", 97, 71, 26, "d", "idle", "rest"),
+            ("17:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("19:30", "home2", 10, 6, 26, "d", "idle", "rest")]},
+        {"when": {"days": [3]}, "stops": [
+            ("07:00", "hotel", 60, 33, 26, "d", "work", "bell"), ("12:00", "mess", 20, 9, 26, "d", "eat", "eat"),
+            ("13:00", "hotel", 30, 74, 26, "d", "work", "sweep"), ("17:00", "mess", 20, 9, 26, "d", "eat", "eat"),
+            ("19:30", "home2", 10, 6, 26, "d", "idle", "rest")]},
+        {"when": {"days": [4]}, "bed": "23:00", "stops": [
+            ("07:00", "west", 31, 38, 26, "l", "work", "luggage"), ("09:30", "hotel", 60, 37, 26, "d", "work", "luggage"),
+            ("17:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("18:00", "hotel", 60, 33, 26, "d", "work", "bell"),
+            ("22:00", "home2", 10, 6, 26, "d", "idle", "rest")]},
+        {"when": {"days": [5]}, "bed": "23:00", "stops": [
+            ("07:00", "hotel", 60, 37, 26, "d", "work", "luggage"), ("17:00", "mess", 20, 9, 26, "d", "eat", "eat"),
+            ("18:00", "hotel", 60, 33, 26, "d", "work", "bell"), ("22:00", "home2", 10, 6, 26, "d", "idle", "rest")]},
+        {"when": {"days": [6]}, "stops": [
+            ("07:00", "hotel", 60, 37, 26, "d", "work", "luggage"), ("15:00", "west", 31, 38, 26, "l", "work", "luggage"),
+            ("17:30", "mess", 20, 9, 26, "d", "eat", "eat"),
+            ("19:30", "home2", 10, 6, 26, "d", "idle", "rest")]},
+    ],
 }
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():

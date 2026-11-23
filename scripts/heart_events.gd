@@ -24,7 +24,8 @@ const ORDER := ["freya_2", "freya_4", "freya_6", "freya_8", "freya_10",
 	"job_2", "job_4", "job_6", "job_8", "job_10",
 	"quill_2", "quill_4", "quill_6", "quill_8", "quill_10",
 	"ixali_2", "ixali_4", "ixali_6", "ixali_8", "ixali_10",
-	"artie_0", "artie_2", "artie_4", "artie_6", "artie_8", "artie_10"]
+	"artie_0", "artie_2", "artie_4", "artie_6", "artie_8", "artie_10",
+	"stu_2", "stu_4", "stu_6", "stu_8", "stu_10"]
 
 const EVENTS := {
 	# ---------------------------------------------------------------- Freya (docs/story/characters/FREYA.md)
@@ -1438,6 +1439,169 @@ const EVENTS := {
 			["emote", "Artie", "love"], ["emote", "player", "love"],
 			["emote", "Pip", "joy"], ["emote", "Kit", "joy"], ["emote", "Nub", "joy"],
 			["keepsake", "scoutmaster_badge", "Keepsake: the Honorary Scoutmaster badge"],
+		],
+	},
+	# ---------------------------------------------------------------- Stu (docs/story/characters/STU.md)
+	"stu_2": {
+		"who": "Stu", "hearts": 2, "title": "Packed Bags by the Airlock",
+		# the hotel lobby on a guest morning (the hotel takes guests Friday to Sunday): Friday once the transport's
+		# guests are in, or Saturday and Sunday from when you wake (your quarters are in the hotel)
+		"area": "hotel", "windows": [[[4], "09:30", "11:00"], [[5, 6], "06:00", "11:00"]],
+		"player": [60, 38, "u"],
+		"cast": [["Stu", 60, 33, "d", "bell d"]],
+		"steps": [
+			["wait", 0.4], ["sfx", "click"],
+			["say", "", ["The hotel lobby, open for the weekend. Stu is polishing the brass reception bell.",
+				"A small, worn canvas duffel bag sits half hidden behind the potted fern."]],
+			["walk", "player", 60, 35], ["face", "player", "u"],
+			["pose", "Stu", ""], ["emote", "Stu", "surprise"],
+			["say", "", ["He jumps when you walk in, then grins sheepishly."]],
+			["say", "Stu", ["[surprised] Oh! Hey, Boss! Just, uh, testing the acoustics on the lobby bell! Crisp, right? Very Parisian, just like Sara ordered!"]],
+			["say", "Sara", ["Indeed, Stu. Though I do wonder why your duffel bag is packed and hiding behind the fern."], "S.A.R.A."],
+			["say", "", ["Stu rubs the back of his neck."]],
+			["say", "Stu", ["[sad] Old habit! Look, I'm grateful you didn't space me when you found me in that hydroponics crate, Sara, really.",
+				"It's just... I don't even remember my real name.",
+				"Every port I've ever docked at, I work a few shifts, keep my head down, and hop the next freighter before anyone starts expecting things."]],
+			["choose", [
+				{"text": "No pressure—stay as long as you want, leave when you're ready.", "friendship": 60, "steps": []},
+				{"text": "You're actually great at this job. The guests love you.", "friendship": 30, "steps": []}]],
+			["emote", "Stu", "surprise"],
+			["say", "", ["He blinks in surprise."]],
+			["say", "Stu", ["Huh. Nobody's ever told me I was 'great' at anything except hiding in cargo vents.",
+				"[happy] Tell you what—I'll stick around through the next transport cycle."]],
+			["say", "", ["He nudges the duffel bag a little further behind the fern. He doesn't unpack it. Not yet."]],
+			["pose", "Stu", "bell d"],
+		],
+	},
+	"stu_4": {
+		"who": "Stu", "hearts": 4, "title": "The Burgundy Suit",
+		# Sesska's weaver shop, on his day off (Tuesday, Wednesday)
+		"area": "weaver", "windows": [[[1, 2], "10:00", "16:00"]],
+		"seen": ["stu_2"],
+		"player": [5, 8, "u"],
+		"cast": [["Stu", 5, 3, "d"], ["Sesska", 6, 3, "l"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Sesska's tailoring counter. Stu stands on a fitting stool, mortified and secretly thrilled, in a crisp burgundy-and-gold bellhop uniform."]],
+			["say", "", ["Sesska adjusts his cuffs with two arms while pinning his hem with the other two."]],
+			["say", "Sesska", ["Stop fidgeting, young man. Void-silk lining breathes better than those greasy coveralls you arrived in."]],
+			["say", "Stu", ["[surprised] It's... it's got gold buttons. Nobody ever made anything just for my measurements before."]],
+			["walk", "player", 5, 6], ["face", "player", "u"],
+			["emote", "Stu", "surprise"],
+			["say", "Stu", ["[shocked] Don't laugh! Sara insisted the hotel needed 'proper presentation.'",
+				"How do I look—ridiculous, or almost like I actually work here?"]],
+			["choose", [
+				{"text": "Sharpest bellhop in the Alpha Sector.", "friendship": 60, "steps": [
+					["pose", "Stu", "laugh"],
+					["say", "Stu", ["[happy] The Alpha Sector! I'm going to have that embroidered on something."]],
+					["pose", "Stu", ""]]},
+				{"text": "It suits you—you look like you belong here.", "friendship": 60, "steps": [
+					["say", "Stu", ["[bashful] ...Belong here. Huh. Say that again sometime. Not now. Later."]]]}]],
+			["say", "Sesska", ["[happy] Hold still. One more pin. There. Now go and carry something heavy, beautifully."]],
+			["emote", "Stu", "joy"],
+			["flag", "stu_uniform"],
+		],
+	},
+	"stu_6": {
+		"who": "Stu", "hearts": 6, "title": "A Name on the Door",
+		# outside East Home 2, where he lives (the script's "West Wing corridor"), on Sunday evening: the guests
+		# checked out at 15:00 and tipped
+		"area": "east", "windows": [[[6], "17:30", "21:00"]],
+		"seen": ["stu_4"],
+		"player": [43, 36, "l"],
+		"cast": [["Tobbin", 39, 34, "l"], ["Stu", 40, 36, "u"]],
+		"steps": [
+			["wait", 0.4], ["sfx", "click"], ["wait", 0.4], ["sfx", "click"],
+			["say", "", ["Outside East Home 2, Tobbin is screwing a freshly carved wooden nameplate onto the door: STU."]],
+			["face", "Tobbin", "player"],
+			["say", "Tobbin", ["[happy] There. Took me three goes to get the U straight. Don't look too close at the U."]],
+			["walk", "player", 41, 36], ["face", "player", "l"],
+			["say", "", ["Stu stares at the nameplate, visibly emotional."]],
+			["pose", "Stu", "sad"],
+			["say", "Stu", ["I used to think not remembering my name meant I didn't matter—like I was just a stray cargo tag floating between stars.",
+				"Today a Collective diplomat tipped me ten Scrip and told me, 'Thank you, Stu, this is the warmest welcome I've had in twenty years.'"]],
+			["pose", "Stu", ""], ["face", "Stu", "player"],
+			["say", "Stu", ["[happy] I unpacked my duffel bag this morning. All the way to the bottom."]],
+			["choose", [
+				{"text": "Welcome home, Stu.", "friendship": 60, "steps": [
+					["emote", "Stu", "joy"],
+					["say", "Stu", ["[happy] ...Home. Okay. Yeah. Welcome home, me."]]]},
+				{"text": "The diplomat was right.", "friendship": 60, "steps": [
+					["say", "Stu", ["[bashful] Twenty years! I've only been doing this a season!"]]]}]],
+			["say", "Tobbin", ["[happy] If the U falls off, I'll make you a better U."]],
+			["flag", "stu_nameplate"],
+		],
+	},
+	"stu_8": {
+		"who": "Stu", "hearts": 8, "title": "After-Hours Lobby Shift",
+		# the hotel lobby late on a guest night (his late shift, Friday or Saturday), after the guests have gone up
+		"area": "hotel", "windows": [[[4, 5], "21:00", "24:00"]],
+		"player": [56, 32, "r"],
+		"cast": [["Stu", 60, 30, "d", "bench"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Dim lantern light in the lobby. The guests have gone to bed. Stu is on the velvet lobby sofa with two mugs of cocoa."]],
+			["emote", "Stu", "hello"],
+			["say", "Stu", ["[happy] Boss! I made two. I always make two. In case."]],
+			["walk", "player", 60, 32], ["face", "player", "u"],
+			["say", "", ["He hands you a mug."]],
+			["pose", "Stu", "talk"],
+			["say", "Stu", ["I spent my whole life sneaking onto ships trying to find somewhere better.",
+				"Funny thing is, the second I stopped running, everything I was looking for was standing right in front of me."]],
+			["pose", "Stu", "bench"],
+			["if", {"dating_other": "Stu"},
+				# the friendship ending: you're dating someone else
+				[["say", "Stu", ["[happy] A home. A job. A door with my name on it. And a best friend. That's you, by the way. It's official.",
+					"[happy] I don't care what my old name was anymore. Being Stu is plenty."]],
+				 ["emote", "Stu", "joy"]],
+				[["say", "", ["He grins nervously, his cheeks flushing a deeper green."]],
+				 ["say", "Stu", ["I don't care what my old name was anymore. Being 'Stu, the guy who gets to be with you' is more than enough for me.",
+					"[love] What do you say?"]],
+				 ["emote", "Stu", "love"],
+				 ["choose", [
+					{"text": "Yes, Stu. Stay with me.", "steps": [
+						["partner", "Stu"],
+						["emote", "Stu", "surprise"],
+						["say", "Stu", ["[surprised] Really? Really really? Okay. I'm going to ring the bell. I'm ringing the bell."]],
+						["sfx", "click"], ["pose", "Stu", "jump"], ["emote", "Stu", "joy"], ["wait", 0.8], ["pose", "Stu", "bench"],
+						["fade", 0.7, 1.0],
+						["say", "", ["The bell rings once in the empty lobby. Somewhere upstairs, a guest mutters and goes back to sleep."]],
+						["fade", 0.0, 1.0]]},
+					{"text": "You mean a lot to me, as a friend.", "steps": [
+						["pose", "Stu", "sad"], ["emote", "Stu", "sad"],
+						["say", "Stu", ["[sad] Best friends. Yeah. Best friends is good. Best friends is great, actually."]],
+						["pose", "Stu", "bench"],
+						["say", "Stu", ["[happy] Drink your cocoa. I put the little marshmallows in. The good ones."]]]}]]]],
+			["say", "Stu", ["[happy] Oh! And Sara says you get a share of the tips, for all the guests you send our way. Don't tell her I said 'tips'."]],
+			["perk", "five_star_partner", "Perk: Five-Star Partner (+20% hotel income and tips)"],
+		],
+	},
+	"stu_10": {
+		"who": "Stu", "hearts": 10, "title": "Suite for Two",
+		# the terminal airlock at night, where his packed bag used to wait for the next freighter (23 Nov). With help
+		# from S.A.R.A. and Jasper, as in the outline.
+		"area": "west", "windows": [[null, "20:00", "24:00"]],
+		"partner": true,
+		"player": [24, 40, "l"],
+		"cast": [["Stu", 19, 40, "r"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The terminal at night. By the airlock window, someone has laid a tablecloth on the floor, lit two candles and set out a picnic with hotel silver.",
+				"Beyond the glass, a freighter is loading at the far pad."]],
+			["emote", "Stu", "hello"],
+			["say", "Stu", ["[happy] Welcome to the best suite on the station! Space view. Jasper did the food. Sara did the candles. I did the tablecloth. It's a bedsheet."]],
+			["walk", "player", 21, 40], ["face", "player", "l"], ["face", "Stu", "r"],
+			["say", "Stu", ["This is where I used to sit with my bag. Every day off. Watching the freighters, picking which one I'd hop."]],
+			["sfx", "warp"],
+			["say", "", ["The freighter's engines light. It lifts, turns, and slides away into the dark."]],
+			["say", "Stu", ["[happy] There goes one. Didn't even look at it.",
+				"[love] Funny. I always thought staying would feel like a trap. It feels like the opposite. Like I finally got off the ship."]],
+			["pose", "Stu", "gift"],
+			["say", "Stu", ["[bashful] This is for you. A little silver bell, like the one on the desk. Sesska made it. Ring it and I'll come running."]],
+			["say", "", ["A tiny silver bell, polished bright."]],
+			["pose", "Stu", ""],
+			["emote", "Stu", "love"], ["emote", "player", "love"],
+			["keepsake", "silver_bell", "Keepsake: Stu's little silver hotel bell"],
 		],
 	},
 }

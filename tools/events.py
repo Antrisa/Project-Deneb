@@ -59,6 +59,10 @@ FACES = {
     "artie": dict(eyes=((8, 14), (14, 14)),
                   colours=dict(skin="#eda470", lid="#e4cdac", white="#f8dfbb", pupil="#2e151a",
                                brow="#603f34", tear="#93e6ea")),
+    # Stu (23 Nov): eyes at (8, 12) and (15, 12) on his eye bumps, brows on row 11 (tools/fix_eyes.py)
+    "stu": dict(eyes=((8, 12), (15, 12)),
+                colours=dict(skin="#acb34c", lid="#f6df97", white="#fdf4b4", pupil="#070008",
+                             brow="#2b1f1a", tear="#93e6ea")),
 }
 
 L_, R_ = "L", "R"

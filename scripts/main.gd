@@ -1402,7 +1402,7 @@ func _debug_next_heart_event() -> void:
 		_snap_residents()
 		cutscene.play(id)
 		return
-	_toast("Debug: no heart events left to play (Shift+F4 forgets the ones seen)")
+	_toast("Debug: no heart events left to play (Shift+F3 forgets the ones seen)")
 
 
 # Wave 1 arrives after Ivan (artie_found_day = D): Artie wakes in the Medbay on D+1, the first visitor transport
@@ -4809,6 +4809,8 @@ func _next_day() -> void:
 	var repaired: Array = _finish_repairs()
 	_go_home()
 	_snap_residents()
+	# You wake in your quarters in the hotel: check its heart events again, as if you'd just arrived (Stu 2).
+	_event_area = ""
 	_save_game()
 	_toast("Day %d  (saved)" % day + ("   You've got mail." if post > 0 else ""))
 	if post > 0:
