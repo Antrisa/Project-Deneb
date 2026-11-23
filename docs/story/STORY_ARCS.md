@@ -170,7 +170,7 @@ Stepping out of her late father's shadow.
 | 8 | Stargazing on the Hull (confession) | Shuttle Bay catwalk after 20:00 | She counts the minutes until you dock. Perk: Master Mechanic. | Script |
 | 10 | Christening the Suite | Shipwright's Suite; backup: her work area in the bay | The "Echo Landing Shipwrights" sign, with Tikka, Sesska and Ana (if arrived). Keepsake: wrench pendant. | Outline |
 
-- **Decided (Zachary, 22 Nov):** her father died testing an earlier version of the same stabilizer. She joins your crew after Test Flight (6). Event 4 is renamed (no attic). Her 2 happens in Engineering.
+- **Decided (Zachary, 22 Nov):** her father, **Jorvik**, died testing an earlier version of the same stabilizer. She joins your crew after Test Flight (6). Event 4 is renamed (no attic). Her 2 happens in Engineering.
 - **Gap:** 4 and 6 have one line each and no choice.
 - **Idea:** the status doc has Freya joining your crew at 6 hearts; no scene marks it. "Test Flight" is the natural moment for her to ask to fly with you.
 - **Clash:** the script's 2 says "Engineering / Shuttle Bay"; the Master says Engineering. 4's title says "Attic", but there's no attic.
@@ -507,7 +507,7 @@ Answer by number; anything left open stays as it is.
 10. **Stu before the hotel opens:** his job, and backup places for 2, 6 and 8.
 11. **Backups for the East orchard** (Evarra 8, Artie 8 and 10).
 12. **Ix'ali's star pendant** at 8: an Oath-Crest you could propose with, or something else?
-13. **Freya's father:** decided 22 Nov: he died testing an earlier version of the stabilizer. Still open: his name, and how long ago.
+13. **Freya's father:** decided 22 Nov: **Jorvik**, who died testing an earlier version of the stabilizer. Still open: how long ago.
 14. **Keepsakes marked (Claude):** Jasper's apron, Evarra's cake slice or pressed-flower frame, Job's oar charm.
 15. **Hearts:** 100 points a heart, as in the NPC Master? Then the code is changed to match.
 16. **"The Nest":** rename the cavern event or the pirate stronghold.
