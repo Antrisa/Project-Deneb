@@ -85,7 +85,7 @@ const ITEMS = {
 			"desc": "A deep blue gem, someone's hidden treasure. Bram pays a fortune; others might love it more."},
 	# Relics (23 Nov): rare finds for Tar'Besh's museum. Give them at his desk or to him. "relic" is the picture
 	# in art/museum/ and "gallery" the wing of cases it goes to first (MapData.MUSEUM_SLOTS). "pirate" relics drop
-	# from beaten Rabble ships; the others come from space events ("relic: <name>" in scripts/space_events.gd).
+	# from beaten Chernobog (pirate) ships; the others come from space events ("relic: <name>" in scripts/space_events.gd).
 	"relic_pilgrim_bell": {"name": "Pilgrim's bell", "icon": 38, "use": "", "relic": "pilgrim_bell", "gallery": "Peoples of the Rim",
 			"desc": "A silver bell from a pilgrim ship. It still rings true. For Tar'Besh's museum."},
 	"relic_station_crest": {"name": "Station crest plate", "icon": 39, "use": "", "relic": "station_crest", "gallery": "The first settlers",
@@ -96,21 +96,21 @@ const ITEMS = {
 			"desc": "A carved charm from a refugee convoy, smooth from being held. For Tar'Besh's museum."},
 	"relic_garden_seeds": {"name": "Garden-ship seeds", "icon": 42, "use": "", "relic": "garden_seeds", "gallery": "Natural history",
 			"desc": "Strange seeds, warm to the touch, from a Vuultam garden ship. For Tar'Besh's museum."},
-	"relic_rabble_flag": {"name": "Torn Rabble banner", "icon": 43, "use": "", "relic": "rabble_flag", "gallery": "Precursor gallery", "pirate": true,
+	"relic_rabble_flag": {"name": "Torn Chernobog banner", "icon": 43, "use": "", "relic": "rabble_flag", "gallery": "Precursor gallery", "pirate": true,
 			"desc": "A raider's banner, scorched where you hit them. For Tar'Besh's museum."},
 	"relic_bone_dice": {"name": "Pirate's bone dice", "icon": 44, "use": "", "relic": "bone_dice", "gallery": "Precursor gallery", "pirate": true,
 			"desc": "Loaded, of course. Found in a raider captain's pocket. For Tar'Besh's museum."},
 	"relic_star_compass": {"name": "Raider's star compass", "icon": 45, "use": "", "relic": "star_compass", "gallery": "Precursor gallery", "pirate": true,
 			"desc": "A brass compass that points at no star you know. For Tar'Besh's museum."},
-	"relic_captain_signet": {"name": "Rabble captain's signet", "icon": 46, "use": "", "relic": "captain_signet", "gallery": "Precursor gallery", "pirate": true,
-			"desc": "A heavy gold ring with a red stone, worn by a Rabble captain. For Tar'Besh's museum."},
+	"relic_captain_signet": {"name": "Chernobog captain's signet", "icon": 46, "use": "", "relic": "captain_signet", "gallery": "Precursor gallery", "pirate": true,
+			"desc": "A heavy gold ring with a red stone, worn by a Chernobog captain. For Tar'Besh's museum."},
 	"relic_gold_tooth": {"name": "Raider's gold tooth", "icon": 47, "use": "", "relic": "gold_tooth", "gallery": "Precursor gallery", "pirate": true,
 			"desc": "A gold fang on a cord. You decide not to ask. For Tar'Besh's museum."},
 	"relic_captain_log": {"name": "Pirate captain's log", "icon": 48, "use": "", "relic": "captain_log", "gallery": "Precursor gallery", "pirate": true,
 			"desc": "Years of raids in a cramped hand, with the Landing on the last page. For Tar'Besh's museum."},
 }
 
-# The relics, and the ones Rabble ships can drop.
+# The relics, and the ones Chernobog ships can drop.
 static func relics() -> Array:
 	var out: Array = []
 	for id in ITEMS:

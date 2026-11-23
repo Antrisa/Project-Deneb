@@ -2319,7 +2319,7 @@ func _pay_covered() -> void:
 
 
 # Adds what this ship brings to a fight's settings: its upgraded definition, and on a crewed ship the crew, the
-# tether and enemy boarders from Rabble ships.
+# tether and enemy boarders from Chernobog ships.
 func _my_fight(base: Dictionary) -> Dictionary:
 	var f: Dictionary = base.duplicate()
 	f["player_def"] = _ship_def()
@@ -2409,7 +2409,7 @@ const NEST_LINES := [
 func _nest_arrive() -> void:
 	nest_stage = 0
 	ship_event.open_event({"title": "The Rabble's Nest",
-		"text": "A hollowed asteroid ringed with lights and docking arms: the Rabble's home. Pickets circle it, and a gun platform hangs off its flank. Three fights, one after another, and no store between.",
+		"text": "A hollowed asteroid ringed with lights and docking arms: the Chernobog's home. Pickets circle it, and a gun platform hangs off its flank. Three fights, one after another, and no store between.",
 		"choices": [
 			{"text": "Attack the Nest.", "outcomes": [{"text": NEST_LINES[0], "effects": ["fight: " + NEST_FIGHTS[0]]}]},
 			{"text": "Not today. Pull back.", "outcomes": [{"text": "You turn away before their pickets notice you. The Nest will keep.", "effects": ["nothing"]}]},
@@ -2459,7 +2459,7 @@ func _after_nest_fight(result: String, hull_left: int) -> void:
 	loot.append_array(["+150 Scrip", "+2 fuel", "item: void_sapphire x1"])
 	var got: Dictionary = apply_space_effects(loot)
 	ship_event.show_result("The Nest falls",
-			"The Nest goes dark, then breaks apart. What the Rabble hoarded for years drifts free, and your crew take all they can carry. Without their home, they'll scatter to smaller strongholds.",
+			"The Nest goes dark, then breaks apart. What the Chernobog hoarded for years drifts free, and your crew take all they can carry. Without their home, they'll scatter to smaller strongholds.",
 			got["gains"], Callable(self, "_after_salvage"))
 	_save_game()
 
@@ -2482,7 +2482,7 @@ func _fold_home() -> void:
 	if nest_news:
 		nest_news = false
 		lines = ["[surprised] The Nest? The whole Nest? S.A.R.A.'s had every channel on the station playing it.",
-			"[happy] Welcome home. Nobody's going to call the Rabble a threat to the Landing for a while."]
+			"[happy] Welcome home. Nobody's going to call the Chernobog a threat to the Landing for a while."]
 	if ship_hull < _hull_max():
 		lines.append("She's taken some knocks. Come and see me and I'll patch the hull.")
 	_say("Freya", lines)

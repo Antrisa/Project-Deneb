@@ -832,10 +832,10 @@ Tick what you want. **Built** means it's in the game now; **Agreed** means you'v
 | Helium-3 | 4% | 10% | 16% |
 | Cobalt-60 | 2% | 6% | 10% |
 | Void sapphire | 1% | 4% | 7% |
-| Pirate relic (Rabble ships only) | 4% | 9% | 14% |
+| Pirate relic (Chernobog ships only) | 4% | 9% | 14% |
 
   The stronghold rolls as if two rings further out, always gives 2 hull plates and a circuit board, and always has a pirate relic while any are left.
-- **Relics:** six pirate relics (Rabble ships) and five from events (`relic: <name>`). You never get one twice; a repeat event relic is sold for 40 Scrip.
+- **Relics:** six pirate relics (Chernobog ships) and five from events (`relic: <name>`). You never get one twice; a repeat event relic is sold for 40 Scrip.
 - **Museum, Stardew-style (`scripts/museum_donate.gd`):** talk to Tar'Besh in the museum with a relic (or use his desk) and pick "Choose a case". The camera pulls back over every case and your relics sit in a bar at the bottom. Click a relic to hold it, then click an empty case to put it in. Click one of your own relics to pick it up again (holding one swaps them), so you can group things. Tar'Besh's pieces can't be moved. Right-click drops what you hold; right-click again, Esc, E or Done closes. With no relics in your bag, his desk still offers "Arrange". Looking at a case shows your relic's text. Saved as `[museum] gifts`.
 - **Art:** the relic pictures in `art/museum/<name>.png` (24x24) and their inventory icons (slots 38-48 of `art/items.png`) are placeholders drawn by `tools/dev/relic_art.py`; the brief for real art is `claude/echo-landing-relic-art.md` in the Project. Salvage icons (slots 31-37) are the artist's own from `art/items/`.
 
@@ -846,7 +846,7 @@ Tick what you want. **Built** means it's in the game now; **Agreed** means you'v
   - **Crew:** Freya and Ana (take them along at 6 hearts: Freya repairs 2x, 2.5x at 8; Ana adds 10 evasion in the cockpit, 15 at 8), hired hands (up to 4 on the books), and the board's hirelings.
   - **Ship selector:** once you own two ships, buttons along the top pick which one you're looking at; each keeps its own levels, hull and guns. "Fly this ship" (at the bench) makes it the one that launches.
   - Freya at 8 hearts: 20% off the Scrip.
-- **Covered fighter** (Freya's quest, open after your first two flights): use the covered fighter in the bay; Freya restores it in three stages: 6 hull plates + 120 Scrip; 4 coil wire + 2 circuit boards + 150; 1 cobalt-60 + 2 lithium cells + 200 (`COVERED_REPAIRS` in main.gd). Then it's yours, with 3 crew seats, pods and a medbay. Boarding and enemy boarders (Rabble ships) are on when you fly it.
+- **Covered fighter** (Freya's quest, open after your first two flights): use the covered fighter in the bay; Freya restores it in three stages: 6 hull plates + 120 Scrip; 4 coil wire + 2 circuit boards + 150; 1 cobalt-60 + 2 lithium cells + 200 (`COVERED_REPAIRS` in main.gd). Then it's yours, with 3 crew seats, pods and a medbay. Boarding and enemy boarders (Chernobog ships) are on when you fly it.
 - **Crew board** (stand-in picture: the star chart, by launch control in the booth): Eshu pins three hirelings every three days once he has arrived. Kinds and traits: `ShipData.HIRE_KINDS` (human steady; Zaa'sh fight 1.5x; Arachnay repair 1.6x; Moogli heal 1.6x; Vuultam, Ervani, Scyldar in between). Hired crew who go down without the tether don't come back; Freya or Ana knocked out go home and stop coming until you ask again.
 - **Art needed:** the uncovered fighter in the bay (the tarp prop stays until then), and a real crew board prop (2 x 3 tiles).
 
@@ -854,7 +854,7 @@ Tick what you want. **Built** means it's in the game now; **Agreed** means you'v
 - **Eshu's contracts** (the courier, was Tally): a Contracts tab on the ship screen. At the crew board Eshu posts two every three days: a **bounty** (beat the wanted ship any way, 90 + 40 a ring) or a **capture** (down its crew with the hull whole, 180 + 60 a ring). Two at a time. A taken contract turns a beacon in its zone, near its ring, into a yellow **Wanted** stop on every run until it's done (`ShipRuns.place_contracts`). Pay comes in the salvage window.
 - **Captures:** a fight won by downing the crew while the hull holds is a capture: boarders walk home, the result says "captured", and you strip the ship for a second helping of salvage. (Captured ships aren't kept yet.)
 - **Surrender:** 40% of ordinary enemies offer Scrip (and maybe fuel or missiles) at 30% hull; "Let them go" ends the fight as spared and pays the offer. Strongholds and the Nest never do.
-- **Fleeing:** half of the non-Rabble ships (not wanted ships) charge their fold drive at half hull; a bar shows in their window; in 20 s they're gone. Knocking out their cockpit or engines stops it.
+- **Fleeing:** half of the non-Chernobog ships (not wanted ships) charge their fold drive at half hull; a bar shows in their window; in 20 s they're gone. Knocking out their cockpit or engines stops it.
 - **Hazards:** a quarter of beacons, distress signals and strongholds from ring 2 out sit in one, by zone (shown in the stop's text and the enemy window): Reach asteroids (random hull hits on either ship), Terran solar flares (fires on both), Zaa'sh nebulae (+10 evasion both), Collective ion storms (your reactor halved).
 - **Augments** (`ShipData.AUGMENTS`, 3 at most, Augments tab at stores; sell back for half): Bram's salvage arm (+25% Scrip and scrap), Tikka's coil tune (weapons +10% charge), shield capacitor (shields back 20% faster), stealth plating (+5 evasion), fuel recycler (1 jump in 5 free), nano-patch swarm (+2 hull after each win).
 - **Store Systems tab:** a system level for Scrip only, at 1.6x the parts' worth plus Freya's price.

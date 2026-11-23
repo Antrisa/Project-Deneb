@@ -270,7 +270,7 @@ static func pick_enemy(zone: String, rng: RandomNumberGenerator) -> String:
 # fuel, missiles or a drone part, and the ship's salvage for the player (23 Nov, Zachary: "ships should also give
 # loot for player like hull plating, rare resources. And rare pirate relics for musem."). Every item can turn up on
 # every ring; the further out, the likelier the rare ones ("All rings should have a chance. But it increases the
-# likelihood of rare loot further you go."). Rabble ships (ids with "rabble", and the stronghold) can carry a pirate
+# likelihood of rare loot further you go."). Chernobog ships (ids with "rabble", and the stronghold) can carry a pirate
 # relic you haven't found yet; the stronghold always does while any are left. `found` lists the relic ids the
 # player already has or has given to the museum.
 # item: [chance on ring 1, added per ring further out, fewest, most]
@@ -284,7 +284,7 @@ const SALVAGE := {
 	"cobalt_60": [0.02, 0.04, 1, 1],
 	"void_sapphire": [0.01, 0.03, 1, 1],
 }
-const RELIC_CHANCE := [0.04, 0.05]          # a Rabble ship carrying a relic: on ring 1, added per ring
+const RELIC_CHANCE := [0.04, 0.05]          # a Chernobog ship carrying a relic: on ring 1, added per ring
 
 static func salvage_chance(item: String, ring: int) -> float:
 	var row: Array = SALVAGE[item]
