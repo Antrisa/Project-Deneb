@@ -143,6 +143,22 @@ func can_fold() -> bool:
 	return free and open and visible and moving == 0.0 and not world.dialogue.active
 
 
+# Bram's 8 (Zachary, 23 Nov): the Moogli trade beacon. Out on a free flight, at a stop, one fuel cell calls the
+# Ollo family's trader to you (main.gd _call_trader); once it's come, it stays at that stop for the rest of the run.
+func has_beacon() -> bool:
+	return free and world._flag("perk_moogli_trade_beacon")
+
+
+func can_beacon() -> bool:
+	if not (has_beacon() and open and visible and moving == 0.0 and at >= 0 and not world.dialogue.active):
+		return false
+	return trader_here() or int(world.fuel) > 0
+
+
+func trader_here() -> bool:
+	return at >= 0 and at < route.size() and bool(route[at].get("trader", false))
+
+
 func jump() -> void:
 	if not can_jump():
 		return
@@ -187,6 +203,10 @@ func _click(id: String, _p: Vector2, button: int) -> void:
 	if id == "refit":
 		if world.ship_upgrades != null and moving == 0.0:
 			world.ship_upgrades.open_at("field")
+		return
+	if id == "beacon":
+		if can_beacon():
+			world._call_trader()
 		return
 	if id == "fold":
 		if can_fold():
@@ -364,7 +384,12 @@ func _paint_side(n: int) -> void:
 	s.text(600, 203, "HULL %d / %d" % [int(world.ship_hull), full], "micro", INK if int(world.ship_hull) * 3 > full else ShipScreen.PIP_RED)
 	s.text(488, 217, "MISSILES %d" % int(world.missiles), "micro", INK)
 	s.text(600, 217, "PARTS %d" % int(world.drone_parts), "micro", INK)
-	s.text(488, 231, "SCRIP %d" % int(world.credits), "micro", INK)
+	if has_beacon():
+		# the scrip moves up beside the fuel, to make room for Bram's beacon (his 8)
+		s.text(532, 203, "SCRIP %d" % int(world.credits), "micro", INK)
+		s.button("beacon", Rect2(488, 227, 108, 18), "Ollo trader" if trader_here() else "Call trader: 1 fuel", false, "micro", can_beacon())
+	else:
+		s.text(488, 231, "SCRIP %d" % int(world.credits), "micro", INK)
 	if free:
 		s.button("refit", Rect2(600, 227, 108, 18), "Refit ship", false, "micro", moving == 0.0)
 	for i in range(KEY_KINDS.size()):

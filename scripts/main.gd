@@ -2325,6 +2325,27 @@ func _start_run() -> void:
 		])
 
 
+# Bram's 8 (Zachary, 23 Nov): the Moogli trade beacon (ship_map.gd's "Call trader" button, perk
+# moogli_trade_beacon). One fuel cell calls the Ollo family's trader (Bram's cousins, a Moogli trader) to the stop
+# you're at; it stays there for the rest of the run, so going back to it is free.
+func _call_trader() -> void:
+	if run_stop < 0 or run_stop >= run_stops.size():
+		return
+	var stop: Dictionary = run_stops[run_stop]
+	if not bool(stop.get("trader", false)):
+		if fuel <= 0:
+			sfx("deny")
+			_toast("Out of fuel")
+			return
+		fuel -= 1
+		stop["trader"] = true
+		sfx("warp", 1.2, -4.0)
+		_toast("Trade beacon: the Ollo family trader comes alongside  (-1 fuel)")
+	ship_map.visible = false
+	ship_event.show_backdrop(stop)
+	ship_store.open_store(ShipData.STORES["moogli_trader"].merged({"name": "Ollo family trader"}, true), Callable(self, "_back_to_map"))
+
+
 # Arrived at a stop on a free flight.
 func _arrive_run(i: int) -> void:
 	if augments.has("fuel_recycler") and run_rng.randf() < 0.2:
