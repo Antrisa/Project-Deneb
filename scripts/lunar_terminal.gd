@@ -1,6 +1,7 @@
 extends Sprite2D
 var title := ""
 var phase := 0.0
+var mail_world = null          # main.gd, for the message pad by your front door: its screen lights up when mail waits
 func _process(delta: float) -> void:
 	if visible:
 		phase += delta
@@ -17,6 +18,13 @@ func _draw() -> void:
 	elif "Manufacturing" in title:
 		draw_arc(mid,5,0,TAU,8,ink,2)
 		draw_line(mid-Vector2(7,0),mid+Vector2(7,0),ink,1)
+	elif "Message" in title:
+		# your mailbox (23 Nov): an envelope on the screen, blinking amber while a letter waits
+		if mail_world != null and not mail_world.mail_waiting.is_empty() and fmod(phase, 1.0) < 0.6:
+			ink = Color("f2c94c")
+		draw_rect(Rect2(mid - Vector2(7, 4), Vector2(14, 9)), ink, false, 1)
+		draw_line(mid - Vector2(7, 4), mid + Vector2(0, 1), ink, 1)
+		draw_line(mid + Vector2(7, -4), mid + Vector2(0, 1), ink, 1)
 	elif "Community" in title:
 		draw_rect(Rect2(mid-Vector2(6,5),Vector2(12,10)),ink,false,1)
 		draw_line(mid-Vector2(0,5),mid+Vector2(0,5),ink,1)

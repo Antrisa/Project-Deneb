@@ -307,7 +307,8 @@ AREA_FLOORS = {
     "west": {".": ("arrivals/terminal", None), "p": ("arrivals/plaza", None), "f": ("arrivals/carpet", None), "h": ("arrivals/carpet_blue", None), "u": ("arrivals/terminal", None),
              "A": ("arrivals/plaza", None), "Q": ("sp_moon", None), "V": ("eng_floor_pad", None), "g": ("arrivals/glass", None), "Y": ("arrivals/basin", None)},
     "agri": {"Q": ("agri/moon", None), "a": ("agri/soil", None), "h": ("eng_floor_concrete", None), "f": ("eng_floor_concrete", ("c8a070", 0.15)), "s": ("agri/spa", None),
-             "u": ("sp_terminal", None), "O": ("agri/water", ("70c8d0", 0.25)), "Y": ("agri/water", None)},
+             "u": ("sp_terminal", None), "O": ("agri/water", ("70c8d0", 0.25)), "Y": ("agri/water", None),
+             "k": ("home/deck", None)},          # the front porch's decking (23 Nov)
     "east": {".": ("sp_plaza", None), "s": ("ea_grass", None), "h": ("ea_deck", None), "a": ("sp_soil", None), "f": ("ea_rubber", None),
              "k": ("ea_court", None), "o": ("ea_deck", None), "t": ("ea_tile", None), "e": ("eng_floor_grate", None), "u": ("sp_terminal", None),
              "A": ("sp_terminal", None), "Y": ("agri/water", None), "O": ("agri/water", ("70c8d0", 0.25)), "p": ("east/dock", None),

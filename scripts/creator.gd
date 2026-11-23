@@ -1,7 +1,7 @@
 extends Control
 # The "who are you?" screen: pick a gender, then hair, eye, skin and clothes colours. Each gender
 # has one outfit and hairstyle (scripts/player_maker.gd STARTER_LOOKS).
-# Shown at the start of a new game, and again from the locker in your quarters.
+# Shown at the start of a new game, and again from the wardrobe in your apartment.
 # main.gd passes key presses and clicks here while it is open.
 
 const WalkCycle = preload("res://scripts/walk_cycle.gd")
@@ -280,7 +280,7 @@ func _draw() -> void:
 	else:
 		_txt(Vector2(16, 144), "Up / Down: choose   Left / Right: change", DIM, 6)
 		_txt(Vector2(16, 153), "Choose a colour row to reveal its sliders.", DIM, 6)
-		_txt(Vector2(16, 166), "Change your look later at your quarters locker.", DIM, 6)
+		_txt(Vector2(16, 166), "Change your look later at the wardrobe at home.", DIM, 6)
 
 
 func _color_key() -> String:

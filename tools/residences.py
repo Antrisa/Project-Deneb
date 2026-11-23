@@ -17,6 +17,8 @@ Who lives where:
   aptMoog Moogli residences      Tobbin and Merrow, Nub
   aptEmpty Residences C          a hall with three flats off it, each its own map: flatQuill, flatIxali,
                                  flatTarBesh (Tar'Besh's has a little Zaa'sh shrine)
+  aptPlayer Your apartment       yours (23 Nov): its front door is on the agri complex's front porch, not here
+                                 (player_home, below)
 Each room is decorated for whoever sleeps in it, and each resident's night stop is beside their own bed
 (HOME_SPOTS, used by SCHEDULES_RAW in tools/build.py).
 Drawn in the promenade style; floors and walls baked by tools/bake_floor.py."""
@@ -123,12 +125,21 @@ class Home:
         """A daytime stop at home (HOME_SPOTS[label]): Saffi sweeping, Kit playing in his room."""
         self.spots[label] = (self.key,) + free_spot(self.r, fx, fy, self.taken, self.doors)
 
-    def finish(self, hall=None, hall_door=None):
+    def finish(self, hall=None, hall_door=None, outside=None):
         """hall: for a flat, the hall map it opens off and the door there (a door each way, like the East
-        Complex homes). Otherwise the home opens straight onto the promenade."""
+        Complex homes). outside: (map key, door tile) for a home whose front door is in a wall of another
+        map, entered from the south (your apartment, off the agri complex's front porch). Otherwise the home
+        opens straight onto the promenade."""
         g, r = self.g, self.r
         r.t.zones += self.zones
-        if hall is None:
+        if outside is not None:
+            from survey import door_pair
+            key, at = outside
+            there = g['A'][key]
+            door_pair(g.setdefault('RES_ENTRANCES', []), {key: there.warps, self.key: r.t.warps},
+                      key, at, 'S', self.key, self.door, 'N', self.title, there.title)
+            g['MAP_PARENT'][self.key] = [key, at[0], at[1] + 1]
+        elif hall is None:
             # the way out: concourse.rebuild points it at the promenade door; the promenade door lands you here
             r.t.warps.append([self.door[0], self.door[1], 'main', 0, 0])
             bx, by, ch, _, _ = g['DOORS'][self.key]
@@ -391,4 +402,37 @@ def build(g):
     hm.put('tree_tub', 3.5, 22.5, 'Potted tree')
     hm.finish(hall, doors["Tar'Besh"])
 
+    player_home(g)
     survey.WALKABLE = saved
+
+
+def player_home(g):
+    """Your apartment (Zachary, 23 Nov): its front door is on the agri complex's front porch, between your field,
+    the workshop and the hot springs, with your mailbox outside (tools/spaceport.py). You start the game here and
+    wake here every morning ("Your bed"); the wardrobe opens the character screen. A bedroom and a washroom along
+    the top; the kitchen, a little table and a sitting area in the open room. Furnished sparely: it has stood
+    empty for years, and you have only just arrived."""
+    hm = Home(g, 'aptPlayer', 'Your apartment', 29, False, 14, {
+        'h': (CARPET, ('7a5a3a', .2)), 'j': (NAVY, None)})
+    hm.room('Your bedroom', 3, 15, 'top', 'h', 9)
+    hm.room('Washroom', 17, 25, 'top', 't', 21, '', 'washroom')
+    hm.open_plan(9, 15, (3, 16, 11, 23), (12, 12, 25, 23))
+    bed = hm.r.near('bed', 4, 5.5, 'Your bed', 'bed', 'Sleep')
+    assert bed, 'no room for your bed'
+    hm.put('wardrobe', 8, 4.5, 'Your wardrobe', 'wardrobe', 'Change your look')
+    hm.put('footlocker', 4.5, 8.5, 'Footlocker'); hm.put('armchair', 13.5, 5.5, 'Armchair', 'seat')
+    hm.put('plants', 13, 8.5, 'Plant')
+    hm.put('shower', 18, 5.5, 'Shower'); hm.put('toilet', 22.5, 4.5, 'Toilet'); hm.put('bath_sink', 25.5, 4.5, 'Washbasin')
+    hm.put('kitchenette', 5, 14.5, 'Kitchenette', 'inspect'); hm.put('fridge', 8, 14.5, 'Fridge')
+    hm.put('cafe_table', 6, 19.5, 'Little table', 'look')
+    hm.put('sofa', 20.5, 17.5, 'Sofa', 'seat'); hm.put('cafe_table', 20.5, 20.5, 'Coffee table')
+    hm.put('armchair', 24.5, 18.5, 'Armchair', 'seat'); hm.put('books', 24.5, 13.5, 'Old bookshelf', 'look')
+    hm.put('curator_desk', 17, 13.5, 'Writing desk', 'look'); hm.put('tree_tub', 3.5, 22.5, 'Potted tree')
+    key, door = g['PLAYER_HOME_DOOR']
+    hm.finish(outside=(key, door))
+    # You start beside your bed (the game then tucks you in: scripts/main.gd _go_home), and S.A.R.A.'s hologram
+    # waits by the bedroom wall, as it did in the hotel's head officer's quarters.
+    bx, by = bed
+    w, h, _ = SIZES['bed']
+    g['PLAYER_START'] = ['aptPlayer'] + list(free_spot(hm.r, bx + w + .5, by + h - .5, hm.taken, hm.doors))
+    g['PLAYER_SARA'] = ['aptPlayer'] + list(free_spot(hm.r, 11.5, 6.5, hm.taken, hm.doors))

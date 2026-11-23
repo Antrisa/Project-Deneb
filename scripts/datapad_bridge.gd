@@ -52,20 +52,20 @@ const PLACES := [
 	["Town square", 181, 102, "Main level", "The Community Concourse: shops, the bar, the library, the medbay, the Survey building and the lounge."],
 	["Engineering", 74, 117, "Engineering Level", "Ore processing, the furnaces, the geothermal core, Tikka's workshop and the shuttle bay."],
 	["Spaceport", 84, 53, "Spaceport District", "Arrivals, customs, the viewing deck and the hotel."],
-	["Agri dome", 192, 38, "Agri Complex", "Your crop beds, the seed rack, the shed and the workshop."],
+	["Agri dome", 192, 38, "Agri Complex", "Your apartment and mailbox, your crop beds, the front porch and the workshop."],
 	["East complex", 284, 82, "East Complex", "The mess hall gardens, the park, the gym and the laundry."],
 	["Apartments", 253, 151, "East Complex", "The eight homes off the East Complex ring."],
 	["Mine", 49, 31, "Mining sector", "Job's dig, the North Cave above it and the cavern gate at its west end."],
 ]
 const AREA_PLACE := {
-	"eng": "Engineering", "bay": "Engineering", "west": "Spaceport", "hotel": "Spaceport", "agri": "Agri dome",
+	"eng": "Engineering", "bay": "Engineering", "west": "Spaceport", "hotel": "Spaceport", "agri": "Agri dome", "aptPlayer": "Agri dome",
 	"east": "East complex", "mine": "Mine", "tunnels": "Mine",
 }
 # Which person or place each journal entry belongs to (scripts/main.gd journal()).
 const QUEST_GIVER := {
 	"Get off this moon": ["Tikka", "Engineering"], "A hand in the mine": ["Job", "Mine"],
 	"Clear the north tunnels": ["Job", "Mine"], "Today's request": ["Bulletin board", "Town square"],
-	"Bram's crates": ["Bram", "Town square"],
+	"Bram's crates": ["Bram", "Town square"], "The caverns": ["Vzz'ket", "Mine"],
 }
 
 var world                    # main.gd

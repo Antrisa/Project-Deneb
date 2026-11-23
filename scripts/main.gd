@@ -41,6 +41,9 @@ const BayWindow = preload("res://scripts/bay_window.gd")
 const LoungeSky = preload("res://scripts/lounge_sky.gd")
 const CalendarScript = preload("res://scripts/station_calendar.gd")
 const MuseumScript = preload("res://scripts/museum_donate.gd")
+const MailData = preload("res://scripts/mail_data.gd")
+const MailReader = preload("res://scripts/mail_reader.gd")
+const MailFlag = preload("res://scripts/mail_flag.gd")
 const UpgradesScript = preload("res://scripts/ship_upgrades.gd")
 var station_calendar
 
@@ -164,6 +167,13 @@ var nest_done := false             # the Rabble's Nest has been raided (runs the
 var relics_found: Array = []       # relic item ids you have ever held (so ships don't drop the same one twice)
 var museum_view                    # scripts/museum_donate.gd: choosing cases for relics
 var ship_upgrades                  # scripts/ship_upgrades.gd: the ship screen (upgrades, ships, crew)
+var mail_view                      # scripts/mail_reader.gd: reading your letters
+# Mail (23 Nov): letters (scripts/mail_data.gd) come with the morning post to your mailbox on the front porch.
+var mail_waiting: Array = []       # letters in the box you haven't read yet, oldest first
+var mail_days: Dictionary = {}     # every letter that has come: id -> the day it came, in the order they came
+var mail_due: Dictionary = {}      # letters on their way: id -> the morning they come
+var caverns_open := false          # Vzz'ket has talked you through the caverns and opened the gate (after his letter)
+var shipping: Dictionary = {}      # the shipping crate on your front porch: item -> how many; Bram empties it overnight
 var museum_gifts: Dictionary = {}  # museum case (index into MapData.MUSEUM_SLOTS, as a string) -> relic item id
 var ana_found_day := -1            # the day you pulled Ana out of her ship (the Wave 2 arrival counts from it)
 var garden_watered_day := -1
@@ -389,7 +399,11 @@ func _ready() -> void:
 	ship_upgrades = UpgradesScript.new()
 	ship_upgrades.world = self
 	add_child(ship_upgrades)
+	mail_view = MailReader.new()
+	mail_view.world = self
+	add_child(mail_view)
 	_load_game()
+	_deliver_mail()
 	wreck_sprite.frame = repair_stage
 	_go_home()
 	_snap_residents()
@@ -605,6 +619,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if museum_view != null and museum_view.open:
 		if not dialogue.active:
 			museum_view.handle_input(event)
+		get_viewport().set_input_as_handled()
+		return
+	if mail_view != null and mail_view.open:
+		mail_view.handle_input(event)
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("new_game"):
@@ -1657,9 +1675,15 @@ func _interact(t: Dictionary) -> void:
 		_say("Your bunk", ["Sleep until morning?"], Callable(self, "_end_day"), "Sleep")
 	elif kind == "wardrobe":
 		if creator == null:
-			_say("Locker", ["A spare uniform, neatly folded. Not your size."])
+			_say("Wardrobe", ["A spare uniform, neatly folded. Not your size."])
 		else:
-			_say("Locker", ["Spare clothes, a comb and a cracked mirror.", "Change how you look?"], Callable(self, "_open_wardrobe"), "Change")
+			_say("Wardrobe", ["Spare clothes, a comb and a cracked mirror.", "Change how you look?"], Callable(self, "_open_wardrobe"), "Change")
+	elif kind == "mail":
+		_check_mailbox()
+	elif kind == "ship":
+		_shipping_crate()
+	elif kind == "craft":
+		_open_crafting()
 	elif kind == "look":
 		var thing_name: String = t["name"]
 		var lines: Array = NpcData.LOOKS.get(thing_name, ["Nothing much to see."])
@@ -1735,6 +1759,8 @@ func _talk(who: String) -> void:
 		_job_quest_talk()
 	elif who == "Vzz'ket" and job_quest == 3:
 		_vzzket_weapon()
+	elif who == "Vzz'ket" and job_quest >= 5 and not caverns_open:
+		_cavern_gate()
 	elif crew_cross.has(who) and day - int(crew_cross[who]) <= 1:
 		crew_cross.erase(who)
 		if persons.has(who):
@@ -3423,8 +3449,10 @@ func _job_quest_talk() -> void:
 			_say("Job", [
 				"[happy] I heard the ruckus clear down here. That's the tunnels safe enough to work. Here, 80 credits.",
 				"Veins up there ain't been touched in years, and Bram'll buy them shells and hides off you.",
-				"[sad] The caverns under the gate, now, that's another matter. Vzz'ket won't hear of it yet, and he's right.",
+				"[sad] The caverns under the gate, now, that's another matter. That's Vzz'ket's call, not mine.",
+				"He'll send word when he's ready to talk. Keep an eye on your mail, cher.",
 			])
+			send_mail("vzzket_caverns", 1)
 		else:
 			_say("Job", ["Way up's at the top of the dig, north wall. Thin them critters out some. You got %d of %d." % [tunnel_kills, TUNNEL_GOAL]])
 	else:
@@ -3483,6 +3511,66 @@ func _do_sell() -> void:
 	_money(value, "Sold to Bram")
 	sfx("coin")
 	_toast("Sold  +%d cr" % value)
+
+
+# ---------------------------------------------------------------- the shipping crate (Zachary, 23 Nov)
+# The crate by your front door, as in Stardew Valley: put in anything Bram buys (SELL) and he collects it overnight
+# and pays his prices; the day's recap shows it as "Shipped to Bram". Use the crate with something he buys picked on
+# your hotbar to put that whole stack in, or with nothing he buys picked to ship everything you carry that he buys.
+
+func _shipping_value() -> int:
+	var total := 0
+	for item in shipping:
+		total += int(shipping[item]) * int(SELL.get(item, 0))
+	return total
+
+
+func _shipping_crate() -> void:
+	var held: String = slots[selected]
+	if held != "" and SELL.has(held) and _count(held) > 0:
+		_ship(held, _count(held))
+		_toast("Shipped %d %s  (Bram pays %d cr in the morning)" % [int(shipping[held]), _item_name(held).to_lower(), _shipping_value()])
+		return
+	var lines: Array = ["Bram empties this crate overnight and pays for whatever is in it."]
+	if not shipping.is_empty():
+		lines.append("In it so far: %d credits' worth." % _shipping_value())
+	if _bars_value() > 0:
+		lines.append("Put in everything you carry that he buys? That's %d credits more." % _bars_value())
+		_say("Shipping crate", lines, Callable(self, "_ship_all"), "Ship it all")
+	else:
+		lines.append("(Pick something Bram buys on your hotbar, then use the crate to put it in.)")
+		_say("Shipping crate", lines)
+
+
+func _ship(item: String, n: int) -> void:
+	_give(item, -n)
+	shipping[item] = int(shipping.get(item, 0)) + n
+	sfx("click")
+
+
+func _ship_all() -> void:
+	for item in SELL:
+		var n: int = _count(item)
+		if n > 0:
+			_ship(item, n)
+	_toast("Shipped  (Bram pays %d cr in the morning)" % _shipping_value())
+
+
+# Bram's overnight round: called as the day ends, so the money is on that day's recap.
+func _collect_shipping() -> void:
+	var value: int = _shipping_value()
+	shipping = {}
+	if value > 0:
+		_money(value, "Shipped to Bram")
+
+
+# The porch workbench: the Crafting page of the menu.
+func _open_crafting() -> void:
+	sfx("click")
+	if datapad != null:
+		datapad.open_page("Crafting")
+	else:
+		ui.show_menu(1)
 
 
 func _bram_default() -> void:
@@ -3552,6 +3640,8 @@ func _objective() -> String:
 		parts.append("Job: clear the north tunnels, top of the main dig (%d/%d)" % [tunnel_kills, TUNNEL_GOAL])
 	elif job_quest == 4:
 		parts.append("Job: tell him the tunnels are clear")
+	elif job_quest >= 5 and not caverns_open and mail_days.has("vzzket_caverns"):
+		parts.append("Vzz'ket: meet him at the cavern gate")
 	if board_taken_day == day and board_done_day != day:
 		var req: Dictionary = _board_request()
 		var item: String = req["item"]
@@ -3622,7 +3712,7 @@ func hurt_player(amount: int, from: Vector2) -> void:
 		_collapse()
 
 
-# Out of health: you wake up back in your quarters, two hours later and a little poorer.
+# Out of health: you wake up in the medbay, two hours later and a little poorer.
 func _collapse() -> void:
 	_clear_cavern()
 	hp = MAX_HP / 2
@@ -3863,10 +3953,10 @@ func _toast(msg: String) -> void:
 func _process(delta: float) -> void:
 	if music_director != null:
 		music_director.update(delta)
-	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (ship_upgrades != null and ship_upgrades.open) or (datapad != null and datapad.blocking())
+	var paused: bool = (title != null and title.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or dialogue.active or ui.open or ui.recap_open or (creator != null and creator.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (ship_upgrades != null and ship_upgrades.open) or (datapad != null and datapad.blocking())
 	if datapad != null:
 		# The datapad leaves the keys alone while one of the game's own windows is open.
-		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (ship_upgrades != null and ship_upgrades.open) or travelling or garden_busy)
+		datapad.sync((title != null and title.open) or dialogue.active or (creator != null and creator.open) or (community_game != null and community_game.open) or (battle != null and battle.open) or (ship_map != null and ship_map.open) or (ship_event != null and ship_event.open) or (ship_store != null and ship_store.open) or (station_calendar != null and station_calendar.open) or (museum_view != null and museum_view.open) or (mail_view != null and mail_view.open) or (ship_upgrades != null and ship_upgrades.open) or travelling or garden_busy)
 	player.frozen = paused or seated or travelling or garden_busy
 	tint.color = _light_color()
 	if not seasonal_props.is_empty():
@@ -3968,6 +4058,7 @@ func _money(amount: int, source: String) -> void:
 
 # The day is over (you slept, or passed out): show the recap, then start tomorrow.
 func _end_day() -> void:
+	_collect_shipping()
 	var lines: Array = []
 	var net := 0
 	for source in ledger:
@@ -4026,6 +4117,13 @@ func journal() -> Array:
 		out.append(["Clear the north tunnels", ["The tunnels are quiet. Tell Job."], false])
 	else:
 		out.append(["A hand in the mine", ["You mined, smelted and cleared the tunnels for Job."], true])
+		if not caverns_open and not mail_days.has("vzzket_caverns"):
+			out.append(["The caverns", ["Vzz'ket guards the gate under the mine. Job says he'll send word when he's ready to talk.",
+				"Letters come with the morning post: check the message pad by your front door."], false])
+		elif not caverns_open:
+			out.append(["The caverns", ["Vzz'ket wrote. He wants to see you at the cavern gate, at the bottom of the mine."], false])
+		else:
+			out.append(["The caverns", ["Vzz'ket opened the cavern gate for you. Every fifth floor has a lift stop."], true])
 	# today
 	if board_taken_day == day and board_done_day != day:
 		var req: Dictionary = _board_request()
@@ -4060,11 +4158,52 @@ func _next_day() -> void:
 	for who in persons:
 		persons[who]["talked_today"] = false
 		persons[who]["talks_today"] = 0
+	var post: int = _deliver_mail()
 	_go_home()
 	_snap_residents()
 	_save_game()
-	_toast("Day %d  (saved)" % day)
+	_toast("Day %d  (saved)" % day + ("   You've got mail." if post > 0 else ""))
 	_morning_news()
+
+
+# ---------------------------------------------------------------- mail
+# Letters (scripts/mail_data.gd) come with the morning post and wait in your mailbox on the agri complex's front
+# porch until you read them (scripts/mail_reader.gd); an envelope bobs over the box meanwhile (scripts/mail_flag.gd).
+
+# Send a letter: it comes with the post `days` mornings from now. A letter only ever comes once.
+func send_mail(id: String, days: int = 1) -> void:
+	if not MailData.LETTERS.has(id) or mail_days.has(id) or mail_due.has(id):
+		return
+	mail_due[id] = day + maxi(days, 0)
+
+
+# The morning post: every letter due by today goes in your mailbox. Returns how many came.
+func _deliver_mail() -> int:
+	for id in MailData.DATED:
+		if not mail_days.has(id) and not mail_due.has(id):
+			mail_due[id] = int(MailData.DATED[id])
+	var came := 0
+	for id in mail_due.keys():
+		if int(mail_due[id]) > day:
+			continue
+		mail_due.erase(id)
+		if MailData.LETTERS.has(id) and not mail_days.has(id):
+			mail_days[id] = day
+			mail_waiting.append(id)
+			came += 1
+	return came
+
+
+func _check_mailbox() -> void:
+	if mail_view.letters().is_empty():
+		_say("Message pad", ["No mail yet. The post comes in the morning."])
+		return
+	mail_view.start()
+
+
+# The reader calls this when a letter is on screen.
+func read_letter(id: String) -> void:
+	mail_waiting.erase(id)
 
 
 # ---------------------------------------------------------------- saving
@@ -4086,6 +4225,11 @@ func _save_game() -> void:
 	cfg.set_value("game", "harbinger_slain", harbinger_slain)
 	cfg.set_value("game", "board_taken_day", board_taken_day)
 	cfg.set_value("game", "board_done_day", board_done_day)
+	cfg.set_value("game", "caverns_open", caverns_open)
+	cfg.set_value("mail", "waiting", mail_waiting)
+	cfg.set_value("mail", "days", mail_days)
+	cfg.set_value("mail", "due", mail_due)
+	cfg.set_value("farm", "shipping", shipping)
 	if not appearance.is_empty():
 		cfg.set_value("game", "appearance", appearance)
 	for who in persons:
@@ -4157,6 +4301,16 @@ func _load_game() -> void:
 	harbinger_slain = bool(cfg.get_value("game", "harbinger_slain", false))
 	board_taken_day = int(cfg.get_value("game", "board_taken_day", 0))
 	board_done_day = int(cfg.get_value("game", "board_done_day", 0))
+	# Saves from before Vzz'ket's letter (23 Nov): if you had cleared the tunnels, the gate was already open.
+	caverns_open = bool(cfg.get_value("game", "caverns_open", job_quest >= 5))
+	var saved_waiting = cfg.get_value("mail", "waiting", [])
+	mail_waiting = saved_waiting if saved_waiting is Array else []
+	var saved_days = cfg.get_value("mail", "days", {})
+	mail_days = saved_days if saved_days is Dictionary else {}
+	var saved_due = cfg.get_value("mail", "due", {})
+	mail_due = saved_due if saved_due is Dictionary else {}
+	var saved_shipping = cfg.get_value("farm", "shipping", {})
+	shipping = saved_shipping if saved_shipping is Dictionary else {}
 	var saved_look = cfg.get_value("game", "appearance", {})
 	if saved_look is Dictionary and not saved_look.is_empty() and maker != null:
 		appearance = maker.tidy(saved_look)
@@ -4340,6 +4494,16 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 	sprite.visible = false
 	actors.add_child(sprite)
 	area_sprites.append([sprite,area_name])
+	if p[0] == "terminal" and str(p[5]) == "Message pad":
+		# your mailbox: its screen shows an envelope (scripts/lunar_terminal.gd), and another bobs over it while a
+		# letter waits (drawn over the walls, like the other overlays)
+		sprite.set("mail_world", self)
+		var flag := MailFlag.new()
+		flag.world = self
+		flag.position = Vector2(float(p[1]) * TILE + float(p[3]) * TILE * 0.5, (float(p[2]) + float(p[4])) * TILE - sprite.texture.get_height() * ART)
+		flag.visible = false
+		top_fx.add_child(flag)
+		area_sprites.append([flag, area_name])
 	if p[0] in ["fountain","terminal"]:
 		var water := ShaderMaterial.new()
 		water.shader = load("res://shaders/fountain_water.gdshader" if p[0] == "fountain" else "res://shaders/mess_lights.gdshader")
@@ -4893,12 +5057,43 @@ func _cavern_gate() -> void:
 	if job_quest < 5:
 		_say("Vzz'ket", ["[angry] The caverns stay shut. Job wants the north tunnels cleared first.", "Clear them. Then we will see what you are."])
 		return
+	if not caverns_open:
+		if not mail_days.has("vzzket_caverns"):
+			# the tunnels are done, but his letter hasn't come yet (it comes with the next morning's post)
+			_say("Vzz'ket", ["Job told me. The tunnels are quiet.", "[angry] Not today. Sleep. I will send word."])
+			if not mail_due.has("vzzket_caverns"):
+				send_mail("vzzket_caverns", 1)
+		else:
+			_vzzket_caverns_talk()
+		return
 	if cav_lift > 0:
 		_say("Cavern gate", ["Vzz'ket unbolts the barricade. The old cage lift still runs.", "Take the lift down to floor %d?" % cav_lift],
 				Callable(self, "_enter_cavern").bind(cav_lift), "Floor %d" % cav_lift, Callable(self, "_enter_cavern").bind(1), "Floor 1")
 	else:
 		_say("Cavern gate", ["Vzz'ket unbolts the barricade. A ladder drops away into the dark.", "Climb down into the Caverns?"],
 				Callable(self, "_enter_cavern").bind(1), "Climb down")
+
+
+# After his letter (scripts/mail_data.gd "vzzket_caverns"): Vzz'ket says what is under the gate, then opens it.
+# Draft lines by Claude, for Zachary to change.
+func _vzzket_caverns_talk() -> void:
+	_say("Vzz'ket", [
+		"You came. Good. Listen. I will say this once.",
+		"Under the gate the rock goes down a long way. Floor under floor. It is never the same twice: the rock moves, and so does what lives in it.",
+		"Near the top, bugs and lizards. Lower, the green caves and the spore crawlers. Lower still, the steam, and crabs that cook you while they bite.",
+		"[sad] Five of my clutch went down after the first crash. Two came back.",
+		"So. Carry food. When you are hurt, climb the ladder. The caverns will be there tomorrow. You might not.",
+		"Break the rocks to find the way down. Every fifth floor the old cage lift stops. Reach one and you can ride straight back to it.",
+		"[surprised] And if you ever hear water down there... tell me first. Then tell Zaas. He will want to swim in it.",
+	])
+	_say_then(Callable(self, "_open_caverns"))
+
+
+func _open_caverns() -> void:
+	caverns_open = true
+	sfx("quest")
+	_toast("The Caverns are open")
+	_cavern_gate()
 
 
 func _enter_cavern(n: int) -> void:

@@ -12,10 +12,10 @@ const PEOPLE = {
 		"pitch": 1.3,
 		"first": [
 			"Easy. You have been asleep for two days. You are on Echo Landing, and you are safe.",
-			"These were the head officer's quarters. It is one of the few proper beds we have left, and I wanted you quarantined for a few days. No offence meant.",
+			"This flat belonged to the agri keeper. It stands on its own out by the farm domes, and I wanted you quarantined for a few days. No offence meant. It is yours now, for as long as you stay.",
 			"I am Sara. I administer the station. Your ship is in the shuttle bay, down the south lift off the town square.",
 			"Tikka, in the engineering bay, can tell you how bad your drive is. Bram, on the west wing of the square, knows who is paying for odd jobs.",
-			"[happy] The spaceport is just outside these barracks. One day I hope to see it finished, and full of visitors. This building would make a fine hotel.",
+			"[happy] The spaceport is just down the walkway. One day I hope to see it finished, and full of visitors. The old barracks beside it would make a fine hotel.",
 		],
 		"repeat": [
 			"I was built to listen. These days I am mostly asked where the spare blankets are.",
@@ -521,6 +521,13 @@ const LOOKS = {
 	"Old bunks": ["Rows of bunks for soldiers who never came. Clear out the rubble and these would be guest rooms."],
 	"Library shelves": ["Field manuals, mostly. Someone has added cookbooks, a few novels and a children's atlas of Earth."],
 	"Landing pad": ["Through the airlock window: painted lines on bare rock, for a spaceport that was never finished.", "One day ships will set down there."],
+	# Your apartment (tools/residences.py aptPlayer) and the hotel's manager's suite, 23 Nov. Claude's placeholder lines.
+	"Writing desk": ["A plain desk with a cup of pens that all still work.", "Someone scratched a row of tally marks into the corner, a long time ago, and then stopped."],
+	"Old bookshelf": ["The agri keeper's books, left behind: crop manuals, two thrillers and a seed catalogue from the year the dome broke.", "Owen at the library would trade you for the thrillers."],
+	"Little table": ["A table for one. Two, if the second doesn't mind elbows."],
+	"Flower box": ["Marigolds in a box of recycled soil. The first flowers out here in years."],
+	"Porch planter": ["Leafy greens in a planter, doing better than they have any right to."],
+	"Suite bed": ["The manager's suite, made up and waiting for a manager.", "You sleep at your own place now, out by the farm."],
 	# Homes (tools/residences.py, tools/east.py, tools/caves.py), 20 Nov. Claude's placeholder lines.
 	"Bram's bed": ["A short, wide Moogli bed, made with military corners. A price tag is still stuck to the headboard."],
 	"Bram's ledgers": ["Every trade Bram has made since he landed, in tiny, careful handwriting.", "One page is just the word 'NO' and a date."],

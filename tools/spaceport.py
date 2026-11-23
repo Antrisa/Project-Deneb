@@ -5,11 +5,12 @@ west   the district junction (option D): a big octagonal plaza with four empty b
        (S.A.R.A.), then the terminal, whose west side is one long window over the landing pad outside; the
        airlock is sealed until you have a space suit. North-west: the Star dome. North: the agri complex.
        South: the hotel. East: the walkway to the Main Level.
-agri   three domes round a central storage shed: your agri dome (one corner still grows), your workshop, and
-       the hot springs and fish ponds. Glass links join the shed to the agri dome and every dome to the others;
-       the way in from the junction crosses the workshop-springs link at a small crossroads.
+agri   three domes round your front porch (Zachary, 23 Nov): your agri dome (one corner still grows), your
+       workshop, and the hot springs and fish ponds. The porch is a big wooden deck at the way in from the
+       junction, with your apartment's front door and mailbox on its north side; glass links join it to every
+       dome, and every dome to the others.
 hotel  option C: a round lobby with a fountain and a curved front desk, the dining room and kitchen, the lounge,
-       your office and bedroom (you start here), a guest corridor and big empty wings to build guest rooms in. The
+       your office and the manager's suite, a guest corridor and big empty wings to build guest rooms in. The
        kitchen opens onto the dining room and the staff hall behind the desk; the dining room and the lounge each
        have their own way down to the guest corridor.
 Drawn in the promenade style; walls faceted by tools/bake_floor.py."""
@@ -25,7 +26,7 @@ SIZES.update({
     'tree_tub': (1, 2, 1), 'lamp_post': (1, 2, 1), 'waiting_seat_w': (1, 3, 2), 'waiting_seat_e': (1, 3, 2), 'market_counter': (3, 2, 1),
     'view_bench': (2, 2, 1),
     'customs_desk': (3, 2, 1), 'stanchion': (1, 1, 1), 'departures_board': (4, 2, 1), 'beacon_mast': (3, 4, 2),
-    'planter_dead': (3, 2, 1), 'rubble': (2, 1, 1), 'glass_shards': (2, 1, 0), 'shipping_bin': (2, 2, 1), 'steam_vent': (1, 1, 1),
+    'planter_dead': (3, 2, 1), 'rubble': (2, 1, 1), 'mailbox': (1, 2, 1), 'flowers': (4, 2, 2), 'glass_shards': (2, 1, 0), 'shipping_bin': (2, 2, 1), 'steam_vent': (1, 1, 1),
     'bunk_bed': (2, 3, 2), 'armchair': (2, 2, 1), 'footlocker': (2, 1, 1), 'gym_rack': (3, 2, 1),
     'front_desk': (5, 2, 1), 'front_desk_l': (3, 2, 1), 'front_desk_r': (3, 2, 1), 'key_board': (2, 2, 1), 'luggage_cart': (2, 2, 1),
     'sofa': (3, 2, 1), 'fireplace': (3, 3, 1), 'fridge': (2, 3, 1), 'bar_table': (3, 2, 1), 'cafe_table': (2, 2, 1),
@@ -116,29 +117,44 @@ def build(g):
     N('telescope', 58, 6, 'Telescope', 'look', 'Look through it'); N('view_bench', 56, 9.5, 'Bench', 'seat', 'Sit')
     N('star_chart', 62, 9, 'Star chart', 'look', 'Look')
 
-    # ================================================================== agri: three domes round the storage shed
-    a = Room(g, 'agri', 'Agri Complex', 110, 90)
+    # ================================================================== agri: three domes round your front porch
+    # Zachary, 23 Nov (mock-up B, with his change: "move the central circle down to make a giant front porch area"):
+    # the storage shed that sat between the domes moved down to the way in and grew into a big wooden front porch.
+    # On its north side, your apartment's front door (the apartment is its own map: tools/residences.py,
+    # aptPlayer) and the glass link up to your agri dome; west, the workshop; east, the hot springs; south, a short
+    # walkway to the junction (the map is 84 tiles tall now, was 90, so the walk in from the junction is 6 tiles
+    # instead of 28). The shed's seed rack, tools and stores stand on the porch.
+    a = Room(g, 'agri', 'Agri Complex', 110, 84)
     F = a.F
-    fill(F, 1, 1, 108, 88, '#')
+    fill(F, 1, 1, 108, 82, '#')
     disc(F, 55, 23, 19, 'a')                                     # your agri dome
     disc(F, 24, 64, 13, 'f')                                     # your workshop
     disc(F, 86, 64, 15, 's')                                     # hot springs and fish ponds
-    chamfer_room(F, 47, 45, 63, 59, 'h', 3)                      # the storage shed
+    porch = (42, 50, 68, 75)
+    chamfer_room(F, porch[0], porch[1], porch[2], porch[3], 'k', 4)   # the front porch: wooden decking
     chamfer_room(F, 77, 54, 89, 63, 'O', 3)                      # the hot spring
     chamfer_room(F, 89, 65, 97, 72, 'Y', 2); chamfer_room(F, 77, 67, 85, 74, 'Y', 2)   # fish ponds
     band(F, (55, 23), (24, 64), 1.6, 'u'); band(F, (55, 23), (86, 64), 1.6, 'u'); band(F, (24, 64), (86, 64), 1.6, 'u')
-    band(F, (55, 40), (55, 47), 1.6, 'u')                        # shed to agri dome
-    fill(F, 54, 60, 56, 87, 'u')                                 # the way in, from the junction
-    agri_in = (55, 88); F[agri_in[1]][agri_in[0]] = 'u'
+    band(F, (55, 40), (55, 51), 1.6, 'u')                        # porch up to the agri dome
+    fill(F, 54, 76, 56, 81, 'u')                                 # the way in, from the junction
+    agri_in = (55, 82); F[agri_in[1]][agri_in[0]] = 'u'
+    home_door = (60, 49); F[home_door[1]][home_door[0]] = 'k'   # your front door, in the porch's north wall
+    g['PLAYER_HOME_DOOR'] = ('agri', home_door)
+    # Behind the door, between the glass links, the apartment block: kept as roof rather than bare moon, so the
+    # door opens into a building.
+    house = {(x, y) for x in range(57, 74) for y in range(34, 49)}
     # Outside the domes and links is bare moon, with a two-tile station wall round everything inside.
-    inside = {(x, y) for y in range(90) for x in range(110) if F[y][x] not in '#Q~'}
-    for y in range(1, 89):
+    inside = {(x, y) for y in range(84) for x in range(110) if F[y][x] not in '#Q~'}
+    for y in range(1, 83):
         for x in range(1, 109):
-            if F[y][x] == '#' and not any((x + dx, y + dy) in inside for dx in range(-2, 3) for dy in range(-2, 3)):
+            if F[y][x] == '#' and (x, y) not in house and not any((x + dx, y + dy) in inside for dx in range(-2, 3) for dy in range(-2, 3)):
                 F[y][x] = 'Q'
-    a.t.zones += [['Agri dome', 36, 4, 74, 42], ['Storage shed', 47, 45, 63, 59], ['Your workshop', 11, 51, 37, 77],
-                  ['Hot springs & fish ponds', 71, 49, 101, 79], ['Glass link', 1, 1, 108, 88]]
-    a.keep_clear(53, 60, 57, 88); a.keep_clear(36, 62, 74, 66); a.keep_clear(53, 38, 57, 47)
+    a.t.zones += [['Agri dome', 36, 4, 74, 42], ['Front porch', porch[0], porch[1], porch[2], porch[3]], ['Your workshop', 11, 51, 37, 77],
+                  ['Hot springs & fish ponds', 71, 49, 101, 79], ['Glass link', 1, 1, 108, 82]]
+    a.keep_clear(52, 38, 57, 54)          # the link up to the dome, and its mouth
+    a.keep_clear(53, 70, 57, 82)          # the way in
+    a.keep_clear(36, 61, 74, 66)          # workshop - porch - hot springs
+    a.keep_clear(59, 49, 61, 54)          # your front door, and the way to it
     # Your field (21 Nov): 10 x 12 tiles in the west of the dome, farmed one tile at a time like Stardew (till,
     # plant, water, harvest; scripts/main.gd and scripts/agri_terrain.gd). One tile is one character wide.
     # Its x, y, w, h start on even tiles, so the soil art's 2 x 2-tile frame pieces line up round it.
@@ -156,10 +172,22 @@ def build(g):
     for fx, fy in ((60, 12), (66, 22), (57, 34), (48, 9), (64, 31)): N('rubble', fx, fy, 'Rubble', None)
     for fx, fy in ((53, 14), (62, 18), (68, 28), (59, 27)): N('glass_shards', fx, fy, 'Broken glass', None)
     a.thing('look', 'Broken agri dome', 'Look', 58, 22, 60)
-    # the storage shed
-    N('shipping_bin', 52, 48, 'Shipping crate', 'look', 'Look'); N('seed_rack', 58.5, 48, 'Seed rack', 'seeds', 'Take seeds')
-    N('garden_tools', 61, 52, 'Garden tools', 'farm_tools', 'Take'); N('storage_shelf', 50, 56.5, 'Shed shelving', None)
-    N('barrel_stack', 61, 57, 'Feed barrels', None); N('cargo', 58, 56.5, 'Crates', None)
+    # The front porch (Zachary, 23 Nov: "you go out into that middle circle you have a little work space and a message
+    # pad mailbox thing, and a shipping bin to sell stuff to bram"). By your front door, as on a Stardew farm: your
+    # message pad (the mailbox: scripts/mail_reader.gd) and the shipping crate that Bram empties overnight. By the
+    # link up to your field: the seed rack and garden tools. West: a little work space (a workbench that opens the
+    # Crafting page, a tool cart) and the old shed's shelving, barrels and crates. East: a bench, a table and a
+    # planter. Flower boxes either side of the way in, and a lamp at each corner.
+    P('terminal', 62, 50, 'Message pad', 'mail', 'Read your mail')
+    P('shipping_bin', 63, 50, 'Shipping crate', 'ship', 'Ship to Bram')
+    N('tree_tub', 58.5, 51.5, 'Potted tree', None)
+    N('seed_rack', 47, 52, 'Seed rack', 'seeds', 'Take seeds'); N('garden_tools', 50, 52, 'Garden tools', 'farm_tools', 'Take')
+    N('workbench', 46.5, 57, 'Porch workbench', 'craft', 'Craft'); N('tool_cart', 44.5, 60, 'Tool cart', None)
+    N('storage_shelf', 45.5, 70, 'Porch shelving', None); N('barrel_stack', 45, 73, 'Feed barrels', None); N('cargo', 48, 72, 'Crates', None)
+    N('bench_s', 64, 56.5, 'Porch bench [S]', 'seat', 'Sit'); N('table', 63, 69.5, 'Porch table', 'seat', 'Sit')
+    N('plants', 65.5, 72, 'Porch planter', 'look', 'Look')
+    N('flowers', 50.5, 74.5, 'Flower box', 'look', 'Look'); N('flowers', 60, 74.5, 'Flower box', 'look', 'Look')
+    for fx, fy in ((47.5, 55), (63.5, 59.5), (47.5, 68), (63.5, 73)): N('lamp_post', fx, fy, 'Lamp', None)
     # your workshop
     N('workbench', 19.5, 58.5, 'Workbench', 'look', 'Look'); N('workbench', 27.5, 58.5, 'Workbench', None)
     N('tool_cart', 15, 65, 'Tool cart', None); N('welding_rig', 32, 67, 'Welding rig'); N('parts_rack', 20, 72.5, 'Parts rack', None)
@@ -171,7 +199,7 @@ def build(g):
 
     # ================================================================== hotel (option C, Zachary 17 Nov)
     # A round lobby under a glass dome with a fountain and the front desk curving along its back; the dining
-    # room and kitchen to the west, the lounge to the east, your office and bedroom behind the desk, a long
+    # room and kitchen to the west, the lounge to the east, your office and the manager's suite behind the desk, a long
     # guest corridor and big empty wings (and a spare room) to build guest rooms in later.
     h = Room(g, 'hotel', 'Hotel', 120, 90)
     F = h.F
@@ -193,7 +221,7 @@ def build(g):
     fill(F, 75, 22, 77, 24, 'u')
     fill(F, 59, 39, 61, 41, 'u'); fill(F, 42, 40, 78, 41, 'u')   # the staff hall behind the desk
     chamfer_room(F, 42, 43, 57, 54, 'o', 3); F[42][50] = 'o'     # your office
-    chamfer_room(F, 63, 43, 78, 54, 't', 3); F[42][70] = 't'     # your bedroom
+    chamfer_room(F, 63, 43, 78, 54, 't', 3); F[42][70] = 't'     # the manager's suite (was your bedroom until 23 Nov)
     fill(F, 59, 42, 61, 55, 'u')
     chamfer_room(F, 84, 36, 108, 52, 'e', 2); fill(F, 94, 53, 96, 55, 'u')   # spare room (empty)
     fill(F, 80, 34, 82, 55, 'u')                                 # lounge down to the guest corridor
@@ -201,7 +229,7 @@ def build(g):
     chamfer_room(F, 4, 63, 56, 86, 'e', 2); chamfer_room(F, 64, 63, 116, 86, 'e', 2)   # empty guest wings
     for x in (29, 30, 31, 89, 90, 91): F[61][x] = F[62][x] = 'u'
     h.t.zones += [['Hotel lobby', 45, 9, 75, 39], ['Dining room', 12, 10, 41, 33], ['Kitchen', 12, 36, 31, 49], ['Lounge', 78, 10, 108, 33],
-                  ['Your office', 42, 43, 57, 54], ['Your bedroom', 63, 43, 78, 54], ['Spare room', 84, 36, 108, 52],
+                  ['Your office', 42, 43, 57, 54], ["Manager's suite", 63, 43, 78, 54], ['Spare room', 84, 36, 108, 52],
                   ['Guest corridor', 4, 56, 116, 60], ['West guest wing', 4, 63, 56, 86], ['East guest wing', 64, 63, 116, 86]]
     h.keep_clear(58, 2, 62, 12); h.keep_clear(40, 21, 47, 25); h.keep_clear(73, 21, 80, 25); h.keep_clear(57, 36, 63, 57)
     h.keep_clear(42, 39, 78, 42); h.keep_clear(19, 32, 25, 37); h.keep_clear(5, 20, 12, 57); h.keep_clear(30, 39, 42, 42); h.keep_clear(79, 32, 83, 57); h.keep_clear(4, 56, 116, 60)
@@ -229,8 +257,8 @@ def build(g):
     # your office
     N('curator_desk', 49.5, 46.5, 'Your desk', 'look', 'Look'); N('star_chart', 55, 46, 'Hotel plans', 'look', 'Look')
     N('books', 45, 46.5, 'Ledgers', None); N('armchair', 46, 52, 'Armchair', 'seat', 'Sit'); N('plants', 53.5, 52.5, 'Plant', 'inspect', 'Inspect')
-    # your bedroom
-    P('bed', 65, 44, 'Your bed', 'bed', 'Sleep'); P('wardrobe', 75, 43, 'Locker', 'wardrobe', 'Change look')
+    # the manager's suite: your bedroom until you moved into your apartment by the farm (23 Nov)
+    P('bed', 65, 44, 'Suite bed', 'look', 'Look'); P('wardrobe', 75, 43, 'Suite wardrobe', None)
     N('footlocker', 65, 49.5, 'Footlocker', None); N('armchair', 75, 52, 'Armchair', 'seat', 'Sit'); N('plants', 66.5, 52.5, 'Plant', 'inspect', 'Inspect')
     # the empty spaces: bare floor marked out for building, a few crates
     N('cargo', 87, 39, 'Crates', None); N('cargo', 7, 66, 'Crates', None); N('cargo', 113, 66, 'Crates', None)
