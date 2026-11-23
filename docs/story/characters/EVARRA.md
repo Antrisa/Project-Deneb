@@ -41,7 +41,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
 - **Two new things in the cutscene engine:**
   - **Backup places** (`"backup"` in an event): her 8 plays in the orchard once the garden dome is open, and at the promenade flower beds until then, so it never waits for the story.
   - **Moving map mid-scene** (`["go", area, x, y, dir]`): her 10 starts in your kitchen in the hotel and ends in the little park.
-- **To test:** in a debug build, **F4** plays the next event in order (Freya's and Jasper's come first, so Evarra's 2 is the eleventh press); **F5** opens the garden dome (4 needs it; with it closed, 8 plays at the flower beds).
+- **To test:** in a debug build, **F3** plays the next event in order (Freya's and Jasper's come first, so Evarra's 2 is the eleventh press); **F5** opens the garden dome (4 needs it; with it closed, 8 plays at the flower beds).
 - **Checked offline:** `python3 tests/check_heart_events.py` (it checks 8 at both places).
 - **Not in yet:** the wildflower border on your field after 6 (`evarra_wildflowers` is set so a map version can switch on), what the brioche and Green Thumb do in play, and the frame as an item you can hold.
 

@@ -1,5 +1,5 @@
 extends SceneTree
-# Plays every heart event (scripts/heart_events.gd) from start to finish, the way F4 does in a debug build,
+# Plays every heart event (scripts/heart_events.gd) from start to finish, the way F3 does in a debug build,
 # picking the first answer at every choice and clicking through every line. Checks that each one ends, is
 # remembered, gives its flags and puts everyone back on their schedule.
 #   godot --headless --script res://tests/heart_events_test.gd
@@ -50,7 +50,7 @@ func run() -> void:
 			"job_rig_quest", "perk_bedrock_strength", "keepsake_oar_charm",
 			"perk_xeno_salve", "quill_clinic_door", "perk_guardian_medic", "keepsake_stethoscope_compass"]:
 		assert(s.story_flags.get(f, false), f)
-	# F4 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
+	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
 	assert(s.partner == "Quill")
 	print("PASS: ", HeartEvents.ORDER.size(), " heart events played to the end, choices picked, flags set.")

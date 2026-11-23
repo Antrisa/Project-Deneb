@@ -37,7 +37,7 @@ Her home is a long walk from everything: about 45 minutes to the mess hall, and 
 
 All five are playable cutscenes: `scripts/heart_events.gd` (the data, written from this doc) played by `scripts/cutscene.gd`. Freya walks, turns and poses from her heart-event sheet (`art/npc_freya_event.png`: talk, laugh, sad, jump, gift, bench, wave, made with `tools/events.py`) and her action sheet; emote bubbles over heads (the same ones as in play: "!", "?", a heart, a sparkle, a tear, a stress mark, a check, a wave), fades, shakes and a choice menu do the rest. Bubbles don't show on the dark screen of the flight in 6. Not run in Godot yet.
 
-- **To test:** in a debug build, **F4** plays the next event (it sets the hearts, day, time and place it needs); **Shift+F4** forgets the ones you've seen; **F5** opens the story places (for 10: the restored Suite).
+- **To test:** in a debug build, **F3** plays the next event (it sets the hearts, day, time and place it needs); **Shift+F3** forgets the ones you've seen; **F5** opens the story places (for 10: the restored Suite).
 - **Checked offline:** `python3 tests/check_heart_events.py` (every place reachable, every pose drawn, every line short enough).
 - **Not in yet:** the parts request before 6 (you haven't said whether to keep it, so 4 now ends "Give me a few days with these"); what the Pioneer Stabilizer and Master Mechanic actually do in play (they're recorded as perks); the keepsake as an item you can hold.
 

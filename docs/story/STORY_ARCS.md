@@ -155,7 +155,7 @@ A gardener without a garden, until there is one. **Reviewed with Zachary on 22 N
 
 ### 3.3 Freya (Human, Junior Shipwright)
 
-Stepping out of her late father's shadow. **Reviewed with Zachary on 22 Nov; full scenes in [`characters/FREYA.md`](characters/FREYA.md)** (Claude drafts around his lines). **All five play in the game as cutscenes** (`scripts/heart_events.gd`, `scripts/cutscene.gd`; debug F4).
+Stepping out of her late father's shadow. **Reviewed with Zachary on 22 Nov; full scenes in [`characters/FREYA.md`](characters/FREYA.md)** (Claude drafts around his lines). **All five play in the game as cutscenes** (`scripts/heart_events.gd`, `scripts/cutscene.gd`; debug F3).
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|

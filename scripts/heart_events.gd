@@ -17,7 +17,7 @@ extends RefCounted
 #   steps           what happens (the step list is at the top of scripts/cutscene.gd)
 # A resident who hasn't arrived on the station yet is left out, and their lines are skipped.
 
-# The order they're checked in (and the order F4 plays them in debug builds).
+# The order they're checked in (and the order F3 plays them in debug builds).
 const ORDER := ["freya_2", "freya_4", "freya_6", "freya_8", "freya_10",
 	"jasper_2", "jasper_4", "jasper_6", "jasper_8", "jasper_10",
 	"evarra_2", "evarra_4", "evarra_6", "evarra_8", "evarra_10",
