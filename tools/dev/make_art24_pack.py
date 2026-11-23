@@ -53,7 +53,7 @@ for f in sorted(glob.glob(os.path.join(root, "art/lunar/*.png"))):
         add(f, f"art/lunar/{n}.png", "window strip", "B", "A long window band set into a wall; the view outside through the glass.")
     elif n in textures and w == h == 64:
         add(f, f"art/lunar/{n}.png", "floor texture", "A", "Seamless floor; 2x2 tiles. Low contrast so furniture stands out.", tile=True)
-    elif n in ("player_ship", "tarp_fighter", "harbinger"):
+    elif n in ("player_ship", "tarp_fighter", "leviathan"):
         add(f, f"art/lunar/{n}.png", "ship / large", "B", "Large sheet: keep the frame layout, every frame shrunk the same.", frames=4 if n == "player_ship" else 1)
     else:
         fp = foot.get(n)

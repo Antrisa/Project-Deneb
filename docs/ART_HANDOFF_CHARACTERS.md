@@ -165,7 +165,7 @@ The eight reference cells in `docs/player_turnaround_24x48.png` show the front, 
     - floors 1–15, rock: stone beetle, cave bat;
     - floors 16–30, lush: vine creeper, glow moth, fungus brute;
     - floors 31–45, steamy and watery: steam eel, magma slug, armoured crab.
-  - **The Harbinger of Destruction** (boss, floor 45). Its current file is a tiny placeholder. A boss needs a much bigger sprite, and the game currently shows every creature one tile wide, so **ask Claude to add boss sizing first**. Suggested: 4 frames of 96 × 96.
+  - **The Leviathan** (sea-monster boss, floor 45; renamed from "the Harbinger" on 22 Nov, since the Harbinger of Destruction is a Custodian). Its current file is a tiny placeholder. A boss needs a much bigger sprite, and the game currently shows every creature one tile wide, so **ask Claude to add boss sizing first**. Suggested: 4 frames of 96 × 96.
 
 ---
 

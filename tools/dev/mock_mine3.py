@@ -248,7 +248,7 @@ for row, (lay, sd) in enumerate(picks):
         draw_floor(m, ox, oy, lay, th, sd * 10 + col, mirror=(col == 1), title=lay["name"].split(". ")[1] + ": " + th["t"].split(": ")[1] + (" (mirrored)" if col == 1 else ""))
 # right column: notes
 m.text(98, 2, "WHAT CHANGES WITH DEPTH", (255, 226, 150))
-m.text(98, 4.5, "Rock (1-15)\n  stalagmites, dark chasms, iron and copper,\n  small creatures.\n\nGreen and lush (16-30)\n  giant mushrooms, ferns and moss, overgrown\n  pits; copper, silver-grey ore, first crystals;\n  creatures a size up.\n\nSteamy and watery (31-44)\n  crystal columns, hot pools you walk round,\n  steam vents; crystal and thermal quartz;\n  the biggest creatures.\n\nFloor 45 is its own hand-made map:\n  the Harbinger, and the shore of the\n  underground ocean.")
+m.text(98, 4.5, "Rock (1-15)\n  stalagmites, dark chasms, iron and copper,\n  small creatures.\n\nGreen and lush (16-30)\n  giant mushrooms, ferns and moss, overgrown\n  pits; copper, silver-grey ore, first crystals;\n  creatures a size up.\n\nSteamy and watery (31-44)\n  crystal columns, hot pools you walk round,\n  steam vents; crystal and thermal quartz;\n  the biggest creatures.\n\nFloor 45 is its own hand-made map:\n  the Leviathan, and the shore of the\n  underground ocean.")
 m.text(98, 46, "VARIETY FROM 10 LAYOUTS", (255, 226, 150))
 m.text(98, 48.5, "- 10 shapes x 3 depths x mirrored\n  = 60 different-looking floors.\n- Middle column shows a mirrored copy.\n- Rocks, ore and creatures are placed\n  fresh each visit, so even a repeat\n  floor plays differently.\n- 'down' marks where the way down sits;\n  how it opens is still to pick.\n- Every 5th floor: a lift stop.")
 m.save("caverns_depths")

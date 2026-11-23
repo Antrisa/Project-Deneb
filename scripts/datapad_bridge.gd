@@ -328,7 +328,7 @@ func _kind(id: String, info: Dictionary) -> String:
 		return "Refined metal"
 	if id in ["hull_plate", "coil_wire"]:
 		return "Component"
-	if id in ["chitin", "hide", "harbinger_scale"]:
+	if id in ["chitin", "hide", "leviathan_scale"]:
 		return "Creature part"
 	return "Mineral"
 

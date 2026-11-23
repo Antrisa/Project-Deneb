@@ -263,7 +263,7 @@ var cav_shaft := false             # the way down has been found on this floor
 var cav_static_nodes := 0          # ore_nodes from MapData; the floor's own come after them
 var cav_sprites: Array = []
 var cav_enemies: Array = []
-var harbinger_slain := false
+var leviathan_slain := false     # the sea monster on floor 45 (the Harbinger is a Custodian, not this)
 # What the story has opened that has no state of its own yet (saved): "east_dome" (the garden dome in the East
 # Complex), and later the Shipwright's Suite, the hotel and so on. _flag() reads these and the ones the game
 # already keeps. Residents' weekly days (MapData.SCHEDULE_DAYS) change with them.
@@ -1250,7 +1250,7 @@ func _flag(flag_name: String) -> bool:
 		"ship_flown": return flights > 0
 		"ivan_defeated": return artie_found_day >= 0
 		"ana_rescued": return ana_found_day >= 0
-		"harbinger_slain": return harbinger_slain
+		"leviathan_slain": return leviathan_slain
 	return bool(story_flags.get(flag_name, false))
 
 
@@ -3946,7 +3946,7 @@ func _open_crafting() -> void:
 # and their prices are in scripts/station_repair.gd, which also draws the page you pay on. You pay; her drones work
 # overnight; the sealed doors open and the wreckage is gone in the morning.
 
-# "open" (repaired), "due" (paid for, opens tomorrow), "locked" (has to wait, e.g. for the Harbinger) or "ready".
+# "open" (repaired), "due" (paid for, opens tomorrow), "locked" (has to wait, e.g. for the Leviathan) or "ready".
 func repair_state(id: String) -> String:
 	if station_fixed.has(id):
 		return "open"
@@ -4153,8 +4153,8 @@ func enemy_died(en) -> void:
 	var epos: Vector2 = en.position
 	_give(drop, 1)
 	_pop_item(drop, epos + Vector2(0, -8))
-	if en.kind == "harbinger":
-		_harbinger_slain()
+	if en.kind == "leviathan":
+		_leviathan_slain()
 	if en.area == "tunnels" and job_quest == 4:
 		tunnel_kills += 1
 		if tunnel_kills == TUNNEL_GOAL:
@@ -4476,10 +4476,10 @@ func _process(delta: float) -> void:
 				player.position += Vector2(0, 24)
 				_toast("Job: \"Not up there bare-handed, cher. See Vzz'ket first.\"")
 				sfx("deny")
-			elif dest_area == "lake" and not harbinger_slain:
-				# The old flooded stair stays sealed until the Harbinger is dead: step back up.
+			elif dest_area == "lake" and not leviathan_slain:
+				# The old flooded stair stays sealed until the Leviathan is dead: step back up.
 				player.position += Vector2(0, -24)
-				_toast("Sealed — the old stair to the flooded galleries. Not while the Harbinger lives.")
+				_toast("Sealed — the old stair to the flooded galleries. Not while the Leviathan lives.")
 				sfx("deny")
 			else:
 				_go_to(dest_area, Vector2i(int(dest[1]), int(dest[2])))
@@ -4700,7 +4700,7 @@ func _save_game() -> void:
 	cfg.set_value("game", "tunnel_kills", tunnel_kills)
 	cfg.set_value("game", "cav_lift", cav_lift)
 	cfg.set_value("game", "cav_deepest", cav_deepest)
-	cfg.set_value("game", "harbinger_slain", harbinger_slain)
+	cfg.set_value("game", "leviathan_slain", leviathan_slain)
 	cfg.set_value("game", "story_flags", story_flags)
 	cfg.set_value("game", "board_taken_day", board_taken_day)
 	cfg.set_value("game", "board_done_day", board_done_day)
@@ -4779,13 +4779,21 @@ func _load_game() -> void:
 	var saved_slots = cfg.get_value("game", "slots", [])
 	if saved_slots is Array:
 		slots = saved_slots
+	# The Harbinger's scale became the Leviathan's (22 Nov).
+	if items.has("harbinger_scale"):
+		items["leviathan_scale"] = int(items.get("leviathan_scale", 0)) + int(items["harbinger_scale"])
+		items.erase("harbinger_scale")
+	for i in slots.size():
+		if str(slots[i]) == "harbinger_scale":
+			slots[i] = "leviathan_scale"
 	selected = clampi(int(cfg.get_value("game", "selected", 0)), 0, 7)
 	_sync_slots()
 	job_quest = int(cfg.get_value("game", "job_quest", 0))
 	tunnel_kills = int(cfg.get_value("game", "tunnel_kills", 0))
 	cav_lift = int(cfg.get_value("game", "cav_lift", 0))
 	cav_deepest = int(cfg.get_value("game", "cav_deepest", 0))
-	harbinger_slain = bool(cfg.get_value("game", "harbinger_slain", false))
+	# saves from before 22 Nov called the floor-45 monster the Harbinger
+	leviathan_slain = bool(cfg.get_value("game", "leviathan_slain", cfg.get_value("game", "harbinger_slain", false)))
 	story_flags = cfg.get_value("game", "story_flags", {})
 	board_taken_day = int(cfg.get_value("game", "board_taken_day", 0))
 	board_done_day = int(cfg.get_value("game", "board_done_day", 0))
@@ -5697,8 +5705,8 @@ func _enter_cavern(n: int) -> void:
 	_toast(note)
 	if n < last:
 		_fill_cavern(key, info, n, band)
-	elif not harbinger_slain:
-		_wake_harbinger(key)
+	elif not leviathan_slain:
+		_wake_leviathan(key)
 	else:
 		_toast("The water is still. Somewhere far out, something is not breathing.")
 
@@ -5823,27 +5831,28 @@ func _clear_cavern() -> void:
 		fixed[cav_key] = {}
 
 
-# Floor 45: the Harbinger heaves itself out of the water onto the shore and comes for you.
-func _wake_harbinger(key: String) -> void:
+# Floor 45: the Leviathan heaves itself out of the water onto the shore and comes for you. (The Harbinger of
+# Destruction is a Custodian, a crystal, not this; Zachary, 22 Nov. "Leviathan" is still a placeholder name.)
+func _wake_leviathan(key: String) -> void:
 	var spot: Array = MapData.CAVERNS["boss"]
 	var en = EnemyScript.new()
-	en.setup(self, "harbinger", key, Vector2(int(spot[0]) * TILE + 8, int(spot[1]) * TILE + 12))
+	en.setup(self, "leviathan", key, Vector2(int(spot[0]) * TILE + 8, int(spot[1]) * TILE + 12))
 	en.boost(1.0, 0, 4.0)
 	actors.add_child(en)
 	enemies.append(en)
 	cav_enemies.append(en)
 	en.visible = true
 	sfx("hurt", 0.4)
-	_say("The Harbinger", ["The black water bulges. Something the size of a shuttle drags itself up onto the shore.",
+	_say("The Leviathan", ["The black water bulges. Something the size of a shuttle drags itself up onto the shore.",
 		"Its eyes are the colour of the power core. It has seen you."])
 
 
-func _harbinger_slain() -> void:
-	harbinger_slain = true
+func _leviathan_slain() -> void:
+	leviathan_slain = true
 	send_mail("sara_ponds", 1)           # S.A.R.A.: the springs are quiet now, so she can repair the fish ponds
 	sfx("quest")
-	_money(500, "The Harbinger, defeated")
-	_say("Underground ocean", ["The Harbinger sinks back into the dark water, and does not rise again.",
+	_money(500, "The Leviathan, defeated")
+	_say("Underground ocean", ["The Leviathan sinks back into the dark water, and does not rise again.",
 		"For the first time, the ocean is quiet. Zaas is going to want to see this.",
 		"You pull a scale the size of a dinner plate from the shingle. (+500 credits)",
 		"Somewhere above, water drains away. The old flooded stair under the copper bay will be open now: there is a lake down there, and fish."])

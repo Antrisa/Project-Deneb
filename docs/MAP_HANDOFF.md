@@ -60,7 +60,7 @@ Written 17 Nov 2026 so that a new chat can carry on the map work. The next job i
   - Floors 1–15: rock.
   - Floors 16–30: green and lush.
   - Floors 31–45: steamy and watery.
-  - Floor 45: the Harbinger of Destruction and the underground ocean.
+  - Floor 45: the Leviathan (the sea monster; the Harbinger of Destruction is a Custodian) and the underground ocean.
   - Mobs get bigger and stronger every 15 floors, and rarer resources appear.
 - **Mining becomes timed:** holding the laser takes time, like swinging a pickaxe, and harder ores take longer. Today `main.gd` `_mine()` (around line 1364) breaks ore instantly.
 - A Stardew-style **energy bar** was agreed in the items discussion.

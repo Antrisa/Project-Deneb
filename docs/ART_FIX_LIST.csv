@@ -315,7 +315,7 @@ Priority,Area,Kind,File(s),New size,Status,What to do / notes,Done?
 2,Main level & shared,prop / door / roof piece,art/lunar/workbench_n.png,72x56,Auto-shrunk stand-in,workbench n,
 2,Main level & shared,window strip,art/lunar/window_bay.png,1200x48 per frame,Integrated on art24,Six animated crater views across both Shuttle Bay window banks. Each has 48 frames at 6 fps. Tested at 1080p and 1440p.,Yes
 2,Main level & shared,window strip,art/lunar/window_lounge.png,1824x48 fallback; 912x64 per animated frame,Integrated on art24,Four-block-high curved glazing across 57 bays. Seven animated views verified in Godot at 1080p and 1440p.,Yes
-2,Mine & caverns,Boss,enemy_harbinger,tbd (suggested 4 frames of 96x96),Placeholder,Ask Claude to add boss sizing first.,
+2,Mine & caverns,Boss,enemy_leviathan,tbd (suggested 4 frames of 96x96),Placeholder,Ask Claude to add boss sizing first.,
 2,Mine & caverns,Creatures,"enemy_bug, enemy_lizard, enemy_spore_crawler, enemy_vent_crab",48x24 (2 frames of 24x24),Auto-shrunk / enlarged stand-in,Bug and lizard were shrunk; spore crawler and vent crab are enlarged code placeholders. Redraw all.,
 2,Mine & caverns,prop / door / roof piece,art/lunar/boulder.png,44x38,Auto-shrunk stand-in,boulder,
 2,Mine & caverns,prop / door / roof piece,art/lunar/cav_moss.png,48x48,Auto-shrunk stand-in,cav moss,
@@ -323,7 +323,7 @@ Priority,Area,Kind,File(s),New size,Status,What to do / notes,Done?
 2,Mine & caverns,prop / door / roof piece,art/lunar/cavern_shaft.png,24x24,Auto-shrunk stand-in,cavern shaft,
 2,Mine & caverns,prop / door / roof piece,art/lunar/mine_path.png,48x48,Auto-shrunk stand-in,mine path,
 2,Mine & caverns,prop / door / roof piece,art/lunar/mine_rock.png,48x48,Auto-shrunk stand-in,mine rock,
-2,Mine & caverns,ship / large,art/lunar/harbinger.png,192x142,Auto-shrunk stand-in,"Large sheet: keep the frame layout, every frame shrunk the same.",
+2,Mine & caverns,ship / large,art/lunar/leviathan.png,192x142,Auto-shrunk stand-in,"Large sheet: keep the frame layout, every frame shrunk the same.",
 2,Shared,Effects,"fx_console, fx_display, fx_furnace, fx_core, fx_water, slash",96x24 (4 frames) / 48x24,Auto-shrunk stand-in,"Screen flicker, furnace glow, core, water, sword slash.",
 2,Shared,Item icons,art/items.png,24x24 each,Auto-shrunk stand-in,23 icons now; the crafting list needs about 200 more (Art Handoff 2).,
 2,Shared,Weapons in hand,"weapon_spear, weapon_sword",42x11 / 33x14,Auto-shrunk stand-in,Held during attacks.,

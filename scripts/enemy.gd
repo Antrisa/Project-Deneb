@@ -10,7 +10,7 @@ const KINDS := {
 	# A flier (23 Nov), like Stardew's bats: flies straight through walls, rocks and props (only the map's edge stops
 	# it), and once it has seen you it never gives up, flitting at you on a jittery zigzag that overshoots and loops back.
 	"echo_bat": {"art": "res://art/enemy_echo_bat.png", "w": 16.0, "hp": 3, "speed": 46.0, "damage": 1, "drop": "hide", "sight": 110.0, "fly": true},
-	"harbinger": {"art": "res://art/enemy_harbinger.png", "w": 16.0, "hp": 40, "speed": 22.0, "damage": 3, "drop": "harbinger_scale", "sight": 420.0},
+	"leviathan": {"art": "res://art/enemy_leviathan.png", "w": 16.0, "hp": 40, "speed": 22.0, "damage": 3, "drop": "leviathan_scale", "sight": 420.0},
 }
 
 var world                    # main.gd

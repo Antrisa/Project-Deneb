@@ -222,7 +222,7 @@ lunar/door_access_ready.png
 lunar/door_access_locked.png
 
 # Moved onto the 24-pixel grid by tools/dev/convert_to_24.py (18 Nov 2026): keep, don't regenerate.
-enemy_harbinger.png
+enemy_leviathan.png
 enemy_spore_crawler.png
 enemy_vent_crab.png
 carbon.png
@@ -332,7 +332,6 @@ lunar/giant_mushroom.png
 lunar/glass_shards.png
 lunar/glow_fungus.png
 lunar/gym_rack.png
-lunar/harbinger.png
 lunar/hazard_sign.png
 lunar/holo_dais.png
 lunar/holy_banner.png
@@ -484,7 +483,7 @@ items/glow_moss_salad.png
 items/gold_bar.png
 items/gold_ore.png
 items/grilled_cave_trout.png
-items/harbinger_scale.png
+items/leviathan_scale.png
 items/hardwood.png
 items/helium_3.png
 items/hide.png

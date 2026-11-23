@@ -1259,7 +1259,7 @@ for k, im in SPR.items():
 
 # ---------------------------------------------------------------- cave creatures
 # The creature sheets (art/enemy_*.png: bug, lizard, spore crawler, vent crab, echo bat, and the floor-45 boss in
-# enemy_harbinger.png) are hand-drawn art since 23 Nov, laid out like the residents' sheets (4 directions x 5 rows).
+# enemy_leviathan.png) are hand-drawn art since 23 Nov, laid out like the residents' sheets (4 directions x 5 rows).
 # They are made by the art tools (creatures4.py), not here, so the build leaves them alone.
 
 # ================================================================ portraits (64x64, six expressions each)
@@ -1860,7 +1860,7 @@ i.r(2, 8, 9, 11, (96, 116, 150)).r(2, 8, 9, 8, (160, 186, 220)).r(4, 12, 6, 14, 
 for n, (c, hi) in enumerate([((232, 186, 70), (255, 236, 150)), ((150, 172, 200), (220, 232, 248))]):
     i = icon(20 + n)   # gold bar, titanium bar
     i.r(2, 8, 13, 12, c).r(3, 6, 12, 8, hi).r(2, 12, 13, 12, dk(c)).r(12, 8, 13, 12, dk(c)).done()
-i = icon(22)    # Harbinger scale
+i = icon(22)    # Leviathan scale
 i.ps([(x, y) for y in range(3, 14) for x in range(8 - (y - 3) // 2, 9 + (y - 3) // 2) if y < 13], (74, 38, 70)).ps([(8, 4), (8, 6), (7, 8), (9, 8), (8, 10)], (200, 110, 190)).done()
 # Farming (21 Nov): placeholder icons until the painted ones (see the farm art instructions).
 i = icon(23)    # hoe

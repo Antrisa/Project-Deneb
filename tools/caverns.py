@@ -5,7 +5,7 @@ once per depth band, so the game has 30 cavern maps:
     rock   floors 1-15   stalagmite walls, dark chasms, iron and copper, a little quartz
     lush   floors 16-30  mossy walls, giant mushrooms and glowing fungi, overgrown pits, gold appears
     steam  floors 31-44  crystal-blue walls, steam vents, hot pools, titanium and gold
-plus floor 45 (`cav_45`), the shore of the underground ocean, where the Harbinger waits.
+plus floor 45 (`cav_45`), the shore of the underground ocean, where the Leviathan waits.
 
 The game (scripts/main.gd, "the caverns") picks one of the band's ten maps for each floor and scatters rocks,
 ore and creatures over the open spots listed here (CAVERNS). The way down is hidden under a rock: each rock
@@ -23,7 +23,7 @@ W, H = int(M * 2 + 30 * S), int(M * 2 + 22 * S)
 WALK = 'mp'                            # cave floor, bridge
 SIZES.update({
     'cavern_ladder': (2, 3, 1), 'stalagmite': (1, 2, 1), 'giant_mushroom': (2, 3, 1), 'fern': (1, 1, 1),
-    'crystal_column': (1, 3, 1), 'harbinger': (8, 6, 4),
+    'crystal_column': (1, 3, 1), 'leviathan': (8, 6, 4),
 })
 BANDS = {
     'rock': dict(title='rock', floor=('mine_rock', None), hole=(5, ('140e12', .88)), walls=('mine_roof', 'mine_wall'),
@@ -191,7 +191,7 @@ def build(g):
     fill_poly(F, ocean, 'O', only='m')
     g.setdefault('FLOOR_EXTRAS', {})['cav_45'] = {'holes': [ocean], 'hole_char': 'O', 'floor_char': 'm', 'lake': True}
     ux, uy = 7, 8
-    room.thing('look', 'Underground ocean', 'Look', 28, 26, 50)          # the Harbinger itself is a creature (main.gd)
+    room.thing('look', 'Underground ocean', 'Look', 28, 26, 50)          # the Leviathan itself is a creature (main.gd)
     room.t.zones.append(['The underground ocean', 1, 1, W - 2, H - 2])
     maps['cav_45'] = finish(g, room, 'steam', (ux, uy), 45, 4, walls=('cav_steam_roof', 'cav_steam_wall'))
     import bake_floor

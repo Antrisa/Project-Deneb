@@ -33,9 +33,9 @@ const REPAIRS := {
 		"where": "Agri Complex: east of your front porch",
 		"about": "The springs draw warm water up from the ocean under the caverns, and the ponds were stocked from them. Something down there kept cracking the pipes, so I sealed the dome.",
 		"cost": 2000, "needs": {},
-		"after": "harbinger_slain",
-		"wait": "Not while the Harbinger lives. Whatever cracks the pipes is down in that water, and I will not send my drones into it.",
-		"mention": "The springs have been quiet since the Harbinger went down. I can repair the hot springs and the fish ponds now, if you can spare the Scrip.",
+		"after": "leviathan_slain",
+		"wait": "Not while the Leviathan lives. Whatever cracks the pipes is down in that water, and I will not send my drones into it.",
+		"mention": "The springs have been quiet since the Leviathan went down. I can repair the hot springs and the fish ponds now, if you can spare the Scrip.",
 	},
 }
 const ORDER := ["storage", "ponds"]

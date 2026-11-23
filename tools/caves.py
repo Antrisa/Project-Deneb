@@ -89,7 +89,7 @@ def build(g):
     poly(F, [(47, 3), (63, 3), (67, 7), (67, 13), (47, 13)], 'o')   # the loading spot
     fill(F, 54, 13, 57, 15, 'o')
     fill(F, 27, 2, 30, 5, 'u')                                      # up to the North Cave
-    fill(F, LAKE_STAIR[0], 44, LAKE_STAIR[1], 48, 'u')              # down to the underground lake (sealed until the Harbinger is dead)
+    fill(F, LAKE_STAIR[0], 44, LAKE_STAIR[1], 48, 'u')              # down to the underground lake (sealed until the Leviathan is dead)
     m.t.warp('R', [(68, y) for y in range(24, 28)], 'eng', 3, 36)            # the tunnel off the west end of the hall
     m.t.warp('R', [(x, 1) for x in range(27, 31)], 'tunnels', CAVE_LANDING[0], CAVE_LANDING[1])
     m.t.warp('R', [(x, 48) for x in range(LAKE_STAIR[0], LAKE_STAIR[1] + 1)], 'lake', LAKE_LANDING[0], LAKE_LANDING[1])
@@ -135,7 +135,7 @@ def build(g):
     m.thing('cav_gate', 'Cavern gate', 'Go down into the Caverns', 4.5, 26, 40)
     N('work_light', 4, 22, 'Work light', None); N('work_light', 4, 31, 'Work light', None)
     N('hazard_sign', 7.5, 22.5, 'Sign: caverns closed', None)
-    # the old flooded stair down to the underground lake: sealed (main.gd) until the Harbinger is dead
+    # the old flooded stair down to the underground lake: sealed (main.gd) until the Leviathan is dead
     N('hazard_sign', LAKE_STAIR[1] + 2.5, 45.5, 'Sign: flooded stair, sealed', None)
     N('work_light', LAKE_STAIR[0] - 2, 45, 'Work light', None)
     m.thing('look', 'Flooded stair', 'Look', MINE_FROM_LAKE[0] + .5, 46.5, 40)
@@ -227,7 +227,7 @@ def build_lake(g):
     """Under the copper bay, the old flooded galleries: a wide, still lake in a dark cavern, lit by glowing fungus
     and crystals. You come down the stair on the north side onto the shingle; a long dock runs out into the deep
     water, a short one off the west shore, and an old fishing camp sits on the rocks to the north-east. The cave
-    fish live here. The stair is sealed (scripts/main.gd) until the Harbinger is dead."""
+    fish live here. The stair is sealed (scripts/main.gd) until the Leviathan is dead."""
     import math
     W, H = 64, 46
     L = Room(g, 'lake', 'The Underground Lake', W, H)

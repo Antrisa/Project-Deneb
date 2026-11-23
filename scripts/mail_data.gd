@@ -9,7 +9,7 @@ extends RefCounted
 # DATED: letters that come on a fixed day (day 1 is the first morning of the game).
 # Everything else is sent by the story, with main.gd send_mail(id, days): it comes with the post that many
 # mornings later. "vzzket_caverns" is sent when you finish Job's north tunnels (job_quest 5); "sara_ponds" when the
-# Harbinger is slain (the fish ponds can be repaired then: scripts/station_repair.gd).
+# Leviathan is slain (the fish ponds can be repaired then: scripts/station_repair.gd).
 #
 # The wording of these letters is a first draft by Claude, for Zachary to change.
 
@@ -51,7 +51,7 @@ const LETTERS := {
 		"from": "S.A.R.A.",
 		"title": "The springs are quiet",
 		"body": [
-			"Since the Harbinger went down, the pressure in the spring pipes has held. Nothing is cracking them any more.",
+			"Since the Leviathan went down, the pressure in the spring pipes has held. Nothing is cracking them any more.",
 			"That means I can repair the hot springs and the fish ponds, east of your porch. They have been sealed since long before you came.",
 			"Ask at either of their doors and I will tell you what it costs.",
 			"I would very much like a warm bath on this station again. Not for me. I have no use for one. For the station.",

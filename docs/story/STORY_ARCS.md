@@ -68,7 +68,7 @@ Not written at all yet: the nine friendship endings for the 8-heart confessions,
 | 13 | **Refugee Night.** A Collective freighter fleeing pirates limps in; the station shelters its passengers overnight. | Two wings restored | Outline | |
 | 14 | **The Chitin Exodus.** Vzz'ket and Job see crawlers migrating upward as a Starborn geo-seal cracks. | "Mine Level 5" | Outline | Clash: the caverns are now rock 1–15, lush 16–24, water 25–45. Floors 16–24 fit. |
 | 15 | **First Light on the Subterranean Sea.** The Harbinger's crystal explodes on floor 25; floors 25–45 flood; the hot springs open. | Harbinger | Outline | |
-| 16 | **The Leviathan of the Deep** (name is a placeholder). Boss on floor 45. | Floor 45 | Outline | |
+| 16 | **The Leviathan** (name is still a placeholder). The sea-monster boss on floor 45. | Floor 45 | In game (fight only) | Renamed 22 Nov: the game called it "the Harbinger", which is the Custodian's name. In the game it guards the stair to the underground lake. |
 | 17 | **The Starborn Convergence.** All four crystals reveal the Starborn. | All four Custodians | Outline | |
 | 18 | **The Great Museum Gala.** Monument to all seven species; the Archivist's Signet. | All 30 artifacts | Outline | |
 | 19 | **The Neutral Zone Summit.** Envoys from all three powers sign a neutrality charter at Echo Landing. | Year 2 and a 5-star hotel | Outline | The only ending beat. |

@@ -63,7 +63,7 @@ for f in sorted(glob.glob(A("player", "*.png")) + glob.glob(A("player", "body2",
 # Creatures, effects, ores, items, weapons, the wreck, the old tile sheet
 for n in ("enemy_bug", "enemy_lizard", "iron_ore", "copper_ore", "slash"):
     convert(A(n + ".png"), 2, 1)
-for n in ("enemy_harbinger", "enemy_spore_crawler", "enemy_vent_crab", "carbon", "gold_ore", "quartz", "stone", "titanium_ore"):
+for n in ("enemy_leviathan", "enemy_spore_crawler", "enemy_vent_crab", "carbon", "gold_ore", "quartz", "stone", "titanium_ore"):
     convert(A(n + ".png"), 2, 1, fn=up)                  # build placeholders made at 16 a tile
 for f in sorted(glob.glob(A("fx_*.png"))):
     convert(f, 4, 1)
