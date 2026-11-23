@@ -1,26 +1,31 @@
 extends MeshInstance2D
 ## Curved glazing in the Survey Level lounge. World dimensions use the 16 px map grid.
+## The view is drawn by scripts/lounge_sky.gdshader from the station clock (23 Nov): the stars and the
+## gas giant stay put, the sun crosses with the time of day and sets behind the giant in the evening,
+## and the day's sky event plays over it. The old 32-frame loops made the sun bob back and forth.
 const HEIGHT := 64
 const WIDTH := 912
 const LEFT := 144
-const FRAME_COUNT := 32
-const FPS := 6.0
 const EVENTS := {
-	3: "eclipse", 7: "gas_cloud", 11: "meteors",
-	15: "transit", 20: "aurora", 26: "comet",
+	3: "eclipse", 7: "gas_cloud", 9: "storm", 11: "meteors",
+	15: "transit", 20: "aurora", 23: "storm", 26: "comet",
+}
+const EVENT_IDS := {
+	"clear": 0, "eclipse": 1, "gas_cloud": 2, "meteors": 3, "transit": 4, "aurora": 5, "comet": 6, "storm": 7,
 }
 const LABELS := {
 	"eclipse": "Solar eclipse", "gas_cloud": "Violet gas cloud", "meteors": "Meteor shower",
-	"transit": "Moon transit", "aurora": "Polar aurora", "comet": "Comet passage",
+	"transit": "Moon transit", "aurora": "Polar aurora", "comet": "Comet passage", "storm": "Space storm",
 }
 const OBSERVATIONS := {
 	"clear": "A turquoise storm turns beneath the giant’s ivory cloud belts.",
-	"eclipse": "The sun slips behind the giant. A sliver of gold clings to its blue limb.",
+	"eclipse": "Around midday the sun slips behind the giant, and a sliver of gold clings to its blue limb.",
 	"gas_cloud": "Violet gas drifts across the star field in wisps. The brightest stars shine through.",
 	"meteors": "Bright trails fall in little groups. A second shower follows the first.",
 	"transit": "A small moon casts a dark silhouette against the bright cloud belts.",
 	"aurora": "Green curtains of light ripple above the giant’s pole.",
 	"comet": "A pale comet passes the giant, trailing two thin tails.",
+	"storm": "An ion storm rolls past the glass. Lightning forks through the charged gas.",
 }
 # Each run follows the baked sill: world x, width, bottom y (exclusive), slope.
 const SILL := [
@@ -67,9 +72,7 @@ const SILL := [
 	[1041, 15, 353, 1],
 ]
 var clock: Node
-var active_sky := ""
 var elapsed := 0.0
-var last_frame := -1
 
 static func sky_for(day: int) -> String:
 	return EVENTS.get(posmod(maxi(day, 1) - 1, 28) + 1, "clear")
@@ -80,6 +83,7 @@ func setup(station: Node) -> void:
 	var shader_material := ShaderMaterial.new()
 	shader_material.shader = preload("res://scripts/lounge_sky.gdshader")
 	material = shader_material
+	texture = load("res://art/lunar/lounge_sky/frame.png")
 	var vertices := PackedVector2Array()
 	var coords := PackedVector2Array()
 	var indices := PackedInt32Array()
@@ -110,14 +114,9 @@ func _sync_visibility() -> void:
 		_process(0.0)
 
 func _process(delta: float) -> void:
-	var sky := sky_for(int(clock.get("day")))
-	if sky != active_sky:
-		active_sky = sky
-		texture = load("res://art/lunar/lounge_sky/%s.png" % sky)
-		elapsed = 0.0
-		last_frame = -1
-	elapsed = fmod(elapsed + delta, FRAME_COUNT / FPS)
-	var frame := floori(elapsed * FPS)
-	if frame != last_frame:
-		(material as ShaderMaterial).set_shader_parameter("frame", frame)
-		last_frame = frame
+	# a long but finite loop for the twinkling and drifting, so the numbers stay small
+	elapsed = fmod(elapsed + delta, 3600.0)
+	var shader := material as ShaderMaterial
+	shader.set_shader_parameter("minute", float(clock.get("minutes")))
+	shader.set_shader_parameter("event", int(EVENT_IDS.get(sky_for(int(clock.get("day"))), 0)))
+	shader.set_shader_parameter("clock_time", elapsed)
