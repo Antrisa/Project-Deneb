@@ -135,6 +135,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`zaas_2` to `zaas_
     - **ZAAS:** "[sad] After me? I only listened. She kept us alive long enough to listen."
     - *(-20 friendship)*
 - *[Zaas wades back in, fishes his hat out of the Merrow Deep, and puts it back on, dripping.]*
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Merrow, "About the plaque" (`merrow_plaque` in `scripts/mail_data.gd`). The text is in [MAIL.md](../MAIL.md).
 
 ## ♥8 Captain of the Deep
 

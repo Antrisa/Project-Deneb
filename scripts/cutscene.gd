@@ -26,6 +26,8 @@ extends Node
 #                                      {"partner": who}, {"dating_other": who}
 #   ["flag", name]  ["friendship", who, points]  ["perk", id, toast]  ["keepsake", id, toast]
 #   ["partner", who]  ["toast", text]  ["give", item, count, toast]   puts items in your pack (Rusk's seeds)
+#   ["mail", letter, days]             sends a letter (scripts/mail_data.gd): it comes with the post that many mornings
+#                                      later (1: the next morning), with its gift if it has one
 #   ["hide", who]  ["show", who]        out of sight and back (boarding your ship); everyone shows again at the end
 #   ["ship", "lift" or "land", seconds] your ship in the Shuttle Bay rises out through the launch doors and fades,
 #                                      or comes back down onto its pad; it's back on the pad when the scene ends
@@ -235,6 +237,8 @@ func _step(s: Array) -> void:
 			world._give(str(s[1]), int(s[2]))
 			world.sfx("quest")
 			world._toast(str(s[3]))
+		"mail":
+			world.send_mail(str(s[1]), int(s[2]) if s.size() > 2 else 1)
 		"partner":
 			world.partner = str(s[1])
 		"toast":

@@ -47,6 +47,7 @@ def gd_consts(path):
 
 md = gd_consts(ROOT / 'scripts/map_data.gd')
 ITEMS = gd_consts(ROOT / 'scripts/item_data.gd').get('ITEMS', {})
+LETTERS = gd_consts(ROOT / 'scripts/mail_data.gd').get('LETTERS', {})
 he = gd_consts(ROOT / 'scripts/heart_events.gd')
 A, SOLID, OPEN = md['AREAS'], md['SOLID_FLOOR'], md['OPEN_OBJ']
 ACTION_ROWS = md['ACTION_ROWS']
@@ -57,7 +58,7 @@ EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
          "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy", "fx", "sara",
-         "give"}
+         "give", "mail"}
 FX = {"bees", "fireflies", "steam", "heartbeats", "spray", "bubbles"}   # scripts/scene_fx.gd
 SARA_CLIPS = set(re.findall(r'"name": "(\w+)"', (ROOT / 'sara/animations_data.gd').read_text()))
 SPECIAL = {"Sara"}   # S.A.R.A.: a hologram on her pads (MapData.PEOPLE), not a walking resident
@@ -179,6 +180,9 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         elif op == "give":
             if s[1] not in ITEMS: bad(ev_id, "give: no item %r in scripts/item_data.gd" % s[1])
             if not (isinstance(s[2], int) and s[2] > 0): bad(ev_id, "give: %r should be a count above 0" % s[2])
+        elif op == "mail":
+            if s[1] not in LETTERS: bad(ev_id, "mail: no letter %r in scripts/mail_data.gd" % s[1])
+            if len(s) > 2 and not (isinstance(s[2], int) and s[2] >= 0): bad(ev_id, "mail: %r should be a number of mornings" % s[2])
         elif op == "energy":
             if not (isinstance(s[1], int) and s[1] < 0): bad(ev_id, "energy: %r should be a small cost, a negative number" % s[1])
         elif op == "sky":

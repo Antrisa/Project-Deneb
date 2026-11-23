@@ -3054,7 +3054,7 @@ func _flight_reward(enemy_id: String) -> void:
 	if cash > 0:
 		_money(cash, "Salvage from the fight")
 	var loot: Dictionary = reward[1]
-	var got: Array = []
+	var got := PackedStringArray()
 	for item in loot:
 		_give(item, int(loot[item]))
 		got.append("%d %s" % [int(loot[item]), str(ItemData.ITEMS[item]["name"]) if ItemData.ITEMS.has(item) else str(item)])
@@ -4947,9 +4947,22 @@ func _check_mailbox() -> void:
 	mail_view.start()
 
 
-# The reader calls this when a letter is on screen.
+# The reader calls this when a letter is on screen. The first time you open one with a gift in it (its "gift" in
+# scripts/mail_data.gd), the gift goes in your pack: Quill's medpacks, Jasper's wheat seeds.
 func read_letter(id: String) -> void:
+	if not mail_waiting.has(id):
+		return
 	mail_waiting.erase(id)
+	var letter: Dictionary = MailData.LETTERS.get(id, {})
+	var gift: Dictionary = letter.get("gift", {})
+	if gift.is_empty():
+		return
+	var got := PackedStringArray()
+	for item in gift:
+		_give(str(item), int(gift[item]))
+		got.append("%s x%d" % [_item_name(str(item)), int(gift[item])])
+	sfx("quest")
+	_toast("In the envelope: " + ", ".join(got))
 
 
 # ---------------------------------------------------------------- saving

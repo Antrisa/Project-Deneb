@@ -108,6 +108,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. She poses from her
 - **GARRICK:** "[happy] Not bad. Not bad at all."
 - **IX'ALI:** "[happy] And now, with what Tar'Besh showed me, I can make you something. Folded plate. Star-Knight armour."
 - **New: the Star-Knight Aegis armour tier (Ix'ali can forge it)**
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Ix'ali, "The book of bouts" (`ixali_bout` in `scripts/mail_data.gd`). The text is in [MAIL.md](../MAIL.md).
 
 ---
 

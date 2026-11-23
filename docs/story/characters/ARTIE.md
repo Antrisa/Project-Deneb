@@ -127,6 +127,7 @@ All six are playable cutscenes in `scripts/heart_events.gd`. He poses from his n
   - **"They're lucky to have you."** (+High Friendship)
     - **ARTIE:** "[bashful] I think I'm the lucky one."
 - **New: Junior Scout Foraging Reports (the kids mark rare finds on your map)**
+- **The next morning** *(Claude, 23 Nov)***:** a letter from The Junior Scouts, "From the Junior Scouts" (`scouts_knots` in `scripts/mail_data.gd`), with Quartz x1 in the envelope. The text is in [MAIL.md](../MAIL.md).
 
 ---
 

@@ -110,6 +110,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
   - **"The diplomat was right."** (+High Friendship)
     - **STU:** "[bashful] Twenty years! I've only been doing this a season!"
 - **TOBBIN:** "[happy] If the U falls off, I'll make you a better U."
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Stu, "My own address" (`stu_address` in `scripts/mail_data.gd`). The text is in [MAIL.md](../MAIL.md).
 
 ---
 

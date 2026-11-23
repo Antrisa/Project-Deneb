@@ -126,3 +126,5 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`rusk_2` to `rusk_
 - **RUSK:** "Her wine was the Secret Reserve. Let's not let it run out."
 - *[Rusk gives you 3 Nebula grape seeds]*
 - *[New: bring Rusk five Nebula grapes and he'll make a bottle of Nebula wine]*
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Rusk, "How Ilsa grew them" (`rusk_ilsa_vine` in `scripts/mail_data.gd`). The text is in [MAIL.md](../MAIL.md).
+

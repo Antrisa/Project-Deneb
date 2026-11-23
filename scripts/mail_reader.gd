@@ -6,17 +6,21 @@ extends CanvasLayer
 #   - The letter you picked on a sheet of paper on the right. It opens on the oldest one you haven't read.
 #   - Click a letter (or press Up / Down) to read it. The pad keeps every letter, so you can read it again.
 #   - Esc, E, a right-click or Close puts the letters away.
+#   - A letter with a gift in it shows the gift along the foot of the page; it goes in your pack the first time you
+#     open the letter (main.gd read_letter).
 # main.gd owns the mail (mail_waiting, mail_days, read_letter()); this file only draws it and takes clicks.
 
 const MailData = preload("res://scripts/mail_data.gd")
 const ShipScreen = preload("res://ui/ship_screen.gd")
 const Calendar = preload("res://scripts/datapad_bridge.gd")
+const ItemData = preload("res://scripts/item_data.gd")
 
 const PAPER := Color("fbf6e8")
 const PAPER_RIM := Color("c9bfa8")
 const NEW_DOT := Color("c9932f")
 const ROW := 34.0                        # one letter in the list
 const LIST_W := 214.0
+const GIFT_H := 42.0                     # the foot of the page that shows a letter's gift
 
 var world                                # main.gd
 var open := false
@@ -180,3 +184,29 @@ func _paint_letter(r: Rect2, id: String) -> void:
 	var sign: String = str(letter.get("sign", ""))
 	if sign != "":
 		s.text_right(r.end.x - 30.0, y + 4.0, "- " + sign, "strong", ShipScreen.INK)
+	_paint_gift(r, letter.get("gift", {}))
+
+
+# What came in the envelope, along the foot of the page: each item's picture and how many. It's in your pack by
+# the time you see this (main.gd read_letter gives it when the letter first opens).
+func _paint_gift(r: Rect2, gift: Dictionary) -> void:
+	if gift.is_empty() or world.items_tex == null:
+		return
+	var s := screen
+	var x: float = r.position.x + 24.0
+	var y: float = r.end.y - GIFT_H
+	s.rect(Rect2(x, y, r.size.x - 48.0, 1), ShipScreen.RULE)
+	y += 9.0
+	s.text(x, y + 8.0, "ENCLOSED", "micro", ShipScreen.MUTED)
+	x += s.width("ENCLOSED", "micro") + 12.0
+	# the pictures at their own size (24 px), so the pixel art stays sharp
+	var cell: float = float(world.items_tex.get_height())
+	for item in gift:
+		var info: Dictionary = ItemData.ITEMS.get(str(item), {})
+		if info.is_empty():
+			continue
+		s.texture(world.items_tex, Rect2(x, y, cell, cell), Rect2(int(info["icon"]) * cell, 0, cell, cell))
+		var label := "%s x%d" % [str(info["name"]), int(gift[item])]
+		s.text(x + cell + 4.0, y + 5.0, label, "label", ShipScreen.INK)
+		x += cell + 4.0 + s.width(label, "label") + 16.0
+	s.text_right(r.end.x - 24.0, y + 8.0, "IN YOUR PACK", "micro", ShipScreen.MUTED)

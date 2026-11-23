@@ -108,6 +108,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`sara_2` to `sara_
 - **S.A.R.A.:** "[happy] Thank you. Keep the emitter. If I'm ever needed somewhere without a pad, now I can come."
 
 *(This is the little holo-emitter she judges from in the Jasper & Evarra 8.)*
+- **The next morning** *(Claude, 23 Nov)***:** a letter from S.A.R.A., "Something to hold" (`sara_walk` in `scripts/mail_data.gd`). The text is in [MAIL.md](../MAIL.md).
 
 ---
 

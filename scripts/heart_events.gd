@@ -70,6 +70,7 @@ const EVENTS := {
 					["say", "Freya", ["[surprised] Huh. I was holding the wrench wrong."]]]}]],
 			["face", "Freya", "player"], ["pose", "Freya", "wave"],
 			["say", "Freya", ["[happy] Thanks. Come find me in the bay sometime. I'll show you what real Terran scrap looks like."]],
+			["mail", "freya_pump", 1],
 			["pose", "Freya", ""],
 		],
 	},
@@ -165,6 +166,7 @@ const EVENTS := {
 			["say", "Freya", ["[happy] Then I'm crew. I'll get my kit. And a cushion for that duct."]],
 			["pose", "Freya", ""],
 			["flag", "freya_crew"],
+			["mail", "tikka_test_flight", 1],
 			["perk", "pioneer_stabilizer", "New: the Pioneer Stabilizer. Freya joined your crew."],
 		],
 	},
@@ -289,6 +291,7 @@ const EVENTS := {
 			["say", "Jasper", ["[happy] One season. Then, mon ami, you will taste a croissant the way it was meant to be."]],
 			["pose", "Jasper", ""],
 			["flag", "jasper_butter_deposit"],
+			["mail", "jasper_wheat", 1],
 		],
 	},
 	"jasper_4": {
@@ -506,6 +509,7 @@ const EVENTS := {
 					["say", "Evarra", ["Space. Water. Jasper's basil. One pot is what a station can spare.",
 						"[happy] One pot is enough to remember what I want."]]]}]],
 			["say", "Evarra", ["[happy] If you ever find a garden going spare, you'll tell me first?"]],
+			["mail", "evarra_lavender", 1],
 			["face", "Evarra", "u"], ["pose", "Evarra", "herbs u"],
 		],
 	},
@@ -705,6 +709,7 @@ const EVENTS := {
 				{"text": "This is the best thing I've tasted since landing here.", "friendship": 30, "steps": []}]],
 			["pose", "Job", "laugh"],
 			["say", "Job", ["[happy] Careful saying things like that, or Jasper's gonna try to steal my thermos."]],
+			["mail", "job_gumbo", 1],
 			["pose", "Job", ""],
 		],
 	},
@@ -731,6 +736,7 @@ const EVENTS := {
 				{"text": "[Dig out the crate]", "friendship": 60, "steps": [
 					["walk", "player", 29, 10], ["face", "player", "u"], ["sfx", "hit"], ["wait", 0.6], ["sfx", "hit"],
 					["say", "", ["You haul rock until the crate slides free. Zaas drags it clear and hugs it."]],
+					["mail", "zaas_hydrophones", 1],
 					["emote", "Zaas", "joy"]]},
 				{"text": "[Help Job hold the beam]", "friendship": 30, "steps": [
 					["walk", "player", 31, 9], ["face", "player", "u"],
@@ -892,6 +898,7 @@ const EVENTS := {
 				{"text": "Even Maren had to start somewhere. Keep at it.", "friendship": 30, "steps": [
 					["say", "Quill", ["[happy] She says she once splinted the wrong leg. I think she was being kind. I hope she was being kind."]]]}]],
 			["say", "Quill", ["[happy] Please do not tell her about the spores."]],
+			["mail", "quill_spores", 1],
 		],
 	},
 	"quill_4": {
@@ -1135,6 +1142,7 @@ const EVENTS := {
 			["say", "Garrick", ["[happy] Not bad. Not bad at all."]],
 			["say", "Ix'ali", ["[happy] And now, with what Tar'Besh showed me, I can make you something. Folded plate. Star-Knight armour."]],
 			["perk", "star_knight_aegis", "New: the Star-Knight Aegis armour tier (Ix'ali can forge it)"],
+			["mail", "ixali_bout", 1],
 		],
 	},
 	"ixali_8": {
@@ -1341,6 +1349,7 @@ const EVENTS := {
 					["say", "Artie", ["[bashful] I think I'm the lucky one."]]]}]],
 			["emote", "Pip", "joy"], ["emote", "Kit", "joy"], ["emote", "Nub", "joy"],
 			["flag", "artie_scouts"],
+			["mail", "scouts_knots", 1],
 			["perk", "junior_scout_reports", "New: Junior Scout Foraging Reports (the kids mark rare finds on your map)"],
 		],
 	},
@@ -1542,6 +1551,7 @@ const EVENTS := {
 					["say", "Stu", ["[bashful] Twenty years! I've only been doing this a season!"]]]}]],
 			["say", "Tobbin", ["[happy] If the U falls off, I'll make you a better U."]],
 			["flag", "stu_nameplate"],
+			["mail", "stu_address", 1],
 		],
 	},
 	"stu_8": {
@@ -1759,6 +1769,7 @@ const EVENTS := {
 			["say", "", ["Ana almost smiles. Nobody else comes over. But a few people look, and one or two of them nod."]],
 			["emote", "Stu", "ready"], ["emote", "Job", "ready"], ["emote", "Garrick", "question"],
 			["flag", "ana_seat"],
+			["mail", "ana_seat", 1],
 		],
 	},
 	"ana_4": {
@@ -2413,6 +2424,7 @@ const EVENTS := {
 			["sara", "nod"],
 			["say", "Sara", ["[happy] Thank you. Keep the emitter. If I'm ever needed somewhere without a pad, now I can come."], "S.A.R.A."],
 			["flag", "sara_emitter"],
+			["mail", "sara_walk", 1],
 		],
 	},
 	"sara_8": {
@@ -2539,6 +2551,7 @@ const EVENTS := {
 				{"text": "They meant you to die. You lived anyway.", "friendship": 60, "steps": [
 					["emote", "Tar'Besh", "joy"], ["pose", "Tar'Besh", "laugh"],
 					["say", "Tar'Besh", ["[happy] I did. Out of spite, mostly, at first. Now out of habit. It is a good habit."]],
+					["mail", "tarbesh_letter", 1],
 					["pose", "Tar'Besh", ""]]},
 				{"text": "Maybe you should have kept your theory to yourself.", "steps": [
 					["emote", "Tar'Besh", "wait"],
@@ -2821,6 +2834,7 @@ const EVENTS := {
 			["say", "", ["Zaas wades back in, fishes his hat out of the Merrow Deep, and puts it back on, dripping."]],
 			["face", "Zaas", "u"], ["pose", "Zaas", "observe u"],
 			["flag", "merrow_deep"],
+			["mail", "merrow_plaque", 1],
 		],
 	},
 	"zaas_8": {
@@ -3075,6 +3089,7 @@ const EVENTS := {
 			["say", "Vzz'ket", ["[happy] ...Those are my words, machine. Keep them. They suit you."]],
 			["perk", "monster_radar", "Perk: Cavern Monster Radar (S.A.R.A. warns you what's waiting below)"],
 			["flag", "vzzket_sensors"],
+			["mail", "vzzket_sleep", 1],
 		],
 	},
 	"rusk_2": {
@@ -3232,6 +3247,7 @@ const EVENTS := {
 			["pose", "Rusk", ""],
 			["toast", "New: bring Rusk five Nebula grapes and he'll make a bottle of Nebula wine"],
 			["flag", "rusk_first_page"],
+			["mail", "rusk_ilsa_vine", 1],
 		],
 	},
 	"nightwatch_2": {

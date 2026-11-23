@@ -63,6 +63,7 @@ All five are playable cutscenes: `scripts/heart_events.gd` (the data, written fr
     - *[She shifts her grip. The valve gives with a clunk, and warm air sighs through the vents.]*
     - **FREYA:** "[surprised] Huh. I was holding the wrench wrong."
 - **FREYA:** "[happy] Thanks. Come find me in the bay sometime. I'll show you what real Terran scrap looks like."
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Freya, "Two-person job" (`freya_pump` in `scripts/mail_data.gd`), with Copper bar x2 in the envelope. The text is in [MAIL.md](../MAIL.md).
 
 ---
 
@@ -132,6 +133,7 @@ All five are playable cutscenes: `scripts/heart_events.gd` (the data, written fr
 - **FREYA:** "[happy] Then I'm crew. I'll get my kit. And a cushion for that duct."
 
 **Unlocks:** the Pioneer Stabilizer (lower fuel cost on runs), and Freya joins your crew (`freya_crew`). Until you have a ship with a second seat, she rides in the duct, the way Ana came home.
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Tikka, "A better memory" (`tikka_test_flight` in `scripts/mail_data.gd`). The text is in [MAIL.md](../MAIL.md).
 
 ---
 

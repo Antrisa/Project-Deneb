@@ -67,6 +67,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
 - **JASPER:** "[happy] Madame, you are a poet!"
 - *[He pours every coin onto her table. The button too. Ooma keeps the button.]*
 - **JASPER:** "[happy] One season. Then, mon ami, you will taste a croissant the way it was meant to be."
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Jasper, "For the croissants" (`jasper_wheat` in `scripts/mail_data.gd`), with Moon wheat seeds x5 in the envelope. The text is in [MAIL.md](../MAIL.md).
 
 ---
 

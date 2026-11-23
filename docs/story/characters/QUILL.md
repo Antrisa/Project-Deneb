@@ -65,6 +65,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
   - **"Even Maren had to start somewhere. Keep at it."** *(Zachary)* (+Friendship)
     - **QUILL:** "[happy] She says she once splinted the wrong leg. I think she was being kind. I hope she was being kind."
 - **QUILL:** "[happy] Please do not tell her about the spores."
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Quill, "Do not tell Maren" (`quill_spores` in `scripts/mail_data.gd`), with Medpack x2 in the envelope. The text is in [MAIL.md](../MAIL.md).
 
 ---
 

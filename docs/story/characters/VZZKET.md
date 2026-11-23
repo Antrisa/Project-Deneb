@@ -143,3 +143,5 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`vzzket_2` to `vzz
 - **S.A.R.A.** *(the sensors)*: "[happy] Sleep well, Vzz'ket. That's what I'm for."
 - **VZZ'KET:** "[happy] ...Those are my words, machine. Keep them. They suit you."
 - *[Perk: Cavern Monster Radar (S.A.R.A. warns you what's waiting below)]*
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Vzz'ket, "The box chirped" (`vzzket_sleep` in `scripts/mail_data.gd`). The text is in [MAIL.md](../MAIL.md).
+

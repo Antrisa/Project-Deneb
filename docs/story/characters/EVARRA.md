@@ -69,6 +69,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
     - **EVARRA:** "Space. Water. Jasper's basil. One pot is what a station can spare."
     - **EVARRA:** "[happy] One pot is enough to remember what I want."
 - **EVARRA:** "[happy] If you ever find a garden going spare, you'll tell me first?"
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Evarra, "Something that grows" (`evarra_lavender` in `scripts/mail_data.gd`), with Star tomato seeds x3 in the envelope. The text is in [MAIL.md](../MAIL.md).
 
 ---
 

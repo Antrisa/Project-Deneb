@@ -113,6 +113,7 @@ All six are playable cutscenes in `scripts/heart_events.gd`. She poses from her 
 - **ANA:** "[surprised] ...Navigator."
 - **FREYA:** "[happy] Navigator. Even better. Then you can tell me why the Boss's ship pulls left on a hard burn."
 - *[Ana almost smiles. Nobody else comes over. But a few people look, and one or two of them nod.]*
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Ana, "The seat" (`ana_seat` in `scripts/mail_data.gd`). The text is in [MAIL.md](../MAIL.md).
 
 ---
 

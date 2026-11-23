@@ -88,6 +88,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tarbesh_2` to `ta
   - **"Maybe you should have kept your theory to yourself."** (the wrong one: −20 friendship)
     - **TAR'BESH:** "Many said so. Most of them are bishops now."
 - *[He switches the slate off and sets it back among the candles.]*
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Tar'Besh, "A better letter" (`tarbesh_letter` in `scripts/mail_data.gd`). Only if you told him they meant him to die and he lived anyway. The text is in [MAIL.md](../MAIL.md).
 
 ---
 

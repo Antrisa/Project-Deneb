@@ -1,11 +1,12 @@
 extends SceneTree
 # Plays every heart event (scripts/heart_events.gd) from start to finish, the way F3 does in a debug build,
 # picking the first answer at every choice and clicking through every line. Checks that each one ends, is
-# remembered, gives its flags and puts everyone back on their schedule.
+# remembered, gives its flags and puts everyone back on their schedule; then that their letters come.
 #   godot --headless --script res://tests/heart_events_test.gd
 
 const HeartEvents = preload("res://scripts/heart_events.gd")
 const BridgeScript = preload("res://scripts/datapad_bridge.gd")
+const MailData = preload("res://scripts/mail_data.gd")
 
 
 func _initialize() -> void:
@@ -84,5 +85,23 @@ func run() -> void:
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
 	assert(s.partner == "Ana")
-	print("PASS: ", HeartEvents.ORDER.size(), " heart events played to the end, choices picked, flags set.")
+	# Letters (scripts/mail_data.gd): the events sent theirs (the first choice always sends, even in Job's 4 and
+	# Tar'Besh's 4), and they come with the next morning's post. A letter's gift goes in your pack once.
+	for id in MailData.LETTERS:
+		if id != "welcome" and id != "vzzket_caverns":
+			assert(s.mail_due.has(id), id + " was sent by its heart event")
+	var morning: int = s.day
+	for id in s.mail_due:
+		morning = maxi(morning, int(s.mail_due[id]))
+	s.day = morning
+	s._deliver_mail()
+	for id in ["freya_pump", "jasper_wheat", "zaas_hydrophones", "quill_spores", "tarbesh_letter", "rusk_ilsa_vine"]:
+		assert(s.mail_waiting.has(id), id + " came with the post")
+	var medpacks: int = s._count("medpack")
+	s.read_letter("quill_spores")
+	assert(s._count("medpack") == medpacks + 2, "Quill's letter has two medpacks in it")
+	assert(not s.mail_waiting.has("quill_spores"), "and now it's read")
+	s.read_letter("quill_spores")
+	assert(s._count("medpack") == medpacks + 2, "a letter's gift only comes the first time you open it")
+	print("PASS: ", HeartEvents.ORDER.size(), " heart events played to the end, choices picked, flags set, letters sent.")
 	quit()

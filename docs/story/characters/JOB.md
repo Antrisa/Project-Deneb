@@ -59,6 +59,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
     - **JOB:** "[happy] ...Huh. Mama used to say near the same thing."
   - **"This is the best thing I've tasted since landing here."** *(Zachary)* (+Friendship)
 - **JOB** *(Zachary)*: "[happy] Careful saying things like that, or Jasper's gonna try to steal my thermos."
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Job, "Mama's gumbo" (`job_gumbo` in `scripts/mail_data.gd`). The text is in [MAIL.md](../MAIL.md).
 
 ---
 
@@ -83,6 +84,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
 - **JOB** *(Zachary)*: "[sad] Appreciate the quick hands. Truth is, this old Terran drill's held together by prayer and copper wire."
 - **JOB** *(Zachary)*: "Everybody counts on my ore quotas to patch the hull, and I hate letting folks down."
 - **JOB:** "Tikka's been on at me to let her rebuild the rig. Reckon it's time I knocked on her door."
+- **The next morning** *(Claude, 23 Nov)***:** a letter from Zaas, "Still listening" (`zaas_hydrophones` in `scripts/mail_data.gd`). Only if you dug out his crate. The text is in [MAIL.md](../MAIL.md).
 
 ---
 

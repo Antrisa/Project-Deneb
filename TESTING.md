@@ -5,6 +5,7 @@ Run from the project folder:
 ```
 python3 tests/check_routes.py
 python3 tests/check_heart_events.py
+python3 tests/check_mail.py
 godot --headless --editor --import --quit
 godot --headless --script res://tests/concourse_test.gd
 godot --headless --script res://tests/player_art_test.gd

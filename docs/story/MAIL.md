@@ -1,0 +1,263 @@
+# Letters from the residents (23 Nov 2026)
+
+Zachary added a mailbox, the message pad by your front door on the agri complex's porch, so that residents can send you mail and gifts, as in Stardew Valley. Then he asked: "if it makes sense in any of the previous arcs add and next morning get mail from the person or gifts. and keep in mind for future arcs."
+
+So sixteen heart events now send a letter that comes with the next morning's post, and five of the letters have a gift in them. The wording is a first draft by Claude, for Zachary to change: the letters live in `scripts/mail_data.gd`.
+
+## How it works
+
+- **Sending:** a heart event sends a letter with a `["mail", id, days]` step (`scripts/cutscene.gd`), which calls `main.gd send_mail(id, days)`. `days` 1 is the next morning. A letter only ever comes once, however often the event plays (F3).
+- **A letter sent from inside a choice** only comes if you made that choice. Two do this: Zaas writes after Job's 4 only if you dug out his crate, and Tar'Besh writes after his 4 only if you told him he lived anyway. Missing a letter is the minor consequence.
+- **Gifts:** a letter's optional `"gift": {item: count}` goes in your pack the first time you open it (`main.gd read_letter`), with a toast ("In the envelope: Medpack x2"). The letter shows it along the foot of its page: ENCLOSED, the item's picture and count, and IN YOUR PACK (`scripts/mail_reader.gd _paint_gift`). Gifts are small and use items that already exist, so no new art is needed.
+- **Fitting the page:** `python3 tests/check_mail.py` measures every letter with the datapad font's own widths at the smallest page (768 x 432), with room left for a gift. It also checks that every gift is an item, that every letter is sent by something and that letters use only plain ASCII (the datapad font has no curly quotes, long dashes or accents: Cafe, not Café). `-v` shows how much room each letter has left.
+- **The Godot test** (`tests/heart_events_test.gd`) checks that every event sent its letter, that they all come with the next morning's post, and that Quill's medpacks come once.
+- Not run in Godot yet.
+
+## For future arcs
+
+When writing a new arc, look for one event that would naturally leave something behind the next morning, and send a letter from it:
+
+- a thank-you after the player helped with something practical;
+- a recipe, a method or a tip the resident promised in the scene (Job's gumbo, Rusk's grape-growing);
+- a few seeds or one small useful item, when it fits the person (Evarra's tomato seeds, Quill's medpacks);
+- someone else's view of a big moment (Tikka after Freya's test flight, Merrow after Zaas's first splash);
+- the morning after, when the scene ended on a change (Vzz'ket's first night's sleep).
+
+About one letter per arc, rarely two. A gift shouldn't repeat the event's own perk or keepsake. Keep a letter to about four short paragraphs, and a little shorter with a gift. Each character doc notes its letters under the event that sends them.
+
+## The letters
+
+| Event | Letter | From | Title | Gift |
+|---|---|---|---|---|
+| Freya 2, The Stubborn Heating Pump | `freya_pump` | Freya | Two-person job | Copper bar x2 |
+| Freya 6, Test Flight | `tikka_test_flight` | Tikka | A better memory | - |
+| Jasper 2, The Butter Tin | `jasper_wheat` | Jasper | For the croissants | Moon wheat seeds x5 |
+| Evarra 2, The Window-Box Herb | `evarra_lavender` | Evarra | Something that grows | Star tomato seeds x3 |
+| Job 2, Gumbo in the Breakroom | `job_gumbo` | Job | Mama's gumbo | - |
+| Job 4, Cave-In on Shaft Four | `zaas_hydrophones` | Zaas | Still listening | - |
+| Quill 2, The Spilled Apothecary | `quill_spores` | Quill | Do not tell Maren | Medpack x2 |
+| Ix'ali 6, Sparring at the Cavern Gate | `ixali_bout` | Ix'ali | The book of bouts | - |
+| Artie 4, The Junior Scouts | `scouts_knots` | The Junior Scouts | From the Junior Scouts | Quartz x1 |
+| Stu 6, A Name on the Door | `stu_address` | Stu | My own address | - |
+| Ana 2, A Seat at the Table | `ana_seat` | Ana | The seat | - |
+| S.A.R.A. 6, Walkabout | `sara_walk` | S.A.R.A. | Something to hold | - |
+| Tar'Besh 4, Next Assignment | `tarbesh_letter` | Tar'Besh | A better letter | - |
+| Zaas 6, First Splash | `merrow_plaque` | Merrow | About the plaque | - |
+| Vzz'ket 8, The Watch Changes | `vzzket_sleep` | Vzz'ket | The box chirped | - |
+| Rusk 8, The First Page | `rusk_ilsa_vine` | Rusk | How Ilsa grew them | - |
+
+Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The gate" (when Job's north tunnels are done), and S.A.R.A.'s notes on the storage dome and the fish ponds.
+
+### Two-person job (`freya_pump`): after Freya's 2, The Stubborn Heating Pump
+
+*From Freya, the next morning. Enclosed: Copper bar x2.*
+
+> Boss!
+>
+> Sector Three's been warm all night. Garrick took his coat off on watch. First time all season, he says.
+>
+> Found these in Dad's offcut bin. He always said good copper's wasted sitting in a bin, so they're yours. Make something that turns.
+>
+> - Freya
+
+### A better memory (`tikka_test_flight`): after Freya's 6, Test Flight
+
+*From Tikka, the next morning.*
+
+> Pilot,
+>
+> Since Jorvik's last run, every launch I've called has sounded like that one to me. Right up until the shaking.
+>
+> Last night one went right. A clean note, all the way out past the doors. I'm keeping that one instead.
+>
+> Thank you for easing off. And for taking her with you. Bring her back in one piece. The ship too, if you can manage both.
+>
+> - Tikka, launch control
+
+### For the croissants (`jasper_wheat`): after Jasper's 2, The Butter Tin
+
+*From Jasper, the next morning. Enclosed: Moon wheat seeds x5.*
+
+> Mon ami,
+>
+> Madame Ooma has my Scrip and my button, and I have one season. But a croissant is only as good as its flour, and the flour on the supply run tastes of the crate it came in.
+>
+> So, enclosed: moon wheat, from Evarra's seed drawer. She says it wants water and patience. I have neither. You have a field.
+>
+> - Jasper
+
+### Something that grows (`evarra_lavender`): after Evarra's 2, The Window-Box Herb
+
+*From Evarra, the next morning. Enclosed: Star tomato seeds x3.*
+
+> Dear neighbour,
+>
+> The seed bank won't part with lavender. I asked nicely, then S.A.R.A. asked even more nicely, and it still said no.
+>
+> So here are star tomatoes. They aren't flowers, but they're stubborn and they love a grow-lamp. A farm has to start with something that wants to grow.
+>
+> - Evarra
+
+### Mama's gumbo (`job_gumbo`): after Job's 2, Gumbo in the Breakroom
+
+*From Job, the next morning.*
+
+> Cher,
+>
+> Wrote it down for you, near as I can. First, the roux: flour and oil, low heat, and stir till it's the colour of an old penny. Don't walk away. Don't you dare walk away.
+>
+> Then the holy trinity: onion, pepper, celery, whatever the hydroponics will spare. Then the spice. The spice I can't write down. It's in a tin, and the tin's mine.
+>
+> Bring a bowl to the breakroom any day after four. There's always a pot.
+>
+> - Job
+
+### Still listening (`zaas_hydrophones`): after Job's 4, Cave-In on Shaft Four
+
+*From Zaas, the next morning. Only if you picked "[Dig out the crate]".*
+
+> To the one who dug,
+>
+> My hydrophones survived. Two dents and a great deal of shale, which I have been picking out with tweezers all night. Merrow says I am being sentimental. I am.
+>
+> I put them back on the rock to be sure they work. They do. And far down under the rock, there is still that sound. Water, moving.
+>
+> I will tell you about it one day, when I am sure.
+>
+> - Zaas
+
+### Do not tell Maren (`quill_spores`): after Quill's 2, The Spilled Apothecary
+
+*From Quill, the next morning. Enclosed: Medpack x2.*
+
+> Dear friend,
+>
+> Thank you for not stepping in the spores. Only three vials were lost, which by my standards is a triumph.
+>
+> Enclosed: two medpacks, made by my own hands, which were steady the entire time. Please take them into the mine. Please do not need them.
+>
+> P.S. Maren found a glowing spot under the bench. I said it was a reflection.
+>
+> - Quill
+
+### The book of bouts (`ixali_bout`): after Ix'ali's 6, Sparring at the Cavern Gate
+
+*From Ix'ali, the next morning.*
+
+> Honoured friend,
+>
+> The armoury keeps a book of every bout fought at the cavern gate since the gate was built. Last night I wrote ours in it.
+>
+> Yours is the first Terran name in the book. Garrick says my handwriting is too large. I say a first deserves large handwriting.
+>
+> Come to the armoury when you are ready. I have taken your measure, and the Aegis plate will not fold itself.
+>
+> - Ix'ali
+
+### From the Junior Scouts (`scouts_knots`): after Artie's 4, The Junior Scouts
+
+*From The Junior Scouts, the next morning. Enclosed: Quartz x1.*
+
+> We practised the square knot 100 times. Kit says 200. Kit is wrong. - Pip
+>
+> Mine is better than Pip's now. We found a shiny rock by the fountain and voted you get it. - Kit
+>
+> NUB TIED THE ENVELOPE. NUB'S IS A REAL KNOT. - Nub
+>
+> - The Junior Scouts
+
+### My own address (`stu_address`): after Stu's 6, A Name on the Door
+
+*From Stu, the next morning.*
+
+> Hi!
+>
+> This is the first letter I've ever sent. I didn't know who to send it to, and then I did.
+>
+> It's from East Home 2. That's me. I'm writing it at my own table, and I've been grinning at the return address for ten minutes.
+>
+> The U is still on. Tobbin came back after dark to check it anyway.
+>
+> - Stu
+
+### The seat (`ana_seat`): after Ana's 2, A Seat at the Table
+
+*From Ana, the next morning.*
+
+> I don't write letters. Ivan read everything that came aboard, so nobody did.
+>
+> But you sat down. In front of everyone. You knew what it would cost you, and you did it anyway.
+>
+> On the way out, two more people nodded at me. I counted.
+>
+> That's all. Thank you.
+>
+> - Ana
+
+### Something to hold (`sara_walk`): after S.A.R.A.'s 6, Walkabout
+
+*From S.A.R.A., the next morning.*
+
+> Good morning.
+>
+> I had my drones bring this, instead of saying it from a pad. A letter is something you can hold, and I wanted you to have something to hold.
+>
+> Last night I looked at the fountain from my usual camera. It is the same fountain. It looks different now that I have stood beside it.
+>
+> I am keeping a list of places to go. It is short. I am in no hurry.
+>
+> - S.A.R.A.
+
+### A better letter (`tarbesh_letter`): after Tar'Besh's 4, Next Assignment
+
+*From Tar'Besh, the next morning. Only if you picked "They meant you to die. You lived anyway."*
+
+> Friend,
+>
+> The last letter I was sent told me where to go, and how long the rations would last. I keep it among the candles, so I will not forget it.
+>
+> It seemed to me tonight that a man should own at least one better letter. So I am writing one, to someone who listened.
+>
+> Out of spite, then out of habit. I have decided that is a respectable reason to be alive.
+>
+> - Tar'Besh, well fed
+
+### About the plaque (`merrow_plaque`): after Zaas's 6, First Splash
+
+*From Merrow, the next morning.*
+
+> Tar'Besh put the plaque up on the shore last night. THE MERROW DEEP, in letters you can read from across the water. I asked him to take it down. He said a plaque is a prayer that stays put.
+>
+> The chief was in the water until dark. I keep every drop on this station clean, and he floated on his back in it, singing.
+>
+> Thank you for being there when he went in. Somebody had to see it who wasn't me. Don't tell him I wrote.
+>
+> - Merrow
+
+### The box chirped (`vzzket_sleep`): after Vzz'ket's 8, The Watch Changes
+
+*From Vzz'ket, the next morning.*
+
+> Pilot.
+>
+> The machine's box chirped in the night. A rock-crawler, on the third landing. She told me what and where. I went down. It was.
+>
+> I went back to my bedroll. It chirped once more before morning. I did not get up. S.A.R.A. says that is the point.
+>
+> I slept until Tikka's drill woke me. Tell no one.
+>
+> - Vzz'ket
+
+### How Ilsa grew them (`rusk_ilsa_vine`): after Rusk's 8, The First Page
+
+*From Rusk, the next morning.*
+
+> Pilot,
+>
+> Ilsa wrote this on the back of a menu. I'll keep the menu.
+>
+> Dig a bed or set down a hydroponic one, and keep it watered. Eight days to the first bunch, then a bunch every three days while you tend it. Plant a bunch and it grows you another vine.
+>
+> Bring me five and I'll fill the cask. Three days, and you've a bottle of Nebula wine. Ship it: Bram's cousins pay what it's worth, and it's worth a lot.
+>
+> - Rusk
