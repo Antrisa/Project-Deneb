@@ -536,13 +536,15 @@ func _move_player(delta: float) -> void:
 		_dir = 1 if dir.y < 0.0 else 0
 
 	var start := position
+	# put down somewhere already on a wall's picture (an old save, a door): let them walk off it
+	var faces := not _blocked(position)
 	var speed: float = CARRY_SPEED if carrying else SPEED
 	var step: Vector2 = dir * speed * delta
 	var next_x: Vector2 = position + Vector2(step.x, 0)
-	if not _blocked(next_x):
+	if not _blocked(next_x, faces):
 		position = next_x
 	var next_y: Vector2 = position + Vector2(0, step.y)
-	if not _blocked(next_y):
+	if not _blocked(next_y, faces):
 		position = next_y
 
 	var distance := start.distance_to(position)
@@ -601,10 +603,14 @@ func _refresh_body_pose() -> void:
 		_crate.position.y = -42.0 + bob if can_pose else -44.0
 
 
-func _blocked(p: Vector2) -> bool:
+# faces: also keep off the tile in front of a wall below you, where the wall's picture is drawn (it
+# stands a tile tall above its own tile), so you don't walk on top of the walls on a room's south side.
+func _blocked(p: Vector2, faces: bool = true) -> bool:
 	for off in [Vector2(-5, -6), Vector2(5, -6), Vector2(-5, 0), Vector2(5, 0)]:
 		var corner: Vector2 = p + off
 		if world.solid_at(corner):
+			return true
+		if faces and world.has_method("wall_face_at") and world.wall_face_at(corner):
 			return true
 	return false
 

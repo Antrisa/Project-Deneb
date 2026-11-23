@@ -691,6 +691,34 @@ func solid_at(p: Vector2) -> bool:
 	return here.has(Vector2i(tx, ty))
 
 
+# The walls' pictures stand a tile taller than their tiles (tools/bake_floor.py lifts them a tile), so the
+# floor tile just north of a wall is covered by it. The player keeps off it (scripts/player.gd _blocked),
+# except where it is a way through: a lift or ramp pad, a doorway, or a one-tile gap with wall above too.
+func wall_face_at(p: Vector2) -> bool:
+	var floor_rows: Array = MapData.AREAS[current_area]["floor"]
+	var tx := int(floor(p.x / TILE))
+	var ty := int(floor(p.y / TILE))
+	if ty < 0 or ty + 1 >= floor_rows.size():
+		return false
+	var frow: String = floor_rows[ty]
+	var below: String = floor_rows[ty + 1]
+	if tx < 0 or tx >= frow.length() or tx >= below.length():
+		return false
+	if MapData.SOLID_FLOOR.contains(frow[tx]) or not MapData.SOLID_FLOOR.contains(below[tx]):
+		return false
+	if ty > 0:
+		var above: String = floor_rows[ty - 1]
+		if tx < above.length() and MapData.SOLID_FLOOR.contains(above[tx]):
+			return false
+	var t := Vector2i(tx, ty)
+	if warps[current_area].has(t) or portals.has(_portal_key(current_area, t)):
+		return false
+	for d in inner_doors:
+		if d.area == current_area and d.tiles.has(t):
+			return false
+	return true
+
+
 func _feet(tile: Vector2i) -> Vector2:
 	return Vector2(tile.x * TILE + 8, tile.y * TILE + 12)
 
