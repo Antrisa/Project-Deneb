@@ -697,7 +697,7 @@ func _perk_grid() -> void:
 		var id := str(ids[index]) if index<ids.size() else ""
 		_img("slot_selected" if id!="" and id==perk_selection else ("slot_empty" if id=="" else "slot_rest"),x,y,38,36)
 		if id!="":
-			_img(id,x+5,y+3,27,27)
+			_img(id,x+4,y+2,29,29)
 			_hit("perk/"+id,x,y,38,36)
 	if ids.size()>24:
 		_btn("bag/prev",260,275,60,18,"Previous",false,bag_page>0)
@@ -706,7 +706,7 @@ func _perk_grid() -> void:
 	_rect(66,detail_y-4,325,1,RULE)
 	var p: Array = perks[ids.find(perk_selection)]
 	_img("slot_selected",66,detail_y+5,37,36)
-	_img(perk_selection,71,detail_y+9,27,27)
+	_img(perk_selection,70,detail_y+8,29,29)
 	_txt(112,detail_y,("%s from %s" % [str(p[2]),str(p[3])]).to_upper(),"micro",MUTED)
 	_txt(111,detail_y+11,str(p[1]),"strong")
 	var lines := _wrap_lines(str(p[4]),278,"body")
