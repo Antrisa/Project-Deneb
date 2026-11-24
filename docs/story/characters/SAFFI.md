@@ -1,6 +1,6 @@
 # Saffi: heart events and her week (24 Nov 2026)
 
-**Decided with Zachary, 24 Nov:** "every character has own arc plus a short family shared arc": an arc each for Garrick, Saffi and Kit, and a two-scene family side arc ([GARRICK_SAFFI_KIT.md](GARRICK_SAFFI_KIT.md)). Claude's first suggestions for the rest, taken: **Garrick was security officer on the refugee transport that crash-landed here**, and a bounty hunter he let dock brought a Chernobog cutter down on it (so he distrusts your trade); **Perimeter Defence** is the station's guns softening up the first ship you fight on each run; **Potluck Buffs** is Saffi's Sunday potluck at the fountain; **Kit's beacon** leads to a smuggler's cache on the jump map, and **his 8 is a deputy badge** you set down at home; their weeks: the model ship and the seals on Saturdays, Saffi's Monday lunch with Rusk and the market.
+**Decided with Zachary, 24 Nov:** "every character has own arc plus a short family shared arc": an arc each for Garrick, Saffi and Kit, and a two-scene family side arc ([GARRICK_SAFFI_KIT.md](GARRICK_SAFFI_KIT.md)). Claude's first suggestions for the rest, taken: **Garrick was security officer on the refugee transport that crash-landed here**, and a bounty hunter he let dock brought a Chernobog cutter down on it (so he distrusts your trade); **Kit's beacon** leads to a smuggler's cache on the jump map, and **his 8 is a deputy badge** you set down at home; their weeks: the model ship and the seals on Saturdays, Saffi's Monday lunch with Rusk and the market. **Then (Zachary, 24 Nov):** "garriks 8 heart is too powerful, change to self defense class, attacking boarders take extra damage on your ship" (it was Perimeter Defence: the station's guns softening up the first ship you fought on each run); "saffi increase max energy perk" (it was a Sunday potluck: share a dish for friendship with everyone and a well-fed morning).
 
 **The family's story (Claude's drafts):** about forty refugees, Saffi and Kit (in a sling) among them, came down on this moon in a transport with its drive shot out, and S.A.R.A. talked them in. Every settler signed the scorched hull plate now in the museum; Kit's is a handprint. The first night, Saffi made soup for forty in a dented helmet. Most of the forty moved on later; they stayed.
 
@@ -8,15 +8,15 @@
 - 2: the welcome basket she's been adding to for weeks: bread, soup, socks, seeds, and everyone's birthdays.
 - 4: her sign-up sheet for a Sunday potluck has one name on it. You build a town out of plates.
 - 6: the scorched hull plate every settler signed, Kit's handprint, and the first night: soup for forty in a dented helmet.
-- 8: the first potluck at the fountain. Jasper isn't allowed to cook and can't bear it. Every Sunday from now on.
+- 8: the first potluck at the fountain. Jasper isn't allowed to cook and can't bear it. Every Sunday from now on, and you're to eat properly.
 
-**What's whose:** the title of 2 is the NPC Master's, and the reward (Potluck Buffs); her carrot-ginger soup is from Ana's 0; the scenes and lines are Claude's drafts. Right answers +60, middle +30, wrong −20.
+**What's whose:** the title of 2 is the NPC Master's; the reward is Zachary's; her carrot-ginger soup is from Ana's 0; the scenes and lines are Claude's drafts. Right answers +60, middle +30, wrong −20.
 
-**Flags:** `saffi_basket` (2), `saffi_signup` (4), `saffi_first_supper` (6), `saffi_potluck` and the perk `perk_potluck` (8).
+**Flags:** `saffi_basket` (2), `saffi_signup` (4), `saffi_first_supper` (6), `saffi_potluck` and the perk `perk_well_fed` (8).
 
-## The potluck (her 8, Potluck Buffs)
+## Well Fed (her 8)
 
-`main.gd _potluck_talk`: from her 8 on, Saffi keeps a potluck table by the fountain on Sundays from 11:30. Talk to her there (11:00–16:00) with a cooked dish in your pack (anything the kitchenette cooks, `ShopData.COOKING`) and you can share it, once a Sunday: everyone you've met gets +20 friendship, and you wake up the next morning well fed, with 60 energy over full (`_next_day`; eating won't take the extra away). Saved as `potluck_day`. It doesn't count as one of the day's chats.
+`main.gd _max_energy()`: with `perk_well_fed`, your energy bar is 30 longer (`WELL_FED_ENERGY`; 270 becomes 300). Sleep fills it, food tops it up to it, and the HUD and the datapad show it (`max_energy`, set each morning, after loading and after a heart event). From her 8 on she still keeps a potluck table by the fountain on Sundays (her week, below); it's company, not a mechanic.
 
 ## Her week (in the game: `tools/build.py`, `SCHEDULE_DAYS_RAW`)
 
@@ -109,7 +109,7 @@ All four are playable cutscenes (`saffi_2` to `saffi_8`), with her new heart-eve
 
 ## ♥8 The First Potluck
 
-**Trigger:** The fountain, Sunday 12:00–15:00, after 6. With half the station. Reward: the potluck. *(The NPC Master's reward; the scene is Claude's.)*
+**Trigger:** The fountain, Sunday 12:00–15:00, after 6. With half the station. Reward: Well Fed, a longer energy bar. *(Zachary's reward; the scene is Claude's.)*
 
 - *[Sunday by the fountain. Two tables pushed together, and on them every kind of plate the Landing owns. Half the station is here. More are coming.]*
 - **SAFFI:** "[happy] {name}! You came! Look at it. Fourteen names on the sheet, and nineteen people at the table."
@@ -126,7 +126,7 @@ All four are playable cutscenes (`saffi_2` to `saffi_8`), with her new heart-eve
   - **"I'll just grab a plate and go."**
     - **SAFFI:** "[sad] Oh. Well. Take some for later, then."
     - *(-20 friendship with Saffi)*
-- **SAFFI:** "Every Sunday from now on. And if you bring a plate, everyone gets a taste of it. That's the rule. The only rule."
-- *[Potluck: on Sundays, bring Saffi a cooked dish at the fountain. Friendship with everyone, and you wake up well fed]*
+- **SAFFI:** "Every Sunday from now on. And eat properly. You run about this station on rations and fumes, {name}. Not on my watch."
+- *[Well Fed: your energy bar is 30 longer]*
 - **RUSK:** "[happy] A toast, then. To the host."
 - **GARRICK:** "[love] To the host."

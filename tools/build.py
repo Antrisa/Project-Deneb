@@ -2872,7 +2872,7 @@ SCHEDULE_DAYS_RAW = {
             ("21:30", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
     ],
     # Saffi (24 Nov): Sundays she cooks at home, then the plaza; after her 8 (saffi_potluck) she keeps the potluck
-    # table by the fountain from late morning (main.gd _potluck_talk)
+    # table by the fountain from late morning
     "Saffi": [
         {"when": {"days": [6]}, "stops": [
             ("09:00", "aptSec", 5, 15, 26, "u", "idle", "watch"), ("12:30", "main", 99, 58, 26, "l", "idle", "rest"),

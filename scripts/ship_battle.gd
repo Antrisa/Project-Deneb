@@ -212,6 +212,7 @@ const POD_TIME := 16.0           # the pod room recharges this long (a second ba
 const E_POD_TIME := 24.0         # how often their pod comes, while none of their boarders are aboard
 const POD_FLIGHT := 1.3
 const FIGHT_DPS := 9.0           # health a second, one on one
+const SELF_DEFENCE_X := 1.5      # Garrick's 8: your crew against boarders on your own ship
 const SABOTAGE_TIME := 4.0       # boarders knock a bar off the room's system this often while nobody stops them
 const REPAIR_TIME := 4.0         # your crew repair a bar this often
 const HEAL_RATE := 6.0           # health a second in a working medbay, per bar
@@ -345,8 +346,6 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	foe = ShipData.enemy(foe_id)
 	e_hull_max = int(foe["hull"])
 	e_hull = e_hull_max
-	if fight.has("foe_hull_frac"):       # Garrick's 8, Perimeter Defence: the Landing's guns got there first
-		e_hull = clampi(int(round(e_hull_max * float(fight["foe_hull_frac"]))), 1, e_hull_max)
 	e_sys = _make_systems(foe["systems"])
 	e_layers = _layers_of(e_sys)
 	e_weapons.clear()
@@ -2200,7 +2199,9 @@ func _tick_fights(delta: float) -> void:
 			continue
 		for e in e_crew_list:
 			if float(e["hp"]) > 0.0 and not bool(e.get("walking", false)) and str(e.get("ship", "foe")) == str(c["ship"]) and str(e["room"]) == str(c["room"]):
-				e["hp"] = maxf(0.0, float(e["hp"]) - FIGHT_DPS * float(c.get("fight_x", 1.0)) * delta)
+				# Garrick's 8, the Self-Defence Class: on your own deck your crew hit boarders half again as hard
+				var home_x: float = SELF_DEFENCE_X if str(c["ship"]) == "me" and bool(fight.get("self_defence", false)) else 1.0
+				e["hp"] = maxf(0.0, float(e["hp"]) - FIGHT_DPS * float(c.get("fight_x", 1.0)) * home_x * delta)
 				c["xp_fight"] = float(c.get("xp_fight", 0.0)) + delta
 				c["brawl"] = true
 				c["foe_x"] = (e["pos"] as Vector2).x

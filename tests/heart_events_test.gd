@@ -107,8 +107,8 @@ func run() -> void:
 			"tobbin_plastic", "tobbin_first_wood", "tobbin_starship", "tobbin_heirloom", "perk_heirloom_chair",
 			"merrow_filters", "merrow_tomatoes", "merrow_dry_week", "merrow_weekends", "perk_hydro_boost",
 			"nub_drew_you", "nub_jumped", "nub_junior_curator", "nub_framed", "moogli_bath_night", "moogli_first_tree",
-			"garrick_signed", "garrick_rounds", "garrick_class", "garrick_resident", "perk_perimeter_defence",
-			"saffi_basket", "saffi_signup", "saffi_first_supper", "saffi_potluck", "perk_potluck",
+			"garrick_signed", "garrick_rounds", "garrick_class", "garrick_resident", "perk_self_defence",
+			"saffi_basket", "saffi_signup", "saffi_first_supper", "saffi_potluck", "perk_well_fed",
 			"kit_race", "kit_beacon", "kit_security", "kit_deputy", "guard_model_ship", "guard_brave_together"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s

@@ -5316,9 +5316,10 @@ const EVENTS := {
 	# ---------------------------------------------------------------- Garrick, Saffi & Kit (24 Nov, Claude's drafts)
 	# Zachary, 24 Nov: every character gets their own arc, plus a short family arc. Claude's first suggestions for
 	# the rest, taken: Garrick was security officer on the refugee transport that crash-landed here, and a bounty
-	# hunter's chase brought a Chernobog cutter down on it; Perimeter Defence: the station's guns soften up the first
-	# ship you fight on a run; Potluck Buffs: Saffi's Sunday potluck at the fountain; Kit's beacon leads to a
-	# smuggler's cache on the jump map, and his 8 is a deputy badge to set down at home.
+	# hunter's chase brought a Chernobog cutter down on it; Kit's beacon leads to a smuggler's cache on the jump map,
+	# and his 8 is a deputy badge to set down at home. Then (Zachary, 24 Nov): Garrick's 8 was too powerful (the
+	# station's guns softening up your first fight), so it's a self-defence class: boarders take extra damage on your
+	# ship; Saffi's 8 makes your energy bar longer (it was a Sunday potluck buff).
 	"garrick_2": {
 		"who": "Garrick", "hearts": 2, "title": "Signed For",
 		# the armoury on a working day: everything sharp on the station gets signed for, including yours. Your ship's
@@ -5395,9 +5396,10 @@ const EVENTS := {
 		],
 	},
 	"garrick_6": {
-		"who": "Garrick", "hearts": 6, "title": "Self-Defence Class",
+		"who": "Garrick", "hearts": 6, "title": "Safety Class",
 		# the plaza on a Saturday morning: foam mats by the fountain for Kit, Pip and Nub. S.A.R.A. doesn't want her
-		# plaza turned into a parade ground; you find the middle (the NPC Master's tension, hospitality vs security)
+		# plaza turned into a parade ground; you find the middle (the NPC Master's tension, hospitality vs security).
+		# Was "Self-Defence Class" (the NPC Master's title); that's his 8 now, for grown-ups
 		"area": "main", "seen": ["garrick_4"], "windows": [[[5], "10:00", "12:30"]],
 		"player": [120, 99, "u"],
 		"cast": [["Garrick", 122, 93, "d"], ["Kit", 121, 95, "u"], ["Pip", 123, 95, "u"], ["Nub", 122, 96, "u"]],
@@ -5447,47 +5449,53 @@ const EVENTS := {
 		],
 	},
 	"garrick_8": {
-		"who": "Garrick", "hearts": 8, "title": "Perimeter Defence",
-		# S.A.R.A.'s core, late: Annex 4's old defence grid, shut down when the transport landed. Pointed outward, never
-		# at the plaza, and covering your ship: you're a resident with a ship, not a hunter. Reward: Perimeter Defence
-		"area": "top", "seen": ["garrick_6"], "windows": [[[0, 1, 2, 3, 4], "20:00", "22:00"]],
-		"player": [23, 26, "u"],
-		"cast": [["Garrick", 20, 22, "r"]],
+		"who": "Garrick", "hearts": 8, "title": "Self-Defence Class",
+		# the Shuttle Bay after hours (Zachary, 24 Nov: his 8 is a self-defence class): a ship's corridors chalked on the
+		# hangar floor, Ix'ali as the boarder, Freya on a crate. The kids got the safety class; you get this one. You're a
+		# resident with a ship, not a hunter. Reward: on your own ship, your crew hit boarders half again as hard
+		"area": "bay", "seen": ["garrick_6"], "windows": [[[0, 1, 2, 3, 4], "18:30", "21:00"]],
+		"player": [16, 22, "u"],
+		"cast": [["Garrick", 20, 20, "d"], ["Freya", 17, 20, "r", "bench"], ["Ix'ali", 24, 20, "l"]],
 		"steps": [
 			["wait", 0.6],
-			["sfx", "sara_holo"], ["sara", "greeting"],
-			["say", "", ["S.A.R.A.'s core, late. Garrick stands by the dais with his cap in his hands, which you have never seen before."]],
-			["walk", "player", 23, 23], ["face", "player", "u"],
-			["say", "Sara", ["Thank you for coming, {name}. The chief has asked me for something. He has never asked me for anything."], "S.A.R.A."],
-			["face", "Garrick", "player"], ["pose", "Garrick", "talk"],
-			["say", "Garrick", ["Annex 4 had a defence grid. Guns in the hull, pointed out. She shut them down the day we landed. Didn't want a fortress."]],
+			["say", "", ["The Shuttle Bay after hours. Garrick has chalked a ship's corridors on the hangar floor. Freya sits on a crate. Ix'ali holds two blunted blades."]],
+			["walk", "player", 19, 21], ["face", "player", "u"],
+			["face", "Garrick", "player"],
+			["say", "Garrick", ["{name}. Good. The kids got the safety class. You get the other one."]],
+			["pose", "Garrick", "talk"],
+			["say", "Garrick", ["You fly with a crew now. Sooner or later somebody cuts through your hull and comes aboard. I've been on the wrong end of that.",
+				"On your own deck, you know every corner and they don't. Hold the doors. Fight in pairs. Never chase them back out."]],
 			["pose", "Garrick", ""],
-			["sara", "explain"],
-			["say", "Sara", ["I wanted a home. Homes don't keep turrets on the porch."], "S.A.R.A."],
-			["say", "Garrick", ["Not on the porch. Out past it. [sad] If they'd been on when that cutter came, we might have come down in one piece."]],
-			["say", "Garrick", ["I want them watching the sky, not the plaza. And I want them covering one ship in particular. Yours."]],
-			["emote", "player", "surprise"],
+			["face", "Ix'ali", "player"],
+			["say", "Ix'ali", ["[happy] I am the boarder. I have been told not to enjoy this. I will enjoy it a little."]],
+			["sfx", "sh_door"], ["walk", "Ix'ali", 22, 20], ["face", "Ix'ali", "l"],
+			["pose", "Freya", ""],
 			["choose", [
-				{"text": "Mine? You don't trust pirate hunters.", "friendship": 60, "steps": [
-					["pose", "Garrick", "laugh"],
-					["say", "Garrick", ["[happy] I don't. You're not one. You're a resident with a ship. I checked the ledger."]],
-					["pose", "Garrick", ""]]},
-				{"text": "S.A.R.A., what do you think?", "friendship": 30, "steps": [
-					["sara", "thinking"],
-					["say", "Sara", ["Outward only. Never the plaza. And the chief stops calling my lobby a 'choke point'."], "S.A.R.A."],
-					["say", "Garrick", ["...Deal."]]]},
-				{"text": "Point some at the plaza too, to be safe.", "steps": [
-					["sara", "warning"],
-					["say", "Sara", ["No."], "S.A.R.A."],
-					["emote", "Garrick", "no"],
-					["say", "Garrick", ["[angry] No. That's the one thing we're not doing."]],
+				{"text": "Hold the door with Freya: two on one.", "friendship": 60, "steps": [
+					["walk", "Freya", 20, 21], ["face", "Freya", "r"],
+					["sfx", "hit"], ["wait", 0.3], ["sfx", "hit"],
+					["say", "", ["You and Freya take the chalk doorway together. Ix'ali comes in fast and finds two blades waiting for her."]],
+					["say", "Ix'ali", ["[happy] Good. Very good. I am defeated. Honourably."]],
+					["say", "Garrick", ["That's the drill."]]]},
+				{"text": "Charge her before she's through.", "friendship": 30, "steps": [
+					["sfx", "hit"], ["shake", 0.2, 2.0],
+					["say", "", ["You meet her in the chalk corridor. It's close. Garrick calls it a draw."]],
+					["say", "Garrick", ["Brave. Wrong, but brave. On your own deck, make them come to you."]]]},
+				{"text": "Chase her back to her ship.", "steps": [
+					["sfx", "hit"],
+					["say", "", ["You drive Ix'ali back out of the chalk lines, across the hangar, and straight into a stack of fuel drums."]],
+					["emote", "Garrick", "frustrated"],
+					["say", "Garrick", ["[angry] And now you're on their ship. Alone. With their friends. That's how people die."]],
 					["friendship", "Garrick", -20]]}]],
-			["sara", "swipe_panels"], ["sfx", "sh_shield"], ["shake", 0.3, 2.0],
-			["say", "", ["Somewhere in the hull, things that have slept for years turn over, wake, and point at the dark."]],
-			["perk", "perimeter_defence", "Perimeter Defence: the Landing's guns soften up the first ship you fight on each run"],
-			["say", "Garrick", ["[happy] There. Go and hunt something, if you must. You'll have the station at your back when you do."]],
-			["sara", "nod"],
-			["say", "Sara", ["[happy] And please come home for dinner."], "S.A.R.A."],
+			["face", "Garrick", "player"],
+			["say", "Garrick", ["[happy] You'll do. Freya, you too. Anyone who flies with you gets the same drill."]],
+			["face", "Freya", "Garrick"],
+			["say", "Freya", ["[happy] Dad hated boarders. He'd have loved this."]],
+			["perk", "self_defence", "Self-Defence Class: on your own ship, your crew hit boarders half again as hard"],
+			["pose", "Garrick", "laugh"],
+			["say", "Garrick", ["I had you down as a hunter. [happy] You're a resident with a ship. I've crossed the other word out in the ledger."]],
+			["pose", "Garrick", ""],
+			["emote", "Ix'ali", "joy"], ["emote", "Freya", "joy"],
 			["flag", "garrick_resident"],
 		],
 	},
@@ -5600,7 +5608,7 @@ const EVENTS := {
 	"saffi_8": {
 		"who": "Saffi", "hearts": 8, "title": "The First Potluck",
 		# the fountain on a Sunday: two tables pushed together and half the station round them. Jasper hasn't cooked and
-		# can't bear it. Every Sunday from now on. Reward: Potluck (bring a dish, everyone gets a taste)
+		# can't bear it. Every Sunday from now on. Reward (Zachary, 24 Nov): Well Fed, a longer energy bar
 		"area": "main", "seen": ["saffi_6"], "windows": [[[6], "12:00", "15:00"]],
 		"player": [115, 104, "u"],
 		"cast": [["Saffi", 115, 100, "d"], ["Garrick", 121, 99, "l"], ["Kit", 112, 99, "u"], ["Nub", 113, 99, "u"],
@@ -5634,9 +5642,10 @@ const EVENTS := {
 					["say", "Saffi", ["[sad] Oh. Well. Take some for later, then."]],
 					["friendship", "Saffi", -20]]}]],
 			["pose", "Saffi", "talk"],
-			["say", "Saffi", ["Every Sunday from now on. And if you bring a plate, everyone gets a taste of it. That's the rule. The only rule."]],
+			["say", "Saffi", ["Every Sunday from now on. And eat properly. You run about this station on rations and fumes, {name}. Not on my watch."]],
 			["pose", "Saffi", ""],
-			["perk", "potluck", "Potluck: on Sundays, bring Saffi a cooked dish at the fountain. Friendship with everyone, and you wake up well fed"],
+			["sfx", "eat"],
+			["perk", "well_fed", "Well Fed: your energy bar is 30 longer"],
 			["say", "Rusk", ["[happy] A toast, then. To the host."]],
 			["emote", "Rusk", "love"], ["emote", "Kit", "joy"], ["emote", "Nub", "joy"], ["emote", "Pip", "joy"],
 			["face", "Garrick", "Saffi"], ["emote", "Garrick", "love"],

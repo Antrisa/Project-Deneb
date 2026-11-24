@@ -1386,6 +1386,7 @@ func _heart_event_done(id: String) -> void:
 	if not events_seen.has(id):
 		events_seen.append(id)
 	_snap_residents()
+	max_energy = _max_energy()      # Saffi's 8 makes the bar longer at once
 	if id == "welcome":
 		_save_game()      # the hoe, the can and the seeds
 
@@ -2060,8 +2061,6 @@ func _talk(who: String) -> void:
 		_sara_repairs(_repair_to_mention())
 	elif who == "Rusk" and _rusk_cask_talk():
 		pass
-	elif who == "Saffi" and _potluck_talk():
-		pass
 	elif crew_cross.has(who) and day - int(crew_cross[who]) <= 1:
 		crew_cross.erase(who)
 		if persons.has(who):
@@ -2318,7 +2317,6 @@ var run_stops: Array = []
 var run_used: Array = []             # events already drawn this run
 var run_rng := RandomNumberGenerator.new()
 var run_stop := -1                   # the stop the ship is at
-var run_fights := 0                  # fights so far this run (Garrick's 8 covers the first one)
 
 
 func _start_run() -> void:
@@ -2330,7 +2328,6 @@ func _start_run() -> void:
 	ShipRuns.place_contracts(run_stops, contracts, run_rng)
 	if _flag("kit_beacon") and not _flag("kit_cache_found"):
 		ShipRuns.place_cache(run_stops, run_rng)          # Kit's 4: the smuggler's beacon he saw
-	run_fights = 0
 	run_used = []
 	run_rng.seed = 104729 * day + Time.get_ticks_msec()
 	run_stop = -1
@@ -2450,9 +2447,6 @@ func _after_run_event(fight: String) -> void:
 	_back_to_map()
 
 
-const PERIMETER_HULL := 0.75
-
-
 func _run_fight(enemy_id: String) -> void:
 	ship_map.visible = false
 	run_enemy = enemy_id
@@ -2470,12 +2464,6 @@ func _run_fight(enemy_id: String) -> void:
 		base["surrender"] = offer
 	if not enemy_id.contains("rabble") and not hard and str(stop.get("kind", "")) != "contract" and run_rng.randf() < 0.5:
 		base["flee"] = true
-	# Garrick's 8, Perimeter Defence: S.A.R.A.'s old defence grid, pointed outward, softens up the first ship you
-	# fight on each run (it starts with a quarter of its hull gone)
-	if _flag("perk_perimeter_defence") and run_fights == 0:
-		base["foe_hull_frac"] = PERIMETER_HULL
-		_toast("Perimeter Defence: the Landing's guns got there first")
-	run_fights += 1
 	battle.start(_my_fight(base), Callable(self, "_after_run_fight"), ship_hull)
 
 
@@ -2724,6 +2712,7 @@ func _my_fight(base: Dictionary) -> Dictionary:
 	var f: Dictionary = base.duplicate()
 	f["player_def"] = _ship_def()
 	f["augments"] = augments.duplicate()
+	f["self_defence"] = _flag("perk_self_defence")      # Garrick's 8: boarders on your ship take more (ship_battle.gd)
 	if active_ship != "starter":
 		f["player_ship"] = active_ship
 		f["crew"] = _crew_for_run()
@@ -4209,46 +4198,14 @@ func _rusk_cask_keep() -> void:
 	_say("Rusk", ["[happy] Planting more? Good. She'd have liked a whole field of them."])
 
 
-# ---------------------------------------------------------------- Saffi's Sunday potluck (her 8, Potluck Buffs)
-# From her 8 on, Saffi keeps a potluck table by the fountain on Sunday from late morning (tools/build.py
-# SCHEDULE_DAYS_RAW). Bring her a cooked dish (anything the kitchenette cooks, ShopData.COOKING) once a Sunday: everyone
-# you've met hears about it (+POTLUCK_FRIENDSHIP each), and you wake up well fed (+POTLUCK_ENERGY over full).
-# Not counted as one of the day's chats.
-const POTLUCK_FRIENDSHIP := 20
-const POTLUCK_ENERGY := 60
-var potluck_day := -1                # the last Sunday you brought a dish (saved)
+# ---------------------------------------------------------------- Saffi's 8, Well Fed (Zachary, 24 Nov: "saffi
+# increase max energy perk"): your energy bar is WELL_FED_ENERGY longer. MAX_ENERGY stays the base; _max_energy() is
+# what you can have, and max_energy (the HUD's) follows it.
+const WELL_FED_ENERGY := 30
 
 
-func _potluck_dish() -> String:
-	for c in ShopData.COOKING:
-		if _count(str(c["makes"])) > 0:
-			return str(c["makes"])
-	return ""
-
-
-func _potluck_talk() -> bool:
-	if not _flag("perk_potluck") or (day - 1) % 7 != 6 or potluck_day == day:
-		return false
-	if minutes < 11.0 * 60.0 or minutes > 16.0 * 60.0:
-		return false
-	var dish: String = _potluck_dish()
-	if dish == "":
-		return false
-	_say("Saffi", ["[happy] There you are! The table's filling up. Is that for us?"],
-		Callable(self, "_potluck_share").bind(dish), "Share your %s" % _item_name(dish).to_lower(),
-		Callable(self, "_chat").bind("Saffi"), "Just chat")
-	return true
-
-
-func _potluck_share(dish: String) -> void:
-	_give(dish, -1)
-	potluck_day = day
-	for who in persons:
-		if bool(persons[who].get("met", false)):
-			_add_friendship(str(who), POTLUCK_FRIENDSHIP)
-	sfx("eat")
-	_toast("The potluck: everyone gets a taste. Friendship with everyone; you'll wake up well fed")
-	_say("Saffi", ["[happy] Into the middle with it. Kit, hands off until it's been blessed. Garrick, that includes you."])
+func _max_energy() -> int:
+	return MAX_ENERGY + (WELL_FED_ENERGY if _flag("perk_well_fed") else 0)
 
 
 # ---------------------------------------------------------------- the shipping crate (Zachary, 23 Nov)
@@ -4594,7 +4551,7 @@ func _eat_sound(item: String) -> String:
 func _eat(item: String) -> void:
 	var info: Dictionary = ItemData.ITEMS[item]
 	var gives_energy: int = int(info.get("energy", 0))
-	if hp >= MAX_HP and (gives_energy == 0 or energy >= MAX_ENERGY) and not ShopData.DRINK_EFFECTS.has(item):
+	if hp >= MAX_HP and (gives_energy == 0 or energy >= _max_energy()) and not ShopData.DRINK_EFFECTS.has(item):
 		_toast("You're not hurt" if gives_energy == 0 else "You're not hungry")
 		return
 	_give(item, -1)
@@ -4602,7 +4559,7 @@ func _eat(item: String) -> void:
 	if item == "medpack" and _flag("perk_advanced_med_stims"):
 		heal *= 2                    # Maren's 8: she tops up your medpacks the old ship's way
 	hp = mini(MAX_HP, hp + heal)
-	energy = maxi(energy, mini(MAX_ENERGY, energy + gives_energy))   # food doesn't take a potluck's extra away
+	energy = mini(_max_energy(), energy + gives_energy)
 	sfx(_eat_sound(item))
 	# Food is eaten with the Stardew-style animation (player.play_eating); the medpack is held up instead.
 	var animated := false
@@ -5016,9 +4973,8 @@ func _next_day() -> void:
 	shops.drink = ""
 	shops._apply_drink()
 	hp = MAX_HP
-	energy = MAX_ENERGY
-	if potluck_day == day - 1:
-		energy = MAX_ENERGY + POTLUCK_ENERGY     # well fed from Saffi's potluck
+	max_energy = _max_energy()
+	energy = max_energy
 	_clear_cavern()
 	_reset_enemies()
 	hotel.new_day()
@@ -5113,7 +5069,6 @@ func _save_game() -> void:
 	cfg.set_value("game", "leviathan_slain", leviathan_slain)
 	cfg.set_value("game", "story_flags", story_flags)
 	cfg.set_value("game", "rusk_cask", rusk_cask)
-	cfg.set_value("game", "potluck_day", potluck_day)
 	cfg.set_value("game", "events_seen", events_seen)
 	cfg.set_value("game", "partner", partner)
 	cfg.set_value("game", "hearts_scale", FRIEND_PER_HEART)
@@ -5212,8 +5167,8 @@ func _load_game() -> void:
 	# saves from before 22 Nov called the floor-45 monster the Harbinger
 	leviathan_slain = bool(cfg.get_value("game", "leviathan_slain", cfg.get_value("game", "harbinger_slain", false)))
 	story_flags = cfg.get_value("game", "story_flags", {})
+	max_energy = _max_energy()
 	rusk_cask = cfg.get_value("game", "rusk_cask", {})
-	potluck_day = int(cfg.get_value("game", "potluck_day", -1))
 	var saved_seen = cfg.get_value("game", "events_seen", [])
 	events_seen = saved_seen if saved_seen is Array else []
 	partner = str(cfg.get_value("game", "partner", ""))

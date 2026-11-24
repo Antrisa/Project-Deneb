@@ -1,22 +1,22 @@
 # Garrick: heart events and his week (24 Nov 2026)
 
-**Decided with Zachary, 24 Nov:** "every character has own arc plus a short family shared arc": an arc each for Garrick, Saffi and Kit, and a two-scene family side arc ([GARRICK_SAFFI_KIT.md](GARRICK_SAFFI_KIT.md)). Claude's first suggestions for the rest, taken: **Garrick was security officer on the refugee transport that crash-landed here**, and a bounty hunter he let dock brought a Chernobog cutter down on it (so he distrusts your trade); **Perimeter Defence** is the station's guns softening up the first ship you fight on each run; **Potluck Buffs** is Saffi's Sunday potluck at the fountain; **Kit's beacon** leads to a smuggler's cache on the jump map, and **his 8 is a deputy badge** you set down at home; their weeks: the model ship and the seals on Saturdays, Saffi's Monday lunch with Rusk and the market.
+**Decided with Zachary, 24 Nov:** "every character has own arc plus a short family shared arc": an arc each for Garrick, Saffi and Kit, and a two-scene family side arc ([GARRICK_SAFFI_KIT.md](GARRICK_SAFFI_KIT.md)). Claude's first suggestions for the rest, taken: **Garrick was security officer on the refugee transport that crash-landed here**, and a bounty hunter he let dock brought a Chernobog cutter down on it (so he distrusts your trade); **Kit's beacon** leads to a smuggler's cache on the jump map, and **his 8 is a deputy badge** you set down at home; their weeks: the model ship and the seals on Saturdays, Saffi's Monday lunch with Rusk and the market. **Then (Zachary, 24 Nov):** "garriks 8 heart is too powerful, change to self defense class, attacking boarders take extra damage on your ship" (it was Perimeter Defence: the station's guns softening up the first ship you fought on each run); "saffi increase max energy perk" (it was a Sunday potluck: share a dish for friendship with everyone and a well-fed morning).
 
 **The family's story (Claude's drafts):** about forty refugees, Saffi and Kit (in a sling) among them, came down on this moon in a transport with its drive shot out, and S.A.R.A. talked them in. Every settler signed the scorched hull plate now in the museum; Kit's is a handprint. The first night, Saffi made soup for forty in a dented helmet. Most of the forty moved on later; they stayed.
 
 **The arc:** the security chief who checks every seal himself, and learns to trust a pirate hunter.
 - 2: everything sharp gets signed for, yours included. Your log says twelve bounties; he wants to know about the people standing near them.
 - 4: his nightly round of the West Terminal's airlocks, and the short version: the transport, the bounty hunter he let dock, and the cutter.
-- 6: a self-defence class for the kids on the plaza; S.A.R.A. doesn't want a parade ground (the NPC Master's tension). You find the middle.
-- 8: S.A.R.A.'s old defence grid, pointed outward, never at the plaza, and covering your ship. You're a resident with a ship, not a hunter.
+- 6: a safety class for the kids on the plaza; S.A.R.A. doesn't want a parade ground (the NPC Master's tension). You find the middle.
+- 8: the self-defence class for grown-ups: a ship's corridors chalked on the hangar floor, Ix'ali as the boarder. You're a resident with a ship, not a hunter.
 
-**What's whose:** the title of 6 and the rewards are the NPC Master's; his first line ("Pirate hunter. Keep it outside the airlock") was already in the game; the scenes and lines are Claude's drafts. Right answers +60, middle +30, wrong −20.
+**What's whose:** his 8's reward is Zachary's (the NPC Master's title for 6, Self-Defence Class, moved to it; 6 is the Safety Class now); his first line ("Pirate hunter. Keep it outside the airlock") was already in the game; the scenes and lines are Claude's drafts. Right answers +60, middle +30, wrong −20.
 
-**Flags:** `garrick_signed` (2), `garrick_rounds` (4), `garrick_class` (6), `garrick_resident` and the perk `perk_perimeter_defence` (8).
+**Flags:** `garrick_signed` (2), `garrick_rounds` (4), `garrick_class` (6), `garrick_resident` and the perk `perk_self_defence` (8).
 
-## Perimeter Defence (his 8)
+## The Self-Defence Class (his 8)
 
-`main.gd _run_fight`: with `perk_perimeter_defence`, the first ship you fight on each free flight starts with a quarter of its hull gone (`PERIMETER_HULL`, a new `"foe_hull_frac"` in the fight, read by `ship_battle.gd start`), with a toast. Story fights are unchanged.
+`ship_battle.gd _tick_fights`: with `perk_self_defence` (passed in the fight as `"self_defence"` by `main.gd _my_fight`), your crew deal half again as much damage (`SELF_DEFENCE_X`, 1.5) to boarders fighting them on your own ship. Fights on the enemy's ship, and the boarders' own damage, are unchanged.
 
 ## His week (in the game: `tools/build.py`, `SCHEDULE_DAYS_RAW`)
 
@@ -83,9 +83,9 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`garrick_2` to `ga
 
 ---
 
-## ♥6 Self-Defence Class
+## ♥6 Safety Class
 
-**Trigger:** The plaza by the fountain, Saturday 10:00–12:30, after 4. With Kit, Pip, Nub and S.A.R.A. at her plaza pad. *(The NPC Master's title; the scene is Claude's.)*
+**Trigger:** The plaza by the fountain, Saturday 10:00–12:30, after 4. With Kit, Pip, Nub and S.A.R.A. at her plaza pad. *(Claude; the NPC Master's self-defence class, for the kids.)*
 
 - *[Saturday on the plaza. Garrick has laid out three foam mats by the fountain. Kit, Pip and Nub sit on them, as still as they can manage.]*
 - **GARRICK:** "Lesson one. Feet apart. If somebody grabs you, you don't fight. You get loud, and you get gone."
@@ -110,27 +110,28 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`garrick_2` to `ga
 
 ---
 
-## ♥8 Perimeter Defence
+## ♥8 Self-Defence Class
 
-**Trigger:** S.A.R.A.'s core, 20:00–22:00, Monday to Friday, after 6. Reward: Perimeter Defence. *(The NPC Master's reward; the scene is Claude's.)*
+**Trigger:** The Shuttle Bay, 18:30–21:00, Monday to Friday, after 6. With Freya and Ix'ali. Reward: on your own ship, your crew hit boarders half again as hard. *(Zachary's reward; the scene is Claude's.)*
 
-- *[S.A.R.A.'s core, late. Garrick stands by the dais with his cap in his hands, which you have never seen before.]*
-- **S.A.R.A.:** "Thank you for coming, {name}. The chief has asked me for something. He has never asked me for anything."
-- **GARRICK:** "Annex 4 had a defence grid. Guns in the hull, pointed out. She shut them down the day we landed. Didn't want a fortress."
-- **S.A.R.A.:** "I wanted a home. Homes don't keep turrets on the porch."
-- **GARRICK:** "Not on the porch. Out past it. [sad] If they'd been on when that cutter came, we might have come down in one piece."
-- **GARRICK:** "I want them watching the sky, not the plaza. And I want them covering one ship in particular. Yours."
+- *[The Shuttle Bay after hours. Garrick has chalked a ship's corridors on the hangar floor. Freya sits on a crate. Ix'ali holds two blunted blades.]*
+- **GARRICK:** "{name}. Good. The kids got the safety class. You get the other one."
+- **GARRICK:** "You fly with a crew now. Sooner or later somebody cuts through your hull and comes aboard. I've been on the wrong end of that."
+- **GARRICK:** "On your own deck, you know every corner and they don't. Hold the doors. Fight in pairs. Never chase them back out."
+- **IX'ALI:** "[happy] I am the boarder. I have been told not to enjoy this. I will enjoy it a little."
 - **CHOICE:**
-  - **"Mine? You don't trust pirate hunters."** (+High Friendship)
-    - **GARRICK:** "[happy] I don't. You're not one. You're a resident with a ship. I checked the ledger."
-  - **"S.A.R.A., what do you think?"** (+Friendship)
-    - **S.A.R.A.:** "Outward only. Never the plaza. And the chief stops calling my lobby a 'choke point'."
-    - **GARRICK:** "...Deal."
-  - **"Point some at the plaza too, to be safe."**
-    - **S.A.R.A.:** "No."
-    - **GARRICK:** "[angry] No. That's the one thing we're not doing."
+  - **"Hold the door with Freya: two on one."** (+High Friendship)
+    - *[You and Freya take the chalk doorway together. Ix'ali comes in fast and finds two blades waiting for her.]*
+    - **IX'ALI:** "[happy] Good. Very good. I am defeated. Honourably."
+    - **GARRICK:** "That's the drill."
+  - **"Charge her before she's through."** (+Friendship)
+    - *[You meet her in the chalk corridor. It's close. Garrick calls it a draw.]*
+    - **GARRICK:** "Brave. Wrong, but brave. On your own deck, make them come to you."
+  - **"Chase her back to her ship."**
+    - *[You drive Ix'ali back out of the chalk lines, across the hangar, and straight into a stack of fuel drums.]*
+    - **GARRICK:** "[angry] And now you're on their ship. Alone. With their friends. That's how people die."
     - *(-20 friendship with Garrick)*
-- *[Somewhere in the hull, things that have slept for years turn over, wake, and point at the dark.]*
-- *[Perimeter Defence: the Landing's guns soften up the first ship you fight on each run]*
-- **GARRICK:** "[happy] There. Go and hunt something, if you must. You'll have the station at your back when you do."
-- **S.A.R.A.:** "[happy] And please come home for dinner."
+- **GARRICK:** "[happy] You'll do. Freya, you too. Anyone who flies with you gets the same drill."
+- **FREYA:** "[happy] Dad hated boarders. He'd have loved this."
+- *[Self-Defence Class: on your own ship, your crew hit boarders half again as hard]*
+- **GARRICK:** "I had you down as a hunter. [happy] You're a resident with a ship. I've crossed the other word out in the ledger."

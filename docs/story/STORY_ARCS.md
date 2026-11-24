@@ -270,7 +270,7 @@ Ivan's sister unlearns that fear is loyalty. **Reviewed with Zachary on 23 Nov; 
 - 6's choices now give +High Friendship (there are no romance points).
 - **Animated (Zachary, 23 Nov):** all six now have poses, emote bubbles and sounds like the other arcs; 8 shows a meteor shower in the lounge's window, and in 10 you board your ship and watch it lift off and land (new scene steps `sky`, `hide`/`show` and `ship`).
 - **Still open:** the console in 10 could become a real upgrade on your ship (`ana_true_north_console` is set); Wingmate needs hooking into ship battles.
-- **Repeat (for later):** 4 has her charting the old ambush corridors for Eshu's skiffs; Eshu 6 "Safe Routes" is the same work. Make Eshu 6 the follow-on.
+- ~~**Repeat (for later):** 4 has her charting the old ambush corridors for Eshu's skiffs; Eshu 6 "Safe Routes" was the same work.~~ Gone 24 Nov: Eshu has no heart events.
 
 ---
 
@@ -467,7 +467,7 @@ The water officer who was right about the ocean, and gave it to the one who kept
 | 6 | Lanterns | The West Terminal's star dome, the anniversary | Pip asks how, and they tell him. Three lanterns at the glass. Letter from Pip. | In game (Claude) |
 
 - **Their weeks:** Owen's Saturdays off with Pip (the star dome, the fountain). After Maren's 6, Pip's Saturday afternoons are his own: the launch booth with Tikka.
-- **Still open:** Eshu's 4 (it was Pip's letter to his parents); codexes for the Compendium; art for the toy rocket (a stand-in now), the lanterns and the photo.
+- **Still open:** codexes for the Compendium; art for the toy rocket (a stand-in now), the lanterns and the photo.
 
 ### 5.8 Tobbin, Merrow & Nub
 
@@ -514,7 +514,7 @@ The water officer who was right about the ocean, and gave it to the one who kept
 
 ### 5.9 Garrick, Saffi & Kit
 
-**Reviewed with Zachary on 24 Nov; all fourteen are written and playable.** Full scenes: [`characters/GARRICK.md`](characters/GARRICK.md), [`characters/SAFFI.md`](characters/SAFFI.md), [`characters/KIT.md`](characters/KIT.md) and the family's side arc, [`characters/GARRICK_SAFFI_KIT.md`](characters/GARRICK_SAFFI_KIT.md). Zachary: "every character has own arc plus a short family shared arc". Claude's first suggestions taken for the rest: Garrick was security officer on the refugee transport that crash-landed here, and a bounty hunter he let dock brought a Chernobog cutter down on it; Perimeter Defence softens up the first ship you fight on a run; Potluck Buffs is a Sunday potluck; Kit's beacon leads to a smuggler's cache, and his 8 is a deputy badge.
+**Reviewed with Zachary on 24 Nov; all fourteen are written and playable.** Full scenes: [`characters/GARRICK.md`](characters/GARRICK.md), [`characters/SAFFI.md`](characters/SAFFI.md), [`characters/KIT.md`](characters/KIT.md) and the family's side arc, [`characters/GARRICK_SAFFI_KIT.md`](characters/GARRICK_SAFFI_KIT.md). Zachary: "every character has own arc plus a short family shared arc". Claude's first suggestions taken for the rest: Garrick was security officer on the refugee transport that crash-landed here, and a bounty hunter he let dock brought a Chernobog cutter down on it; Kit's beacon leads to a smuggler's cache, and his 8 is a deputy badge. Then Zachary changed the two rewards: Garrick's 8 was "too powerful" (the station's guns softening up your first fight), so it's a self-defence class where boarders take extra damage on your ship; Saffi's 8 is a longer energy bar (it was a Sunday potluck buff).
 
 **Garrick** (human, security chief and quartermaster): checks every seal himself.
 
@@ -522,8 +522,8 @@ The water officer who was right about the ocean, and gave it to the one who kept
 |---|---|---|---|---|
 | 2 | Signed For | The armoury, a working day | Everything sharp is signed for, yours too; twelve bounties, and the people near them. | In game (Claude) |
 | 4 | The Rounds | The West Terminal's airlocks at night | The transport, the bounty hunter he let dock, and the cutter chasing him. | In game (Claude) |
-| 6 | Self-Defence Class | The plaza, Saturday morning, with the kids and S.A.R.A. | Hospitality vs security: a "safety class", with mats. | In game (the NPC Master's title, scene by Claude) |
-| 8 | Perimeter Defence | S.A.R.A.'s core, late | Annex 4's old guns, pointed outward, covering your ship. Reward: Perimeter Defence (the first ship you fight on a run starts damaged). | In game (the NPC Master's reward, scene by Claude) |
+| 6 | Safety Class (was Self-Defence Class) | The plaza, Saturday morning, with the kids and S.A.R.A. | Hospitality vs security: a "safety class", with mats. | In game (Claude) |
+| 8 | Self-Defence Class | The Shuttle Bay after hours, with Freya and Ix'ali | A boarding drill on chalked corridors. Reward: on your own ship, your crew hit boarders half again as hard. | In game (Zachary's reward, scene by Claude) |
 
 **Saffi** (Ervani, community host): a town out of plates.
 
@@ -532,7 +532,7 @@ The water officer who was right about the ocean, and gave it to the one who kept
 | 2 | Welcome Basket | Your front door, morning | Bread, soup, socks, seeds, and everyone's birthdays. | In game (the NPC Master's title, scene by Claude) |
 | 4 | Bring a Plate | The market after lunch | A potluck sign-up sheet with one name on it. | In game (Claude) |
 | 6 | Every Name | The museum's hull plate from the first crash | Kit's handprint; soup for forty in a dented helmet. | In game (Claude) |
-| 8 | The First Potluck | The fountain, Sunday | Half the station, and Jasper not allowed to cook. Reward: the Sunday potluck (bring a dish: friendship with everyone, and you wake up well fed). | In game (the NPC Master's reward, scene by Claude) |
+| 8 | The First Potluck | The fountain, Sunday | Half the station, and Jasper not allowed to cook. Reward: Well Fed (your energy bar is 30 longer). | In game (Zachary's reward, scene by Claude) |
 
 **Kit** (Ervani, their son): security chief, or a pirate.
 
@@ -551,21 +551,14 @@ The water officer who was right about the ocean, and gave it to the one who kept
 | 6 | Brave Together | The mine's cavern gate, after dinner, with Vzz'ket | Kit went to see a crawler so he wouldn't be scared. Brave together counts double. | In game (Claude) |
 
 - **Closed:** S.A.R.A. vs Garrick (his 6 and 8); Garrick's wariness of your pirate-hunter past (his 2, 4, 8 and Kit's 6); the beacon (a smuggler's cache); the 8 that had no scene (each has one).
-- **Their weeks:** Kit's Saturdays (the model ship, then the West Terminal's seals with Garrick after his 6); Saffi's Sunday cooking, then the potluck after her 8; Saffi's Monday lunch with Rusk (already in her day, now a day line).
+- **Their weeks:** Kit's Saturdays (the model ship, then the West Terminal's seals with Garrick after his 6); Saffi's Sunday cooking, then the potluck table by the fountain after her 8 (company, not a mechanic); Saffi's Monday lunch with Rusk (already in her day, now a day line).
 - **Still open:** art for Kit's badge (a stand-in); the NPC Master still calls Rusk "Saffi's uncle" (he isn't: a figure in their lives, 23 Nov).
 
 ### 5.10 Eshu (Arachnay, Courier & bounty pilot; Wave 1)
 
-| ♥ | Event | When and where | What happens | Status |
-|---|---|---|---|---|
-| 2 | Forty Sacks | Reception | Sorting mail with four arms at once. | Outline |
-| 4 | The Blockade Letter | Reception | He runs a pirate blockade to deliver Pip's letter. | Outline |
-| 6 | Safe Routes | Shuttle Bay, with Ana; backup: with Garrick | Safe trade routes with Ana. | Outline |
-| 8 | (no title) | Reception | Rewards only: Express Export Crates; high-tier bounties. | Gap |
+**No heart events** (Zachary, 24 Nov: "no hearts for eshu he is just behind the courrier desk"), like Ooma. He keeps the Post & Privateer Dispatch desk in the West Terminal (07:30 to dinner), the crew board in the Shuttle Bay's booth, and the capture contracts and bounties (`main.gd`, 23 Nov). The old outline (2 Forty Sacks, 4 The Blockade Letter, 6 Safe Routes, 8 rewards only: Express Export Crates and high-tier bounties) is cut; the contracts already pay bounties.
 
-- Renamed from Tally in the game on 23 Nov (Decision 18). His shop room and home are still undecided; 2 and 8 should move to the Post & Privateer Dispatch once it has a room.
-- **Needs rewriting:** 4's outline ("he runs a pirate blockade to deliver Pip's letter") assumed Pip's parents were alive. They're dead (24 Nov), so 4 needs a new letter or a new scene.
-- **Repeat:** 6 and Ana 4 (section 3.9).
+- **Closed with it:** 4's letter to Pip's parents (they're dead, 24 Nov), and the repeat of his 6 with Ana's 4.
 
 ---
 
@@ -653,4 +646,4 @@ Answer by number; anything left open stays as it is.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska, Maren, Owen & Pip, Tobbin, Merrow & Nub, and Garrick, Saffi & Kit (24 Nov); Eshu is next, and last.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska, Maren, Owen & Pip, Tobbin, Merrow & Nub, and Garrick, Saffi & Kit (24 Nov); Eshu has no heart events (24 Nov), so every arc is written.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
