@@ -54,6 +54,8 @@ const BridgeScript = preload("res://scripts/datapad_bridge.gd")
 const ShopsScript = preload("res://scripts/shops.gd")   # the shops, Job's geode bench, cooking, drinks, gear (23 Nov)
 const ShopData = preload("res://scripts/shop_data.gd")
 var shops                          # scripts/shops.gd
+const HotelScript = preload("res://scripts/hotel.gd")   # S.A.R.A.'s hotel: guest rooms, grading, the desk (24 Nov)
+var hotel                          # scripts/hotel.gd
 const HeartEvents = preload("res://scripts/heart_events.gd")
 const CutsceneScript = preload("res://scripts/cutscene.gd")
 var datapad                        # the Terran datapad HUD and pages (scripts/datapad_bridge.gd); null = old UI
@@ -448,6 +450,9 @@ func _ready() -> void:
 	shops = ShopsScript.new()
 	shops.setup(self)
 	add_child(shops)
+	hotel = HotelScript.new()
+	hotel.setup(self)
+	add_child(hotel)
 	if datapad != null and datapad.pad != null:
 		datapad.pad.shop_action.connect(shops.on_action)
 	_load_game()
@@ -1857,6 +1862,8 @@ func _interact(t: Dictionary) -> void:
 		_say("Seed rack", ["Empty. Bram sells seeds at his Sundries on the town square."])
 	elif kind == "inspect" and current_area == "aptPlayer" and str(t["name"]) == "Kitchenette":
 		shops.open("Cook")
+	elif current_area == "hotel" and str(t["name"]) in ["Your desk", "Hotel plans"] and hotel.stage > 0:
+		shops.open("Hotel")         # the management desk (scripts/hotel.gd)
 	elif kind == "game":
 		var company := _activity_near(t.pos,48.0,["chess","hologame"])
 		if not company.is_empty():
@@ -3692,13 +3699,15 @@ func _mine(t: Dictionary) -> void:
 # on the tile in front of you, in your Agri complex or your hotel rooms. They block their tiles, are saved, and
 # can be picked up again (a chest only when empty, a furnace only when idle). At a hub the Crafting page makes the
 # hub's recipes (ItemData.RECIPES "station"). A furnace is a machine, Stardew-style: see _furnace_use.
-const PLACEABLE := {
+const BASE_PLACEABLE := {
 	"arc_smelter": {"art": "home_furnace", "w": 2, "h": 1, "name": "Furnace", "station": ""},
 	"manufacturing_hub": {"art": "home_hub", "w": 3, "h": 1, "name": "Manufacturing hub", "station": "Manufacturing Hub"},
 	"storage_chest": {"art": "home_chest", "w": 1, "h": 1, "name": "Storage chest", "station": ""},
 	# furniture to look at (Pip's 8): no station, no storage
 	"toy_rocket": {"art": "toy_rocket", "w": 1, "h": 1, "name": "Pip's toy rocket", "station": "", "decor": true},
 }
+# Everything you can set down: BASE_PLACEABLE and the hotel's walls, doors and furniture (scripts/hotel.gd).
+var PLACEABLE: Dictionary = BASE_PLACEABLE.merged(HotelScript.FURNITURE)
 const BUILD_AREAS := ["agri", "hotel"]
 const STATION_REACH := 40.0         # how near a station you must stand to use its recipes (world units)
 var placed: Array = []              # [{"item", "area", "x", "y"}], saved
@@ -3750,7 +3759,8 @@ func _spawn_placed(e: Dictionary) -> void:
 		for dx in w:
 			var tt := Vector2i(x + dx, y + dy)
 			tiles.append(tt)
-			blocked[area][tt] = true
+			if not spec.get("walk", false):      # hotel doors and rugs can be walked over
+				blocked[area][tt] = true
 	var th := {"kind": "placed", "name": str(spec["name"]), "hint": "Use", "area": area,
 		"pos": Vector2(x * TILE + w * 8, y * TILE + h * 8), "radius": 26.0 + 8.0 * (w - 1), "who": "", "key": _placed_key(e),
 		"item": str(e["item"])}
@@ -4758,6 +4768,7 @@ func _process(delta: float) -> void:
 		paused = cutscene != null and cutscene.running
 	if not paused and not travelling and not garden_busy:
 		shops.tick(delta)
+		hotel.tick(delta)
 		if _welcome_due():
 			_welcome_visit()
 		minutes += delta / SECONDS_PER_GAME_MINUTE
@@ -4909,6 +4920,7 @@ func journal() -> Array:
 			out.append(["The caverns", ["Vzz'ket wrote. He wants to see you at the cavern gate, at the bottom of the mine."], false])
 		else:
 			out.append(["The caverns", ["Vzz'ket opened the cavern gate for you. Every fifth floor has a lift stop."], true])
+	out.append_array(hotel.journal())
 	# today
 	if board_taken_day == day and board_done_day != day:
 		var req: Dictionary = _board_request()
@@ -4933,6 +4945,7 @@ func _next_day() -> void:
 	energy = MAX_ENERGY
 	_clear_cavern()
 	_reset_enemies()
+	hotel.new_day()
 	_reset_nodes()
 	for who in persons:
 		persons[who]["talked_today"] = false
@@ -5053,6 +5066,7 @@ func _save_game() -> void:
 	cfg.set_value("farm", "seeds_taken_day", seeds_taken_day)
 	cfg.set_value("game", "welcomed", welcomed)
 	cfg.set_value("farm", "can_water", can_water)
+	hotel.save(cfg)
 	cfg.set_value("shops", "known_recipes", shops.known_recipes)
 	cfg.set_value("shops", "wearing", shops.wearing)
 	cfg.set_value("access", "doors", door_locks)
@@ -5162,6 +5176,7 @@ func _load_game() -> void:
 		farm = saved_farm
 	seeds_taken_day = int(cfg.get_value("farm", "seeds_taken_day", -1))
 	# Saves from before the welcome visit (23 Nov) are past day one or already have their tools.
+	hotel.load_from(cfg)
 	can_water = clampi(int(cfg.get_value("farm", "can_water", CAN_CAPACITY)), 0, CAN_CAPACITY)
 	welcomed = bool(cfg.get_value("game", "welcomed", day > 1 or int(items.get("hoe", 0)) > 0))
 	var saved_recipes = cfg.get_value("shops", "known_recipes", [])

@@ -51,6 +51,8 @@ func open(who: String) -> void:
 	var tabs: Array = []
 	if who == "Cook":
 		tabs.append(["Cook", _cook_rows()])
+	elif who == "Hotel":
+		tabs = world.hotel.desk_tabs()      # the management desk (scripts/hotel.gd)
 	elif who == "Job":
 		tabs.append(["Crack", _crack_rows()])
 		tabs.append(["Sell", _sell_rows(who)])
@@ -58,7 +60,7 @@ func open(who: String) -> void:
 		tabs.append(["Buy", _buy_rows(who)])
 		if who == "Bram" or ShopData.BUYS.has(who):
 			tabs.append(["Sell", _sell_rows(who)])
-	var title: String = "Your kitchenette" if who == "Cook" else str(ShopData.TITLES.get(who, who))
+	var title: String = {"Cook": "Your kitchenette", "Hotel": "Hotel management"}.get(who, str(ShopData.TITLES.get(who, who)))
 	world.datapad.pad.show_shop(title, tabs, reopening)
 
 
@@ -169,6 +171,7 @@ func on_action(action: String) -> void:
 		"crackall": _crack(id, world._count(id))
 		"cook1": _cook(id, 1)
 		"cook5": _cook(id, 5)
+		"room": world.hotel.on_action(verb, id)
 	refresh()
 
 
