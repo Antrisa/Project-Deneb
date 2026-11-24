@@ -42,7 +42,7 @@ SWING = {
         3: dict(L="rest", R="rest"),
         4: dict(L="rest", R="rest"),
     }, hands={"rest": (-1, 7), "forward": (1, 5), "back": (2, 5)},
-        elbows={"back": (0, 3)}, arm_w=3, shoulders={"L": (3, 27), "R": (17, 27)}),   # his wide sleeves
+        elbows={"back": (0, 3)}, shoulders={"L": (4, 27), "R": (17, 27)}),   # sleeves out at his sides
 }
 BOB = {0: 0, 1: 1, 2: 1, 3: 0, 4: 0}
 
