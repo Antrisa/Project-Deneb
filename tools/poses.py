@@ -1477,7 +1477,8 @@ def render_sleep(walk, name):
     stretches), the head follows a frame later (the neck stretches)."""
     rig = RIGS[name]
     s = rig["sleep"]
-    cell = walk[0:FH, 0:FW].copy()
+    src = BARE[name] if BARE.get(name) is not None else walk   # the painted standing frame
+    cell = src[0:FH, 0:FW].copy()
     close_eyes(cell, s["eyes"], hexc(s["skin"]), hexc(s["lash"]))
     neck, top = s["neck"], s["top"]
     frames = []
