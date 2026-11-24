@@ -29,7 +29,7 @@ Every perk and keepsake the heart events give, as the datapad's **Perks** tab sh
 | Five-Star Partner (`five_star_partner`) | Stu | Stu 8, After-Hours Lobby Shift | +20% hotel income and tips. | Yes | Stu's room key, its bow a five-pointed star |
 | Wingmate (`wingmate`) | Ana | Ana 8, Co-Pilot's Promise | +20% ship evasion, and your fold drive charges a fifth faster. | Yes | Ana's pilot wings pin |
 | Concierge (`concierge`) | S.A.R.A. | S.A.R.A. 8, Night Shift | S.A.R.A. sends you to any of her pads, and pings you each morning with what's ready. | Yes | One of S.A.R.A.'s holo pads, her light above it |
-| Relic Appraisal (`relic_appraisal`) | Tar'Besh | Tar'Besh 8, Every Kind of Mind | +25% Scrip on museum donations. | Not yet | Tar'Besh's appraiser's loupe |
+| Relic Appraisal (`relic_appraisal`) | Tar'Besh | Tar'Besh 8, Every Kind of Mind | +25% on the Scrip the museum pays you for every 5 relics you give. | Yes | Tar'Besh's appraiser's loupe |
 | Deep-Sea Sonar Lure (`deep_sea_sonar_lure`) | Zaas | Zaas 8, Captain of the Deep | A lure for the deep water, for when there's fishing. | Not yet | Zaas's sonar lure, a fish with a glowing eye |
 | Cavern Monster Radar (`monster_radar`) | Vzz'ket | Vzz'ket 8, The Watch Changes | S.A.R.A. warns you what's waiting on the floor below. | Yes | S.A.R.A.'s motion-sensor scope, a blip on it |
 | Chitin-Piercer Traps (`chitin_piercer_traps`) | Vzz'ket & Rusk | Vzz'ket & Rusk 8, Sentinels of Echo Landing | Ix'ali's traps at the cavern gate. | Not yet | Ix'ali's spike trap |
@@ -64,13 +64,12 @@ Every perk and keepsake the heart events give, as the datapad's **Perks** tab sh
 
 - Moogli Trade Beacon: `ship_map.gd` (Call trader). Smelter Overclock: `main.gd _furnace_use`. Advanced Med-Stims, Family Table: `main.gd _eat`. Heirloom Chair: `item_data.gd` recipe with `learn`. Hydro-Boost: `main.gd _grow_crops`. Self-Defence Class, Wingmate, Pioneer Stabilizer: `main.gd _my_fight` passes them to `ship_battle.gd` (and the jump map's ion-storm note). Well Fed, Guardian Medic: `main.gd _max_energy`, `_max_hp`, `_collapse`.
 - Master Mechanic: `ship_upgrades.gd _discount` (tools are crafted, not bought, so it's ship upgrades only). Sous-Chef's Blessing: `shops.gd start_drink` (drinks are the only buffs so far). Bedrock Strength: `main.gd _mining_energy`, `shops.gd maybe_geode`. Chivalric Guard: `shops.gd damage_taken`. Thrifty: `shops.gd roll_geode`.
-- Five-Star Partner, Void-Silk Linens: `hotel.gd base_pay`, `grade` (Five-Star replaced upstream's S.A.R.A. bonus, which counted her hearts on the old 5-a-heart scale). Concierge: `main.gd concierge_rows`, `sara_send`, `_sara_pings`, `shops.gd` "Concierge". Cavern Monster Radar: `main.gd _radar_ping`, `_cav_mob_kinds`.
+- Five-Star Partner, Void-Silk Linens: `hotel.gd base_pay`, `grade` (Five-Star replaced upstream's S.A.R.A. bonus, which counted her hearts on the old 5-a-heart scale). Relic Appraisal: `main.gd _museum_thanks` (the museum pays 250 Scrip at 5 relics, 500 at 10). Concierge: `main.gd concierge_rows`, `sara_send`, `_sara_pings`, `shops.gd` "Concierge". Cavern Monster Radar: `main.gd _radar_ping`, `_cav_mob_kinds`.
 
 ## Still to do
 
-20 of the 32 perks work so far. The rest wait for something that isn't in the game yet:
+21 of the 32 perks work so far. The rest wait for something that isn't in the game yet:
 
-- Relic Appraisal: museum donations don't pay Scrip yet, so there's nothing for it to raise.
 - Thrifty's recycling half: there's no recycler.
 - Honey and bees: Wildflower Honey, Honey-Lavender Brioche, Starlight Souffle. Fishing: Deep-Sea Sonar Lure. Codexes: Lore Compendium. Crop quality: Green Thumb.
 - New recipes, items or a menu: Parisian Bistro Menu, Xeno-Salve, Star-Knight Aegis. The map: Junior Scout Reports. The cavern gate: Chitin-Piercer Traps.

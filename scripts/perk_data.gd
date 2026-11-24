@@ -56,8 +56,8 @@ const PERKS := {
 	"concierge": {"icon": 18, "name": "Concierge", "from": "S.A.R.A.", "works": true,
 		"desc": "S.A.R.A. sends you to any of her pads, and pings you each morning with what's ready."},
 	# Tar'Besh
-	"relic_appraisal": {"icon": 19, "name": "Relic Appraisal", "from": "Tar'Besh", "works": false,
-		"desc": "+25% Scrip on museum donations."},
+	"relic_appraisal": {"icon": 19, "name": "Relic Appraisal", "from": "Tar'Besh", "works": true,
+		"desc": "+25% on the Scrip the museum pays you for every 5 relics you give."},
 	# Zaas
 	"deep_sea_sonar_lure": {"icon": 20, "name": "Deep-Sea Sonar Lure", "from": "Zaas", "works": false,
 		"desc": "A lure for the deep water, for when there's fishing."},

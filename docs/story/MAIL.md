@@ -63,6 +63,8 @@ About one letter per arc, rarely two. A gift shouldn't repeat the event's own pe
 | Saffi 6, Every Name | `saffi_soup` | Saffi | The helmet soup | Crater potato x2 |
 | Kit 4, The Beacon | `kit_coordinates` | Kit | THE BEACON | - |
 | Garrick, Saffi & Kit 6, Brave Together | `guard_double` | Saffi | Double | - |
+| The museum, 5 relics given | `tarbesh_museum_5` | Tar'Besh | Five cases | Cavern geode x3 |
+| The museum, 10 relics given | `tarbesh_museum_10` | Tar'Besh | Ten | Void sapphire |
 
 Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The gate" (when Job's north tunnels are done), and S.A.R.A.'s notes on the storage dome and the fish ponds.
 
@@ -477,3 +479,35 @@ Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The
 > Thank you for coming. And thank Vzz'ket for us again, if he'll let you. He won't let us.
 >
 > - Saffi, Garrick and Kit
+
+## The museum's thanks (24 Nov)
+
+Zachary: "every 5 relics you get something for donations." Not heart events: `main.gd _museum_thanks` sends these when the 5th and 10th relics go into the museum's cases (Tar'Besh also pays 250 and 500 Scrip there and then, a quarter more with his 8's Relic Appraisal; from 15 relics on, 50 Scrip a relic and no letter yet). Each comes once, even if you take a relic back out.
+
+### Five cases (`tarbesh_museum_5`)
+
+*From Tar'Besh, the morning after the fifth relic. In the envelope: three cavern geodes.*
+
+> Friend,
+>
+> Five cases that were empty are not empty. I have stood in front of each one longer than a curator should admit.
+>
+> A museum is a promise that somebody will remember. You are keeping it for people you never met.
+>
+> Job says the caverns keep their best things wrapped in rock. Here are three. Take them to his bench.
+>
+> - Tar'Besh, curator
+
+### Ten (`tarbesh_museum_10`)
+
+*From Tar'Besh, the morning after the tenth relic. In the envelope: a void sapphire.*
+
+> Friend,
+>
+> Ten. The children have begun arguing about which case is best. That is how you know a museum is alive.
+>
+> This sapphire came to me my first year here, in a pilgrim's offering bowl. I never knew what it was for. Now I do.
+>
+> Keep looking. The cases are patient, and so am I.
+>
+> - Tar'Besh

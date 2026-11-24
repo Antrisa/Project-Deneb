@@ -5268,6 +5268,7 @@ func _save_game() -> void:
 	cfg.set_value("ships", "contracts_done", contracts_done)
 	cfg.set_value("ships", "crew_cross", crew_cross)
 	cfg.set_value("museum", "gifts", museum_gifts)
+	cfg.set_value("museum", "thanked", museum_thanked)
 	cfg.set_value("ship", "missiles", missiles)
 	cfg.set_value("ship", "drone_parts", drone_parts)
 	cfg.set_value("ship", "weapons", ship_weapons)
@@ -5409,6 +5410,8 @@ func _load_game() -> void:
 	relics_found = saved_relics if saved_relics is Array else []
 	var saved_gifts = cfg.get_value("museum", "gifts", {})
 	museum_gifts = saved_gifts if saved_gifts is Dictionary else {}
+	var saved_thanks = cfg.get_value("museum", "thanked", [])
+	museum_thanked = saved_thanks if saved_thanks is Array else []
 	_show_museum_gifts()
 	missiles = int(cfg.get_value("ship", "missiles", 0))
 	drone_parts = int(cfg.get_value("ship", "drone_parts", 0))
@@ -5742,6 +5745,36 @@ func museum_place(id: String, slot: int) -> void:
 	museum_gifts[str(slot)] = id
 	show_exhibit(slot, str(ItemData.ITEMS[id]["relic"]))
 	sfx("museum_place")
+	_museum_thanks()
+
+
+# The museum's thanks (Zachary, 24 Nov: "every 5 relics you get something for donations"): at 5 relics in the cases,
+# then 10, 15..., Tar'Besh pays Scrip there and then and writes the next morning, with a gift. Each comes once:
+# taking a relic back out doesn't undo it. Tar'Besh's 8, Relic Appraisal, adds a quarter to the Scrip.
+const MUSEUM_STEP := 5
+const MUSEUM_SCRIP := [250, 500]     # at 5 and 10 relics; after that, 50 a relic (15 relics: 750)
+const RELIC_APPRAISAL := 1.25
+var museum_thanked: Array = []     # the counts already thanked (5, 10...), saved
+
+
+func _museum_thanks() -> void:
+	var m := MUSEUM_STEP
+	while m <= museum_gifts.size():
+		if not museum_thanked.has(m):
+			museum_thanked.append(m)
+			var k: int = m / MUSEUM_STEP - 1
+			var scrip: int = int(MUSEUM_SCRIP[k]) if k < MUSEUM_SCRIP.size() else m * 50
+			if _flag("perk_relic_appraisal"):
+				scrip = int(round(scrip * RELIC_APPRAISAL))
+			_money(scrip, "The museum's thanks")
+			sfx("quest")
+			_toast("Tar'Besh: %d relics in the cases. The museum's thanks: +%d scrip%s" % [m, scrip,
+					" (appraised)" if _flag("perk_relic_appraisal") else ""])
+			if m == 5:
+				send_mail("tarbesh_museum_5", 1)
+			elif m == 10:
+				send_mail("tarbesh_museum_10", 1)
+		m += MUSEUM_STEP
 
 
 func museum_take(slot: int) -> void:

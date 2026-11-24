@@ -128,10 +128,19 @@ func run() -> void:
 	var kinds: Array = s._cav_mob_kinds(7)
 	s.cav_next = {"floor": 7, "kinds": kinds}
 	assert(s._cav_mob_kinds(7) == kinds, "the radar's floor below is the floor you get")
+	# The museum's thanks at five relics (main.gd _museum_thanks), with Tar'Besh's Relic Appraisal, and only once
+	var cash: int = s.credits
+	s.museum_gifts = {"0": "relic_pilgrim_bell", "1": "relic_station_crest", "2": "relic_duellist_bell",
+		"3": "relic_convoy_charm", "4": "relic_garden_seeds"}
+	s._museum_thanks()
+	assert(s.credits == cash + int(round(250 * s.RELIC_APPRAISAL)) and s.mail_due.has("tarbesh_museum_5"), "five relics")
+	s._museum_thanks()
+	assert(s.credits == cash + int(round(250 * s.RELIC_APPRAISAL)), "the museum thanks you once")
+	s.museum_gifts = {}
 	# Letters (scripts/mail_data.gd): the events sent theirs (the first choice always sends, even in Job's 4 and
 	# Tar'Besh's 4), and they come with the next morning's post. A letter's gift goes in your pack once.
 	for id in MailData.LETTERS:
-		if id != "welcome" and id != "vzzket_caverns":
+		if not id in ["welcome", "vzzket_caverns", "tarbesh_museum_5", "tarbesh_museum_10"]:      # sent by the story, the museum
 			assert(s.mail_due.has(id), id + " was sent by its heart event")
 	var morning: int = s.day
 	for id in s.mail_due:

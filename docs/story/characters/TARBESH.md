@@ -38,7 +38,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tarbesh_2` to `ta
 - **S.A.R.A.** speaks over the museum speakers in 2 and from her dais in 6, with her clips (`summon_screen`, `warning`, `glitch_interrupt`, `conjure_teacup`); the tea steams.
 - **To test:** in a debug build, **F3** plays the next event in order.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
-- **Not in yet:** Relic Appraisal in play (the museum has no donations yet); the plaque in the Sanctum and the astrolabe as art (on the Art Fix List).
+- **In play since 24 Nov:** Relic Appraisal: the museum pays you for every 5 relics you give (250 Scrip at 5, 500 at 10, with a letter and a gift each; `main.gd _museum_thanks`), and the perk adds a quarter to that Scrip. **Not in yet:** the plaque in the Sanctum and the astrolabe as art (on the Art Fix List).
 
 ---
 
@@ -125,7 +125,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tarbesh_2` to `ta
 
 ## ♥8 Every Kind of Mind (was "Keeper of the Starborn")
 
-**Trigger:** the Sanctum 18:30–23:00 with Tar'Besh at 8 hearts. Perk: Relic Appraisal (+25% Scrip on museum donations). Renamed so the title doesn't give the Convergence away.
+**Trigger:** the Sanctum 18:30–23:00 with Tar'Besh at 8 hearts. Perk: Relic Appraisal (+25% Scrip on museum donations: the thanks every 5 relics, since 24 Nov). Renamed so the title doesn't give the Convergence away.
 
 - *[The Sanctum after hours. Violet light from the braziers. Tar'Besh kneels before the three crystals, a small brass plaque in his hands.]*
 - **TAR'BESH:** "Ah. You'll want to see this before I lose my nerve."

@@ -214,6 +214,31 @@ const LETTERS := {
 		"sign": "S.A.R.A.",
 	},
 	# Tar'Besh 4, Next Assignment: only if you told him they meant him to die and he lived anyway
+	# The museum's thanks (main.gd _museum_thanks): 5 relics in the cases, then 10
+	"tarbesh_museum_5": {
+		"from": "Tar'Besh",
+		"title": "Five cases",
+		"body": [
+			"Friend,",
+			"Five cases that were empty are not empty. I have stood in front of each one longer than a curator should admit.",
+			"A museum is a promise that somebody will remember. You are keeping it for people you never met.",
+			"Job says the caverns keep their best things wrapped in rock. Here are three. Take them to his bench.",
+		],
+		"sign": "Tar'Besh, curator",
+		"gift": {"cavern_geode": 3},
+	},
+	"tarbesh_museum_10": {
+		"from": "Tar'Besh",
+		"title": "Ten",
+		"body": [
+			"Friend,",
+			"Ten. The children have begun arguing about which case is best. That is how you know a museum is alive.",
+			"This sapphire came to me my first year here, in a pilgrim's offering bowl. I never knew what it was for. Now I do.",
+			"Keep looking. The cases are patient, and so am I.",
+		],
+		"sign": "Tar'Besh",
+		"gift": {"void_sapphire": 1},
+	},
 	"tarbesh_letter": {
 		"from": "Tar'Besh",
 		"title": "A better letter",
