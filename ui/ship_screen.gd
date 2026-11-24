@@ -431,8 +431,9 @@ func scope(r: Rect2, pattern: int = 1, hostile: bool = false) -> void:
 
 # A window onto a backdrop picture (24 Nov, Zachary's Space Backgrounds pack, 640 x 360): area is the whole scene
 # the picture covers (both ship windows in a fight, so the two read as one view of space) and r the window showing
-# its part. The picture covers area at a whole number of screen pixels per art pixel, centred; the scope's rim and
-# corner marks go over it. No picture: a plain scope.
+# its part. The picture covers area at a whole number of screen pixels per art pixel, centred; over it go the
+# scope's grid dots, darker edges, rim and corner marks (Zachary's pick C, 24 Nov: the scene seen through the
+# scope, behind the ships). No picture: a plain scope.
 func backdrop(r: Rect2, tex: Texture2D, area: Rect2, hostile: bool = false) -> void:
 	if tex == null:
 		scope(r, 1, hostile)
@@ -535,7 +536,18 @@ func _scope_texture(w: int, h: int, pattern: int, hostile: bool, frame_only: boo
 	w = maxi(w, 24)
 	h = maxi(h, 24)
 	var image := Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
-	if not frame_only:
+	if frame_only:
+		# over a backdrop: the window's edges darken (a vignette), and the scope's grid dots show faintly
+		for yy in range(h):
+			for xx in range(w):
+				var e: float = maxf(absf(float(xx) / w - 0.5), absf(float(yy) / h - 0.5)) * 2.0
+				var a: float = pow(clampf((e - 0.55) / 0.45, 0.0, 1.0), 1.5) * 0.47
+				if a > 0.0:
+					image.set_pixel(xx, yy, Color(0.03, 0.04, 0.06, a))
+		for xx in range(12, w, 14):
+			for yy in range(10, h, 14):
+				image.set_pixel(xx, yy, Color(0.47, 0.55, 0.5, 0.3))
+	else:
 		image.fill(Color("433f3c") if hostile else Color("3d4946"))
 		var dots := [Color("708076"), Color("6b7972"), Color("5b6b62"), Color("7f8b7e")]
 		for i in range(int(w * h / 180.0)):

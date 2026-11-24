@@ -301,7 +301,8 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	e_flee = -1.0
 	hazard = str(fight.get("hazard", ""))
 	hazard_t = randf_range(6.0, 10.0)
-	var bd := "res://art/ships/backdrops/%s.png" % str(fight.get("backdrop", "empty"))
+	# the pushed-back copy (tools/dev/backdrop_depth.py: less colour and contrast, darker), so the ships stand in front
+	var bd := "res://art/ships/backdrops/far/%s.png" % str(fight.get("backdrop", "empty"))
 	backdrop_tex = load(bd) if ResourceLoader.exists(bd) else null
 	augments = fight.get("augments", [])
 	# your ship: the starter, or another from the fight (boarding test, F6; later Freya's quest and Eshu's captures)
