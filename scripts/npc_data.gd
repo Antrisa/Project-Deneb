@@ -102,7 +102,7 @@ const PEOPLE = {
 		"id": "freya",
 		"pitch": 1.25,
 		"first": [
-			"[happy] Hey, you're the pilot! Freya. I keep the heat running, mostly by hitting it.",
+			"[happy] Hey, you're the pilot! {name}, right? I'm Freya. I keep the heat running, mostly by hitting it.",
 			"[sad] That bay your ship is sitting in was my dad's. He was shipwright here. Built half of what still works.",
 			"One day I'm going to get the whole docking suite running again. Your wreck is good practice.",
 		],
@@ -435,7 +435,7 @@ const FAREWELLS = {
 		"If you find salvage out there with no owner, you know where I am."],
 	"Vzz'ket": ["You leave with the tunnels half cleared. The tunnels will wait.",
 		"Fly the way you fight. Straight at it."],
-	"Ix'ali": ["Your guard has improved. Keep it up, out there.", "Go well, pilot."],
+	"Ix'ali": ["Your guard has improved. Keep it up, out there.", "Go well, {name}."],
 	"Garrick": ["Clear skies. If you see Chernobog markings out there, run first and be brave later."],
 	"Rusk": ["[happy] Off, are you? One for the road, on the house. Don't tell anyone, it'll ruin me."],
 	"Zaas": ["Out to the stars, then. I'd have liked to show you the sea, if we ever find it.", "Safe travels."],

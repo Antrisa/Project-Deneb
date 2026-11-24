@@ -3006,7 +3006,7 @@ const EVENTS := {
 					["sfx", "click"], ["wait", 0.4], ["sfx", "coin"],
 					["say", "", ["The lamp comes on, and stays on. Warm light across the whole counter."]],
 					["emote", "Rusk", "joy"], ["pose", "Rusk", "laugh"],
-					["say", "Rusk", ["[happy] One out of three! Before breakfast! Pilot, you've ruined me for other helpers."]],
+					["say", "Rusk", ["[happy] One out of three! Before breakfast! {name}, you've ruined me for other helpers."]],
 					["pose", "Rusk", ""]]},
 				{"text": "Why bother? The whole place is a ruin.", "steps": [
 					["pose", "Rusk", "sad"],
@@ -3053,7 +3053,7 @@ const EVENTS := {
 					["say", "Rusk", ["[bashful] ...Don't you tell Kit. He'd be heartbroken it wasn't a whale."]],
 					["emote", "Rusk", "love"]]},
 				{"text": "So it was all a lie?", "steps": [
-					["say", "Rusk", ["[sad] All my stories are lies, pilot. That's what makes them safe to tell."]],
+					["say", "Rusk", ["[sad] All my stories are lies, {name}. That's what makes them safe to tell."]],
 					["friendship", "Rusk", -20]]}]],
 			["flag", "rusk_tail"],
 		],
@@ -3093,7 +3093,7 @@ const EVENTS := {
 					["pose", "Rusk", ""], ["emote", "Rusk", "love"]]},
 				{"text": "Maybe it's time to let it go.", "steps": [
 					["pose", "Rusk", "sad"],
-					["say", "Rusk", ["[sad] I've let go of everything else, pilot. I'll keep the sign."]],
+					["say", "Rusk", ["[sad] I've let go of everything else, {name}. I'll keep the sign."]],
 					["pose", "Rusk", ""],
 					["friendship", "Rusk", -20]]}]],
 			["say", "", ["He doesn't put the sign back in the chest. He props it against the armchair, where he can see it from the bed."]],
@@ -3297,7 +3297,7 @@ const EVENTS := {
 				[["say", "Ix'ali", ["The machine's box and I have the gate tonight. Go, before I change my mind."]]],
 				[["say", "Ix'ali", ["I have the gate tonight. And on Fridays, it seems. Go, before I change my mind."]]]],
 			["face", "Rusk", "player"],
-			["say", "Rusk", ["You've known him longest, pilot. Who keeps the gate tonight?"]],
+			["say", "Rusk", ["You've known him longest, {name}. Who keeps the gate tonight?"]],
 			["choose", [
 				{"text": "Ix'ali does. Vzz'ket's coming for a drink.", "friendship": 60, "steps": [
 					["face", "Vzz'ket", "player"], ["wait", 0.8],
@@ -3544,7 +3544,7 @@ const SCENES := {
 		"steps": [
 			["wait", 0.4],
 			["walk", "player", 59, 59],
-			["say", "Bram", ["[happy] Pilot! Pilot, wait there!"]],
+			["say", "Bram", ["[happy] {name}! {name}, wait there!"]],
 			["emote", "player", "surprise"],
 			["walks", [["Bram", 58, 61], ["Jasper", 60, 61]]],
 			["face", "Bram", "player"], ["face", "Jasper", "player"],
@@ -3597,7 +3597,7 @@ const SCENES := {
 			["face", "Bram", "u"],
 			["say", "Bram", ["Your field's in the agri dome, up the corridor to the north. Talk to any of us at work to shop."]],
 			["face", "Bram", "player"], ["pose", "Bram", "wave"],
-			["say", "Bram", ["[happy] Good luck, pilot."]],
+			["say", "Bram", ["[happy] Good luck, {name}."]],
 			["pose", "Jasper", "wave"],
 			["say", "Jasper", ["[happy] Six o'clock! The stew waits for no one."]],
 			["pose", "Bram", ""], ["pose", "Jasper", ""],

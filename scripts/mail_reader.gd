@@ -179,7 +179,9 @@ func _paint_letter(r: Rect2, id: String) -> void:
 	s.rect(Rect2(x, y, w, 1), ShipScreen.RULE)
 	y += 12.0
 	for para in letter.get("body", []):
-		y = s.wrap_text(x, y, w, str(para), "body", ShipScreen.INK, 17.0)
+		# {name} and the pronouns, as residents say them (scripts/player_maker.gd with_pronouns)
+		var said: String = world.maker.with_pronouns(str(para), world.appearance) if world.maker != null else str(para)
+		y = s.wrap_text(x, y, w, said, "body", ShipScreen.INK, 17.0)
 		y += 7.0
 	var sign: String = str(letter.get("sign", ""))
 	if sign != "":

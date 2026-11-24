@@ -133,10 +133,36 @@ func option_count(key: String) -> int:
 	return names.size()
 
 
-# Swaps {they}, {them}, {their}... in a line of dialogue for he or she, from the player's gender.
+# The player's name (24 Nov): typed on the character screen, kept in the look. At most NAME_MAX letters,
+# digits, spaces, hyphens and apostrophes; "" until one is given.
+const NAME_MAX := 14
+const NAME_FALLBACK := "Pilot"
+
+
+static func clean_name(s: String) -> String:
+	var out := ""
+	for i in s.length():
+		var c := s[i]
+		if c.to_upper() != c.to_lower() or c.is_valid_int() or c in [" ", "-", "'"]:
+			out += c
+	out = out.strip_edges()
+	while out.contains("  "):
+		out = out.replace("  ", " ")
+	return out.substr(0, NAME_MAX)
+
+
+# What residents call you: your name, or "Pilot" if you haven't given one.
+static func display_name(look: Dictionary) -> String:
+	var n := clean_name(str(look.get("name", "")))
+	return n if n != "" else NAME_FALLBACK
+
+
+# Swaps {they}, {them}, {their}... in a line of dialogue for he or she, from the player's gender, and
+# {name} for the player's name.
 func with_pronouns(line: String, look: Dictionary) -> String:
 	if line.find("{") == -1:
 		return line
+	line = line.replace("{name}", display_name(look))
 	var which: int = 1 if int(look.get("body", 0)) == 1 else 2      # she for Female, he for Male
 	var out: String = line
 	for word in WORDS:
@@ -170,6 +196,7 @@ func tidy(look: Dictionary) -> Dictionary:
 	for k in PALETTES:
 		if look.has(k) and Color.html_is_valid(str(look[k])):
 			out[k] = str(look[k])
+	out["name"] = clean_name(str(look.get("name", "")))
 	# clothes are the player's to choose again (24 Nov); the hairstyle stays the gender's own
 	for k in CLOTHES:
 		if look.has(k):

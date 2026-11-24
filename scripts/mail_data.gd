@@ -85,7 +85,7 @@ const LETTERS := {
 		"from": "Tikka",
 		"title": "A better memory",
 		"body": [
-			"Pilot,",
+			"{name},",
 			"Since Jorvik's last run, every launch I've called has sounded like that one to me. Right up until the shaking.",
 			"Last night one went right. A clean note, all the way out past the doors. I'm keeping that one instead.",
 			"Thank you for easing off. And for taking her with you. Bring her back in one piece. The ship too, if you can manage both.",
@@ -253,7 +253,7 @@ const LETTERS := {
 		"from": "Rusk",
 		"title": "How Ilsa grew them",
 		"body": [
-			"Pilot,",
+			"{name},",
 			"Ilsa wrote this on the back of a menu. I'll keep the menu.",
 			"Dig a bed or set down a hydroponic one, and keep it watered. Eight days to the first bunch, then a bunch every three days while you tend it. Plant a bunch and it grows you another vine.",
 			"Bring me five and I'll fill the cask. Three days, and you've a bottle of Nebula wine. Ship it: Bram's cousins pay what it's worth, and it's worth a lot.",

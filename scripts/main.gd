@@ -113,7 +113,7 @@ const BOARD := [
 	{"who": "Tikka", "item": "copper_bar", "n": 2, "pay": 50, "text": "WANTED: 2 copper bars for rewiring. 50 cr. - Tikka",
 			"thanks": "[love] Copper! Real copper! Do you know what I have been using? Do not ask what I have been using."},
 	{"who": "Freya", "item": "iron_bar", "n": 1, "pay": 25, "text": "Need 1 iron bar for a pump bracket. 25 cr. - Freya",
-			"thanks": "[happy] Perfect. Pump four is going to hate this. Thanks, pilot."},
+			"thanks": "[happy] Perfect. Pump four is going to hate this. Thanks, {name}."},
 	{"who": "Jasper", "item": "copper_ore", "n": 3, "pay": 30, "text": "Copper ore, 3 pieces. I am told it makes a superior saucepan. 30 cr. - Jasper",
 			"thanks": "[love] Magnifique! Tikka will beat these into a pan, and then we will see who laughs at ration pack six."},
 	{"who": "Zaas", "item": "iron_ore", "n": 4, "pay": 35, "text": "REQUIRED: 4 iron ore, for sounding weights. 35 cr. - Capt. Zaas",
@@ -2138,7 +2138,7 @@ func _at_workplace(who: String) -> bool:
 func _plain_intro(who: String) -> String:
 	var facts: Array = BridgeScript.RESIDENTS.get(who, [])
 	var role: String = str(facts[0]).to_lower() if not facts.is_empty() else "one of the crew"
-	return "[happy] You're the pilot Sara pulled out of the wreck! I'm %s, %s. Come and find me at work some time and I'll say hello properly." % [who, role]
+	return "[happy] You must be {name}, the pilot Sara pulled out of the wreck! I'm %s, %s. Come and find me at work some time and I'll say hello properly." % [who, role]
 
 
 # What they say first on a day of the week that's different for them: their days off, or the days they

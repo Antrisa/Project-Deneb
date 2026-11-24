@@ -1,11 +1,13 @@
 extends CanvasLayer
 # The "who are you?" screen (24 Nov: redrawn in the Terran datapad style of the other screens, ui/ship_screen.gd,
-# and the clothes are back). Pick a gender, a top and a bottom, and the hair, eye, skin and clothes colours.
+# and the clothes are back). Type your name (residents use it), pick a gender, a top and a bottom, and the hair,
+# eye, skin and clothes colours.
 # Each gender keeps one hairstyle (scripts/player_maker.gd STARTER_LOOKS).
 # Shown at the start of a new game, and again from the wardrobe in your apartment.
 #   - Left: you, walking on the spot from the front, back and both sides; under that, for a colour line, the
 #     preset swatches and hue / saturation / lightness sliders (click or drag).
-#   - Right: the choices. Click a line's arrows (or Up / Down then Left / Right) to change it.
+#   - Right: the choices. Click a line's arrows (or Up / Down then Left / Right) to change it. The Name line takes
+#     typing: click it (or press Enter on it) and type; Enter, Tab or a click elsewhere finishes.
 #   - Shuffle (R) picks random clothes and colours; Starter look (Home) puts the gender's own back; Start / Done
 #     (E or Enter) keeps it. Esc leaves the wardrobe without changing anything.
 # main.gd passes key presses here while it is open; clicks come straight to the screen.
@@ -16,7 +18,7 @@ const ShipScreen = preload("res://ui/ship_screen.gd")
 
 # What each line of the screen changes: [key in the look, label]
 const ROWS := [
-	["body", "Gender"], ["tops", "Top"], ["bottoms", "Bottom"],
+	["name", "Name"], ["body", "Gender"], ["tops", "Top"], ["bottoms", "Bottom"],
 	["hairColor", "Hair colour"], ["eyeColor", "Eyes"], ["skinColor", "Skin"],
 	["topColor", "Top colour"], ["bottomColor", "Bottom colour"],
 ]
@@ -37,6 +39,7 @@ var _sheet: Texture2D
 var _time := 0.0
 var _drag := -1              # the slider being dragged (0 hue, 1 saturation, 2 lightness), -1 none
 var _sliders: Array = []     # [axis, Rect2] of each slider bar as last drawn
+var _typing := false         # keys go into the name
 
 
 func _ready() -> void:
@@ -55,6 +58,8 @@ func show_for(start_look: Dictionary, is_first_time: bool) -> void:
 	first_time = is_first_time
 	row = 0
 	_drag = -1
+	# a new crew member starts by typing their name
+	_typing = first_time and str(look.get("name", "")) == ""
 	open = true
 	visible = true
 	_refresh()
@@ -83,6 +88,9 @@ func _process(delta: float) -> void:
 
 func _change(index: int, by: int) -> void:
 	var key: String = ROWS[index][0]
+	if key == "name":
+		_typing = true
+		return
 	if key == "body":
 		# the other gender's hair and starter clothes, keeping any colours already picked
 		var n: int = maker.option_count(key)
@@ -90,7 +98,9 @@ func _change(index: int, by: int) -> void:
 		var colours := {}
 		for k in MakerScript.PALETTES:
 			colours[k] = look[k]
+		var name_kept: String = str(look.get("name", ""))
 		look = maker.defaults(next)
+		look["name"] = name_kept
 		if not (first_time and _starter_colours(colours, 1 - next)):
 			look.merge(colours, true)
 	elif MakerScript.NAMES.has(key):
@@ -114,20 +124,26 @@ func _starter_colours(colours: Dictionary, body: int) -> bool:
 func _shuffle() -> void:
 	# Shuffle changes the clothes and colours; gender (and so the hairstyle) stays as chosen.
 	var keep_body: int = int(look.get("body", 0))
+	var name_kept: String = str(look.get("name", ""))
 	look = maker.random_look()
 	look["body"] = keep_body
+	look["name"] = name_kept
 	look = maker.tidy(look)
 	world.sfx("click", 0.9)
 	_refresh()
 
 
 func _use_starter() -> void:
+	var name_kept: String = str(look.get("name", ""))
 	look = maker.defaults(int(look.body))
+	look["name"] = name_kept
 	world.sfx("click", 1.2, -6.0)
 	_refresh()
 
 
 func _finish() -> void:
+	_typing = false
+	look["name"] = MakerScript.clean_name(str(look.get("name", "")))
 	open = false
 	visible = false
 	_drag = -1
@@ -143,7 +159,41 @@ func _leave() -> void:
 	world.sfx("click", 0.9)
 
 
+# While the name is being typed, every key goes to it first (before main.gd's own keys such as music).
+func _input(event: InputEvent) -> void:
+	if not open or not _typing:
+		return
+	var key := event as InputEventKey
+	if key == null or not key.pressed:
+		return
+	get_viewport().set_input_as_handled()
+	var name_now: String = str(look.get("name", ""))
+	match key.keycode:
+		KEY_ENTER, KEY_KP_ENTER, KEY_TAB, KEY_ESCAPE:
+			_typing = false
+			look["name"] = MakerScript.clean_name(name_now)
+			if key.keycode == KEY_TAB:
+				row = 1
+			return
+		KEY_UP, KEY_DOWN:
+			_typing = false
+			look["name"] = MakerScript.clean_name(name_now)
+			row = (row + (1 if key.keycode == KEY_DOWN else ROWS.size() - 1)) % ROWS.size()
+			return
+		KEY_BACKSPACE:
+			if name_now.length() > 0:
+				look["name"] = name_now.substr(0, name_now.length() - 1)
+			return
+	if key.unicode > 31 and name_now.length() < MakerScript.NAME_MAX:
+		var c := String.chr(key.unicode)
+		if MakerScript.clean_name("a" + c) != "a" or c == " ":
+			look["name"] = name_now + c
+			world.sfx("click", 1.4, -12.0)
+
+
 func handle_input(event: InputEvent) -> void:
+	if _typing:
+		return
 	if event.is_action_pressed("move_up", true):
 		row = (row + ROWS.size() - 1) % ROWS.size()
 	elif event.is_action_pressed("move_down", true):
@@ -153,7 +203,10 @@ func handle_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("move_right", true):
 		_change(row, 1)
 	elif event.is_action_pressed("interact"):
-		_finish()
+		if ROWS[row][0] == "name":
+			_typing = true
+		else:
+			_finish()
 	elif event.is_action_pressed("cancel") and not first_time:
 		_leave()
 	else:
@@ -165,7 +218,10 @@ func handle_input(event: InputEvent) -> void:
 				KEY_HOME:
 					_use_starter()
 				KEY_ENTER, KEY_KP_ENTER:
-					_finish()
+					if ROWS[row][0] == "name":
+						_typing = true
+					else:
+						_finish()
 
 
 # Clicks reach the screen directly (ui/ship_screen.gd); main.gd's own click handling leaves them be.
@@ -179,10 +235,15 @@ func _click(id: String, at: Vector2, button: int) -> void:
 		return
 	if button != MOUSE_BUTTON_LEFT:
 		return
+	if _typing and id != "row/0":
+		_typing = false
+		look["name"] = MakerScript.clean_name(str(look.get("name", "")))
 	var parts := id.split("/")
 	match parts[0]:
 		"row":
 			row = parts[1].to_int()
+			if ROWS[row][0] == "name":
+				_typing = true
 		"prev":
 			row = parts[1].to_int()
 			_change(row, -1)
@@ -255,7 +316,8 @@ func _paint() -> void:
 	_paint_rows(choices)
 	# the bottom row
 	s.shift(s.bottom_left())
-	s.text_fit(61, ShipScreen.STATUS_Y, 360, "Up / Down choose a line, Left / Right change it. R shuffles.", "label", ShipScreen.INK)
+	var hint := "Type your name; Enter when done. Residents will call you by it." if _typing else "Up / Down choose a line, Left / Right change it. R shuffles."
+	s.text_fit(61, ShipScreen.STATUS_Y, 360, hint, "label", ShipScreen.INK)
 	s.shift(s.bottom_right())
 	s.button("shuffle", Rect2(355, 388, 84, 22), "Shuffle")
 	s.button("starter", Rect2(445, 388, 104, 22), "Starter look")
@@ -360,6 +422,19 @@ func _paint_rows(r: Rect2) -> void:
 		s.text(line.position.x + 8.0, line.position.y + 5.0, str(ROWS[i][1]), "label", ShipScreen.INK if i == row else ShipScreen.MUTED)
 		var value_x: float = line.position.x + 104.0
 		var value_w: float = line.end.x - value_x - 30.0
+		if key == "name":
+			# a text box instead of arrows
+			var box := Rect2(value_x - 2.0, line.position.y + 2.0, line.end.x - value_x - 2.0, line.size.y - 4.0)
+			s.frame(box, ShipScreen.IVORY, ShipScreen.ORANGE if _typing else Color("c3b8a5"), Color("fffdf7"), Color("e6dcc6"))
+			var shown: String = str(look.get("name", ""))
+			if shown == "" and not _typing:
+				s.text(box.position.x + 6.0, line.position.y + 5.0, "Type a name", "label", Color("a8a69e"))
+			else:
+				s.text(box.position.x + 6.0, line.position.y + 5.0, shown, "label", ShipScreen.INK)
+			if _typing and int(_time * 2.0) % 2 == 0:
+				s.rect(Rect2(box.position.x + 7.0 + s.width(shown, "label"), line.position.y + 5.0, 1.0, 13.0), ShipScreen.INK)
+			y += ROW_H
+			continue
 		s.button("prev/%d" % i, Rect2(value_x - 2.0, line.position.y + 2.0, 20.0, line.size.y - 4.0), "<")
 		s.button("next/%d" % i, Rect2(line.end.x - 24.0, line.position.y + 2.0, 20.0, line.size.y - 4.0), ">")
 		var mid := Rect2(value_x + 22.0, line.position.y, value_w - 22.0, line.size.y)
