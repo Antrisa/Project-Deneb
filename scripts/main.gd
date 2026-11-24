@@ -197,6 +197,9 @@ var garden_busy := false
 var farm := {}
 var farm_view: Node2D               # scripts/agri_terrain.gd, which draws the field
 var seeds_taken_day := -1
+# The watering can holds CAN_CAPACITY pours; fill it at the water tap in the Agri dome (Zachary, 24 Nov).
+const CAN_CAPACITY := 40
+var can_water := CAN_CAPACITY
 var welcomed := false             # Bram and Jasper's first-morning scene outside your door has played (_welcome_visit)
 var travelling := false
 var portals := {}
@@ -5049,6 +5052,7 @@ func _save_game() -> void:
 	cfg.set_value("home", "machines", machines)
 	cfg.set_value("farm", "seeds_taken_day", seeds_taken_day)
 	cfg.set_value("game", "welcomed", welcomed)
+	cfg.set_value("farm", "can_water", can_water)
 	cfg.set_value("shops", "known_recipes", shops.known_recipes)
 	cfg.set_value("shops", "wearing", shops.wearing)
 	cfg.set_value("access", "doors", door_locks)
@@ -5158,6 +5162,7 @@ func _load_game() -> void:
 		farm = saved_farm
 	seeds_taken_day = int(cfg.get_value("farm", "seeds_taken_day", -1))
 	# Saves from before the welcome visit (23 Nov) are past day one or already have their tools.
+	can_water = clampi(int(cfg.get_value("farm", "can_water", CAN_CAPACITY)), 0, CAN_CAPACITY)
 	welcomed = bool(cfg.get_value("game", "welcomed", day > 1 or int(items.get("hoe", 0)) > 0))
 	var saved_recipes = cfg.get_value("shops", "known_recipes", [])
 	shops.known_recipes = saved_recipes if saved_recipes is Array else []
@@ -5685,7 +5690,7 @@ func _activity_dialogue(who: String) -> String:
 
 func _water_garden(t: Dictionary) -> void:
 	if current_area == "agri":
-		_irrigate(t)
+		_refill_can(t)
 		return
 	if garden_watered_day==day:
 		_toast("The garden has enough water for today")
@@ -5791,6 +5796,10 @@ func _farm_use(use: String, item: String) -> void:
 		return
 	if swing_cd > 0.0:
 		return
+	if use == "water" and can_water <= 0:
+		sfx("deny")
+		_toast("The can is empty. Fill it at the water tap in the Agri dome.")
+		return
 	swing_cd = 0.4
 	if not _farm_energy(): return
 	player.face(Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
@@ -5803,6 +5812,9 @@ func _farm_use(use: String, item: String) -> void:
 		if on_field and not farm.has(tile):
 			farm[tile] = {"crop": "", "age": 0, "watered": -1}
 	elif use == "water":
+		can_water -= 1
+		if can_water == 0:
+			_toast("That was the last of the water. Fill up at the water tap.")
 		sfx("water_pour")
 		var splash := preload("res://scripts/watering_effect.gd").new()
 		splash.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 4)
@@ -5861,26 +5873,27 @@ func _grow_crops() -> void:
 	if farm_view != null: farm_view.sync_crops()
 
 
-# The irrigation valve in the Agri dome waters every dug tile at once.
-func _irrigate(t: Dictionary) -> void:
-	if farm.is_empty():
-		_toast("Nothing dug to water yet. Take a hoe from the shed.")
+# The water tap in the Agri dome (it was the irrigation valve, which watered every dug tile at once) fills the
+# watering can (Zachary, 24 Nov). Watering is by hand, one tile a pour, so hydroponic beds are worth their price.
+func _refill_can(t: Dictionary) -> void:
+	if _count("watering_can") <= 0:
+		_toast("The tap runs clear and cold. You'll need a watering can.")
+		return
+	if can_water >= CAN_CAPACITY:
+		_toast("Your watering can is already full (%d pours)." % CAN_CAPACITY)
 		return
 	garden_busy = true
 	player.frozen = true
 	var effect := preload("res://scripts/watering_effect.gd").new()
 	effect.position = t.pos + Vector2(0, -12)
 	actors.add_child(effect)
-	_toast("Opening the irrigation valve…")
-	sfx("valve_spray")
-	await get_tree().create_timer(1.4).timeout
+	sfx("can_refill")
+	await get_tree().create_timer(0.8).timeout
 	effect.queue_free()
-	for tile in farm:
-		farm[tile]["watered"] = day
+	can_water = CAN_CAPACITY
 	garden_busy = false
 	player.frozen = false
-	if farm_view != null: farm_view.sync_crops()
-	_toast("Every dug tile is watered")
+	_toast("Watering can full: %d pours" % CAN_CAPACITY)
 
 
 # ---------------------------------------------------------------- your first morning (Zachary, 23 Nov)

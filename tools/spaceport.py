@@ -215,7 +215,7 @@ def build(g):
     # No set dressing anywhere in the district (Zachary, 23 Nov: "remove all the set dressings like i said except
     # the sale bin and message box"). What's left works: the shipping crate and the message pad on the porch, the
     # seed rack, garden tools and irrigation valve for your field, and the workbench that opens the Crafting page.
-    N('hydroponics', 45, 29.5, 'Irrigation valve', 'garden', 'Water')     # waters every tilled tile at once
+    N('hydroponics', 45, 29.5, 'Water tap', 'garden', 'Fill your can')     # fills the watering can (Zachary, 24 Nov)
     a.thing('look', 'Broken agri dome', 'Look', 58, 22, 60)
     # By the dome's door: the seed rack and the garden tools (they were on the porch until 23 Nov).
     N('seed_rack', 51, 38.5, 'Seed rack', 'seeds', 'Take seeds'); N('garden_tools', 59.5, 38.5, 'Garden tools', 'farm_tools', 'Take')
