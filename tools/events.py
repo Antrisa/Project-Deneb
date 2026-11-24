@@ -71,13 +71,10 @@ FACES = {
     "rusk": dict(eyes=((8, 13), (14, 13)),
                  colours=dict(skin="#e67543", lid="#decdac", white="#f6ecd4", pupil="#2a1a12",
                               brow="#563f2f", tear="#93e6ea")),
-    # Bram and Ooma (23 Nov, for their heart events): eyes from tools/fix_eyes.py
+    # Bram (23 Nov, for his heart events): eyes from tools/fix_eyes.py
     "bram": dict(eyes=((7, 17), (16, 17)),
                  colours=dict(skin="#b1b852", lid="#d9cd83", white="#f8e9bc", pupil="#200711",
                               brow="#331e1d", tear="#93e6ea")),
-    "ooma": dict(eyes=((10, 14), (15, 14)),
-                 colours=dict(skin="#b86d70", lid="#dece86", white="#f0e3a0", pupil="#130518",
-                              brow="#3f1f2e", tear="#93e6ea")),
     # Zaas and Merrow (23 Nov, for his heart events): eyes from tools/fix_eyes.py; Zaas's "skin" is his teal face,
     # under the hat brim
     "zaas": dict(eyes=((10, 20), (16, 20)),

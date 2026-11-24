@@ -1,7 +1,7 @@
 # Bram: heart events and his week (23 Nov 2026)
 
 **Decided with Zachary, 23 Nov:**
-- **Everyone gets their own arc**, and side arcs are 2–3 scenes. Bram's arc is his own; what he shares with Ooma is the side arc in [`BRAM_OOMA.md`](BRAM_OOMA.md).
+- **Everyone gets their own arc**, and side arcs are 2–3 scenes. Bram's arc is his own. A side arc with Ooma, the Merchant Guild of Two, was written and then cut the same day, with Ooma's own arc (Zachary: "maybe no heart events for oma shes just a wandering trader"); the drafts are in git history.
 - **Who he is:** the general store owner. He sells seeds, fertiliser, basic goods and crafting recipes. Through his contacts with other Moogli merchants he sells what you put in your shipping crate: it goes up in his cargo pod overnight.
 - **His week:** **Thursdays off**, with a quiet jab at a certain other general store ("Only a fool closes on a Wednesday. So: Thursday."), and a **half day on Sunday**.
 - **His 8's reward:** a **Moogli trade beacon**. In the space segment you spend one fuel to call a store to you.

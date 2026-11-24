@@ -271,8 +271,6 @@ var leviathan_slain := false     # the sea monster on floor 45 (the Harbinger is
 # already keeps. Residents' weekly days (MapData.SCHEDULE_DAYS) change with them.
 var story_flags := {}
 var rusk_cask := {}                # Rusk's cask (his 8): {"bottles": n, "ready": day} while your grapes ferment (saved)
-var ooma_order := {}               # Ooma's catalogue (Bram & Ooma's 8): {"item", "count", "day"} on its way (saved)
-var ooma_offered := -1             # the day Ooma last showed you the catalogue (once a visit; not saved)
 # Places the story opens. Nothing opens them in play yet (the Custodians' bundles will); in debug builds F5
 # opens or closes them all, to test residents' days (22 Nov).
 const PLACE_FLAGS := ["east_dome", "suite_restored"]
@@ -2048,8 +2046,6 @@ func _talk(who: String) -> void:
 		_sara_repairs(_repair_to_mention())
 	elif who == "Rusk" and _rusk_cask_talk():
 		pass
-	elif who == "Ooma" and _ooma_order_talk():
-		pass
 	elif crew_cross.has(who) and day - int(crew_cross[who]) <= 1:
 		crew_cross.erase(who)
 		if persons.has(who):
@@ -2317,14 +2313,6 @@ func _start_run() -> void:
 	ShipRuns.place_contracts(run_stops, contracts, run_rng)
 	run_used = []
 	run_rng.seed = 104729 * day + Time.get_ticks_msec()
-	# Bram & Ooma's 5 (the tip-off): her coordinates put a wreck on the first ring of your next free flight, once
-	if _flag("guild_tip_wreck") and not _flag("guild_tip_used"):
-		story_flags["guild_tip_used"] = true
-		var tip: int = ShipRuns.add_hidden(run_stops, -1, "wreck field", run_rng, _rings_open())
-		run_stops[tip]["name"] = "Ooma's wreck"
-		run_stops[tip]["tip"] = true
-		run_stops[tip]["about"] = "The coordinates Ooma traded for Jasper's stew. Nobody else has them. Richer pickings than most."
-		_toast("Ooma's coordinates: a wreck on the first ring")
 	run_stop = -1
 	sfx("launch")
 	ship_map.open_run(run_stops, Callable(self, "_arrive_run"), Callable(self, "_fold_home"), _rings_open())
@@ -2358,19 +2346,6 @@ func _call_trader() -> void:
 	ship_store.open_store(ShipData.STORES["moogli_trader"].merged({"name": "Ollo family trader"}, true), Callable(self, "_back_to_map"))
 
 
-# Ooma's ship's stock; from her 8 (perk ooma_old_friend) everything there costs 20% less, and she pays a little
-# less for what you sell her too (sells_at is what her goods cost you).
-func _ooma_stock() -> Dictionary:
-	var stock: Dictionary = ShipData.STORES["ooma"]
-	if not _flag("perk_ooma_old_friend"):
-		return stock
-	var cut := 0.8
-	return stock.merged({"name": "Ooma's ship (old friend's price)", "markup": float(stock["markup"]) * cut,
-		"sells_at": float(stock["sells_at"]) * cut, "fuel": maxi(1, roundi(int(stock["fuel"]) * cut)),
-		"missiles": maxi(1, roundi(int(stock["missiles"]) * cut)), "drone_parts": maxi(1, roundi(int(stock["drone_parts"]) * cut)),
-		"repair": maxi(1, roundi(int(stock["repair"]) * cut))}, true)
-
-
 # Arrived at a stop on a free flight.
 func _arrive_run(i: int) -> void:
 	if augments.has("fuel_recycler") and run_rng.randf() < 0.2:
@@ -2394,16 +2369,14 @@ func _arrive_run(i: int) -> void:
 			var store_id: String = str(stop.get("store", ShipData.ZONE_STORE.get(zone, "moogli_trader")))
 			ship_store.open_store(ShipData.STORES[store_id].merged({"name": str(stop["name"])}, true), Callable(self, "_back_to_map"))
 		"ooma":
-			ship_store.open_store(_ooma_stock(), Callable(self, "_back_to_map"))
+			ship_store.open_store(ShipData.STORES["ooma"], Callable(self, "_back_to_map"))
 			if first_visit:
 				_say("Ooma", ["[happy] Well, look who's out past the lamp-posts! Off-station prices, off-station stock, dearie.",
 					"Rare guns, rare goods. Don't tell Bram where you saw me."])
 		"nest":
 			_nest_arrive()
 		"wreck":
-			# Ooma's wreck (the side arc's tip-off) salvages like one three rings further out
-			var level: int = ring + (3 if bool(stop.get("tip", false)) else 1)
-			var got: Dictionary = apply_space_effects(ShipRuns.reward(level, false, run_rng, "", relics_found).slice(1))
+			var got: Dictionary = apply_space_effects(ShipRuns.reward(ring + 1, false, run_rng, "", relics_found).slice(1))
 			ship_event.show_result(str(stop["name"]), "Nobody's here but the dead hulls. Your drone goes over them for anything worth taking.",
 					got["gains"], Callable(self, "_after_salvage"))
 		"quiet":
@@ -4185,63 +4158,6 @@ func _rusk_cask_keep() -> void:
 	_say("Rusk", ["[happy] Planting more? Good. She'd have liked a whole field of them."])
 
 
-# ---------------------------------------------------------------- Ooma's catalogue
-# Bram & Ooma's side arc, 8 (the NPC Master's "VIP Contraband Catalog", 23 Nov): each visit (Wednesdays and Saturdays)
-# Ooma's catalogue has one thing in it for you. Order it, pay now, and she brings it the next time she comes. One
-# order at a time; the offer changes every visit. Not counted as one of the day's chats (business), like Rusk's cask.
-# Prices are about twice what the things are worth (ShopData.VALUE): Claude's placeholders.
-const OOMA_CATALOGUE := [["void_sapphire", 1, 260], ["helium_3", 2, 380], ["cobalt_60", 2, 340],
-	["circuit_board", 3, 300], ["rare_earths", 4, 220], ["lithium_cell", 3, 240]]
-
-
-func _ooma_offer() -> Array:
-	# her visits in order: two a week (Wednesday, Saturday), so the offer changes each time she comes
-	var weekday: int = (day - 1) % 7
-	var visit: int = ((day - 1) / 7) * 2 + (1 if weekday >= 5 else 0)
-	return OOMA_CATALOGUE[visit % OOMA_CATALOGUE.size()]
-
-
-func _ooma_order_talk() -> bool:
-	if not _flag("guild_partners"):
-		return false
-	if not ooma_order.is_empty():
-		if day <= int(ooma_order["day"]):
-			return false
-		var item: String = str(ooma_order["item"])
-		var n: int = int(ooma_order["count"])
-		ooma_order = {}
-		_give(item, n)
-		sfx("quest")
-		_toast("+%d %s  (Ooma's catalogue)" % [n, _item_name(item).to_lower()])
-		_say("Ooma", ["[happy] Your order, pilot. %d %s, as promised. Do not ask where. You will only be disappointed by the answer." % [n, _item_name(item).to_lower()]])
-		return true
-	if ooma_offered == day:
-		return false
-	ooma_offered = day
-	var offer: Array = _ooma_offer()
-	var what: String = "%d %s" % [int(offer[1]), _item_name(str(offer[0])).to_lower()]
-	_say("Ooma", ["The catalogue, pilot. This visit: %s, for %d Scrip, paid now. I bring it next time the tides bring me." % [what, int(offer[2])]],
-		Callable(self, "_ooma_order"), "Order it (%d Scrip)" % int(offer[2]), Callable(self, "_ooma_order_later"), "Not this time")
-	return true
-
-
-func _ooma_order() -> void:
-	var offer: Array = _ooma_offer()
-	var price: int = int(offer[2])
-	if credits < price:
-		sfx("deny")
-		_say("Ooma", ["You are %d Scrip short, pilot. The catalogue is patient. I am fairly patient." % (price - credits)])
-		return
-	_money(-price, "Ooma's catalogue")
-	ooma_order = {"item": str(offer[0]), "count": int(offer[1]), "day": day}
-	sfx("coin")
-	_toast("Ordered from Ooma: %d %s  (-%d Scrip; it comes on her next visit)" % [int(offer[1]), _item_name(str(offer[0])).to_lower(), price])
-
-
-func _ooma_order_later() -> void:
-	_say("Ooma", ["Next time, then. It will be something else. [happy] It is always something else."])
-
-
 # ---------------------------------------------------------------- the shipping crate (Zachary, 23 Nov)
 # The crate by your front door, as in Stardew Valley: put in anything that sells (ShopData.VALUE) and Bram collects
 # it overnight. The crate pays full value, the most anything sells for (Zachary, 23 Nov: "shipping bin pays most");
@@ -5098,7 +5014,6 @@ func _save_game() -> void:
 	cfg.set_value("game", "leviathan_slain", leviathan_slain)
 	cfg.set_value("game", "story_flags", story_flags)
 	cfg.set_value("game", "rusk_cask", rusk_cask)
-	cfg.set_value("game", "ooma_order", ooma_order)
 	cfg.set_value("game", "events_seen", events_seen)
 	cfg.set_value("game", "partner", partner)
 	cfg.set_value("game", "hearts_scale", FRIEND_PER_HEART)
@@ -5196,8 +5111,6 @@ func _load_game() -> void:
 	leviathan_slain = bool(cfg.get_value("game", "leviathan_slain", cfg.get_value("game", "harbinger_slain", false)))
 	story_flags = cfg.get_value("game", "story_flags", {})
 	rusk_cask = cfg.get_value("game", "rusk_cask", {})
-	var saved_order = cfg.get_value("game", "ooma_order", {})
-	ooma_order = saved_order if saved_order is Dictionary else {}
 	var saved_seen = cfg.get_value("game", "events_seen", [])
 	events_seen = saved_seen if saved_seen is Array else []
 	partner = str(cfg.get_value("game", "partner", ""))

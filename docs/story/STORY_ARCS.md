@@ -295,7 +295,7 @@ Needs **both** at the level. All five were full scripts ([ROMANCE_SCRIPTS.md](RO
 
 ## 5. Platonic arcs
 
-All 40 were outlines; S.A.R.A.'s, Tar'Besh's, Zaas's, Vzz'ket & Rusk's and Bram & Ooma's are written and in the game now (23 Nov). Text is from the NPC Master; where the Master has only a word or two, the older bible's outline is used.
+All 40 were outlines; S.A.R.A.'s, Tar'Besh's, Zaas's, Vzz'ket & Rusk's and Bram's are written and in the game now (23 Nov); Ooma has none (Zachary). Text is from the NPC Master; where the Master has only a word or two, the older bible's outline is used.
 
 ### 5.1 S.A.R.A. (AI, Steward & Concierge)
 
@@ -378,9 +378,9 @@ The water officer who was right about the ocean, and gave it to the one who kept
 - **Their weeks:** Rusk has Monday mornings off (the bar opens at 18:00). Vzz'ket has no day off until he's earned one: his nights after his own 8 (Sundays off too), and Friday nights at the Open-Mic after the side arc's 8 (Ix'ali holds the gate).
 - **Still open:** the bar's run-down state and its repair (Rusk 2's lamp and the side arc's sign could be steps of it); furnishing your quarters (for the spear); a Fermenter at home (the economy plan has one).
 
-### 5.5 Bram & Ooma: their own arcs, and a side arc (Merchant Guild of Two)
+### 5.5 Bram (Ooma: no heart events)
 
-**Reviewed with Zachary on 23 Nov; all eleven are written and playable.** Each has an arc of their own, and they share a three-scene side arc (Zachary: everyone gets their own arc, side arcs are 2–3 scenes). Full scenes: [`characters/BRAM.md`](characters/BRAM.md), [`characters/OOMA.md`](characters/OOMA.md), [`characters/BRAM_OOMA.md`](characters/BRAM_OOMA.md) (the side arc).
+**Reviewed with Zachary on 23 Nov; Bram's four are written and playable.** Full scenes: [`characters/BRAM.md`](characters/BRAM.md). **Ooma has no heart events** (Zachary, 23 Nov: "maybe no heart events for oma shes just a wandering trader"): her own arc and the Bram & Ooma side arc (the old outlines' price war, tip-off and guild) were written and then cut the same day; the drafts are in git history.
 
 **Bram** (Moogli, general store): the shopkeeper who never collects.
 
@@ -391,29 +391,10 @@ The water officer who was right about the ocean, and gave it to the one who kept
 | 6 | The Long Column | His flat, Thursday night | The family stops shipping until he collects what he's owed, and he never collects. Tell the others, and his 8 remembers. | In game (Claude) |
 | 8 | Paid in Full | The mess hall, Sunday lunch | Tobbin, Freya, Job and Jasper pay him back in kind. Reward: his grandfather's Moogli trade beacon. | In game (Zachary's reward, scene by Claude) |
 
-**Ooma** (Scyldar, travelling trader; Wednesdays and Saturdays): the trader nobody can place.
-
-| ♥ | Event | When and where | What happens | Status |
-|---|---|---|---|---|
-| 2 | The First Pick | Her kiosk, Saturday morning | She knows more about you than you told her. Next morning, a letter from "O." with a void sapphire. | In game (Claude) |
-| 4 | Three Names | The West Terminal's customs desk, Wednesday night | S.A.R.A. keeps a list of the names her ship flies under; keep her secret, and S.A.R.A. lets slip the antibiotics she brought last winter. | In game (Claude) |
-| 6 | The Inspection | The armoury, Wednesday afternoon | A Terran bulletin, and Garrick wants her crate opened. Vouch for her and she shows you inside, almost all of it. | In game (Claude) |
-| 8 | Low Tide | Ankle-deep in the Merrow Deep, Saturday night; **backup:** her feet in the plaza fountain | One true thing: this is the only port where people wave when her ship comes down. Reward: an old friend's price at her ship (20% off). | In game (Claude) |
-
-**The side arc** (both at the level, on Ooma's days):
-
-| ♥ | Event | When and where | What happens | Status |
-|---|---|---|---|---|
-| 2 | Price War on Aisle One | Between their stalls, Saturday morning | A genuine pre-war toaster, sold for half Bram's scrap rate. It toasts, then plays an anthem. | In game (the NPC Master's outline, scene by Claude) |
-| 5 | The Tip-Off | Rusk's bar, Saturday night | Ooma's coordinates for a hot meal from Jasper. Your next free flight has a hidden wreck on the first ring. | In game (the NPC Master's outline, scene by Claude) |
-| 8 | Merchant Guild of Two | Between their stalls, Wednesday afternoon | Tobbin hangs their sign. Reward: Ooma's catalogue (one rare item to order each visit, brought the next time she comes). | In game (the NPC Master's outline, scene by Claude) |
-
-- **Decided (Zachary, 23 Nov): everyone gets their own arc.** Bram and Ooma each get a single arc; what they share becomes a side arc of 2–3 scenes (the limit for every side arc from now on).
-- **Decided (Zachary, 23 Nov): Bram** is the general store owner: seeds, fertiliser, basic goods and crafting recipes. Through his contacts with other Moogli merchants he sells what you put in your shipping crate: it goes up in his cargo pod overnight. He takes **Thursdays off** and works a **half day on Sunday**, with a quiet jab at a certain other general store: "Only a fool closes on a Wednesday. So: Thursday." In the game now: his Thursday and Sunday (`tools/build.py SCHEDULE_DAYS_RAW`), day lines, the board calendar, a CLOSED THURSDAYS sign on his counter ("Only a fool closes on a Wednesday"), two new everyday lines, and the crate's text mentions the cargo pod. His 8's reward (Zachary, 23 Nov): a **Moogli trade beacon**: out in space, spend one fuel to call a store to you (built: `docs/SHIP_ART_UI.md`, section 8).
-- **Decided (Zachary, 23 Nov): Ooma stays mysterious** ("she may be a spy or blackmarket trader or whatever, but she seems to like the station and giving you good product"). Nothing in her arc says what she is.
-- **Their weeks:** Bram's Thursdays off and Sunday half days (above); Ooma's Saturday evenings on the Merrow Deep's beach once it's open.
+- **Decided (Zachary, 23 Nov): everyone gets their own arc**, and side arcs are 2–3 scenes (the limit for every side arc from now on).
+- **Decided (Zachary, 23 Nov): Bram** is the general store owner: seeds, fertiliser, basic goods and crafting recipes. Through his contacts with other Moogli merchants he sells what you put in your shipping crate: it goes up in his cargo pod overnight. He takes **Thursdays off** and works a **half day on Sunday**, with a quiet jab at a certain other general store: "Only a fool closes on a Wednesday. So: Thursday." His 8's reward: a **Moogli trade beacon** (out in space, spend one fuel to call a store to you; `docs/SHIP_ART_UI.md`, section 8). Upstream's shops shut on a keeper's day off (`main.gd _at_workplace`).
+- **Ooma's week:** she still spends Saturday evenings on the Merrow Deep's beach once it's open (a schedule, not a scene).
 - **Wrong choices:** −20; in Bram's 6, offering to pay his ledger yourself gets nothing (his pride).
-- **Still open:** the shops' buy menus (Bram's seeds, fertiliser and recipes; Ooma's rotating stock); the old outline's exotic seeds (a new crop); Ooma's usual spot is by the games tables, away from her kiosk, where the scenes put her.
 
 ### 5.6 Tikka & Sesska (both)
 
@@ -562,4 +543,4 @@ Answer by number; anything left open stays as it is.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram & Ooma are done too; Tikka & Sesska are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events); Tikka & Sesska are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
