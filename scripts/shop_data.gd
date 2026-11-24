@@ -93,6 +93,22 @@ const TITLES := {
 	"Tobbin": "Tobbin's furniture",
 }
 
+# ---------------------------------------------------------------- tool upgrades (Tikka, Engineering)
+# Zachary, 24 Nov: "an upgrade section to Tikka in engineering where if you have the materials and scrip upgrade
+# your tools to the next level". basic -> steel -> titanium -> Precursor. [tool you have, what it becomes, scrip,
+# materials]. Tikka takes the old tool and hands back the new one straight away, in the same hotbar slot.
+const UPGRADES := [
+	["laser", "steel_laser", 500, {"steel_bar": 5}],
+	["steel_laser", "titanium_laser", 1500, {"titanium_bar": 5, "circuit_board": 1}],
+	["titanium_laser", "precursor_laser", 5000, {"high_density_core": 2, "void_sapphire": 1}],
+	["hoe", "steel_hoe", 500, {"steel_bar": 5}],
+	["steel_hoe", "titanium_hoe", 1500, {"titanium_bar": 5}],
+	["titanium_hoe", "precursor_hoe", 5000, {"high_density_core": 1, "void_sapphire": 1}],
+	["watering_can", "steel_can", 500, {"steel_bar": 5}],
+	["steel_can", "titanium_can", 1500, {"titanium_bar": 5}],
+	["titanium_can", "precursor_can", 5000, {"high_density_core": 1, "void_sapphire": 1}],
+]
+
 # ---------------------------------------------------------------- geodes (Job cracks them)
 # A geode turns up as you cut rock or ore in the mine and the north tunnels (GEODE_CHANCE a cut); the caverns'
 # geode veins give cavern geodes. Job opens them for a fee. Each roll: [chance, items, low, high].

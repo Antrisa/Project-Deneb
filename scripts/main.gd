@@ -102,7 +102,7 @@ const NEEDS_TIER := {"titanium_ore": 2, "boulder": 2, "basalt_core": 3, "cobalt_
 const CAV_STONES := {"rock": ["stone", "stone_rock_1", "stone_rock_2"], "lush": ["stone_lush_0", "stone_lush_1", "stone_lush_2"],
 		"steam": ["stone_steam_0", "stone_steam_1", "stone_steam_2"]}
 const BOULDER_STONE := 10
-const TIER_SPEED := {1: 1.0, 2: 0.6}      # cut time multiplier for each laser tier
+const TIER_SPEED := {1: 1.0, 2: 0.6, 3: 0.4, 4: 0.25}      # cut time multiplier for each laser tier (4 = Precursor)
 const DEFAULT_CUT_TIME := 1.0
 const NODE_HITS := 2               # cuts per ore vein each time it refills (daily, or every few days: MapData.NODES)
 const JOB_IRON := 5                # what Job asks for in his first request
@@ -201,6 +201,7 @@ var farm_view: Node2D               # scripts/agri_terrain.gd, which draws the f
 var seeds_taken_day := -1
 # The watering can holds CAN_CAPACITY pours; fill it at the water tap in the Agri dome (Zachary, 24 Nov).
 const CAN_CAPACITY := 40
+const CAN_BY_TIER := {1: 40, 2: 60, 3: 90, 4: 140}     # pours each can holds (Tikka's upgrades, 24 Nov)
 var can_water := CAN_CAPACITY
 var welcomed := false             # Bram and Jasper's first-morning scene outside your door has played (_welcome_visit)
 var travelling := false
@@ -3616,6 +3617,16 @@ func _sync_slots() -> void:
 				slots[free] = item
 
 
+# Trade one of an item for another in the same slot (Tikka's tool upgrades): the new tool sits where the old one was.
+func _swap_item(old: String, new_item: String) -> void:
+	var at: int = slots.find(old)
+	items[old] = maxi(0, _count(old) - 1)
+	items[new_item] = _count(new_item) + 1
+	if at != -1 and _count(old) <= 0 and not slots.has(new_item):
+		slots[at] = new_item
+	_sync_slots()
+
+
 func swap_slots(a: int, b: int) -> void:
 	var moved: String = slots[a]
 	slots[a] = slots[b]
@@ -3729,7 +3740,10 @@ func _use_tool() -> void:
 # The tool art folder for an item (art/tools/<id>), for the hand animations. "" if it has none.
 func _tool_art(item: String) -> String:
 	return {"hoe": "hoe_basic", "watering_can": "watering_can_basic", "laser": "mining_laser_basic",
-		"steel_laser": "mining_laser_steel"}.get(item, "")
+		"steel_laser": "mining_laser_steel", "titanium_laser": "mining_laser_titanium", "precursor_laser": "mining_laser_precursor",
+		"steel_hoe": "hoe_steel", "titanium_hoe": "hoe_titanium", "precursor_hoe": "hoe_precursor",
+		"steel_can": "watering_can_steel", "titanium_can": "watering_can_titanium",
+		"precursor_can": "watering_can_precursor"}.get(item, "")
 
 
 func _item_icon(item: String) -> int:
@@ -5414,7 +5428,7 @@ func _load_game() -> void:
 	seeds_taken_day = int(cfg.get_value("farm", "seeds_taken_day", -1))
 	# Saves from before the welcome visit (23 Nov) are past day one or already have their tools.
 	hotel.load_from(cfg)
-	can_water = clampi(int(cfg.get_value("farm", "can_water", CAN_CAPACITY)), 0, CAN_CAPACITY)
+	can_water = maxi(0, int(cfg.get_value("farm", "can_water", CAN_CAPACITY)))
 	welcomed = bool(cfg.get_value("game", "welcomed", day > 1 or int(items.get("hoe", 0)) > 0))
 	var saved_recipes = cfg.get_value("shops", "known_recipes", [])
 	shops.known_recipes = saved_recipes if saved_recipes is Array else []
@@ -6112,7 +6126,9 @@ func _farm_use(use: String, item: String) -> void:
 		_toast("The can is empty. Fill it at the water tap in the Agri dome.")
 		return
 	swing_cd = 0.4
-	if not _farm_energy(): return
+	var tier: int = int(ItemData.ITEMS[item].get("tier", 1))
+	if not _farm_energy({1: FARM_ENERGY, 2: 1, 3: 2, 4: 3}.get(tier, FARM_ENERGY)): return
+	var work: Array = _farm_tiles(tile, tier)
 	player.face(Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
 	var animated: bool = player.tool_action(_tool_art(item), "hoe" if use == "hoe" else "water")
 	if not animated:
@@ -6120,10 +6136,16 @@ func _farm_use(use: String, item: String) -> void:
 	if use == "hoe":
 		sfx("tool_swing", randf_range(0.95, 1.05), -6.0)
 		sfx("hoe_dig", randf_range(0.92, 1.08))
-		if on_field and not farm.has(tile):
-			farm[tile] = {"crop": "", "age": 0, "watered": -1}
+		for wt in work:
+			if farmable(wt) and not farm.has(wt):
+				farm[wt] = {"crop": "", "age": 0, "watered": -1}
 	elif use == "water":
-		can_water -= 1
+		for wt in work:
+			if can_water <= 0:
+				break
+			can_water -= 1
+			if farm.has(wt):
+				farm[wt]["watered"] = day
 		if can_water == 0:
 			_toast("That was the last of the water. Fill up at the water tap.")
 		sfx("water_pour")
@@ -6132,18 +6154,48 @@ func _farm_use(use: String, item: String) -> void:
 		if animated:
 			splash.spout = player.watering_spout
 		actors.add_child(splash)
-		if on_field and farm.has(tile):
-			farm[tile]["watered"] = day
 	if farm_view != null: farm_view.sync_crops()
 
 
-func _farm_energy() -> bool:
-	if energy < FARM_ENERGY:
+# The tiles one swing works (Tikka's upgrades, 24 Nov): basic and steel the one tile; titanium that tile and the
+# next two on in the same direction; Precursor the 3 x 3 square just beyond you.
+func _farm_tiles(tile: Vector2i, tier: int) -> Array:
+	var step := tile - _player_tile()
+	if step == Vector2i.ZERO or (step.x != 0 and step.y != 0):
+		var f: Vector2 = player.facing()
+		step = Vector2i(roundi(f.x), roundi(f.y))
+	if tier == 3:
+		return [tile, tile + step, tile + step * 2]
+	if tier >= 4:
+		var out: Array = []
+		var centre: Vector2i = tile + step
+		for dy in range(-1, 2):
+			for dx in range(-1, 2):
+				out.append(centre + Vector2i(dx, dy))
+		return out
+	return [tile]
+
+
+func _farm_energy(cost := FARM_ENERGY) -> bool:
+	if energy < cost:
 		sfx("deny")
 		_toast("Too tired. Eat something, or sleep.")
 		return false
-	energy -= shops.tool_energy(FARM_ENERGY)
+	energy -= shops.tool_energy(cost)
 	return true
+
+
+# The watering can you carry (the best one, if somehow more than one), or "" with none.
+func _held_can() -> String:
+	for c in ["precursor_can", "titanium_can", "steel_can", "watering_can"]:
+		if _count(c) > 0:
+			return c
+	return ""
+
+
+func _can_capacity() -> int:
+	var c := _held_can()
+	return int(CAN_BY_TIER.get(int(ItemData.ITEMS[c].get("tier", 1)) if c != "" else 1, CAN_CAPACITY))
 
 
 # E on a ripe crop in front of you (or under the mouse, next to you) picks it.
@@ -6193,11 +6245,11 @@ func _grow_crops() -> void:
 # The water tap in the Agri dome (it was the irrigation valve, which watered every dug tile at once) fills the
 # watering can (Zachary, 24 Nov). Watering is by hand, one tile a pour, so hydroponic beds are worth their price.
 func _refill_can(t: Dictionary) -> void:
-	if _count("watering_can") <= 0:
+	if _held_can() == "":
 		_toast("The tap runs clear and cold. You'll need a watering can.")
 		return
-	if can_water >= CAN_CAPACITY:
-		_toast("Your watering can is already full (%d pours)." % CAN_CAPACITY)
+	if can_water >= _can_capacity():
+		_toast("Your watering can is already full (%d pours)." % _can_capacity())
 		return
 	garden_busy = true
 	player.frozen = true
@@ -6207,10 +6259,10 @@ func _refill_can(t: Dictionary) -> void:
 	sfx("can_refill")
 	await get_tree().create_timer(0.8).timeout
 	effect.queue_free()
-	can_water = CAN_CAPACITY
+	can_water = _can_capacity()
 	garden_busy = false
 	player.frozen = false
-	_toast("Watering can full: %d pours" % CAN_CAPACITY)
+	_toast("Watering can full: %d pours" % _can_capacity())
 
 
 # ---------------------------------------------------------------- your first morning (Zachary, 23 Nov)

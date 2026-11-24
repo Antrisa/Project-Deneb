@@ -307,6 +307,23 @@ const ITEMS = {
 	# Kit's 8 (24 Nov; stand-in art and icon 139 by tools/dev/kit_art.py): main.gd PLACEABLE "decor", like Pip's rocket
 	"deputy_badge": {"name": "Kit's deputy badge", "icon": 139, "use": "build",
 			"desc": "A tin star painted gold, DEPUTY stamped crooked across it. Kit says it's real. Garrick says it's real enough."},
+	# Tool upgrades at Tikka's (24 Nov; scripts/shop_data.gd UPGRADES): basic -> steel -> titanium -> Precursor.
+	# Hoes and cans: steel costs 1 energy a swing; titanium works 3 tiles in a row; Precursor a 3 x 3 square.
+	# Cans hold more water each tier (main.gd CAN_BY_TIER). Icons 140-146: the artist's art/items/*.png.
+	"steel_hoe": {"name": "Steel hoe", "icon": 140, "use": "hoe", "tier": 2,
+			"desc": "A steel hoe from Tikka's bench. Digs for 1 energy."},
+	"titanium_hoe": {"name": "Titanium hoe", "icon": 141, "use": "hoe", "tier": 3,
+			"desc": "Light and sharp. Digs 3 tiles in a row in one swing."},
+	"precursor_hoe": {"name": "Precursor hoe", "icon": 142, "use": "hoe", "tier": 4,
+			"desc": "Old metal that hums. Digs a 3 x 3 square in one swing."},
+	"steel_can": {"name": "Steel watering can", "icon": 143, "use": "water", "tier": 2,
+			"desc": "Holds 60 pours. Waters for 1 energy."},
+	"titanium_can": {"name": "Titanium watering can", "icon": 144, "use": "water", "tier": 3,
+			"desc": "Holds 90 pours. Waters 3 tiles in a row."},
+	"precursor_can": {"name": "Precursor watering can", "icon": 145, "use": "water", "tier": 4,
+			"desc": "Holds 140 pours. Waters a 3 x 3 square."},
+	"precursor_laser": {"name": "Precursor mining laser", "icon": 146, "use": "mine", "tier": 4,
+			"desc": "A beam that remembers older stars. Cuts anything, fastest of all."},
 }
 
 # The relics, and the ones Chernobog ships can drop.

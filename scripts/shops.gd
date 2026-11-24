@@ -67,6 +67,8 @@ func open(who: String) -> void:
 		tabs.append(["Buy", _buy_rows(who)])
 		if who == "Bram" or ShopData.BUYS.has(who):
 			tabs.append(["Sell", _sell_rows(who)])
+		if who == "Tikka":
+			tabs.append(["Upgrade", _upgrade_rows()])
 	var title: String = {"Cook": "Your kitchenette", "Hotel": "Hotel management", "Concierge": "S.A.R.A.'s pads"}.get(who,
 			str(ShopData.TITLES.get(who, who)))
 	var keeper: String = "Sara" if who in ["Hotel", "Concierge"] else who
@@ -162,6 +164,50 @@ func _crack_rows() -> Array:
 	return rows
 
 
+# Tikka's tool upgrades (ShopData.UPGRADES): the next step for each tool you carry.
+func _upgrade_rows() -> Array:
+	var rows: Array = []
+	var cash: int = int(world.credits)
+	for u in ShopData.UPGRADES:
+		var from: String = str(u[0])
+		if world._count(from) <= 0:
+			continue
+		var to: String = str(u[1])
+		var price: int = int(u[2])
+		var needs: Dictionary = u[3]
+		var parts: Array = []
+		for m in needs:
+			parts.append("%d/%d %s" % [mini(world._count(str(m)), int(needs[m])), int(needs[m]), _name(str(m)).to_lower()])
+		var ok: bool = cash >= price and world._has_all(needs)
+		rows.append([to, "%s -> %s" % [_name(from), _name(to)], "Needs " + ", ".join(parts), "%d scrip" % price,
+			[["upgrade/" + from, "Upgrade", ok]]])
+	if rows.is_empty():
+		rows.append(["", "Nothing to upgrade", "Bring a mining laser, hoe or watering can", "", []])
+	return rows
+
+
+func _upgrade(from: String) -> void:
+	for u in ShopData.UPGRADES:
+		if str(u[0]) != from:
+			continue
+		var to: String = str(u[1])
+		var price: int = int(u[2])
+		var needs: Dictionary = u[3]
+		if world._count(from) <= 0:
+			return
+		if int(world.credits) < price or not world._has_all(needs):
+			world.sfx("deny")
+			world._toast("Tikka needs the scrip and the materials first.")
+			return
+		world._money(-price, "Tool upgrade")
+		for m in needs:
+			world._give(str(m), -int(needs[m]))
+		world._swap_item(from, to)
+		world.sfx("smelt")
+		world._toast("Tikka hands it back: %s!" % _name(to))
+		return
+
+
 func _cook_rows() -> Array:
 	var rows: Array = []
 	for r in ShopData.COOKING:
@@ -195,6 +241,7 @@ func on_action(action: String) -> void:
 		"cook1": _cook(id, 1)
 		"cook5": _cook(id, 5)
 		"room": world.hotel.on_action(verb, id)
+		"upgrade": _upgrade(id)
 		"pad":
 			shop = ""
 			world.sara_send(id)
