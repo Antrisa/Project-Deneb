@@ -288,6 +288,7 @@ const PROP_ANIM_FPS := 8.0
 var prop_glows: Array = []         # glow sprites on lamps and machines (scripts/prop_fx.gd), brighter at night
 var seasonal_props: Array = []     # [sprite, prop name] for props with art/lunar/<name>_summer.png etc. (trees)
 var prop_season := ""              # the season their pictures show now
+var portrait_season := ""          # the season the residents' portraits show now (summer and winter outfits)
 var museum_cases := {}             # "x:y" (tiles) -> the glass case sprite there, so exhibits can be put inside
 var warps := {}                    # area name -> {Vector2i tile: [area, x, y]}
 var blocked := {}                  # area name -> {Vector2i tile: true} (tiles people stand on)
@@ -1200,7 +1201,7 @@ func _ensure_person(who: String) -> String:
 	if not persons.has(who):
 		persons[who] = {
 			"id": id, "first": info["first"], "repeat": info["repeat"], "pitch": float(info.get("pitch", 1.0)),
-			"portrait": load("res://art/portrait_%s.png" % id),
+			"portrait": load(portrait_path(id)),
 			"met": false, "talked_today": false, "friendship": 0, "next": 0, "talks_today": 0, "intro_due": false,
 		}
 	return id
@@ -1981,7 +1982,7 @@ func _say(who: String, lines: Array, on_yes: Callable = Callable(), yes_text: St
 		portrait = persons[face]["portrait"]
 		dialogue.voice_pitch = float(persons[face]["pitch"])
 	elif face != "" and ResourceLoader.exists("res://art/portrait_%s.png" % face.to_lower()):
-		portrait = load("res://art/portrait_%s.png" % face.to_lower())
+		portrait = load(portrait_path(face.to_lower()))
 	# Swap {they}, {them}, {their}... for the player's pronouns (see scripts/player_maker.gd).
 	var said: Array = []
 	for line in lines:
@@ -4819,6 +4820,7 @@ func _process(delta: float) -> void:
 	tint.color = _light_color()
 	if not seasonal_props.is_empty():
 		_apply_prop_season()
+	_apply_portrait_season()
 	var glow_a: float = PropFx.glow_strength(tint.color)
 	for g in prop_glows:
 		g.modulate.a = glow_a
@@ -5541,6 +5543,33 @@ func _is_own_bed(t: Vector2i) -> bool:
 			if t.x >= int(p[1]) and t.x < int(p[1]) + int(p[3]) and t.y == int(p[2]) + int(p[4]) - 1:
 				return true
 	return false
+
+
+# A resident's portrait strip for today's season (24 Nov): summer and winter outfits live in art/summer/ and
+# art/winter/; spring and autumn wear the usual clothes (art/portrait_<id>.png).
+func portrait_path(id: String) -> String:
+	var season: String = str(BridgeScript.season_date(day)[0]).to_lower()
+	if season == "summer" or season == "winter":
+		var path := "res://art/%s/portrait_%s.png" % [season, id]
+		if ResourceLoader.exists(path):
+			return path
+	return "res://art/portrait_%s.png" % id
+
+
+# When the season turns, everyone met so far changes into that season's portrait, and the datapad's copies
+# of their faces are made again from the new pictures.
+func _apply_portrait_season() -> void:
+	var season: String = str(BridgeScript.season_date(day)[0]).to_lower()
+	if season == portrait_season:
+		return
+	portrait_season = season
+	for who in persons:
+		var st: Dictionary = persons[who]
+		if not ResourceLoader.exists("res://art/portrait_%s.png" % st["id"]):
+			continue
+		st["portrait"] = load(portrait_path(str(st["id"])))
+		if datapad != null and datapad.pad.extra_textures.has("p_" + str(who)):
+			datapad.pad.extra_textures.erase("p_" + str(who))
 
 
 # Spring uses the plain picture; summer, autumn and winter use <name>_<season>.png when it exists.
