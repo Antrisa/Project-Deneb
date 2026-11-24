@@ -3806,6 +3806,24 @@ func _spawn_placed(e: Dictionary) -> void:
 	placed_nodes[_placed_key(e)] = {"sprite": sprite, "thing": th, "tiles": tiles}
 	if str(e["item"]) == "arc_smelter":
 		_furnace_look(_placed_key(e))
+	if str(e["item"]) == "hotel_wall":
+		_hotel_wall_looks(area)
+
+
+# Hotel walls join up, seen from above: a wall with another wall just below it shows only its top (a cap with trim
+# down the sides); a wall with open floor below shows its full face. Both pictures are the same size, so swapping
+# keeps them standing on their tile. Called whenever a hotel wall is set down or picked up.
+func _hotel_wall_looks(area: String) -> void:
+	var walls := {}
+	for e in placed:
+		if str(e["area"]) == area and str(e["item"]) == "hotel_wall":
+			walls[Vector2i(int(e["x"]), int(e["y"]))] = _placed_key(e)
+	var face: Texture2D = load("res://art/lunar/hotel_wall_piece.png")
+	var cap: Texture2D = load("res://art/lunar/hotel_wall_cap.png")
+	for t in walls:
+		var info: Dictionary = placed_nodes.get(walls[t], {})
+		if info.has("sprite"):
+			(info["sprite"] as Sprite2D).texture = cap if walls.has(t + Vector2i(0, 1)) else face
 
 
 func _use_placed(t: Dictionary) -> void:
@@ -3873,6 +3891,8 @@ func _pick_up(key: String) -> void:
 	placed_nodes.erase(key)
 	placed = placed.filter(func(e): return _placed_key(e) != key)
 	chests.erase(key)
+	if item == "hotel_wall":
+		_hotel_wall_looks(area)
 	_give(item, 1)
 	sfx("item_pickup")
 	_toast("Picked up: %s" % _item_name(item))

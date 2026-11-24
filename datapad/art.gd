@@ -48,6 +48,9 @@ const TEXTURES := {
 	"i_armor": preload("res://datapad/art/i_armor.png"),
 	"i_blaster": preload("res://datapad/art/i_blaster.png"),
 	"i_bolt": preload("res://datapad/art/i_bolt.png"),
+	"i_boots": preload("res://datapad/art/i_boots.png"),           # gear slots (Echo Landing, 24 Nov)
+	"i_hat": preload("res://datapad/art/i_hat.png"),
+	"i_outfit": preload("res://datapad/art/i_outfit.png"),
 	"i_craft": preload("res://datapad/art/i_craft.png"),
 	"i_crew": preload("res://datapad/art/i_crew.png"),
 	"i_farming": preload("res://datapad/art/i_farming.png"),
