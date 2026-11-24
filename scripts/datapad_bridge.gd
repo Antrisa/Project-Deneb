@@ -12,6 +12,7 @@ extends Node
 const PAD_SCENE := "res://datapad/datapad.tscn"
 const ItemData = preload("res://scripts/item_data.gd")
 const ShopData = preload("res://scripts/shop_data.gd")
+const PerkData = preload("res://scripts/perk_data.gd")
 const MapDataRef = preload("res://scripts/map_data.gd")
 const HEART_POINTS := 100          # friendship points per heart (main.gd FRIEND_PER_HEART, 22 Nov)
 const SEASONS := [["Spring", 28], ["Summer", 31], ["Autumn", 31], ["Winter", 31]]   # NPC master doc, section 2
@@ -93,6 +94,14 @@ func setup(game) -> bool:
 		var info: Dictionary = ItemData.ITEMS[id]
 		pad.catalog[id] = [str(info["name"]), _category(info), _kind(id, info), str(info.get("desc", ""))]
 		pad.extra_textures[id] = _icon(int(info["icon"]))
+	# The Perks tab's icons (art/perks.png, 24-pixel cells in scripts/perk_data.gd's "icon" order)
+	var perk_sheet: Texture2D = load("res://art/perks.png")
+	for kind in [["perk_", PerkData.PERKS], ["keepsake_", PerkData.KEEPSAKES]]:
+		for id in kind[1]:
+			var pic := AtlasTexture.new()
+			pic.atlas = perk_sheet
+			pic.region = Rect2(int(kind[1][id]["icon"]) * 24, 0, 24, 24)
+			pad.extra_textures[str(kind[0]) + str(id)] = pic
 	pad.recipes = _recipes()
 	pad.produce_items = []
 	# What fits each gear-page slot (23 Nov): armour, boots, and the clothes that show over them (ShopData.WEAR).
@@ -170,6 +179,12 @@ func sync(modal: bool) -> void:
 			_sent["map_spot"] = spot
 			_sector_refresh()
 			pad.refresh()
+	var perks: Array = _perks()
+	if perks != _sent.get("perks"):
+		_sent["perks"] = perks
+		pad.perks = perks
+		if str(pad.page) == "Inventory":
+			changed = true
 	var vitals := [int(world.hp), _max_hp, int(world.energy), int(world.max_energy)]
 	if vitals != _sent.get("vitals"):
 		_sent["vitals"] = vitals
@@ -289,6 +304,20 @@ func _place_for(area: String) -> String:
 	if area.begins_with("cav_"):
 		return "Mine"
 	return "Town square"
+
+
+# The perks and keepsakes you have, for the datapad's Perks tab (scripts/perk_data.gd), perks first.
+func _perks() -> Array:
+	var out: Array = []
+	for id in PerkData.PERKS:
+		if world._flag("perk_" + str(id)):
+			var p: Dictionary = PerkData.PERKS[id]
+			out.append(["perk_" + str(id), str(p["name"]), "Perk", str(p["from"]), str(p["desc"]), bool(p["works"])])
+	for id in PerkData.KEEPSAKES:
+		if world._flag("keepsake_" + str(id)):
+			var k: Dictionary = PerkData.KEEPSAKES[id]
+			out.append(["keepsake_" + str(id), str(k["name"]), "Keepsake", str(k["from"]), str(k["desc"]), true])
+	return out
 
 
 func _icon(index: int) -> Texture2D:

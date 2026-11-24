@@ -263,6 +263,43 @@ for ev_id, ev in list(EVENTS.items()) + list(SCENES.items()):
             if len(c) > 4: check_pose(ev_id, c[0], c[4])
         check_steps(ev_id, pev, pev['steps'], pev['area'], known)
 
+# The datapad's Perks tab (scripts/perk_data.gd): every perk and keepsake an event gives has its entry and an icon
+# in art/perks.png, and the icon numbers run 0 to ICON_COUNT - 1 with none shared.
+PERK_DATA = gd_consts(ROOT / 'scripts' / 'perk_data.gd')
+_given = {'perk': set(), 'keepsake': set()}
+
+
+def _gives(steps):
+    for s in steps:
+        if isinstance(s, dict):
+            _gives(s.get('steps', []))
+            continue
+        if isinstance(s, list) and s and isinstance(s[0], str) and s[0] in _given:
+            _given[s[0]].add(s[1])
+        for x in (s[1:] if isinstance(s, list) else []):
+            if isinstance(x, list):
+                _gives([x] if x and not isinstance(x[0], list) else x)
+            elif isinstance(x, dict):
+                for v in x.values():
+                    if isinstance(v, list):
+                        _gives(v)
+
+
+for _ev in list(EVENTS.values()) + list(SCENES.values()):
+    _gives(_ev['steps'])
+for kind, table in (('perk', 'PERKS'), ('keepsake', 'KEEPSAKES')):
+    for pid in sorted(_given[kind] - set(PERK_DATA[table])):
+        problems.append("perk_data.gd: the %s %r has no %s entry (the datapad's Perks tab)" % (kind, pid, table))
+_icons = [int(v['icon']) for tbl in ('PERKS', 'KEEPSAKES') for v in PERK_DATA[tbl].values()]
+if sorted(_icons) != list(range(int(PERK_DATA['ICON_COUNT']))):
+    problems.append("perk_data.gd: icon numbers must run 0 to ICON_COUNT - 1, each used once")
+try:
+    from PIL import Image
+    if Image.open(ROOT / 'art' / 'perks.png').width < 24 * int(PERK_DATA['ICON_COUNT']):
+        problems.append("art/perks.png has fewer icons than perk_data.gd needs (tools/dev/perk_icons.py)")
+except ImportError:
+    pass
+
 if problems:
     print("\n".join("FAIL: " + p for p in problems))
     raise SystemExit(1)

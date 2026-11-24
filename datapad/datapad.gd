@@ -82,6 +82,10 @@ var location_name := "Engineering"
 var page := "HUD"
 var bag_filter := "All"
 var item_selection := ""
+# The Perks tab (24 Nov 2026, scripts/perk_data.gd): perks and keepsakes you have, set by the game:
+# [[texture id, name, "Perk" or "Keepsake", who gave it, what it does, whether it works yet], ...]
+var perks: Array = []
+var perk_selection := ""
 var recipe_filter := "All"
 var material_page := 0
 var nearby_crafting_stations: Variant = null
@@ -593,7 +597,7 @@ func _inventory() -> void:
 	_img("i_scrip",619,111,13,13,OCHRE)
 	_right(700,111,str(station_scrip)+" SCRIP","micro",MUTED)
 	var fx := 66
-	for group in ["All","Tools","Supplies","Materials","Gear"]:
+	for group in ["All","Tools","Supplies","Materials","Gear","Perks"]:
 		var fw := _width(group,"label")+16
 		if bag_filter==group:
 			_rect(fx,136,fw,19,"#eed8bf")
@@ -601,6 +605,10 @@ func _inventory() -> void:
 		_txt(fx+8,137,group,"label",OCHRE if group==bag_filter else MUTED)
 		_hit("filter/"+group,fx,136,fw,19)
 		fx += fw+2
+	if bag_filter=="Perks":
+		_perk_grid()
+		_gear_side()
+		return
 	var items := _items()
 	var by_slot := _by_slot()
 	for k in 24:
@@ -642,6 +650,13 @@ func _inventory() -> void:
 			_btn("use",206,349,84,22,"Use item")
 	else:
 		_txt(66,detail_y+7,"No items in this group","body",MUTED)
+	_gear_side()
+	if _held>=0 and _bag_item(_held)!="":
+		_txt(66,121,"Click a slot to put it there; right-click to put it back","micro",OCHRE)
+
+
+# The right half of the inventory: the player figure, what they wear, the laser sockets and the quick slots.
+func _gear_side() -> void:
 	_img("gear_display",520,136,86,123)
 	_img(player_sprite,539,146,48,96)
 	# armour on the left of the figure, clothes on the right, the laser parts below
@@ -659,8 +674,46 @@ func _inventory() -> void:
 	_rect(420,316,280,1,RULE)
 	_txt(421,320,"QUICK ACCESS","micro",MUTED)
 	_belt(421,335,true)
-	if _held>=0 and _bag_item(_held)!="":
-		_txt(66,121,"Click a slot to put it there; right-click to put it back","micro",OCHRE)
+
+
+# The Perks tab: every perk and keepsake you have, with what it does and who gave it.
+func _perk_grid() -> void:
+	if perks.is_empty():
+		_txt(66,170,"No perks yet","strong")
+		var empty := _wrap_lines("Get to know the residents. At eight hearts most of them give you something to keep.",320,"body")
+		for i in empty.size():
+			_txt(66,192+13*i,empty[i],"body",MUTED)
+		return
+	var ids: Array = []
+	for p in perks:
+		ids.append(str(p[0]))
+	if not perk_selection in ids:
+		perk_selection=str(ids[0])
+	bag_page=clampi(bag_page,0,maxi(0,ceili(ids.size()/24.0)-1))
+	for k in 24:
+		var index := bag_page*24+k
+		var x := 66+(k%8)*41
+		var y := 160+floori(k/8.0)*39
+		var id := str(ids[index]) if index<ids.size() else ""
+		_img("slot_selected" if id!="" and id==perk_selection else ("slot_empty" if id=="" else "slot_rest"),x,y,38,36)
+		if id!="":
+			_img(id,x+5,y+3,27,27)
+			_hit("perk/"+id,x,y,38,36)
+	if ids.size()>24:
+		_btn("bag/prev",260,275,60,18,"Previous",false,bag_page>0)
+		_btn("bag/next",328,275,60,18,"Next",false,(bag_page+1)*24<ids.size())
+	var detail_y := 293 if ids.size()>24 else 284
+	_rect(66,detail_y-4,325,1,RULE)
+	var p: Array = perks[ids.find(perk_selection)]
+	_img("slot_selected",66,detail_y+5,37,36)
+	_img(perk_selection,71,detail_y+9,27,27)
+	_txt(112,detail_y,("%s from %s" % [str(p[2]),str(p[3])]).to_upper(),"micro",MUTED)
+	_txt(111,detail_y+11,str(p[1]),"strong")
+	var lines := _wrap_lines(str(p[4]),278,"body")
+	for i in mini(3,lines.size()):
+		_txt(112,detail_y+29+13*i,lines[i],"body",MUTED)
+	if not bool(p[5]):
+		_txt(112,detail_y+31+13*mini(3,lines.size()),"NOT IN THE GAME YET","micro",OCHRE)
 
 
 # The "All" view shows the bag slot by slot, so things can be moved; the others list what matches.
@@ -1459,6 +1512,7 @@ func _activate(id: String) -> void:
 				_held=k
 				item_selection=_bag_item(k)
 		"item": item_selection=arg
+		"perk": perk_selection=arg
 		"filter":
 			_held=-1
 			bag_filter=arg
