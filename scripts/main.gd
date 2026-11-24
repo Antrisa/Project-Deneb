@@ -3766,7 +3766,7 @@ func _start_cut(t: Dictionary) -> void:
 
 func _can_cut(t: Dictionary) -> bool:
 	var node: Dictionary = ore_nodes[int(t["node"])]
-	if _count("laser") <= 0 and _count("steel_laser") <= 0:
+	if not ["laser", "steel_laser", "titanium_laser", "precursor_laser"].any(func(l): return _count(l) > 0):
 		sfx("deny")
 		_say("Ore vein", ["A seam of ore in solid rock. You would need a mining laser to cut it. Job might have a spare."])
 		return false

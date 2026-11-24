@@ -47,7 +47,7 @@ const ITEMS = {
 	"steel_bar": {"name": "Steel bar", "icon": 18, "use": "",
 			"desc": "Two iron bars and a lump of carbon, worked on the Crafting page. Bram pays 30."},
 	"steel_laser": {"name": "Steel mining laser", "icon": 19, "use": "mine", "tier": 2,
-			"desc": "Job's old laser rebuilt in steel. It cuts faster than the basic one, and it can cut titanium."},
+			"desc": "Job's old laser, rebuilt in steel by Tikka. It cuts faster than the basic one, and it can cut titanium."},
 	"gold_bar": {"name": "Gold bar", "icon": 20, "use": "",
 			"desc": "Poured from gold ore at any furnace. Bram pays 90."},
 	"titanium_bar": {"name": "Titanium bar", "icon": 21, "use": "",
@@ -91,7 +91,7 @@ const ITEMS = {
 	"crater_garnet": {"name": "Crater garnet", "icon": 67, "use": "",
 			"desc": "A deep red gem from the middle caverns."},
 	"titanium_laser": {"name": "Titanium mining laser", "icon": 68, "use": "mine", "tier": 3,
-			"desc": "Bright titanium with teal light strips. Cuts fastest of all, and the only laser that cuts basalt and cobalt-60."},
+			"desc": "Bright titanium with teal light strips, from Tikka's bench. Faster again, and it cuts basalt and cobalt-60."},
 	"arc_smelter": {"name": "Furnace", "icon": 69, "use": "build",
 			"desc": "An electric furnace for your own workshop. Set it down in the Agri complex or your hotel rooms, hold ore and right-click it to load it: 4 copper ore cook into a copper bar. Also bricks, glass, steel and cells."},
 	"manufacturing_hub": {"name": "Manufacturing hub", "icon": 70, "use": "build",
@@ -375,7 +375,6 @@ const RECIPES = [
 	# anywhere
 	{"makes": "hull_plate", "n": 1, "needs": {"iron_bar": 3}},
 	{"makes": "coil_wire", "n": 1, "needs": {"copper_bar": 2}},
-	{"makes": "steel_laser", "n": 1, "needs": {"laser": 1, "steel_bar": 3, "coil_wire": 1}},
 	{"makes": "hydro_bed", "n": 1, "needs": {"steel_bar": 2, "coil_wire": 1, "circuit_board": 1}},   # Zachary, 23 Nov: they were too cheap
 	{"makes": "arc_smelter", "n": 1, "needs": {"iron_ore": 10, "stone": 5}},
 	{"makes": "storage_chest", "n": 1, "needs": {"iron_bar": 2, "stone": 10}},
@@ -404,5 +403,4 @@ const RECIPES = [
 	{"makes": "circuit_board", "n": 1, "needs": {"copper_bar": 2, "refined_silicon": 2}, "station": "Manufacturing Hub"},
 	{"makes": "hull_plate", "n": 1, "needs": {"aluminium_bar": 2}, "station": "Manufacturing Hub"},
 	{"makes": "precision_lens", "n": 1, "needs": {"thermal_quartz": 2, "copper_bar": 1, "refined_silicon": 1}, "station": "Manufacturing Hub"},
-	{"makes": "titanium_laser", "n": 1, "needs": {"steel_laser": 1, "titanium_bar": 3, "motor": 1, "circuit_board": 1}, "station": "Manufacturing Hub"},
 ]
