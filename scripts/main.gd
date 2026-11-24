@@ -120,7 +120,15 @@ const BOARD := [
 			"thanks": "[love] Thank you. The beans will have something to climb now. I'll save you the first ones."},
 ]
 const WEEKDAYS := ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-const SOUND_NAMES := ["step", "step_soft", "click", "coin", "zap", "smelt", "warp", "quest", "deny", "swing", "hit", "hurt", "die", "eat"]
+const SOUND_NAMES := ["step", "step_soft", "click", "coin", "zap", "smelt", "warp", "quest", "deny", "swing", "hit", "hurt", "die", "eat",
+	# 24 Nov: Zachary's recordings (Drive "Echo Landing Sounds") and made-up stand-ins (tools/dev/madeup_sounds.py)
+	"step_deck", "step_soil", "step_carpet", "step_rock", "step_water", "door_slide", "door_locked", "ladder", "lift",
+	"tool_swing", "weapon_swing", "hoe_dig", "water_pour", "can_refill", "seed_plant", "harvest", "item_pickup",
+	"valve_spray", "tool_upgrade", "hotbar", "rock_crack", "rock_break", "geode_crack", "ore_find", "craft",
+	"chest_open", "chest_close", "gift", "bell_ring", "mail_waiting", "pass_out", "medpack", "bug_noise", "map_jump",
+	"crew_order", "toast", "datapad_open", "hail", "sara_holo", "launch", "ship_crate", "furnace_load", "machine_done",
+	"cook", "recipe_new", "repair_done", "museum_place", "letter_open", "trash", "sleep", "enemy_die", "crew_down",
+	"drink", "win_sting", "lose_sting", "crate_hit"]
 # Space-battle sounds (tools/dev/ship_sounds.py). Each gets a few players so quick repeats overlap.
 const SHIP_SOUNDS := ["sh_laser", "sh_missile", "sh_beam", "sh_ion", "sh_flak", "sh_dart", "sh_shield", "sh_hull", "sh_hit",
 	"sh_miss", "sh_explode", "sh_fire", "sh_alarm", "sh_vent", "sh_fold", "sh_ready", "sh_blaster", "sh_pod", "sh_door"]
@@ -284,6 +292,8 @@ var repair_stage := 0              # 0..REPAIRS.size()
 
 var sounds := {}                   # sound name -> AudioStreamPlayer
 var sound_takes := {}              # sound name -> Array of streams, from audio/<name>_1.ogg, _2.ogg …
+var last_take := {}                # sound name -> the take it played last
+var arrive_sound := ""             # the sound _go_to plays on arrival instead of the door (the ladder, a lift)
 var fixed := {}                    # area name -> {Vector2i tile: true} (things residents must walk around)
 # Stardew-style beds: area name -> {Vector2i tile: Vector2 where a sleeper stands}. The foot row of each
 # bed can be walked into; whoever stands there is under the covers (art/lunar/<bed>_blanket.png in front).
@@ -702,7 +712,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var key: int = key_event.physical_keycode
 			if key >= KEY_1 and key <= KEY_8:
 				selected = key - KEY_1
-				sfx("click", 1.4, -6.0)
+				sfx("hotbar", 1.0, -4.0)
 
 
 func _interact_nearest() -> void:
@@ -748,7 +758,7 @@ func _mouse_button(button: int) -> void:
 			sfx("click")
 		elif slot != -1:
 			selected = slot
-			sfx("click", 1.4, -6.0)
+			sfx("hotbar", 1.0, -4.0)
 		elif _selected_use() != "":
 			_use_tool()
 		else:
@@ -886,7 +896,9 @@ func _go_to(area_name: String, tile: Vector2i, announce: bool = true) -> void:
 		var data: Dictionary = MapData.AREAS[area_name]
 		var area_title: String = data["title"]
 		_toast(area_title)
-		sfx("warp")
+		if not travelling or arrive_sound != "":
+			sfx(arrive_sound if arrive_sound != "" else "door_slide")
+	arrive_sound = ""
 
 
 # Animated overlays. Each art file has 4 frames of 16x16, laid over the still tile.
@@ -1742,6 +1754,7 @@ func _say_then(cb: Callable) -> void:
 func _talk(who: String) -> void:
 	var st: Dictionary = persons[who]
 	if who == "Sara":
+		sfx("sara_holo", 1.0, -4.0)
 		_sara_play("greeting" if not st["met"] else ["explain", "talk_both", "nod", "head_tilt", "laugh"].pick_random())
 	if not st["met"]:
 		_emote(who, &"hello")
@@ -1905,7 +1918,7 @@ func _pay_repair() -> void:
 	for item in needs:
 		_give(item, -int(needs[item]))
 	repair_stage += 1
-	sfx("quest")
+	sfx("repair_done")
 	wreck_sprite.frame = repair_stage
 	_toast("Ship repair %d of %d done" % [repair_stage, REPAIRS.size()])
 	if repair_stage >= REPAIRS.size():
@@ -2028,7 +2041,7 @@ func _start_run() -> void:
 	run_used = []
 	run_rng.seed = 104729 * day + Time.get_ticks_msec()
 	run_stop = -1
-	sfx("warp")
+	sfx("launch")
 	ship_map.open_run(run_stops, Callable(self, "_arrive_run"), Callable(self, "_fold_home"), _rings_open())
 	if not bool(said_run_hint):
 		said_run_hint = true
@@ -2534,7 +2547,7 @@ func _fold_home() -> void:
 	ship_event.close()
 	ship_store.close()
 	run_stops = []
-	sfx("warp")
+	sfx("sh_fold")
 	_home_at_eight()
 	_snap_residents()
 	var lines: Array = ["[happy] Welcome back. The fold drive's still warm."]
@@ -2587,7 +2600,7 @@ func _send_off_sara() -> void:
 
 func _lift_off() -> void:
 	fuel = maxi(fuel, ShipData.FIRST_FLIGHT_FUEL)
-	sfx("warp")
+	sfx("launch")
 	ship_map.open_route(ShipData.FIRST_FLIGHT, -1, Callable(self, "_arrive"), false, "First flight")
 	_say("Sara", [
 		"You're clear of the crater. The fold drive is spinning up. Safe travels...",
@@ -2894,7 +2907,7 @@ func _ship_lost() -> void:
 # Losing either fight wakes you in the Medbay as usual, and the next launch tries again.
 
 func _second_flight() -> void:
-	sfx("warp")
+	sfx("launch")
 	battle.start({"enemy": "ana_corsair", "story": true, "player_def": _ship_def("starter")}, Callable(self, "_after_ana"), ship_hull)
 	_say("Sara", [
 		"You're clear of the crater. Where are we headed today?",
@@ -3017,38 +3030,64 @@ func _do_freya_repair() -> void:
 # ---------------------------------------------------------------- sounds
 
 func _setup_sounds() -> void:
-	for sound_name in SOUND_NAMES:
-		var p := AudioStreamPlayer.new()
-		# a real sound dropped in as audio/<name>.ogg wins over the made-up .wav
-		p.stream = load("res://audio/%s.ogg" % sound_name) if ResourceLoader.exists("res://audio/%s.ogg" % sound_name) \
-				else load("res://audio/%s.wav" % sound_name)
-		# several takes (audio/<name>_1.ogg, _2.ogg …) play in turn at random, so steps don't repeat
-		var takes: Array = []
-		for k in range(1, 9):
-			var take_path := "res://audio/%s_%d.ogg" % [sound_name, k]
-			if not ResourceLoader.exists(take_path):
-				break
-			takes.append(load(take_path))
-		if not takes.is_empty():
-			sound_takes[sound_name] = takes
-			p.stream = takes[0]
-		add_child(p)
-		sounds[sound_name] = p
-	for sound_name in SHIP_SOUNDS:
-		var pool: Array = []
-		for k in 3:
-			var sp := AudioStreamPlayer.new()
-			# a real sound dropped in as .ogg (Kenney's packs come as .ogg) wins over the made-up .wav
-			sp.stream = load("res://audio/%s.ogg" % sound_name) if ResourceLoader.exists("res://audio/%s.ogg" % sound_name) \
-					else load("res://audio/%s.wav" % sound_name)
-			add_child(sp)
-			pool.append(sp)
-		sounds[sound_name] = pool
+	for sound_name in SOUND_NAMES + SHIP_SOUNDS:
+		var stream = _sound_stream(sound_name)
+		if stream == null:
+			continue                    # no file yet: sfx() of this name stays quiet
+		if SHIP_SOUNDS.has(sound_name):
+			var pool: Array = []        # a few players, so quick repeats in a fight overlap
+			for k in 3:
+				var sp := AudioStreamPlayer.new()
+				sp.stream = stream
+				add_child(sp)
+				pool.append(sp)
+			sounds[sound_name] = pool
+		else:
+			var p := AudioStreamPlayer.new()
+			p.stream = stream
+			add_child(p)
+			sounds[sound_name] = p
 	music = AudioStreamPlayer.new()
 	add_child(music)
 	music_director = MusicDirector.new()
 	add_child(music_director)
 	music_director.setup(self, music)
+
+
+# The sound for a name: several takes (audio/<name>_1.ogg, _2.ogg …) are kept in sound_takes and played at random,
+# so steps and hits don't repeat; otherwise a real audio/<name>.ogg wins over the made-up .wav. null: no file yet.
+func _sound_stream(sound_name: String):
+	var takes: Array = []
+	for k in range(1, 9):
+		var take_path := "res://audio/%s_%d.ogg" % [sound_name, k]
+		if not ResourceLoader.exists(take_path):
+			break
+		takes.append(load(take_path))
+	if not takes.is_empty():
+		sound_takes[sound_name] = takes
+		return takes[0]
+	for ext in ["ogg", "wav"]:
+		var path := "res://audio/%s.%s" % [sound_name, ext]
+		if ResourceLoader.exists(path):
+			return load(path)
+	return null
+
+
+# Which footsteps fit the floor under you (Zachary's recordings, 24 Nov): rock in the mine and caverns, carpet in
+# homes, the hotel and the lounge, wet tiles in the bath house, soil on the dug field, the soft steps round the
+# farm, metal deck plates everywhere else.
+func step_sound() -> String:
+	var a := current_area
+	if a.begins_with("cav_") or a == "mine" or a == "tunnels" or a == "lake":
+		return "step_rock"
+	if a == "bathhouse":
+		return "step_water"
+	if a.begins_with("home") or a == "hotel" or a == "lounge" or a == "aptPlayer" or a == "aptCoop":
+		return "step_carpet"
+	if a == "agri":
+		var tile := Vector2i(int(player.position.x) / TILE, int(player.position.y) / TILE)
+		return "step_soil" if farm.has(tile) or farmable(tile) else "step_soft"
+	return "step_deck"
 
 
 # The music director stops or restarts the song on its next update.
@@ -3072,12 +3111,13 @@ func sfx(sound_name: String, pitch: float = 1.0, volume_db: float = 0.0) -> void
 			pool.push_back(pool.pop_front())
 	else:
 		p = sounds[sound_name]
-		if sound_takes.has(sound_name):
-			var takes: Array = sound_takes[sound_name]
-			var k := randi() % takes.size()
-			if takes.size() > 1 and takes[k] == p.stream:     # never the same take twice in a row
-				k = (k + 1) % takes.size()
-			p.stream = takes[k]
+	if sound_takes.has(sound_name):
+		var takes: Array = sound_takes[sound_name]
+		var k := randi() % takes.size()
+		if takes.size() > 1 and takes[k] == last_take.get(sound_name):     # never the same take twice in a row
+			k = (k + 1) % takes.size()
+		p.stream = takes[k]
+		last_take[sound_name] = takes[k]
 	p.pitch_scale = pitch
 	p.volume_db = volume_db
 	p.play()
@@ -3157,7 +3197,7 @@ func craft(index: int) -> bool:
 		_give(item, -int(needs[item]))
 	var makes: String = recipe["makes"]
 	_give(makes, int(recipe["n"]))
-	sfx("quest", 1.3)
+	sfx("craft")
 	return true
 
 
@@ -3213,7 +3253,7 @@ func _use_tool() -> void:
 			return
 		swing_cd = 0.32
 		player.swing(item)
-		sfx("swing", randf_range(0.9, 1.1))
+		sfx("weapon_swing", randf_range(0.92, 1.08))
 		_swing_hits(item)
 	elif use == "eat":
 		_eat(item)
@@ -3341,7 +3381,9 @@ func _mine(t: Dictionary) -> void:
 	if bool(node.get("cav", false)) and item == "stone" and int(node["hits"]) <= 0:
 		cav_rocks_left -= 1
 		_maybe_open_shaft(t, node)
-	sfx("zap", randf_range(0.9, 1.1))
+	sfx("rock_break" if int(node["hits"]) <= 0 else "rock_crack", randf_range(0.92, 1.08))
+	if item in ["cavern_geode", "quartz", "thermal_quartz", "moon_opal", "fire_opal", "void_sapphire"]:
+		sfx("ore_find", 1.0, -3.0)
 	var vein_pos: Vector2 = t["pos"]
 	_pop_item(item, vein_pos + Vector2(0, -10))
 	_toast("+%d %s  (%d)" % [amount, _item_name(item), _count(item)])
@@ -3391,7 +3433,7 @@ func _build(item: String) -> void:
 	placed.append(e)
 	_spawn_placed(e)
 	_give(item, -1)
-	sfx("click", 0.7)
+	sfx("crate_hit", 1.1, -6.0)
 	_toast("%s set down. Right-click it to use it." % str(spec["name"]))
 
 
@@ -3448,6 +3490,7 @@ func _open_station() -> void:
 
 func _open_chest(key: String) -> void:
 	open_chest = key
+	sfx("chest_open")
 	if datapad != null:
 		datapad.open_storage("Storage chest")
 	else:
@@ -3481,7 +3524,7 @@ func _pick_up(key: String) -> void:
 	placed = placed.filter(func(e): return _placed_key(e) != key)
 	chests.erase(key)
 	_give(item, 1)
-	sfx("click", 1.2)
+	sfx("item_pickup")
 	_toast("Picked up: %s" % _item_name(item))
 
 
@@ -3530,7 +3573,7 @@ func _furnace_use(key: String, area: String, at: Vector2) -> void:
 		var made: String = str(m["makes"])
 		machines.erase(key)
 		_give(made, 1)
-		sfx("smelt")
+		sfx("machine_done")
 		_flash(at + Vector2(0, 2), Color(1.0, 0.6, 0.25), 1.6)
 		_pop_item(made, at + Vector2(0, -22))
 		_toast("+1 %s  (%d)" % [_item_name(made), _count(made)])
@@ -3559,7 +3602,7 @@ func _furnace_use(key: String, area: String, at: Vector2) -> void:
 	for id in needs:
 		_give(id, -int(needs[id]))
 	machines[key] = {"makes": str(r["makes"]), "ready": clock_now() + float(r["mins"]), "area": area, "pos": at}
-	sfx("smelt", 0.8)
+	sfx("furnace_load")
 	_flash(at + Vector2(0, 2), Color(1.0, 0.55, 0.2), 1.2)
 	_toast("Smelting %s, ready in %d min" % [_item_name(str(r["makes"])).to_lower(), int(r["mins"])])
 	_furnace_look(key)
@@ -3752,7 +3795,7 @@ func _job_quest_talk() -> void:
 func _take_laser() -> void:
 	_give("laser", 1)
 	job_quest = 1
-	sfx("quest")
+	sfx("tool_upgrade")
 	_toast("Got: mining laser")
 	_say("Job", [
 		"Point the bright end at the rock. Veins give out after a couple cuts, but they settle back by mornin'.",
@@ -3771,7 +3814,7 @@ func _choose_weapon(kind: String) -> void:
 	weapon = kind
 	_give(kind, 1)
 	job_quest = 4
-	sfx("quest")
+	sfx("tool_upgrade")
 	_toast("Got: Zaa'sh %s" % kind)
 	_say("Vzz'ket", ["[sad] It was my clutch-brother's. Bring it back clean.",
 			"The way up is at the top of the main dig. Clear out six of them, then tell Job.",
@@ -3820,7 +3863,7 @@ func _shipping_crate() -> void:
 func _ship(item: String, n: int) -> void:
 	_give(item, -n)
 	shipping[item] = int(shipping.get(item, 0)) + n
-	sfx("click")
+	sfx("ship_crate")
 
 
 func _ship_all() -> void:
@@ -3841,7 +3884,7 @@ func _collect_shipping() -> void:
 
 # The porch workbench: the Crafting page of the menu.
 func _open_crafting() -> void:
-	sfx("click")
+	sfx("datapad_open")
 	if datapad != null:
 		datapad.open_page("Crafting")
 	else:
@@ -3894,7 +3937,7 @@ func pay_station_repair(id: String) -> String:
 	for item in needs:
 		_give(item, -int(needs[item]))
 	station_due.append(id)
-	sfx("quest")
+	sfx("repair_done")
 	_save_game()
 	return "S.A.R.A.: \"Thank you. My drones start tonight. It will be open in the morning.\""
 
@@ -4056,7 +4099,7 @@ func _swing_hits(kind: String) -> void:
 
 
 func enemy_died(en) -> void:
-	sfx("die", randf_range(0.9, 1.1))
+	sfx("enemy_die", randf_range(0.9, 1.1))
 	var drop: String = en.drop_item()
 	var epos: Vector2 = en.position
 	_give(drop, 1)
@@ -4090,6 +4133,7 @@ func hurt_player(amount: int, from: Vector2) -> void:
 
 # Out of health: you wake up in the medbay, two hours later and a little poorer.
 func _collapse() -> void:
+	sfx("pass_out")
 	_clear_cavern()
 	hp = MAX_HP / 2
 	energy = maxi(energy, MAX_ENERGY / 4)
@@ -4111,6 +4155,13 @@ func _collapse() -> void:
 	])
 
 
+# Drinks gulp, the medpack hisses, everything else crunches.
+func _eat_sound(item: String) -> String:
+	if item == "medpack":
+		return "medpack"
+	return "drink" if bool(ItemData.ITEMS.get(item, {}).get("drink", false)) else "eat"
+
+
 func _eat(item: String) -> void:
 	var info: Dictionary = ItemData.ITEMS[item]
 	var gives_energy: int = int(info.get("energy", 0))
@@ -4120,7 +4171,7 @@ func _eat(item: String) -> void:
 	_give(item, -1)
 	hp = mini(MAX_HP, hp + int(info.get("heal", 5)))
 	energy = mini(MAX_ENERGY, energy + gives_energy)
-	sfx("eat")
+	sfx(_eat_sound(item))
 	# Food is eaten with the Stardew-style animation (player.play_eating); the medpack is held up instead.
 	var animated := false
 	if gives_energy > 0 and creator != null:
@@ -4414,6 +4465,7 @@ func clock_text(total_minutes: int) -> String:
 
 # Still up at 1:00 am: you pass out where you stand and wake in your own bed.
 func _pass_out() -> void:
+	sfx("pass_out")
 	var lost: int = mini(credits / 10, 100)
 	_money(-(lost), "Dropped when you passed out")
 	_end_day()
@@ -4435,6 +4487,7 @@ func _money(amount: int, source: String) -> void:
 
 # The day is over (you slept, or passed out): show the recap, then start tomorrow.
 func _end_day() -> void:
+	sfx("sleep")
 	_collect_shipping()
 	var lines: Array = []
 	var net := 0
@@ -4535,6 +4588,8 @@ func _next_day() -> void:
 	_snap_residents()
 	_save_game()
 	_toast("Day %d  (saved)" % day + ("   You've got mail." if post > 0 else ""))
+	if post > 0:
+		sfx("mail_waiting")
 	_morning_news()
 	for id in repaired:
 		_toast("S.A.R.A.: repairs finished overnight. %s: open." % str(StationRepair.REPAIRS[id]["name"]))
@@ -5073,6 +5128,7 @@ func museum_place(id: String, slot: int) -> void:
 	_give(id, -1)
 	museum_gifts[str(slot)] = id
 	show_exhibit(slot, str(ItemData.ITEMS[id]["relic"]))
+	sfx("museum_place")
 
 
 func museum_take(slot: int) -> void:
@@ -5166,10 +5222,11 @@ func _enter_portal(t: Dictionary) -> void:
 			_toast("Player 2's apartment: kept for a second player (co-op comes later)")
 		else:
 			_toast("Locked — access is not available yet")
-		sfx("deny")
+		sfx("door_locked")
 		return
 	var e: Array = t.entry
 	var door = portals[key]
+	sfx("lift" if e.size() > 7 and str(e[7]).to_lower().contains("lift") else "door_slide")
 	travelling = true
 	player.frozen = true
 	var tween := create_tween()
@@ -5339,7 +5396,7 @@ func _farm_use(use: String, item: String) -> void:
 			farm[tile]["crop"] = str(ItemData.ITEMS[item].get("crop", ""))
 			farm[tile]["age"] = 0
 			_give(item, -1)
-			sfx("click", 0.8)
+			sfx("seed_plant")
 			if farm_view != null: farm_view.sync_crops()
 		return
 	if swing_cd > 0.0:
@@ -5351,11 +5408,12 @@ func _farm_use(use: String, item: String) -> void:
 	if not animated:
 		player.show_tool(_item_icon(item))
 	if use == "hoe":
-		sfx("step", 0.7)
+		sfx("tool_swing", randf_range(0.95, 1.05), -6.0)
+		sfx("hoe_dig", randf_range(0.92, 1.08))
 		if on_field and not farm.has(tile):
 			farm[tile] = {"crop": "", "age": 0, "watered": -1}
 	elif use == "water":
-		sfx("blip", 0.6)
+		sfx("water_pour")
 		var splash := preload("res://scripts/watering_effect.gd").new()
 		splash.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 4)
 		if animated:
@@ -5392,7 +5450,7 @@ func _try_harvest() -> bool:
 	else:
 		player.show_pickup(_held_item_picture(got))
 	_give(got, 1)
-	sfx("coin", 1.2)
+	sfx("harvest")
 	_toast("+1 %s" % _item_name(got))
 	if int(c["regrow"]) > 0:
 		t["age"] = int(c["days"]) - int(c["regrow"])   # fruits again after a few more watered days
@@ -5423,6 +5481,7 @@ func _irrigate(t: Dictionary) -> void:
 	effect.position = t.pos + Vector2(0, -12)
 	actors.add_child(effect)
 	_toast("Opening the irrigation valve…")
+	sfx("valve_spray")
 	await get_tree().create_timer(1.4).timeout
 	effect.queue_free()
 	for tile in farm:
@@ -5503,7 +5562,7 @@ func _welcome_gifts() -> void:
 	_give("hydro_bed", 2)
 	for seed_id in WELCOME_SEEDS:
 		_give(seed_id, int(WELCOME_SEEDS[seed_id]))
-	sfx("quest")
+	sfx("gift")
 	_toast("+ Hoe, watering can, 2 hydroponic beds, %d potato and %d wheat seeds" % [int(WELCOME_SEEDS["crater_potato_seeds"]), int(WELCOME_SEEDS["moon_wheat_seeds"])])
 	_say("Bram", ["Field's in the agri dome, west of your door. Talk to any of us at work to shop. Good luck, pilot."])
 	_save_game()
@@ -5578,7 +5637,7 @@ func _enter_cavern(n: int) -> void:
 	var info: Dictionary = data["maps"][key]
 	var up: Array = info["up"]
 	_go_to(key, Vector2i(int(up[0]), int(up[1])), false)
-	sfx("warp")
+	sfx("ladder")
 	cav_deepest = maxi(cav_deepest, n)
 	var note := "The Caverns, floor %d" % n
 	if n % 5 == 0 and n > cav_lift and n < last:
@@ -5688,6 +5747,7 @@ func _maybe_open_shaft(t: Dictionary, node: Dictionary) -> void:
 func _leave_caverns() -> void:
 	_clear_cavern()
 	var gate: Array = MapData.CAVERNS["gate"]
+	arrive_sound = "ladder"
 	_go_to("mine", Vector2i(int(gate[0]), int(gate[1])))
 
 

@@ -94,7 +94,7 @@ func _show(id: String) -> void:
 		return
 	showing = id
 	world.read_letter(id)
-	world.sfx("click")
+	world.sfx("letter_open")
 
 
 func _click(id: String, _p: Vector2, button: int) -> void:

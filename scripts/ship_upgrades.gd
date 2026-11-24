@@ -251,7 +251,7 @@ func _buy(i: int) -> void:
 			u["tank"] = int(u["tank"]) + 1
 		"tether":
 			u["tether"] = true
-	world.sfx("quest")
+	world.sfx("tool_upgrade")
 	status = "%s upgraded." % str(r["label"])
 
 

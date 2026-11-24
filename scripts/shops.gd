@@ -201,7 +201,7 @@ func _learn(dish: String) -> void:
 		return
 	world._money(-price, "Shopping")
 	known_recipes.append(dish)
-	world.sfx("quest")
+	world.sfx("recipe_new")
 	world._toast("Learned: %s. Cook it at your kitchenette." % _name(dish))
 
 
@@ -232,7 +232,7 @@ func _crack(id: String, n: int) -> void:
 		world.sfx("deny")
 		world._toast("Not enough scrip for Job's fee." if world._count(id) > 0 else "You have no geodes.")
 		return
-	world.sfx("smelt")
+	world.sfx("geode_crack")
 	var parts: Array = []
 	for item in found:
 		parts.append(_counted(str(item), int(found[item])))
@@ -273,7 +273,7 @@ func _cook(dish: String, n: int) -> void:
 		world.sfx("deny")
 		world._toast("You're missing something for that.")
 		return
-	world.sfx("smelt")
+	world.sfx("cook")
 	world._toast("Cooked %s" % _counted(dish, made))
 
 

@@ -102,6 +102,12 @@ var _clock := 0.0              # real seconds, for _resume
 var _resume := {}              # song -> [position, _clock when it was cut short]
 var _streams := {}
 var _rng := RandomNumberGenerator.new()
+# Ambient beds under the music (24 Nov): the station's hum, fans and drips in the agri dome, water dripping in the
+# caverns and at the lake, the ship's drone in space. They loop, and fade across when the place changes.
+const AMB_DB := -6.0
+var amb: AudioStreamPlayer
+var _amb_name := ""
+var _amb_streams := {}
 
 
 func setup(main_world, music_player: AudioStreamPlayer) -> void:
@@ -109,10 +115,15 @@ func setup(main_world, music_player: AudioStreamPlayer) -> void:
 	player = music_player
 	player.finished.connect(_on_finished)
 	_rng.randomize()
+	amb = AudioStreamPlayer.new()
+	amb.volume_db = -60.0
+	add_child(amb)
+	amb.finished.connect(func(): if _amb_name != "": amb.play())     # loop the bed
 
 
 func update(delta: float) -> void:
 	_clock += delta
+	_update_ambient(delta)
 	if world.title != null and world.title.open:
 		return                 # the title screen plays its own theme and pauses this player
 	if not world.music_on:
@@ -226,6 +237,50 @@ func _place_now() -> String:
 	if area == "bram" or area == "mess" or area == "top" or area == "lounge" or area == "agri":
 		return area
 	return "station"
+
+
+func _ambient_now() -> String:
+	if world.title != null and world.title.open:
+		return ""
+	var place := _place_now()
+	if place == "creator":
+		return ""
+	if place == "space" or place == "battle":
+		return "amb_space"
+	var area: String = world.current_area
+	if place == "mines" or area == "lake":
+		return "amb_caves"
+	if area == "agri":
+		return "amb_agri"
+	return "amb_station"
+
+
+func _amb_stream(bed: String):
+	if not _amb_streams.has(bed):
+		var found = null
+		for ext in ["ogg", "wav"]:
+			var path := "res://audio/%s.%s" % [bed, ext]
+			if ResourceLoader.exists(path):
+				found = load(path)
+				break
+		_amb_streams[bed] = found
+	return _amb_streams[bed]
+
+
+func _update_ambient(delta: float) -> void:
+	var want := _ambient_now()
+	if want != _amb_name:
+		amb.volume_db = maxf(-60.0, amb.volume_db - 40.0 * delta)        # fade the old bed out first
+		if amb.volume_db <= -59.0 or not amb.playing:
+			_amb_name = want
+			amb.stop()
+			var bed_stream = _amb_stream(want) if want != "" else null
+			if bed_stream != null:
+				amb.stream = bed_stream
+				amb.volume_db = -60.0
+				amb.play()
+	elif amb.playing:
+		amb.volume_db = minf(AMB_DB, amb.volume_db + 20.0 * delta)
 
 
 # Fade out whatever is playing, then be quiet for a while.

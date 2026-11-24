@@ -138,7 +138,7 @@ func handle_click(button: int) -> void:
 			if at.x >= x - 3.0 and at.x < x + TAB_W - 5.0:
 				tab = i
 				held = -1
-				world.sfx("click", 1.2, -6.0)
+				world.sfx("crew_order", 1.2, -4.0)
 		return
 	if tab == 0:
 		var slot: int = _inventory_slot_at(at)
@@ -196,7 +196,7 @@ func handle_input(event: InputEvent) -> void:
 		if key >= KEY_1 and key <= KEY_5:
 			tab = key - KEY_1
 			held = -1
-			world.sfx("click", 1.2, -6.0)
+			world.sfx("crew_order", 1.2, -4.0)
 			return
 	if tab == 0:
 		_inventory_input(event)

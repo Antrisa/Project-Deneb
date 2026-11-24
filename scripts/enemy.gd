@@ -214,3 +214,5 @@ func hurt(amount: int, push: Vector2) -> void:
 		world.enemy_died(self)
 	else:
 		world.sfx("hit", randf_range(0.9, 1.1))
+		if randf() < 0.5 and kind.contains("bug"):
+			world.sfx("bug_noise", randf_range(0.9, 1.15), -4.0)

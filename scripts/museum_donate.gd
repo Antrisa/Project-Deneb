@@ -126,7 +126,6 @@ func _click(id: String, p: Vector2, button: int) -> void:
 		world.sfx("deny")                 # Tar'Besh's own piece
 	elif held != "":
 		world.museum_place(held, slot)
-		world.sfx("quest")
 		held = held if world._count(held) > 0 else ""
 	else:
 		world.sfx("deny")

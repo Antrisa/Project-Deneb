@@ -231,7 +231,7 @@ func _bag_list() -> Array:
 
 func _on_storage_moved(id: String, to_chest: bool) -> void:
 	world.chest_move(world.open_chest, id, to_chest)
-	world.sfx("click", 1.1 if to_chest else 0.9)
+	world.sfx("item_pickup", 1.1 if to_chest else 0.9, -3.0)
 	pad.set_storage(_chest_list(), _bag_list())
 
 

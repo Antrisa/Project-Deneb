@@ -153,7 +153,7 @@ func jump() -> void:
 	move_index = next_index()
 	moving = 0.001
 	jumps += 1
-	world.sfx("warp", 1.2, -4.0)
+	world.sfx("map_jump")
 
 
 func _process(delta: float) -> void:

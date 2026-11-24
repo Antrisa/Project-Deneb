@@ -458,6 +458,7 @@ func _win() -> void:
 		break_t = 0.0                # it breaks apart (a ship won by downing its crew stays whole)
 		end_timer = 3.0
 	world.sfx("sh_explode" if e_hull <= 0 else "quest")
+	world.sfx("win_sting", 1.0, -4.0)
 
 
 func _lose(why: String) -> void:
@@ -469,6 +470,7 @@ func _lose(why: String) -> void:
 	lose_t = 0.0
 	shake = 1.4
 	world.sfx("sh_explode", 0.8)
+	world.sfx("lose_sting", 1.0, -4.0)
 
 
 func _jump() -> void:
@@ -2091,7 +2093,7 @@ func _tick_space(delta: float) -> void:
 		surrender_asked = true
 		paused = true
 		offer_open = true
-		world.sfx("sh_ready", 0.7, -4.0)
+		world.sfx("hail")
 		return
 	if bool(fight.get("flee", false)) and e_hull > 0 and e_hull * 2 <= e_hull_max:
 		if e_flee < 0.0:
@@ -2300,6 +2302,7 @@ func _lose_person(c: Dictionary) -> void:
 	var where: Vector2 = _on_page(str(c["ship"]) != "foe", c["pos"])
 	c["gone"] = true
 	c["hp"] = 0.0
+	world.sfx("crew_down")
 	var words: String = ("%s is out: back to the station's Medbay" if bool(c["named"]) else "%s didn't make it") % str(c["name"])
 	lost_words.append(words)
 	_pop(where + Vector2(0, -12), words, BAD)
