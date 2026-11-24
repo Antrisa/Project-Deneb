@@ -2,14 +2,14 @@
 
 Zachary added a mailbox, the message pad by your front door on the agri complex's porch, so that residents can send you mail and gifts, as in Stardew Valley. Then he asked: "if it makes sense in any of the previous arcs add and next morning get mail from the person or gifts. and keep in mind for future arcs."
 
-So sixteen heart events now send a letter that comes with the next morning's post, and five of the letters have a gift in them. Bram's arc (written the same day, after the rule) added one more, with a gift, and Tikka & Sesska's (24 Nov) three more, two with gifts: twenty in all. The wording is a first draft by Claude, for Zachary to change: the letters live in `scripts/mail_data.gd`.
+So sixteen heart events now send a letter that comes with the next morning's post, and five of the letters have a gift in them. Bram's arc (written the same day, after the rule) added one more, with a gift, Tikka & Sesska's (24 Nov) three more, two with gifts, and Maren, Owen & Pip's (24 Nov) four more, one with a gift: twenty-four in all. The wording is a first draft by Claude, for Zachary to change: the letters live in `scripts/mail_data.gd`.
 
 ## How it works
 
 - **Your name:** `{name}` in a letter (or any line of dialogue) becomes the name you gave your character, or Pilot (upstream, 24 Nov).
 
 - **Sending:** a heart event sends a letter with a `["mail", id, days]` step (`scripts/cutscene.gd`), which calls `main.gd send_mail(id, days)`. `days` 1 is the next morning. A letter only ever comes once, however often the event plays (F3).
-- **A letter sent from inside a choice** only comes if you made that choice. Four do this: Zaas writes after Job's 4 only if you dug out his crate, Tar'Besh writes after his 4 only if you told him he lived anyway, Freya writes after Tikka's 4 only if you let her take the lamp, and Sesska's cap after her 2 doesn't come if you told her it was only a jacket. Missing a letter is the minor consequence.
+- **A letter sent from inside a choice** only comes if you made that choice. Six do this: Zaas writes after Job's 4 only if you dug out his crate, Tar'Besh writes after his 4 only if you told him he lived anyway, Freya writes after Tikka's 4 only if you let her take the lamp, Sesska's cap after her 2 doesn't come if you told her it was only a jacket, Maren's after her 4 not if you told her it was only tea, and Pip's geode after his 4 not if you told him finders keepers. Missing a letter is the minor consequence.
 - **Gifts:** a letter's optional `"gift": {item: count}` goes in your pack the first time you open it (`main.gd read_letter`), with a toast ("In the envelope: Medpack x2"). The letter shows it along the foot of its page: ENCLOSED, the item's picture and count, and IN YOUR PACK (`scripts/mail_reader.gd _paint_gift`). Gifts are small and use items that already exist, so no new art is needed.
 - **Fitting the page:** `python3 tests/check_mail.py` measures every letter with the datapad font's own widths at the smallest page (768 x 432), with room left for a gift. It also checks that every gift is an item, that every letter is sent by something and that letters use only plain ASCII (the datapad font has no curly quotes, long dashes or accents: Cafe, not Café). `-v` shows how much room each letter has left.
 - **The Godot test** (`tests/heart_events_test.gd`) checks that every event sent its letter, that they all come with the next morning's post, and that Quill's medpacks come once.
@@ -51,6 +51,10 @@ About one letter per arc, rarely two. A gift shouldn't repeat the event's own pe
 | Tikka 4, The Kettle Queue | `freya_lamp` | Freya | She let me | - |
 | Sesska 2, Every Seam Giving Up | `sesska_offcuts` | Sesska | Offcuts | Knit cap x1 |
 | Tikka & Sesska 6, The Anniversary | `forty_years` | Tikka and Sesska | Forty years and a day | Coil wire x2 |
+| Maren 4, A Hot Cup of Tea | `maren_tea` | Maren | Hot tea | - |
+| Owen 4, The Freighter Log | `owen_recorder` | Owen | Good company | - |
+| Pip 4, Lost and Found | `pip_found` | Pip | Found it | Geode x1 |
+| Maren, Owen & Pip 6, Lanterns | `pip_lanterns` | Pip | Green stars | - |
 
 Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The gate" (when Job's north tunnels are done), and S.A.R.A.'s notes on the storage dome and the fish ponds.
 
@@ -319,3 +323,53 @@ Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The
 > Enclosed, the highest honour I give: coil wire. Sesska says this is not how thanks work. Sesska is wrong. - T.
 >
 > - Tikka and Sesska
+
+### Hot tea (`maren_tea`): after Maren's 4, A Hot Cup of Tea
+
+*From Maren, the next morning. Not if you told her it was only tea.*
+
+> {name},
+>
+> Thirty-one minutes of quiet. I timed it. The tea was hot the whole way down.
+>
+> Pip says you turned him round 'like a door'. He wants to know how you did it. I've told him it's a doctor's secret.
+>
+> - Maren
+
+### Good company (`owen_recorder`): after Owen's 4, The Freighter Log
+
+*From Owen, the next morning.*
+
+> {name},
+>
+> I've put the recorder in the drawer with Tam's first school report and Ines's flight licence. It seemed like the right company.
+>
+> I listened once more, alone, for the green stars. Then I closed the drawer. That was enough for now.
+>
+> Thank you for staying.
+>
+> - Owen
+
+### Found it (`pip_found`): after Pip's 4, Lost and Found
+
+*From Pip, the next morning. Enclosed: Geode x1. Not if you told him finders keepers.*
+
+> Dear {name},
+>
+> I found this by the bins. It's a geode. Job says you crack them. I didn't crack it. I thought you should.
+>
+> Finders keepers is a real rule. But Gran says giving things away is a better rule.
+>
+> - Pip (age 9)
+
+### Green stars (`pip_lanterns`): after Maren, Owen & Pip's 6, Lanterns
+
+*From Pip, the next morning.*
+
+> Dear {name},
+>
+> Grandad played me the message. Dad sounds like Grandad but younger. Gran cried and then she laughed and then she made toast.
+>
+> I'm going to be a pilot and check the drive every time. You can come too. You can check it as well.
+>
+> - Pip

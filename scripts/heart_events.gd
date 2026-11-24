@@ -38,7 +38,9 @@ const ORDER := ["freya_2", "freya_4", "freya_6", "freya_8", "freya_10",
 	"rusk_2", "rusk_4", "rusk_6", "rusk_8",
 	"nightwatch_2", "nightwatch_4", "nightwatch_8",
 	"bram_2", "bram_4", "bram_6", "bram_8",
-	"tikka_2", "tikka_4", "tikka_6", "tikka_8", "sesska_2", "sesska_4", "sesska_6", "sesska_8", "forty_4", "forty_6"]
+	"tikka_2", "tikka_4", "tikka_6", "tikka_8", "sesska_2", "sesska_4", "sesska_6", "sesska_8", "forty_4", "forty_6",
+	"maren_2", "maren_4", "maren_6", "maren_8", "owen_2", "owen_4", "owen_6", "owen_8", "pip_2", "pip_4", "pip_6", "pip_8",
+	"family_4", "family_6"]
 
 const EVENTS := {
 	# ---------------------------------------------------------------- Freya (docs/story/characters/FREYA.md)
@@ -4086,6 +4088,581 @@ const EVENTS := {
 			["say", "", ["They dance badly, to a music box, with eight hands between them. Nobody else in the room is looking at anything else."]],
 			["flag", "forty_anniversary"],
 			["mail", "forty_years", 1],
+		],
+	},
+	# ---------------------------------------------------------------- Maren, Owen & Pip (Zachary, 24 Nov)
+	# An arc each, and a two-scene family side arc. Pip's parents, Maren and Owen's son Tam and his wife Ines (Claude's
+	# placeholder names), died three years ago when their freighter Kestrel's drive failed between stations in the
+	# Neutral Zone: "nobodys fault bad things happen somtimes" (Zachary). Pip knows they died, not how. Maren and
+	# Owen brought him to the Landing afterwards, for somewhere quiet; that's why the doctor "came here to retire".
+	# Maren: the doctor who came here to stop leaving. Her 8: Advanced Med-Stims (medpacks heal twice as much).
+	"maren_2": {
+		"who": "Maren", "hearts": 2, "title": "House Calls",
+		# the East Complex after dinner: her rounds, with you carrying a bag. Job's back first
+		"area": "east", "windows": [[[0, 1, 2, 4, 5], "19:30", "21:15"]],
+		"player": [69, 47, "u"],
+		"cast": [["Maren", 68, 46, "u"], ["Job", 73, 40, "d", "bench"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The East Complex, after dinner. Maren walks fast for someone carrying two bags. She has handed you the heavier one."]],
+			["say", "Maren", ["House calls. The clinic shuts at seven. The patients don't. First, Job's back."]],
+			["walks", [["Maren", 73, 41], ["player", 71, 42]]],
+			["face", "Maren", "u"], ["face", "player", "u"],
+			["emote", "Job", "hello"],
+			["say", "Job", ["[happy] Evening, Doc."]],
+			["say", "Maren", ["Sit up straight."]],
+			["say", "Job", ["I am sitting up straight."]],
+			["say", "Maren", ["Sit up straighter."]],
+			["pose", "Maren", "treat u"], ["sfx", "click"],
+			["say", "", ["She runs two fingers down his spine as if she's reading it."]],
+			["say", "Maren", ["You lifted something you shouldn't have."]],
+			["emote", "Job", "sad"],
+			["say", "Job", ["[sad] ...A beam. Only a little beam."]],
+			["pose", "Maren", ""],
+			["say", "Maren", ["Of course it was. A stim tonight, a hot soak tomorrow, and no mining for a day.", "[angry] No mining, Job. I can hear you thinking about it."]],
+			["emote", "Job", "frustrated"],
+			["walks", [["Maren", 68, 44], ["player", 69, 45]]],
+			["face", "Maren", "player"], ["face", "player", "Maren"],
+			["pose", "Maren", "talk"],
+			["say", "Maren", ["Thirty years a ship's surgeon. I've stitched people up in nine systems: in corridors, in cargo holds, once in a lift.",
+				"I came here to retire. [happy] Everyone laughs when I say that. You're allowed to."]],
+			["pose", "Maren", ""],
+			["choose", [
+				{"text": "You didn't really come here to retire, did you?", "friendship": 60, "steps": [
+					["emote", "Maren", "sad"],
+					["say", "Maren", ["[sad] ...No. We came for Pip. After his mum and dad, we wanted somewhere quiet. Somewhere nothing happens.",
+						"[happy] Then you fell out of the sky."]]]},
+				{"text": "Retirement suits you.", "friendship": 30, "steps": [
+					["say", "Maren", ["[happy] Liar. I look exhausted. But thank you."]]]},
+				{"text": "Let Quill do the house calls.", "steps": [
+					["emote", "Maren", "frustrated"],
+					["say", "Maren", ["[angry] Quill has the clinic. The house calls are mine. People tell you things on their own doorstep."]],
+					["friendship", "Maren", -20]]}]],
+			["say", "Maren", ["Next: Tobbin's wrist. Then Nub has a splinter he's very proud of. Keep up."]],
+			["flag", "maren_house_calls"],
+		],
+	},
+	"maren_4": {
+		"who": "Maren", "hearts": 4, "title": "A Hot Cup of Tea",
+		# the common room on her Thursday off: thirty years, and she's never finished a cup of tea while it was hot.
+		# You keep Pip, Quill and Job away until she does. Letter: hers, unless you told her it was only tea
+		"area": "common", "windows": [[[3], "12:30", "15:00"]],
+		"seen": ["maren_2"],
+		"player": [12, 14, "u"],
+		"cast": [["Maren", 11, 7, "u"], ["Pip", 12, 16, "u"], ["Quill", 13, 16, "u"], ["Job", 11, 16, "u"]],
+		"steps": [
+			["hide", "Pip"], ["hide", "Quill"], ["hide", "Job"],
+			["wait", 0.6],
+			["say", "", ["The common room, on Maren's Thursday off. A kettle is just coming to the boil, and Maren is watching it like a patient."]],
+			["walk", "player", 13, 7], ["face", "player", "l"],
+			["face", "Maren", "player"],
+			["say", "Maren", ["[happy] Shh. Don't move. It's nearly there.", "Thirty years, and I've never once finished a cup of tea while it was hot. Today I am going to."]],
+			["sfx", "machine_done"],
+			["say", "", ["She pours. Steam curls off the cup. Somewhere outside, running feet."]],
+			["show", "Pip"], ["walk", "Pip", 12, 12],
+			["emote", "Pip", "hello"],
+			["say", "Pip", ["Gran! Gran, guess what Kit..."]],
+			["walk", "player", 12, 11], ["face", "player", "d"],
+			["say", "", ["You get to Pip first, turn him round by the shoulders, and point him at the fountain."]],
+			["emote", "Pip", "question"],
+			["walk", "Pip", 12, 16], ["hide", "Pip"],
+			["show", "Quill"], ["walk", "Quill", 13, 13],
+			["say", "Quill", ["Maren, the bandage order..."]],
+			["emote", "player", "no"],
+			["emote", "Quill", "surprise"],
+			["say", "Quill", ["[surprised] Ah. Tea. Understood. Retreating."]],
+			["walk", "Quill", 13, 16], ["hide", "Quill"],
+			["show", "Job"], ["walk", "Job", 11, 14],
+			["emote", "player", "wait"], ["emote", "Job", "question"],
+			["say", "", ["Job takes one look at your face, holds up both hands, and backs out again."]],
+			["walk", "Job", 11, 16], ["hide", "Job"],
+			["walk", "player", 13, 7], ["face", "player", "l"],
+			["face", "Maren", "u"], ["pose", "Maren", "eat u"], ["wait", 1.2], ["pose", "Maren", ""],
+			["face", "Maren", "player"], ["emote", "Maren", "joy"],
+			["say", "Maren", ["[happy] Hot. ...It's hot.", "Our Tam used to bring me tea on the ship, every morning between patients. By the time I got to it, it was always cold.",
+				"[sad] He made terrible tea. On time, every day."]],
+			["choose", [
+				{"text": "Tell me about him.", "friendship": 60, "steps": [
+					["pose", "Maren", "talk"],
+					["say", "Maren", ["[happy] He took a toaster apart at nine and put it back with two parts left over. It worked better. Pip has his ears, and his hands.",
+						"[sad] ...Thank you for asking. People don't. They think it hurts. It hurts more when nobody says his name."]],
+					["pose", "Maren", ""],
+					["mail", "maren_tea", 1]]},
+				{"text": "Drink your tea. I'll keep watch.", "friendship": 30, "steps": [
+					["say", "Maren", ["[happy] Yes, doctor."]],
+					["mail", "maren_tea", 1]]},
+				{"text": "It's only tea.", "steps": [
+					["emote", "Maren", "sad"],
+					["say", "Maren", ["[sad] ...Yes. Only tea."]],
+					["friendship", "Maren", -20]]}]],
+			["flag", "maren_hot_tea"],
+		],
+	},
+	"maren_6": {
+		"who": "Maren", "hearts": 6, "title": "Letting Go",
+		# the corridor to the Survey lift on a weekend morning: Pip wants to go up on his own ("I'm not allowed on the lift
+		# by myself"). Either way he goes in the end (maren_lets_go): his Saturdays are his own from now on
+		"area": "main", "windows": [[[5, 6], "10:00", "12:00"]],
+		"seen": ["maren_4"],
+		"player": [115, 30, "u"],
+		"cast": [["Pip", 115, 23, "u"], ["Maren", 114, 25, "u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The corridor to the Survey lift. Pip stands at the lift doors with his hand on the button. Maren stands behind him with her hand on Pip."]],
+			["walk", "player", 115, 27], ["face", "player", "u"],
+			["face", "Pip", "player"], ["emote", "Pip", "hello"],
+			["say", "Pip", ["[happy] I'm going up to the Survey Level. By myself. S.A.R.A. says she'll meet me at the top. Gran's deciding."]],
+			["face", "Maren", "player"],
+			["say", "Maren", ["Gran is deciding.", "His father went up his first lift alone at nine, too. Then his first ship at twenty. Then..."]],
+			["emote", "Maren", "sad"], ["pose", "Maren", "sad"],
+			["say", "Maren", ["[sad] You keep a child safe by keeping him close. And then one day, keeping him close is the thing that hurts him."]],
+			["pose", "Maren", ""],
+			["choose", [
+				{"text": "Let him go. S.A.R.A. watches every floor.", "friendship": 60, "steps": [
+					["emote", "Maren", "wait"],
+					["say", "Maren", ["...Every floor. Yes. She does."]],
+					["face", "Maren", "Pip"],
+					["say", "Maren", ["Go on, then. Straight up, straight to S.A.R.A., and back by lunch."]],
+					["emote", "Pip", "joy"], ["pose", "Pip", "jump"], ["wait", 0.5], ["pose", "Pip", ""],
+					["say", "Pip", ["[happy] Straight up, straight to S.A.R.A., back by lunch!"]],
+					["walk", "Pip", 115, 21], ["sfx", "lift"], ["hide", "Pip"],
+					["say", "", ["The lift doors close. Maren lets out a breath she seems to have been holding for three years."]],
+					["face", "Maren", "player"],
+					["say", "Maren", ["[happy] Well. He's going to be insufferable now."]]]},
+				{"text": "Go up with him, just this once.", "steps": [
+					["emote", "Pip", "frustrated"],
+					["say", "Pip", ["[angry] Gran! That's not by myself!"]],
+					["say", "Maren", ["[sad] ...Next time. I'll be ready next Saturday."]],
+					["walks", [["Pip", 115, 21], ["Maren", 114, 22]]], ["sfx", "lift"], ["hide", "Pip"], ["hide", "Maren"],
+					["say", "", ["She is. The Saturday after, Pip goes up on his own, and tells everyone about it for a week."]],
+					["friendship", "Pip", -20]]}]],
+			["flag", "maren_lets_go"],
+		],
+	},
+	"maren_8": {
+		"who": "Maren", "hearts": 8, "title": "Med-Stims",
+		# the Medbay after hours: the old ship's recipe, taught to you and Quill. Reward (NPC Master): Advanced
+		# Med-Stims, medpacks heal twice as much (main.gd _eat). Nothing waits, so no backup
+		"area": "medbay", "windows": [[[0, 1, 2, 4, 5], "19:30", "21:15"]],
+		"seen": ["maren_6"],
+		"player": [5, 8, "u"],
+		"cast": [["Maren", 7, 5, "d"], ["Quill", 8, 7, "l"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The Medbay after hours. Maren has laid out vials, a burner and a very old textbook. Quill is taking notes about the notes."]],
+			["walk", "player", 6, 7], ["face", "player", "u"],
+			["say", "Maren", ["Good, you're here. Stand there. Don't touch the blue one.",
+				"Med-stims. The old ship's recipe: twice the kick of a medpack, half the shakes. I've never taught it to anyone. Nobody stayed long enough."]],
+			["pose", "Maren", "treat d"], ["sfx", "craft"],
+			["say", "Quill", ["[surprised] You're adding the spores now? The journal says after."]],
+			["say", "Maren", ["The journal was written by a man who'd never been shot at. Now."]],
+			["sfx", "medpack"], ["fx", "steam", 7, 6, 1], ["wait", 0.6], ["fx", "steam", "off"],
+			["pose", "Maren", ""], ["face", "Maren", "player"],
+			["say", "Maren", ["[happy] There. Every medpack you carry, I'll top up the old way."]],
+			["perk", "advanced_med_stims", "Perk: Advanced Med-Stims (medpacks heal twice as much)"],
+			["pose", "Maren", "talk"],
+			["say", "Maren", ["I told you I came here to retire. I didn't. I came here to stop leaving.",
+				"Thirty years of ports. You patch someone up, they fly off, and you never learn how it ends.",
+				"[sad] Here, I'll learn how it ends. I'm not sure I'm brave enough for that. I'm doing it anyway."]],
+			["pose", "Maren", ""],
+			["choose", [
+				{"text": "Welcome home, Maren.", "friendship": 60, "steps": [
+					["emote", "Maren", "love"],
+					["say", "Maren", ["[happy] ...Home. Don't tell Owen I said it first. He's been waiting three years to say it."]]]},
+				{"text": "Pip's lucky to have you.", "friendship": 30, "steps": [
+					["say", "Maren", ["[happy] Pip's lucky to have a whole station. I'm the part that makes him wear a coat."]]]},
+				{"text": "So you're never retiring?", "steps": [
+					["say", "Maren", ["[angry] I'll retire when people stop falling out of the sky. Present company included."]],
+					["friendship", "Maren", -20]]}]],
+			["face", "Quill", "Maren"],
+			["say", "Quill", ["[happy] I've written that down. 'Home.' Underlined twice."]],
+			["flag", "maren_home"],
+		],
+	},
+	# Owen: the librarian who keeps everyone's story. His 8: the Library Lore Compendium, which does nothing until
+	# there's a codex system (Claude's suggestion, taken 24 Nov).
+	"owen_2": {
+		"who": "Owen", "hearts": 2, "title": "One Novel",
+		# the library during morning lessons: the Terrans' only novel, read aloud, and you do the voices
+		"area": "library", "windows": [[[0, 1, 2, 3, 4], "08:00", "11:00"]],
+		"player": [8, 13, "u"],
+		"cast": [["Owen", 8, 6, "d"], ["Pip", 7, 8, "u"], ["Kit", 9, 8, "u"], ["Nub", 8, 9, "u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The library, during lessons. Owen holds up a battered paperback the way other people hold up a lantern."]],
+			["say", "Owen", ["Today: the novel. The only novel the Terrans left, among four hundred technical manuals.",
+				"I've read it nine times. It is not good. That's what makes it such a good lesson."]],
+			["walk", "player", 11, 8], ["face", "player", "l"],
+			["face", "Owen", "player"], ["emote", "Owen", "hello"],
+			["say", "Owen", ["[happy] Ah. A guest reader. Every story needs voices, and mine all sound like a librarian."]],
+			["emote", "Pip", "joy"], ["emote", "Kit", "joy"], ["emote", "Nub", "joy"],
+			["say", "Pip", ["[happy] Do Captain Valor! Do Captain Valor!"]],
+			["choose", [
+				{"text": "Read Captain Valor, in your deepest voice.", "friendship": 60, "steps": [
+					["say", "", ["\"Stand fast, crew,\" you rumble. \"The nebula is merely weather!\" Pip falls off his chair laughing."]],
+					["pose", "Owen", "laugh"],
+					["say", "Owen", ["[happy] Better than the author deserved."]],
+					["pose", "Owen", ""]]},
+				{"text": "Read the villain, with a terrible cackle.", "friendship": 60, "steps": [
+					["say", "", ["\"At last, Valor, your little ship is MINE!\" Nub hides under the table, thrilled."]],
+					["pose", "Owen", "laugh"],
+					["say", "Owen", ["[happy] Oh, very good. Very bad. Very good."]],
+					["pose", "Owen", ""]]},
+				{"text": "Skip to the end. Everyone knows how these go.", "steps": [
+					["emote", "Pip", "no"], ["emote", "Kit", "no"], ["emote", "Nub", "no"],
+					["say", "Owen", ["[angry] We never skip to the end. The end is only any good because of everything before it."]],
+					["friendship", "Owen", -20]]}]],
+			["pose", "Owen", "talk"],
+			["say", "Owen", ["Today's lesson: a bad book still has somebody's whole heart in it. That's why we keep them.",
+				"Pip's father read this one too. Nine times, the summer he was nine. [happy] He thought Captain Valor was real."]],
+			["pose", "Owen", ""],
+			["emote", "Pip", "love"],
+			["say", "Pip", ["[happy] Grandad does Dad's voice for Captain Valor. It's the same voice."]],
+			["flag", "owen_novel"],
+		],
+	},
+	"owen_4": {
+		"who": "Owen", "hearts": 4, "title": "The Freighter Log",
+		# the cargo bay at night, by Bram's pod: Bram's cousin Pell found the Kestrel's flight recorder in a salvage lot.
+		# Owen listens with you: his son's last log. The drive. Nobody's fault. Letter: Owen's, the next morning
+		"area": "eng", "windows": [[null, "21:45", "23:30"]],
+		"seen": ["owen_2"],
+		"player": [104, 46, "r"],
+		"cast": [["Bram", 108, 49, "r", "restock r"], ["Owen", 106, 48, "r"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The cargo bay, late. Bram's pod sits on the yellow pad with its hatch open. Owen waits beside it, very still, holding his hat."]],
+			["pose", "Bram", ""], ["face", "Bram", "l"],
+			["say", "Bram", ["[sad] Pell found it in a salvage lot on the lanes, two systems out. He knew the name. Everybody on the lanes knows the name."]],
+			["pose", "Bram", "gift"],
+			["say", "", ["A flight recorder, scorched black at one corner. On the side, in stencil: KESTREL."]],
+			["pose", "Bram", ""],
+			["say", "Bram", ["There is no charge. I see no charge. My ledger is very old."]],
+			["face", "Owen", "player"],
+			["say", "Owen", ["[sad] Our son's ship. Tam, and his wife Ines. Three years ago her drive failed between stations. Pip was with us, for that one run.",
+				"I asked the traders to look for it. I never thought they would. Will you stay while I listen? I can't do it with Maren. Not yet."]],
+			["walk", "player", 105, 47], ["face", "player", "r"],
+			["sfx", "datapad_open"],
+			["say", "", ["Static. Then a young man's voice, tired and cheerful."]],
+			["say", "", ["Kestrel, log. Drive's running hot again. Ines says it's nothing. Ines always says it's nothing.",
+				"We'll put in at the next station and have it looked at. Tell Pip we'll be home for his birthday. Tell him the stars here are green."], "Tam (recording)"],
+			["sfx", "zap"],
+			["say", "", ["The recording ends in a crackle. Owen listens to the quiet after it for a long time."]],
+			["emote", "Owen", "sad"], ["pose", "Owen", "sad"],
+			["say", "Owen", ["[sad] A coupling. That's all it was. Nobody's fault. Bad things happen sometimes.",
+				"Pip knows they're gone. He doesn't know how. He's never asked, and I've never offered."]],
+			["pose", "Owen", ""],
+			["choose", [
+				{"text": "One day he'll want to hear his dad's voice. Keep it for him.", "friendship": 60, "steps": [
+					["say", "Owen", ["...His voice. Yes. Not the ending. The green stars.", "[happy] I'll keep it for when he asks. He will. He's his father's son."]]]},
+				{"text": "Some things are better not knowing.", "friendship": 30, "steps": [
+					["say", "Owen", ["[sad] Perhaps. I've spent three years not knowing. It wasn't better. It was only quieter."]]]},
+				{"text": "Send it off in the pod. Let it go.", "steps": [
+					["emote", "Owen", "no"],
+					["say", "Owen", ["[angry] It's the last of his voice. I'll let go of a great many things. Not this."]],
+					["friendship", "Owen", -20]]}]],
+			["face", "Bram", "Owen"],
+			["say", "Bram", ["[sad] ...I will wait to close the hatch. Take your time. The pod can be late. My cousins will survive."]],
+			["flag", "owen_kestrel_log"],
+			["mail", "owen_recorder", 1],
+		],
+	},
+	"owen_6": {
+		"who": "Owen", "hearts": 6, "title": "Pip's Book",
+		# his study at home on a weekend afternoon: he's writing Pip a book about his mum and dad, and can't end it
+		"area": "aptDoc", "windows": [[[5, 6], "14:00", "17:00"]],
+		"seen": ["owen_4"],
+		"player": [9, 23, "d"],
+		"cast": [["Owen", 5, 25, "u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Owen's study, at the weekend. He sits at his desk under a slope of paper, writing by hand, which he says is the only honest way."]],
+			["walk", "player", 7, 26], ["face", "player", "l"],
+			["face", "Owen", "player"],
+			["say", "Owen", ["[happy] Come in, mind the drafts. Both kinds.", "I'm writing Pip a book. About his mum and dad. Everything we remember, before we forget the small things."]],
+			["pose", "Owen", "talk"],
+			["say", "Owen", ["Chapter one: Tam at nine, and the toaster. Chapter two: Ines, who could land a freighter on a coin, and once did, to win the coin.",
+				"The last chapter's the hard one. I've written it six times. Every time, it ends with the drive."]],
+			["pose", "Owen", ""],
+			["say", "Owen", ["How would you end it?"]],
+			["choose", [
+				{"text": "End it with Pip. They're the beginning of his story.", "friendship": 60, "steps": [
+					["emote", "Owen", "surprise"],
+					["say", "Owen", ["...Not their last day. His first. [happy] Yes. That's the book. I'd been writing the wrong one."]]]},
+				{"text": "End it with the green stars.", "friendship": 60, "steps": [
+					["emote", "Owen", "love"],
+					["say", "Owen", ["[happy] 'Tell him the stars here are green.' Yes. Let the last word be Tam's."]]]},
+				{"text": "Leave the sad part out. He's only nine.", "steps": [
+					["say", "Owen", ["[sad] He's nine, and he already has the sad part. What he hasn't got is everything around it."]],
+					["friendship", "Owen", -20]]}]],
+			["say", "Owen", ["Thank you. I'll have it bound. Tobbin says he can do covers. Tobbin says he can do anything, given glue."]],
+			["flag", "owen_book"],
+		],
+	},
+	"owen_8": {
+		"who": "Owen", "hearts": 8, "title": "The Compendium",
+		# the museum after closing, with Tar'Besh: a book with a page for every codex you'll find. Reward (NPC Master):
+		# the Library Lore Compendium; nothing in the game uses it until there are codexes. Nothing waits
+		"area": "museum", "windows": [[null, "19:30", "21:30"]],
+		"seen": ["owen_6"],
+		"player": [50, 30, "r"],
+		"cast": [["Tar'Besh", 56, 25, "d"], ["Owen", 55, 28, "u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The museum after closing. Owen and Tar'Besh have one great book open across Tar'Besh's desk, and are arguing over it with tremendous politeness."]],
+			["walk", "player", 53, 28], ["face", "player", "r"],
+			["face", "Owen", "player"], ["face", "Tar'Besh", "player"],
+			["say", "Tar'Besh", ["Ah. A witness. Owen insists the Precursor glass is a window. I insist it is a mirror. We have agreed to let you be wrong for both of us."]],
+			["say", "Owen", ["[happy] We've been making you something. Well. The bones of something."]],
+			["face", "Owen", "l"], ["pose", "Owen", "gift"],
+			["say", "", ["A thick ledger, bound in hide, with tabs down the side. Nearly all its pages are blank."]],
+			["pose", "Owen", ""],
+			["say", "Owen", ["The Library Lore Compendium. Every codex you find out there, every scrap with writing on it, has a page waiting in here.",
+				"The Terrans left me four hundred manuals and one novel. You're going to bring me the rest."]],
+			["perk", "library_lore_compendium", "Perk: Library Lore Compendium (the codexes you find will fill it in)"],
+			["say", "Tar'Besh", ["[happy] He has put my name on the spine. Under his, in smaller letters. I have chosen to be gracious."]],
+			["choose", [
+				{"text": "I'll fill every page.", "friendship": 60, "steps": [
+					["say", "Owen", ["[happy] Good. Then one day Pip can read it, and know how we all got here."]]]},
+				{"text": "So is it a window or a mirror?", "friendship": 30, "steps": [
+					["say", "Owen", ["[happy] A window, obviously."]],
+					["say", "Tar'Besh", ["A mirror, obviously."]]]},
+				{"text": "Couldn't I just read the manuals?", "steps": [
+					["say", "Owen", ["[sad] You could. Nobody ever has. That's rather the problem."]],
+					["friendship", "Owen", -20]]}]],
+			["flag", "owen_compendium"],
+		],
+	},
+	# Pip: nine, and knows where everything is. His 8 (Zachary, 24 Nov): a toy rocketship, a piece of furniture you
+	# set down at home (item toy_rocket, main.gd PLACEABLE).
+	"pip_2": {
+		"who": "Pip", "hearts": 2, "title": "Pip in the Archive",
+		# the library after closing: Pip's up the shelves looking for his parents' ship in the register. He knows they
+		# died; he doesn't know how
+		"area": "library", "windows": [[null, "19:30", "20:45"]],
+		"player": [8, 13, "u"],
+		"cast": [["Pip", 13, 2, "u", "study u"], ["Owen", 9, 13, "u"]],
+		"steps": [
+			["hide", "Owen"],
+			["wait", 0.6],
+			["say", "", ["The library after closing. The lights are low. Up in the top corner, the shelves Owen calls the archive, something small is rustling."]],
+			["walk", "player", 12, 3], ["face", "player", "u"],
+			["emote", "Pip", "surprise"], ["pose", "Pip", ""], ["face", "Pip", "player"], ["pose", "Pip", "jump"],
+			["say", "Pip", ["[surprised] It's you! Phew. I thought you were Grandad. Don't tell Grandad."]],
+			["pose", "Pip", ""],
+			["say", "Pip", ["I'm looking for the ship register. Mum and Dad's ship was called the Kestrel. It'll say what happened.",
+				"[sad] I know they died. Everyone thinks I don't know things. I just don't know how. Gran and Grandad say 'when you're older'.",
+				"I'm nine. Nine is older."]],
+			["choose", [
+				{"text": "Then ask them. Tell them nine is older.", "friendship": 60, "steps": [
+					["emote", "Pip", "question"],
+					["say", "Pip", ["...Ask them? Like, with words? [sad] ...Okay. Not tonight. Maybe soon."]]]},
+				{"text": "I'll help you look.", "friendship": 30, "steps": [
+					["say", "", ["You find the register. Under KESTREL there is one line: LOST, NEUTRAL ZONE. Nothing else."]],
+					["emote", "Pip", "sad"],
+					["say", "Pip", ["[sad] ...I knew that bit."]]]},
+				{"text": "You shouldn't be up here. Bed.", "steps": [
+					["emote", "Pip", "frustrated"],
+					["say", "Pip", ["[angry] Everybody says that."]],
+					["friendship", "Pip", -20]]}]],
+			["show", "Owen"], ["walk", "Owen", 9, 10], ["face", "Owen", "Pip"],
+			["say", "Owen", ["Pip. Bed. ...Gently, I mean. Bed, gently."]],
+			["walk", "Pip", 9, 11],
+			["face", "Owen", "player"],
+			["say", "Owen", ["[sad] Thank you for being kind to him. He's been up there every night this week. I've been pretending not to notice."]],
+			["walks", [["Pip", 8, 13], ["Owen", 9, 13]]],
+			["flag", "pip_archive"],
+		],
+	},
+	"pip_4": {
+		"who": "Pip", "hearts": 4, "title": "Lost and Found",
+		# the fountain plaza after lessons: his secret crate of everything people drop. Give it back together.
+		# Letter: Pip's, with a geode (not if you told him finders keepers)
+		"area": "main", "windows": [[[0, 1, 2, 3, 4], "15:00", "17:30"]],
+		"seen": ["pip_2"],
+		"player": [108, 103, "u"],
+		"cast": [["Pip", 106, 99, "d"], ["Quill", 125, 92, "l", "read l"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The fountain plaza. Pip is waiting for you behind a bench, with a crate he can barely carry and an expression of enormous secrecy."]],
+			["walk", "player", 107, 101], ["face", "player", "u"],
+			["say", "Pip", ["[happy] This is my Lost and Found. Mostly Found. People drop things. I know where everything is, so I find them."]],
+			["pose", "Pip", "play d"],
+			["say", "", ["Inside: six tongue depressors, a spanner with JORVIK scratched on the handle, a whetstone, a brass button and one very small wooden U."]],
+			["pose", "Pip", ""],
+			["say", "Pip", ["[sad] I meant to give them back. Then I'd kept them too long, and now it's stealing. Quill's going to know it was me."]],
+			["choose", [
+				{"text": "We'll give them back together. Quill first.", "friendship": 60, "steps": [
+					["walks", [["Pip", 123, 92], ["player", 123, 94]]],
+					["face", "Pip", "Quill"], ["pose", "Quill", ""], ["face", "Quill", "Pip"], ["face", "player", "u"],
+					["say", "Pip", ["[sad] ...These are yours. I was keeping them safe. For a really long time."]],
+					["emote", "Quill", "surprise"],
+					["say", "Quill", ["[surprised] My tongue depressors! All six!", "[happy] ...Thank you for keeping them safe, Pip. Nobody's ever kept anything safe for me before."]],
+					["emote", "Pip", "joy"],
+					["say", "", ["The rest of the afternoon goes the same way. The spanner goes to Freya, who goes very quiet and then hugs him.",
+						"The whetstone goes to Ix'ali. Tobbin is delighted to have his U back."]],
+					["mail", "pip_found", 1]]},
+				{"text": "Put them back where you found them. Nobody will know.", "friendship": 30, "steps": [
+					["say", "", ["You spend the afternoon sneaking things back where they belong. It's harder than it sounds. Quill finds his tongue depressors and looks very confused."]],
+					["mail", "pip_found", 1]]},
+				{"text": "Finders keepers.", "steps": [
+					["emote", "Pip", "sad"],
+					["say", "Pip", ["[sad] ...That's what I thought too. It doesn't feel very good, though."]],
+					["friendship", "Pip", -20]]}]],
+			["flag", "pip_lost_and_found"],
+		],
+	},
+	"pip_6": {
+		"who": "Pip", "hearts": 6, "title": "Except Mine Will Work",
+		# the Shuttle Bay on a Saturday, Owen's day off: Pip sits in your cockpit. Mum was a pilot, Dad fixed things
+		"area": "bay", "windows": [[[5], "10:00", "12:30"]],
+		"seen": ["pip_4"],
+		"player": [27, 22, "u"],
+		"cast": [["Pip", 23, 19, "u"], ["Owen", 6, 18, "r"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The Shuttle Bay on a Saturday. Owen has brought Pip to see the ships, and is pretending to read by the door. Pip is staring up at yours."]],
+			["walk", "player", 25, 20], ["face", "player", "l"],
+			["face", "Pip", "player"], ["emote", "Pip", "hello"],
+			["say", "Pip", ["[happy] Can I sit in it? Just sit. I won't touch anything. I'll touch one thing."]],
+			["say", "", ["You help him up into the cockpit. He sits in the pilot's seat with both hands flat on his knees, very carefully not touching anything."]],
+			["hide", "Pip"], ["wait", 0.8], ["sfx", "click"],
+			["say", "Pip", ["[happy] It smells like Freya's bench. ...Mum was a pilot. Dad fixed things. Gran says I've got both kinds of hands."]],
+			["say", "Pip", ["[sad] It was the drive. I know that much. Kids hear things, even when grown-ups whisper.",
+				"When I grow up I'm going to have a ship like yours. Except mine will work. ...And I'm going to check the drive. Every single time."]],
+			["choose", [
+				{"text": "Then you'll be a good pilot. The best ones check twice.", "friendship": 60, "steps": [
+					["say", "Pip", ["[happy] Twice! Tikka says three times. I'll do four."]]]},
+				{"text": "Want to learn the pre-flight checklist?", "friendship": 60, "steps": [
+					["say", "", ["You walk him through it, switch by switch, without turning anything on. He gets every one right on the second go."]],
+					["say", "Pip", ["[happy] Fuel, seals, drive, nav, comms. Drive twice."]]]},
+				{"text": "Maybe stay on the ground. Ships are dangerous.", "steps": [
+					["say", "Pip", ["[angry] That's what Gran says. Gran's wrong. Mostly wrong. A bit wrong."]],
+					["friendship", "Pip", -20]]}]],
+			["show", "Pip"], ["face", "Pip", "Owen"], ["face", "Owen", "Pip"],
+			["say", "Owen", ["[happy] Lunch, Captain. Your grandmother has opinions about lunch."]],
+			["walk", "Pip", 7, 18],
+			["flag", "pip_cockpit"],
+		],
+	},
+	"pip_8": {
+		"who": "Pip", "hearts": 8, "title": "Checked Twice",
+		# your front door at the weekend: he's made you a toy rocketship. Reward (Zachary, 24 Nov): Pip's toy rocket, a
+		# piece of furniture you set down at home. Owen watches from down by the corridor. Nothing waits
+		"area": "agri", "windows": [[[5, 6], "08:00", "11:00"]],
+		"seen": ["pip_6"],
+		"player": [59, 57, "d"],
+		"cast": [["Pip", 61, 58, "l"], ["Owen", 55, 66, "u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Your front door, at the weekend. Pip is waiting on the porch, holding something behind his back with both hands.",
+				"Down by the corridor, Owen is pretending to read the shipping crate."]],
+			["walk", "player", 59, 58], ["face", "player", "r"],
+			["emote", "Pip", "hello"],
+			["say", "Pip", ["[happy] I came by myself! Grandad only walked me to the corridor. That counts as by myself."]],
+			["emote", "Owen", "hello"],
+			["say", "Pip", ["I made you something. Tobbin gave me the offcuts, Tikka gave me coil, and Sesska sewed the flags. I did everything else. Mostly."]],
+			["pose", "Pip", "gift"],
+			["say", "", ["A toy rocketship, nearly as tall as Pip's arm: a tin nose, a red wooden body and coil-wire fins. On the side, in careful letters: CHECKED TWICE."]],
+			["give", "toy_rocket", 1, "+ Pip's toy rocket (set it down at home, like a chest)"],
+			["pose", "Pip", ""],
+			["say", "Pip", ["It's for your room. So you remember to come back. Everyone has to come back. That's the rule."]],
+			["choose", [
+				{"text": "I'll always come back. That's a promise.", "friendship": 60, "steps": [
+					["emote", "Pip", "joy"], ["pose", "Pip", "jump"], ["wait", 0.4], ["pose", "Pip", ""],
+					["say", "Pip", ["[happy] Good. I'll check."]]]},
+				{"text": "It's the best ship I've ever seen.", "friendship": 60, "steps": [
+					["say", "Pip", ["[happy] Better than yours?"]],
+					["say", "", ["You consider your own ship, and all its repairs."]],
+					["say", "Pip", ["[happy] I knew it."]]]},
+				{"text": "Did you really make this yourself?", "steps": [
+					["emote", "Pip", "frustrated"],
+					["say", "Pip", ["[angry] Mostly! I said mostly!"]],
+					["friendship", "Pip", -20]]}]],
+			["walk", "Pip", 56, 66], ["emote", "Owen", "love"],
+			["flag", "pip_rocket"],
+		],
+	},
+	# ---------------------------------------------------------------- the family's side arc (Zachary, 24 Nov)
+	# Two scenes; all three need the hearts ("with").
+	"family_4": {
+		"who": "Maren", "with": ["Owen", "Pip"], "hearts": 4, "title": "Sunday Dinner",
+		# their flat on a Sunday evening: Owen's stew, Pip's one-finger whistle, and the photo on the shelf
+		"area": "aptDoc", "windows": [[[6], "19:15", "20:45"]],
+		"player": [17, 21, "l"],
+		"cast": [["Maren", 5, 18, "r"], ["Owen", 9, 18, "l"], ["Pip", 7, 17, "d"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Maren and Owen's flat, Sunday dinner. Owen has cooked, which Maren says is brave of him. There's a place set for you."]],
+			["walk", "player", 7, 19], ["face", "player", "u"],
+			["emote", "Pip", "hello"],
+			["say", "Pip", ["[happy] You sit there. That's the guest chair. It wobbles. That's how you know it's for guests."]],
+			["say", "Owen", ["[happy] Stew. Of a sort. The sort is mostly hope."]],
+			["pose", "Maren", "eat r"], ["pose", "Owen", "eat l"], ["pose", "Pip", "eat d"], ["sfx", "eat"], ["wait", 0.9],
+			["pose", "Pip", ""],
+			["say", "Pip", ["Dad could whistle with two fingers. Really loud. I can do it with one finger."]],
+			["say", "", ["Pip demonstrates. It is mostly air."]],
+			["pose", "Owen", ""], ["pose", "Maren", ""],
+			["emote", "Maren", "love"],
+			["say", "Maren", ["[happy] He could. Loudly. On ships with very thin walls. The captain made a rule about it."]],
+			["say", "Owen", ["The Tam Rule. It's still in the regulations of a freighter somewhere."]],
+			["emote", "Pip", "joy"],
+			["say", "Pip", ["Do you want to see them? Mum and Dad? There's a picture on the shelf. Mum's the one laughing. Dad's the one making her."]],
+			["choose", [
+				{"text": "I'd love to see them.", "friendship": 60, "steps": [
+					["walks", [["Pip", 30, 14], ["player", 29, 15]]],
+					["face", "Pip", "u"], ["face", "player", "u"],
+					["say", "", ["A small photo in a big frame: a woman in a flight jacket, laughing, and a man with Pip's ears pulling a face behind her."]],
+					["say", "Pip", ["[happy] That's them. That's on the Kestrel. Grandad says the green behind them is a nebula."]],
+					["friendship", "Owen", 60], ["friendship", "Pip", 60]]},
+				{"text": "Maybe after dinner.", "steps": [
+					["say", "Pip", ["[sad] Oh. ...Okay. After dinner."]],
+					["say", "", ["After dinner, Pip has forgotten. You don't think Maren has."]]]}]],
+			["flag", "family_dinner"],
+		],
+	},
+	"family_6": {
+		"who": "Maren", "with": ["Owen", "Pip"], "hearts": 6, "title": "Lanterns",
+		# the West Terminal's star dome on the anniversary: Pip asks how, and they tell him. Nobody's fault. Three paper
+		# lanterns at the glass. Letter: Pip's, the next morning
+		"area": "west", "windows": [[null, "19:30", "21:30"]],
+		"seen": ["family_4"],
+		"player": [58, 12, "u"],
+		"cast": [["Pip", 55, 6, "u"], ["Maren", 54, 7, "u"], ["Owen", 56, 7, "u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The West Terminal's little star dome, on a quiet evening. Three years ago today. Maren, Owen and Pip each hold a paper lantern with a light inside."]],
+			["walk", "player", 57, 9], ["face", "player", "u"],
+			["face", "Owen", "player"],
+			["say", "Owen", ["[sad] Thank you for coming. Pip asked for you. So did we."]],
+			["face", "Pip", "Maren"],
+			["say", "Pip", ["Gran. Grandad. ...Nine is older. Will you tell me how?"]],
+			["emote", "Maren", "sad"], ["face", "Maren", "Pip"], ["face", "Owen", "Pip"],
+			["pose", "Maren", "talk"],
+			["say", "Maren", ["[sad] ...Yes. It's time. Your mum and dad's ship had a drive, like every ship. One day, between stations, a little part in it failed.",
+				"It wasn't anybody's fault. Not theirs. Not the ship's. Not yours. Never yours. Bad things happen sometimes."]],
+			["pose", "Maren", ""],
+			["say", "Owen", ["[sad] Their last message said they'd be home for your birthday, and that the stars there were green. I've kept it for you. Whenever you want it."]],
+			["emote", "Pip", "sad"], ["pose", "Pip", "sad"],
+			["say", "Pip", ["[sad] ...Green stars."]],
+			["wait", 0.8], ["pose", "Pip", ""],
+			["choose", [
+				{"text": "Kneel down beside him.", "friendship": 60, "steps": [
+					["say", "", ["You kneel beside him. He leans into your shoulder, the way you'd lean on a wall you trust."]],
+					["friendship", "Pip", 60]]},
+				{"text": "It's all right to be sad, Pip.", "friendship": 60, "steps": [
+					["say", "Pip", ["[sad] I know. Gran says sad is just love with nowhere to go."]],
+					["friendship", "Pip", 60]]},
+				{"text": "Hey, look, a shooting star!", "steps": [
+					["say", "Pip", ["[sad] ...I don't want a star right now."]],
+					["friendship", "Pip", -20]]}]],
+			["face", "Pip", "u"], ["face", "Maren", "u"], ["face", "Owen", "u"],
+			["fx", "fireflies", 55, 4, 2], ["sfx", "bell_ring"],
+			["say", "", ["Three lanterns lift towards the glass and hang there under the stars, glowing, as if the stars had come a little closer."]],
+			["say", "Pip", ["[happy] Bye, Mum. Bye, Dad. I'm going to check the drive. Every time."]],
+			["emote", "Maren", "love"], ["emote", "Owen", "love"],
+			["flag", "family_lanterns"],
+			["mail", "pip_lanterns", 1],
 		],
 	},
 

@@ -2904,8 +2904,18 @@ SCHEDULE_DAYS_RAW = {
             ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
     ],
     # Pip, Kit and Nub join the Junior Scouts once Artie starts them: Monday afternoons at the fountain, and the
-    # first-Saturday outing.
+    # first-Saturday outing. Saturdays (24 Nov) are with Owen: the star dome and the fountain; once Maren has let him
+    # go up the lift alone (maren_lets_go), the afternoons are his own, in the launch booth with Tikka. The outings come
+    # after these, so they win on their Saturdays.
     "Pip": [
+        {"when": {"days": [5], "not": ["maren_lets_go"]}, "stops": [
+            ("09:00", "mess", 24, 12, 26, "d", "eat", "eat"), ("10:30", "west", 54, 11, 26, "u", "idle", "play"),
+            ("13:00", "main", 85, 64, 26, "d", "idle", "play"), ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"),
+            ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "flags": ["maren_lets_go"]}, "stops": [
+            ("09:00", "mess", 24, 12, 26, "d", "eat", "eat"), ("10:30", "west", 58, 9, 26, "u", "idle", "play"),
+            ("13:30", "bay", 10, 30, 26, "l", "idle", "play"), ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"),
+            ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
         {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
             ("07:30", "library", 9, 9, 26, "u", "work", "study"), ("12:30", "main", 97, 57, 26, "d", "idle", "play"),
             ("15:00", "main", 88, 67, 26, "u", "idle", "play"), ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"),
@@ -3037,6 +3047,14 @@ SCHEDULE_DAYS_RAW = {
             ("07:00", "main", 114, 52, 26, "l", "restock", "restock"), ("12:15", "mess", 9, 7, 26, "d", "eat", "eat"),
             ("13:30", "bathhouse", 30, 12, 26, "r", "idle", "rest"), ("17:35", "mess", 9, 7, 26, "d", "eat", "eat"),
             ("19:15", *HOME_SPOTS["Bram at the bar"], 26, "u", "idle", "drink"), ("22:00", *HOME_SPOTS["Bram"], 26, "d", "idle", "rest")]},
+    ],
+    # Owen (Zachary, 24 Nov): Saturdays off, no lessons. Breakfast, the West Terminal's star dome with Pip to watch the
+    # ships, the fountain in the afternoon, dinner, home.
+    "Owen": [
+        {"when": {"days": [5]}, "stops": [
+            ("09:00", "mess", 20, 12, 26, "d", "eat", "eat"), ("10:30", "west", 55, 11, 26, "u", "idle", "rest"),
+            ("13:00", "main", 84, 64, 26, "d", "idle", "rest"), ("17:35", "mess", 20, 12, 26, "d", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Owen"], 26, "d", "idle", "rest")]},
     ],
     # Tikka & Sesska (Zachary, 24 Nov): Sundays off together. Until her 8 (tikka_sundays_off) Tikka slips into
     # Engineering on Sunday mornings "to look at the core" while Sesska weaves at home; afterwards they spend the day

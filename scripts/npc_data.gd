@@ -654,7 +654,7 @@ const LOOKS = {
 # of them always keeps the mess hall.
 const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6], "Quill": [0, 5], "Maren": [3, 6],
 	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3], "Tar'Besh": [0], "Zaas": [6], "Rusk": [0],
-	"Bram": [3], "Tikka": [6], "Sesska": [6]}
+	"Bram": [3], "Tikka": [6], "Sesska": [6], "Owen": [5]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -811,6 +811,21 @@ const DAY_LINES := {
 		3: {"flag": "ivan_defeated", "lines": [
 			"Thursday: linens for the hotel. Every pillowcase counted twice, by me, and then once more by Tikka.",
 			"[happy] The hotel takes my linens on Thursdays. Real guests, on my sheets. On Arach Minor I'd have called that a good street."]},
+	},
+	# Owen and Pip (Zachary, 24 Nov): no lessons on Saturdays, so the library's shut and Owen takes Pip out: the
+	# West Terminal's star dome to watch the ships come in, then the fountain. Once Maren has let Pip go up the lift
+	# on his own (her 6, maren_lets_go), his Saturday afternoons are his: the launch booth, where Tikka lets him watch.
+	"Owen": {
+		5: ["[happy] Saturday. No lessons, the library is shut, and Pip and I are going to watch ships we can't afford.",
+			"Saturdays I teach Pip the constellations from the star dome. He teaches me the ships. He's winning."],
+	},
+	"Pip": {
+		5: {"flag": "maren_lets_go", "lines": [
+			"[happy] Saturday! I'm allowed to go to the bay BY MYSELF. Tikka lets me sit in the launch booth if I don't touch.",
+			"Grandad watches ships in the morning and I watch them all afternoon. Mine are better ships."],
+			"else": [
+			"[happy] No lessons! Grandad's taking me to see the ships. I'm going to count them. Last time it was four.",
+			"Saturday's the best day. Grandad says that's because nobody's ill on Saturdays. Gran says that's not true."]},
 	},
 	# Vzz'ket's nights off only start once he's earned them (the side arc's 8, his own 8): {"flag", "lines"} waits for
 	# the flag

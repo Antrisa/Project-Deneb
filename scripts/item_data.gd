@@ -98,6 +98,9 @@ const ITEMS = {
 			"desc": "A bench of tools and a little fabricator. Set it down at home; at it, the Crafting page can make magnets, motors, circuit boards, lenses and laser upgrades."},
 	"storage_chest": {"name": "Storage chest", "icon": 71, "use": "build",
 			"desc": "A sturdy chest for your things. Set it down at home and open it to store and take items."},
+	# Pip's 8 (Zachary, 24 Nov): a piece of furniture you set down at home (main.gd PLACEABLE "decor")
+	"toy_rocket": {"name": "Pip's toy rocket", "icon": 122, "use": "build",
+			"desc": "Tin nose, red body, coil-wire fins. On the side, in careful letters: CHECKED TWICE. Set it down at home."},
 	"hydro_bed": {"name": "Hydroponic bed", "icon": 49, "use": "place",
 			"desc": "A self-watering growing tray. Select it and press Space on open soil in the Agri dome to set it down; plant seeds in it like a dug tile. It waters itself every night."},
 	"watering_can": {"name": "Watering can", "icon": 24, "use": "water",

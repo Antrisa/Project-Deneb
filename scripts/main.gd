@@ -3693,6 +3693,8 @@ const PLACEABLE := {
 	"arc_smelter": {"art": "home_furnace", "w": 2, "h": 1, "name": "Furnace", "station": ""},
 	"manufacturing_hub": {"art": "home_hub", "w": 3, "h": 1, "name": "Manufacturing hub", "station": "Manufacturing Hub"},
 	"storage_chest": {"art": "home_chest", "w": 1, "h": 1, "name": "Storage chest", "station": ""},
+	# furniture to look at (Pip's 8): no station, no storage
+	"toy_rocket": {"art": "toy_rocket", "w": 1, "h": 1, "name": "Pip's toy rocket", "station": "", "decor": true},
 }
 const BUILD_AREAS := ["agri", "hotel"]
 const STATION_REACH := 40.0         # how near a station you must stand to use its recipes (world units)
@@ -3765,6 +3767,10 @@ func _use_placed(t: Dictionary) -> void:
 		else:
 			_say("Furnace", ["Cold and empty. Hold ore (or stone, sand, salts) and use the furnace to load it."],
 					Callable(self, "_pick_up").bind(key), "Pick it up")
+		return
+	if spec.get("decor", false):
+		_say(str(spec["name"]), [str(ItemData.ITEMS.get(str(t["item"]), {}).get("desc", ""))],
+				Callable(self, "_pick_up").bind(key), "Pick it up")
 		return
 	if str(spec["station"]) != "":
 		_say(str(spec["name"]), ["The %s hums, ready for work." % str(spec["name"]).to_lower()],
@@ -4506,7 +4512,10 @@ func _eat(item: String) -> void:
 		_toast("You're not hurt" if gives_energy == 0 else "You're not hungry")
 		return
 	_give(item, -1)
-	hp = mini(MAX_HP, hp + int(info.get("heal", 5)))
+	var heal: int = int(info.get("heal", 5))
+	if item == "medpack" and _flag("perk_advanced_med_stims"):
+		heal *= 2                    # Maren's 8: she tops up your medpacks the old ship's way
+	hp = mini(MAX_HP, hp + heal)
 	energy = mini(MAX_ENERGY, energy + gives_energy)
 	sfx(_eat_sound(item))
 	# Food is eaten with the Stardew-style animation (player.play_eating); the medpack is held up instead.

@@ -91,6 +91,16 @@ FACES = {
     "ana": dict(eyes=((8, 13), (14, 13)),
                 colours=dict(skin="#e1a378", lid="#e4cbb9", white="#f8ddca", pupil="#2f161e",
                              brow="#2c1119", tear="#93e6ea")),
+    # Maren, Owen and Pip (24 Nov, for their heart events): eyes from tools/fix_eyes.py
+    "maren": dict(eyes=((9, 13), (15, 13)),
+                  colours=dict(skin="#e0a686", lid="#e5cbac", white="#f9ddbb", pupil="#2a1a14",
+                               brow="#593e50", tear="#93e6ea")),
+    "owen": dict(eyes=((9, 14), (14, 14)),
+                 colours=dict(skin="#eba877", lid="#e4cbab", white="#f8ddba", pupil="#2a1a14",
+                              brow="#7e4f3e", tear="#93e6ea")),
+    "pip": dict(eyes=((9, 23), (14, 23)),
+                colours=dict(skin="#eca56f", lid="#eacda4", white="#ffdfb3", pupil="#2a1414",
+                             brow="#6d2a26", tear="#93e6ea")),
     # Tikka and Sesska (24 Nov, for their heart events): eyes from tools/fix_eyes.py; Tikka's gold is the pale
     # of her eye
     "tikka": dict(eyes=((8, 16), (14, 16)),

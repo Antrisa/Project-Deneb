@@ -99,13 +99,13 @@ Also in the docs but not on this list: the yearly Grand Hotel Inspection (sectio
 |---|---|---|
 | **A. The Terran hardliners** want Annex 4 back or S.A.R.A.'s self-destruct carried out. Lore V4 adds Empress Asta, whose father's death is tied to synthetic rights. | Nothing now (S.A.R.A.'s "Ghost Signal" was dropped, 23 Nov) | Nothing |
 | **B. The Junta and the Custodians.** "If word reaches Zaa'sh space that sentient constructs are active here, the Junta will send warships." | Prologue 4; Tar'Besh 6 (he lies to the Temple about the crystals, 23 Nov) | Nothing yet; the Sky-Weavers' reveal at the end should end the Zaa'sh hatred of AI |
-| **C. Pip's parents** are alive in Collective space. | Maren/Owen/Pip 4, Eshu 4 (Pip's letter) | Nothing |
+| **C. Pip's parents** ~~are alive in Collective space~~. **Decided 24 Nov (Zachary): they're dead**: their freighter's drive failed between stations, nobody's fault. Pip knows, but not how. | Pip 2, Owen 4 (the Kestrel's recorder), the family's side arc | **Closed:** the family's side arc 6 (Lanterns), where Maren and Owen tell Pip how |
 | **D. Who took Artie** in October 2036 ("a silent silver light lifted my truck"), and why was his pod in Ivan's hold? A silent silver light sounds like a Precursor drone. | Artie 2 | Nothing |
 | **E. The Precursor Lexicon in your head.** Quill's "electromagnetic spike", the Mother-Drone's "Tend the small worlds". | Prologue 2–3 | Only the Custodians talking to you |
 | **F. "Something big stirring below."** The giant carapace, the crawlers fleeing upward, the tides Zaas hears. | Vzz'ket & Rusk's side arc 4, Chitin Exodus, Zaas 4 | The Leviathan on floor 45 (decided 23 Nov: it broke the brood-queen's shell in Vzz'ket & Rusk's side arc 4, and its heartbeat is what Zaas hears in his 4) |
 | **G. The Chernobog remnants.** "The Chernobog lieutenants scattered." | Ana 2 | Space runs could pick it up (pirate strongholds) |
 
-**Idea (Claude), nothing decided:** the Neutral Zone Summit is where A and B could land. Each power arrives with a claim (the Empire on S.A.R.A. and Annex 4, the Junta on the Custodians, the Collective on its refugees), and how the residents stand with you decides how it goes: S.A.R.A. 6 and Tar'Besh's secret pay off, Eshu (who keeps a private line to every empire and puts the kettle on for rival envoys) gets everyone to one table, and Ix'ali, Ana and Artie each have a side to speak for. C and D could close earlier, in Year 1: Pip's parents through Eshu's network, and Artie's abductors through the Starborn Convergence.
+**Idea (Claude), nothing decided:** the Neutral Zone Summit is where A and B could land. Each power arrives with a claim (the Empire on S.A.R.A. and Annex 4, the Junta on the Custodians, the Collective on its refugees), and how the residents stand with you decides how it goes: S.A.R.A. 6 and Tar'Besh's secret pay off, Eshu (who keeps a private line to every empire and puts the kettle on for rival envoys) gets everyone to one table, and Ix'ali, Ana and Artie each have a side to speak for. D could close earlier, in Year 1, through the Starborn Convergence (C closed on 24 Nov: Pip's parents are dead).
 
 ### 1.4 A possible shape for the year (Idea, Claude)
 
@@ -430,15 +430,44 @@ The water officer who was right about the ocean, and gave it to the one who kept
 
 ### 5.7 Maren, Owen & Pip
 
+**Reviewed with Zachary on 24 Nov; all fourteen are written and playable.** Full scenes: [`characters/MAREN.md`](characters/MAREN.md), [`characters/OWEN.md`](characters/OWEN.md), [`characters/PIP.md`](characters/PIP.md) and the family's side arc, [`characters/MAREN_OWEN_PIP.md`](characters/MAREN_OWEN_PIP.md). Zachary: **Pip's parents are dead** (Decision 7): their freighter's drive failed, "nobodys fault bad things happen somtimes"; Pip knows, "not the details, but he knows"; his 8's reward is "a toy rocketship piece of furniture". Claude's suggestions taken for the rest: an arc each plus a two-scene side arc; Tam and Ines (and the Kestrel) as placeholder names; the Lore Compendium waits for a codex system.
+
+**Maren** (human, the station's doctor): the doctor who came here to stop leaving.
+
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Pip in the Archive (Pip's hearts) | Library | Pip sneaks into the restricted archive. | Outline |
-| 4 | The Freighter Log (Owen's) | Library | Clues that Pip's parents are alive in Collective space. | Outline |
-| 6 | Letting Go (Maren's) | Plaza | Pip joins Artie's Junior Scouts; backup before Artie: Freya lets him help in the bay. | Outline |
-| 8 | (no title) (Maren's) | Medbay | Rewards only: Advanced Med-Stims; Library Lore Compendium. | Gap |
+| 2 | House Calls | The East Complex after dinner | Her rounds, Job's back first. She didn't really come to retire. | In game (Claude) |
+| 4 | A Hot Cup of Tea | The common room, her Thursday off | You keep Pip, Quill and Job away; her first hot tea in thirty years. Tam used to bring her tea. | In game (Claude) |
+| 6 | Letting Go | The corridor to the Survey lift, a weekend morning | Pip goes up on his own. His Saturdays change. | In game (the NPC Master's title, scene by Claude) |
+| 8 | Med-Stims | The Medbay after hours, with Quill | The old ship's recipe. Reward: Advanced Med-Stims (medpacks heal twice as much). | In game (the NPC Master's reward, scene by Claude) |
 
-- **Gap:** thread C has the most pull and no ending. How did Pip's parents go missing? Do they write back, come home, or stay lost? Decision 7.
-- **Gap:** 8 has no scene.
+**Owen** (human, the librarian): the man who keeps everyone's story.
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 2 | One Novel | The library, morning lessons | The Terrans' only novel, and you do the voices. | In game (Claude) |
+| 4 | The Freighter Log | The cargo bay by Bram's pod, late | Pell found the Kestrel's recorder. Tam's last log. Nobody's fault. | In game (the NPC Master's title, scene by Claude) |
+| 6 | Pip's Book | His study at home, a weekend afternoon | The book he's writing Pip about his parents, and how to end it. | In game (Claude) |
+| 8 | The Compendium | The museum after closing, with Tar'Besh | Reward: the Library Lore Compendium (waits for codexes). | In game (the NPC Master's reward, scene by Claude) |
+
+**Pip** (nine): knows where everything is.
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 2 | Pip in the Archive | The library after closing | Looking for the Kestrel in the register. "Nine is older." | In game (the NPC Master's title, scene by Claude) |
+| 4 | Lost and Found | The fountain plaza | His secret crate of everything people drop, given back. Letter: a geode. | In game (Claude) |
+| 6 | Except Mine Will Work | Your cockpit in the Shuttle Bay, Saturday | Mum was a pilot. He'll check the drive every single time. | In game (Claude) |
+| 8 | Checked Twice | Your front door, a weekend morning | Reward: Pip's toy rocket, a piece of furniture. | In game (Zachary's reward, scene by Claude) |
+
+**Side arc** (all three at the hearts):
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 4 | Sunday Dinner | Their flat, Sunday evening | Owen's stew, Pip's whistle, the photo on the shelf. | In game (Claude) |
+| 6 | Lanterns | The West Terminal's star dome, the anniversary | Pip asks how, and they tell him. Three lanterns at the glass. Letter from Pip. | In game (Claude) |
+
+- **Their weeks:** Owen's Saturdays off with Pip (the star dome, the fountain). After Maren's 6, Pip's Saturday afternoons are his own: the launch booth with Tikka.
+- **Still open:** Eshu's 4 (it was Pip's letter to his parents); codexes for the Compendium; art for the toy rocket (a stand-in now), the lanterns and the photo.
 
 ### 5.8 Tobbin, Merrow & Nub
 
@@ -474,7 +503,7 @@ The water officer who was right about the ocean, and gave it to the one who kept
 | 8 | (no title) | Reception | Rewards only: Express Export Crates; high-tier bounties. | Gap |
 
 - Renamed from Tally in the game on 23 Nov (Decision 18). His shop room and home are still undecided; 2 and 8 should move to the Post & Privateer Dispatch once it has a room.
-- **Idea:** make 4's letter the next step in Pip's thread (a letter to his parents, or from them).
+- **Needs rewriting:** 4's outline ("he runs a pirate blockade to deliver Pip's letter") assumed Pip's parents were alive. They're dead (24 Nov), so 4 needs a new letter or a new scene.
 - **Repeat:** 6 and Ana 4 (section 3.9).
 
 ---
@@ -550,7 +579,7 @@ Answer by number; anything left open stays as it is.
 4. **Your ship:** is the game's fighter what's left of the *Wandering Star*?
 5. **Who took Artie in 2036**, and why was his pod in Ivan's hold?
 6. **Where threads A and B end:** at the Neutral Zone Summit, or elsewhere?
-7. **Pip's parents:** found, a letter only, or left open?
+7. **Pip's parents:** decided 24 Nov: they're dead. Their freighter's drive failed between stations in the Neutral Zone three years ago, "nobodys fault bad things happen somtimes" (Zachary). Pip knows, but not how; his grandparents tell him in the family's side arc.
 8. **The first bees:** decided 22 Nov: side-arc 6. Evarra 6 is now a wildflower border round your field.
 9. **Jasper & Evarra 8 waiting for the hotel:** decided 23 Nov: it plays in the hotel's dining room, and in the mess hall until the hotel opens. (Then cut the same day, when side arcs became three scenes.)
 10. **Stu before the hotel opens:** decided 23 Nov: the hotel opens after the Ivan fight, before Stu arrives, so he needs no job before it and no backup places. Guests come Friday to Sunday.
@@ -563,4 +592,4 @@ Answer by number; anything left open stays as it is.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska (24 Nov); Maren, Owen & Pip are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska and Maren, Owen & Pip (24 Nov); Tobbin, Merrow & Nub are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).

@@ -273,6 +273,52 @@ const LETTERS := {
 		"sign": "Bram Ollo",
 		"gift": {"crater_potato_seeds": 5},
 	},
+	# Maren's 4, her hot cup of tea (not if you told her it was only tea)
+	"maren_tea": {
+		"from": "Maren",
+		"title": "Hot tea",
+		"body": [
+			"{name},",
+			"Thirty-one minutes of quiet. I timed it. The tea was hot the whole way down.",
+			"Pip says you turned him round 'like a door'. He wants to know how you did it. I've told him it's a doctor's secret.",
+		],
+		"sign": "Maren",
+	},
+	# Owen's 4, the morning after the Kestrel's recorder
+	"owen_recorder": {
+		"from": "Owen",
+		"title": "Good company",
+		"body": [
+			"{name},",
+			"I've put the recorder in the drawer with Tam's first school report and Ines's flight licence. It seemed like the right company.",
+			"I listened once more, alone, for the green stars. Then I closed the drawer. That was enough for now.",
+			"Thank you for staying.",
+		],
+		"sign": "Owen",
+	},
+	# Pip's 4, Lost and Found (not if you told him finders keepers)
+	"pip_found": {
+		"from": "Pip",
+		"title": "Found it",
+		"body": [
+			"Dear {name},",
+			"I found this by the bins. It's a geode. Job says you crack them. I didn't crack it. I thought you should.",
+			"Finders keepers is a real rule. But Gran says giving things away is a better rule.",
+		],
+		"sign": "Pip (age 9)",
+		"gift": {"geode": 1},
+	},
+	# the family's side arc 6, Lanterns
+	"pip_lanterns": {
+		"from": "Pip",
+		"title": "Green stars",
+		"body": [
+			"Dear {name},",
+			"Grandad played me the message. Dad sounds like Grandad but younger. Gran cried and then she laughed and then she made toast.",
+			"I'm going to be a pilot and check the drive every time. You can come too. You can check it as well.",
+		],
+		"sign": "Pip",
+	},
 	# Tikka's 4, if you let Freya take Owen's lamp
 	"freya_lamp": {
 		"from": "Freya",

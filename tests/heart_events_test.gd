@@ -100,11 +100,15 @@ func run() -> void:
 			"bram_night_pod", "bram_quiet_credit", "bram_long_column", "bram_told", "bram_paid_in_full", "perk_moogli_trade_beacon",
 			"tikka_manifold", "tikka_freya_helps", "tikka_day_off", "tikka_sundays_off", "perk_smelter_overclock",
 			"sesska_jacket", "sesska_landing_pattern", "sesska_cavern_silk", "sesska_void_silk", "perk_void_silk_linens",
-			"forty_workwear", "forty_anniversary"]:
+			"forty_workwear", "forty_anniversary",
+			"maren_house_calls", "maren_hot_tea", "maren_lets_go", "maren_home", "perk_advanced_med_stims",
+			"owen_novel", "owen_kestrel_log", "owen_book", "owen_compendium", "perk_library_lore_compendium",
+			"pip_archive", "pip_lost_and_found", "pip_cockpit", "pip_rocket", "family_dinner", "family_lanterns"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
 	assert(s.partner == "Ana")
+	assert(s._count("toy_rocket") >= 1, "Pip's 8 gave you his toy rocket")
 	# Letters (scripts/mail_data.gd): the events sent theirs (the first choice always sends, even in Job's 4 and
 	# Tar'Besh's 4), and they come with the next morning's post. A letter's gift goes in your pack once.
 	for id in MailData.LETTERS:
