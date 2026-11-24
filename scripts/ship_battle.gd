@@ -345,6 +345,8 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	foe = ShipData.enemy(foe_id)
 	e_hull_max = int(foe["hull"])
 	e_hull = e_hull_max
+	if fight.has("foe_hull_frac"):       # Garrick's 8, Perimeter Defence: the Landing's guns got there first
+		e_hull = clampi(int(round(e_hull_max * float(fight["foe_hull_frac"]))), 1, e_hull_max)
 	e_sys = _make_systems(foe["systems"])
 	e_layers = _layers_of(e_sys)
 	e_weapons.clear()

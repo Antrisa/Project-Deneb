@@ -2864,6 +2864,24 @@ SCHEDULE_DAYS_RAW = {
             ("13:00", "mess", 14, 9, 26, "u", "eat", "eat"), ("14:00", "aptSec", 8, 7, 26, "d", "idle", "rest"),
             ("17:35", "mess", 14, 9, 26, "u", "eat", "eat"), ("19:15", "bar", 26, 21, 26, "l", "idle", "drink"),
             ("21:30", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
+        # after Kit's 6 (kit_security, 24 Nov): Saturday mornings he checks the West Terminal's seals, with Kit
+        {"when": {"days": [5], "flags": ["kit_security"]}, "stops": [
+            ("09:00", "west", 19, 40, 26, "l", "idle", "patrol"), ("11:00", "main", 88, 66, 26, "d", "idle", "rest"),
+            ("13:00", "mess", 14, 9, 26, "u", "eat", "eat"), ("14:30", "east", 60, 44, 26, "d", "idle", "rest"),
+            ("17:35", "mess", 14, 9, 26, "u", "eat", "eat"), ("19:15", "bar", 26, 21, 26, "l", "idle", "drink"),
+            ("21:30", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
+    ],
+    # Saffi (24 Nov): Sundays she cooks at home, then the plaza; after her 8 (saffi_potluck) she keeps the potluck
+    # table by the fountain from late morning (main.gd _potluck_talk)
+    "Saffi": [
+        {"when": {"days": [6]}, "stops": [
+            ("09:00", "aptSec", 5, 15, 26, "u", "idle", "watch"), ("12:30", "main", 99, 58, 26, "l", "idle", "rest"),
+            ("15:00", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work", "sweep"), ("17:35", "main", 131, 72, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Saffi"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["saffi_potluck"]}, "stops": [
+            ("09:00", "aptSec", 5, 15, 26, "u", "idle", "watch"), ("11:30", "promenade", 115, 100, 26, "d", "idle", "watch"),
+            ("15:30", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work", "sweep"), ("17:35", "main", 131, 72, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Saffi"], 26, "d", "idle", "rest")]},
     ],
     # Artie (23 Nov, Zachary). Before the Scouts (his 4 sets artie_scouts): out of place, he reads in the library,
     # wanders round the plaza and sits in the Observation Lounge. After: he helps Owen in the library, runs the
@@ -2928,6 +2946,15 @@ SCHEDULE_DAYS_RAW = {
             ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
     ],
     "Kit": [
+        # Saturdays (24 Nov): the model ship with his dad in the morning, the fountain after; once he's a junior
+        # security officer (his 6, kit_security), the West Terminal's seals with Garrick instead. The Scouts' first
+        # Saturday outings come after these in the list, so they still win.
+        {"when": {"days": [5]}, "stops": [
+            ("09:00", "aptSec", 10, 7, 26, "l", "idle", "toy"), ("12:30", "main", 98, 57, 26, "d", "idle", "play"),
+            ("17:35", "mess", 19, 9, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [5], "flags": ["kit_security"]}, "stops": [
+            ("09:00", "west", 20, 41, 26, "l", "idle", "play"), ("12:30", "main", 98, 57, 26, "d", "idle", "play"),
+            ("17:35", "mess", 19, 9, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
         {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
             ("08:00", "library", 11, 10, 26, "u", "work", "study"), ("12:30", "main", 98, 57, 26, "d", "idle", "play"),
             ("15:00", "main", 90, 67, 26, "u", "idle", "play"), ("17:35", "mess", 19, 9, 26, "u", "eat", "eat"),

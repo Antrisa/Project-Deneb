@@ -2,7 +2,7 @@
 
 Zachary added a mailbox, the message pad by your front door on the agri complex's porch, so that residents can send you mail and gifts, as in Stardew Valley. Then he asked: "if it makes sense in any of the previous arcs add and next morning get mail from the person or gifts. and keep in mind for future arcs."
 
-So sixteen heart events now send a letter that comes with the next morning's post, and five of the letters have a gift in them. Bram's arc (written the same day, after the rule) added one more, with a gift, Tikka & Sesska's (24 Nov) three more, two with gifts, Maren, Owen & Pip's (24 Nov) four more, one with a gift, and Tobbin, Merrow & Nub's (24 Nov) four more, three with gifts: twenty-eight in all. The wording is a first draft by Claude, for Zachary to change: the letters live in `scripts/mail_data.gd`.
+So sixteen heart events now send a letter that comes with the next morning's post, and five of the letters have a gift in them. Bram's arc (written the same day, after the rule) added one more, with a gift, Tikka & Sesska's (24 Nov) three more, two with gifts, Maren, Owen & Pip's (24 Nov) four more, one with a gift, Tobbin, Merrow & Nub's (24 Nov) four more, three with gifts, and Garrick, Saffi & Kit's (24 Nov) four more, two with gifts: thirty-two in all. The wording is a first draft by Claude, for Zachary to change: the letters live in `scripts/mail_data.gd`.
 
 ## How it works
 
@@ -59,6 +59,10 @@ About one letter per arc, rarely two. A gift shouldn't repeat the event's own pe
 | Merrow 4, Star-Tomatoes | `merrow_seeds` | Merrow | For your beds | Star tomato seeds x6 |
 | Nub 6, Junior Curator | `nub_curator` | Nub | JUNIOR CURATOR | Chitin x1 |
 | Tobbin, Merrow & Nub 6, The First Tree | `moogli_tree` | Merrow | Tree | - |
+| Garrick 4, The Rounds | `garrick_issue` | Garrick | Quartermaster's issue | Medpack x1 |
+| Saffi 6, Every Name | `saffi_soup` | Saffi | The helmet soup | Crater potato x2 |
+| Kit 4, The Beacon | `kit_coordinates` | Kit | THE BEACON | - |
+| Garrick, Saffi & Kit 6, Brave Together | `guard_double` | Saffi | Double | - |
 
 Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The gate" (when Job's north tunnels are done), and S.A.R.A.'s notes on the storage dome and the fish ponds.
 
@@ -425,3 +429,51 @@ Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The
 > Thank you for being there. A family's first tree needs witnesses.
 >
 > - Merrow, Tobbin and Nub (and Tree)
+
+### Quartermaster's issue (`garrick_issue`): after Garrick's 4, The Rounds
+
+*From Garrick, the next morning. Enclosed: Medpack x1.*
+
+> {name},
+>
+> Signed out to you from stores: one medpack. You'll need it more than the shelf does.
+>
+> Same time tonight. Bring your own lamp.
+>
+> - G.
+
+### The helmet soup (`saffi_soup`): after Saffi's 6, Every Name
+
+*From Saffi, the next morning. Enclosed: Crater potato x2.*
+
+> {name},
+>
+> One ginger root, two potatoes, a ration bar, and forty people. I've sent the potatoes. You bring the people.
+>
+> Sunday, at the fountain. I'm keeping you a seat by Rusk.
+>
+> - Saffi
+
+### THE BEACON (`kit_coordinates`): after Kit's 4, The Beacon
+
+*From Kit, the next morning.*
+
+> Dear {name},
+>
+> Three long. Two short. Every night at 19:40. Mum helped me work out where: it's on the second ring, near the Reach.
+>
+> Take your ship. Bring me something back. Not treasure. Well. Treasure if there's treasure.
+>
+> - Kit (security chief, nearly)
+
+### Double (`guard_double`): after Garrick, Saffi & Kit's 6, Brave Together
+
+*From Saffi, for all three, the next morning.*
+
+> {name},
+>
+> Kit is grounded until he's forty. Garrick says thirty. We've settled on Tuesday.
+>
+> Thank you for coming. And thank Vzz'ket for us again, if he'll let you. He won't let us.
+>
+> - Saffi, Garrick and Kit

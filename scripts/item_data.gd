@@ -304,6 +304,9 @@ const ITEMS = {
 			"desc": "Real wood, pegged and wedged the way Tobbin's grandmother did it. It creaks hello. Comfort +0.3, decoration +0.3."},
 	"nub_drawing": {"name": "Nub's drawing", "icon": 138, "use": "build",
 			"desc": "The whole Landing under the dome, a tree that isn't there yet, and you by a smiling ship. The frame was a chair."},
+	# Kit's 8 (24 Nov; stand-in art and icon 139 by tools/dev/kit_art.py): main.gd PLACEABLE "decor", like Pip's rocket
+	"deputy_badge": {"name": "Kit's deputy badge", "icon": 139, "use": "build",
+			"desc": "A tin star painted gold, DEPUTY stamped crooked across it. Kit says it's real. Garrick says it's real enough."},
 }
 
 # The relics, and the ones Chernobog ships can drop.

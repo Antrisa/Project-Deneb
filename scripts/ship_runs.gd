@@ -44,6 +44,7 @@ const ABOUT := {
 	"ooma": "Ooma's ship, hung with lanterns. Rare goods for rare customers.",
 	"wreck": "Something worth picking over, if nobody beats you to it.",
 	"quiet": "A still patch of space, off every trade lane. Somewhere to rest and patch up.",
+	"cache": "Three long blinks and two short: the light Kit saw from his telescope. A smuggler's beacon on something nobody came back for.",
 }
 # Hazards (23 Nov): a beacon, distress signal or stronghold from ring 2 out may sit in one, by zone. They change
 # the fight there (ship_battle.gd _tick_space): asteroids hit either ship, flares start fires on both, a nebula
@@ -207,6 +208,36 @@ static func place_contracts(stops: Array, contracts: Array, rng: RandomNumberGen
 		st2["name"] = "Wanted: " + str(c["target_name"])
 		st2["about"] = ("Eshu's contract: capture the %s with its hull in one piece. Down its crew." if str(c["kind"]) == "capture" \
 				else "Eshu's bounty: the %s, destroyed or taken.") % str(c["target_name"]).to_lower()
+
+
+# Kit's 4 (24 Nov): the smuggler's beacon he spotted from his telescope. Until you've found it, every run turns one
+# beacon on ring 2 (ring 1 if that's all that's open), in the Reach if there's one there, into its cache.
+static func place_cache(stops: Array, rng: RandomNumberGenerator) -> void:
+	var picks: Array = []
+	var any: Array = []
+	for i in stops.size():
+		var st: Dictionary = stops[i]
+		if str(st["kind"]) != "beacon" or int(st["ring"]) != mini(2, _max_ring(stops)):
+			continue
+		any.append(i)
+		if str(st["zone"]) == "Reach":
+			picks.append(i)
+	if picks.is_empty():
+		picks = any
+	if picks.is_empty():
+		return
+	var st2: Dictionary = stops[picks[rng.randi() % picks.size()]]
+	st2["kind"] = "cache"
+	st2["name"] = "Kit's beacon"
+	st2["about"] = ABOUT["cache"]
+	st2.erase("hazard")
+
+
+static func _max_ring(stops: Array) -> int:
+	var top := 1
+	for st in stops:
+		top = maxi(top, int(st["ring"]))
+	return top
 
 
 static func _shuffle(a: Array, rng: RandomNumberGenerator) -> void:

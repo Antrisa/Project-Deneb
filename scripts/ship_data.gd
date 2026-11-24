@@ -663,6 +663,7 @@ const STOP_KINDS := {
 	"wreck": {"label": "Wreck", "color": Color("9ab4c8")},
 	"quiet": {"label": "Quiet sector", "color": Color("8ee0c8")},
 	"contract": {"label": "Wanted ship", "color": Color("ffd84a")},
+	"cache": {"label": "Smuggler's cache", "color": Color("ffb36b")},   # Kit's 4
 }
 
 # The first flight (Zachary, 21 Nov): the route is locked. It heads off the Chernobog and stops once at each kind

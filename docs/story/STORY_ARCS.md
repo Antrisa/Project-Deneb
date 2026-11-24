@@ -514,15 +514,45 @@ The water officer who was right about the ocean, and gave it to the one who kept
 
 ### 5.9 Garrick, Saffi & Kit
 
+**Reviewed with Zachary on 24 Nov; all fourteen are written and playable.** Full scenes: [`characters/GARRICK.md`](characters/GARRICK.md), [`characters/SAFFI.md`](characters/SAFFI.md), [`characters/KIT.md`](characters/KIT.md) and the family's side arc, [`characters/GARRICK_SAFFI_KIT.md`](characters/GARRICK_SAFFI_KIT.md). Zachary: "every character has own arc plus a short family shared arc". Claude's first suggestions taken for the rest: Garrick was security officer on the refugee transport that crash-landed here, and a bounty hunter he let dock brought a Chernobog cutter down on it; Perimeter Defence softens up the first ship you fight on a run; Potluck Buffs is a Sunday potluck; Kit's beacon leads to a smuggler's cache, and his 8 is a deputy badge.
+
+**Garrick** (human, security chief and quartermaster): checks every seal himself.
+
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Welcome Basket (Saffi's hearts) | Their home | Saffi's potluck basket. | Outline |
-| 4 | The Beacon (Kit's) | Observation Lounge | Kit spots a smuggler's beacon. | Outline |
-| 6 | Self-Defence Class (Garrick's) | Plaza | Self-defence without militarising the plaza. | Outline |
-| 8 | (no title) (Garrick's) | Armoury | Rewards only: Potluck Buffs; Perimeter Defence. | Gap |
+| 2 | Signed For | The armoury, a working day | Everything sharp is signed for, yours too; twelve bounties, and the people near them. | In game (Claude) |
+| 4 | The Rounds | The West Terminal's airlocks at night | The transport, the bounty hunter he let dock, and the cutter chasing him. | In game (Claude) |
+| 6 | Self-Defence Class | The plaza, Saturday morning, with the kids and S.A.R.A. | Hospitality vs security: a "safety class", with mats. | In game (the NPC Master's title, scene by Claude) |
+| 8 | Perimeter Defence | S.A.R.A.'s core, late | Annex 4's old guns, pointed outward, covering your ship. Reward: Perimeter Defence (the first ship you fight on a run starts damaged). | In game (the NPC Master's reward, scene by Claude) |
 
-- **S.A.R.A. vs Garrick:** S.A.R.A.'s new arc (23 Nov) no longer settles it, so 6 owns it.
-- **Gap:** Garrick is "wary of the player's pirate-hunter background" (cast doc); no scene uses it. **Gap:** 4's smuggler beacon goes nowhere (a space-run stop? Ooma?). 8 has no scene.
+**Saffi** (Ervani, community host): a town out of plates.
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 2 | Welcome Basket | Your front door, morning | Bread, soup, socks, seeds, and everyone's birthdays. | In game (the NPC Master's title, scene by Claude) |
+| 4 | Bring a Plate | The market after lunch | A potluck sign-up sheet with one name on it. | In game (Claude) |
+| 6 | Every Name | The museum's hull plate from the first crash | Kit's handprint; soup for forty in a dented helmet. | In game (Claude) |
+| 8 | The First Potluck | The fountain, Sunday | Half the station, and Jasper not allowed to cook. Reward: the Sunday potluck (bring a dish: friendship with everyone, and you wake up well fed). | In game (the NPC Master's reward, scene by Claude) |
+
+**Kit** (Ervani, their son): security chief, or a pirate.
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 2 | Fastest on the Station | The plaza at lunch | A race round the fountain. | In game (Claude) |
+| 4 | The Beacon | His telescope at home, before bed | Three long, two short: a smuggler's mark. A cache goes on your jump map. | In game (the NPC Master's title, moved from the lounge; scene by Claude) |
+| 6 | Wanted | The Shuttle Bay after lessons, with Garrick | He wants to be a bounty hunter like you; Garrick makes him a junior security officer. | In game (Claude) |
+| 8 | Deputy | The West Terminal's customs hall, a weekend | Every officer picks one deputy. Reward: Kit's deputy badge, to set down at home. | In game (Claude) |
+
+**The side arc** (all three need the hearts):
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 4 | The Model Ship | Their flat, Saturday morning | Your ship in glue; which way does the cockpit go? | In game (Claude) |
+| 6 | Brave Together | The mine's cavern gate, after dinner, with Vzz'ket | Kit went to see a crawler so he wouldn't be scared. Brave together counts double. | In game (Claude) |
+
+- **Closed:** S.A.R.A. vs Garrick (his 6 and 8); Garrick's wariness of your pirate-hunter past (his 2, 4, 8 and Kit's 6); the beacon (a smuggler's cache); the 8 that had no scene (each has one).
+- **Their weeks:** Kit's Saturdays (the model ship, then the West Terminal's seals with Garrick after his 6); Saffi's Sunday cooking, then the potluck after her 8; Saffi's Monday lunch with Rusk (already in her day, now a day line).
+- **Still open:** art for Kit's badge (a stand-in); the NPC Master still calls Rusk "Saffi's uncle" (he isn't: a figure in their lives, 23 Nov).
 
 ### 5.10 Eshu (Arachnay, Courier & bounty pilot; Wave 1)
 
@@ -623,4 +653,4 @@ Answer by number; anything left open stays as it is.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska, Maren, Owen & Pip, and Tobbin, Merrow & Nub (24 Nov); Garrick, Saffi & Kit are next, then Eshu.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska, Maren, Owen & Pip, Tobbin, Merrow & Nub, and Garrick, Saffi & Kit (24 Nov); Eshu is next, and last.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).

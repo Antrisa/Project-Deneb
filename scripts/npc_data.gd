@@ -856,6 +856,27 @@ const DAY_LINES := {
 			"[happy] Friday! Curator day! I've got pins. You're not allowed to touch the pins.",
 			"Mr Tar'Besh says a curator looks first and draws second. I draw first. He says that's allowed on Fridays."]},
 	},
+	# Garrick, Saffi and Kit (Zachary, 24 Nov): Saffi has Rusk at the fountain for Monday lunch and her potluck on
+	# Sundays after her 8 (saffi_potluck); Kit's Saturdays are the model ship with Garrick, then the West Terminal's
+	# seals once he's a junior security officer (his 6, kit_security).
+	"Saffi": {
+		0: ["[happy] Monday. Rusk comes up to the fountain for lunch. He says he's not family. He brings dessert.",
+			"Rusk was at Kit's first birthday, and his second, and every one since. Nobody invited him. Nobody had to."],
+		6: {"flag": "saffi_potluck", "lines": [
+			"[happy] Sunday! Potluck at the fountain. Bring a plate. Any plate. Even an empty one, if you bring yourself.",
+			"Sunday. Jasper's sulking at the potluck table because nobody will let him cook. He's never been happier."],
+			"else": [
+			"Sunday. I cook too much on Sundays. It's a habit from the transport: there was never enough, so now there's always extra.",
+			"[happy] Sunday dinner at ours. Garrick is under orders not to inspect anything. Kit is under orders to help. Neither is obeying."]},
+	},
+	"Kit": {
+		5: {"flag": "kit_security", "lines": [
+			"[happy] Saturday! Seal day! Dad lets me hold the lamp. I check them twice. He checks them three times. I'm catching up.",
+			"Junior Security Officer Kit, on duty. [happy] Mostly on duty. I'm also eating a biscuit."],
+			"else": [
+			"[happy] Saturday! Dad and me are building your ship. A model one. It's got more fire than yours.",
+			"Dad says the model ship is 'nearly' done. He's said that for three Saturdays."]},
+	},
 	# Vzz'ket's nights off only start once he's earned them (the side arc's 8, his own 8): {"flag", "lines"} waits for
 	# the flag
 	"Vzz'ket": {

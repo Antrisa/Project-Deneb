@@ -402,6 +402,52 @@ const LETTERS := {
 		],
 		"sign": "Merrow, Tobbin and Nub (and Tree)",
 	},
+	# Garrick's 4, the morning after his rounds
+	"garrick_issue": {
+		"from": "Garrick",
+		"title": "Quartermaster's issue",
+		"body": [
+			"{name},",
+			"Signed out to you from stores: one medpack. You'll need it more than the shelf does.",
+			"Same time tonight. Bring your own lamp.",
+		],
+		"sign": "G.",
+		"gift": {"medpack": 1},
+	},
+	# Saffi's 6, the morning after the hull plate
+	"saffi_soup": {
+		"from": "Saffi",
+		"title": "The helmet soup",
+		"body": [
+			"{name},",
+			"One ginger root, two potatoes, a ration bar, and forty people. I've sent the potatoes. You bring the people.",
+			"Sunday, at the fountain. I'm keeping you a seat by Rusk.",
+		],
+		"sign": "Saffi",
+		"gift": {"crater_potato": 2},
+	},
+	# Kit's 4, the morning after the beacon
+	"kit_coordinates": {
+		"from": "Kit",
+		"title": "THE BEACON",
+		"body": [
+			"Dear {name},",
+			"Three long. Two short. Every night at 19:40. Mum helped me work out where: it's on the second ring, near the Reach.",
+			"Take your ship. Bring me something back. Not treasure. Well. Treasure if there's treasure.",
+		],
+		"sign": "Kit (security chief, nearly)",
+	},
+	# Garrick, Saffi & Kit's side arc 6, Brave Together
+	"guard_double": {
+		"from": "Saffi",
+		"title": "Double",
+		"body": [
+			"{name},",
+			"Kit is grounded until he's forty. Garrick says thirty. We've settled on Tuesday.",
+			"Thank you for coming. And thank Vzz'ket for us again, if he'll let you. He won't let us.",
+		],
+		"sign": "Saffi, Garrick and Kit",
+	},
 }
 
 const DATED := {"welcome": 1, "sara_storage": 3}

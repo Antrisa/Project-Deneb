@@ -116,6 +116,16 @@ FACES = {
     "nub": dict(eyes=((8, 23), (14, 23)),
                 colours=dict(skin="#cec75f", lid="#e1d981", white="#f6f0c0", pupil="#180411",
                              brow="#382520", tear="#93e6ea")),
+    # Garrick, Saffi and Kit (24 Nov, for their heart events): eyes from tools/fix_eyes.py
+    "garrick": dict(eyes=((9, 10), (14, 10)),
+                    colours=dict(skin="#eca26a", lid="#e1c7a0", white="#f5d9ae", pupil="#1d0e22",
+                                 brow="#563d35", tear="#93e6ea")),
+    "saffi": dict(eyes=((8, 15), (14, 15)),
+                  colours=dict(skin="#976f62", lid="#decdb2", white="#f2dfc2", pupil="#1f2a1a",
+                               brow="#7c4b3e", tear="#93e6ea")),
+    "kit": dict(eyes=((8, 23), (15, 23)),
+                colours=dict(skin="#ae6741", lid="#e2cfac", white="#f6e2bc", pupil="#1f2a18",
+                             brow="#623231", tear="#93e6ea")),
 }
 
 L_, R_ = "L", "R"

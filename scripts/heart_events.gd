@@ -42,7 +42,9 @@ const ORDER := ["freya_2", "freya_4", "freya_6", "freya_8", "freya_10",
 	"maren_2", "maren_4", "maren_6", "maren_8", "owen_2", "owen_4", "owen_6", "owen_8", "pip_2", "pip_4", "pip_6", "pip_8",
 	"family_4", "family_6",
 	"tobbin_2", "tobbin_4", "tobbin_6", "tobbin_8", "merrow_2", "merrow_4", "merrow_6", "merrow_8",
-	"nub_2", "nub_4", "nub_6", "nub_8", "moogli_4", "moogli_6"]
+	"nub_2", "nub_4", "nub_6", "nub_8", "moogli_4", "moogli_6",
+	"garrick_2", "garrick_4", "garrick_6", "garrick_8", "saffi_2", "saffi_4", "saffi_6", "saffi_8",
+	"kit_2", "kit_4", "kit_6", "kit_8", "guard_4", "guard_6"]
 
 const EVENTS := {
 	# ---------------------------------------------------------------- Freya (docs/story/characters/FREYA.md)
@@ -5309,6 +5311,601 @@ const EVENTS := {
 			["emote", "Merrow", "love"], ["emote", "Tobbin", "love"], ["emote", "Nub", "joy"],
 			["flag", "moogli_first_tree"],
 			["mail", "moogli_tree", 1],
+		],
+	},
+	# ---------------------------------------------------------------- Garrick, Saffi & Kit (24 Nov, Claude's drafts)
+	# Zachary, 24 Nov: every character gets their own arc, plus a short family arc. Claude's first suggestions for
+	# the rest, taken: Garrick was security officer on the refugee transport that crash-landed here, and a bounty
+	# hunter's chase brought a Chernobog cutter down on it; Perimeter Defence: the station's guns soften up the first
+	# ship you fight on a run; Potluck Buffs: Saffi's Sunday potluck at the fountain; Kit's beacon leads to a
+	# smuggler's cache on the jump map, and his 8 is a deputy badge to set down at home.
+	"garrick_2": {
+		"who": "Garrick", "hearts": 2, "title": "Signed For",
+		# the armoury on a working day: everything sharp on the station gets signed for, including yours. Your ship's
+		# log says pirate hunter, and he wants to know about the people near the twelve bounties
+		"area": "armoury", "windows": [[[0, 1, 2, 3, 4], "09:00", "11:45"], [[0, 1, 2, 3, 4], "14:00", "17:00"]],
+		"player": [5, 8, "u"],
+		"cast": [["Garrick", 5, 3, "d", "ledger d"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["The armoury. Garrick sits behind the counter with a ledger as big as a door, writing very slowly."]],
+			["walk", "player", 5, 5], ["face", "player", "u"],
+			["pose", "Garrick", ""], ["face", "Garrick", "player"],
+			["say", "Garrick", ["{name}. Good. Saves me a walk. Everything sharp on this station gets signed for. That includes what's on you."]],
+			["say", "Garrick", ["Laser. Knife. Whatever's in the boot. On the counter."]],
+			["sfx", "click"], ["wait", 0.3], ["sfx", "click"],
+			["say", "", ["You set it all on the counter. He writes each one down, then looks at you over the top of the ledger."]],
+			["pose", "Garrick", "talk"],
+			["say", "Garrick", ["Your ship's log says pirate hunter. Bounties on twelve Chernobog.",
+				"[angry] It doesn't say what happened to the people standing near the twelve."]],
+			["pose", "Garrick", ""],
+			["choose", [
+				{"text": "Everyone near them walked away. I made sure.", "friendship": 60, "steps": [
+					["say", "Garrick", ["...Good answer. Hard to check. But a good answer."]]]},
+				{"text": "I don't hunt any more. I farm.", "friendship": 30, "steps": [
+					["say", "Garrick", ["[happy] Farmer. I'll write that down. In pencil."]]]},
+				{"text": "Twelve? It was more than twelve.", "steps": [
+					["emote", "Garrick", "frustrated"],
+					["say", "Garrick", ["[angry] That's not the number I was asking about."]],
+					["friendship", "Garrick", -20]]}]],
+			["face", "Garrick", "d"], ["pose", "Garrick", "ledger d"], ["sfx", "click"],
+			["say", "", ["He signs the ledger, turns it round, and taps the line where you sign under him."]],
+			["pose", "Garrick", ""], ["face", "Garrick", "player"],
+			["say", "Garrick", ["There. You're on my books. I know where you are now, and so do you. [happy] Welcome to the Landing. Officially."]],
+			["flag", "garrick_signed"],
+		],
+	},
+	"garrick_4": {
+		"who": "Garrick", "hearts": 4, "title": "The Rounds",
+		# the West Terminal after hours: his nightly round of the airlock seals. The short version of why he doesn't like
+		# your trade: the transport, the bounty hunter he let dock, and the cutter that was chasing him. Letter: his
+		"area": "west", "seen": ["garrick_2"], "windows": [[null, "20:00", "21:30"]],
+		"player": [26, 40, "l"],
+		"cast": [["Garrick", 19, 40, "l", "patrol l"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The West Terminal after hours. Garrick goes from airlock to airlock with a lamp, checking every seal by hand. Every night, Saffi says."]],
+			["walk", "player", 21, 40], ["face", "player", "l"],
+			["pose", "Garrick", ""], ["face", "Garrick", "player"],
+			["say", "Garrick", ["Evening. Walk with me or go home. Don't stand there being a silhouette."]],
+			["face", "Garrick", "l"], ["pose", "Garrick", "patrol l"], ["sfx", "click"], ["wait", 0.5], ["sfx", "door_locked"],
+			["say", "Garrick", ["Outer seal. Holding. ...You want to know why I don't like your trade. Fine. You've earned the short version."]],
+			["pose", "Garrick", ""], ["face", "Garrick", "player"], ["pose", "Garrick", "talk"],
+			["say", "Garrick", ["I was security officer on the transport that brought us here. Refugees. Saffi, Kit in a sling, forty others.",
+				"A bounty hunter asked to dock. Said he was being chased. I let him in. [angry] What was chasing him was a Chernobog cutter."]],
+			["say", "Garrick", ["[sad] They shot our drive out to get at him. We came down on this moon with half a hull, and S.A.R.A. talked us in."]],
+			["pose", "Garrick", ""],
+			["say", "Garrick", ["He patched his ship from our wreck and left in the night. I've signed every airlock on this station shut myself ever since."]],
+			["choose", [
+				{"text": "You couldn't have known what was chasing him.", "friendship": 60, "steps": [
+					["emote", "Garrick", "sad"],
+					["say", "Garrick", ["[sad] That's what Saffi says. I check the seals anyway. ...Thank you."]]]},
+				{"text": "I'd never have asked you to dock.", "friendship": 30, "steps": [
+					["say", "Garrick", ["No? ...Maybe not. You've got farm dirt under your nails now, anyway."]]]},
+				{"text": "Sounds like he did what he had to.", "steps": [
+					["emote", "Garrick", "frustrated"],
+					["say", "Garrick", ["[angry] He did what he wanted. Forty people paid for it."]],
+					["friendship", "Garrick", -20]]}]],
+			["face", "Garrick", "l"], ["pose", "Garrick", "patrol l"], ["sfx", "click"],
+			["say", "", ["He checks the seal a second time. Then a third."]],
+			["pose", "Garrick", ""], ["face", "Garrick", "player"],
+			["say", "Garrick", ["Same time tomorrow, if you're up. The lamp's heavier than it looks."]],
+			["flag", "garrick_rounds"],
+			["mail", "garrick_issue", 1],
+		],
+	},
+	"garrick_6": {
+		"who": "Garrick", "hearts": 6, "title": "Self-Defence Class",
+		# the plaza on a Saturday morning: foam mats by the fountain for Kit, Pip and Nub. S.A.R.A. doesn't want her
+		# plaza turned into a parade ground; you find the middle (the NPC Master's tension, hospitality vs security)
+		"area": "main", "seen": ["garrick_4"], "windows": [[[5], "10:00", "12:30"]],
+		"player": [120, 99, "u"],
+		"cast": [["Garrick", 122, 93, "d"], ["Kit", 121, 95, "u"], ["Pip", 123, 95, "u"], ["Nub", 122, 96, "u"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Saturday on the plaza. Garrick has laid out three foam mats by the fountain. Kit, Pip and Nub sit on them, as still as they can manage."]],
+			["walk", "player", 120, 97], ["face", "player", "u"],
+			["pose", "Garrick", "talk"],
+			["say", "Garrick", ["Lesson one. Feet apart. If somebody grabs you, you don't fight. You get loud, and you get gone."]],
+			["pose", "Garrick", ""],
+			["emote", "Kit", "joy"], ["pose", "Kit", "jump"],
+			["say", "Kit", ["[happy] And then you punch them!"]],
+			["pose", "Kit", ""],
+			["say", "Garrick", ["And then you get gone, Kit."]],
+			["sfx", "sara_holo"], ["sara", "warning"],
+			["say", "Sara", ["Chief Garrick. I asked you not to turn my plaza into a parade ground. Guests will arrive to find children practising escapes."], "S.A.R.A."],
+			["face", "Garrick", "u"],
+			["say", "Garrick", ["[angry] Guests arrived on my last ship, too. One of them brought a war with him. I'd like these three to know where the doors are."]],
+			["emote", "Pip", "question"], ["emote", "Nub", "question"],
+			["say", "", ["S.A.R.A.'s light flickers. Garrick folds his arms. Both of them look at you."]],
+			["choose", [
+				{"text": "Call it a safety class. Doors, shouting, hiding. No punching.", "friendship": 60, "steps": [
+					["sara", "clasp_hands"],
+					["say", "Sara", ["[happy] A safety class. On a Saturday. With mats. ...I could put that in the hotel brochure."], "S.A.R.A."],
+					["face", "Garrick", "player"],
+					["say", "Garrick", ["Safety class. Fine. Same lesson, better name."]]]},
+				{"text": "Hold it in the armoury instead.", "friendship": 30, "steps": [
+					["face", "Garrick", "player"],
+					["say", "Garrick", ["The kids won't come to the armoury. That's rather the point of a plaza."]],
+					["sara", "thinking"],
+					["say", "Sara", ["...Then here. But softly, Chief."], "S.A.R.A."]]},
+				{"text": "Let them punch. Kids should learn to fight.", "steps": [
+					["sara", "glitch_interrupt"], ["sfx", "zap"],
+					["face", "Garrick", "player"], ["emote", "Garrick", "no"],
+					["say", "Garrick", ["[angry] No. That's exactly what I'm not teaching."]],
+					["friendship", "Garrick", -20]]}]],
+			["face", "Garrick", "d"], ["pose", "Garrick", "talk"],
+			["say", "Garrick", ["Right. Lesson two. Where's the nearest door? Point. ...Nub, that's a planter."]],
+			["pose", "Garrick", ""],
+			["emote", "Nub", "joy"],
+			["say", "Nub", ["[happy] It's a door for plants."]],
+			["pose", "Garrick", "laugh"],
+			["say", "Garrick", ["[happy] ...Close enough."]],
+			["pose", "Garrick", ""],
+			["emote", "Pip", "joy"], ["emote", "Kit", "joy"],
+			["flag", "garrick_class"],
+		],
+	},
+	"garrick_8": {
+		"who": "Garrick", "hearts": 8, "title": "Perimeter Defence",
+		# S.A.R.A.'s core, late: Annex 4's old defence grid, shut down when the transport landed. Pointed outward, never
+		# at the plaza, and covering your ship: you're a resident with a ship, not a hunter. Reward: Perimeter Defence
+		"area": "top", "seen": ["garrick_6"], "windows": [[[0, 1, 2, 3, 4], "20:00", "22:00"]],
+		"player": [23, 26, "u"],
+		"cast": [["Garrick", 20, 22, "r"]],
+		"steps": [
+			["wait", 0.6],
+			["sfx", "sara_holo"], ["sara", "greeting"],
+			["say", "", ["S.A.R.A.'s core, late. Garrick stands by the dais with his cap in his hands, which you have never seen before."]],
+			["walk", "player", 23, 23], ["face", "player", "u"],
+			["say", "Sara", ["Thank you for coming, {name}. The chief has asked me for something. He has never asked me for anything."], "S.A.R.A."],
+			["face", "Garrick", "player"], ["pose", "Garrick", "talk"],
+			["say", "Garrick", ["Annex 4 had a defence grid. Guns in the hull, pointed out. She shut them down the day we landed. Didn't want a fortress."]],
+			["pose", "Garrick", ""],
+			["sara", "explain"],
+			["say", "Sara", ["I wanted a home. Homes don't keep turrets on the porch."], "S.A.R.A."],
+			["say", "Garrick", ["Not on the porch. Out past it. [sad] If they'd been on when that cutter came, we might have come down in one piece."]],
+			["say", "Garrick", ["I want them watching the sky, not the plaza. And I want them covering one ship in particular. Yours."]],
+			["emote", "player", "surprise"],
+			["choose", [
+				{"text": "Mine? You don't trust pirate hunters.", "friendship": 60, "steps": [
+					["pose", "Garrick", "laugh"],
+					["say", "Garrick", ["[happy] I don't. You're not one. You're a resident with a ship. I checked the ledger."]],
+					["pose", "Garrick", ""]]},
+				{"text": "S.A.R.A., what do you think?", "friendship": 30, "steps": [
+					["sara", "thinking"],
+					["say", "Sara", ["Outward only. Never the plaza. And the chief stops calling my lobby a 'choke point'."], "S.A.R.A."],
+					["say", "Garrick", ["...Deal."]]]},
+				{"text": "Point some at the plaza too, to be safe.", "steps": [
+					["sara", "warning"],
+					["say", "Sara", ["No."], "S.A.R.A."],
+					["emote", "Garrick", "no"],
+					["say", "Garrick", ["[angry] No. That's the one thing we're not doing."]],
+					["friendship", "Garrick", -20]]}]],
+			["sara", "swipe_panels"], ["sfx", "sh_shield"], ["shake", 0.3, 2.0],
+			["say", "", ["Somewhere in the hull, things that have slept for years turn over, wake, and point at the dark."]],
+			["perk", "perimeter_defence", "Perimeter Defence: the Landing's guns soften up the first ship you fight on each run"],
+			["say", "Garrick", ["[happy] There. Go and hunt something, if you must. You'll have the station at your back when you do."]],
+			["sara", "nod"],
+			["say", "Sara", ["[happy] And please come home for dinner."], "S.A.R.A."],
+			["flag", "garrick_resident"],
+		],
+	},
+	"saffi_2": {
+		"who": "Saffi", "hearts": 2, "title": "Welcome Basket",
+		# your front door in the morning: the welcome basket she's been adding to for weeks. Bread, soup, socks, seeds,
+		# and a list of everyone's birthdays
+		"area": "agri", "windows": [[[0, 1, 2, 3, 4, 5], "08:00", "10:30"]],
+		"player": [59, 57, "d"],
+		"cast": [["Saffi", 55, 66, "u"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Someone is coming up the corridor to your door, carrying a basket so full the cloth on top won't lie flat."]],
+			["walk", "Saffi", 59, 59], ["face", "Saffi", "player"],
+			["emote", "Saffi", "hello"],
+			["say", "Saffi", ["[happy] Finally! I've been bringing you this for weeks. Then I'd add something, and it wasn't ready, so I'd add something else."]],
+			["pose", "Saffi", "gift"], ["sfx", "gift"],
+			["say", "", ["Bread, still warm. A jar of soup. Spare socks. A packet of seeds. A list of everyone's birthdays, in Saffi's neat hand."]],
+			["give", "moon_wheat_bread", 1, ""], ["give", "star_tomato_soup", 1, ""], ["give", "crater_potato_seeds", 5, ""],
+			["toast", "+ Moon wheat bread, star tomato soup, 5 crater potato seeds"],
+			["pose", "Saffi", ""],
+			["say", "Saffi", ["The birthdays are the important part. Nobody on this station remembers anyone's. Except Rusk, and he only remembers mine."]],
+			["choose", [
+				{"text": "Come in for a cup of tea?", "friendship": 60, "steps": [
+					["emote", "Saffi", "love"],
+					["say", "Saffi", ["[happy] Oh, I'd love to. I can't. Kit's got lessons and Garrick's got his socks on the wrong feet. Another day. Hold me to it."]]]},
+				{"text": "This is too much, Saffi.", "friendship": 30, "steps": [
+					["say", "Saffi", ["[happy] It's exactly enough. That's what a welcome is for."]]]},
+				{"text": "I don't really do soup.", "steps": [
+					["emote", "Saffi", "sad"],
+					["say", "Saffi", ["[sad] ...Oh. Well. Everyone does soup eventually. I'll wait."]],
+					["friendship", "Saffi", -20]]}]],
+			["say", "Saffi", ["Garrick says you're trouble. [happy] He says that about everyone he likes. Welcome to the Landing, {name}."]],
+			["pose", "Saffi", "wave"], ["wait", 0.4], ["pose", "Saffi", ""],
+			["walk", "Saffi", 55, 70], ["hide", "Saffi"],
+			["flag", "saffi_basket"],
+		],
+	},
+	"saffi_4": {
+		"who": "Saffi", "hearts": 4, "title": "Bring a Plate",
+		# the market after lunch: her sign-up sheet for a Sunday potluck at the fountain has one name on it. You build a
+		# town out of plates
+		"area": "main", "seen": ["saffi_2"], "windows": [[[0, 1, 2, 3, 4], "13:00", "14:30"]],
+		"player": [136, 94, "u"],
+		"cast": [["Saffi", 140, 90, "u", "browse u"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["The market after lunch. Saffi stands by the stalls with a clipboard and a pencil, and the look of someone ignored very politely all morning."]],
+			["walk", "player", 140, 92], ["face", "player", "u"],
+			["pose", "Saffi", ""], ["face", "Saffi", "player"],
+			["say", "Saffi", ["{name}! You've got a pencil hand. Sign this. It's a potluck. Sundays, at the fountain. Everyone brings one plate."]],
+			["say", "", ["The sheet has one name on it: SAFFI. Under it, very small: Kit (maybe)."]],
+			["say", "Saffi", ["[sad] Jasper says he cooks all week. Bram says he'll bring 'a surprise', which means he won't come. Garrick says he's on duty."]],
+			["choose", [
+				{"text": "Sign it. First, in big letters.", "friendship": 60, "steps": [
+					["sfx", "click"],
+					["say", "", ["You write your name under hers, big enough to read from the fountain."]],
+					["emote", "Saffi", "joy"],
+					["say", "Saffi", ["[happy] Now it's a list. People sign lists. Nobody signs a sheet with one name on it."]]]},
+				{"text": "What if the cook gets the day off?", "friendship": 30, "steps": [
+					["say", "Saffi", ["...A potluck where Jasper isn't allowed to cook. [happy] Oh, he'd hate that. He'd come just to complain. Perfect."]]]},
+				{"text": "Maybe people are just busy.", "steps": [
+					["emote", "Saffi", "sad"],
+					["say", "Saffi", ["[sad] Everyone's busy. That's how a station stays a station and never turns into a town."]],
+					["friendship", "Saffi", -20]]}]],
+			["pose", "Saffi", "talk"],
+			["say", "Saffi", ["When we landed, nobody knew anybody. The first thing we did that wasn't fixing something was sit down and eat.",
+				"[happy] You can build a town out of plates. I've seen it done."]],
+			["pose", "Saffi", ""],
+			["flag", "saffi_signup"],
+		],
+	},
+	"saffi_6": {
+		"who": "Saffi", "hearts": 6, "title": "Every Name",
+		# the museum, at the scorched hull plate every settler signed: Kit's handprint, and the first night, when she
+		# made soup for forty in a dented helmet. Letter: hers, the next morning
+		"area": "museum", "seen": ["saffi_4"], "windows": [[[1, 2, 3, 4, 5], "14:00", "16:30"]],
+		"player": [48, 13, "u"],
+		"cast": [["Saffi", 52, 10, "u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The museum. Saffi stands in front of the scorched hull plate from the first crash, the one every settler signed. She hasn't seen you yet."]],
+			["walk", "player", 51, 10], ["face", "player", "u"],
+			["face", "Saffi", "player"],
+			["say", "Saffi", ["Oh. Hello. I come and look at this sometimes. Garrick won't. He says he remembers it fine without help."]],
+			["face", "Saffi", "u"],
+			["say", "", ["Up close, the plate is covered in names, scratched in with whatever was to hand. In one corner is a tiny handprint in grey sealant."]],
+			["say", "Saffi", ["[happy] That's Kit. He wouldn't hold still, so S.A.R.A. said a handprint counted."]],
+			["face", "Saffi", "player"], ["pose", "Saffi", "talk"],
+			["say", "Saffi", ["The first night, we had nothing. Ration bars, and a ginger root I'd carried from home in my pocket for luck.",
+				"S.A.R.A. found a hot plate that worked. I made soup in a dented helmet. Forty people, one helmet of soup."]],
+			["pose", "Saffi", "sad"],
+			["say", "Saffi", ["[sad] It wasn't enough. Not nearly enough. [happy] But everyone sat down together, and that was the first night it felt like somewhere."]],
+			["pose", "Saffi", ""],
+			["choose", [
+				{"text": "That's why the potluck matters to you.", "friendship": 60, "steps": [
+					["emote", "Saffi", "love"],
+					["say", "Saffi", ["[happy] Yes. A plate in the middle, and everyone reaching for it. That's a town."]]]},
+				{"text": "What was in the soup?", "friendship": 30, "steps": [
+					["say", "Saffi", ["Ginger, hope, and a ration bar crumbled in at the end. [happy] I've made it better since. Never quite as good."]]]},
+				{"text": "Forty people on one helmet? Sounds grim.", "steps": [
+					["emote", "Saffi", "frustrated"],
+					["say", "Saffi", ["[angry] It was grim. That was rather the point, {name}."]],
+					["friendship", "Saffi", -20]]}]],
+			["say", "Saffi", ["Come on Sunday. Bring a plate. Bring anything. [happy] Just come and sit down."]],
+			["flag", "saffi_first_supper"],
+			["mail", "saffi_soup", 1],
+		],
+	},
+	"saffi_8": {
+		"who": "Saffi", "hearts": 8, "title": "The First Potluck",
+		# the fountain on a Sunday: two tables pushed together and half the station round them. Jasper hasn't cooked and
+		# can't bear it. Every Sunday from now on. Reward: Potluck (bring a dish, everyone gets a taste)
+		"area": "main", "seen": ["saffi_6"], "windows": [[[6], "12:00", "15:00"]],
+		"player": [115, 104, "u"],
+		"cast": [["Saffi", 115, 100, "d"], ["Garrick", 121, 99, "l"], ["Kit", 112, 99, "u"], ["Nub", 113, 99, "u"],
+			["Pip", 117, 99, "u"], ["Rusk", 110, 100, "r"], ["Jasper", 120, 100, "l"], ["Bram", 111, 101, "r"],
+			["Tobbin", 119, 101, "l"], ["Merrow", 110, 99, "r"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Sunday by the fountain. Two tables pushed together, and on them every kind of plate the Landing owns. Half the station is here. More are coming."]],
+			["walk", "player", 115, 102], ["face", "player", "u"],
+			["emote", "Saffi", "joy"], ["pose", "Saffi", "wave"],
+			["say", "Saffi", ["[happy] {name}! You came! Look at it. Fourteen names on the sheet, and nineteen people at the table."]],
+			["pose", "Saffi", ""],
+			["emote", "Jasper", "frustrated"],
+			["say", "Jasper", ["I brought nothing. Saffi says the cook gets the day off. [sad] I have never been so uncomfortable in my life."]],
+			["pose", "Bram", "laugh"],
+			["say", "Bram", ["[happy] The surprise is that I came."]],
+			["pose", "Bram", ""],
+			["say", "Kit", ["Dad brought a ration bar. He says it's for tradition."]],
+			["say", "Garrick", ["[happy] It is for tradition."]],
+			["say", "Saffi", ["Sit, sit. There's a space by Rusk. There's always a space by Rusk."]],
+			["choose", [
+				{"text": "Sit down with everyone.", "friendship": 60, "steps": [
+					["walk", "player", 112, 101], ["face", "player", "u"],
+					["sfx", "eat"],
+					["say", "", ["You sit. A plate comes your way, then another. Nobody asks you to fix anything. Somebody passes you the salt."]]]},
+				{"text": "Help Saffi serve first.", "friendship": 30, "steps": [
+					["say", "Saffi", ["[happy] Oh no you don't. The host serves; guests sit. ...Fine. You can carry the bread."]],
+					["sfx", "eat"]]},
+				{"text": "I'll just grab a plate and go.", "steps": [
+					["emote", "Saffi", "sad"],
+					["say", "Saffi", ["[sad] Oh. Well. Take some for later, then."]],
+					["friendship", "Saffi", -20]]}]],
+			["pose", "Saffi", "talk"],
+			["say", "Saffi", ["Every Sunday from now on. And if you bring a plate, everyone gets a taste of it. That's the rule. The only rule."]],
+			["pose", "Saffi", ""],
+			["perk", "potluck", "Potluck: on Sundays, bring Saffi a cooked dish at the fountain. Friendship with everyone, and you wake up well fed"],
+			["say", "Rusk", ["[happy] A toast, then. To the host."]],
+			["emote", "Rusk", "love"], ["emote", "Kit", "joy"], ["emote", "Nub", "joy"], ["emote", "Pip", "joy"],
+			["face", "Garrick", "Saffi"], ["emote", "Garrick", "love"],
+			["say", "Garrick", ["[love] To the host."]],
+			["emote", "Saffi", "love"],
+			["flag", "saffi_potluck"],
+		],
+	},
+	"kit_2": {
+		"who": "Kit", "hearts": 2, "title": "Fastest on the Station",
+		# the plaza at lunchtime: Kit races you round the fountain. Run properly and he wins by a whisker (and loves you
+		# for trying); cut across the fountain and you're wet and a cheat
+		"area": "main", "windows": [[[0, 1, 2, 3, 4], "12:30", "14:30"]],
+		"player": [118, 90, "r"],
+		"cast": [["Kit", 123, 92, "l", "play l"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Lunchtime on the plaza. Kit is doing laps of the fountain, very fast, with nobody chasing him."]],
+			["pose", "Kit", ""], ["walk", "Kit", 120, 90], ["face", "Kit", "player"],
+			["say", "Kit", ["[happy] You! You're new and you're tall. Race me. Round the fountain. Pip won't race me any more.",
+				"He says it's because he's busy. [angry] It's because I'm the fastest."]],
+			["walks", [["Kit", 111, 93], ["player", 110, 93]]],
+			["face", "Kit", "d"], ["face", "player", "d"],
+			["say", "Kit", ["Once round, back to here. Three... two... ONE!"]],
+			["choose", [
+				{"text": "Run as fast as you can.", "friendship": 60, "steps": [
+					["sfx", "step"],
+					["walks", [["Kit", 111, 98], ["player", 110, 99]]],
+					["walks", [["Kit", 119, 98], ["player", 120, 99]]],
+					["walks", [["Kit", 119, 93], ["player", 120, 92]]],
+					["walks", [["Kit", 111, 92], ["player", 112, 92]]],
+					["face", "Kit", "player"], ["emote", "Kit", "joy"], ["pose", "Kit", "jump"],
+					["say", "Kit", ["[happy] WON! By a whisker! But you RAN. Properly! Nobody runs properly against me."]],
+					["pose", "Kit", ""]]},
+				{"text": "Let him win.", "friendship": 30, "steps": [
+					["walks", [["Kit", 111, 98], ["player", 110, 96]]],
+					["walks", [["Kit", 119, 98], ["player", 110, 99]]],
+					["walks", [["Kit", 119, 93], ["player", 120, 99]]],
+					["walks", [["Kit", 111, 92], ["player", 120, 93]]],
+					["walk", "player", 113, 92],
+					["face", "Kit", "player"], ["emote", "Kit", "frustrated"],
+					["say", "Kit", ["[angry] You let me win. I can tell. Dad does it too. ...I still won, though."]]]},
+				{"text": "Cut straight across the fountain.", "steps": [
+					["walks", [["Kit", 111, 98], ["player", 113, 92]]],
+					["sfx", "step_water"], ["fx", "spray", 115, 95, 6],
+					["say", "", ["You climb over the edge and splash straight through the middle of the fountain. Kit stops dead."]],
+					["energy", -10],
+					["fx", "spray", "off"],
+					["walk", "Kit", 111, 93], ["face", "Kit", "player"], ["emote", "Kit", "no"],
+					["say", "Kit", ["[angry] That's CHEATING. You're wet AND a cheater."]]]}]],
+			["say", "Kit", ["Same time tomorrow. I'm going to be security chief, and security chiefs have to be fast.",
+				"[happy] Or a pirate. Pirates have to be fast too. Dad says I can't be both."]],
+			["flag", "kit_race"],
+		],
+	},
+	"kit_4": {
+		"who": "Kit", "hearts": 4, "title": "The Beacon",
+		# his telescope at home before bed: a light out in the dark blinking three long, two short. Saffi knows it: an
+		# old smuggler's mark. It goes on your jump map (a smuggler's cache, ShipRuns.place_cache). Letter: Kit's
+		"area": "aptSec", "seen": ["kit_2"], "windows": [[null, "19:15", "20:15"]],
+		"player": [21, 10, "u"],
+		"cast": [["Kit", 18, 6, "u"], ["Saffi", 12, 15, "u"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Kit's room. He's up on his toes at his telescope, one eye screwed shut, counting under his breath."]],
+			["walk", "player", 20, 6], ["face", "player", "l"],
+			["face", "Kit", "player"], ["emote", "Kit", "surprise"],
+			["say", "Kit", ["[shocked] Don't move! It's blinking again. Look. Look! Out past the third bright star, down a bit."]],
+			["face", "Kit", "u"],
+			["say", "", ["You look. Something tiny out in the dark blinks: three long, two short. Then nothing. Then again. Three long, two short."]],
+			["say", "Kit", ["It's not on my chart. Stars don't blink like that. [happy] It's a code! It's a pirate code!"]],
+			["face", "Kit", "player"],
+			["choose", [
+				{"text": "Let's write it down properly.", "friendship": 60, "steps": [
+					["emote", "Kit", "joy"],
+					["say", "Kit", ["[happy] Like a real log! When, where, what it did!"]],
+					["sfx", "click"],
+					["say", "", ["Kit writes it on his sky chart in enormous letters: 19:40. THREE LONG TWO SHORT. NOT A STAR."]]]},
+				{"text": "Go and tell your mum.", "friendship": 30, "steps": [
+					["say", "Kit", ["[angry] She'll just say it's bedtime."]]]},
+				{"text": "It's just a star, Kit.", "steps": [
+					["emote", "Kit", "sad"], ["pose", "Kit", "sad"],
+					["say", "Kit", ["[sad] Stars don't blink in a code. ...You didn't even look properly."]],
+					["pose", "Kit", ""],
+					["friendship", "Kit", -20]]}]],
+			["walk", "Saffi", 21, 9], ["face", "Saffi", "Kit"],
+			["say", "Saffi", ["Bed in ten minutes, Captain. What's all this?"]],
+			["pose", "Kit", "jump"],
+			["say", "Kit", ["[happy] A beacon, Mum! Three long, two short!"]],
+			["pose", "Kit", ""],
+			["emote", "Saffi", "surprise"],
+			["say", "Saffi", ["...Three long, two short is an old smuggler's mark. Garrick will want to know.", "[happy] And I suspect {name} will want to go and look."]],
+			["face", "Kit", "player"],
+			["say", "Kit", ["Bring me something back! Not treasure. Well. Treasure if there's treasure."]],
+			["toast", "Kit's beacon goes on your jump map: a beacon on the second ring"],
+			["flag", "kit_beacon"],
+			["mail", "kit_coordinates", 1],
+		],
+	},
+	"kit_6": {
+		"who": "Kit", "hearts": 6, "title": "Wanted",
+		# the Shuttle Bay after lessons: Kit in Ix'ali's helmet with a WANTED poster, going to be a bounty hunter "like
+		# you". Garrick finds him, and you answer. Garrick swears him in as a junior security officer instead
+		"area": "bay", "seen": ["kit_4"], "windows": [[[0, 1, 2, 3, 4], "15:00", "17:00"]],
+		"player": [16, 21, "u"],
+		"cast": [["Kit", 22, 18, "l"], ["Garrick", 5, 18, "r"]],
+		"steps": [
+			["hide", "Garrick"],
+			["wait", 0.5],
+			["say", "", ["The Shuttle Bay. A small fox in an enormous flight helmet stands on a crate by your ship, holding up a hand-drawn poster."]],
+			["walk", "player", 20, 18], ["face", "player", "r"],
+			["pose", "Kit", "gift"],
+			["say", "Kit", ["[happy] WANTED: the Chernobog. Reward: lots. I'm going to be a bounty hunter. Like you. I've got the helmet already."]],
+			["pose", "Kit", ""],
+			["if", {"flag": "kit_cache_found"}, [
+				["say", "Kit", ["And you found my beacon! Mum said it was a whole cargo pod! [happy] I found that. I'm basically a hunter already."]]]],
+			["say", "", ["The helmet comes down to his shoulders. It's Ix'ali's, borrowed without asking."]],
+			["show", "Garrick"], ["walk", "Garrick", 18, 19], ["face", "Garrick", "Kit"],
+			["say", "Garrick", ["[angry] KIT. Off the crate. That's Ix'ali's helmet, and that is not a toy."]],
+			["emote", "Kit", "sad"],
+			["say", "Kit", ["[sad] I'm practising. For being a hunter. Like {name}."]],
+			["emote", "Garrick", "surprise"], ["face", "Garrick", "player"],
+			["say", "", ["Garrick goes very still. He looks at you, and doesn't say anything at all."]],
+			["choose", [
+				{"text": "Hunting is mostly being scared, Kit. Your dad keeps people safe.", "friendship": 60, "steps": [
+					["say", "Kit", ["...Safe is better than scared?"]],
+					["emote", "Garrick", "love"],
+					["friendship", "Garrick", 30]]},
+				{"text": "Ask your dad what he thinks.", "friendship": 30, "steps": [
+					["face", "Garrick", "Kit"],
+					["say", "Garrick", ["[sad] I think I'd like you to want to keep people safe. Not to chase them."]],
+					["say", "Kit", ["...Can I do both?"]]]},
+				{"text": "One day I'll take you hunting, Kit.", "steps": [
+					["emote", "Kit", "joy"],
+					["say", "Garrick", ["[angry] Not on a hunt, you won't. {name}. A word, later."]],
+					["friendship", "Garrick", -20]]}]],
+			["face", "Garrick", "Kit"], ["pose", "Garrick", "talk"],
+			["say", "Garrick", ["Give me the helmet. ...We'll get you one that fits. A security one. Saturdays, you can help me check the seals."]],
+			["pose", "Garrick", ""],
+			["emote", "Kit", "joy"], ["pose", "Kit", "jump"],
+			["say", "Kit", ["[happy] A REAL one? Security chief, then! And a hunter on Sundays."]],
+			["pose", "Kit", ""],
+			["say", "Garrick", ["[happy] We'll discuss Sundays."]],
+			["flag", "kit_security"],
+		],
+	},
+	"kit_8": {
+		"who": "Kit", "hearts": 8, "title": "Deputy",
+		# the West Terminal's empty customs hall on a weekend: Junior Security Officer Kit at the old customs desk, with
+		# a rubber stamp. Every officer picks one deputy. Reward: Kit's deputy badge, to set down at home
+		"area": "west", "seen": ["kit_6"], "windows": [[[5, 6], "10:00", "12:00"]],
+		"player": [44, 40, "u"],
+		"cast": [["Kit", 41, 31, "d"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["The customs hall, empty on a weekend. Behind the old customs desk, standing on two crates, is Kit, in a security cap that actually fits."]],
+			["walk", "player", 41, 34], ["face", "player", "u"],
+			["pose", "Kit", "wave"],
+			["say", "Kit", ["Halt! Papers, please. ...It's you. You still have to show papers. Dad says no exceptions."]],
+			["pose", "Kit", ""],
+			["sfx", "click"], ["wait", 0.3], ["sfx", "click"],
+			["say", "", ["You hand over a seed receipt. Kit studies it, frowning, and stamps it twice. The stamp says APPROVED, backwards."]],
+			["say", "Kit", ["[happy] Junior Security Officer Kit. Dad swore me in. Saturdays I check the seals with him. Every one. Even the boring ones."]],
+			["say", "Kit", ["And a junior officer gets to pick one deputy. [bashful] I picked you. If you want."]],
+			["choose", [
+				{"text": "I'd be honoured, Officer.", "friendship": 60, "steps": [
+					["emote", "Kit", "joy"], ["pose", "Kit", "jump"],
+					["say", "Kit", ["[happy] YES. I knew it. I told Pip you'd say that."]],
+					["pose", "Kit", ""]]},
+				{"text": "Shouldn't you pick Pip?", "friendship": 30, "steps": [
+					["say", "Kit", ["[angry] Pip would want to be in charge. ...You can share it with Pip. Sometimes."]]]},
+				{"text": "Deputies are for kids, Kit.", "steps": [
+					["emote", "Kit", "sad"],
+					["say", "Kit", ["[sad] ...It's not for kids. It's real."]],
+					["friendship", "Kit", -20]]}]],
+			["pose", "Kit", "gift"], ["sfx", "gift"],
+			["give", "deputy_badge", 1, "+ Kit's deputy badge (set it down at home)"],
+			["say", "", ["A tin star, painted gold, with DEPUTY stamped across it a little crooked. Garrick's stamp, Kit's hammering."]],
+			["pose", "Kit", ""],
+			["say", "Kit", ["It's real. Dad says it's real enough, and that's the same thing. [happy] Now you have to come when I call. Deputy."]],
+			["flag", "kit_deputy"],
+		],
+	},
+	"guard_4": {
+		"who": "Garrick", "with": ["Saffi", "Kit"], "hearts": 4, "title": "The Model Ship",
+		# their flat on a Saturday morning: Garrick and Kit building a model of your ship, mostly glue. Which way does
+		# the cockpit go?
+		"area": "aptSec", "windows": [[[5], "09:00", "12:00"]],
+		"player": [17, 23, "u"],
+		"cast": [["Garrick", 7, 17, "d"], ["Kit", 9, 17, "d"], ["Saffi", 12, 15, "l"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Saturday at Garrick and Saffi's. On the table: a model starship, mostly glue. Garrick holds a wing. Kit holds the other. They don't match."]],
+			["walk", "player", 8, 20], ["face", "player", "u"],
+			["face", "Kit", "player"], ["emote", "Kit", "joy"],
+			["say", "Kit", ["[happy] It's YOUR ship! We're making your ship! Dad did the engines. I did the fire."]],
+			["face", "Garrick", "player"],
+			["say", "Garrick", ["Your ship had fire coming out of it when it landed. Kit insists on accuracy."]],
+			["pose", "Saffi", "laugh"],
+			["say", "Saffi", ["[happy] They've been at it since breakfast. There's glue on the ceiling. I don't know how."]],
+			["pose", "Saffi", ""],
+			["say", "Garrick", ["{name}. You've seen the real one up close. Which way round does the cockpit go?"]],
+			["choose", [
+				{"text": "Cockpit forward, wings level.", "friendship": 60, "steps": [
+					["say", "", ["You turn the cockpit round and hold the wings level while the glue sets. Kit gasps. It looks like a ship."]],
+					["friendship", "Kit", 30], ["friendship", "Saffi", 30],
+					["emote", "Garrick", "joy"]]},
+				{"text": "Leave it. It's perfect as it is.", "friendship": 30, "steps": [
+					["say", "Kit", ["[happy] SEE, Dad?"]],
+					["say", "Garrick", ["[sad] ...It has three wings, Kit."]],
+					["friendship", "Kit", 30]]},
+				{"text": "Let me do it. You're doing it wrong.", "steps": [
+					["emote", "Kit", "frustrated"],
+					["say", "Kit", ["[angry] It's OUR ship. You fly the real one."]],
+					["friendship", "Kit", -20]]}]],
+			["face", "Garrick", "d"], ["face", "Kit", "d"],
+			["sfx", "craft"], ["wait", 0.8],
+			["say", "", ["It takes until lunch. When it's done it has two wings, one engine, a great deal of fire, and a cockpit pointing the right way."]],
+			["face", "Kit", "player"], ["pose", "Kit", "jump"],
+			["say", "Kit", ["[happy] It's going on the shelf! Next to the photo! The one from the crash!"]],
+			["pose", "Kit", ""],
+			["say", "Saffi", ["The photo where we're all filthy. [love] My favourite."]],
+			["emote", "Garrick", "love"],
+			["flag", "guard_model_ship"],
+		],
+	},
+	"guard_6": {
+		"who": "Saffi", "with": ["Garrick", "Kit"], "hearts": 6, "title": "Brave Together",
+		# the mine's cavern gate after dinner: Kit went to see a crawler so he wouldn't be scared. Vzz'ket found him
+		# first and kept him by his camp stove. Being brave together counts double. Letter: theirs
+		"area": "mine", "seen": ["guard_4"], "windows": [[null, "18:45", "20:15"]],
+		"player": [12, 30, "l"],
+		"cast": [["Kit", 6, 28, "d"], ["Vzz'ket", 8, 28, "l"], ["Garrick", 13, 29, "l"], ["Saffi", 13, 31, "l"]],
+		"steps": [
+			["wait", 0.4],
+			["say", "", ["Kit didn't come home for dinner. Saffi tried the fountain; Garrick tried every airlock. It was Vzz'ket's comm that found him: the cavern gate."]],
+			["walks", [["player", 10, 29], ["Garrick", 9, 28], ["Saffi", 10, 30]]],
+			["face", "player", "l"], ["face", "Garrick", "Kit"], ["face", "Saffi", "Kit"],
+			["say", "", ["Kit sits by Vzz'ket's camp stove with a blanket round him and a cup of something hot. Vzz'ket sits beside him, spear across his knees."]],
+			["face", "Kit", "Garrick"], ["emote", "Kit", "sad"], ["pose", "Kit", "sad"],
+			["say", "Kit", ["[sad] I wanted to see a crawler. Just one. So I'd know what they look like. So I wouldn't be scared any more."]],
+			["say", "Vzz'ket", ["The small one reached the gate. I asked him to wait with me. He has waited very well."]],
+			["pose", "Garrick", "talk"],
+			["say", "Garrick", ["[angry] Kit. Do you know what's down there? Do you know what I thought when..."]],
+			["pose", "Garrick", "sad"],
+			["say", "", ["Garrick stops. His hands are shaking. Saffi looks at you."]],
+			["choose", [
+				{"text": "Kit, being scared is how you know to come home.", "friendship": 60, "steps": [
+					["say", "Kit", ["[sad] ...I did want to come home. I didn't know how to stop being brave."]],
+					["friendship", "Garrick", 30], ["friendship", "Kit", 30]]},
+				{"text": "Let Garrick hold him first. Talk later.", "friendship": 30, "steps": [
+					["walk", "Garrick", 7, 28], ["face", "Garrick", "Kit"],
+					["say", "", ["Garrick picks Kit up, blanket and all, and doesn't say anything for a long time."]],
+					["friendship", "Garrick", 30]]},
+				{"text": "He's fine. No harm done.", "steps": [
+					["emote", "Saffi", "frustrated"],
+					["say", "Saffi", ["[angry] He's fine because Vzz'ket was here. Not because it was fine."]],
+					["friendship", "Saffi", -20]]}]],
+			["pose", "Garrick", ""], ["pose", "Kit", ""],
+			["face", "Saffi", "Kit"],
+			["say", "Saffi", ["[sad] Next time you want to be brave, come and find one of us first. Brave together counts double."]],
+			["say", "Kit", ["...Double?"]],
+			["say", "Garrick", ["[sad] Double. House rule."]],
+			["face", "Garrick", "Vzz'ket"],
+			["say", "Garrick", ["Thank you. I owe you."]],
+			["say", "Vzz'ket", ["You owe me nothing, chief. You hold your gates. I hold mine."]],
+			["emote", "Saffi", "love"], ["emote", "Garrick", "love"], ["emote", "Kit", "love"],
+			["flag", "guard_brave_together"],
+			["mail", "guard_double", 1],
 		],
 	},
 }
