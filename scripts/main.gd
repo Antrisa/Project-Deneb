@@ -2164,7 +2164,7 @@ func _talk(who: String) -> void:
 			"And my bench is yours: anything you want fitted to your ship, that's where we do it."])
 
 		_freya_ship_repair()
-	elif SHOP_HELLO.has(who) and _at_workplace(who):
+	elif SHOP_HELLO.has(who) and _in_shop(who):
 		_shop_offer(who, first_today)
 	elif who == "Sara" and _flag("perk_concierge"):
 		_say("Sara", ["[happy] Going somewhere? Any pad of mine, door to door."], Callable(shops, "open").bind("Concierge"),
@@ -2206,12 +2206,40 @@ const SHOP_HELLO := {
 }
 
 
+# Where each keeper's shop is (Zachary, 24 Nov: "shop people can only sell while in their shop area"):
+# area -> zones in that area ("" = anywhere in it). The keeper has to be there, and so do you.
+const SHOP_AT := {
+	"Bram": {"main": ["Bram's market", "Bram's supplies"], "bram": [""]},
+	"Tikka": {"eng": [""]},
+	"Rusk": {"bar": [""], "main": ["Rusk's bar"]},
+	"Jasper": {"mess": [""], "main": ["Mess hall"]},
+	"Sesska": {"main": ["Sesska's textiles"], "weaver": [""]},
+	"Ix'ali": {"armoury": [""], "main": ["Armoury"]},
+	"Maren": {"medbay": [""], "main": ["Medbay"]},
+	"Job": {"mine": [""]},
+	"Tobbin": {"main": ["Tobbin's workshop"]},
+}
+
+
+func _in_shop(who: String) -> bool:
+	var r = _resident_named(who)
+	if r == null or not SHOP_AT.has(who) or str(r.area) != current_area or not _at_workplace(who):
+		return false
+	var zones: Array = SHOP_AT[who].get(current_area, [])
+	if zones.has(""):
+		return true
+	for z in MapData.AREAS[current_area].get("zones", []):
+		if zones.has(str(z[0])) and r.tile.x >= int(z[1]) and r.tile.x <= int(z[3]) and r.tile.y >= int(z[2]) and r.tile.y <= int(z[4]):
+			return true
+	return false
+
+
 func _shop_offer(who: String, first_today := false) -> void:
 	var line: String = SHOP_HELLO[who]
 	if who == "Tikka" and repair_stage < REPAIRS.size():
-		_say(who, [line], Callable(shops, "open").bind(who), "Shop", Callable(self, "_tikka_repair"), "Ship repairs")
+		_say(who, [line], Callable(shops, "open_later").bind(who), "Shop", Callable(self, "_tikka_repair"), "Ship repairs")
 	else:
-		_say(who, [line], Callable(shops, "open").bind(who), "Crack geodes" if who == "Job" else "Shop",
+		_say(who, [line], Callable(shops, "open_later").bind(who), "Crack geodes" if who == "Job" else "Shop",
 				Callable(self, "_chat").bind(who, first_today), "Just chat")
 
 

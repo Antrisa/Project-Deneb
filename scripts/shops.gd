@@ -42,6 +42,11 @@ func tick(delta: float) -> void:
 
 # ---------------------------------------------------------------- opening the screen
 
+# From the keeper's dialogue: open once the dialogue box has closed and the key that closed it is done with.
+func open_later(who: String) -> void:
+	call_deferred("open", who)
+
+
 func open(who: String) -> void:
 	if world.datapad == null or world.datapad.pad == null:
 		world._toast("The shop screen needs the datapad.")
@@ -75,6 +80,9 @@ func open(who: String) -> void:
 		hello = "Pick a pad and I'll fold you there. Mind the step."
 	world.datapad.pad.shop_greeting = hello.substr(hello.find("]") + 1).strip_edges() if hello.begins_with("[") else hello
 	world.datapad.pad.show_shop(title, tabs, reopening)
+	if str(world.datapad.pad.page) != "Shop":
+		push_warning("shops.gd: the datapad did not open the Shop page for %s" % who)
+		world._toast("The shop screen didn't open (shop: %s). Tell Claude." % who)
 
 
 func refresh() -> void:
