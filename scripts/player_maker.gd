@@ -30,6 +30,9 @@ const PALETTES := {
 	"bottomColor": ["#51454b", "#506063", "#657081", "#30343c", "#6b4a2e", "#3f5a8a", "#4a6a4a", "#8a8f99", "#7a2e2e", "#c9b38a"],
 }
 
+# The picture choices the character screen offers: the clothes. (Hair is fixed per gender.)
+const CLOTHES := ["tops", "bottoms"]
+
 # Choices that are not pictures. "body" is the Gender line: Male uses the layers in art/player/,
 # Female uses art/player/body2/ (same eight file names and layout). It also sets the pronouns.
 const OPTIONS := {
@@ -161,21 +164,27 @@ func defaults(body: int = 0) -> Dictionary:
 
 
 # A look with anything missing or out of range replaced by the default. Each gender has one fixed
-# outfit and hairstyle (its starter look); only the colours are the player's to choose (22 Nov).
+# hairstyle (its starter look's); the clothes and the colours are the player's to choose.
 func tidy(look: Dictionary) -> Dictionary:
 	var out := defaults(int(look.get("body", 0)))
 	for k in PALETTES:
 		if look.has(k) and Color.html_is_valid(str(look[k])):
 			out[k] = str(look[k])
+	# clothes are the player's to choose again (24 Nov); the hairstyle stays the gender's own
+	for k in CLOTHES:
+		if look.has(k):
+			out[k] = clampi(int(look[k]), 0, CHOICES - 1)
 	for k in OPTIONS:
 		if look.has(k):
 			out[k] = clampi(int(look[k]), 0, option_count(k) - 1)
 	return out
 
 
-# Random colours; the outfit and hairstyle stay the gender's own (see tidy).
+# Random colours and clothes; the hairstyle stays the gender's own (see tidy).
 func random_look() -> Dictionary:
 	var out := {}
+	for k in CLOTHES:
+		out[k] = randi() % CHOICES
 	for k in PALETTES:
 		var colours: Array = PALETTES[k]
 		out[k] = colours[randi() % colours.size()]

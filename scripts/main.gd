@@ -4674,14 +4674,11 @@ func _build_ui() -> void:
 	# The character screen, if the layered player art is installed (art/player/).
 	maker = MakerScript.new()
 	if maker.load_layers():
-		var top_layer := CanvasLayer.new()
-		top_layer.layer = 12
-		top_layer.scale = Vector2.ONE * UI_SCALE
-		add_child(top_layer)
+		# its own layer, drawn in the datapad style at the window's size (scripts/creator.gd)
 		creator = CreatorScript.new()
 		creator.world = self
 		creator.maker = maker
-		top_layer.add_child(creator)
+		add_child(creator)
 
 
 # Wipe the save and start again, on the character screen (F9, or Settings > New game on the title screen).
