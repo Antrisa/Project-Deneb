@@ -300,8 +300,44 @@ try:
 except ImportError:
     pass
 
+# Staged like a Stardew cutscene (Zachary, 24 Nov: "npcs move and do actions as well as character using emotes and
+# text boxes"): every heart event has someone moving (a resident walks, or S.A.R.A. plays her clips), the player
+# reacting at least once, two resident emotes, and a pose (S.A.R.A. is a hologram and can't pose).
+def _all_steps(steps, out):
+    for s in steps:
+        if isinstance(s, dict):
+            _all_steps(s.get('steps', []), out)
+        elif isinstance(s, list) and s and isinstance(s[0], str):
+            out.append(s)
+            if s[0] == 'choose':
+                for o in s[1]:
+                    _all_steps(o.get('steps', []), out)
+            elif s[0] == 'if':
+                for branch in s[2:]:
+                    _all_steps(branch, out)
+
+
+staged = 0
+for ev_id, ev in EVENTS.items():
+    st = []
+    _all_steps(ev['steps'], st)
+    moves = sum(1 for s in st if s[0] == 'walk' and s[1] != 'player') + \
+        sum(1 for s in st if s[0] == 'walks' for w in s[1] if w[0] != 'player') + sum(1 for s in st if s[0] == 'sara')
+    p_emotes = sum(1 for s in st if s[0] == 'emote' and s[1] == 'player')
+    r_emotes = sum(1 for s in st if s[0] == 'emote' and s[1] != 'player')
+    poses = sum(1 for s in st if s[0] == 'pose' and s[2] != '')
+    short = []
+    if moves < 1: short.append("nobody moves")
+    if p_emotes < 1: short.append("the player never emotes")
+    if r_emotes < 2: short.append("fewer than two resident emotes")
+    if poses < 1 and ev['who'] != 'Sara': short.append("no poses")
+    if short:
+        bad(ev_id, "not staged: " + ", ".join(short))
+    else:
+        staged += 1
+
 if problems:
     print("\n".join("FAIL: " + p for p in problems))
     raise SystemExit(1)
-print("PASS: %d heart events and %d story scene(s), %d steps, %d lines: places reachable, poses drawn, steps and lines valid."
-      % (len(EVENTS), len(SCENES), count["steps"], count["lines"]))
+print("PASS: %d heart events and %d story scene(s), %d steps, %d lines: places reachable, poses drawn, steps and lines valid;"
+      " all %d events staged (movement, emotes, poses)." % (len(EVENTS), len(SCENES), count["steps"], count["lines"], staged))
