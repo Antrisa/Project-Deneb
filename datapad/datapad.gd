@@ -116,6 +116,9 @@ var _mouse_ui := Vector2.ZERO
 # Echo Landing shops (23 Nov): tabs of rows, filled by scripts/shops.gd. Each tab is [name, rows]; each row is
 # [icon id, title, subtitle, price text, buttons], each button [action, label, enabled].
 var shop_tabs: Array = []
+# Echo Landing (24 Nov): who runs the shop, shown beside the tabs: a face id (extra_textures "p_<who>") and a line.
+var shop_portrait := ""
+var shop_greeting := ""
 # Echo Landing (24 Nov): the hotel's night for the day summary (scripts/hotel.gd last_night), or {} for none.
 var recap_hotel: Dictionary = {}
 var shop_tab := 0
@@ -547,6 +550,18 @@ func _side_tab(id: String,y: int,icon: String,label: String,selected: bool,enabl
 	_txt(743-_width(label,"micro")/2,y+27,label,"micro",INK if enabled else MUTED)
 	if selected: _rect(721,y+10,3,27,ORANGE)
 	if enabled: _hit(id,718,y,48,47)
+# A row of little pixel stars (Echo Landing, 24 Nov): `value` of them lit, halves allowed, `out_of` in all.
+const STAR_ROWS := ["....#....", "...###...", "#########", ".#######.", "..#####..", ".###.###.", ".##...##."]
+func _stars(x:int,y:int,value:float,out_of:int,lit:=OCHRE,dim:="#cfc8b8") -> void:
+	for i in out_of:
+		var fill:=clampf(value-i,0.0,1.0)
+		for r in STAR_ROWS.size():
+			var row:String=STAR_ROWS[r]
+			for c in row.length():
+				if row[c]=="#":
+					var on:=fill>=1.0 or (fill>=0.5 and c<=4)
+					_rect(x+i*11+c,y+r,1,1,lit if on else dim)
+
 func _heading(title,meta="") -> void:
 	_txt(68,97,title,"title")
 	if meta!="":
@@ -1166,6 +1181,15 @@ func _shop() -> void:
 	_heading(shop_name,str(station_scrip)+" SCRIP")
 	for t in shop_tabs.size():
 		_btn("shoptab/"+str(t),69+t*104,139,98,21,str(shop_tabs[t][0]),t==shop_tab)
+	# the keeper: their face and a line, right of the tabs
+	var gx:=69+shop_tabs.size()*104+6
+	if shop_portrait!="" and extra_textures.has(shop_portrait):
+		_img(shop_portrait,gx,134,28,28)
+		gx+=34
+	if shop_greeting!="":
+		var glines:Array=_wrap_lines(shop_greeting,697-gx,"micro")
+		for gl in mini(2,glines.size()):
+			_txt(gx,136+gl*12,str(glines[gl]),"micro",MUTED)
 	var rows:=_shop_rows()
 	_pager("shop_pages",69,350,rows.size(),shop_page,625)
 	if rows.is_empty():
@@ -1178,6 +1202,9 @@ func _shop() -> void:
 		_bevel(69,y,627,40,"#fffdf5","#d8d1c3")
 		if catalog.has(str(v[0])) or extra_textures.has(str(v[0])): _img(str(v[0]),80,y+3,33,33)
 		_txt(126,y+3,str(v[1]),"strong")
+		if v.size()>5 and v[5] is Array:
+			# stars after the title: [value, out of], half stars allowed (the hotel's grades and rating)
+			_stars(126+_width(str(v[1]),"strong")+8,y+5,float(v[5][0]),int(v[5][1]))
 		_txt(126,y+22,str(v[2]),"micro",MUTED)
 		_right(476,y+11,str(v[3]),"label",MUTED)
 		var buttons:Array=v[4]
@@ -1229,7 +1256,8 @@ func _recap() -> void:
 		_right(694,278,"+%d scrip" % int(recap_hotel.get("pay",0)),"strong",INK)
 		var before:float=float(recap_hotel.get("from",0.0));var after:float=float(recap_hotel.get("to",0.0))
 		var arrow:="up" if after>before+0.005 else ("down" if after<before-0.005 else "steady")
-		_txt(71,298,"Hotel rating %.1f stars (%s from %.1f)%s" % [after,arrow,before,". The guests have checked out" if bool(recap_hotel.get("left",false)) else ""],"body",MUTED)
+		_stars(71,300,after,5)
+		_txt(131,298,"%.1f stars (%s from %.1f)%s" % [after,arrow,before,". The guests have checked out" if bool(recap_hotel.get("left",false)) else ""],"body",MUTED)
 	_btn("back",502,326 if not recap_hotel.is_empty() else 316,194,29,"Continue",true)
 func _dialog() -> void:
 	hits.clear()

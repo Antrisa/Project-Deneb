@@ -366,6 +366,19 @@ func _crew() -> Array:
 	return out
 
 
+# The datapad id of a resident's face ("p_<who>"), registering it the first time. "" if they have no portrait.
+func portrait_key(who: String) -> String:
+	var key: String = "p_" + who
+	if pad.extra_textures.has(key):
+		return key
+	if world.persons.has(who) and world.persons[who].get("portrait") != null:
+		var face: Texture2D = _small_portrait(world.persons[who]["portrait"])
+		if face != null:
+			pad.extra_textures[key] = face
+			return key
+	return ""
+
+
 # The neutral face from a portrait strip (square pictures side by side), in a frame shaped like the
 # resident file's 74x70 one. The face keeps all its pixels (22 Nov): shrinking it smoothly here and
 # enlarging it again on screen is what made the faces fuzzy, so the datapad now scales the full picture.

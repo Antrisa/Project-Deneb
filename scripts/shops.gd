@@ -61,6 +61,14 @@ func open(who: String) -> void:
 		if who == "Bram" or ShopData.BUYS.has(who):
 			tabs.append(["Sell", _sell_rows(who)])
 	var title: String = {"Cook": "Your kitchenette", "Hotel": "Hotel management"}.get(who, str(ShopData.TITLES.get(who, who)))
+	var keeper: String = "Sara" if who == "Hotel" else who
+	world.datapad.pad.shop_portrait = world.datapad.portrait_key(keeper) if who != "Cook" else ""
+	var hello: String = str(world.SHOP_HELLO.get(who, ""))
+	if who == "Hotel":
+		hello = "Every guest needs a bed, four walls and a door. Make it lovely and they'll pay for it."
+	elif who == "Cook":
+		hello = "Recipes you know, and what each one needs."
+	world.datapad.pad.shop_greeting = hello.substr(hello.find("]") + 1).strip_edges() if hello.begins_with("[") else hello
 	world.datapad.pad.show_shop(title, tabs, reopening)
 
 

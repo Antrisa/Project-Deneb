@@ -374,14 +374,13 @@ func desk_tabs() -> Array:
 		var room: Dictionary = list[i]
 		var g: Dictionary = grade(room)
 		var id: String = str(room["id"])
-		var stars := "%.1f stars, %s" % [float(g["total"]), str(g["tier"])]
 		if bool(g["rentable"]) and is_open(id):
 			ready += 1
 		var label := "Open" if is_open(id) else "Closed"
-		rows.append(["guest_bed" if bool(g["rentable"]) else "hotel_wall", "Room %d (%d tiles): %s" % [i + 1, room["tiles"].size(), stars],
-			"Size %.1f, comfort %.1f, decor %.1f. %s" % [float(g["size"]), float(g["comfort"]), float(g["decor"]), str(g["note"])],
+		rows.append(["guest_bed" if bool(g["rentable"]) else "hotel_wall", "Room %d, %s" % [i + 1, str(g["tier"])],
+			"%d tiles. Size %.1f, comfort %.1f, decor %.1f. %s" % [room["tiles"].size(), float(g["size"]), float(g["comfort"]), float(g["decor"]), str(g["note"])],
 			label if bool(g["rentable"]) else "Not rentable",
-			[["room/" + id, "Close" if is_open(id) else "Open", bool(g["rentable"])]]])
+			[["room/" + id, "Close" if is_open(id) else "Open", bool(g["rentable"])]], [float(g["total"]), 3]])
 	if rows.is_empty():
 		rows.append(["hotel_wall", "No guest rooms yet", "Build in the guest wings: walls on every side, a door, and a bed inside", "", []])
 	var about: Array = [
@@ -390,8 +389,8 @@ func desk_tabs() -> Array:
 		["hotel_wall", "How rooms are graded (2.5 stars)", "Size up to 0.5, comfort up to 1, decoration up to 1", "", []],
 		["potted_plant", "A guest's day (5 stars)", "Room 2.5, lunch 1.5, activities 1. Lunch and activities come soon", "", []],
 	]
-	about.insert(0, ["potted_plant", "Hotel rating: %.1f stars" % rating,
-		"Base pay %d a guest a night. About %d guests come a week at this rating" % [base_pay(), guests_for(rating)], "", []])
+	about.insert(0, ["potted_plant", "Hotel rating",
+		"%.1f stars. Base pay %d a guest a night; about %d guests a week" % [rating, base_pay(), guests_for(rating)], "", [], [rating, 5]])
 	if not guests.is_empty():
 		var counts := {}
 		for g in guests:
