@@ -1195,6 +1195,7 @@ RIGS = {
         # (24 Nov) the walk's fists at her waist come off with the arms, and her arms keep their width when
         # held out sideways
         hand_boxes=dict(d=[(5, 8, 30, 32), (17, 20, 30, 32)], u=[(4, 7, 31, 32), (17, 20, 31, 32)]),
+        hip_fill=dict(d=[(6, 7, 27, 29), (17, 18, 27, 29)]),
         thick_arms=True,
         sleep=dict(eyes=[(10, 13, 2, 3), (15, 13, 2, 3)], skin="#f2c29a", lash="#5e3430",
                    neck=20, top=27),
@@ -1548,6 +1549,14 @@ def view_body(walk, rig_dir, name, view, rig):
         body[y0:y1 + 1, x0:x1 + 1] = 0
         for y in range(y0, y1 + 1):
             body[y, x0:x1 + 1] = body[y1 + 1, x0:x1 + 1]
+    # the hips behind where the arms hung: empty pixels in each box take the row below's
+    hf = rig.get("hip_fill", {}).get(view, [])
+    for (x0, x1, y0, y1) in hf:
+        for y in range(y1, y0 - 1, -1):
+            for x in range(x0, x1 + 1):
+                if not body[y, x, 3]:
+                    body[y, x] = body[y + 1, x]
+    hb = hb + hf
     for y in sorted({y for (_, _, y0, y1) in hb for y in range(y0, y1 + 1)}):
         xs = np.where(body[y, :, 3] > 0)[0]
         if len(xs):
