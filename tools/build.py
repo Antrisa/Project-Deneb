@@ -2939,7 +2939,40 @@ SCHEDULE_DAYS_RAW = {
             ("09:00", "east", 166, 47, 26, "u", "idle", "play"), ("17:35", "mess", 19, 9, 26, "u", "eat", "eat"),
             ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
     ],
+    # Tobbin, Merrow & Nub (Zachary, 24 Nov): Tobbin's shop is shut on Sundays: his bench at home in the morning, the
+    # plaza garden after lunch, or the garden dome's trees once it's open. Merrow works every day until her 8 (her day
+    # off in the lounge), then has weekends: the lounge glass on Saturdays, the fountain from a bench (she can't help
+    # it), and on Sundays her own grow bed and the garden (by the bluebark in the garden dome, once it's open).
+    "Tobbin": [
+        {"when": {"days": [6]}, "stops": [
+            ("08:30", "aptMoog", 29, 23, 26, "u", "idle", "build"), ("13:00", "promenade", 113, 80, 26, "l", "idle", "sketch"),
+            ("17:35", "main", 120, 72, 26, "u", "eat", "eat"), ("19:15", "main", 48, 49, 26, "d", "idle", "rest"),
+            ("21:30", *HOME_SPOTS["Tobbin"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["east_dome"]}, "stops": [
+            ("08:30", "aptMoog", 29, 23, 26, "u", "idle", "build"), ("12:30", "east", 127, 33, 26, "u", "idle", "sketch"),
+            ("17:35", "main", 120, 72, 26, "u", "eat", "eat"), ("19:15", "main", 48, 49, 26, "d", "idle", "rest"),
+            ("21:30", *HOME_SPOTS["Tobbin"], 26, "d", "idle", "rest")]},
+    ],
+    "Merrow": [
+        {"when": {"days": [5], "flags": ["merrow_weekends"]}, "stops": [
+            ("09:00", "lounge", 45, 11, 26, "u", "idle", "rest"), ("12:00", "promenade", 107, 93, 26, "r", "idle", "rest"),
+            ("14:30", "aptMoog", 23, 14, 26, "u", "idle", "tend"), ("17:35", "main", 121, 72, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Merrow"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["merrow_weekends"]}, "stops": [
+            ("09:00", "aptMoog", 23, 14, 26, "u", "idle", "tend"), ("12:00", "promenade", 110, 80, 26, "u", "idle", "garden"),
+            ("17:35", "main", 121, 72, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Merrow"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["merrow_weekends", "east_dome"]}, "stops": [
+            ("09:00", "aptMoog", 23, 14, 26, "u", "idle", "tend"), ("12:00", "east", 121, 46, 26, "u", "idle", "garden"),
+            ("17:20", "main", 121, 72, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Merrow"], 26, "d", "idle", "rest")]},
+    ],
     "Nub": [
+        # Sundays: drawing at his desk, then the fountain; Fridays after his 6 he's the museum's Junior Curator
+        {"when": {"days": [6]}, "stops": [
+            ("09:00", "aptMoog", 19, 5, 26, "u", "idle", "draw"), ("13:00", "promenade", 116, 91, 26, "d", "idle", "play"),
+            ("17:35", "main", 125, 72, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [4], "flags": ["nub_junior_curator"]}, "stops": [
+            ("08:00", "library", 7, 9, 26, "u", "work", "draw"), ("12:30", "museum", 49, 31, 26, "u", "idle", "draw"),
+            ("17:35", "main", 125, 72, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
         {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
             ("08:00", "library", 7, 9, 26, "u", "work", "draw"), ("12:30", "main", 96, 57, 26, "d", "idle", "play"),
             ("15:00", "main", 92, 67, 26, "u", "idle", "play"), ("17:35", "mess", 9, 9, 26, "u", "eat", "eat"),

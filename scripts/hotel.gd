@@ -43,6 +43,8 @@ const FURNITURE := {
 	"potted_plant": {"art": "potted_plant", "w": 1, "h": 2, "name": "Potted plant", "station": "", "decor": true, "beauty": 0.2},
 	"small_fern": {"art": "fern", "w": 1, "h": 1, "name": "Small fern", "station": "", "decor": true, "beauty": 0.1},
 	"berry_rug": {"art": "rug_berry", "w": 3, "h": 2, "name": "Berry rug", "station": "", "decor": true, "beauty": 0.3, "walk": true},
+	# Tobbin's 8 (24 Nov): his first real-wood chair, and the ones you make once he's taught you
+	"heirloom_chair": {"art": "heirloom_chair", "w": 1, "h": 2, "name": "Heirloom chair", "station": "", "decor": true, "comfort": 0.3, "beauty": 0.3},
 }
 
 const ROOM_MAX := 2.5

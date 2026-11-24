@@ -103,12 +103,17 @@ func run() -> void:
 			"forty_workwear", "forty_anniversary",
 			"maren_house_calls", "maren_hot_tea", "maren_lets_go", "maren_home", "perk_advanced_med_stims",
 			"owen_novel", "owen_kestrel_log", "owen_book", "owen_compendium", "perk_library_lore_compendium",
-			"pip_archive", "pip_lost_and_found", "pip_cockpit", "pip_rocket", "family_dinner", "family_lanterns"]:
+			"pip_archive", "pip_lost_and_found", "pip_cockpit", "pip_rocket", "family_dinner", "family_lanterns",
+			"tobbin_plastic", "tobbin_first_wood", "tobbin_starship", "tobbin_heirloom", "perk_heirloom_chair",
+			"merrow_filters", "merrow_tomatoes", "merrow_dry_week", "merrow_weekends", "perk_hydro_boost",
+			"nub_drew_you", "nub_jumped", "nub_junior_curator", "nub_framed", "moogli_bath_night", "moogli_first_tree"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
 	assert(s.partner == "Ana")
 	assert(s._count("toy_rocket") >= 1, "Pip's 8 gave you his toy rocket")
+	assert(s._count("heirloom_chair") >= 1, "Tobbin's 8 gave you his first real-wood chair")
+	assert(s._count("nub_drawing") >= 1, "Nub's 8 gave you his drawing")
 	# Letters (scripts/mail_data.gd): the events sent theirs (the first choice always sends, even in Job's 4 and
 	# Tar'Besh's 4), and they come with the next morning's post. A letter's gift goes in your pack once.
 	for id in MailData.LETTERS:

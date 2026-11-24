@@ -654,7 +654,7 @@ const LOOKS = {
 # of them always keeps the mess hall.
 const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6], "Quill": [0, 5], "Maren": [3, 6],
 	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3], "Tar'Besh": [0], "Zaas": [6], "Rusk": [0],
-	"Bram": [3], "Tikka": [6], "Sesska": [6], "Owen": [5]}
+	"Bram": [3], "Tikka": [6], "Sesska": [6], "Owen": [5], "Tobbin": [6]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -826,6 +826,35 @@ const DAY_LINES := {
 			"else": [
 			"[happy] No lessons! Grandad's taking me to see the ships. I'm going to count them. Last time it was four.",
 			"Saturday's the best day. Grandad says that's because nobody's ill on Saturdays. Gran says that's not true."]},
+	},
+	# Tobbin, Merrow and Nub (Zachary, 24 Nov): Tobbin's shop is shut on Sundays (his bench at home, then the garden);
+	# Merrow works every day until her 8, then takes weekends off (merrow_weekends). Nub draws on Sundays, and is the
+	# museum's Junior Curator on Friday afternoons after his 6.
+	"Tobbin": {
+		6: ["[happy] Sunday. The shop's shut. Even chairs need a day off. Especially chairs.",
+			"Sundays I make things nobody ordered. Those always turn out the best.",
+			"[happy] No customers, no plastic. Just me, Nub, and whatever's on the bench at home."],
+	},
+	"Merrow": {
+		5: {"flag": "merrow_weekends", "lines": [
+			"[happy] Saturday. My day off. I've only checked the fountain once. From a distance. With my eyes half shut.",
+			"Saturdays I sit at the lounge glass and do nothing. I'm getting quite good at it."],
+			"else": [
+			"Saturday. The water doesn't know it's the weekend, so neither do I.",
+			"[sad] Tobbin says I should take a day off. The fountain says otherwise. The fountain is louder."]},
+		6: {"flag": "merrow_weekends", "lines": [
+			"[happy] Sunday. My own grow bed, my own boy, and nobody else's leaks.",
+			"Sunday. If you see Zaas with a clipboard, you haven't seen me."],
+			"else": [
+			"Sunday. Every drop on the Landing still needs me on Sundays. Mostly the drops Nub splashes."]},
+	},
+	"Nub": {
+		6: ["[happy] Sunday is drawing day! And pancakes. Dad makes them shaped like chairs.",
+			"Dad's shop is shut on Sundays. He still goes and looks at it through the window.",
+			"[happy] I drew you again. You're even taller this time. You've been growing."],
+		4: {"flag": "nub_junior_curator", "lines": [
+			"[happy] Friday! Curator day! I've got pins. You're not allowed to touch the pins.",
+			"Mr Tar'Besh says a curator looks first and draws second. I draw first. He says that's allowed on Fridays."]},
 	},
 	# Vzz'ket's nights off only start once he's earned them (the side arc's 8, his own 8): {"flag", "lines"} waits for
 	# the flag

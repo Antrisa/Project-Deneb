@@ -35,6 +35,8 @@ const VALUE := {
 	"lunar_agate": 20, "anorthosite": 18, "moon_olivine": 25, "regolith_jasper": 22, "ilmenite": 45, "selenite_rose": 50,
 	"armalcolite": 120, "orange_glass": 40, "spinel": 45, "basalt_glass": 35, "fire_opal": 85, "tranquillityite": 110,
 	"geode": 5, "cavern_geode": 10,
+	# Tobbin's planks (after his 4); nobody buys them back but Bram and the crate
+	"real_wood": 40,
 }
 
 # Who pays full value for what. Bram is the general dealer: he buys anything in VALUE, at BRAM_RATE.
@@ -77,12 +79,18 @@ const STOCK := {
 		["station_coat", 140, ""], ["silk_coat", 280, "sesska_silk"]],
 	"Ix'ali": [["hard_hat", 70, ""], ["padded_vest", 110, ""], ["work_boots", 90, ""]],
 	"Maren": [["medpack", 40, ""]],
+	# Tobbin's furniture (Zachary, 24 Nov: "he will sell a bunch of furniture in his shop"): the hotel's furniture
+	# ready-made, at about two and a half times what it costs to craft; real-wood planks after his 4
+	"Tobbin": [["guest_bed", 120, ""], ["fine_guest_bed", 300, ""], ["guest_armchair", 90, ""], ["guest_dresser", 160, ""],
+		["guest_wardrobe", 230, ""], ["guest_desk", 160, ""], ["bedside_lamp", 75, ""], ["guest_bookshelf", 180, ""],
+		["potted_plant", 50, ""], ["small_fern", 35, ""], ["berry_rug", 110, ""], ["real_wood", 60, "tobbin_wood"]],
 }
 
 # The shops' names on the screen, and a line from the keeper when it opens.
 const TITLES := {
 	"Bram": "Bram's Sundries", "Tikka": "Engineering stores", "Rusk": "Rusk's bar", "Jasper": "The mess hall",
 	"Sesska": "Sesska's weaving", "Ix'ali": "The armoury", "Maren": "The medbay", "Job": "Job's geode bench",
+	"Tobbin": "Tobbin's furniture",
 }
 
 # ---------------------------------------------------------------- geodes (Job cracks them)

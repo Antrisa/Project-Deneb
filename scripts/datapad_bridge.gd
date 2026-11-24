@@ -341,7 +341,10 @@ func _recipes() -> Array:
 	for recipe in ItemData.RECIPES:
 		var needs: Dictionary = recipe["needs"]
 		var first: String = needs.keys()[0]
-		out.append([str(recipe["makes"]), first, int(needs[first]), int(recipe["n"]), str(recipe.get("station", "Pocket")), needs.duplicate()])
+		var station: String = str(recipe.get("station", "Pocket"))
+		if recipe.has("learn") and not world._flag(str(recipe["learn"])):
+			station = "Learn from " + str(recipe.get("teacher", "someone"))     # not taught yet (Tobbin's 8)
+		out.append([str(recipe["makes"]), first, int(needs[first]), int(recipe["n"]), station, needs.duplicate()])
 	return out
 
 

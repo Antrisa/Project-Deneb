@@ -109,6 +109,13 @@ FACES = {
     "sesska": dict(eyes=((8, 14), (16, 14)),
                    colours=dict(skin="#b88a94", lid="#cfa091", white="#e8bfa3", pupil="#1d0e15",
                                 brow="#36212c", tear="#93e6ea")),
+    # Tobbin and Nub (24 Nov, for their heart events; Merrow's came with Zaas's): eyes from tools/fix_eyes.py
+    "tobbin": dict(eyes=((8, 17), (14, 17)),
+                   colours=dict(skin="#c88b42", lid="#ebc287", white="#f6e6c0", pupil="#2e1c1c",
+                                brow="#462820", tear="#93e6ea")),
+    "nub": dict(eyes=((8, 23), (14, 23)),
+                colours=dict(skin="#cec75f", lid="#e1d981", white="#f6f0c0", pupil="#180411",
+                             brow="#382520", tear="#93e6ea")),
 }
 
 L_, R_ = "L", "R"

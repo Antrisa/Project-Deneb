@@ -40,7 +40,9 @@ const ORDER := ["freya_2", "freya_4", "freya_6", "freya_8", "freya_10",
 	"bram_2", "bram_4", "bram_6", "bram_8",
 	"tikka_2", "tikka_4", "tikka_6", "tikka_8", "sesska_2", "sesska_4", "sesska_6", "sesska_8", "forty_4", "forty_6",
 	"maren_2", "maren_4", "maren_6", "maren_8", "owen_2", "owen_4", "owen_6", "owen_8", "pip_2", "pip_4", "pip_6", "pip_8",
-	"family_4", "family_6"]
+	"family_4", "family_6",
+	"tobbin_2", "tobbin_4", "tobbin_6", "tobbin_8", "merrow_2", "merrow_4", "merrow_6", "merrow_8",
+	"nub_2", "nub_4", "nub_6", "nub_8", "moogli_4", "moogli_6"]
 
 const EVENTS := {
 	# ---------------------------------------------------------------- Freya (docs/story/characters/FREYA.md)
@@ -4666,6 +4668,649 @@ const EVENTS := {
 		],
 	},
 
+	# ---------------------------------------------------------------- Tobbin, Merrow & Nub (24 Nov, Claude's drafts)
+	# Zachary, 24 Nov: Tobbin's 4, 6 and 8 wait for the garden dome's trees ("wait for trees"); his 8 is a real-wood
+	# chair and its crafting recipe; he sells furniture in his shop, shut on Sundays; Merrow has weekends off after her
+	# 8. Claude's suggestions, taken: an arc each and a two-scene side arc; Nub's 8 a framed drawing to set down at
+	# home; Hydro-Boost as the NPC Master has it (beds grow 20% faster).
+	"tobbin_2": {
+		"who": "Tobbin", "hearts": 2, "title": "Plastic and Steel",
+		# his workshop on a working day: a plastic chair leg snaps, and you hold the frame while he pins it with steel.
+		# His grandmother's bluebark chairs on Moogli Prime creaked hello
+		"area": "furn", "windows": [[[0, 1, 2, 3, 4, 5], "09:00", "17:00"]],
+		"player": [4, 8, "u"],
+		"cast": [["Tobbin", 4, 3, "l", "build l"]],
+		"steps": [
+			["wait", 0.5],
+			["sfx", "hit"], ["shake", 0.2, 2.0],
+			["say", "", ["Tobbin's workshop smells of hot plastic. Something in his hands goes crack, and a chair leg skitters across the floor."]],
+			["pose", "Tobbin", ""], ["emote", "Tobbin", "frustrated"],
+			["face", "Tobbin", "d"],
+			["say", "Tobbin", ["[angry] Plastic! It bends when it should hold, and it snaps when it should bend. And steel won't bend at all. It just sulks."]],
+			["walk", "player", 4, 5], ["face", "player", "u"],
+			["emote", "Tobbin", "surprise"],
+			["say", "Tobbin", ["Oh! {name}. Mind where you sit. Nothing in here is a chair yet. Some of it never will be."]],
+			["pose", "Tobbin", "talk"],
+			["say", "Tobbin", ["On Moogli Prime my grandmother made chairs from bluebark. You sat in one and it creaked hello.", "[sad] These creak goodbye."]],
+			["pose", "Tobbin", ""],
+			["say", "Tobbin", ["Will you hold the frame? I'll put a steel pin down the leg. Steel inside, plastic outside. Like a Moogli in a spacesuit."]],
+			["choose", [
+				{"text": "Hold it steady.", "friendship": 60, "steps": [
+					["walk", "player", 3, 4], ["face", "player", "u"],
+					["face", "Tobbin", "l"], ["pose", "Tobbin", "build l"],
+					["sfx", "hit"], ["wait", 0.4], ["sfx", "hit"], ["wait", 0.4], ["sfx", "click"],
+					["pose", "Tobbin", ""],
+					["say", "", ["You hold the frame while he taps the pin home. The leg holds. The chair stands on four feet, looking a little surprised."]],
+					["emote", "Tobbin", "joy"], ["face", "Tobbin", "player"],
+					["say", "Tobbin", ["[happy] It stands! It's ugly, but it stands. Ugly and standing is how most good things start."]]]},
+				{"text": "Have you tried glue?", "friendship": 30, "steps": [
+					["pose", "Tobbin", "laugh"],
+					["say", "Tobbin", ["[happy] Glue! I've tried four glues. I've tried tape. Once, I tried asking nicely. Hold the frame, and we'll try steel."]],
+					["pose", "Tobbin", ""],
+					["walk", "player", 3, 4], ["face", "player", "u"],
+					["face", "Tobbin", "l"], ["pose", "Tobbin", "build l"],
+					["sfx", "hit"], ["wait", 0.4], ["sfx", "click"],
+					["pose", "Tobbin", ""],
+					["say", "", ["The pin goes in. The leg holds. The chair stands, a little crooked, as if it's listening."]]]},
+				{"text": "Just sit on it and see.", "steps": [
+					["walk", "player", 3, 4], ["face", "player", "u"],
+					["emote", "Tobbin", "no"],
+					["say", "Tobbin", ["[shocked] Wait, don't..."]],
+					["sfx", "hit"], ["shake", 0.3, 3.0],
+					["say", "", ["You sit. The chair doesn't. You meet the floor of Tobbin's workshop, and the floor wins."]],
+					["energy", -10],
+					["face", "Tobbin", "player"],
+					["say", "Tobbin", ["[sad] ...That's three this week. Are you hurt? Good. Hold the next one for me, please. Don't sit on it."]]]}]],
+			["face", "Tobbin", "player"],
+			["pose", "Tobbin", "talk"],
+			["say", "Tobbin", ["Real wood is alive, even after it's cut. It moves with the air. It forgives you. This station has never had a single plank.",
+				"[love] If that garden dome ever grows a tree, I'm going to ask it, very politely, for a branch."]],
+			["pose", "Tobbin", ""],
+			["say", "Tobbin", ["[happy] Till then, plastic and steel. If you need furniture, I'm outside my door most days. It's honest work, at least."]],
+			["flag", "tobbin_plastic"],
+		],
+	},
+	"tobbin_4": {
+		"who": "Tobbin", "hearts": 4, "title": "First Real Wood",
+		# the garden dome on a Sunday morning, once it's open (it waits for the trees, like Zaas's 6 and 8 wait for the
+		# Leviathan): Merrow prunes a limb off the oldest tree, and Tobbin holds real wood for the first time in eleven
+		# years. His shop sells planks from then on. Letter: his, the next morning, with two planks
+		"area": "east", "flags": ["east_dome"], "seen": ["tobbin_2"], "windows": [[[6], "08:00", "13:00"]],
+		"player": [126, 36, "u"],
+		"cast": [["Merrow", 124, 31, "u", "garden u"], ["Tobbin", 127, 32, "u"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The garden dome, early on a Sunday. Merrow is at the oldest tree with a pruning saw. Tobbin stands beneath it, holding his breath."]],
+			["sfx", "craft"], ["wait", 0.5], ["sfx", "craft"],
+			["say", "Merrow", ["This limb's been rubbing the glass since before we came. It comes off, or the panel cracks."]],
+			["walk", "player", 125, 33], ["face", "player", "u"],
+			["face", "Tobbin", "player"],
+			["say", "Tobbin", ["{name}! Don't talk. Don't breathe. She's cutting a branch off a tree. A real branch. Off a real tree."]],
+			["face", "Tobbin", "u"],
+			["sfx", "hit"], ["shake", 0.25, 2.0],
+			["say", "", ["A long, pale limb comes down with a soft whump and lies in the grass, leaves and all."]],
+			["pose", "Merrow", ""], ["face", "Merrow", "Tobbin"],
+			["say", "Merrow", ["[happy] There, love. I asked the tree. It said yes."]],
+			["walk", "Tobbin", 126, 32], ["face", "Tobbin", "l"], ["pose", "Tobbin", "build l"],
+			["say", "Tobbin", ["[love] ...It's warm. Still warm from the lamps. Smell it, {name}. That's what a forest smells like. Eleven years. I'd forgotten."]],
+			["choose", [
+				{"text": "Kneel and smell it.", "friendship": 60, "steps": [
+					["say", "", ["Green and sharp and sweet. Under the station's recycled air, it smells like somewhere else."]],
+					["pose", "Tobbin", ""], ["face", "Tobbin", "player"],
+					["say", "Tobbin", ["[happy] You see? Somewhere else. That's what wood is. A piece of somewhere else you can hold."]]]},
+				{"text": "What will you make first?", "friendship": 30, "steps": [
+					["pose", "Tobbin", ""], ["face", "Tobbin", "player"],
+					["say", "Tobbin", ["A chair. No, a spoon, to practise. No... [happy] I don't know! I've never had to choose before."]]]},
+				{"text": "It's just a stick.", "steps": [
+					["pose", "Tobbin", ""], ["emote", "Tobbin", "sad"],
+					["say", "Tobbin", ["[sad] ...Yes. Just a stick. And a star is just a light."]],
+					["friendship", "Tobbin", -20]]}]],
+			["face", "Tobbin", "Merrow"],
+			["say", "Merrow", ["One limb a season, Tob. Pruning, not felling. The trees come first."]],
+			["say", "Tobbin", ["One limb a season. I'll make every splinter count.", "[happy] And what I can't use, I'll sell. Planks, {name}! Real planks, at my door."]],
+			["emote", "Merrow", "love"],
+			["flag", "tobbin_first_wood"],
+			["mail", "tobbin_planks", 1],
+		],
+	},
+	"tobbin_6": {
+		"who": "Tobbin", "hearts": 6, "title": "A Wooden Starship",
+		# their flat after Nub's bedtime: Tobbin carves Nub a toy starship from the first wood's offcut, and you keep Nub
+		# from seeing it. His father carved him a boat; Nub has never seen a river, but he's seen ships
+		"area": "aptMoog", "flags": ["east_dome"], "seen": ["tobbin_4"], "windows": [[null, "19:30", "20:30"]],
+		"player": [26, 21, "r"],
+		"cast": [["Tobbin", 29, 23, "u", "build u"], ["Nub", 21, 10, "d"]],
+		"steps": [
+			["hide", "Nub"],
+			["wait", 0.6],
+			["say", "", ["Their flat, after Nub's bedtime. Tobbin sits at his home bench with a pale block of wood and a very small knife. Shavings curl round his feet."]],
+			["walk", "player", 27, 23], ["face", "player", "r"],
+			["say", "Tobbin", ["Shh. Come and look. Quietly. The first wood had an offcut, and an offcut is a promise."]],
+			["say", "", ["It's a starship. Fat-bellied, with stubby wings and a little round cockpit. He is carving the hull plates one line at a time."]],
+			["pose", "Tobbin", ""], ["face", "Tobbin", "player"],
+			["say", "Tobbin", ["My father carved me a boat when I was Nub's size. We had rivers on Moogli Prime. [sad] Nub's never seen a river.",
+				"[happy] But he's seen ships. He's seen yours. On fire, he says."]],
+			["show", "Nub"], ["sfx", "door_slide"],
+			["walk", "Nub", 25, 20], ["face", "Nub", "Tobbin"],
+			["say", "Nub", ["Daaad? I can't sleep. What's that? Is that a... what is that?"]],
+			["emote", "Tobbin", "surprise"], ["face", "Tobbin", "Nub"],
+			["say", "", ["Tobbin goes very still, the way only a parent hiding a present can."]],
+			["choose", [
+				{"text": "Nub! Quick, draw me a picture of your dad!", "friendship": 60, "steps": [
+					["face", "Nub", "player"], ["emote", "Nub", "joy"],
+					["say", "Nub", ["[happy] Now? It's NIGHT. ...Okay! Don't move, Dad. You have to stay exactly like that."]],
+					["walk", "Nub", 21, 10], ["hide", "Nub"],
+					["emote", "Tobbin", "love"],
+					["say", "Tobbin", ["[happy] He'll draw for an hour and fall asleep on the paper. You're a genius."]]]},
+				{"text": "It's a secret. Off to bed, Nub.", "friendship": 30, "steps": [
+					["face", "Nub", "player"], ["emote", "Nub", "frustrated"],
+					["say", "Nub", ["[angry] Secrets are only for grown-ups. That's not fair. ...Night."]],
+					["walk", "Nub", 21, 10], ["hide", "Nub"]]},
+				{"text": "It's a toy ship, Nub! For you!", "steps": [
+					["emote", "Nub", "joy"],
+					["say", "Nub", ["[happy] A SHIP? For me? Can I hold it? Can I fly it?"]],
+					["emote", "Tobbin", "sad"],
+					["say", "Tobbin", ["[sad] ...It was going to be a surprise. It isn't finished, Nub. Bed. You'll have it when it's ready."]],
+					["walk", "Nub", 21, 10], ["hide", "Nub"],
+					["friendship", "Tobbin", -20]]}]],
+			["face", "Tobbin", "u"], ["pose", "Tobbin", "build u"],
+			["sfx", "craft"], ["wait", 0.8],
+			["say", "", ["He blows off the dust, turns the ship over and carves on its belly: NUB'S. And under that, smaller: ECHO LANDING."]],
+			["pose", "Tobbin", ""],
+			["walks", [["Tobbin", 21, 12], ["player", 21, 13]]],
+			["walk", "Tobbin", 17, 8], ["face", "Tobbin", "l"], ["pose", "Tobbin", "gift"],
+			["say", "", ["Nub is asleep, a lump under his blanket. Tobbin sets the starship on his toy chest, nose to the window, where it's the first thing he'll see."]],
+			["pose", "Tobbin", ""],
+			["walk", "Tobbin", 21, 12], ["face", "Tobbin", "player"],
+			["say", "Tobbin", ["[love] Thank you, {name}. A chair says someone's staying. A toy says someone's growing up here. I never thought we'd have either."]],
+			["flag", "tobbin_starship"],
+		],
+	},
+	"tobbin_8": {
+		"who": "Tobbin", "hearts": 8, "title": "A Chair That Stays",
+		# his workshop, with Merrow and Nub: the first real-wood chair, pegged and wedged like his grandmother's. It's
+		# yours, and he teaches you the joints (the heirloom chair's recipe). It creaks hello. Waits for the trees too
+		"area": "furn", "flags": ["east_dome"], "seen": ["tobbin_6"], "windows": [[[0, 1, 2, 3, 4, 5], "09:00", "17:00"]],
+		"player": [4, 8, "u"],
+		"cast": [["Tobbin", 4, 4, "d"], ["Merrow", 6, 3, "l"], ["Nub", 2, 5, "r"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["Tobbin's workshop, swept clean for once. In the middle stands a chair under a sheet. Merrow and Nub are trying very hard not to peek."]],
+			["walk", "player", 4, 6], ["face", "player", "u"],
+			["say", "Tobbin", ["{name}. Good, you're here. I wanted you here for this. Nub, the sheet."]],
+			["emote", "Nub", "joy"], ["walk", "Nub", 3, 5], ["pose", "Nub", "jump"], ["sfx", "click"],
+			["say", "", ["Nub whips the sheet off. A chair: pale wood, the grain running down the legs like water, the seat worn smooth by hand. Not a pin or bolt in it."]],
+			["pose", "Nub", ""],
+			["say", "Tobbin", ["[happy] Bluebark joints. Pegs and wedges, the way my grandmother did them. The limb from the dome, and every evening since."]],
+			["pose", "Tobbin", "talk"],
+			["say", "Tobbin", ["A chair is a promise that someone is staying.",
+				"[love] You fell out of the sky onto the worst moon in the sector, and you stayed. So it's yours."]],
+			["pose", "Tobbin", ""],
+			["choose", [
+				{"text": "Sit in it.", "friendship": 60, "steps": [
+					["walk", "Tobbin", 5, 4], ["face", "Tobbin", "l"],
+					["say", "", ["You sit. The chair takes your weight and gives one small, polite creak."]],
+					["emote", "Tobbin", "surprise"],
+					["say", "Tobbin", ["[shocked] ...Did you hear that? It creaked hello."]],
+					["emote", "Merrow", "love"],
+					["say", "Merrow", ["[happy] It did, Tob. I heard it."]]]},
+				{"text": "I can't take this. It's your first one.", "friendship": 30, "steps": [
+					["pose", "Tobbin", "laugh"],
+					["say", "Tobbin", ["[happy] That's exactly why. The first one goes to whoever made me want to make it."]],
+					["pose", "Tobbin", ""]]},
+				{"text": "It'd look great in the hotel lobby.", "steps": [
+					["emote", "Tobbin", "sad"],
+					["say", "Tobbin", ["[sad] ...The lobby. Yes. Strangers would sit in it. Put it somewhere you live, {name}. Please."]],
+					["friendship", "Tobbin", -20]]}]],
+			["give", "heirloom_chair", 1, "+ Heirloom chair (set it down at home)"],
+			["face", "Tobbin", "player"],
+			["say", "Tobbin", ["One more thing. You've watched me cut every joint. Let me show you the rest properly, and then you can make your own."]],
+			["fade", 1.0, 0.6], ["sfx", "craft"], ["wait", 0.6], ["fade", 0.0, 0.6],
+			["perk", "heirloom_chair", "Learned: the heirloom chair (3 real-wood planks and a hide, at a manufacturing hub)"],
+			["face", "Nub", "Tobbin"],
+			["say", "Nub", ["[happy] Dad! Make one for me! A tiny one!"]],
+			["pose", "Tobbin", "laugh"],
+			["say", "Tobbin", ["[happy] Tiny chairs are the hardest kind. ...Yes. All right. Yes."]],
+			["pose", "Tobbin", ""],
+			["flag", "tobbin_heirloom"],
+		],
+	},
+	"merrow_2": {
+		"who": "Merrow", "hearts": 2, "title": "Filter Day",
+		# the plaza fountain at dawn: she pulls the station's water filters and you hold the other end. Every drop on
+		# the Landing goes through here, and nobody notices until it stops
+		"area": "main", "windows": [[[0, 1, 2, 3, 4, 5], "06:30", "09:30"]],
+		"player": [113, 89, "d"],
+		"cast": [["Merrow", 115, 92, "d", "valve_d d"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The plaza, before anyone's up. The fountain is off, and Merrow is elbow-deep in it, hauling out a filter the size of a door."]],
+			["walk", "player", 113, 92], ["face", "player", "r"],
+			["pose", "Merrow", ""], ["face", "Merrow", "player"],
+			["say", "Merrow", ["Morning. Don't stand there, stand here. Hold this end. It's heavy and it's slimy, and both of those are good signs."]],
+			["sfx", "water_pour"],
+			["say", "", ["You hold one end while she shakes out the filter. Out come hair, grit, a sock, three crayons and a very small plastic dinosaur."]],
+			["emote", "Merrow", "frustrated"],
+			["say", "Merrow", ["[angry] Nub.", "...Every drop on the Landing goes through this fountain. Showers, soup, the lot. A hundred times round, at least.",
+				"Don't think about it too hard."]],
+			["choose", [
+				{"text": "That's amazing, actually.", "friendship": 60, "steps": [
+					["emote", "Merrow", "joy"],
+					["say", "Merrow", ["[happy] Isn't it? Nobody thinks so. Water's only interesting when it stops."]]]},
+				{"text": "Can't a drone do this?", "friendship": 30, "steps": [
+					["say", "Merrow", ["Drones did it for the two years before we came. [angry] That's why it smelled."]]]},
+				{"text": "Ugh. Gross.", "steps": [
+					["sfx", "valve_spray"], ["fx", "spray", 114, 92, 6],
+					["say", "", ["She gives the filter one more shake, and you get a faceful of fountain."]],
+					["energy", -10],
+					["say", "Merrow", ["[happy] Sorry. Reflex. It's clean water. Mostly."]],
+					["fx", "spray", "off"]]}]],
+			["say", "Merrow", ["Zaas has the title. I have the wrench. [happy] That's all right. A title never cleaned a filter."]],
+			["say", "Merrow", ["I'll keep the dinosaur. He can trade me something for it."]],
+			["face", "Merrow", "d"], ["pose", "Merrow", "valve_d d"], ["sfx", "click"], ["wait", 0.4],
+			["sfx", "valve_spray"],
+			["say", "", ["She slides the clean filter home and opens the valve. The fountain coughs once, then sings."]],
+			["pose", "Merrow", ""],
+			["flag", "merrow_filters"],
+		],
+	},
+	"merrow_4": {
+		"who": "Merrow", "hearts": 4, "title": "Star-Tomatoes",
+		# the reclamation plant's warm corner behind the last air scrubber: her secret star-tomatoes, on water saved
+		# from her own ration, for Nub, who thinks tomatoes come in tubes. Letter: hers, with seeds
+		"area": "east", "seen": ["merrow_2"], "windows": [[[0, 1, 2, 3, 4, 5], "14:00", "16:30"]],
+		"player": [95, 66, "r"],
+		"cast": [["Merrow", 106, 65, "r", "tend r"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The reclamation plant hums. Behind the last air scrubber, where the warm air comes out, someone is humming back."]],
+			["walk", "player", 103, 65], ["face", "player", "r"],
+			["emote", "Merrow", "surprise"], ["pose", "Merrow", ""], ["face", "Merrow", "l"],
+			["say", "Merrow", ["[shocked] Oh! It's you. Only you. Good. Come round, quick, before the chief walks past with his clipboard."]],
+			["walk", "player", 105, 65], ["face", "player", "r"], ["face", "Merrow", "r"],
+			["say", "", ["Tucked in the corner: three star-tomato plants in a cut-down drum, under a grow lamp wired to the scrubber's spare socket. Two are blushing."]],
+			["face", "Merrow", "player"], ["pose", "Merrow", "talk"],
+			["say", "Merrow", ["Star-tomatoes. On water I've saved from my own ration, a cup at a time. I wrote the water rules, so I can't break them.",
+				"[bashful] So I'm bending them. Very slightly. In a corner."]],
+			["pose", "Merrow", ""],
+			["say", "Merrow", ["They're for Nub. [sad] He thinks tomatoes come in tubes. He's never eaten a thing that grew. Not once, his whole life."]],
+			["choose", [
+				{"text": "Your secret's safe with me.", "friendship": 60, "steps": [
+					["emote", "Merrow", "love"],
+					["say", "Merrow", ["[happy] Thank you. A secret's lighter with two."]]]},
+				{"text": "Can I try one?", "friendship": 30, "steps": [
+					["say", "Merrow", ["[happy] The first one's Nub's. The second... we'll see how well you keep secrets."]]]},
+				{"text": "You should tell Zaas about this.", "steps": [
+					["emote", "Merrow", "frustrated"],
+					["say", "Merrow", ["[angry] And he'd put it on a form, and the form in a drawer, and the tomatoes in the soup. No."]],
+					["friendship", "Merrow", -20]]}]],
+			["face", "Merrow", "r"], ["pose", "Merrow", "tend r"], ["sfx", "water_pour"],
+			["say", "", ["She gives each plant a capful of water, exactly the same, like a nurse on her rounds."]],
+			["pose", "Merrow", ""], ["face", "Merrow", "player"],
+			["say", "Merrow", ["Grow your own, if you like. Star-tomatoes love a hydroponic bed. [happy] More than a scrubber vent, anyway."]],
+			["flag", "merrow_tomatoes"],
+			["mail", "merrow_seeds", 1],
+		],
+	},
+	"merrow_6": {
+		"who": "Merrow", "hearts": 6, "title": "Dry Week",
+		# the reclamation plant late at night: a recycler membrane split three days ago and the fountain's off. She
+		# hasn't been home; you help her patch it, and the water comes back. Nub asked her why she's never home
+		"area": "east", "seen": ["merrow_4"], "windows": [[null, "21:00", "23:30"]],
+		"player": [94, 72, "r"],
+		"cast": [["Merrow", 99, 74, "d", "valve_d d"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The reclamation plant, late. A recycler membrane split three days ago. The fountain's off, showers are two minutes, and Merrow hasn't been home."]],
+			["walk", "player", 97, 74], ["face", "player", "r"],
+			["pose", "Merrow", ""], ["face", "Merrow", "player"],
+			["say", "Merrow", ["[sad] Don't. I know how I look. Pass me the patch kit. The grey case. Please."]],
+			["choose", [
+				{"text": "Hand her the grey case.", "friendship": 60, "steps": [
+					["sfx", "click"],
+					["say", "Merrow", ["Thank you. Now hold the lamp there. No, there. ...There."]]]},
+				{"text": "Hand her the red case.", "friendship": 30, "steps": [
+					["say", "Merrow", ["[happy] That's the first-aid kit. Although, at this point... No. The grey one."]],
+					["sfx", "click"]]},
+				{"text": "You need to go to bed.", "steps": [
+					["emote", "Merrow", "frustrated"],
+					["say", "Merrow", ["[angry] If I go to bed, the Landing goes thirsty. The grey case, {name}."]],
+					["sfx", "click"],
+					["friendship", "Merrow", -20]]}]],
+			["face", "Merrow", "d"], ["pose", "Merrow", "valve_d d"],
+			["sfx", "craft"], ["wait", 0.6], ["sfx", "click"], ["wait", 0.4],
+			["sfx", "sh_vent"], ["shake", 0.3, 2.0],
+			["say", "", ["The patch holds. Overhead, pipes knock and gurgle, and then, very faintly, comes the sound of the plaza fountain starting up."]],
+			["sfx", "water_pour"],
+			["pose", "Merrow", ""], ["face", "Merrow", "player"], ["emote", "Merrow", "joy"],
+			["say", "Merrow", ["[happy] Listen to that. ...Ha. Ha ha. I'm going to cry now, and it'll be very undignified, and you won't tell anyone."]],
+			["pose", "Merrow", "sad"],
+			["say", "Merrow", ["[sad] Nub asked me this morning why I'm never home. I said, the water. He said, the water's not your baby. I'm your baby."]],
+			["choose", [
+				{"text": "He's right, you know.", "friendship": 60, "steps": [
+					["say", "Merrow", ["[sad] I know. ...I know. The water will still be here tomorrow. He won't be small for ever."]]]},
+				{"text": "You kept the whole station going.", "friendship": 30, "steps": [
+					["pose", "Merrow", ""],
+					["say", "Merrow", ["[happy] I did, didn't I? Don't tell him I said so. He'll want a medal too."]]]},
+				{"text": "Zaas should have been here.", "steps": [
+					["pose", "Merrow", ""], ["emote", "Merrow", "frustrated"],
+					["say", "Merrow", ["[angry] Zaas was here till midnight last night. Don't you start on my chief. That's my job."]],
+					["friendship", "Merrow", -20]]}]],
+			["pose", "Merrow", ""],
+			["say", "Merrow", ["Walk me home? My legs have forgotten the way."]],
+			["flag", "merrow_dry_week"],
+		],
+	},
+	"merrow_8": {
+		"who": "Merrow", "hearts": 8, "title": "A Day Off",
+		# the Observation Lounge on a Saturday: Tobbin had S.A.R.A. take her off the rota. She can't sit still, so she
+		# shows you how to tune your beds' grow strips (Hydro-Boost), and takes weekends off from now on
+		"area": "lounge", "seen": ["merrow_6"], "windows": [[[5], "10:00", "16:00"]],
+		"player": [48, 14, "u"],
+		"cast": [["Merrow", 45, 11, "u"], ["Tobbin", 42, 16, "r"], ["Nub", 41, 16, "r"]],
+		"steps": [
+			["hide", "Tobbin"], ["hide", "Nub"],
+			["wait", 0.6],
+			["say", "", ["The Observation Lounge, mid-morning. Merrow stands at the glass with a cup of tea she hasn't drunk.",
+				"There's no wrench on her belt. She keeps touching the place where it goes."]],
+			["walk", "player", 46, 12], ["face", "player", "u"],
+			["face", "Merrow", "player"],
+			["say", "Merrow", ["[angry] Tobbin had S.A.R.A. take me off the rota. A whole day. Off. I didn't know you could do that to a person."]],
+			["say", "Merrow", ["I've been to the fountain twice. Just to look. [sad] It's fine. It's running. It doesn't need me. That's the worst part."]],
+			["choose", [
+				{"text": "Tell me about Moogli Prime.", "friendship": 60, "steps": [
+					["emote", "Merrow", "joy"],
+					["say", "Merrow", ["[happy] Rain. It rained every afternoon at four. The farms on the hills drank it straight from the sky.",
+						"No pumps. No filters. I'd stand in it with my mouth open. ...I haven't thought about that in years."]]]},
+				{"text": "Come and see my farm.", "friendship": 30, "steps": [
+					["say", "Merrow", ["That's work, {name}. ...Is it work if it isn't my farm? [happy] Tell me about it, then. Just tell me."]]]},
+				{"text": "Shall we check the fountain again?", "steps": [
+					["emote", "Merrow", "frustrated"],
+					["say", "Merrow", ["[angry] Don't. Don't tempt me. I'll go, and I'll stay, and Tobbin will put a lock on the lounge."]],
+					["friendship", "Merrow", -20]]}]],
+			["pose", "Merrow", "talk"],
+			["say", "Merrow", ["Your hydroponic beds. You've left the grow strips on the factory setting, haven't you? Everyone does. The factory never grew a thing."]],
+			["say", "Merrow", ["Blue up, red down, and pulse it at night. They'll think it's spring all the time. Here. I'll write it on your hand."]],
+			["pose", "Merrow", ""],
+			["say", "", ["She writes three numbers on the back of your hand in grease pencil, and smiles for the first time all morning."]],
+			["perk", "hydro_boost", "Hydro-Boost: your hydroponic beds grow 20% faster"],
+			["show", "Tobbin"], ["show", "Nub"],
+			["walks", [["Tobbin", 43, 12], ["Nub", 44, 13]]],
+			["face", "Tobbin", "Merrow"], ["face", "Nub", "Merrow"], ["face", "Merrow", "Nub"],
+			["pose", "Nub", "jump"],
+			["say", "Nub", ["[happy] Mum! We brought a picnic! It's mostly bread!"]],
+			["pose", "Nub", ""],
+			["say", "Tobbin", ["[happy] Day one of your holiday, my love. How are we doing?"]],
+			["say", "Merrow", ["[happy] Terribly. ...Saturdays, Tob. From now on. And Sundays. The water can learn some patience."]],
+			["emote", "Tobbin", "love"], ["emote", "Nub", "joy"],
+			["flag", "merrow_weekends"],
+		],
+	},
+	"nub_2": {
+		"who": "Nub", "hearts": 2, "title": "I Drew You",
+		# the plaza in the afternoon: Nub's drawing of you, the tall one with the sad ship. The ship's sad because it
+		# fell; the next drawing is the one where you fixed it
+		"area": "main", "windows": [[null, "12:30", "17:00"]],
+		"player": [119, 89, "d"],
+		"cast": [["Nub", 122, 91, "d", "draw d"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Nub is lying on his tummy on the plaza floor, drawing with great concentration and the tip of his tongue out."]],
+			["walk", "player", 121, 91], ["face", "player", "r"],
+			["emote", "Nub", "surprise"], ["pose", "Nub", ""], ["face", "Nub", "player"],
+			["pose", "Nub", "jump"],
+			["say", "Nub", ["[happy] It's you! I'm drawing you! Don't look! ...Okay, look."]],
+			["pose", "Nub", "gift"],
+			["say", "", ["A stick person with very long arms stands by a ship. The ship has a sad face and orange scribble coming out of it. Everyone is smiling but the ship."]],
+			["say", "Nub", ["That's you. You're the tall one. That's your ship. It's on fire, because Pip said."]],
+			["pose", "Nub", ""],
+			["choose", [
+				{"text": "It's wonderful, Nub.", "friendship": 60, "steps": [
+					["emote", "Nub", "joy"], ["pose", "Nub", "jump"],
+					["say", "Nub", ["[happy] I know! Dad says I'm the best drawer on the whole moon."]],
+					["pose", "Nub", ""]]},
+				{"text": "Why is the ship sad?", "friendship": 30, "steps": [
+					["say", "Nub", ["Because it fell down. Falling's sad. [happy] Then you fixed it, so it's happy. That's the next drawing. I haven't done it yet."]]]},
+				{"text": "I don't look like that.", "steps": [
+					["emote", "Nub", "sad"], ["pose", "Nub", "sad"],
+					["say", "Nub", ["[sad] You do in the drawing."]],
+					["pose", "Nub", ""],
+					["friendship", "Nub", -20]]}]],
+			["say", "Nub", ["You can have it. Every drawing's for somebody, and this one's yours. [happy] Don't fold it. Folding is bad for drawings."]],
+			["toast", "Nub's drawing goes up on your wall at home"],
+			["flag", "nub_drew_you"],
+		],
+	},
+	"nub_4": {
+		"who": "Nub", "hearts": 4, "title": "The Fountain Edge",
+		# the plaza fountain in the afternoon: Kit jumps off the edge again and again; Nub can't, yet. You help him jump
+		# (or dare him, and he goes in backwards). Merrow sees everything from where she works
+		"area": "main", "seen": ["nub_2"], "windows": [[[0, 1, 2, 3, 4, 5], "15:00", "17:00"]],
+		"player": [110, 91, "r"],
+		"cast": [["Nub", 113, 92, "d"], ["Kit", 117, 92, "d", "play d"], ["Merrow", 121, 95, "l", "tend l"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Kit is jumping off the fountain's edge, again and again, landing like a cat. Nub stands on the edge with his toes curled over it."]],
+			["sfx", "step_soft"], ["emote", "Kit", "joy"],
+			["say", "Kit", ["[happy] Your go, Nub! It's easy! You just go!"]],
+			["walk", "player", 113, 91], ["face", "player", "d"],
+			["face", "Nub", "player"], ["emote", "Nub", "help"],
+			["say", "Nub", ["[sad] It's very high. It's higher when you're on it. ...Will you do something?"]],
+			["choose", [
+				{"text": "Jump with him.", "friendship": 60, "steps": [
+					["say", "", ["You step up beside him. One... two..."]],
+					["face", "Nub", "d"], ["pose", "Nub", "jump"], ["sfx", "step_soft"], ["wait", 0.4],
+					["say", "", ["...three. You land together. Nub lands on his bottom, but he lands."]],
+					["pose", "Nub", ""], ["face", "Nub", "Kit"], ["emote", "Nub", "joy"],
+					["say", "Nub", ["[happy] I JUMPED! Kit! KIT! I jumped off the fountain edge! A real jump!"]],
+					["say", "Kit", ["[happy] That was a real jump."]],
+					["pose", "Merrow", ""], ["walk", "Merrow", 119, 93], ["face", "Merrow", "Nub"],
+					["say", "Merrow", ["[happy] I saw that! I see everything from over there. Even the bits I'm not meant to."]]]},
+				{"text": "Hold out your hand.", "friendship": 30, "steps": [
+					["say", "", ["You hold out a hand. He takes it, squeezes very hard, and jumps."]],
+					["face", "Nub", "d"], ["pose", "Nub", "jump"], ["sfx", "step_soft"], ["wait", 0.4], ["pose", "Nub", ""],
+					["face", "Nub", "player"],
+					["say", "Nub", ["[happy] I did it! I mostly did it. You did the hand bit."]],
+					["pose", "Merrow", ""], ["walk", "Merrow", 119, 93], ["face", "Merrow", "Nub"],
+					["say", "Merrow", ["[happy] That's my boy. Both feet off the ground. That counts."]]]},
+				{"text": "Bet you can't!", "steps": [
+					["emote", "Nub", "frustrated"],
+					["say", "Nub", ["[angry] I CAN!"]],
+					["face", "Nub", "u"], ["pose", "Nub", "jump"],
+					["sfx", "step_water"], ["fx", "spray", 114, 94, 6], ["shake", 0.2, 2.0],
+					["say", "", ["He jumps. Backwards. Into the fountain."]],
+					["pose", "Nub", "sad"],
+					["pose", "Merrow", ""], ["walk", "Merrow", 119, 93], ["face", "Merrow", "Nub"], ["emote", "Merrow", "frustrated"],
+					["say", "Merrow", ["[angry] Nub! That's twice this week! Out. Out, and drip on someone else."]],
+					["fx", "spray", "off"], ["pose", "Nub", ""],
+					["friendship", "Nub", -20]]}]],
+			["face", "Kit", "player"],
+			["say", "Kit", ["[happy] Tomorrow I'm teaching him the twisty one."]],
+			["flag", "nub_jumped"],
+		],
+	},
+	"nub_6": {
+		"who": "Nub", "hearts": 6, "title": "Junior Curator",
+		# the museum: Nub has taped a drawing under every label on the south cases. Tar'Besh finds them; you speak up,
+		# and he makes Nub Junior Curator (Fridays, with pins). Letter: Nub's, with a bug shell for your museum
+		"area": "museum", "seen": ["nub_4"], "windows": [[[0, 1, 2, 3, 4, 5], "13:00", "16:30"]],
+		"player": [47, 36, "u"],
+		"cast": [["Nub", 49, 31, "u", "draw u"], ["Tar'Besh", 55, 28, "d"]],
+		"steps": [
+			["wait", 0.6],
+			["say", "", ["The museum, quiet as ever. Under every label on the south cases, someone has taped a drawing. Nub is taping up another one, very carefully."]],
+			["walk", "player", 47, 31], ["face", "player", "r"],
+			["emote", "Nub", "joy"], ["pose", "Nub", ""], ["face", "Nub", "player"],
+			["say", "Nub", ["[happy] Shh! It's a museum. I'm doing labels. The real labels are only words. Words don't show you anything."]],
+			["say", "", ["Under 'Star map on bone' is a bone with stars on. Under 'Pirate cutlass' is a sword with a frowning face. Its label says BAD SWORD."]],
+			["walk", "Tar'Besh", 51, 31], ["face", "Tar'Besh", "Nub"],
+			["say", "Tar'Besh", ["Young Nub. There is tape on my display cases."]],
+			["face", "Nub", "Tar'Besh"], ["emote", "Nub", "sad"],
+			["say", "Nub", ["[sad] ...It's good tape. It comes off."]],
+			["face", "Tar'Besh", "player"],
+			["say", "Tar'Besh", ["{name}. You are a sensible person, now and then. What would you have me do?"]],
+			["choose", [
+				{"text": "His drawings are better than the labels.", "friendship": 60, "steps": [
+					["say", "Tar'Besh", ["[happy] ...They are, rather. 'BAD SWORD.' I wrote four hundred words on that cutlass. He has said it in two."]]]},
+				{"text": "Nub, next time, ask first.", "friendship": 30, "steps": [
+					["face", "Nub", "player"],
+					["say", "Nub", ["[sad] Okay. ...Can I ask now?"]],
+					["say", "Tar'Besh", ["[happy] You may."]]]},
+				{"text": "Take them down, Nub.", "steps": [
+					["face", "Nub", "player"], ["pose", "Nub", "sad"],
+					["say", "Nub", ["[sad] Okay."]],
+					["say", "Tar'Besh", ["Hm. Wait. Leave them a moment, Nub. I have not finished looking."]],
+					["pose", "Nub", ""],
+					["friendship", "Nub", -20]]}]],
+			["face", "Tar'Besh", "Nub"],
+			["say", "Tar'Besh", ["A museum is a way of remembering. A child remembering is the best kind there is. [happy] They stay. In frames. With proper credit."]],
+			["say", "Tar'Besh", ["Junior Curator Nub: one drawing a week, on Fridays, approved by the senior curator. Tape is forbidden. I will supply pins."]],
+			["emote", "Nub", "joy"], ["pose", "Nub", "jump"],
+			["say", "Nub", ["[happy] JUNIOR CURATOR! I have to tell Mum! I have to tell DAD!"]],
+			["pose", "Nub", ""],
+			["walk", "Nub", 45, 38], ["hide", "Nub"],
+			["face", "Tar'Besh", "player"],
+			["say", "Tar'Besh", ["[happy] My first hire. The Temple would be appalled. I find I do not mind."]],
+			["flag", "nub_junior_curator"],
+			["mail", "nub_curator", 1],
+		],
+	},
+	"nub_8": {
+		"who": "Nub", "hearts": 8, "title": "Framed",
+		# their flat after dinner: Nub gives you the next drawing, framed. The whole Landing under the dome, a tree that
+		# isn't there yet, and your ship smiling. Tobbin made the frame from the plastic chair that broke
+		"area": "aptMoog", "seen": ["nub_6"], "windows": [[null, "18:45", "20:15"]],
+		"player": [17, 22, "u"],
+		"cast": [["Nub", 17, 18, "d"], ["Tobbin", 14, 17, "r"], ["Merrow", 20, 17, "l"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["Their flat. Nub stands in the middle of the room holding something flat and square behind his back, vibrating slightly."]],
+			["walk", "player", 17, 20], ["face", "player", "u"],
+			["say", "Nub", ["[happy] Close your eyes! ...Are they closed? They're not closed. Okay. Open them."]],
+			["pose", "Nub", "gift"], ["sfx", "gift"],
+			["say", "", ["A drawing in a frame. The whole Landing under the dome: Mum at the fountain, Dad with a chair, Pip, Kit, a tree that isn't there yet.",
+				"And you, the tall one, beside a ship that's smiling now."]],
+			["say", "Nub", ["It's the next drawing. The ship's happy because you fixed it. [happy] Dad made the frame. Out of the chair that broke."]],
+			["pose", "Nub", ""],
+			["say", "Tobbin", ["[happy] Every bad chair is a good frame, waiting."]],
+			["choose", [
+				{"text": "I'll hang it where I see it every day.", "friendship": 60, "steps": [
+					["emote", "Nub", "joy"], ["pose", "Nub", "jump"],
+					["say", "Nub", ["[happy] By your bed! So it's the first thing! Like Dad's ship!"]],
+					["pose", "Nub", ""]]},
+				{"text": "Is that tree in the dome?", "friendship": 30, "steps": [
+					["say", "Nub", ["Not yet. Mum says one day. [happy] I drew it now so it knows where to go."]]]},
+				{"text": "You could sell these, Nub.", "steps": [
+					["emote", "Nub", "sad"],
+					["say", "Nub", ["[sad] ...You don't sell presents."]],
+					["say", "Merrow", ["[angry] He's right, {name}."]],
+					["friendship", "Nub", -20]]}]],
+			["give", "nub_drawing", 1, "+ Nub's drawing (set it down at home)"],
+			["emote", "Merrow", "love"],
+			["say", "Merrow", ["He did eleven of these this week. That one's the best. He made us promise not to look. [happy] We looked."]],
+			["flag", "nub_framed"],
+		],
+	},
+	"moogli_4": {
+		"who": "Tobbin", "with": ["Merrow", "Nub"], "hearts": 4, "title": "Bath Night",
+		# their flat on bath night (Wednesdays and Saturdays): Nub has hidden. You find him behind the sofa, and he'll
+		# get in if you tell him about your crash. A Moogli bath is half an hour of splashing and two hours of fur
+		"area": "aptMoog", "windows": [[[2, 5], "19:15", "20:30"]],
+		"player": [17, 22, "u"],
+		"cast": [["Tobbin", 12, 15, "d"], ["Merrow", 14, 15, "d"], ["Nub", 24, 21, "u"]],
+		"steps": [
+			["hide", "Nub"],
+			["wait", 0.5],
+			["say", "", ["Bath night. Tobbin holds a towel. Merrow holds a sponge. Neither of them is holding Nub, which is the problem."]],
+			["walk", "player", 15, 17], ["face", "player", "u"],
+			["face", "Merrow", "player"], ["face", "Tobbin", "player"],
+			["say", "Merrow", ["[angry] He was here a minute ago. That child can smell a bath through two doors."]],
+			["say", "Tobbin", ["{name}! You've got young eyes. Where would you hide, if you were small and against soap?"]],
+			["choose", [
+				{"text": "Behind the sofa.", "friendship": 60, "steps": [
+					["friendship", "Merrow", 30], ["friendship", "Nub", 30],
+					["walk", "player", 22, 20], ["face", "player", "r"]]},
+				{"text": "In his toy chest.", "friendship": 30, "steps": [
+					["say", "Merrow", ["Checked it. Twice. He's learned."]],
+					["friendship", "Merrow", 15], ["friendship", "Nub", 15],
+					["say", "", ["Then you spot it: one round, guilty ear, poking up behind the sofa."]],
+					["walk", "player", 22, 20], ["face", "player", "r"]]},
+				{"text": "Skip it tonight. He's fine.", "steps": [
+					["emote", "Merrow", "frustrated"],
+					["say", "Merrow", ["[angry] One night is how it starts. Then it's a week. Then he smells like the recycler."]],
+					["friendship", "Merrow", -20],
+					["say", "", ["A small, offended voice comes from behind the sofa."]],
+					["walk", "player", 22, 20], ["face", "player", "r"]]}]],
+			["show", "Nub"], ["face", "Nub", "player"], ["emote", "Nub", "surprise"],
+			["say", "Nub", ["[angry] No bath! I'm not dirty! I'm only floor-coloured!"]],
+			["say", "Nub", ["...I'll get in if you tell me about the crash. The whole crash. With the fire bit."]],
+			["fade", 1.0, 0.6],
+			["place", "Nub", 26, 6, "u"], ["place", "Merrow", 27, 6, "l"], ["place", "Tobbin", 29, 8, "l"], ["place", "player", 28, 10, "u"],
+			["fade", 0.0, 0.6],
+			["fx", "bubbles", 26, 5, 2], ["sfx", "water_pour"],
+			["say", "", ["So you tell it from the bathroom doorway, fire bits and all, while Nub sits in the tub and Merrow scrubs. It's the best audience it's ever had."]],
+			["say", "Nub", ["[happy] And then what? And THEN what?"]],
+			["sfx", "step_water"],
+			["say", "", ["Half an hour of splashing later, Nub is clean. Then Tobbin towels him, and his fur dries, and keeps drying, and goes up, and up..."]],
+			["fx", "bubbles", "off"],
+			["face", "Nub", "d"], ["emote", "Nub", "joy"],
+			["say", "", ["...until he is twice his size and perfectly round, like a dandelion with feet."]],
+			["pose", "Tobbin", "laugh"],
+			["say", "Tobbin", ["[happy] There he is. Our little cloud."]],
+			["pose", "Tobbin", ""],
+			["say", "Merrow", ["[happy] Every bath night. Every single one. ...Thank you, {name}. Same time next week?"]],
+			["flag", "moogli_bath_night"],
+		],
+	},
+	"moogli_6": {
+		"who": "Merrow", "with": ["Tobbin", "Nub"], "hearts": 6, "title": "The First Tree",
+		# a Sunday morning: Merrow has sprouted the bluebark seed Tobbin's grandmother gave him when they left Moogli
+		# Prime, eleven years in a drawer. They plant it in the garden dome; until the dome's open, in the tub in their
+		# flat. Letter: from all three (and Tree)
+		"area": "east", "seen": ["moogli_4"], "windows": [[[6], "09:00", "12:00"]],
+		"backup": {"unless": "east_dome", "area": "aptMoog", "player": [19, 23, "u"],
+			"cast": [["Merrow", 21, 22, "l", "garden l"], ["Tobbin", 22, 23, "u"], ["Nub", 19, 22, "r"]]},
+		"player": [120, 49, "u"],
+		"cast": [["Merrow", 120, 46, "u", "garden u"], ["Tobbin", 118, 46, "r"], ["Nub", 122, 47, "l"]],
+		"steps": [
+			["wait", 0.6],
+			["if", {"flag": "east_dome"},
+				[["say", "", ["The garden dome, Sunday morning. Merrow kneels in the grass with a trowel. Tobbin and Nub stand over her, holding hands, very serious."]],
+					["walk", "player", 120, 48], ["face", "player", "u"]],
+				[["say", "", ["Their flat, Sunday morning. Merrow kneels by the big tub in the corner with a trowel. Tobbin and Nub stand over her, very serious."]]]],
+			["say", "Merrow", ["Come and see, {name}. Quietly. It's shy."]],
+			["pose", "Merrow", ""],
+			["say", "", ["In her cupped hands: a seedling, two leaves high, its stem a soft, dusty blue."]],
+			["say", "Tobbin", ["[love] Bluebark. From my grandmother's tree. She gave me the seed when we left Moogli Prime. Eleven years in a drawer."]],
+			["say", "Merrow", ["Nothing ever had the light for it. Or the soil. Or the time. [happy] Then everything did, all at once."]],
+			["say", "Nub", ["It's a baby tree. It's a baby chair."]],
+			["pose", "Tobbin", "laugh"],
+			["say", "Tobbin", ["[happy] ...It is, isn't it?"]],
+			["pose", "Tobbin", ""],
+			["choose", [
+				{"text": "Can I help plant it?", "friendship": 60, "steps": [
+					["say", "", ["Merrow lets you press the soil down round it. Nub pats it too, very gently, the way you'd pat a head."]],
+					["friendship", "Tobbin", 30], ["friendship", "Nub", 30]]},
+				{"text": "How big will it get?", "friendship": 30, "steps": [
+					["say", "Merrow", ["[happy] Taller than the dome, in a hundred years. We'll worry about that in fifty."]],
+					["friendship", "Tobbin", 15], ["friendship", "Nub", 15]]},
+				{"text": "When can it be made into chairs?", "steps": [
+					["emote", "Tobbin", "surprise"],
+					["say", "Tobbin", ["[shocked] {name}! Not in front of the tree!"]],
+					["say", "Nub", ["[sad] Don't make the baby into a chair."]],
+					["friendship", "Merrow", -20]]}]],
+			["if", {"flag": "east_dome"}, [["pose", "Merrow", "garden u"]], [["pose", "Merrow", "garden l"]]],
+			["sfx", "seed_plant"], ["wait", 0.6],
+			["pose", "Merrow", ""],
+			["if", {"flag": "east_dome"},
+				[["say", "", ["The first tree from Moogli Prime on the whole moon. It's tiny. Nub has already named it. Its name is Tree."]]],
+				[["say", "Merrow", ["In the tub for now. [happy] When the garden dome opens, it goes in the ground. First thing."]],
+					["say", "", ["Nub has already named it. Its name is Tree."]]]],
+			["emote", "Merrow", "love"], ["emote", "Tobbin", "love"], ["emote", "Nub", "joy"],
+			["flag", "moogli_first_tree"],
+			["mail", "moogli_tree", 1],
+		],
+	},
 }
 
 

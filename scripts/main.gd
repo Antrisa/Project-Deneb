@@ -2112,6 +2112,7 @@ const SHOP_HELLO := {
 	"Ix'ali": "Armour, fitted to you. Stand still.",
 	"Maren": "Medpacks are on the shelf. One will put you right back on your feet.",
 	"Job": "[happy] Got geodes? I'll crack them for you. And I'll buy any pretty rocks you don't want.",
+	"Tobbin": "Beds, chairs, shelves, lamps. Plastic and steel, but honest. Every piece has a promise in it.",
 }
 
 
@@ -3497,6 +3498,9 @@ func craft(index: int) -> bool:
 	if station != "" and not nearby_stations().has(station):
 		sfx("deny")
 		return false
+	if recipe.has("learn") and not _flag(str(recipe["learn"])):     # someone has to teach you first (Tobbin's 8)
+		sfx("deny")
+		return false
 	if not _has_all(needs):
 		sfx("deny")
 		return false
@@ -3707,8 +3711,9 @@ const BASE_PLACEABLE := {
 	"arc_smelter": {"art": "home_furnace", "w": 2, "h": 1, "name": "Furnace", "station": ""},
 	"manufacturing_hub": {"art": "home_hub", "w": 3, "h": 1, "name": "Manufacturing hub", "station": "Manufacturing Hub"},
 	"storage_chest": {"art": "home_chest", "w": 1, "h": 1, "name": "Storage chest", "station": ""},
-	# furniture to look at (Pip's 8): no station, no storage
+	# furniture to look at (Pip's 8, Nub's 8): no station, no storage
 	"toy_rocket": {"art": "toy_rocket", "w": 1, "h": 1, "name": "Pip's toy rocket", "station": "", "decor": true},
+	"nub_drawing": {"art": "nub_drawing", "w": 1, "h": 1, "name": "Nub's drawing", "station": "", "decor": true},   # Nub's 8
 }
 # Everything you can set down: BASE_PLACEABLE and the hotel's walls, doors and furniture (scripts/hotel.gd).
 var PLACEABLE: Dictionary = BASE_PLACEABLE.merged(HotelScript.FURNITURE)
@@ -5890,6 +5895,12 @@ func _grow_crops() -> void:
 		var t: Dictionary = farm[tile]
 		if str(t["crop"]) != "" and (int(t["watered"]) == day or bool(t.get("bed", false))):
 			t["age"] = int(t["age"]) + 1
+			# Merrow's 8, Hydro-Boost: hydroponic beds grow a fifth faster (an extra day's growth in every five,
+			# the first one up front)
+			if bool(t.get("bed", false)) and _flag("perk_hydro_boost"):
+				t["boost"] = int(t.get("boost", 0)) + 1
+				if int(t["boost"]) % 5 == 1:
+					t["age"] = int(t["age"]) + 1
 	if farm_view != null: farm_view.sync_crops()
 
 

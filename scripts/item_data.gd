@@ -295,6 +295,15 @@ const ITEMS = {
 			"desc": "A little fern in a pot. Decoration +0.1."},
 	"berry_rug": {"name": "Berry rug", "icon": 135, "use": "build",
 			"desc": "A soft rug you can walk on. Decoration +0.3."},
+	# Tobbin, Merrow & Nub (24 Nov; stand-in art and icons 136-138 by tools/dev/moogli_art.py). Real wood: Tobbin's
+	# shop sells planks after his 4 (the garden dome's first limb); the heirloom chair is his 8 (he gives you one and
+	# teaches you the joints: the recipe below); Nub's drawing is Nub's 8 (main.gd PLACEABLE "decor").
+	"real_wood": {"name": "Real wood plank", "icon": 136, "use": "",
+			"desc": "A plank from the garden dome's trees, pale and sweet-smelling. Tobbin sells them, one limb a season."},
+	"heirloom_chair": {"name": "Heirloom chair", "icon": 137, "use": "build",
+			"desc": "Real wood, pegged and wedged the way Tobbin's grandmother did it. It creaks hello. Comfort +0.3, decoration +0.3."},
+	"nub_drawing": {"name": "Nub's drawing", "icon": 138, "use": "build",
+			"desc": "The whole Landing under the dome, a tree that isn't there yet, and you by a smiling ship. The frame was a chair."},
 }
 
 # The relics, and the ones Chernobog ships can drop.
@@ -365,6 +374,10 @@ const RECIPES = [
 	{"makes": "potted_plant", "n": 1, "needs": {"brick": 2, "moon_wheat": 1}, "station": "Manufacturing Hub"},
 	{"makes": "small_fern", "n": 1, "needs": {"brick": 1, "moon_wheat": 1}, "station": "Manufacturing Hub"},
 	{"makes": "berry_rug", "n": 1, "needs": {"hide": 3, "chitin": 2}, "station": "Manufacturing Hub"},
+	# Tobbin's 8 teaches it: "learn" is the story flag that unlocks a recipe (main.gd craft; until then the
+	# Crafting page shows "Learn from <teacher>" where the station goes)
+	{"makes": "heirloom_chair", "n": 1, "needs": {"real_wood": 3, "hide": 1}, "station": "Manufacturing Hub",
+		"learn": "perk_heirloom_chair", "teacher": "Tobbin"},
 	# at a manufacturing hub
 	{"makes": "magnet", "n": 1, "needs": {"rare_earths": 1, "iron_bar": 1}, "station": "Manufacturing Hub"},
 	{"makes": "motor", "n": 1, "needs": {"coil_wire": 2, "steel_bar": 1, "magnet": 1}, "station": "Manufacturing Hub"},

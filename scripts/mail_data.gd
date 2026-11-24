@@ -355,6 +355,53 @@ const LETTERS := {
 		"sign": "Tikka and Sesska",
 		"gift": {"coil_wire": 2},
 	},
+	# Tobbin's 4, the morning after the garden dome's first limb
+	"tobbin_planks": {
+		"from": "Tobbin",
+		"title": "Two planks",
+		"body": [
+			"{name},",
+			"The limb is drying in my workshop, and the whole shop smells like a forest. Nub says it smells like 'outside'. He's never been outside.",
+			"Two planks from the first cut. Not for selling: for making something badly, the way everyone starts. Mind the grain. It goes where it wants.",
+		],
+		"sign": "Tobbin",
+		"gift": {"real_wood": 2},
+	},
+	# Merrow's 4, the morning after her star-tomatoes
+	"merrow_seeds": {
+		"from": "Merrow",
+		"title": "For your beds",
+		"body": [
+			"{name},",
+			"Seeds from the scrubber corner. They grew on a cup of water a day and a borrowed socket, so a proper bed will spoil them rotten.",
+			"Put this letter in the recycler when you've read it. It all comes through my fountain in the end, so I'll know.",
+		],
+		"sign": "Merrow",
+		"gift": {"star_tomato_seeds": 6},
+	},
+	# Nub's 6, the morning after Tar'Besh makes him Junior Curator
+	"nub_curator": {
+		"from": "Nub",
+		"title": "JUNIOR CURATOR",
+		"body": [
+			"Dear {name},",
+			"I am a JUNIOR CURATOR. Mr Tar'Besh gave me pins. Pins are better than tape but you can't put them in your mouth.",
+			"This is a bug shell. It's for your museum. You haven't got a museum, so this is the first thing in it.",
+		],
+		"sign": "Nub (Junior Curator)",
+		"gift": {"chitin": 1},
+	},
+	# Tobbin, Merrow & Nub's side arc 6, The First Tree
+	"moogli_tree": {
+		"from": "Merrow",
+		"title": "Tree",
+		"body": [
+			"{name},",
+			"Tree has a third leaf. Nub announced it at breakfast like a birth. Tobbin cried into his porridge, which he says was steam.",
+			"Thank you for being there. A family's first tree needs witnesses.",
+		],
+		"sign": "Merrow, Tobbin and Nub (and Tree)",
+	},
 }
 
 const DATED := {"welcome": 1, "sara_storage": 3}

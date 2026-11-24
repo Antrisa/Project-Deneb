@@ -2,7 +2,7 @@
 
 Zachary added a mailbox, the message pad by your front door on the agri complex's porch, so that residents can send you mail and gifts, as in Stardew Valley. Then he asked: "if it makes sense in any of the previous arcs add and next morning get mail from the person or gifts. and keep in mind for future arcs."
 
-So sixteen heart events now send a letter that comes with the next morning's post, and five of the letters have a gift in them. Bram's arc (written the same day, after the rule) added one more, with a gift, Tikka & Sesska's (24 Nov) three more, two with gifts, and Maren, Owen & Pip's (24 Nov) four more, one with a gift: twenty-four in all. The wording is a first draft by Claude, for Zachary to change: the letters live in `scripts/mail_data.gd`.
+So sixteen heart events now send a letter that comes with the next morning's post, and five of the letters have a gift in them. Bram's arc (written the same day, after the rule) added one more, with a gift, Tikka & Sesska's (24 Nov) three more, two with gifts, Maren, Owen & Pip's (24 Nov) four more, one with a gift, and Tobbin, Merrow & Nub's (24 Nov) four more, three with gifts: twenty-eight in all. The wording is a first draft by Claude, for Zachary to change: the letters live in `scripts/mail_data.gd`.
 
 ## How it works
 
@@ -10,7 +10,7 @@ So sixteen heart events now send a letter that comes with the next morning's pos
 
 - **Sending:** a heart event sends a letter with a `["mail", id, days]` step (`scripts/cutscene.gd`), which calls `main.gd send_mail(id, days)`. `days` 1 is the next morning. A letter only ever comes once, however often the event plays (F3).
 - **A letter sent from inside a choice** only comes if you made that choice. Six do this: Zaas writes after Job's 4 only if you dug out his crate, Tar'Besh writes after his 4 only if you told him he lived anyway, Freya writes after Tikka's 4 only if you let her take the lamp, Sesska's cap after her 2 doesn't come if you told her it was only a jacket, Maren's after her 4 not if you told her it was only tea, and Pip's geode after his 4 not if you told him finders keepers. Missing a letter is the minor consequence.
-- **Gifts:** a letter's optional `"gift": {item: count}` goes in your pack the first time you open it (`main.gd read_letter`), with a toast ("In the envelope: Medpack x2"). The letter shows it along the foot of its page: ENCLOSED, the item's picture and count, and IN YOUR PACK (`scripts/mail_reader.gd _paint_gift`). Gifts are small and use items that already exist, so no new art is needed.
+- **Gifts:** a letter's optional `"gift": {item: count}` goes in your pack the first time you open it (`main.gd read_letter`), with a toast ("In the envelope: Medpack x2"). The letter shows it along the foot of its page: ENCLOSED, the item's picture and count, and IN YOUR PACK (`scripts/mail_reader.gd _paint_gift`). Gifts are small and use items that already exist (Tobbin's planks are the one new item: his shop sells them too).
 - **Fitting the page:** `python3 tests/check_mail.py` measures every letter with the datapad font's own widths at the smallest page (768 x 432), with room left for a gift. It also checks that every gift is an item, that every letter is sent by something and that letters use only plain ASCII (the datapad font has no curly quotes, long dashes or accents: Cafe, not Café). `-v` shows how much room each letter has left.
 - **The Godot test** (`tests/heart_events_test.gd`) checks that every event sent its letter, that they all come with the next morning's post, and that Quill's medpacks come once.
 - Not run in Godot yet.
@@ -55,6 +55,10 @@ About one letter per arc, rarely two. A gift shouldn't repeat the event's own pe
 | Owen 4, The Freighter Log | `owen_recorder` | Owen | Good company | - |
 | Pip 4, Lost and Found | `pip_found` | Pip | Found it | Geode x1 |
 | Maren, Owen & Pip 6, Lanterns | `pip_lanterns` | Pip | Green stars | - |
+| Tobbin 4, First Real Wood | `tobbin_planks` | Tobbin | Two planks | Real wood plank x2 |
+| Merrow 4, Star-Tomatoes | `merrow_seeds` | Merrow | For your beds | Star tomato seeds x6 |
+| Nub 6, Junior Curator | `nub_curator` | Nub | JUNIOR CURATOR | Chitin x1 |
+| Tobbin, Merrow & Nub 6, The First Tree | `moogli_tree` | Merrow | Tree | - |
 
 Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The gate" (when Job's north tunnels are done), and S.A.R.A.'s notes on the storage dome and the fish ponds.
 
@@ -373,3 +377,51 @@ Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The
 > I'm going to be a pilot and check the drive every time. You can come too. You can check it as well.
 >
 > - Pip
+
+### Two planks (`tobbin_planks`): after Tobbin's 4, First Real Wood
+
+*From Tobbin, the next morning. Enclosed: Real wood plank x2.*
+
+> {name},
+>
+> The limb is drying in my workshop, and the whole shop smells like a forest. Nub says it smells like 'outside'. He's never been outside.
+>
+> Two planks from the first cut. Not for selling: for making something badly, the way everyone starts. Mind the grain. It goes where it wants.
+>
+> - Tobbin
+
+### For your beds (`merrow_seeds`): after Merrow's 4, Star-Tomatoes
+
+*From Merrow, the next morning. Enclosed: Star tomato seeds x6.*
+
+> {name},
+>
+> Seeds from the scrubber corner. They grew on a cup of water a day and a borrowed socket, so a proper bed will spoil them rotten.
+>
+> Put this letter in the recycler when you've read it. It all comes through my fountain in the end, so I'll know.
+>
+> - Merrow
+
+### JUNIOR CURATOR (`nub_curator`): after Nub's 6, Junior Curator
+
+*From Nub, the next morning. Enclosed: Chitin x1 (a bug shell).*
+
+> Dear {name},
+>
+> I am a JUNIOR CURATOR. Mr Tar'Besh gave me pins. Pins are better than tape but you can't put them in your mouth.
+>
+> This is a bug shell. It's for your museum. You haven't got a museum, so this is the first thing in it.
+>
+> - Nub (Junior Curator)
+
+### Tree (`moogli_tree`): after Tobbin, Merrow & Nub's 6, The First Tree
+
+*From Merrow, for all three, the next morning.*
+
+> {name},
+>
+> Tree has a third leaf. Nub announced it at breakfast like a birth. Tobbin cried into his porridge, which he says was steam.
+>
+> Thank you for being there. A family's first tree needs witnesses.
+>
+> - Merrow, Tobbin and Nub (and Tree)

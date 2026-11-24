@@ -341,7 +341,7 @@ The water officer who was right about the ocean, and gave it to the one who kept
 - **Decided (Zachary, 23 Nov):** the Scyldar are an ocean people, so his search is homesickness, not a hobby; the sea is the Merrow Deep. Claude's rework of the places and the bell (it was a research skiff) was accepted. Wrong choices: soaked and nothing gained (2, −10 energy), −20 friendship (4, 6, 8).
 - **His week:** Sunday is his day off and his expedition day: the North Cave with his hydrophone, or the lake once it's open.
 - **Linked:** 4's heartbeat, the Chitin Exodus and the brood-queen's shell (Vzz'ket & Rusk's side arc) all point at the same thing below (thread F). Job's "I'll dig him a tunnel" pays off in the bell's drill motor.
-- **Gap (still):** Merrow's own 8 (section 5.8) should be about her; this arc gives her the badge but not her story.
+- **Closed (24 Nov):** Merrow's own story is her arc in section 5.8 (her 8 is her first day off); this arc gives her the badge and the sea's name.
 
 ### 5.4 Vzz'ket & Rusk: their own arcs, and a side arc (The Night Watch)
 
@@ -471,15 +471,46 @@ The water officer who was right about the ocean, and gave it to the one who kept
 
 ### 5.8 Tobbin, Merrow & Nub
 
+**Reviewed with Zachary on 24 Nov; all fourteen are written and playable.** Full scenes: [`characters/TOBBIN.md`](characters/TOBBIN.md), [`characters/MERROW.md`](characters/MERROW.md), [`characters/NUB.md`](characters/NUB.md) and the family's side arc, [`characters/TOBBIN_MERROW_NUB.md`](characters/TOBBIN_MERROW_NUB.md). Zachary: Tobbin's 4, 6 and 8 **wait for the trees** (the garden dome; an exception, like Zaas's 6 and 8); his 8 is **a real chair and its crafting recipe**; **he sells furniture in his shop**, shut on Sundays; **Merrow has the weekend off after her 8**. Claude's suggestions taken for the rest: an arc each plus a two-scene side arc; Nub's 8 a framed drawing; Hydro-Boost as the NPC Master has it.
+
+**Tobbin** (Moogli, furniture maker): a station that has never had a plank.
+
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Plastic and Steel (Tobbin's hearts) | Furniture workshop | He fights plastic-and-steel furniture. | Outline |
-| 4 | First Real Wood (Tobbin's) | East orchard; waits for the first wood | The first real-wood harvest. | Outline |
-| 6 | A Wooden Starship (Tobbin's) | Their home | He carves Nub a toy ship. | Outline |
-| 8 | (no title) (Merrow's) | Furniture workshop | Rewards only: Heirloom Real-Wood Furniture; Hydro-Boost. | Gap |
+| 2 | Plastic and Steel | His workshop, a working day | A plastic leg snaps; you hold the frame while he pins it. His grandmother's bluebark chairs creaked hello. | In game (the NPC Master's title, scene by Claude) |
+| 4 | First Real Wood | The garden dome, Sunday morning; **waits for the dome** | Merrow prunes a limb off the oldest tree. His shop sells planks from now on. | In game (the NPC Master's title, scene by Claude) |
+| 6 | A Wooden Starship | Their flat after Nub's bedtime; after the dome | He carves Nub a toy ship from the offcut; you keep Nub from seeing it. | In game (the NPC Master's title, scene by Claude) |
+| 8 | A Chair That Stays | His workshop, with Merrow and Nub; after the dome | The first real-wood chair. It's yours; he teaches you the joints. It creaks hello. Reward: the heirloom chair and its recipe. | In game (Zachary's reward, scene by Claude) |
 
-- **Gap:** 8 runs on Merrow's hearts, but every scene before it is Tobbin's, and Merrow's own story plays in Zaas's arc. Her 8 should be about her.
-- **Clash:** where the wood comes from. The Sovereign gives Lunar Birch saplings to your West Agridome; the East orchard is fruit trees. You bringing him your first Lunar Birch Log might be the better trigger.
+**Merrow** (Moogli, hydroponics; does Zaas's water work): learning to stop.
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 2 | Filter Day | The plaza fountain at dawn | Every drop on the Landing goes through it. Hair, crayons, a dinosaur. | In game (Claude) |
+| 4 | Star-Tomatoes | Behind the reclamation plant's last air scrubber | Her secret tomatoes, on her own water ration, for Nub. | In game (Claude) |
+| 6 | Dry Week | The reclamation plant, late | A split membrane; the fountain comes back. "I'm your baby." | In game (Claude) |
+| 8 | A Day Off | The Observation Lounge, Saturday | Tobbin took her off the rota. Reward: Hydro-Boost (beds grow 20% faster). Weekends off from now on. | In game (the NPC Master's reward, scene by Claude) |
+
+**Nub** (Moogli, their son): draws everything, so it's remembered.
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 2 | I Drew You | The plaza, afternoon | You, the tall one, and a sad ship on fire. | In game (Claude) |
+| 4 | The Fountain Edge | The fountain, with Kit and Merrow | His first jump (or, dared, backwards into the water). | In game (Claude) |
+| 6 | Junior Curator | The museum, with Tar'Besh | Drawings taped under every label. Junior Curator, Fridays, with pins. | In game (Claude) |
+| 8 | Framed | Their flat after dinner | The next drawing, framed in the chair that broke. Reward: Nub's drawing, to set down at home. | In game (Claude) |
+
+**The side arc** (all three need the hearts):
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 4 | Bath Night | Their flat, Wednesday or Saturday evening | Nub hides; he gets in if you tell him about the crash. Twice his size, dry. | In game (Claude) |
+| 6 | The First Tree | The garden dome, Sunday morning; **backup:** the tub in their flat | The bluebark seed from Tobbin's grandmother, eleven years in a drawer. Its name is Tree. | In game (Claude) |
+
+- **Closed:** the 8 that ran on Merrow's hearts with Tobbin's story (each has an 8 now), and the wood (the garden dome's pruned limb, not the East orchard).
+- **Tobbin's shop:** the hotel's furniture ready-made, and real-wood planks after his 4. **Recipes can be taught** now (`"learn"` and `"teacher"` in `item_data.gd RECIPES`).
+- **Their weeks:** Tobbin's Sundays (home bench, the garden or the dome's trees); Merrow's weekends after her 8; Nub's Sunday drawing, and his Fridays at the museum after his 6.
+- **Still open:** art for the heirloom chair, the planks and Nub's drawing (stand-ins); Merrow's weekends aren't on the station calendar (its days off are fixed).
 
 ### 5.9 Garrick, Saffi & Kit
 
@@ -592,4 +623,4 @@ Answer by number; anything left open stays as it is.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska and Maren, Owen & Pip (24 Nov); Tobbin, Merrow & Nub are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska, Maren, Owen & Pip, and Tobbin, Merrow & Nub (24 Nov); Garrick, Saffi & Kit are next, then Eshu.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
