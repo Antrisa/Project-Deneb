@@ -118,6 +118,16 @@ func run() -> void:
 	assert(s._count("heirloom_chair") >= 1, "Tobbin's 8 gave you his first real-wood chair")
 	assert(s._count("nub_drawing") >= 1, "Nub's 8 gave you his drawing")
 	assert(s._count("deputy_badge") >= 1, "Kit's 8 gave you his deputy badge")
+	# Perks now in play (scripts/perk_data.gd "works"): a few of their effects, checked directly
+	assert(s._max_hp() == s.MAX_HP + s.GUARDIAN_HP, "Quill's 8: two more hearts")
+	assert(s._cooked("mess_hall_stew") and not s._cooked("ration"), "Family Table knows a cooked meal")
+	assert(s.concierge_rows().size() == 4, "S.A.R.A.'s 8: all four of her pads to travel to")
+	assert(s.ship_upgrades._discount() < 1.0, "Freya's 8: Master Mechanic")
+	var pay: int = s.hotel.base_pay()
+	assert(pay == int(round(s.hotel.BASE_PAY_AT_3 * s.hotel.rating / 3.0 * s.hotel.FIVE_STAR_PERK)), "Stu's 8: a fifth more a night")
+	var kinds: Array = s._cav_mob_kinds(7)
+	s.cav_next = {"floor": 7, "kinds": kinds}
+	assert(s._cav_mob_kinds(7) == kinds, "the radar's floor below is the floor you get")
 	# Letters (scripts/mail_data.gd): the events sent theirs (the first choice always sends, even in Job's 4 and
 	# Tar'Besh's 4), and they come with the next morning's post. A letter's gift goes in your pack once.
 	for id in MailData.LETTERS:

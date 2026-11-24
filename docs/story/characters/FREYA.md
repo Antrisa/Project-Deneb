@@ -39,7 +39,7 @@ All five are playable cutscenes: `scripts/heart_events.gd` (the data, written fr
 
 - **To test:** in a debug build, **F3** plays the next event (it sets the hearts, day, time and place it needs); **Shift+F3** forgets the ones you've seen; **F5** opens the story places (for 10: the restored Suite).
 - **Checked offline:** `python3 tests/check_heart_events.py` (every place reachable, every pose drawn, every line short enough).
-- **Not in yet:** the parts request before 6 (you haven't said whether to keep it, so 4 now ends "Give me a few days with these"); what the Pioneer Stabilizer and Master Mechanic actually do in play (they're recorded as perks); the keepsake as an item you can hold.
+- **In play since 24 Nov:** the Pioneer Stabilizer (an ion storm no longer halves your reactor) and Master Mechanic (20% off ship upgrades). **Not in yet:** the parts request before 6 (you haven't said whether to keep it, so 4 now ends "Give me a few days with these"); the keepsake as an item you can hold.
 
 ---
 
@@ -139,7 +139,7 @@ All five are playable cutscenes: `scripts/heart_events.gd` (the data, written fr
 
 ## ♥8 Under the Star Dome (confession; was "Stargazing on the Hull")
 
-**Trigger:** enter the Star dome after 20:00 with Freya at 8 hearts. Perk either way: **Master Mechanic** (20% off ship and tool upgrades).
+**Trigger:** enter the Star dome after 20:00 with Freya at 8 hearts. Perk either way: **Master Mechanic** (20% off ship upgrades; tools are crafted, so Zachary's "and tool upgrades" was dropped on 24 Nov).
 
 **Setting:** the Star dome at night. Freya sits on the bench under the telescope, her boots up on the rail.
 

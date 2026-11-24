@@ -42,7 +42,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. She poses from her
 
 - **To test:** in a debug build, **F3** plays the next event in order (Ix'ali's 2 is the twenty-sixth press).
 - **Checked offline:** `python3 tests/check_heart_events.py`.
-- **Not in yet:** the Star-Knight Aegis tier and Chivalric Guard in play, the duel itself (it plays under a fade, with hits and a shake), the pendant and pauldron as items you can hold.
+- **In play since 24 Nov:** Chivalric Guard (a fifth less of the damage that gets through, `shops.gd damage_taken`). **Not in yet:** the Star-Knight Aegis tier, the duel itself (it plays under a fade, with hits and a shake), the pendant and pauldron as items you can hold.
 - **Still open:** Decision 12: is the star pendant at 8 an Oath-Crest you could later propose with? The scene gives it either way and sets `ixali_star_pendant`. And her backstory line in 4 is a Claude placeholder.
 
 ---

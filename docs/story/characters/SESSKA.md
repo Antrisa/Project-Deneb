@@ -3,7 +3,7 @@
 **Decided with Zachary, 24 Nov:**
 - **Everyone gets their own arc**: this one is Sesska's own. She and Tikka also share a two-scene side arc, "Forty Years" ([TIKKA_SESSKA.md](TIKKA_SESSKA.md)).
 - **Her week:** **Sundays off** with Tikka. **Wednesday afternoons** she buys fibre from Evarra; **Thursday afternoons**, once the hotel is open, she takes it linens.
-- **Her 8's reward:** the NPC Master's **Void-Silk Luxury Linens**, a boost for the hotel. Zachary: "nothing until the hotel is made", so the perk is recorded and does nothing until the hotel takes paying guests.
+- **Her 8's reward:** the NPC Master's **Void-Silk Luxury Linens**, a boost for the hotel. Zachary: "nothing until the hotel is made", so the perk does nothing until the hotel takes paying guests. Since 24 Nov (the hotel is in): every guest room with a bed is 0.2 comfier (`hotel.gd grade`, LINENS_COMFORT).
 - **Her 6** unlocks the **Cavern-silk coat** in her shop (it was hidden until something unlocked it).
 
 **The arc:** a weaver who lost her street, and finds a new one.

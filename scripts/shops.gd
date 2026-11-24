@@ -51,6 +51,8 @@ func open(who: String) -> void:
 	var tabs: Array = []
 	if who == "Cook":
 		tabs.append(["Cook", _cook_rows()])
+	elif who == "Concierge":
+		tabs.append(["Pads", world.concierge_rows()])      # S.A.R.A.'s 8 (main.gd sara_send)
 	elif who == "Hotel":
 		tabs = world.hotel.desk_tabs()      # the management desk (scripts/hotel.gd)
 	elif who == "Job":
@@ -60,14 +62,17 @@ func open(who: String) -> void:
 		tabs.append(["Buy", _buy_rows(who)])
 		if who == "Bram" or ShopData.BUYS.has(who):
 			tabs.append(["Sell", _sell_rows(who)])
-	var title: String = {"Cook": "Your kitchenette", "Hotel": "Hotel management"}.get(who, str(ShopData.TITLES.get(who, who)))
-	var keeper: String = "Sara" if who == "Hotel" else who
+	var title: String = {"Cook": "Your kitchenette", "Hotel": "Hotel management", "Concierge": "S.A.R.A.'s pads"}.get(who,
+			str(ShopData.TITLES.get(who, who)))
+	var keeper: String = "Sara" if who in ["Hotel", "Concierge"] else who
 	world.datapad.pad.shop_portrait = world.datapad.portrait_key(keeper) if who != "Cook" else ""
 	var hello: String = str(world.SHOP_HELLO.get(who, ""))
 	if who == "Hotel":
 		hello = "Every guest needs a bed, four walls and a door. Make it lovely and they'll pay for it."
 	elif who == "Cook":
 		hello = "Recipes you know, and what each one needs."
+	elif who == "Concierge":
+		hello = "Pick a pad and I'll fold you there. Mind the step."
 	world.datapad.pad.shop_greeting = hello.substr(hello.find("]") + 1).strip_edges() if hello.begins_with("[") else hello
 	world.datapad.pad.show_shop(title, tabs, reopening)
 
@@ -182,6 +187,10 @@ func on_action(action: String) -> void:
 		"cook1": _cook(id, 1)
 		"cook5": _cook(id, 5)
 		"room": world.hotel.on_action(verb, id)
+		"pad":
+			shop = ""
+			world.sara_send(id)
+			return
 	refresh()
 
 
@@ -257,6 +266,10 @@ func _crack(id: String, n: int) -> void:
 # [item, how many] from one geode, by ShopData.GEODE_ROLLS.
 func roll_geode(id: String) -> Array:
 	var rolls: Array = ShopData.GEODE_ROLLS.get(id, [])
+	if world._flag("perk_thrifty") and rolls.size() >= 2 and _rng.randf() < THRIFTY_CHANCE:
+		# Artie's 8: now and then the geode is one of the good ones (the two rarest rows)
+		var rare: Array = (rolls[rolls.size() - 2][1] as Array) + (rolls[rolls.size() - 1][1] as Array)
+		return [str(rare[_rng.randi() % rare.size()]), 1]
 	var x: float = _rng.randf()
 	for r in rolls:
 		x -= float(r[0])
@@ -267,8 +280,12 @@ func roll_geode(id: String) -> Array:
 
 
 # A geode turns up now and then as you cut rock or ore in the mine and the north tunnels.
+const THRIFTY_CHANCE := 0.15
+
+
 func maybe_geode(area: String) -> void:
-	if (area == "mine" or area == "tunnels") and _rng.randf() < ShopData.GEODE_CHANCE:
+	var chance: float = ShopData.GEODE_CHANCE * (1.5 if world._flag("perk_bedrock_strength") else 1.0)   # Job's 8
+	if (area == "mine" or area == "tunnels") and _rng.randf() < chance:
 		world._give("geode", 1)
 		world._toast("A geode fell out of the rock! Job cracks them open.")
 
@@ -300,6 +317,8 @@ func start_drink(item: String) -> void:
 		return
 	drink = item
 	drink_left = float(ShopData.DRINK_EFFECTS[item][0])
+	if world._flag("perk_sous_chefs_blessing"):
+		drink_left *= 1.2                 # Jasper's 8: what you eat and drink stays with you a fifth longer
 	_apply_drink()
 
 
@@ -319,6 +338,8 @@ func damage_taken(amount: int) -> int:
 	var block: float = minf(0.6, 0.1 * defence())
 	if drink != "":
 		block = minf(0.75, block + (1.0 - float(ShopData.DRINK_EFFECTS[drink][3])))
+	if world._flag("perk_chivalric_guard"):
+		block = 1.0 - (1.0 - block) * 0.8     # Ix'ali's 8: a fifth less of what gets through
 	var left := 0
 	for i in amount:
 		if _rng.randf() >= block:

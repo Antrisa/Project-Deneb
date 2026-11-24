@@ -42,7 +42,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`vzzket_2` to `vzz
 - **The camp** (`tools/caves.py`): the hunting banner south of the gate and the spear rack north of it are new; there was no room for a seat by the stove, so he sits on a ration crate.
 - **New scene step** `["give", item, count, toast]` puts items in your pack (his spear; Rusk's seeds).
 - **His first spear** (`vzzket_first_spear`) is an item now; it can't be placed until your quarters can be furnished.
-- **Not in yet:** the monster radar in play (it's a flag); the sensor box and the camp's own art (Art Fix List).
+- **In play since 24 Nov:** the monster radar: on each cavern floor S.A.R.A. names the creatures on the floor below, and they are the ones you meet (`main.gd _radar_ping`). **Not in yet:** the sensor box and the camp's own art (Art Fix List).
 
 ---
 

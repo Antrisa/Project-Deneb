@@ -44,7 +44,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
 
 - **To test:** in a debug build, **F3** plays the next event in order (Quill's 2 is the twenty-first press).
 - **Checked offline:** `python3 tests/check_heart_events.py`.
-- **Not in yet:** the Xeno-Salve recipe and Guardian Medic in play, Quill's name on the clinic door (`quill_clinic_door` is set for when there's a sign), the glowing plant in the park (narrated), and the charm as an item you can hold.
+- **Not in yet:** the Xeno-Salve recipe (Guardian Medic works since 24 Nov: twelve hearts, and Maren charges nothing when you collapse), Quill's name on the clinic door (`quill_clinic_door` is set for when there's a sign), the glowing plant in the park (narrated), and the charm as an item you can hold.
 - 2 plays only on Maren's days off, when Quill has the medbay alone (so she isn't standing there while he worries about her tiles).
 
 ---
@@ -133,7 +133,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
       - **QUILL:** "[sad] Of course. Thank you for telling me honestly. Honesty is good medicine."
       - **QUILL:** "[happy] Keep the bookmark. Ferns do not take things back."
 - **QUILL:** "[happy] And please stop collapsing in the mine. From now on I am keeping a closer eye on you. Medically."
-- **Perk: Guardian Medic (+20 max health, and collapsing costs no Scrip)**
+- **Perk: Guardian Medic (two more hearts of health, and collapsing costs no Scrip)** (24 Nov: health is ten hearts, so "+20" became two hearts)
 
 ---
 

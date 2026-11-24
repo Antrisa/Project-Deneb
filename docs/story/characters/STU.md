@@ -48,7 +48,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his 
 - **You used to wake in the hotel,** so 2 could play on a Saturday or Sunday morning without leaving and coming back. Since 23 Nov you live in your own flat by the farm, and 2 plays when you walk into the hotel on those mornings. (The game still checks your home's events when you wake.)
 - **To test:** in a debug build, **F3** plays the next event in order (Stu's 2 is the thirty-seventh press); it brings Wave 1 in if it hasn't arrived.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
-- **Not in yet:** Five-Star Partner in play (there's no hotel income yet), the nameplate as a prop on East Home 2's door (narrated), the uniform as a new outfit, the bell as an item you can hold.
+- **In play since 24 Nov:** Five-Star Partner (guests pay a fifth more, `hotel.gd base_pay`; it was upstream's S.A.R.A. 8-heart bonus, which counted hearts on the old scale). **Not in yet:** the nameplate as a prop on East Home 2's door (narrated), the uniform as a new outfit, the bell as an item you can hold.
 
 ---
 

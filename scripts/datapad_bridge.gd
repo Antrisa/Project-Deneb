@@ -185,7 +185,7 @@ func sync(modal: bool) -> void:
 		pad.perks = perks
 		if str(pad.page) == "Inventory":
 			changed = true
-	var vitals := [int(world.hp), _max_hp, int(world.energy), int(world.max_energy)]
+	var vitals := [int(world.hp), int(world._max_hp()), int(world.energy), int(world.max_energy)]
 	if vitals != _sent.get("vitals"):
 		_sent["vitals"] = vitals
 		pad.set_vitals(vitals[0], vitals[1], vitals[2], vitals[3])

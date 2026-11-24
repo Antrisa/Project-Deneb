@@ -216,7 +216,7 @@ const EVENTS := {
 			["pose", "Freya", "talk"],
 			["say", "Freya", ["[happy] Oh, and from now on, anything you want upgraded, you bring it to me. Family rate."]],
 			["pose", "Freya", "bench"],
-			["perk", "master_mechanic", "Perk: Master Mechanic (20% off ship and tool upgrades)"],
+			["perk", "master_mechanic", "Perk: Master Mechanic (20% off ship upgrades)"],
 		],
 	},
 	"freya_10": {
@@ -1014,7 +1014,7 @@ const EVENTS := {
 			["pose", "Quill", "talk"],
 			["say", "Quill", ["[happy] And please stop collapsing in the mine. From now on I am keeping a closer eye on you. Medically."]],
 			["pose", "Quill", ""],
-			["perk", "guardian_medic", "Perk: Guardian Medic (+20 max health, and collapsing costs no Scrip)"],
+			["perk", "guardian_medic", "Perk: Guardian Medic (two more hearts of health, and collapsing costs no Scrip)"],
 		],
 	},
 	"quill_10": {

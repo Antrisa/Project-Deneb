@@ -186,7 +186,8 @@ func _rows() -> Array:
 
 
 func _discount() -> float:
-	return 0.8 if world._crew_hearts("Freya") >= 8 else 1.0
+	# Freya's 8, Master Mechanic: "anything you want upgraded, you bring it to me. Family rate."
+	return 0.8 if world._flag("perk_master_mechanic") or world._crew_hearts("Freya") >= 8 else 1.0
 
 
 func _scrip(cost: Array) -> int:

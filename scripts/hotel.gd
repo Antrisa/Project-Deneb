@@ -64,7 +64,8 @@ const MOOD_RATING := {"Angry": -0.3, "Neutral": 0.0, "Happy": 0.1, "Ecstatic": 0
 const RATING_START := 2.5
 const BASE_PAY_AT_3 := 200.0        # a guest's pay for a night at a 3-star hotel; it scales with the rating
 const GUESTS_BY_STARS := [0, 2, 4, 8, 14, 20]              # how many come each week at 0..5 stars
-const SARA_PERK := 1.2              # S.A.R.A.'s 8-heart reward: base pay x1.2
+const FIVE_STAR_PERK := 1.2         # Stu's 8, Five-Star Partner: base pay x1.2 (your share of the tips)
+const LINENS_COMFORT := 0.2         # Sesska's 8, Void-Silk Linens: every guest bed's room is this much comfier
 const LUNCH_FOR_NOW := 0.75         # until the hotel kitchen (stage 3): Jasper's lunch from the mess hall
 const ACTIVITIES_FOR_NOW := 0.5     # until activities (stage 4): the lounge as it is
 const RACES := ["Terran", "Moogli", "Zaa'sh", "Vuultam", "Chernobog", "Sesskan"]
@@ -123,8 +124,8 @@ static func guests_for(stars: float) -> int:
 
 func base_pay() -> int:
 	var pay: float = BASE_PAY_AT_3 * rating / 3.0
-	if world.persons.has("Sara") and int(world.persons["Sara"].get("friendship", 0)) >= 8 * 5:
-		pay *= SARA_PERK
+	if world._flag("perk_five_star_partner"):
+		pay *= FIVE_STAR_PERK
 	return int(round(pay))
 
 
@@ -322,6 +323,8 @@ func grade(room: Dictionary) -> Dictionary:
 			comfort += float(spec.get("comfort", 0.0))
 		beauty += float(spec.get("beauty", 0.0))
 	comfort = minf(COMFORT_MAX, bed + comfort)
+	if bed > 0.0 and world._flag("perk_void_silk_linens"):
+		comfort = minf(COMFORT_MAX, comfort + LINENS_COMFORT)
 	# bigger rooms need more decoration to look finished
 	var decor: float = minf(DECOR_MAX, beauty / (0.5 + n / 40.0))
 	var total: float = size + comfort + decor

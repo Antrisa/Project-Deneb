@@ -213,7 +213,8 @@ const POD_TIME := 16.0           # the pod room recharges this long (a second ba
 const E_POD_TIME := 24.0         # how often their pod comes, while none of their boarders are aboard
 const POD_FLIGHT := 1.3
 const FIGHT_DPS := 9.0           # health a second, one on one
-const SELF_DEFENCE_X := 1.5      # Garrick's 8: your crew against boarders on your own ship
+const SELF_DEFENCE_X := 1.5
+const WINGMATE_X := 1.2             # Ana's 8: evasion and fold drive charging, a fifth more      # Garrick's 8: your crew against boarders on your own ship
 const SABOTAGE_TIME := 4.0       # boarders knock a bar off the room's system this often while nobody stops them
 const REPAIR_TIME := 4.0         # your crew repair a bar this often
 const HEAL_RATE := 6.0           # health a second in a working medbay, per bar
@@ -325,8 +326,8 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	hull_max = int(me["hull"])
 	hull = clampi(hull_now, 1, hull_max)
 	reactor = int(me["reactor"])
-	if str(fight.get("hazard", "")) == "ion_storm":
-		reactor = int(ceil(reactor / 2.0))      # an ion storm halves your reactor
+	if str(fight.get("hazard", "")) == "ion_storm" and not bool(fight.get("stabilizer", false)):
+		reactor = int(ceil(reactor / 2.0))      # an ion storm halves your reactor (not with Freya's 6, Jorvik's stabilizer)
 	uplink = bool(fight.get("uplink", false))
 	sys = _make_systems(me["systems"])
 	bar_sys = []
@@ -581,7 +582,7 @@ func _tick(delta: float) -> void:
 
 	if not bool(fight.get("story", false)) and _eff(sys, "pilot") > 0:
 		var was_ready: bool = fold >= 100.0
-		fold = minf(100.0, fold + delta * 0.6 * (1 + _eff(sys, "engines")))
+		fold = minf(100.0, fold + delta * 0.6 * (1 + _eff(sys, "engines")) * (WINGMATE_X if bool(fight.get("wingmate", false)) else 1.0))
 		if fold >= 100.0 and not was_ready and not bool(fight.get("story", false)):
 			world.sfx("sh_ready", 1.0, -6.0)
 
@@ -721,7 +722,10 @@ func _my_evasion() -> int:
 				break
 	if base > 0:
 		base += (5 if augments.has("stealth") else 0) + (10 if hazard == "nebula" else 0)
-	return base + 5 if base > 0 and _boosting("engines") else base
+	var ev: int = base + 5 if base > 0 and _boosting("engines") else base
+	if ev > 0 and bool(fight.get("wingmate", false)):
+		ev = int(round(ev * WINGMATE_X))       # Ana's 8, Wingmate
+	return ev
 
 
 # True when the drone has arrived in an undamaged bay holding that system.

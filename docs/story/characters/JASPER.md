@@ -39,7 +39,7 @@ All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts
 
 - **To test:** in a debug build, **F3** plays the next event in order (Freya's five come first, so Jasper's 2 is the sixth press; it sets the hearts, day, time and place each needs); **Shift+F3** forgets the ones you've seen.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
-- **Not in yet:** what the Parisian Bistro Menu and Sous-Chef's Blessing do in play (there's no cooking or food buffs yet, so they're recorded as perks); the café terrace on the map after 10 (it needs tables, an awning and a sign drawn for the plaza; `cafe_etoile` is set so a map version can switch on); the apron as an item you can hold.
+- **Not in yet:** what the Parisian Bistro Menu does in play (Sous-Chef's Blessing works since 24 Nov: drink effects last a fifth longer); the café terrace on the map after 10 (it needs tables, an awning and a sign drawn for the plaza; `cafe_etoile` is set so a map version can switch on); the apron as an item you can hold.
 
 ---
 

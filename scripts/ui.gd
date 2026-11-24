@@ -298,8 +298,8 @@ func _draw_hotbar() -> void:
 	for i in COLS:
 		var item: String = world.slots[i]
 		_draw_slot(origin + Vector2(i * SLOT, 0), item, 1 if i == world.selected else 0)
-	# Health: ten hearts above the hotbar.
-	for h in 10:
+	# Health: ten hearts above the hotbar (twelve with Quill's 8).
+	for h in world._max_hp():
 		draw_texture_rect_region(_hearts_tex, Rect2(316 - 80 + h * 8, origin.y - 9, 7, 6), Rect2(0.0 if h < world.hp else _hearts_tex.get_width() / 2.0, 0, _hearts_tex.get_width() / 2.0, _hearts_tex.get_height()))
 	# Energy: a bar above the hearts (Stardew-style). It turns red when you are nearly worn out.
 	var e_frac: float = clampf(float(world.energy) / float(world.max_energy), 0.0, 1.0)

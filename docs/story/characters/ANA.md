@@ -48,7 +48,7 @@ All six are playable cutscenes in `scripts/heart_events.gd`. She poses from her 
 - **The second flight's loyalists** now say: "We always knew you were weak. Never once fired on a transport. Ivan covered for you. Ivan's gone."
 - **To test:** in a debug build, **F3** plays the next event in order (Ana's 0 is the forty-second press); it brings Ana in if she hasn't arrived.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
-- **Not in yet:** Wingmate in ship battles; the console as a real upgrade on your ship; the jacket as an item you can wear.
+- **In play since 24 Nov:** Wingmate (+20% evasion and a fold drive charging a fifth faster, in fights; `ship_battle.gd` WINGMATE_X). **Not in yet:** the console as a real upgrade on your ship; the jacket as an item you can wear.
 
 ---
 

@@ -1477,6 +1477,60 @@ func _morning_news() -> void:
 		_toast(news)
 
 
+# S.A.R.A.'s 8, Concierge: talk to her at any of her pads and she sends you to another (the datapad's Shop page
+# lists them, scripts/shops.gd "Concierge"), and each morning she pings your datapad with what is waiting.
+const SARA_PADS := {"top": "Her core, top of the station", "aptPlayer": "Your apartment", "west": "Reception, West Terminal",
+	"main": "The plaza fountain"}
+
+
+func concierge_rows() -> Array:
+	var rows: Array = []
+	for p in MapData.PEOPLE:
+		if str(p[0]) != "Sara":
+			continue
+		var a: String = str(p[1])
+		var here: bool = a == current_area
+		rows.append(["p_Sara", str(SARA_PADS.get(a, a)), "You're here" if here else "", "", [["pad/" + a, "Go", not here]]])
+	return rows
+
+
+func sara_send(area_name: String) -> void:
+	if not _flag("perk_concierge") or _sara_resting():
+		return
+	for p in MapData.PEOPLE:
+		if str(p[0]) != "Sara" or str(p[1]) != area_name:
+			continue
+		var pad := Vector2i(int(p[2]), int(p[3]))
+		var land := pad + Vector2i(0, 2)
+		for off in [Vector2i(0, 2), Vector2i(0, 1), Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 3)]:
+			if _npc_walkable(area_name, pad + off, {}):
+				land = pad + off
+				break
+		if datapad != null:
+			datapad.open_page("HUD")
+		sfx("sara_holo", 1.0, -4.0)
+		_go_to(area_name, land)
+		_toast("S.A.R.A. folds you across the station: %s." % str(SARA_PADS.get(area_name, area_name)).to_lower())
+		return
+
+
+func _sara_pings() -> void:
+	if not _flag("perk_concierge"):
+		return
+	var notes: Array = []
+	var ripe := 0
+	for tile in farm:
+		var c: Dictionary = CROPS.get(str(farm[tile].get("crop", "")), {})
+		if not c.is_empty() and int(farm[tile]["age"]) >= int(c["days"]):
+			ripe += 1
+	if ripe > 0:
+		notes.append("%d crop%s ready to pick" % [ripe, "" if ripe == 1 else "s"])
+	if not rusk_cask.is_empty() and day >= int(rusk_cask.get("ready", day + 1)):
+		notes.append("Rusk's wine is ready")
+	if not notes.is_empty():
+		_toast("S.A.R.A.: " + "; ".join(notes) + ".")
+
+
 # Someone who stays in one place. One person can appear in several places
 # (Sara's holograms) and shares one state.
 # Art can be drawn at any size. This scales a sprite so one frame is `world_width` wide in the world,
@@ -2081,13 +2135,17 @@ func _talk(who: String) -> void:
 
 		_freya_ship_repair()
 	elif SHOP_HELLO.has(who) and _at_workplace(who):
-		_shop_offer(who)
+		_shop_offer(who, first_today)
+	elif who == "Sara" and _flag("perk_concierge"):
+		_say("Sara", ["[happy] Going somewhere? Any pad of mine, door to door."], Callable(shops, "open").bind("Concierge"),
+				"Travel", Callable(self, "_chat").bind("Sara", first_today), "Just talk")
 	else:
-		_chat(who)
+		_chat(who, first_today)
 
 
 # Everyday talk: two chats a day, as in Stardew; business (jobs, shops, quests) and birthdays are not counted.
-func _chat(who: String) -> void:
+# first_today: the first time you've spoken today (_talk has already marked it), when the day line comes first.
+func _chat(who: String, first_today := false) -> void:
 	var st: Dictionary = persons[who]
 	if int(st.get("talks_today", 0)) >= TALKS_PER_DAY and not _special_day(who):
 		_emote(who, &"wait")
@@ -2118,13 +2176,13 @@ const SHOP_HELLO := {
 }
 
 
-func _shop_offer(who: String) -> void:
+func _shop_offer(who: String, first_today := false) -> void:
 	var line: String = SHOP_HELLO[who]
 	if who == "Tikka" and repair_stage < REPAIRS.size():
 		_say(who, [line], Callable(shops, "open").bind(who), "Shop", Callable(self, "_tikka_repair"), "Ship repairs")
 	else:
 		_say(who, [line], Callable(shops, "open").bind(who), "Crack geodes" if who == "Job" else "Shop",
-				Callable(self, "_chat").bind(who), "Just chat")
+				Callable(self, "_chat").bind(who, first_today), "Just chat")
 
 
 # A resident's birthday (scripts/datapad_bridge.gd RESIDENTS) lets you chat as much as you like.
@@ -2326,6 +2384,11 @@ func _start_run() -> void:
 		_toast("Freya tops up the tank: %d fuel" % full_tank)
 		fuel = full_tank
 	run_stops = ShipRuns.make_run(day, ShipData.RING_STOPS, _rings_open(), nest_done, _ooma_out())
+	if _flag("perk_pioneer_stabilizer"):
+		for st in run_stops:
+			if str(st.get("hazard", "")) == "ion_storm":
+				st["about"] = str(st["about"]).replace(str(ShipRuns.HAZARD_ABOUT["ion_storm"]),
+						"An ion storm, but Jorvik's stabilizer keeps your reactor whole.")
 	ShipRuns.place_contracts(run_stops, contracts, run_rng)
 	if _flag("kit_beacon") and not _flag("kit_cache_found"):
 		ShipRuns.place_cache(run_stops, run_rng)          # Kit's 4: the smuggler's beacon he saw
@@ -2732,6 +2795,8 @@ func _my_fight(base: Dictionary) -> Dictionary:
 	f["player_def"] = _ship_def()
 	f["augments"] = augments.duplicate()
 	f["self_defence"] = _flag("perk_self_defence")      # Garrick's 8: boarders on your ship take more (ship_battle.gd)
+	f["wingmate"] = _flag("perk_wingmate")              # Ana's 8: more evasion, a faster fold drive
+	f["stabilizer"] = _flag("perk_pioneer_stabilizer")  # Freya's 6: an ion storm doesn't halve your reactor
 	if active_ship != "starter":
 		f["player_ship"] = active_ship
 		f["crew"] = _crew_for_run()
@@ -3222,7 +3287,7 @@ func _ship_lost() -> void:
 	var lost: int = mini(credits * SHIP_LOSS_SHARE / 100, 150)
 	_money(-(lost), "Lost when your ship was beaten")
 	_home_at_eight()
-	hp = maxi(1, MAX_HP / 2)
+	hp = maxi(1, _max_hp() / 2)
 	var bed: Array = MapData.MEDBAY
 	_go_to(str(bed[0]), Vector2i(int(bed[1]), int(bed[2])), false)
 	_snap_residents()
@@ -3587,7 +3652,7 @@ func _use_tool() -> void:
 			if not player.tool_action(_tool_art(item), "laser"):
 				player.show_tool(_item_icon(item))
 			sfx("zap", 0.7, -6.0)
-			energy = maxi(0, energy - shops.tool_energy(CUT_ENERGY))
+			energy = maxi(0, energy - _mining_energy())
 	elif use == "weapon":
 		if swing_cd > 0.0:
 			return
@@ -3715,7 +3780,7 @@ func _mine(t: Dictionary) -> void:
 		else:
 			s.frame = 1
 	_give(item, amount)
-	energy = maxi(0, energy - shops.tool_energy(CUT_ENERGY))
+	energy = maxi(0, energy - _mining_energy())
 	if current_area == "mine" or current_area == "tunnels":
 		shops.maybe_geode(current_area)
 	if bool(node.get("cav", false)) and item == "stone" and int(node["hits"]) <= 0:
@@ -4247,6 +4312,34 @@ func _max_energy() -> int:
 	return MAX_ENERGY + (WELL_FED_ENERGY if _flag("perk_well_fed") else 0)
 
 
+# Quill's 8, Guardian Medic: two more hearts of health (and collapsing costs nothing, in _collapse).
+const GUARDIAN_HP := 2
+
+
+func _max_hp() -> int:
+	return MAX_HP + (GUARDIAN_HP if _flag("perk_guardian_medic") else 0)
+
+
+# Job's 8, Bedrock Strength: mining costs a fifth less energy. Energy is whole points, so the fifth saved on each
+# cut adds up and comes off a point at a time.
+var _mining_saved := 0.0
+
+
+func _mining_energy() -> int:
+	var cost: int = shops.tool_energy(CUT_ENERGY)
+	if _flag("perk_bedrock_strength"):
+		_mining_saved += cost * 0.2
+		if _mining_saved >= 1.0:
+			_mining_saved -= 1.0
+			cost -= 1
+	return cost
+
+
+# Cooked meals: dishes from your kitchenette, and Jasper's French dishes (for Jasper & Evarra's Family Table).
+func _cooked(item: String) -> bool:
+	return not ShopData.cooking_for(item).is_empty() or ShopData.RECIPE_NAMES.has(item)
+
+
 # ---------------------------------------------------------------- the shipping crate (Zachary, 23 Nov)
 # The crate by your front door, as in Stardew Valley: put in anything that sells (ShopData.VALUE) and Bram collects
 # it overnight. The crate pays full value, the most anything sells for (Zachary, 23 Nov: "shipping bin pays most");
@@ -4560,9 +4653,10 @@ func hurt_player(amount: int, from: Vector2) -> void:
 func _collapse() -> void:
 	sfx("pass_out")
 	_clear_cavern()
-	hp = MAX_HP / 2
+	hp = _max_hp() / 2
 	energy = maxi(energy, MAX_ENERGY / 4)
-	var lost: int = credits / 10
+	var guardian: bool = _flag("perk_guardian_medic")       # Quill's 8: no charge for the stitches
+	var lost: int = 0 if guardian else credits / 10
 	_money(-(lost), "Dropped when you collapsed")
 	minutes = minf(minutes + 120.0, DAY_END - 1.0)
 	player.set_carrying(false)
@@ -4574,6 +4668,12 @@ func _collapse() -> void:
 	_reset_enemies()
 	if persons.has("Maren"):
 		persons["Maren"]["met"] = true
+	if guardian:
+		_say("Maren", [
+			"[sad] Easy. Vzz'ket carried you in from the tunnels. You have been out for two hours.",
+			"No charge. Quill has you on his list, and he looked in every ten minutes. He would like you to stop doing this.",
+		])
+		return
 	_say("Maren", [
 		"[sad] Easy. Vzz'ket carried you in from the tunnels. You have been out for two hours.",
 		"[angry] I have taken %d credits for the stitches. Buy a medpack next time. It is cheaper than I am." % lost,
@@ -4590,14 +4690,17 @@ func _eat_sound(item: String) -> String:
 func _eat(item: String) -> void:
 	var info: Dictionary = ItemData.ITEMS[item]
 	var gives_energy: int = int(info.get("energy", 0))
-	if hp >= MAX_HP and (gives_energy == 0 or energy >= _max_energy()) and not ShopData.DRINK_EFFECTS.has(item):
+	if hp >= _max_hp() and (gives_energy == 0 or energy >= _max_energy()) and not ShopData.DRINK_EFFECTS.has(item):
 		_toast("You're not hurt" if gives_energy == 0 else "You're not hungry")
 		return
 	_give(item, -1)
 	var heal: int = int(info.get("heal", 5))
 	if item == "medpack" and _flag("perk_advanced_med_stims"):
 		heal *= 2                    # Maren's 8: she tops up your medpacks the old ship's way
-	hp = mini(MAX_HP, hp + heal)
+	if _flag("perk_family_table") and _cooked(item):
+		heal = int(ceil(heal * 1.25))                  # Jasper & Evarra's 10: cooked meals do a quarter more
+		gives_energy = int(ceil(gives_energy * 1.25))
+	hp = mini(_max_hp(), hp + heal)
 	energy = mini(_max_energy(), energy + gives_energy)
 	sfx(_eat_sound(item))
 	# Food is eaten with the Stardew-style animation (player.play_eating); the medpack is held up instead.
@@ -4905,7 +5008,7 @@ func _pass_out() -> void:
 	var lost: int = mini(credits / 10, 100)
 	_money(-(lost), "Dropped when you passed out")
 	_end_day()
-	hp = MAX_HP / 2
+	hp = _max_hp() / 2
 	energy = MAX_ENERGY / 2
 	var lines: Array = ["[sad] You were found asleep on your feet at one in the morning. Someone carried you to bed."]
 	if lost > 0:
@@ -5012,7 +5115,7 @@ func _next_day() -> void:
 	shops.drink_left = 0.0             # a drink wears off overnight
 	shops.drink = ""
 	shops._apply_drink()
-	hp = MAX_HP
+	hp = _max_hp()
 	max_energy = _max_energy()
 	energy = max_energy
 	_clear_cavern()
@@ -5033,6 +5136,7 @@ func _next_day() -> void:
 	if post > 0:
 		sfx("mail_waiting")
 	_morning_news()
+	_sara_pings()
 	for id in repaired:
 		_toast("S.A.R.A.: repairs finished overnight. %s: open." % str(StationRepair.REPAIRS[id]["name"]))
 
@@ -6042,6 +6146,41 @@ func _cav_band(n: int) -> String:
 	return "rock" if n <= 15 else ("lush" if n <= 30 else "steam")
 
 
+# Vzz'ket's 8, the Cavern Monster Radar: on each floor S.A.R.A. names what is waiting on the floor below. The
+# floor below's creatures are picked then (cav_next), so the warning is true when you get there.
+var cav_next := {}
+const MOB_NAMES := {"bug": ["bug", "bugs"], "lizard": ["rock lizard", "rock lizards"], "echo_bat": ["echo bat", "echo bats"],
+	"spore_crawler": ["spore crawler", "spore crawlers"], "vent_crab": ["vent crab", "vent crabs"]}
+
+
+func _cav_mob_kinds(n: int) -> Array:
+	if int(cav_next.get("floor", -1)) == n:
+		return cav_next["kinds"]
+	var kinds: Array = CAV_MOBS[_cav_band(n)]
+	var out: Array = []
+	for i in mini(3 + n / 8, 8):
+		out.append(kinds[randi() % kinds.size()])
+	return out
+
+
+func _radar_ping(below: int) -> void:
+	if not _flag("perk_monster_radar"):
+		return
+	if below >= int(MapData.CAVERNS["last"]):
+		if not leviathan_slain:
+			_toast("S.A.R.A.: below you is the Leviathan. Something that big doesn't need a motion sensor.")
+		return
+	cav_next = {"floor": below, "kinds": _cav_mob_kinds(below)}
+	var counts := {}
+	for k in cav_next["kinds"]:
+		counts[str(k)] = int(counts.get(str(k), 0)) + 1
+	var parts: Array = []
+	for k in counts:
+		var names: Array = MOB_NAMES.get(k, [k, k + "s"])
+		parts.append("%d %s" % [int(counts[k]), str(names[0] if int(counts[k]) == 1 else names[1])])
+	_toast("S.A.R.A.: floor %d below: %s." % [below, ", ".join(parts)])
+
+
 func _cavern_gate() -> void:
 	if job_quest < 5:
 		_say("Vzz'ket", ["[angry] The caverns stay shut. Job wants the north tunnels cleared first.", "Clear them. Then we will see what you are."])
@@ -6111,6 +6250,7 @@ func _enter_cavern(n: int) -> void:
 	_toast(note)
 	if n < last:
 		_fill_cavern(key, info, n, band)
+		_radar_ping(n + 1)
 	elif not leviathan_slain:
 		_wake_leviathan(key)
 	else:
@@ -6120,7 +6260,8 @@ func _enter_cavern(n: int) -> void:
 func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
 	var spots: Array = info["spots"].duplicate()
 	spots.shuffle()
-	var mobs: int = mini(3 + n / 8, 8)
+	var mob_kinds: Array = _cav_mob_kinds(n)
+	var mobs: int = mob_kinds.size()
 	var veins: int = randi_range(6, 10)
 	cav_rocks = randi_range(40, 55)
 	cav_rocks_left = cav_rocks
@@ -6140,8 +6281,7 @@ func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
 		var tile := Vector2i(int(s[0]), int(s[1]))
 		if i < mobs:
 			var en = EnemyScript.new()
-			var kinds: Array = CAV_MOBS[band]
-			en.setup(self, kinds[randi() % kinds.size()], key, Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
+			en.setup(self, str(mob_kinds[i]), key, Vector2(tile.x * TILE + 8, tile.y * TILE + 12))
 			en.boost(float(power[0]), int(power[1]), float(power[2]))
 			actors.add_child(en)
 			enemies.append(en)

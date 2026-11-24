@@ -29,7 +29,7 @@ All three are playable cutscenes in `scripts/heart_events.gd` (`siblings_4`, `si
 - **Animated (Zachary, 23 Nov):** a new scene step, `["fx", kind, x, y, spread]`, draws bees, fireflies or steam in code (`scripts/scene_fx.gd`) until there's art. Steam rises from the mugs in 4; in 6 the bees buzz in the glass hive, pour out round the flowers (and find Jasper's helmet if you told him to keep it on), then settle on Evarra's hand; fireflies drift over the banquet in 10, with the bees joining them once there are bees. Ana's soup in her 0 steams too.
 - **To test:** in a debug build, **F3** plays the next event in order; the side arc comes after Ana's six.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
-- **Not in yet:** Wildflower Honey production (the bees), the Starlight Soufflé recipe and its Grand Hotel Inspection bonus, the Family Table perk's effect on meals, and the framed photo above the mess hall counter (art). The apiary box and glass hive in 6 are narrated (art).
+- **Not in yet:** Wildflower Honey production (the bees), the Starlight Soufflé recipe and its Grand Hotel Inspection bonus, (the Family Table perk works since 24 Nov: cooked meals do a quarter more, `main.gd _eat`), and the framed photo above the mess hall counter (art). The apiary box and glass hive in 6 are narrated (art).
 - **Shared place:** Freya's 8 is also in the West Terminal's star dome, on its bench; the siblings' 4 is at the glass by the telescope.
 
 ---

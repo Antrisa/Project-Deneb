@@ -10,32 +10,32 @@ Every perk and keepsake the heart events give, as the datapad's **Perks** tab sh
 
 | Perk | From | Given by | What it does | In the game? | Icon |
 |---|---|---|---|---|---|
-| Pioneer Stabilizer (`pioneer_stabilizer`) | Freya | Freya 6, Test Flight | Jorvik's FTL stabilizer, finished at last. Your ship's jumps run steadier. | Not yet | Jorvik's FTL stabilizer: brass gimbal rings round a glowing core |
-| Master Mechanic (`master_mechanic`) | Freya | Freya 8, Under the Star Dome | 20% off ship and tool upgrades. | Not yet | Freya's wrench, taped grip |
+| Pioneer Stabilizer (`pioneer_stabilizer`) | Freya | Freya 6, Test Flight | Jorvik's FTL stabilizer, finished at last: an ion storm no longer halves your reactor. | Yes | Jorvik's FTL stabilizer: brass gimbal rings round a glowing core |
+| Master Mechanic (`master_mechanic`) | Freya | Freya 8, Under the Star Dome | 20% off ship upgrades. | Yes | Freya's wrench, taped grip |
 | Parisian Bistro Menu (`parisian_bistro_menu`) | Jasper | Jasper 6, Taste of Paris | Jasper's bistro dishes, on the mess hall's menu. | Not yet | A bistro chalkboard sign |
-| Sous-Chef's Blessing (`sous_chefs_blessing`) | Jasper | Jasper 8, A Table of My Own | Food buffs last 20% longer. | Not yet | Jasper's balloon whisk |
+| Sous-Chef's Blessing (`sous_chefs_blessing`) | Jasper | Jasper 8, A Table of My Own | Food and drink buffs last 20% longer. | Yes | Jasper's balloon whisk |
 | Honey-Lavender Brioche (`honey_lavender_brioche`) | Evarra | Evarra 6, A Hem of Wildflowers | A recipe: Evarra's brioche, once there's honey. | Not yet | A brioche with a sprig of lavender |
 | Green Thumb (`green_thumb`) | Evarra | Evarra 8, Wildflower Crown | Better-quality crops. | Not yet | Evarra's wildflower crown |
 | Wildflower Honey (`wildflower_honey`) | Jasper & Evarra | Jasper & Evarra 6, Operation Honeybee | The garden dome's bees make honey. | Not yet | A jar of wildflower honey, cloth lid |
 | Starlight Souffle (`starlight_souffle`) | Jasper & Evarra | Jasper & Evarra 8, A Table for the Whole Sector | A recipe: Starlight Souffle & Lunar Truffle Glaze, a big boost at the Grand Hotel Inspection. | Not yet | A starlight souffle in its ramekin |
-| Family Table (`family_table`) | Jasper & Evarra | Jasper & Evarra 8, A Table for the Whole Sector | Cooked meals restore 25% more health and energy. | Not yet | A place set at the family table |
-| Bedrock Strength (`bedrock_strength`) | Job | Job 8, Quiet Ground | Mining uses 20% less energy, and more geodes turn up. | Not yet | Job's pick |
+| Family Table (`family_table`) | Jasper & Evarra | Jasper & Evarra 8, A Table for the Whole Sector | Cooked meals restore 25% more health and energy. | Yes | A place set at the family table |
+| Bedrock Strength (`bedrock_strength`) | Job | Job 8, Quiet Ground | Mining uses 20% less energy, and more geodes turn up. | Yes | Job's pick |
 | Xeno-Salve (`xeno_salve`) | Quill | Quill 4, Field Notes in the Dark | A recipe: Xeno-Salve restores full health and cures what ails you. | Not yet | A jar of glowing xeno-salve |
-| Guardian Medic (`guardian_medic`) | Quill | Quill 8, Heartbeat | +20 max health, and collapsing costs no Scrip. | Not yet | A heart with a medic's cross |
+| Guardian Medic (`guardian_medic`) | Quill | Quill 8, Heartbeat | Two more hearts of health, and collapsing costs no Scrip. | Yes | A heart with a medic's cross |
 | Star-Knight Aegis (`star_knight_aegis`) | Ix'ali | Ix'ali 6, Sparring at the Cavern Gate | Ix'ali can forge the Star-Knight Aegis armour tier. | Not yet | A Star-Knight helm, violet crest |
-| Chivalric Guard (`chivalric_guard`) | Ix'ali | Ix'ali 8, The Oath | Take 20% less damage. | Not yet | Ix'ali's shield, a heart on it |
+| Chivalric Guard (`chivalric_guard`) | Ix'ali | Ix'ali 8, The Oath | Take 20% less damage. | Yes | Ix'ali's shield, a heart on it |
 | Junior Scout Reports (`junior_scout_reports`) | Artie | Artie 4, The Junior Scouts | The Junior Scouts mark rare finds on your map. | Not yet | The scouts' folded map, marked with an X |
-| Thrifty (`thrifty`) | Artie | Artie 8, Campfire Under Glass | Recycling and geodes sometimes give rare items. | Not yet | Artie's enamel camp mug, steaming |
-| Five-Star Partner (`five_star_partner`) | Stu | Stu 8, After-Hours Lobby Shift | +20% hotel income and tips. | Not yet | Stu's room key, its bow a five-pointed star |
-| Wingmate (`wingmate`) | Ana | Ana 8, Co-Pilot's Promise | +20% ship evasion, and faster FTL travel. | Not yet | Ana's pilot wings pin |
-| Concierge (`concierge`) | S.A.R.A. | S.A.R.A. 8, Night Shift | S.A.R.A. pings your datapad, and can send you to any of her pads. | Not yet | One of S.A.R.A.'s holo pads, her light above it |
+| Thrifty (`thrifty`) | Artie | Artie 8, Campfire Under Glass | Geodes sometimes hold rare finds. (Recycling too, once the station has a recycler.) | Yes | Artie's enamel camp mug, steaming |
+| Five-Star Partner (`five_star_partner`) | Stu | Stu 8, After-Hours Lobby Shift | +20% hotel income and tips. | Yes | Stu's room key, its bow a five-pointed star |
+| Wingmate (`wingmate`) | Ana | Ana 8, Co-Pilot's Promise | +20% ship evasion, and your fold drive charges a fifth faster. | Yes | Ana's pilot wings pin |
+| Concierge (`concierge`) | S.A.R.A. | S.A.R.A. 8, Night Shift | S.A.R.A. sends you to any of her pads, and pings you each morning with what's ready. | Yes | One of S.A.R.A.'s holo pads, her light above it |
 | Relic Appraisal (`relic_appraisal`) | Tar'Besh | Tar'Besh 8, Every Kind of Mind | +25% Scrip on museum donations. | Not yet | Tar'Besh's appraiser's loupe |
 | Deep-Sea Sonar Lure (`deep_sea_sonar_lure`) | Zaas | Zaas 8, Captain of the Deep | A lure for the deep water, for when there's fishing. | Not yet | Zaas's sonar lure, a fish with a glowing eye |
-| Cavern Monster Radar (`monster_radar`) | Vzz'ket | Vzz'ket 8, The Watch Changes | S.A.R.A. warns you what's waiting on the floor below. | Not yet | S.A.R.A.'s motion-sensor scope, a blip on it |
+| Cavern Monster Radar (`monster_radar`) | Vzz'ket | Vzz'ket 8, The Watch Changes | S.A.R.A. warns you what's waiting on the floor below. | Yes | S.A.R.A.'s motion-sensor scope, a blip on it |
 | Chitin-Piercer Traps (`chitin_piercer_traps`) | Vzz'ket & Rusk | Vzz'ket & Rusk 8, Sentinels of Echo Landing | Ix'ali's traps at the cavern gate. | Not yet | Ix'ali's spike trap |
 | Moogli Trade Beacon (`moogli_trade_beacon`) | Bram | Bram 8, Paid in Full | On a free flight, spend 1 fuel to call the Ollo family trader to where you are. | Yes | Bram's grandfather's trade beacon, a lantern |
 | Smelter Overclock (`smelter_overclock`) | Tikka | Tikka 8, Overclock | Every furnace smelts in half the time. | Yes | Tikka's regulator coil, copper wire wound fine |
-| Void-Silk Linens (`void_silk_linens`) | Sesska | Sesska 8, Void-Silk | Luxury linens for the hotel's beds, once it takes paying guests. | Not yet | A void-silk pillowcase, the glowing thread through it |
+| Void-Silk Linens (`void_silk_linens`) | Sesska | Sesska 8, Void-Silk | Luxury linens for the hotel's guest beds: every guest room is more comfortable. | Yes | A void-silk pillowcase, the glowing thread through it |
 | Advanced Med-Stims (`advanced_med_stims`) | Maren | Maren 8, Med-Stims | Medpacks heal twice as much. | Yes | Maren's med-stim, a red dose in it |
 | Lore Compendium (`library_lore_compendium`) | Owen | Owen 8, The Compendium | The codexes you find will fill it in. | Not yet | Owen's hide-bound ledger with tabs down the side |
 | Heirloom Chair (`heirloom_chair`) | Tobbin | Tobbin 8, A Chair That Stays | The recipe: 3 real-wood planks and a hide, at a manufacturing hub. | Yes | Tobbin's chisel |
@@ -60,6 +60,17 @@ Every perk and keepsake the heart events give, as the datapad's **Perks** tab sh
 | Flight Jacket (`flight_jacket`) | Ana | Ana 10, True North | A flight jacket in your size, Sesska's stitching. Hers has both your initials on the collar. | Ana's flight jacket |
 | Family Photo (`family_photo`) | Jasper & Evarra | Jasper & Evarra 8, A Table for the Whole Sector | Jasper, Evarra and you, above the mess hall counter. | The family photo: Jasper, Evarra and you |
 
+## Where each working perk is in the code
+
+- Moogli Trade Beacon: `ship_map.gd` (Call trader). Smelter Overclock: `main.gd _furnace_use`. Advanced Med-Stims, Family Table: `main.gd _eat`. Heirloom Chair: `item_data.gd` recipe with `learn`. Hydro-Boost: `main.gd _grow_crops`. Self-Defence Class, Wingmate, Pioneer Stabilizer: `main.gd _my_fight` passes them to `ship_battle.gd` (and the jump map's ion-storm note). Well Fed, Guardian Medic: `main.gd _max_energy`, `_max_hp`, `_collapse`.
+- Master Mechanic: `ship_upgrades.gd _discount` (tools are crafted, not bought, so it's ship upgrades only). Sous-Chef's Blessing: `shops.gd start_drink` (drinks are the only buffs so far). Bedrock Strength: `main.gd _mining_energy`, `shops.gd maybe_geode`. Chivalric Guard: `shops.gd damage_taken`. Thrifty: `shops.gd roll_geode`.
+- Five-Star Partner, Void-Silk Linens: `hotel.gd base_pay`, `grade` (Five-Star replaced upstream's S.A.R.A. bonus, which counted her hearts on the old 5-a-heart scale). Concierge: `main.gd concierge_rows`, `sara_send`, `_sara_pings`, `shops.gd` "Concierge". Cavern Monster Radar: `main.gd _radar_ping`, `_cav_mob_kinds`.
+
 ## Still to do
 
-7 of the 32 perks work so far. The rest need wiring up, in batches; some wait for systems that aren't in the game yet (honey and bees, fishing, codexes, crop quality).
+20 of the 32 perks work so far. The rest wait for something that isn't in the game yet:
+
+- Relic Appraisal: museum donations don't pay Scrip yet, so there's nothing for it to raise.
+- Thrifty's recycling half: there's no recycler.
+- Honey and bees: Wildflower Honey, Honey-Lavender Brioche, Starlight Souffle. Fishing: Deep-Sea Sonar Lure. Codexes: Lore Compendium. Crop quality: Green Thumb.
+- New recipes, items or a menu: Parisian Bistro Menu, Xeno-Salve, Star-Knight Aegis. The map: Junior Scout Reports. The cavern gate: Chitin-Piercer Traps.
