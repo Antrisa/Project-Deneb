@@ -6,6 +6,8 @@ So sixteen heart events now send a letter that comes with the next morning's pos
 
 ## How it works
 
+- **Your name:** `{name}` in a letter (or any line of dialogue) becomes the name you gave your character, or Pilot (upstream, 24 Nov).
+
 - **Sending:** a heart event sends a letter with a `["mail", id, days]` step (`scripts/cutscene.gd`), which calls `main.gd send_mail(id, days)`. `days` 1 is the next morning. A letter only ever comes once, however often the event plays (F3).
 - **A letter sent from inside a choice** only comes if you made that choice. Four do this: Zaas writes after Job's 4 only if you dug out his crate, Tar'Besh writes after his 4 only if you told him he lived anyway, Freya writes after Tikka's 4 only if you let her take the lamp, and Sesska's cap after her 2 doesn't come if you told her it was only a jacket. Missing a letter is the minor consequence.
 - **Gifts:** a letter's optional `"gift": {item: count}` goes in your pack the first time you open it (`main.gd read_letter`), with a toast ("In the envelope: Medpack x2"). The letter shows it along the foot of its page: ENCLOSED, the item's picture and count, and IN YOUR PACK (`scripts/mail_reader.gd _paint_gift`). Gifts are small and use items that already exist, so no new art is needed.
@@ -298,7 +300,7 @@ Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The
 
 *From Sesska, the next morning. Enclosed: Knit cap x1. Not if you told her it was only a jacket.*
 
-> Dear pilot,
+> Dear {name},
 >
 > There were offcuts from your jacket. There are always offcuts. Offcuts become caps.
 >
@@ -310,7 +312,7 @@ Upstream's own letters are unchanged: S.A.R.A.'s welcome (day 1), Vzz'ket's "The
 
 *From both of them, the next morning. Enclosed: Coil wire x2.*
 
-> Pilot,
+> {name},
 >
 > The music box played all night. Tikka checked it twice, then a third time, and then I hid it. - S.
 >

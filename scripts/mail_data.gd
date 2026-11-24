@@ -290,7 +290,7 @@ const LETTERS := {
 		"from": "Sesska",
 		"title": "Offcuts",
 		"body": [
-			"Dear pilot,",
+			"Dear {name},",
 			"There were offcuts from your jacket. There are always offcuts. Offcuts become caps.",
 			"I guessed the size of your head. My guesses are good. If it doesn't fit, your head is wrong.",
 		],
@@ -302,7 +302,7 @@ const LETTERS := {
 		"from": "Tikka and Sesska",
 		"title": "Forty years and a day",
 		"body": [
-			"Pilot,",
+			"{name},",
 			"The music box played all night. Tikka checked it twice, then a third time, and then I hid it. - S.",
 			"Enclosed, the highest honour I give: coil wire. Sesska says this is not how thanks work. Sesska is wrong. - T.",
 		],

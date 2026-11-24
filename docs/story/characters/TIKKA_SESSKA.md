@@ -32,7 +32,7 @@ Both are playable cutscenes in `scripts/heart_events.gd` (`forty_4`, `forty_6`),
 - **SESSKA:** "This suit is a disgrace. The lining is older than Freya. I'll line it in bug silk: warm, soft, and it moves when you move."
 - **TIKKA:** "[angry] Bug silk snags. I need a tight weave. Three-ply. Snag-proof. Ugly is fine. Ugly is ideal."
 - **SESSKA:** "Ugly is not fine. You'll be wearing it. I'll be looking at you wearing it."
-- **TIKKA:** "Pilot. You decide."
+- **TIKKA:** "{name}. You decide."
 - **CHOICE:**
   - **"Both. A tight weave outside, bug silk inside."** (+High Friendship)
     - **TIKKA:** "...That is a correct answer. I hate it. It's correct."
@@ -58,13 +58,13 @@ Both are playable cutscenes in `scripts/heart_events.gd` (`forty_4`, `forty_6`),
 **Trigger:** Engineering, Tikka's bench, 08:00–12:00 on a weekday, after 4; the evening is in the hotel's dining room, or the mess hall before the hotel opens. *(Claude)*
 
 - *[Engineering, mid-morning. Tikka is at her bench, building something very small, very fast, with all four hands.]*
-- **TIKKA:** "[surprised] Pilot! Good. You. Come here. Don't tell Sesska you saw me."
+- **TIKKA:** "[surprised] {name}! Good. You. Come here. Don't tell Sesska you saw me."
 - **TIKKA:** "Forty years. Tonight. I had it in my diary. My diary was under the core manifold schematics. I found it this morning."
 - **TIKKA:** "I have her present. Nearly. A music box: coil wire, wound fine, every note tuned by hand. It plays the song from our wedding. Nearly."
 - **TIKKA:** "[sad] What I don't have is a dinner. Or a table. Or a plan. I have a music box and nine hours."
 - **CHOICE:**
   - **"Leave the dinner to me. You finish the box."** (+High Friendship)
-    - **TIKKA:** "[happy] Load-sharing. You'd make a good engineer, pilot. Go. Go!"
+    - **TIKKA:** "[happy] Load-sharing. You'd make a good engineer, {name}. Go. Go!"
   - **"Just tell her you forgot. She'll understand."**
     - **TIKKA:** "[angry] She'll understand. That is the problem. She always understands."
     - **TIKKA:** "[sad] ...Will you help anyway?"
@@ -84,7 +84,7 @@ Both are playable cutscenes in `scripts/heart_events.gd` (`forty_4`, `forty_6`),
 - *[The music box plays a thin, bright tune. Every note is exactly in tune. Of course it is.]*
 - **SESSKA:** "[sad] Our song. ...You tuned every note."
 - **TIKKA:** "[happy] Twice. Then a third time. Because I like you."
-- **SESSKA:** "Pilot. Rusk sent a bottle, and someone has to make the toast. Tikka will only talk about the box."
+- **SESSKA:** "{name}. Rusk sent a bottle, and someone has to make the toast. Tikka will only talk about the box."
 - **CHOICE:**
   - **"To forty years, and forty more."** (+High Friendship)
     - **SESSKA:** "[happy] Forty more. I'll hold her to it. I'll hold her to both."

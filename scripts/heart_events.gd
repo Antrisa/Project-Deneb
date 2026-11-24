@@ -3545,7 +3545,7 @@ const EVENTS := {
 			["walk", "player", 64, 36], ["face", "player", "l"],
 			["pose", "Tikka", ""], ["face", "Tikka", "player"],
 			["emote", "Tikka", "surprise"], ["pose", "Tikka", "jump"],
-			["say", "Tikka", ["[surprised] Pilot! It's late. Why are you here? ...Why am I here? Don't answer that."]],
+			["say", "Tikka", ["[surprised] {name}! It's late. Why are you here? ...Why am I here? Don't answer that."]],
 			["pose", "Tikka", "talk"],
 			["say", "Tikka", ["Listen. Under the hum. Hear it? One flat note. A valve on the manifold is a hair out, and the whole station is singing a quarter-tone flat.",
 				"S.A.R.A. says the readings are fine. The readings are fine. The note is not."]],
@@ -3605,7 +3605,7 @@ const EVENTS := {
 			["say", "Tikka", ["And I'll do it in autumn. Kettles are seasonal."]],
 			["walk", "player", 80, 128], ["face", "player", "l"],
 			["emote", "Tikka", "hello"],
-			["say", "Tikka", ["Pilot. If you're in the queue, you're behind Pip. Pip's drone is a disaster."]],
+			["say", "Tikka", ["{name}. If you're in the queue, you're behind Pip. Pip's drone is a disaster."]],
 			["emote", "Pip", "frustrated"],
 			["say", "Pip", ["[angry] It's not a disaster, it's a prototype!"]],
 			["face", "Saffi", "player"],
@@ -3721,7 +3721,7 @@ const EVENTS := {
 			["say", "", ["Your front door, Sunday morning. Tikka is waiting on the porch with a toolbag. A little way off, Sesska is waiting with a picnic basket and a look."]],
 			["walk", "player", 59, 58],
 			["emote", "Tikka", "hello"], ["pose", "Tikka", "wave"],
-			["say", "Tikka", ["[happy] Pilot! Good morning. This is a visit. I'm visiting."]],
+			["say", "Tikka", ["[happy] {name}! Good morning. This is a visit. I'm visiting."]],
 			["pose", "Tikka", ""],
 			["say", "Sesska", ["It is a visit with a toolbag."]],
 			["face", "Tikka", "Sesska"],
@@ -3748,7 +3748,7 @@ const EVENTS := {
 					["emote", "Tikka", "joy"],
 					["say", "Tikka", ["[happy] I could!"]],
 					["emote", "Sesska", "frustrated"],
-					["say", "Sesska", ["[angry] She could not. Pilot."]],
+					["say", "Sesska", ["[angry] She could not. {name}."]],
 					["say", "Tikka", ["[sad] ...I could not. Sorry. It's Sunday."]],
 					["friendship", "Sesska", -20]]}]],
 			["walks", [["Tikka", 55, 77], ["Sesska", 56, 78]]],
@@ -3816,7 +3816,7 @@ const EVENTS := {
 			["sfx", "craft"],
 			["walk", "player", 127, 72], ["face", "player", "l"],
 			["pose", "Sesska", ""], ["face", "Sesska", "player"],
-			["say", "Sesska", ["[happy] Pilot. You're in my light. Stay, stay. The light out here is terrible anyway."]],
+			["say", "Sesska", ["[happy] {name}. You're in my light. Stay, stay. The light out here is terrible anyway."]],
 			["pose", "Sesska", "talk"],
 			["say", "Sesska", ["A window onto a corridor. I've decided: if the street won't come to the window, the loom goes out to the street.",
 				"And now that I'm out here, a problem. Every Arachnay town has its own pattern. Arach Minor's is the river and its seven bridges.",
@@ -3831,7 +3831,7 @@ const EVENTS := {
 			["say", "Kit", ["Put a bug on it! A really big one!"]],
 			["say", "Sesska", ["[happy] Vzz'ket would approve. Everybody else would sit somewhere else at dinner."]],
 			["face", "Sesska", "player"],
-			["say", "Sesska", ["Pilot. What does the Landing look like, to you? One thing. I'll weave it in."]],
+			["say", "Sesska", ["{name}. What does the Landing look like, to you? One thing. I'll weave it in."]],
 			["choose", [
 				{"text": "The ring of the station, with the moon underneath.", "friendship": 60, "steps": [
 					["emote", "Sesska", "joy"],
@@ -3939,7 +3939,7 @@ const EVENTS := {
 					["say", "Sesska", ["Kept things are only kept. Used things are loved."]]]},
 				{"text": "What would void-silk sell for?", "steps": [
 					["emote", "Sesska", "frustrated"],
-					["say", "Sesska", ["[angry] You can sleep on it, pilot. That's what it's for."]],
+					["say", "Sesska", ["[angry] You can sleep on it, {name}. That's what it's for."]],
 					["friendship", "Sesska", -20]]}]],
 			["perk", "void_silk_linens", "Perk: Void-Silk Luxury Linens (for the hotel's beds, once it takes paying guests)"],
 			["pose", "Tikka", ""], ["face", "Tikka", "r"], ["emote", "Tikka", "surprise"],
@@ -3972,7 +3972,7 @@ const EVENTS := {
 			["say", "Sesska", ["Ugly is not fine. You'll be wearing it. I'll be looking at you wearing it."]],
 			["face", "Tikka", "player"], ["face", "Sesska", "player"],
 			["emote", "Tikka", "question"], ["emote", "Sesska", "question"],
-			["say", "Tikka", ["Pilot. You decide."]],
+			["say", "Tikka", ["{name}. You decide."]],
 			["choose", [
 				{"text": "Both. A tight weave outside, bug silk inside.", "friendship": 60, "steps": [
 					["emote", "Tikka", "surprise"],
@@ -4018,7 +4018,7 @@ const EVENTS := {
 			["walk", "player", 54, 10], ["face", "player", "l"],
 			["pose", "Tikka", ""], ["face", "Tikka", "player"],
 			["emote", "Tikka", "surprise"],
-			["say", "Tikka", ["[surprised] Pilot! Good. You. Come here. Don't tell Sesska you saw me."]],
+			["say", "Tikka", ["[surprised] {name}! Good. You. Come here. Don't tell Sesska you saw me."]],
 			["pose", "Tikka", "talk"],
 			["say", "Tikka", ["Forty years. Tonight. I had it in my diary. My diary was under the core manifold schematics. I found it this morning.",
 				"I have her present. Nearly. A music box: coil wire, wound fine, every note tuned by hand. It plays the song from our wedding. Nearly.",
@@ -4027,7 +4027,7 @@ const EVENTS := {
 			["choose", [
 				{"text": "Leave the dinner to me. You finish the box.", "friendship": 60, "steps": [
 					["emote", "Tikka", "joy"],
-					["say", "Tikka", ["[happy] Load-sharing. You'd make a good engineer, pilot. Go. Go!"]]]},
+					["say", "Tikka", ["[happy] Load-sharing. You'd make a good engineer, {name}. Go. Go!"]]]},
 				{"text": "Just tell her you forgot. She'll understand.", "steps": [
 					["emote", "Tikka", "frustrated"],
 					["say", "Tikka", ["[angry] She'll understand. That is the problem. She always understands.", "[sad] ...Will you help anyway?"]]]}]],
@@ -4071,7 +4071,7 @@ const EVENTS := {
 			["pose", "Sesska", ""],
 			["say", "Tikka", ["[happy] Twice. Then a third time. Because I like you."]],
 			["face", "Tikka", "player"], ["face", "Sesska", "player"],
-			["say", "Sesska", ["Pilot. Rusk sent a bottle, and someone has to make the toast. Tikka will only talk about the box."]],
+			["say", "Sesska", ["{name}. Rusk sent a bottle, and someone has to make the toast. Tikka will only talk about the box."]],
 			["choose", [
 				{"text": "To forty years, and forty more.", "friendship": 60, "steps": [
 					["emote", "Tikka", "love"], ["emote", "Sesska", "love"],

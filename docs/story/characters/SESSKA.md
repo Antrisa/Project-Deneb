@@ -75,7 +75,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`sesska_2` to `ses
 **Trigger:** Her loom on the promenade outside the shop, 13:00–17:00, Monday to Saturday, after 2. With Pip and Kit. *(Claude)*
 
 - *[The promenade outside Sesska's shop. Her big loom stands out in the corridor by her shop window, and she's weaving in the middle of everybody's way.]*
-- **SESSKA:** "[happy] Pilot. You're in my light. Stay, stay. The light out here is terrible anyway."
+- **SESSKA:** "[happy] {name}. You're in my light. Stay, stay. The light out here is terrible anyway."
 - **SESSKA:** "A window onto a corridor. I've decided: if the street won't come to the window, the loom goes out to the street."
 - **SESSKA:** "And now that I'm out here, a problem. Every Arachnay town has its own pattern. Arach Minor's is the river and its seven bridges."
 - **SESSKA:** "[sad] This station has stood longer than I've lived on it, and it has no pattern of its own. Everybody here wears somewhere else."
@@ -83,7 +83,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`sesska_2` to `ses
 - **SESSKA:** "Better. A flag is only for waving. This, you can wear."
 - **KIT:** "Put a bug on it! A really big one!"
 - **SESSKA:** "[happy] Vzz'ket would approve. Everybody else would sit somewhere else at dinner."
-- **SESSKA:** "Pilot. What does the Landing look like, to you? One thing. I'll weave it in."
+- **SESSKA:** "{name}. What does the Landing look like, to you? One thing. I'll weave it in."
 - **CHOICE:**
   - **"The ring of the station, with the moon underneath."** (+High Friendship)
     - **SESSKA:** "[happy] Ring and moon. Plain, and true. That's the warp, then: everything else hangs on it."
@@ -144,7 +144,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`sesska_2` to `ses
   - **"Are you sure? It was the last of it."** (+Friendship)
     - **SESSKA:** "Kept things are only kept. Used things are loved."
   - **"What would void-silk sell for?"**
-    - **SESSKA:** "[angry] You can sleep on it, pilot. That's what it's for."
+    - **SESSKA:** "[angry] You can sleep on it, {name}. That's what it's for."
     - *(-20 friendship with Sesska)*
 - *[Perk: Void-Silk Luxury Linens (for the hotel's beds, once it takes paying guests)]*
 - **TIKKA:** "[surprised] ...Coil?"

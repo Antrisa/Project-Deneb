@@ -50,7 +50,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tikka_2` to `tikk
 
 - *[Engineering, late. The geothermal core hums in its cage of light. Tikka is alone at a control panel, humming back at it.]*
 - **TIKKA:** "Mmm-mm. Mm-mmm. No. Mmmm..."
-- **TIKKA:** "[surprised] Pilot! It's late. Why are you here? ...Why am I here? Don't answer that."
+- **TIKKA:** "[surprised] {name}! It's late. Why are you here? ...Why am I here? Don't answer that."
 - **TIKKA:** "Listen. Under the hum. Hear it? One flat note. A valve on the manifold is a hair out, and the whole station is singing a quarter-tone flat."
 - **TIKKA:** "S.A.R.A. says the readings are fine. The readings are fine. The note is not."
 - **TIKKA:** "My ears are busy. Go to the coolant tank by the west wall. Third wheel from the top. When I say turn, turn. Slowly."
@@ -81,7 +81,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tikka_2` to `tikk
 - **TIKKA:** "Next. Saffi. Kettle. The element's gone again. Two minutes."
 - **SAFFI:** "[happy] You did this kettle in spring, Tikka."
 - **TIKKA:** "And I'll do it in autumn. Kettles are seasonal."
-- **TIKKA:** "Pilot. If you're in the queue, you're behind Pip. Pip's drone is a disaster."
+- **TIKKA:** "{name}. If you're in the queue, you're behind Pip. Pip's drone is a disaster."
 - **PIP:** "[angry] It's not a disaster, it's a prototype!"
 - **SAFFI:** "She's here every night after a full shift. Nobody asks her to. Nobody has to."
 - **SAFFI:** "[sad] Nobody ever offers to help, either. She wouldn't let them."
@@ -143,7 +143,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tikka_2` to `tikk
 **Trigger:** Your front door in the Agri complex, 07:00–11:00 on a Sunday, after 6. With Sesska. Reward: Smelter Overclock. *(Claude)*
 
 - *[Your front door, Sunday morning. Tikka is waiting on the porch with a toolbag. A little way off, Sesska is waiting with a picnic basket and a look.]*
-- **TIKKA:** "[happy] Pilot! Good morning. This is a visit. I'm visiting."
+- **TIKKA:** "[happy] {name}! Good morning. This is a visit. I'm visiting."
 - **SESSKA:** "It is a visit with a toolbag."
 - **TIKKA:** "Visits can have toolbags."
 - **TIKKA:** "Freya has the core today. S.A.R.A. is watching Freya, and Sesska is watching me. Everybody is watched. It's very restful."
@@ -159,6 +159,6 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tikka_2` to `tikk
     - **SESSKA:** "[happy] Forty years, and she's learning the other thing. I'm going to frame this morning."
   - **"While you're here, could you look at my hoe?"**
     - **TIKKA:** "[happy] I could!"
-    - **SESSKA:** "[angry] She could not. Pilot."
+    - **SESSKA:** "[angry] She could not. {name}."
     - **TIKKA:** "[sad] ...I could not. Sorry. It's Sunday."
     - *(-20 friendship with Sesska)*
