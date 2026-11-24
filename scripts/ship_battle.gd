@@ -174,6 +174,7 @@ var surrender_asked := false
 var offer_open := false            # the surrender window is up over the fight (datapad style)
 var e_flee := -1.0                 # their fold drive charging to escape, 0..100 (-1: not trying)
 var hazard := ""                   # "asteroids", "flare", "nebula", "ion_storm" or ""
+var backdrop_tex: Texture2D = null  # the scene behind both ship windows (art/ships/backdrops, fight["backdrop"])
 var hazard_t := 0.0
 var augments: Array = []
 var e_sys := {}
@@ -300,6 +301,8 @@ func start(new_fight: Dictionary, cb: Callable, hull_now: int) -> void:
 	e_flee = -1.0
 	hazard = str(fight.get("hazard", ""))
 	hazard_t = randf_range(6.0, 10.0)
+	var bd := "res://art/ships/backdrops/%s.png" % str(fight.get("backdrop", "empty"))
+	backdrop_tex = load(bd) if ResourceLoader.exists(bd) else null
 	augments = fight.get("augments", [])
 	# your ship: the starter, or another from the fight (boarding test, F6; later Freya's quest and Eshu's captures)
 	crew_mode = fight.has("crew") and fight.has("player_ship")
@@ -2884,7 +2887,9 @@ func _paint_strip() -> void:
 
 func _paint_my_window() -> void:
 	var s := screen
-	s.scope(MY_WIN, 1)
+	s.backdrop(MY_WIN, backdrop_tex, _scene())
+	if backdrop_tex != null:          # a dark band keeps the window's labels readable over a planet
+		s.rect(Rect2(MY_WIN.position + Vector2(2, 2), Vector2(MY_WIN.size.x - 4, 18)), Color(0.04, 0.05, 0.08, 0.55))
 	s.text(MY_WIN.position.x + 11, MY_WIN.position.y + 7, "OWN SHIP", "micro", ShipScreen.SCOPE_TEXT)
 	if uplink:
 		s.text_right(MY_WIN.end.x - 11, MY_WIN.position.y + 7, "S.A.R.A. UPLINK", "micro", Color("78d8e6"))
@@ -3174,10 +3179,17 @@ func _paint_airlock(ship: Dictionary, d: Dictionary, slab: Rect2, xf: Transform2
 
 
 
+# Both ship windows together: the one view of space the backdrop covers.
+func _scene() -> Rect2:
+	return Rect2(MY_WIN.position, FOE_WIN.end - MY_WIN.position)
+
+
 # Their window: the band with their name, hull, shields, evasion and crew, then the ship.
 func _paint_foe_window() -> void:
 	var s := screen
-	s.scope(FOE_WIN, 4, true)
+	s.backdrop(FOE_WIN, backdrop_tex, _scene(), true)
+	if backdrop_tex != null:
+		s.rect(Rect2(FOE_WIN.position + Vector2(2, 2), Vector2(FOE_WIN.size.x - 4, 50)), Color(0.04, 0.05, 0.08, 0.55))
 	var x0: float = FOE_WIN.position.x + 11
 	var y0: float = FOE_WIN.position.y
 	s.text_fit(x0, y0 + 6, 150, str(foe.get("name", "")).to_upper(), "label", Color("f0e6d0"))

@@ -2447,11 +2447,29 @@ func _after_run_event(fight: String) -> void:
 	_back_to_map()
 
 
+# The scene a fight is fought against (24 Nov, Zachary's Space Backgrounds pack, art/ships/backdrops): the stop's
+# hazard if it has one, home orbit on the first ring, otherwise one of its zone's scenes, always the same one for
+# the same stop.
+const BACKDROP_HAZARD := {"asteroids": "asteroids", "nebula": "nebula", "ion_storm": "ion_storm", "flare": "eclipse"}
+const BACKDROP_ZONE := {"Terran": ["ocean_planet", "moons", "empty"], "Zaa'sh": ["comet", "moons", "empty"],
+	"Reach": ["ringed_planet", "ice_field", "empty"], "Collective": ["ice_moon", "ice_field", "empty"]}
+func _backdrop_for(stop: Dictionary) -> String:
+	var hz := str(stop.get("hazard", ""))
+	if BACKDROP_HAZARD.has(hz):
+		return BACKDROP_HAZARD[hz]
+	var ring := int(stop.get("ring", 1))
+	if ring <= 1:
+		return "home"
+	var zone := str(stop.get("zone", ShipRuns.zone_of(float(stop.get("angle", 0.0)), ring, float(stop.get("off", 0.0)))))
+	var pool: Array = BACKDROP_ZONE.get(zone, ["empty"])
+	return str(pool[(int(absf(float(stop.get("angle", 0.0))) * 7) + ring) % pool.size()])
+
+
 func _run_fight(enemy_id: String) -> void:
 	ship_map.visible = false
 	run_enemy = enemy_id
 	var stop: Dictionary = run_stops[run_stop] if run_stop >= 0 and run_stop < run_stops.size() else {}
-	var base := {"enemy": enemy_id, "story": false, "hazard": str(stop.get("hazard", ""))}
+	var base := {"enemy": enemy_id, "story": false, "hazard": str(stop.get("hazard", "")), "backdrop": _backdrop_for(stop)}
 	# Some ships give up at 30% hull and pay to be let go; traders and patrols run for it at half hull (23 Nov).
 	var ring: int = int(stop.get("ring", 1))
 	var hard: bool = enemy_id == "pirate_stronghold" or enemy_id == "rabble_nest"
@@ -2817,7 +2835,7 @@ func _after_nest_choice(fight: String) -> void:
 func _nest_fight() -> void:
 	ship_map.visible = false
 	run_enemy = NEST_FIGHTS[nest_stage]
-	battle.start(_my_fight({"enemy": run_enemy, "story": false}), Callable(self, "_after_nest_fight"), ship_hull)
+	battle.start(_my_fight({"enemy": run_enemy, "story": false, "backdrop": "ringed_planet"}), Callable(self, "_after_nest_fight"), ship_hull)
 
 
 func _after_nest_fight(result: String, hull_left: int) -> void:
@@ -3086,7 +3104,7 @@ func apply_space_effects(effects: Array) -> Dictionary:
 
 func _stop_fight(stop: Dictionary) -> void:
 	ship_map.visible = false
-	battle.start({"enemy": str(stop["enemy"]), "story": true, "tutorial": true, "player_def": _ship_def("starter")}, Callable(self, "_after_picket"), ship_hull)
+	battle.start({"enemy": str(stop["enemy"]), "story": true, "tutorial": true, "player_def": _ship_def("starter"), "backdrop": "ringed_planet"}, Callable(self, "_after_picket"), ship_hull)
 	_say("Sara", [
 		"That's a Chernobog Cutter, scouting ahead of the others. You'll have to go through it.",
 		"Space pauses the fight. You can give every order while it's paused.",
@@ -3131,7 +3149,7 @@ func _after_picket(result: String, hull_left: int) -> void:
 
 func _stop_ivan(stop: Dictionary) -> void:
 	ship_map.visible = false
-	battle.start({"enemy": str(stop["enemy"]), "story": true, "uplink": true, "player_def": _ship_def("starter")}, Callable(self, "_after_ivan"), ship_hull)
+	battle.start({"enemy": str(stop["enemy"]), "story": true, "uplink": true, "player_def": _ship_def("starter"), "backdrop": "eclipse"}, Callable(self, "_after_ivan"), ship_hull)
 	_say("Ivan", [
 		"[angry] You. The one who got away from me at the jump.",
 		"I'll take that station apart plate by plate, and you can watch from what's left of your ship.",
@@ -3225,7 +3243,7 @@ func _ship_lost() -> void:
 
 func _second_flight() -> void:
 	sfx("launch")
-	battle.start({"enemy": "ana_corsair", "story": true, "player_def": _ship_def("starter")}, Callable(self, "_after_ana"), ship_hull)
+	battle.start({"enemy": "ana_corsair", "story": true, "player_def": _ship_def("starter"), "backdrop": "comet"}, Callable(self, "_after_ana"), ship_hull)
 	_say("Sara", [
 		"You're clear of the crater. Where are we headed today?",
 		"[surprised] Wait. Something just dropped out of fold right on top of you. Chernobog colours.",
@@ -3265,7 +3283,7 @@ func _loyalists_speak() -> void:
 
 
 func _loyalist_fight() -> void:
-	battle.start({"enemy": "loyalist_gunship", "story": true, "player_def": _ship_def("starter")}, Callable(self, "_after_loyalists"), ship_hull)
+	battle.start({"enemy": "loyalist_gunship", "story": true, "player_def": _ship_def("starter"), "backdrop": "moons"}, Callable(self, "_after_loyalists"), ship_hull)
 	_say("Sara", [
 		"[surprised] A gunship just undocked from her. They've shot out her engines and they're coming for you.",
 		"Ana's ship is adrift. Deal with them first.",

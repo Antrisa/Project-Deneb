@@ -429,6 +429,22 @@ func scope(r: Rect2, pattern: int = 1, hostile: bool = false) -> void:
 	texture(_scope_texture(int(r.size.x), int(r.size.y), pattern, hostile), r)
 
 
+# A window onto a backdrop picture (24 Nov, Zachary's Space Backgrounds pack, 640 x 360): area is the whole scene
+# the picture covers (both ship windows in a fight, so the two read as one view of space) and r the window showing
+# its part. The picture covers area at a whole number of screen pixels per art pixel, centred; the scope's rim and
+# corner marks go over it. No picture: a plain scope.
+func backdrop(r: Rect2, tex: Texture2D, area: Rect2, hostile: bool = false) -> void:
+	if tex == null:
+		scope(r, 1, hostile)
+		return
+	var pic: Vector2 = tex.get_size()
+	var cover: float = maxf(area.size.x / pic.x, area.size.y / pic.y)
+	var k: float = ceilf(cover * _px - 0.001) / _px
+	var origin: Vector2 = (area.get_center() - pic * k * 0.5).round()
+	texture(tex, r, Rect2((r.position - origin) / k, r.size / k))
+	texture(_scope_texture(int(r.size.x), int(r.size.y), 0, hostile, true), r)
+
+
 # A row of pips: n of them, the first filled ones lit.
 func pips(x: float, y: float, n: int, filled: int, w: float = 5.0, h: float = 9.0, gap: float = 2.0,
 		on: Color = PIP_ON, off: Color = PIP_OFF, rim_on: Color = Color("4d5a4e"), rim_off: Color = Color("bdb4a5")) -> void:
@@ -511,21 +527,23 @@ func _star_texture() -> Texture2D:
 	return ImageTexture.create_from_image(image)
 
 
-func _scope_texture(w: int, h: int, pattern: int, hostile: bool) -> Texture2D:
-	var key := "%d,%d,%d,%s" % [w, h, pattern, hostile]
+# frame_only: just the rim, the ruler and the corner marks, clear inside (over a backdrop).
+func _scope_texture(w: int, h: int, pattern: int, hostile: bool, frame_only: bool = false) -> Texture2D:
+	var key := "%d,%d,%d,%s,%s" % [w, h, pattern, hostile, frame_only]
 	if _scopes.has(key):
 		return _scopes[key]
 	w = maxi(w, 24)
 	h = maxi(h, 24)
 	var image := Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
-	image.fill(Color("433f3c") if hostile else Color("3d4946"))
-	var dots := [Color("708076"), Color("6b7972"), Color("5b6b62"), Color("7f8b7e")]
-	for i in range(int(w * h / 180.0)):
-		image.set_pixel((i * 71 + i * i * 13 + 19 * pattern) % w, (i * 41 + i * i * 11 + 7 * pattern) % h, dots[i % 4])
-	var grid := Color("4e4844") if hostile else Color("48544e")
-	for xx in range(12, w, 14):
-		for yy in range(10, h, 14):
-			image.set_pixel(xx, yy, grid)
+	if not frame_only:
+		image.fill(Color("433f3c") if hostile else Color("3d4946"))
+		var dots := [Color("708076"), Color("6b7972"), Color("5b6b62"), Color("7f8b7e")]
+		for i in range(int(w * h / 180.0)):
+			image.set_pixel((i * 71 + i * i * 13 + 19 * pattern) % w, (i * 41 + i * i * 11 + 7 * pattern) % h, dots[i % 4])
+		var grid := Color("4e4844") if hostile else Color("48544e")
+		for xx in range(12, w, 14):
+			for yy in range(10, h, 14):
+				image.set_pixel(xx, yy, grid)
 	for xx in range(18, w - 13, 7):
 		var t := 4 if (xx - 18) % 35 == 0 else 2
 		for yy in range(h - 4 - t, h - 3):
