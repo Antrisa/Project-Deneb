@@ -583,7 +583,7 @@ func _move_player(delta: float) -> void:
 	var beat := WalkCycle.phase(_walk_distance)
 	_sprite.frame_coords = Vector2i(_dir, WalkCycle.pose(beat, _sprite.vframes))
 	if beat != _last_phase and beat % 2 == 0:
-		world.sfx("step_soft", randf_range(0.9, 1.12), -13.0)     # softer footfalls (Zachary, 23 Nov)
+		world.sfx("step_soft", randf_range(0.95, 1.05), -13.0)    # real footstep takes (Zachary's Suno steps, 23 Nov)
 	_last_phase = beat
 
 

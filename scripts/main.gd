@@ -283,6 +283,7 @@ var credits := 0
 var repair_stage := 0              # 0..REPAIRS.size()
 
 var sounds := {}                   # sound name -> AudioStreamPlayer
+var sound_takes := {}              # sound name -> Array of streams, from audio/<name>_1.ogg, _2.ogg …
 var fixed := {}                    # area name -> {Vector2i tile: true} (things residents must walk around)
 # Stardew-style beds: area name -> {Vector2i tile: Vector2 where a sleeper stands}. The foot row of each
 # bed can be walked into; whoever stands there is under the covers (art/lunar/<bed>_blanket.png in front).
@@ -3021,6 +3022,16 @@ func _setup_sounds() -> void:
 		# a real sound dropped in as audio/<name>.ogg wins over the made-up .wav
 		p.stream = load("res://audio/%s.ogg" % sound_name) if ResourceLoader.exists("res://audio/%s.ogg" % sound_name) \
 				else load("res://audio/%s.wav" % sound_name)
+		# several takes (audio/<name>_1.ogg, _2.ogg …) play in turn at random, so steps don't repeat
+		var takes: Array = []
+		for k in range(1, 9):
+			var take_path := "res://audio/%s_%d.ogg" % [sound_name, k]
+			if not ResourceLoader.exists(take_path):
+				break
+			takes.append(load(take_path))
+		if not takes.is_empty():
+			sound_takes[sound_name] = takes
+			p.stream = takes[0]
 		add_child(p)
 		sounds[sound_name] = p
 	for sound_name in SHIP_SOUNDS:
@@ -3061,6 +3072,12 @@ func sfx(sound_name: String, pitch: float = 1.0, volume_db: float = 0.0) -> void
 			pool.push_back(pool.pop_front())
 	else:
 		p = sounds[sound_name]
+		if sound_takes.has(sound_name):
+			var takes: Array = sound_takes[sound_name]
+			var k := randi() % takes.size()
+			if takes.size() > 1 and takes[k] == p.stream:     # never the same take twice in a row
+				k = (k + 1) % takes.size()
+			p.stream = takes[k]
 	p.pitch_scale = pitch
 	p.volume_db = volume_db
 	p.play()
