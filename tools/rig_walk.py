@@ -257,7 +257,34 @@ def swing_arm(strip, pivot, hand_top, h, lift):
     return out
 
 
-def build(body, arm, pivot, hand_top, hip, row, extend=0):
+def rotate_arm(strip, pivot, hand_top, h):
+    """Turn the whole arm sprite rigidly about the shoulder so the hand lands h pixels ahead
+    (negative) or behind (positive). Every destination pixel samples the arm at rest (nearest
+    pixel), so the arm keeps its width, shading and bracer and never breaks into stripes."""
+    ys, xs = np.nonzero(strip[:, :, 3])
+    if not len(ys):
+        return np.zeros_like(strip)
+    cx = (xs.min() + xs.max() + 1) / 2.0            # the middle of the arm at the shoulder
+    py = float(pivot)
+    theta = np.arctan2(h, max(1, hand_top - pivot) + 1)
+    c, s_ = np.cos(theta), np.sin(theta)
+    out = np.zeros_like(strip)
+    for y in range(FH):
+        for x in range(FW):
+            dx, dy = x + 0.5 - cx, y + 0.5 - py
+            rx, ry = dx * c - dy * s_, dx * s_ + dy * c
+            sx, sy = int(np.floor(rx + cx)), int(np.floor(ry + py))
+            if 0 <= sx < FW and 0 <= sy < FH and strip[sy, sx, 3] and sy >= pivot - 1:
+                out[y, x] = strip[sy, sx]
+    return out
+
+
+# residents whose arm turns rigidly about the shoulder instead of bending row by row (a bare
+# arm over a bare torso shears into stripes)
+ROTATE_ARM = {"freya"}
+
+
+def build(body, arm, pivot, hand_top, hip, row, extend=0, name=""):
     s = body
     ft = foot_top(s)
     if ft - hip < 2:
@@ -276,7 +303,10 @@ def build(body, arm, pivot, hand_top, hip, row, extend=0):
         over(out, up)
     h = {1: ARM_BACK, 2: -ARM_FORWARD, 3: -2, 4: 2}[row]
     lift = (2 if h < 0 else 1) if abs(h) >= ARM_BACK else 0
-    over(out, shifted(swing_arm(arm, pivot[1], hand_top, h, lift), 0, dy))
+    if name in ROTATE_ARM:
+        over(out, shifted(rotate_arm(arm, pivot[1], hand_top, h), 0, dy))
+    else:
+        over(out, shifted(swing_arm(arm, pivot[1], hand_top, h, lift), 0, dy))
     return out
 
 
@@ -297,7 +327,7 @@ if __name__ == "__main__":
         body, arm, pivot, hand_top, hip, extend = read_rig(RIG, name)
         a = np.array(Image.open(os.path.join(SRC, f"npc_{name}.png")).convert("RGBA"))
         for row in (1, 2, 3, 4):
-            new = build(body, arm, pivot, hand_top, hip, row, extend)
+            new = build(body, arm, pivot, hand_top, hip, row, extend, name)
             a[row * FH:(row + 1) * FH, LEFT * FW:(LEFT + 1) * FW] = new
             a[row * FH:(row + 1) * FH, (LEFT + 1) * FW:(LEFT + 2) * FW] = new[:, ::-1]
         # the side standing pose is the parts at rest, so it matches the walk
