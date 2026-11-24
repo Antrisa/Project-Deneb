@@ -65,7 +65,14 @@ SARA_CLIPS = set(re.findall(r'"name": "(\w+)"', (ROOT / 'sara/animations_data.gd
 SPECIAL = {"Sara"}   # S.A.R.A.: a hologram on her pads (MapData.PEOPLE), not a walking resident
 SEASONS = {"Spring", "Summer", "Autumn", "Winter"}
 SKIES = {"clear", "eclipse", "gas_cloud", "meteors", "transit", "aurora", "comet", "storm"}   # scripts/lounge_sky.gd
-SOUNDS = {p.stem for p in (ROOT / 'audio').glob('*.wav')}
+# main.gd only loads the sounds it names (SOUND_NAMES, SHIP_SOUNDS) that have a file: audio/<name>.ogg or .wav, or
+# takes audio/<name>_1.ogg, _2.ogg ... (_sound_stream). Anything else plays nothing.
+_main_src = (ROOT / 'scripts' / 'main.gd').read_text()
+def _const_names(name):
+    m = re.search(r'^const %s := \[(.*?)\]' % name, _main_src, re.S | re.M)
+    return re.findall(r'"([a-z_0-9]+)"', m.group(1)) if m else []
+SOUNDS = {s for s in _const_names('SOUND_NAMES') + _const_names('SHIP_SOUNDS')
+          if any((ROOT / 'audio' / f).exists() for f in (s + '.ogg', s + '.wav', s + '_1.ogg'))}
 DIRS = {"d", "u", "l", "r"}
 
 

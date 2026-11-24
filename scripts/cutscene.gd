@@ -239,7 +239,7 @@ func _step(s: Array) -> void:
 		"give":
 			world._give(str(s[1]), int(s[2]))
 			if s.size() > 3 and str(s[3]) != "":       # "" gives it quietly (several gifts, then one "toast")
-				world.sfx("quest")
+				world.sfx("gift")
 				world._toast(str(s[3]))
 		"mail":
 			world.send_mail(str(s[1]), int(s[2]) if s.size() > 2 else 1)
