@@ -116,6 +116,8 @@ var _mouse_ui := Vector2.ZERO
 # Echo Landing shops (23 Nov): tabs of rows, filled by scripts/shops.gd. Each tab is [name, rows]; each row is
 # [icon id, title, subtitle, price text, buttons], each button [action, label, enabled].
 var shop_tabs: Array = []
+# Echo Landing (24 Nov): the hotel's night for the day summary (scripts/hotel.gd last_night), or {} for none.
+var recap_hotel: Dictionary = {}
 var shop_tab := 0
 # A chest you built (23 Nov): the Storage page lists your bag and the chest side by side, four rows a page;
 # Store / Take move a whole stack across (main.gd chest_move).
@@ -1209,13 +1211,26 @@ func _recap() -> void:
 	_heading("Day summary",recap.get("day","").to_upper())
 	_txt(71,150,"STATION ACCOUNT","micro",MUTED)
 	var earned=int(recap.get("earned",0));var spent=int(recap.get("spent",0))
+	var gap:=28 if not recap_hotel.is_empty() else 40
 	for i in 3:
-		var y:=180+40*i
-		_rect(70,y+31,626,1,RULE)
+		var y:=172+gap*i
+		_rect(70,y+gap-9,626,1,RULE)
 		_txt(71,y,["Earned","Spent","Net change"][i],"strong")
 		var val:int=[earned,-spent,earned-spent][i]
 		_right(694,y,("%+d" % val)+" scrip","strong",OCHRE if val<0 else INK)
-	_btn("back",502,316,194,29,"Continue",true)
+	if not recap_hotel.is_empty():
+		# the hotel's night (Echo Landing, 24 Nov): the guests' moods, their pay, and the hotel's stars
+		var moods:Dictionary=recap_hotel.get("moods",{})
+		var parts:Array=[]
+		for m in ["Ecstatic","Happy","Neutral","Angry"]:
+			if int(moods.get(m,0))>0: parts.append("%d %s" % [int(moods[m]),m.to_lower()])
+		_txt(71,262,"THE HOTEL TONIGHT","micro",MUTED)
+		_txt(71,278,"Guests: "+", ".join(parts),"body")
+		_right(694,278,"+%d scrip" % int(recap_hotel.get("pay",0)),"strong",INK)
+		var before:float=float(recap_hotel.get("from",0.0));var after:float=float(recap_hotel.get("to",0.0))
+		var arrow:="up" if after>before+0.005 else ("down" if after<before-0.005 else "steady")
+		_txt(71,298,"Hotel rating %.1f stars (%s from %.1f)%s" % [after,arrow,before,". The guests have checked out" if bool(recap_hotel.get("left",false)) else ""],"body",MUTED)
+	_btn("back",502,326 if not recap_hotel.is_empty() else 316,194,29,"Continue",true)
 func _dialog() -> void:
 	hits.clear()
 	var bottom := _bounds.end.y - 432

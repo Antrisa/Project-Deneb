@@ -652,6 +652,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F8:
 		_display_check()
 		return
+	# F2 (editor and debug builds): the hotel test kit, then F2 again sleeps through to the next day (scripts/hotel.gd)
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F2 and OS.is_debug_build():
+		hotel.debug_kit()
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F7 and OS.is_debug_build():
 		_debug_ship_ready()
 		return
@@ -4855,6 +4859,7 @@ func _money(amount: int, source: String) -> void:
 func _end_day() -> void:
 	sfx("sleep")
 	_collect_shipping()
+	hotel.night_pay()                  # Friday to Sunday nights: the hotel's guests pay (scripts/hotel.gd)
 	var lines: Array = []
 	var net := 0
 	for source in ledger:

@@ -251,6 +251,7 @@ func show_recap(finished_day: int, lines: Array, _net: int, _total: int, _talked
 			spent -= amount
 	var date: Array = season_date(finished_day)
 	world.ui.recap_open = true
+	pad.recap_hotel = world.hotel.last_night if world.hotel != null else {}
 	pad.show_recap("%s %d (day %d)" % [date[0], int(date[1]), finished_day], earned, spent)
 
 

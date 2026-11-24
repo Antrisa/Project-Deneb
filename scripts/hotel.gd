@@ -11,7 +11,16 @@ extends Node
 #     of 5: room 2.5, lunch 1.5, activities 1 (lunch and activities come in later stages).
 #   - The management desk (the desk in your office) lists the rooms with their grades, what's holding each back,
 #     and an open/closed switch: on Thursday you choose how many rooms to rent out.
-# Stage 2 (not built yet): the weekly transport, guests, nightly pay and the end-of-night star screen.
+# Stage 2: the weekly transport, guests, nightly pay and the end-of-night star screen.
+#   - Every Friday from first_guests_day, the transport brings guests_for(rating) guests, one to each open room that
+#     can be rented (the best rooms first). They stay Friday, Saturday and Sunday and leave on Sunday night.
+#   - Each guest day is scored at 06:00 (everything has to be done in advance): room grade + lunch + activities,
+#     out of 5. The score sets the guest's mood, the mood sets their pay for the night (MOOD_PAY), and the night's
+#     moods move the hotel's star rating (MOOD_RATING). The pay goes in the day's account as "Hotel guests", and the
+#     day summary shows the moods and the rating (datapad recap).
+#   - Until lunch (stage 3) and activities (stage 4) exist, Jasper sends lunch over from the mess hall
+#     (LUNCH_FOR_NOW stars) and the lounge as it is gives ACTIVITIES_FOR_NOW.
+# F2 (debug builds): the hotel test kit (see debug_kit), then F2 again ends the day, to step through a weekend.
 #
 # Not run in Godot yet; written to be checked by Zachary.
 
@@ -46,7 +55,23 @@ const FLOOD_LIMIT := 160            # a space bigger than this isn't closed in (
 const GUEST_WINGS := ["West guest wing", "East guest wing"]
 const TIERS := [[2.0, "Luxurious"], [1.4, "Comfortable"], [0.8, "Decent"], [0.0, "Shabby"]]
 
+const MOODS := ["Angry", "Neutral", "Happy", "Ecstatic"]
+const MOOD_FROM := [0.0, 2.0, 3.0, 4.25]                  # a day's score (out of 5) for each mood, low to high
+const MOOD_PAY := {"Angry": 0.25, "Neutral": 0.75, "Happy": 1.0, "Ecstatic": 1.5}
+const MOOD_RATING := {"Angry": -0.3, "Neutral": 0.0, "Happy": 0.1, "Ecstatic": 0.4}   # stars per guest-night, averaged
+const RATING_START := 2.5
+const BASE_PAY_AT_3 := 200.0        # a guest's pay for a night at a 3-star hotel; it scales with the rating
+const GUESTS_BY_STARS := [0, 2, 4, 8, 14, 20]              # how many come each week at 0..5 stars
+const SARA_PERK := 1.2              # S.A.R.A.'s 8-heart reward: base pay x1.2
+const LUNCH_FOR_NOW := 0.75         # until the hotel kitchen (stage 3): Jasper's lunch from the mess hall
+const ACTIVITIES_FOR_NOW := 0.5     # until activities (stage 4): the lounge as it is
+const RACES := ["Terran", "Moogli", "Zaa'sh", "Vuultam", "Chernobog", "Sesskan"]
+
 var world                           # main.gd
+var rating := RATING_START          # the hotel's stars, 1 to 5
+var guests: Array = []              # this weekend's: [{"room", "race", "score", "mood"}]
+var last_night: Dictionary = {}     # the night just paid, for the day summary: {"moods", "pay", "from", "to", "left"}
+var _news := ""
 var stage := 0                      # 0 before S.A.R.A.'s call, 1 after it (guests from first_guests_day)
 var first_guests_day := -1          # the Friday the first transport arrives
 var room_open: Dictionary = {}      # room id -> false when closed (rooms are open by default)
@@ -58,9 +83,14 @@ func setup(main_world) -> void:
 
 
 func tick(_delta: float) -> void:
-	if _call_due and not world.dialogue.active and str(world.current_area) != "":
+	if world.dialogue.active:
+		return
+	if _call_due:
 		_call_due = false
 		_sara_call()
+	elif _news != "":
+		world._toast(_news)
+		_news = ""
 
 
 # ---------------------------------------------------------------- the call
@@ -72,6 +102,102 @@ func new_day() -> void:
 		stage = 1
 		first_guests_day = int(world.day) + 4
 		_call_due = true
+	if stage < 1 or int(world.day) < first_guests_day:
+		return
+	if weekday == 4:
+		_check_in()
+	if weekday >= 4 and not guests.is_empty():
+		_score_day()
+
+
+# ---------------------------------------------------------------- guests
+
+static func guests_for(stars: float) -> int:
+	var i: int = clampi(int(floor(stars)), 0, 5)
+	if i >= 5:
+		return GUESTS_BY_STARS[5]
+	return int(round(lerpf(GUESTS_BY_STARS[i], GUESTS_BY_STARS[i + 1], stars - i)))
+
+
+func base_pay() -> int:
+	var pay: float = BASE_PAY_AT_3 * rating / 3.0
+	if world.persons.has("Sara") and int(world.persons["Sara"].get("friendship", 0)) >= 8 * 5:
+		pay *= SARA_PERK
+	return int(round(pay))
+
+
+# Friday 06:00: the transport docks. One guest to each open room that can be rented, best rooms first.
+func _check_in() -> void:
+	guests.clear()
+	var ready: Array = []
+	for room in rooms():
+		var g: Dictionary = grade(room)
+		if bool(g["rentable"]) and is_open(str(room["id"])):
+			ready.append([float(g["total"]), str(room["id"])])
+	ready.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
+	var n: int = mini(ready.size(), guests_for(rating))
+	for i in n:
+		guests.append({"room": str(ready[i][1]), "race": RACES[randi() % RACES.size()], "score": 0.0, "mood": "Neutral"})
+	if n == 0:
+		_news = "The transport docked, but the hotel had no rooms open. Its passengers stayed aboard."
+	else:
+		_news = "The transport docked: %d guest%s checked in at the hotel, until Sunday." % [n, "" if n == 1 else "s"]
+
+
+# Each guest day at 06:00: score every guest on the hotel as it is now.
+func _score_day() -> void:
+	var by_id := {}
+	for room in rooms():
+		by_id[str(room["id"])] = room
+	for g in guests:
+		var room_stars := 0.0
+		if by_id.has(str(g["room"])):
+			var gr: Dictionary = grade(by_id[str(g["room"])])
+			room_stars = float(gr["total"]) if bool(gr["rentable"]) else 0.0
+		var score: float = room_stars + lunch_stars() + activity_stars()
+		g["score"] = score
+		g["mood"] = mood_for(score)
+
+
+static func mood_for(score: float) -> String:
+	var mood: String = MOODS[0]
+	for i in MOODS.size():
+		if score >= float(MOOD_FROM[i]):
+			mood = MOODS[i]
+	return mood
+
+
+func lunch_stars() -> float:
+	return LUNCH_FOR_NOW
+
+
+func activity_stars() -> float:
+	return ACTIVITIES_FOR_NOW
+
+
+# main.gd _end_day, before the day's account is added up: pay for tonight if guests are staying, move the rating,
+# and on Sunday night see them off.
+func night_pay() -> void:
+	last_night = {}
+	var weekday: int = (int(world.day) - 1) % 7
+	if guests.is_empty() or weekday < 4:
+		return
+	var moods := {"Angry": 0, "Neutral": 0, "Happy": 0, "Ecstatic": 0}
+	var pay := 0
+	var change := 0.0
+	var base := base_pay()
+	for g in guests:
+		var mood: String = str(g["mood"])
+		moods[mood] = int(moods[mood]) + 1
+		pay += int(round(base * float(MOOD_PAY[mood])))
+		change += float(MOOD_RATING[mood])
+	var before := rating
+	rating = clampf(rating + change / guests.size(), 1.0, 5.0)
+	if pay > 0:
+		world._money(pay, "Hotel guests")
+	last_night = {"moods": moods, "pay": pay, "from": before, "to": rating, "left": weekday == 6}
+	if weekday == 6:
+		guests.clear()
 
 
 func _sara_call() -> void:
@@ -262,6 +388,18 @@ func desk_tabs() -> Array:
 		["hotel_wall", "How rooms are graded (2.5 stars)", "Size up to 0.5, comfort up to 1, decoration up to 1", "", []],
 		["potted_plant", "A guest's day (5 stars)", "Room 2.5, lunch 1.5, activities 1. Lunch and activities come soon", "", []],
 	]
+	about.insert(0, ["potted_plant", "Hotel rating: %.1f stars" % rating,
+		"Base pay %d a guest a night. About %d guests come a week at this rating" % [base_pay(), guests_for(rating)], "", []])
+	if not guests.is_empty():
+		var counts := {}
+		for g in guests:
+			counts[g["mood"]] = int(counts.get(g["mood"], 0)) + 1
+		var parts: Array = []
+		for m in MOODS:
+			if counts.has(m):
+				parts.append("%d %s" % [int(counts[m]), str(m).to_lower()])
+		about.insert(1, ["guest_bed", "%d guest%s staying" % [guests.size(), "" if guests.size() == 1 else "s"],
+			"Today: " + ", ".join(parts), "", []])
 	return [["Rooms", rows], ["Hotel", about]]
 
 
@@ -297,7 +435,28 @@ func journal() -> Array:
 	], false]]
 
 
+# F2 (debug builds): start the hotel, jump to Thursday morning and hand over enough to build two rooms. After
+# that, F2 ends the day (as if you slept), so you can step through a weekend: check-in, three nights, check-out.
+func debug_kit() -> void:
+	if stage > 0:
+		world._end_day()
+		return
+	if int(world.artie_found_day) < 0:
+		world.artie_found_day = int(world.day)
+	var weekday: int = (int(world.day) - 1) % 7
+	world.day = int(world.day) + (3 - weekday + 7) % 7          # the coming Thursday (or today)
+	stage = 1
+	first_guests_day = int(world.day) + 1
+	var kit := {"hotel_wall": 60, "hotel_door": 2, "guest_bed": 1, "fine_guest_bed": 1, "guest_armchair": 1,
+			"bedside_lamp": 2, "potted_plant": 2, "berry_rug": 1, "guest_bookshelf": 1}
+	for item in kit:
+		world._give(str(item), int(kit[item]))
+	world._toast("Debug: hotel started, it's Thursday (day %d). Build rooms in a guest wing, then F2 to sleep." % int(world.day))
+
+
 func save(cfg: ConfigFile) -> void:
+	cfg.set_value("hotel", "rating", rating)
+	cfg.set_value("hotel", "guests", guests)
 	cfg.set_value("hotel", "stage", stage)
 	cfg.set_value("hotel", "first_guests_day", first_guests_day)
 	cfg.set_value("hotel", "room_open", room_open)
@@ -305,6 +464,9 @@ func save(cfg: ConfigFile) -> void:
 
 func load_from(cfg: ConfigFile) -> void:
 	stage = int(cfg.get_value("hotel", "stage", 0))
+	rating = clampf(float(cfg.get_value("hotel", "rating", RATING_START)), 1.0, 5.0)
+	var saved_guests = cfg.get_value("hotel", "guests", [])
+	guests = saved_guests if saved_guests is Array else []
 	first_guests_day = int(cfg.get_value("hotel", "first_guests_day", -1))
 	var saved = cfg.get_value("hotel", "room_open", {})
 	room_open = saved if saved is Dictionary else {}
