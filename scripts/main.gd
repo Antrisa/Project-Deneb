@@ -197,7 +197,7 @@ var garden_busy := false
 var farm := {}
 var farm_view: Node2D               # scripts/agri_terrain.gd, which draws the field
 var seeds_taken_day := -1
-var welcomed := false             # Bram and Jasper's first-morning visit has happened (_welcome_visit)
+var welcomed := false             # Bram and Jasper's first-morning scene outside your door has played (_welcome_visit)
 var travelling := false
 var portals := {}
 var door_locks := {}
@@ -1245,8 +1245,6 @@ func _snap_residents() -> void:
 		r.away = gone
 		if MapData.SCHEDULES_ALT.has(r.who) and _first_days(r.who):
 			r.schedule = MapData.SCHEDULES_ALT[r.who]
-		elif WELCOME_SCHEDULE.has(r.who) and day == 1 and not welcomed:
-			r.schedule = _welcome_schedule(r.who)
 		else:
 			r.schedule = _day_schedule(r.who)
 		r.snap(minutes)
@@ -1376,6 +1374,8 @@ func _heart_event_done(id: String) -> void:
 	if not events_seen.has(id):
 		events_seen.append(id)
 	_snap_residents()
+	if id == "welcome":
+		_save_game()      # the hoe, the can and the seeds
 
 
 # Debug (F4): meet the next event's trigger (hearts, flags, partner, weekday, time, place) and play it.
@@ -5877,79 +5877,19 @@ func _irrigate(t: Dictionary) -> void:
 
 
 # ---------------------------------------------------------------- your first morning (Zachary, 23 Nov)
-# Bram and Jasper come round to your apartment on day one: a rundown of the station, then a hoe, a watering can,
-# two hydroponic beds and a bag of seeds. They wait by the door until 09:00 (WELCOME_SCHEDULE), then go to work.
-# The visit starts by itself the first time you are home on day one with nothing else open.
-
-const WELCOME_SEEDS := {"crater_potato_seeds": 15, "moon_wheat_seeds": 10}
-const WELCOME_SCHEDULE := {
-	"Bram": [0, "aptPlayer", 13, 21, 26, "u", "idle", 0],
-	"Jasper": [0, "aptPlayer", 15, 21, 26, "u", "idle", 0],
-}
-const WELCOME_UNTIL := 540        # 09:00
-
-
-# Day one's schedule for Bram or Jasper: by your door until 09:00, then their usual day from wherever it has got to.
-func _welcome_schedule(who: String) -> Array:
-	var out: Array = [WELCOME_SCHEDULE[who]]
-	var normal: Array = MapData.SCHEDULES[who]
-	var last: Array = []
-	for e in normal:
-		if int(e[0]) <= WELCOME_UNTIL:
-			last = e.duplicate()
-		else:
-			if not last.is_empty():
-				last[0] = WELCOME_UNTIL
-				out.append(last)
-				last = []
-			out.append(e)
-	if not last.is_empty():
-		last[0] = WELCOME_UNTIL
-		out.append(last)
-	return out
-
+# The first time you step out of your front door, Bram and Jasper come up the corridor to meet you: a rundown of the
+# station, your shipping crate and message pad, then a hoe, a watering can, two hydroponic beds and a bag of seeds.
+# It's a scene (HeartEvents.SCENES "welcome", played by scripts/cutscene.gd), outside your apartment in the Agri
+# complex. Until 23 Nov it was dialogue with the two of them standing in your flat (Zachary: "they should be
+# outside and thats where the cutscene starts").
 
 func _welcome_due() -> bool:
-	return not welcomed and day == 1 and current_area == "aptPlayer"
+	return not welcomed and current_area == "agri" and cutscene != null and not cutscene.running
 
 
 func _welcome_visit() -> void:
 	welcomed = true
-	for who in ["Bram", "Jasper"]:
-		if persons.has(who):
-			persons[who]["met"] = true
-			_emote(who, &"hello")
-	_say("Bram", [
-		"[happy] Knock knock! You're up. Bram, salvage broker; Bram's Sundries, on the town square. And this is Jasper.",
-		"S.A.R.A. asked us to show you the ropes. Quick version: the Landing runs on scrip, and you earn it.",
-		"Cut ore in Job's mine and smelt it, grow crops in the agri dome, or salvage what the void leaves lying about.",
-		"Everybody buys their own kind of thing: Tikka in Engineering takes metal and parts, Jasper takes crops, Job takes pretty rocks.",
-		"And I take anything, at a slightly worse price. Or drop it in the crate by your door, and I'll collect overnight and pay full value.",
-	])
-	_say_then(Callable(self, "_welcome_jasper"))
-
-
-func _welcome_jasper() -> void:
-	_say("Jasper", [
-		"[happy] And I'm the one who feeds everyone. Dinner's at six in the mess hall, and I sell meals and recipes all day.",
-		"Your kitchenette works, by the way. Learn a recipe from me and cook it here: it's cheaper than eating out.",
-		"We brought you something to start with. The agri dome's been waiting for someone with time to dig.",
-	])
-	_say_then(Callable(self, "_welcome_gifts"))
-
-
-func _welcome_gifts() -> void:
-	if _count("hoe") == 0:
-		_give("hoe", 1)
-	if _count("watering_can") == 0:
-		_give("watering_can", 1)
-	_give("hydro_bed", 2)
-	for seed_id in WELCOME_SEEDS:
-		_give(seed_id, int(WELCOME_SEEDS[seed_id]))
-	sfx("gift")
-	_toast("+ Hoe, watering can, 2 hydroponic beds, %d potato and %d wheat seeds" % [int(WELCOME_SEEDS["crater_potato_seeds"]), int(WELCOME_SEEDS["moon_wheat_seeds"])])
-	_say("Bram", ["Field's in the agri dome, west of your door. Talk to any of us at work to shop. Good luck, pilot."])
-	_save_game()
+	cutscene.play("welcome")
 
 
 # ---------------------------------------------------------------- the Caverns

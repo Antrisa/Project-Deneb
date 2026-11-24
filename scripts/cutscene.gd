@@ -23,9 +23,10 @@ extends Node
 #   ["wait", seconds]  ["fade", alpha, seconds]  ["shake", seconds, pixels]  ["sfx", name]  ["clock", minutes]
 #   ["choose", [{"text": ..., "friendship": points, "steps": [...]}, ...]]   friendship goes to the event's resident
 #   ["if", {condition}, [then steps], [else steps]]   conditions: {"flag": f}, {"not_flag": f}, {"arrived": who},
-#                                      {"partner": who}, {"dating_other": who}
+#                                      {"partner": who}, {"dating_other": who}, {"has": item} (it's in your pack)
 #   ["flag", name]  ["friendship", who, points]  ["perk", id, toast]  ["keepsake", id, toast]
-#   ["partner", who]  ["toast", text]  ["give", item, count, toast]   puts items in your pack (Rusk's seeds)
+#   ["partner", who]  ["toast", text]  ["give", item, count, toast]   puts items in your pack (Rusk's seeds); toast ""
+#                                      gives it quietly, for several gifts and then one "toast"
 #   ["mail", letter, days]             sends a letter (scripts/mail_data.gd): it comes with the post that many mornings
 #                                      later (1: the next morning), with its gift if it has one
 #   ["hide", who]  ["show", who]        out of sight and back (boarding your ship); everyone shows again at the end
@@ -44,6 +45,7 @@ extends Node
 #                                      hides; after a "go", place it again. Gone, and her pads back, when the scene ends.
 # Events can also need a second resident at the same hearts ("with": ["Evarra"]) and play only in some
 # seasons ("seasons": ["Autumn", "Winter"]): main.gd _event_ready.
+# play() also takes the story scenes in HeartEvents.SCENES (your first morning), which main.gd starts itself.
 
 const HeartEvents = preload("res://scripts/heart_events.gd")
 const SceneFx = preload("res://scripts/scene_fx.gd")
@@ -103,10 +105,11 @@ func _ready() -> void:
 # ---------------------------------------------------------------- playing an event
 
 func play(id: String) -> void:
-	if running or not HeartEvents.EVENTS.has(id):
+	if running or not (HeartEvents.EVENTS.has(id) or HeartEvents.SCENES.has(id)):
 		return
 	event_id = id
-	event = world._event_place(HeartEvents.EVENTS[id])     # its backup place, if the story hasn't opened its own
+	# a heart event at its backup place if the story hasn't opened its own, or a story scene (HeartEvents.SCENES)
+	event = world._event_place(HeartEvents.EVENTS[id] if HeartEvents.EVENTS.has(id) else HeartEvents.SCENES[id])
 	running = true
 	_actors = {}
 	_walkers = []
@@ -235,8 +238,9 @@ func _step(s: Array) -> void:
 			world._toast(str(s[2]))
 		"give":
 			world._give(str(s[1]), int(s[2]))
-			world.sfx("quest")
-			world._toast(str(s[3]))
+			if s.size() > 3 and str(s[3]) != "":       # "" gives it quietly (several gifts, then one "toast")
+				world.sfx("quest")
+				world._toast(str(s[3]))
 		"mail":
 			world.send_mail(str(s[1]), int(s[2]) if s.size() > 2 else 1)
 		"partner":
@@ -278,6 +282,8 @@ func _test(cond: Dictionary) -> bool:
 		return world.partner == str(cond["partner"])
 	if cond.has("dating_other"):
 		return world.partner != "" and world.partner != str(cond["dating_other"])
+	if cond.has("has"):
+		return world._count(str(cond["has"])) > 0
 	return false
 
 

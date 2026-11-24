@@ -53,6 +53,7 @@ A, SOLID, OPEN = md['AREAS'], md['SOLID_FLOOR'], md['OPEN_OBJ']
 ACTION_ROWS = md['ACTION_ROWS']
 RESIDENTS = set(md['SCHEDULES'])
 EVENTS, ORDER = he['EVENTS'], he['ORDER']
+SCENES = he.get('SCENES', {})   # story scenes that aren't heart events (your first morning): checked the same way
 EVENT_ROWS = ["talk", "laugh", "sad", "jump", "gift", "bench", "wave"]
 EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "ready", "no", "wait", "help", "follow", "cute"}
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
@@ -194,8 +195,10 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
                 if len(o.get("text", "")) > 64: bad(ev_id, "choice text too long for the menu: %r" % o["text"])
                 check_steps(ev_id, ev, o.get("steps", []), area, known)
         elif op == "if":
-            if not set(s[1]) <= {"flag", "not_flag", "arrived", "partner", "dating_other"}:
+            if not set(s[1]) <= {"flag", "not_flag", "arrived", "partner", "dating_other", "has"}:
                 bad(ev_id, "if: unknown condition %r" % s[1])
+            if "has" in s[1] and s[1]["has"] not in ITEMS:
+                bad(ev_id, "if: no item %r in scripts/item_data.gd" % s[1]["has"])
             f = s[1].get("flag", s[1].get("not_flag"))
             if f in known:
                 taken = known[f] if "flag" in s[1] else not known[f]
@@ -210,8 +213,11 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
 for ev_id in ORDER:
     if ev_id not in EVENTS:
         bad(ev_id, "in ORDER but not in EVENTS")
-for ev_id, ev in EVENTS.items():
-    if ev_id not in ORDER:
+for ev_id in SCENES:
+    if ev_id in EVENTS:
+        bad(ev_id, "is both a heart event and a story scene")
+for ev_id, ev in list(EVENTS.items()) + list(SCENES.items()):
+    if ev_id not in ORDER and ev_id not in SCENES:
         bad(ev_id, "not in ORDER, so it never plays")
     if ev['area'] not in A:
         bad(ev_id, "no area %r" % ev['area'])
@@ -253,5 +259,5 @@ for ev_id, ev in EVENTS.items():
 if problems:
     print("\n".join("FAIL: " + p for p in problems))
     raise SystemExit(1)
-print("PASS: %d heart events, %d steps, %d lines: places reachable, poses drawn, steps and lines valid."
-      % (len(EVENTS), count["steps"], count["lines"]))
+print("PASS: %d heart events and %d story scene(s), %d steps, %d lines: places reachable, poses drawn, steps and lines valid."
+      % (len(EVENTS), len(SCENES), count["steps"], count["lines"]))

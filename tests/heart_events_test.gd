@@ -1,5 +1,5 @@
 extends SceneTree
-# Plays every heart event (scripts/heart_events.gd) from start to finish, the way F3 does in a debug build,
+# Plays your first morning, then every heart event (scripts/heart_events.gd), from start to finish, the way F3 does in a debug build,
 # picking the first answer at every choice and clicking through every line. Checks that each one ends, is
 # remembered, gives its flags and puts everyone back on their schedule; then that their letters come.
 #   godot --headless --script res://tests/heart_events_test.gd
@@ -22,6 +22,29 @@ func run() -> void:
 		s.creator.visible = false
 	if s.title != null:
 		s.title.open = false
+	# Your first morning (HeartEvents.SCENES "welcome"): stepping out of your front door plays it, once.
+	s.welcomed = false
+	s._go_to("agri", Vector2i(59, 57), false)
+	for i in 30:
+		if s.cutscene.running:
+			break
+		await process_frame
+	assert(s.cutscene.running, "your first morning starts when you step outside")
+	await _click_through(s)
+	assert(not s.cutscene.running, "your first morning finished")
+	assert(s.welcomed)
+	assert(s._count("hoe") >= 1 and s._count("watering_can") >= 1 and s._count("hydro_bed") >= 2, "Bram's tools and beds")
+	assert(s._count("crater_potato_seeds") >= 15 and s._count("moon_wheat_seeds") >= 10, "Jasper's seeds")
+	assert(s.persons["Bram"]["met"] and s.persons["Jasper"]["met"], "you've met them now")
+	for r in s.residents:
+		assert(not r.in_scene, "welcome: " + r.who + " is back on their schedule")
+	s._go_to("aptPlayer", Vector2i(14, 23), false)
+	await process_frame
+	s._go_to("agri", Vector2i(59, 57), false)
+	await process_frame
+	await process_frame
+	assert(not s.cutscene.running, "your first morning plays only once")
+
 	s.flights = 1
 	s.artie_found_day = 1
 	s.ana_found_day = 1
@@ -30,14 +53,7 @@ func run() -> void:
 		s._debug_next_heart_event()
 		await process_frame
 		assert(s.cutscene.running, id + " started")
-		var started := Time.get_ticks_msec()
-		while s.cutscene.running and Time.get_ticks_msec() - started < 120000:
-			if s.cutscene._choosing:
-				s.cutscene._pick(0)
-			elif s.dialogue.active:
-				s.dialogue.advance()      # finish typing the line
-				s.dialogue.advance()      # and go on to the next
-			await process_frame
+		await _click_through(s)
 		assert(not s.cutscene.running, id + " finished")
 		assert(s.events_seen.has(id), id + " remembered")
 		for r in s.residents:
@@ -104,5 +120,17 @@ func run() -> void:
 	assert(not s.mail_waiting.has("quill_spores"), "and now it's read")
 	s.read_letter("quill_spores")
 	assert(s._count("medpack") == medpacks + 2, "a letter's gift only comes the first time you open it")
-	print("PASS: ", HeartEvents.ORDER.size(), " heart events played to the end, choices picked, flags set, letters sent.")
+	print("PASS: your first morning, and ", HeartEvents.ORDER.size(), " heart events played to the end, choices picked, flags set, letters sent.")
 	quit()
+
+
+# Click through a scene: the first answer at every choice, every line typed out and then moved on from.
+func _click_through(s) -> void:
+	var started := Time.get_ticks_msec()
+	while s.cutscene.running and Time.get_ticks_msec() - started < 120000:
+		if s.cutscene._choosing:
+			s.cutscene._pick(0)
+		elif s.dialogue.active:
+			s.dialogue.advance()      # finish typing the line
+			s.dialogue.advance()      # and go on to the next
+		await process_frame
