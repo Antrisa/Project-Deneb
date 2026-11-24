@@ -20,13 +20,17 @@ FW, FH = 24, 48
 # per resident: the hem row of the standing frame (legs start below it), and the hand targets
 # (dx, dy from each shoulder) per row: L and R as seen by the viewer
 SWING = {
-    "freya": dict(hem=40, rows={
-        0: dict(L=(-1, 7), R=(1, 7)),
-        1: dict(L=(-2, 5), R=(0, 9)),       # right leg trails: right hand forward, left back
-        2: dict(L=(0, 9), R=(2, 5)),        # left leg trails
-        3: dict(L=(-1, 6), R=(1, 8)),       # on their way back through
-        4: dict(L=(-1, 8), R=(1, 6)),
-    }),
+    # a straight arm hangs from the shoulder past the elbow (2 left/right of it, 4 down); the
+    # forward arm bends at the elbow, its forearm coming toward us so the hand rises in front of
+    # the belt; the back arm stays straight, its hand a pixel higher and out behind the hip
+    "freya": dict(hem=40, elbow=(-1, 4), rows={
+        0: dict(L="rest", R="rest"),
+        1: dict(L="back", R="forward"),     # right leg trails: right hand forward, left back
+        2: dict(L="forward", R="back"),     # left leg trails
+        3: dict(L="rest", R="rest"),
+        4: dict(L="rest", R="rest"),
+    }, hands={"rest": (-1, 7), "forward": (1, 5), "back": (-2, 6)},
+        bracer=("#86593f", "#6b3a2c")),     # her leather bracers cover the forearms
 }
 BOB = {0: 0, 1: 1, 2: 1, 3: 0, 4: 0}
 
@@ -51,11 +55,29 @@ def build(art, name):
         cell[:hem + 1 + bob] = 0
         P.over(cell, upper)
         layer = np.zeros_like(cell)
-        for side, elbow in (("L", -1), ("R", 1)):
+        for side, sign in (("L", 1), ("R", -1)):
             sx, sy = rig["d"][side]
-            dx, dy = hands[side]
-            P.draw_arm(layer, (sx, sy + bob), (sx + dx, sy + bob + dy), elbow, pal,
-                       width=rig.get("arm_w", 2), thick=True)
+            dx, dy = cfg["hands"][hands[side]]
+            ex, ey = cfg["elbow"]
+            # the viewer's right arm is the left one mirrored (the arm is drawn from its left
+            # edge, so the mirror is a pixel further in)
+            hx, elx = (sx + dx, sx + ex) if sign > 0 else (sx - dx, sx - ex)
+            one = np.zeros_like(layer)
+            P.draw_arm(one, (sx, sy + bob), (hx, sy + bob + dy), 0, pal,
+                       width=rig.get("arm_w", 2), elbow=(elx, sy + bob + ey), thick=True)
+            if cfg.get("bracer"):
+                lit, dark = (P.hexc(c) for c in cfg["bracer"])
+                line = pal["line"]
+                w = rig.get("arm_w", 2)
+                fore = P.line_pts((elx, sy + bob + ey), (hx, sy + bob + dy - 1))
+                top = min(y for _, y in fore)
+                for (x, y) in fore:
+                    for j in range(w):
+                        for i in range(w):
+                            yy, xx = y + j, x + i
+                            if 0 <= yy < FH and 0 <= xx < FW and one[yy, xx, 3] and (one[yy, xx] != line).any():
+                                one[yy, xx] = lit if yy == top else dark
+            P.over(layer, one)
         P.over(cell, layer)
         walk[row * FH:(row + 1) * FH, 0:FW] = cell
     Image.fromarray(walk).save(path)
