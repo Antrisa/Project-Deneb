@@ -65,15 +65,9 @@ const REVEALS := {
 }
 
 
-static func zone_of(angle: float) -> String:
-	var a: float = fposmod(angle, 360.0)
-	if a >= 225.0 and a < 315.0:
-		return "Terran"
-	if a >= 315.0 or a < 45.0:
-		return "Zaa'sh"
-	if a < 135.0:
-		return "Reach"
-	return "Collective"
+# The zone a stop at this angle and ring lies in (24 Nov: the borders bend, so it depends on how far out it is).
+static func zone_of(angle: float, ring: int = 1, off: float = 0.0) -> String:
+	return ZONE_KEYS[ShipData.zone_index_at(ShipData.map_point(angle, ring, off))]
 
 
 # A day's map: [{"kind", "name", "ring", "angle", "about", "zone", "links": [stop indices], "seen": false}].
@@ -90,7 +84,8 @@ static func make_run(day: int, ring_stops: Array, max_ring := MAX_RING, nest_don
 		for k in range(n):
 			var ang: float = turn + k * 360.0 / n + rng.randf_range(-8.0, 8.0)
 			here.append(stops.size())
-			stops.append({"kind": "beacon", "ring": ring, "angle": fposmod(ang, 360.0), "links": [], "seen": false})
+			stops.append({"kind": "beacon", "ring": ring, "angle": fposmod(ang, 360.0), "links": [], "seen": false,
+				"off": snappedf(rng.randf_range(-4.0, 4.0), 0.1)})       # a little in or out from its rough ring
 		by_ring.append(here)
 	# what kind each stop is: mostly beacons; a store on every ring; a distress signal or two per ring; the
 	# stronghold on the outermost ring, in the Reach
@@ -109,7 +104,7 @@ static func make_run(day: int, ring_stops: Array, max_ring := MAX_RING, nest_don
 				distress -= 1
 	var reach: Array = []
 	for i in by_ring[max_ring]:
-		if zone_of(float(stops[i]["angle"])) == "Reach" and str(stops[i]["kind"]) == "beacon":
+		if zone_of(float(stops[i]["angle"]), max_ring, float(stops[i]["off"])) == "Reach" and str(stops[i]["kind"]) == "beacon":
 			reach.append(i)
 	if reach.size() > 0:
 		stops[reach[rng.randi() % reach.size()]]["kind"] = "special" if nest_done else "nest"
@@ -135,7 +130,7 @@ static func make_run(day: int, ring_stops: Array, max_ring := MAX_RING, nest_don
 				if _gap(stops, i, out[1]) < 360.0 / float(ring_stops[ring + 1]) * 1.2:
 					_link(stops, i, out[1])
 	for s in stops:
-		var z: String = zone_of(float(s["angle"]))
+		var z: String = zone_of(float(s["angle"]), int(s["ring"]), float(s.get("off", 0.0)))
 		s["zone"] = z
 		match str(s["kind"]):
 			"store":
@@ -169,7 +164,7 @@ static func add_hidden(stops: Array, from: int, reveal: String, rng: RandomNumbe
 	var base_angle: float = float(stops[from]["angle"]) if from >= 0 else rng.randf() * 360.0
 	var spacing: float = 360.0 / float(ShipData.RING_STOPS[ring])
 	var angle: float = fposmod(base_angle + spacing * 0.5 * (1.0 if rng.randf() < 0.5 else -1.0), 360.0)
-	var z: String = zone_of(angle)
+	var z: String = zone_of(angle, ring)
 	var stop := {"kind": str(spec[0]), "ring": ring, "angle": angle, "links": [], "seen": false, "zone": z,
 		"name": str(spec[1]), "hidden": true}
 	stop["about"] = ABOUT.get(str(spec[0]), "")

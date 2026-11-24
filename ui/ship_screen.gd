@@ -356,8 +356,9 @@ func case(tag: String, tag_color: Color = Color("62816e")) -> void:
 # row (TERRAN | FIELD DATAPAD ... tag) along its top.
 func case_fill(tag: String, tag_color: Color = Color("62816e")) -> void:
 	rect(Rect2(_bounds), SPACE)
-	var r := Rect2(Vector2(3, 3), page - Vector2(6, 6))
-	rect(Rect2(r.position + Vector2(2, 2), r.size), Color(0, 0, 0, 0.35))
+	# flush with the edges of the window (Zachary, 24 Nov: "the UI border needs to expand ... to fit flush with the
+	# edges of the screen"); the orange rim is the window's edge
+	var r := Rect2(Vector2(_bounds.position), Vector2(_bounds.size))
 	rect(r, Color("c2643a"))
 	rect(r.grow(-2.0), Color("f4f1e8"))
 	outline(r.grow(-2.0), Color("e9b68c"))

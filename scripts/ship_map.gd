@@ -1,6 +1,7 @@
 extends CanvasLayer
-# The jump map (21 Nov 2026): a big circle round Echo Landing, five rings out into the neutral zone, split into
-# four zones of control (Terran, Zaa'sh, Collective, and the Rabble's Reach). Drawn on the Terran field datapad
+# The jump map (21 Nov 2026): a big hexagon round Echo Landing (24 Nov: no circles), five rough rings out into the
+# neutral zone, split by bent borders into four zones of control (Terran, Zaa'sh, Collective, and the Rabble's
+# Reach). The shape is ShipData.MAP_EDGE / MAP_RINGS / MAP_BORDERS / MAP_ZONES (mock-up jump_map_hex_1080p.png). Drawn on the Terran field datapad
 # (ui/ship_screen.gd): the map in the scope on the left, the next stop and your ship's stores on the right.
 # Mock-up: datapad_map_x2.png in the Drive folder.
 #
@@ -14,11 +15,10 @@ const ShipData = preload("res://scripts/ship_data.gd")
 const ShipScreen = preload("res://ui/ship_screen.gd")
 
 # The page fills the window (Zachary, 22 Nov), so the map's scope, its middle and its scale are worked out each
-# frame (_layout): the circle grows with the scope. RING radii are at zoom 1, the 420 x 330 scope of the old page.
+# frame (_layout): the hexagon grows with the scope. Map units are ShipData's (30 a ring).
 var MAP_WIN := Rect2(53, 52, 420, 330)
 var CENTER := Vector2(263, 217)
 var zoom := 1.0
-const RING := [0.0, 30.0, 60.0, 90.0, 120.0, 150.0]   # radius of each ring; ring 0 is the Landing
 const MOVE_TIME := 0.9
 const INK := Color("373b36")          # as ui/ship_screen.gd
 const MUTED := Color("595e55")          # as ui/ship_screen.gd
@@ -36,7 +36,7 @@ var on_jump: Callable = Callable()
 var moving := 0.0                  # 0..1 while the ship travels to the next stop
 var move_index := -1
 var screen: ShipScreen
-var dots: Array = []               # the other stops on the rings: [position, kind]
+var dots: Array = []               # the other stops on the rings: [ring, angle, off, kind]
 var pulse := 0.0
 # Free flights (normal runs, scripts/ship_runs.gd): every stop linked to its neighbours; you pick where to go.
 var free := false
@@ -59,21 +59,12 @@ func _ready() -> void:
 	rng.seed = 21
 	# Mostly ordinary beacons, some distress signals, a few stores, and the odd special sector.
 	var mix: Array = ["beacon", "beacon", "beacon", "beacon", "beacon", "beacon", "distress", "distress", "store", "special"]
-	for ring in range(1, RING.size()):
+	for ring in range(1, ShipData.RING_STOPS.size()):
 		var n: int = ShipData.RING_STOPS[ring]
 		var turn: float = rng.randf() * 360.0 / n
 		for k in range(n):
 			var ang: float = turn + k * 360.0 / n + rng.randf_range(-6.0, 6.0)
-			var r: float = RING[ring] + rng.randf_range(-4.0, 4.0)
-			dots.append([Vector2(cos(deg_to_rad(ang)), sin(deg_to_rad(ang))) * r, mix[rng.randi() % mix.size()]])
-
-
-func _zone_index(ang: float) -> int:
-	var a: float = fposmod(ang, 360.0)
-	if a >= 225.0 and a < 315.0: return 0
-	if a >= 315.0 or a < 45.0: return 1
-	if a < 135.0: return 2
-	return 3
+			dots.append([ring, ang, rng.randf_range(-4.0, 4.0), mix[rng.randi() % mix.size()]])
 
 
 # Show the map with a route. index: the stop the ship is at (-1 = just left the Landing).
@@ -125,8 +116,12 @@ func stop_pos(i: int) -> Vector2:
 	if i < 0 or i >= route.size():
 		return CENTER
 	var s: Dictionary = route[i]
-	var a: float = deg_to_rad(float(s["angle"]))
-	return CENTER + Vector2(cos(a), sin(a)) * float(RING[int(s["ring"])]) * zoom
+	return _at(ShipData.map_point(float(s["angle"]), int(s["ring"]), float(s.get("off", 0.0))))
+
+
+# A map point (ShipData's units) on the page.
+func _at(p: Vector2) -> Vector2:
+	return CENTER + p * zoom
 
 
 func next_index() -> int:
@@ -229,20 +224,35 @@ func _click(id: String, _p: Vector2, button: int) -> void:
 
 # ---------------------------------------------------------------- drawing
 
-func _wedge(from_deg: float, to_deg: float, radius: float, color: Color) -> void:
-	var pts := PackedVector2Array([CENTER])
-	var steps := 24
-	for i in range(steps + 1):
-		var a: float = deg_to_rad(lerpf(from_deg, to_deg, float(i) / steps))
-		pts.append(CENTER + Vector2(cos(a), sin(a)) * radius)
-	screen.polygon(pts, color)
+# A filled diamond (the stops; no circles on this map), and a diamond outline round one.
+func _diamond(c: Vector2, r: float, col: Color) -> void:
+	screen.polygon(PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)]), col)
+
+
+func _diamond_ring(c: Vector2, r: float, col: Color, thick: float = 1.0) -> void:
+	var pts := [c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)]
+	for k in 4:
+		screen.line(pts[k], pts[(k + 1) % 4], col, thick)
+
+
+func _loop(points: Array, col: Color, thick: float = 1.0) -> void:
+	for k in points.size():
+		screen.line(_at(points[k]), _at(points[(k + 1) % points.size()]), col, thick)
+
+
+func _hexagon(c: Vector2, r: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for k in 6:
+		pts.append(c + Vector2.from_angle(deg_to_rad(60.0 * k)) * r)
+	return pts
 
 
 func _layout() -> void:
 	var pg: Vector2 = screen.page
 	MAP_WIN = Rect2(12, 46, pg.x - 24.0 - 241.0, pg.y - 96.0)
 	CENTER = MAP_WIN.get_center().round()
-	zoom = minf(MAP_WIN.size.x / 420.0, MAP_WIN.size.y / 330.0)
+	var edge: float = (ShipData.MAP_EDGE[0] as Vector2).length()
+	zoom = minf(MAP_WIN.size.x / (2.0 * edge + 24.0), MAP_WIN.size.y / (1.732 * edge + 24.0))
 
 
 func _paint() -> void:
@@ -250,36 +260,53 @@ func _paint() -> void:
 	_layout()
 	s.case_fill("Jump map")
 	s.scope(MAP_WIN, 3)
-	var outer: float = (RING[RING.size() - 1] + 7.0) * zoom
-	for z in ShipData.ZONES:
-		_wedge(float(z["from"]), float(z["to"]), outer, Color(z["color"], 0.72))
-	s.circle(CENTER, (RING[1] + 7.0) * zoom, Color("3d4946"))
-	for r in RING:
-		if r > 0.0:
-			s.ring(CENTER, r * zoom, Color(0.54, 0.6, 0.55, 0.55))
-	for z in ShipData.ZONES:
-		var mid: float = deg_to_rad((float(z["from"]) + float(z["to"])) / 2.0)
-		var rim: Vector2 = CENTER + Vector2(cos(mid), sin(mid)) * (outer - 12.0)
+	# the zones, the dashed lines where two meet, and the big hexagon's rim
+	for k in ShipData.ZONES.size():
+		var pts := PackedVector2Array()
+		for p in ShipData.MAP_ZONES[k]:
+			pts.append(_at(p))
+		s.polygon(pts, Color(ShipData.ZONES[k]["color"], 0.72))
+	for border in ShipData.MAP_BORDERS:
+		for i in range(1, border.size() - 1):
+			var a: Vector2 = border[i]
+			var b: Vector2 = border[i + 1]
+			if not Geometry2D.is_point_in_polygon(a, PackedVector2Array(ShipData.MAP_EDGE)):
+				break
+			if not Geometry2D.is_point_in_polygon(b, PackedVector2Array(ShipData.MAP_EDGE)):
+				b = b.normalized() * ShipData.map_ray(ShipData.MAP_EDGE, rad_to_deg(b.angle()))
+			var dashes: int = maxi(1, int(_at(a).distance_to(_at(b)) / 5.6))
+			for j in dashes:
+				s.line(_at(a.lerp(b, float(j) / dashes)), _at(a.lerp(b, (j + 0.55) / dashes)), Color(0.9, 0.89, 0.82, 0.5), 1.2)
+	_loop(ShipData.MAP_EDGE, Color(0.78, 0.82, 0.77, 0.67), 1.2)
+	s.polygon(_hexagon(CENTER, 20.0 * zoom), Color("3d4946"))
+	# the rough rings; rings shut on this run dimmer
+	for ring in range(1, ShipData.MAP_RINGS.size()):
+		var open_ring: bool = not free or ring <= max_ring
+		_loop(ShipData.MAP_RINGS[ring], Color(0.59, 0.65, 0.6, 0.68) if open_ring else Color(0.43, 0.47, 0.44, 0.32), 1.0)
+	for k in ShipData.ZONES.size():
+		var z: Dictionary = ShipData.ZONES[k]
+		var mid: float = 270.0 + 90.0 * k
+		var rim: Vector2 = _at(Vector2.from_angle(deg_to_rad(mid)) * (ShipData.map_ray(ShipData.MAP_EDGE, mid) - 13.0))
 		var label: String = str(z["name"]).to_upper()
 		var half: float = s.width(label, "micro") / 2.0
 		var x: float = clampf(rim.x, MAP_WIN.position.x + 10.0 + half, MAP_WIN.end.x - 10.0 - half)
 		s.text_center(x, rim.y - 6.0, label, "micro", z["text"])
 	# the other stops: not on this route (on a free flight, only the shut rings further out)
 	for d in dots:
-		var p: Vector2 = CENTER + (d[0] as Vector2) * zoom
+		var p: Vector2 = _at(ShipData.map_point(float(d[1]), int(d[0]), float(d[2])))
 		if free:
-			if (d[0] as Vector2).length() > RING[max_ring] + 12.0:
-				s.circle(p, 2.0, Color(0.32, 0.35, 0.35))
+			if int(d[0]) > max_ring:
+				_diamond(p, 2.4, Color(0.32, 0.35, 0.35))
 			continue
 		var near := false
 		for i in range(route.size()):
 			if stop_pos(i).distance_to(p) < 12.0:
 				near = true
 		if not near:
-			s.circle(p, 2.5, Color(0.42, 0.46, 0.45))
+			_diamond(p, 3.0, Color(0.42, 0.46, 0.45))
 	# the Landing
-	s.circle(CENTER, 8.0, Color("64b4ff"))
-	s.ring(CENTER, 8.0, Color("f0f0f0"))
+	s.polygon(_hexagon(CENTER, 9.0), Color("f0f0f0"))
+	s.polygon(_hexagon(CENTER, 8.0), Color("64b4ff"))
 	s.text_center(CENTER.x, CENTER.y - 8.0, "EL", "micro", Color("14203c"))
 	var n: int = next_index()
 	if free:
@@ -295,14 +322,14 @@ func _paint() -> void:
 			var stop: Dictionary = route[i]
 			var kind: Dictionary = ShipData.STOP_KINDS[stop["kind"]]
 			var here: Vector2 = stop_pos(i)
-			var rad: float = 6.0 if str(stop["kind"]) == "special" else 5.0
-			s.circle(here, rad, kind["color"] if i > at else Color(kind["color"]).darkened(0.4))
-			s.ring(here, rad, Color("20262a"))
+			var rad: float = 7.5 if str(stop["kind"]) == "special" else 6.0
+			_diamond(here, rad + 1.0, Color("20262a"))
+			_diamond(here, rad, kind["color"] if i > at else Color(kind["color"]).darkened(0.4))
 			if i == n and moving == 0.0:
-				s.ring(here, rad + 3.0 + sin(pulse * 5.0), GOLD, 1.5)
+				_diamond_ring(here, rad + 4.0 + sin(pulse * 5.0), GOLD, 1.5)
 				s.hit("stop", Rect2(here - Vector2(10, 10), Vector2(20, 20)))
 				if s.hovering(Rect2(here - Vector2(10, 10), Vector2(20, 20))) and can_jump():
-					s.ring(here, rad + 6.0, Color("fff6ea"))
+					_diamond_ring(here, rad + 7.5, Color("fff6ea"))
 			s.text_center(here.x, here.y - rad - 13.0, str(stop["name"]).to_upper(), "micro", NAME_ON_MAP if i > at else Color("8f9c8a"))
 	# your ship
 	var ship: Vector2 = stop_pos(at)
@@ -332,24 +359,26 @@ func _paint_free() -> void:
 		var stop: Dictionary = route[i]
 		var kind: Dictionary = ShipData.STOP_KINDS[stop["kind"]]
 		var here: Vector2 = stop_pos(i)
-		var rad: float = 6.0 if str(stop["kind"]) == "special" else 4.5
+		var rad: float = 7.5 if str(stop["kind"]) == "special" else 5.6
 		var col: Color = kind["color"]
 		if bool(stop.get("seen", false)):
 			col = col.darkened(0.45)
-		s.circle(here, rad, col)
-		s.ring(here, rad, Color("20262a"))
+		_diamond(here, rad + 1.0, Color("20262a"))
+		_diamond(here, rad, col)
 		var hot := Rect2(here - Vector2(9, 9), Vector2(18, 18))
 		if reach.has(i) and moving == 0.0:
-			s.ring(here, rad + 3.0 + sin(pulse * 5.0), GOLD, 1.5)
+			_diamond_ring(here, rad + 4.0 + sin(pulse * 5.0), GOLD, 1.5)
 			s.hit("stop/%d" % i, hot)
 			if s.hovering(hot):
 				named = i
 		if i == target:
-			s.ring(here, rad + 6.0, Color("fff6ea"), 1.5)
+			_diamond_ring(here, rad + 7.5, Color("fff6ea"), 1.5)
 	for i in [target, named]:
 		if i >= 0:
 			var here2: Vector2 = stop_pos(i)
-			s.text_center(here2.x, here2.y - 21.0, str(route[i]["name"]).to_upper(), "micro", NAME_ON_MAP)
+			# above the stop, or below it when that would sit on the Landing
+			var y: float = here2.y - 23.0 if here2.distance_to(CENTER) > 40.0 * zoom else here2.y + 12.0
+			s.text_center(here2.x, y, str(route[i]["name"]).to_upper(), "micro", NAME_ON_MAP)
 
 
 func _paint_side(n: int) -> void:
@@ -364,9 +393,9 @@ func _paint_side(n: int) -> void:
 		var stop: Dictionary = route[n]
 		var kind: Dictionary = ShipData.STOP_KINDS[stop["kind"]]
 		s.text_fit(488, 78, 219, str(stop["name"]), "mid", INK)
-		s.circle(Vector2(491.5, 106.5), 3.5, kind["color"])
-		s.ring(Vector2(491.5, 106.5), 3.5, Color("20262a"))
-		var zone: Dictionary = ShipData.ZONES[_zone_index(float(stop["angle"]))]
+		_diamond(Vector2(491.5, 106.5), 5.0, Color("20262a"))
+		_diamond(Vector2(491.5, 106.5), 4.0, kind["color"])
+		var zone: Dictionary = ShipData.ZONES[ShipData.stop_zone_index(stop)]
 		var been: String = "  (BEEN HERE)" if bool(stop.get("seen", false)) else ""
 		s.text_fit(499, 102, 208, "%s, %s, RING %d%s" % [str(kind["label"]).to_upper(), str(zone["name"]).to_upper(), int(stop["ring"]), been], "micro", MUTED)
 		var lines: Array = s.wrap_lines(str(stop["about"]), 219, "label")
@@ -396,8 +425,8 @@ func _paint_side(n: int) -> void:
 		var kind2: Dictionary = ShipData.STOP_KINDS[KEY_KINDS[i]]
 		var x: float = 488.0 + (i % 2) * 110.0
 		var y: float = 252.0 + floorf(i / 2.0) * 14.0
-		s.circle(Vector2(x + 3.5, y + 5.5), 3.5, kind2["color"])
-		s.ring(Vector2(x + 3.5, y + 5.5), 3.5, Color("20262a"))
+		_diamond(Vector2(x + 3.5, y + 5.5), 5.0, Color("20262a"))
+		_diamond(Vector2(x + 3.5, y + 5.5), 4.0, kind2["color"])
 		s.text(x + 11, y + 1, str(kind2["label"]), "micro", MUTED)
 	# the buttons
 	var can: bool = can_jump()

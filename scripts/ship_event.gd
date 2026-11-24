@@ -146,15 +146,7 @@ func _continue() -> void:
 func _zone() -> Dictionary:
 	if stop.is_empty() or int(stop.get("ring", 0)) <= 1:
 		return {}
-	var a: float = fposmod(float(stop.get("angle", 0.0)), 360.0)
-	var idx := 3                        # ShipData.ZONES: Terran, Zaa'sh, the Reach, Collective
-	if a >= 225.0 and a < 315.0:
-		idx = 0
-	elif a >= 315.0 or a < 45.0:
-		idx = 1
-	elif a < 135.0:
-		idx = 2
-	return ShipData.ZONES[idx]
+	return ShipData.ZONES[ShipData.stop_zone_index(stop)]       # the zone the stop sits in on the map
 
 
 func _tag() -> String:

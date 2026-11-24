@@ -589,6 +589,64 @@ const ZONES := [
 	{"name": "Collective influence", "from": 135.0, "to": 225.0, "color": Color("1c4030"), "text": Color("6edc8c")},
 ]
 const RING_STOPS := [0, 4, 8, 12, 16, 20]      # how many stops each ring has (ring 0 is the Landing)
+
+# The jump map's shape (24 Nov; Zachary: zones "a little fluid ... not a straight line", rings "rough rings", "i
+# dont like circles", "make the overall map a giant hexagon, so it still looks clean"). Map units: 30 a ring, the
+# Landing at 0,0. MAP_EDGE is the big flat-topped hexagon; MAP_RINGS[ring] is a rough hexagon (its corners and the
+# middle of each side pushed in or out); MAP_BORDERS are the bent lines between the zones (Terran/Zaa'sh first),
+# from the Landing outward; MAP_ZONES are the zones' outlines in ZONES order. Fixed, so the map is the same every
+# day. Made by the mock-up script (/home/claude/work/space_map_mock/mock_map_hex.py, jump_map_hex_1080p.png).
+const MAP_EDGE := [Vector2(163.0, 0.0), Vector2(81.5, 141.2), Vector2(-81.5, 141.2), Vector2(-163.0, 0.0), Vector2(-81.5, -141.2), Vector2(81.5, -141.2)]
+const MAP_RINGS := [
+	[],
+	[Vector2(27.6, 0.2), Vector2(25.6, 17.7), Vector2(15.7, 27.1), Vector2(1.1, 22.6), Vector2(-15.2, 27.7), Vector2(-26.6, 17.2), Vector2(-27.5, 1.2), Vector2(-26.3, -12.8), Vector2(-15.2, -25.6), Vector2(-0.8, -27.6), Vector2(13.6, -24.1), Vector2(20.3, -12.1)],
+	[Vector2(60.9, -2.2), Vector2(48.7, 24.5), Vector2(29.0, 51.5), Vector2(-1.1, 52.7), Vector2(-27.6, 53.6), Vector2(-45.7, 25.1), Vector2(-61.8, -2.5), Vector2(-42.7, -23.4), Vector2(-33.3, -52.9), Vector2(1.8, -53.2), Vector2(29.7, -52.2), Vector2(44.0, -28.3)],
+	[Vector2(89.5, 4.5), Vector2(68.3, 43.0), Vector2(45.5, 73.7), Vector2(-1.3, 73.4), Vector2(-45.6, 81.2), Vector2(-65.8, 32.5), Vector2(-87.7, 3.8), Vector2(-60.4, -39.6), Vector2(-45.6, -73.9), Vector2(-5.1, -78.1), Vector2(42.1, -78.8), Vector2(71.4, -37.4)],
+	[Vector2(122.8, 5.9), Vector2(85.1, 53.8), Vector2(62.7, 104.3), Vector2(-5.2, 98.0), Vector2(-57.8, 108.7), Vector2(-87.9, 58.9), Vector2(-121.1, 2.2), Vector2(-87.3, -58.1), Vector2(-60.5, -102.0), Vector2(2.2, -105.4), Vector2(58.9, -104.3), Vector2(87.8, -50.0)],
+	[Vector2(148.7, 5.9), Vector2(113.6, 73.5), Vector2(78.6, 130.2), Vector2(3.6, 125.8), Vector2(-73.9, 132.8), Vector2(-109.9, 72.8), Vector2(-147.3, 2.3), Vector2(-112.1, -62.9), Vector2(-77.1, -132.2), Vector2(9.3, -126.3), Vector2(82.0, -126.7), Vector2(120.8, -57.4)],
+]
+const MAP_BORDERS := [
+	[Vector2(-0.0, -0.0), Vector2(-13.0, -12.5), Vector2(-24.2, -34.3), Vector2(-58.8, -37.9), Vector2(-75.8, -62.1), Vector2(-68.6, -105.7), Vector2(-124.0, -144.0)],
+	[Vector2(0.0, -0.0), Vector2(12.0, -13.4), Vector2(25.9, -33.1), Vector2(41.5, -56.4), Vector2(81.0, -55.1), Vector2(92.2, -85.9), Vector2(145.4, -122.3)],
+	[Vector2(0.0, 0.0), Vector2(11.9, 13.5), Vector2(35.4, 22.7), Vector2(54.3, 44.2), Vector2(77.4, 60.1), Vector2(79.0, 98.1), Vector2(123.2, 144.7)],
+	[Vector2(-0.0, 0.0), Vector2(-9.8, 15.1), Vector2(-32.2, 26.9), Vector2(-40.9, 56.8), Vector2(-68.1, 70.5), Vector2(-95.8, 81.9), Vector2(-151.0, 115.4)],
+]
+const MAP_ZONES := [
+	[Vector2(-0.0, -0.0), Vector2(-13.0, -12.5), Vector2(-24.2, -34.3), Vector2(-58.8, -37.9), Vector2(-75.8, -62.1), Vector2(-68.6, -105.7), Vector2(-92.5, -122.2), Vector2(-81.5, -141.2), Vector2(-81.5, -141.2), Vector2(81.5, -141.2), Vector2(81.5, -141.2), Vector2(107.4, -96.3), Vector2(92.2, -85.9), Vector2(81.0, -55.1), Vector2(41.5, -56.4), Vector2(25.9, -33.1), Vector2(12.0, -13.4), Vector2(0.0, -0.0)],
+	[Vector2(0.0, -0.0), Vector2(12.0, -13.4), Vector2(25.9, -33.1), Vector2(41.5, -56.4), Vector2(81.0, -55.1), Vector2(92.2, -85.9), Vector2(107.4, -96.3), Vector2(163.0, 0.0), Vector2(163.0, 0.0), Vector2(163.0, 0.0), Vector2(96.0, 116.0), Vector2(79.0, 98.1), Vector2(77.4, 60.1), Vector2(54.3, 44.2), Vector2(35.4, 22.7), Vector2(11.9, 13.5), Vector2(0.0, 0.0)],
+	[Vector2(0.0, 0.0), Vector2(11.9, 13.5), Vector2(35.4, 22.7), Vector2(54.3, 44.2), Vector2(77.4, 60.1), Vector2(79.0, 98.1), Vector2(96.0, 116.0), Vector2(81.5, 141.2), Vector2(81.5, 141.2), Vector2(-81.5, 141.2), Vector2(-81.5, 141.2), Vector2(-110.5, 90.9), Vector2(-95.8, 81.9), Vector2(-68.1, 70.5), Vector2(-40.9, 56.8), Vector2(-32.2, 26.9), Vector2(-9.8, 15.1), Vector2(-0.0, 0.0)],
+	[Vector2(-0.0, 0.0), Vector2(-9.8, 15.1), Vector2(-32.2, 26.9), Vector2(-40.9, 56.8), Vector2(-68.1, 70.5), Vector2(-95.8, 81.9), Vector2(-110.5, 90.9), Vector2(-163.0, 0.0), Vector2(-163.0, 0.0), Vector2(-163.0, 0.0), Vector2(-163.0, 0.0), Vector2(-92.5, -122.2), Vector2(-68.6, -105.7), Vector2(-75.8, -62.1), Vector2(-58.8, -37.9), Vector2(-24.2, -34.3), Vector2(-13.0, -12.5), Vector2(-0.0, -0.0)],
+]
+
+
+# How far out a ray from the Landing at this angle (degrees) crosses a closed loop of points.
+static func map_ray(loop: Array, angle: float) -> float:
+	var far := Vector2.from_angle(deg_to_rad(angle)) * 1000.0
+	var best := 0.0
+	for i in loop.size():
+		var p = Geometry2D.segment_intersects_segment(Vector2.ZERO, far, loop[i], loop[(i + 1) % loop.size()])
+		if p != null and (best == 0.0 or (p as Vector2).length() < best):
+			best = (p as Vector2).length()
+	return best
+
+
+# Where a stop sits, in map units: on its rough ring at its angle, nudged in or out by its own off.
+static func map_point(angle: float, ring: int, off: float = 0.0) -> Vector2:
+	if ring <= 0:
+		return Vector2.ZERO
+	return Vector2.from_angle(deg_to_rad(angle)) * (map_ray(MAP_RINGS[ring], angle) + off)
+
+
+# The ZONES index of the zone a map point lies in.
+static func zone_index_at(p: Vector2) -> int:
+	for k in MAP_ZONES.size():
+		if Geometry2D.is_point_in_polygon(p, PackedVector2Array(MAP_ZONES[k])):
+			return k
+	return 0
+
+
+static func stop_zone_index(stop: Dictionary) -> int:
+	return zone_index_at(map_point(float(stop.get("angle", 0.0)), int(stop.get("ring", 1)), float(stop.get("off", 0.0))))
 # The kinds of stop on the map (Zachary, 21 Nov), as in FTL:
 #   beacon   - an ordinary stop: any random event or a fight. You don't know which until you jump.
 #              What turns up leans toward the zone's owner (Terran patrols, Zaa'sh pilgrims, Collective convoys, pirates).
