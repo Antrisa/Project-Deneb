@@ -7,7 +7,8 @@ action and event builders keep cutting from it) has its arms and resting fists t
 tools/poses.py (view_body), and both arms are drawn back on with poses.draw_arm (thick), so
 both sides match. Per row: 0 stand, 1 contact A, 2 contact B, 3 passing A, 4 passing B
 (playback 1, 3, 2, 4). On a contact the body drops a pixel, the hand on the trailing leg's side
-swings forward (toward us: lower and in) and the other swings back (higher and out); passing
+swings forward (bent at the elbow, the hand rising in front of the belt) and the other swings
+back behind her (drawn under the body, so the forearm and hand go out of sight); passing
 rows hang at rest. The legs below the hem are the walk's own.
 """
 import sys, os
@@ -22,14 +23,16 @@ FW, FH = 24, 48
 SWING = {
     # a straight arm hangs from the shoulder past the elbow (2 left/right of it, 4 down); the
     # forward arm bends at the elbow, its forearm coming toward us so the hand rises in front of
-    # the belt; the back arm stays straight, its hand a pixel higher and out behind the hip
+    # the belt; the back arm swings behind her: drawn under the body, its forearm goes in behind
+    # the hip and only the upper arm shows
     "freya": dict(hem=40, elbow=(-1, 4), rows={
         0: dict(L="rest", R="rest"),
         1: dict(L="back", R="forward"),     # right leg trails: right hand forward, left back
         2: dict(L="forward", R="back"),     # left leg trails
         3: dict(L="rest", R="rest"),
         4: dict(L="rest", R="rest"),
-    }, hands={"rest": (-1, 7), "forward": (1, 5), "back": (-2, 6)},
+    }, hands={"rest": (-1, 7), "forward": (1, 5), "back": (2, 5)},
+        elbows={"back": (0, 3)},
         bracer=("#86593f", "#6b3a2c")),     # her leather bracers cover the forearms
 }
 BOB = {0: 0, 1: 1, 2: 1, 3: 0, 4: 0}
@@ -55,10 +58,11 @@ def build(art, name):
         cell[:hem + 1 + bob] = 0
         P.over(cell, upper)
         layer = np.zeros_like(cell)
+        behind = np.zeros_like(cell)
         for side, sign in (("L", 1), ("R", -1)):
             sx, sy = rig["d"][side]
             dx, dy = cfg["hands"][hands[side]]
-            ex, ey = cfg["elbow"]
+            ex, ey = cfg.get("elbows", {}).get(hands[side], cfg["elbow"])
             # the viewer's right arm is the left one mirrored (the arm is drawn from its left
             # edge, so the mirror is a pixel further in)
             hx, elx = (sx + dx, sx + ex) if sign > 0 else (sx - dx, sx - ex)
@@ -77,8 +81,12 @@ def build(art, name):
                             yy, xx = y + j, x + i
                             if 0 <= yy < FH and 0 <= xx < FW and one[yy, xx, 3] and (one[yy, xx] != line).any():
                                 one[yy, xx] = lit if yy == top else dark
-            P.over(layer, one)
-        P.over(cell, layer)
+            P.over(behind if hands[side] == "back" else layer, one)
+        final = np.zeros_like(cell)
+        P.over(final, behind)
+        P.over(final, cell)
+        P.over(final, layer)
+        cell = final
         walk[row * FH:(row + 1) * FH, 0:FW] = cell
     Image.fromarray(walk).save(path)
 
