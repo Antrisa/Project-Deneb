@@ -1,8 +1,7 @@
 extends CanvasLayer
 # The "who are you?" screen (24 Nov: redrawn in the Terran datapad style of the other screens, ui/ship_screen.gd,
 # and the clothes are back). Type your name (residents use it), pick a gender, a top and a bottom, and the hair,
-# eye, skin and clothes colours.
-# Each gender keeps one hairstyle (scripts/player_maker.gd STARTER_LOOKS).
+# eye, skin and clothes colours, and (24 Nov) the hairstyle again.
 # Shown at the start of a new game, and again from the wardrobe in your apartment.
 #   - Left: you, walking on the spot from the front, back and both sides; under that, for a colour line, the
 #     preset swatches and hue / saturation / lightness sliders (click or drag).
@@ -18,7 +17,7 @@ const ShipScreen = preload("res://ui/ship_screen.gd")
 
 # What each line of the screen changes: [key in the look, label]
 const ROWS := [
-	["name", "Name"], ["body", "Gender"], ["tops", "Top"], ["bottoms", "Bottom"],
+	["name", "Name"], ["body", "Gender"], ["hair", "Hair"], ["tops", "Top"], ["bottoms", "Bottom"],
 	["hairColor", "Hair colour"], ["eyeColor", "Eyes"], ["skinColor", "Skin"],
 	["topColor", "Top colour"], ["bottomColor", "Bottom colour"],
 ]
@@ -92,7 +91,7 @@ func _change(index: int, by: int) -> void:
 		_typing = true
 		return
 	if key == "body":
-		# the other gender's hair and starter clothes, keeping any colours already picked
+		# the other gender's starter hair and clothes, keeping any colours already picked
 		var n: int = maker.option_count(key)
 		var next: int = (int(look[key]) + by + n) % n
 		var colours := {}
@@ -122,7 +121,7 @@ func _starter_colours(colours: Dictionary, body: int) -> bool:
 
 
 func _shuffle() -> void:
-	# Shuffle changes the clothes and colours; gender (and so the hairstyle) stays as chosen.
+	# Shuffle changes the hairstyle, clothes and colours; the name and gender stay as chosen.
 	var keep_body: int = int(look.get("body", 0))
 	var name_kept: String = str(look.get("name", ""))
 	look = maker.random_look()
@@ -353,7 +352,7 @@ func _paint_tips(r: Rect2) -> void:
 	var y: float = r.position.y + 4.0
 	s.text(r.position.x, y, "CLOTHES AND COLOURS", "micro", ShipScreen.MUTED)
 	y += 16.0
-	y = s.wrap_text(r.position.x, y, r.size.x, "Pick a top and a bottom, then their colours. Choose a colour line to mix your own shade.", "body", ShipScreen.INK, 17.0)
+	y = s.wrap_text(r.position.x, y, r.size.x, "Pick a hairstyle, a top and a bottom, then their colours. Choose a colour line to mix your own shade.", "body", ShipScreen.INK, 17.0)
 	y += 6.0
 	s.wrap_text(r.position.x, y, r.size.x, "You can change your look any time at the wardrobe in your apartment.", "label", ShipScreen.MUTED, 15.0)
 
