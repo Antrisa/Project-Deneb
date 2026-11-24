@@ -34,6 +34,15 @@ SWING = {
     }, hands={"rest": (-1, 7), "forward": (1, 5), "back": (2, 5)},
         elbows={"back": (0, 3)},
         bracer=("#86593f", "#6b3a2c")),     # her leather bracers cover the forearms
+    # Jasper (24 Nov): chef's coat to row 37 with wide white sleeves and orange paws
+    "jasper": dict(hem=37, elbow=(-1, 4), rows={
+        0: dict(L="rest", R="rest"),
+        1: dict(L="back", R="forward"),
+        2: dict(L="forward", R="back"),
+        3: dict(L="rest", R="rest"),
+        4: dict(L="rest", R="rest"),
+    }, hands={"rest": (-1, 7), "forward": (1, 5), "back": (2, 5)},
+        elbows={"back": (0, 3)}, arm_w=3, shoulders={"L": (3, 27), "R": (17, 27)}),   # his wide sleeves
 }
 BOB = {0: 0, 1: 1, 2: 1, 3: 0, 4: 0}
 
@@ -60,7 +69,7 @@ def build(art, name):
         layer = np.zeros_like(cell)
         behind = np.zeros_like(cell)
         for side, sign in (("L", 1), ("R", -1)):
-            sx, sy = rig["d"][side]
+            sx, sy = cfg.get("shoulders", {}).get(side, rig["d"][side])
             dx, dy = cfg["hands"][hands[side]]
             ex, ey = cfg.get("elbows", {}).get(hands[side], cfg["elbow"])
             # the viewer's right arm is the left one mirrored (the arm is drawn from its left
@@ -68,11 +77,11 @@ def build(art, name):
             hx, elx = (sx + dx, sx + ex) if sign > 0 else (sx - dx, sx - ex)
             one = np.zeros_like(layer)
             P.draw_arm(one, (sx, sy + bob), (hx, sy + bob + dy), 0, pal,
-                       width=rig.get("arm_w", 2), elbow=(elx, sy + bob + ey), thick=True)
+                       width=cfg.get("arm_w", rig.get("arm_w", 2)), elbow=(elx, sy + bob + ey), thick=True)
             if cfg.get("bracer"):
                 lit, dark = (P.hexc(c) for c in cfg["bracer"])
                 line = pal["line"]
-                w = rig.get("arm_w", 2)
+                w = cfg.get("arm_w", rig.get("arm_w", 2))
                 fore = P.line_pts((elx, sy + bob + ey), (hx, sy + bob + dy - 1))
                 top = min(y for _, y in fore)
                 for (x, y) in fore:

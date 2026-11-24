@@ -1375,6 +1375,10 @@ RIGS = {
         u=dict(arms=[(1, 5, 26, 37), (17, 21, 26, 37)], L=(5, 27), R=(17, 27)),
         l=dict(N=(10, 25), F=(11, 25)),
         hip=dict(d=38, u=38, l=37),
+        # (24 Nov) the inner halves of the walk's paws at the hem come off too, and the arms keep their
+        # width held out sideways
+        hand_boxes=dict(d=[(6, 7, 34, 35), (15, 16, 34, 35)], u=[(6, 7, 34, 35), (15, 16, 34, 35)]),
+        thick_arms=True,
         sleep=dict(eyes=[(7, 14, 2, 3), (14, 14, 2, 3)], skin="#f5823a", lash="#2a1510",
                    neck=23, top=30),
     ),
