@@ -1,13 +1,13 @@
-"""The circuit suit (24 Nov): glowing circuit traces on top 9 ("Circuit suit") and bottom 8 ("Tech leggings").
+"""The circuit suit (24 Nov): the earlier art's circuit bodysuit details on top 9 ("Circuit suit") and bottom 8
+("Tech leggings").
 
 Usage: python3 -I tools/circuit_suit.py [GAME_DIR]
 
-Zachary's favourite outfit from the earlier player art was the dark suit with glowing cyan circuitry. The current
-art's "Circuit suit" top had lost it, so this paints the traces back on: a seam line down the middle with a glowing
-node on the chest, branches round the ribs, and lines down the sleeves; the leggings get a line down each leg with
-nodes at the knees. The traces are drawn on the standing frame of each facing and carried to every walk and action
-frame by matching the frame to the standing one (so they move with the body), only onto the cloth (never the
-outline, never skin). Their mask is cleared, so they keep their own glow whatever colour the suit is dyed.
+Zachary's favourite outfit from the earlier player art was its circuit bodysuit: a dark suit with panel seams and
+small mint lights. The current art's "Circuit suit" had lost them, so this paints them back on in the same places
+and colours. The detail is drawn on the standing frame of each facing and carried to every walk and action frame by
+matching the frame to the standing one (so it moves with the body), only onto the cloth (never the outline, never
+skin). Its mask is cleared, so the lights keep their colour whatever colour the suit is dyed.
 """
 import os, sys
 import numpy as np
@@ -15,17 +15,20 @@ from PIL import Image
 
 GAME = sys.argv[1] if len(sys.argv) > 1 else "."
 FW, FH = 24, 48
-LINE = (54, 198, 232, 255)
-NODE = (150, 246, 255, 255)
+MINT = (134, 203, 187, 255)     # the old suit's accent lights
+SEAM = (48, 36, 49, 255)        # its panel seams, in the outline colour
+COLLAR = (164, 172, 178, 255)
 
-# Traces on the standing frame, facing down / up / left (right is left mirrored): (x, y, colour)
-def trace(points, colour=LINE):
+# Detail on the standing frame, facing down / up / left (right is left mirrored): (x, y, colour). Copied from
+# the earlier art's suit (before the 22 Nov redo): panel seams down the sides of the chest, two lights on the
+# chest and one on each shoulder, a lit collar tab, a lit line down the front from the side, and short lit
+# stripes on the thighs.
+def trace(points, colour):
     return [(x, y, colour) for x, y in points]
 
 def run(x0, y0, x1, y1):
-    pts = []
+    pts = [(x0, y0)]
     x, y = x0, y0
-    pts.append((x, y))
     while (x, y) != (x1, y1):
         if x != x1:
             x += 1 if x1 > x else -1
@@ -35,19 +38,18 @@ def run(x0, y0, x1, y1):
     return pts
 
 TOP = {
-    0: trace(run(11, 23, 11, 31) + run(10, 27, 7, 27) + run(7, 28, 7, 30) + run(12, 27, 16, 27) + run(16, 28, 16, 30)
-             + run(5, 26, 5, 31) + run(18, 26, 18, 31))
-       + trace([(11, 25), (12, 25), (11, 26), (12, 26)], NODE),
-    1: trace(run(11, 22, 11, 31) + run(10, 25, 8, 25) + run(8, 26, 8, 29) + run(12, 25, 15, 25) + run(15, 26, 15, 29)
-             + run(5, 26, 5, 31) + run(18, 26, 18, 30))
-       + trace([(11, 27), (11, 28)], NODE),
-    2: trace(run(12, 23, 12, 31) + run(11, 28, 9, 28) + run(9, 29, 9, 31))
-       + trace([(12, 25), (12, 26)], NODE),
+    0: trace(run(7, 23, 7, 31) + run(16, 23, 16, 31), SEAM)
+       + trace([(11, 22), (12, 22)], COLLAR)
+       + trace([(10, 25), (13, 25), (5, 26), (18, 26)], MINT),
+    1: trace(run(7, 23, 7, 31) + run(16, 23, 16, 31), SEAM)
+       + trace([(12, 25), (5, 26), (18, 26)], MINT),
+    2: trace(run(13, 24, 13, 31), SEAM)
+       + trace(run(9, 23, 9, 28) + [(12, 27)], MINT),
 }
 BOTTOM = {
-    0: trace(run(8, 34, 8, 40) + run(15, 34, 15, 40)) + trace([(8, 37), (15, 37)], NODE),
-    1: trace(run(8, 34, 8, 40) + run(15, 34, 15, 40)) + trace([(8, 37), (15, 37)], NODE),
-    2: trace(run(12, 34, 12, 40)) + trace([(12, 37)], NODE),
+    0: trace(run(9, 35, 9, 37) + run(15, 35, 15, 37), MINT),
+    1: trace(run(9, 35, 9, 37) + run(15, 35, 15, 37), MINT),
+    2: trace(run(12, 36, 12, 37) + run(12, 40, 12, 41), MINT),
 }
 
 
