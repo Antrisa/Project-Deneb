@@ -44,7 +44,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`zaas_2` to `zaas_
 - **Heart-event sheets** are new for **Zaas and Merrow** (`art/npc_zaas_event.png`, `art/npc_merrow_event.png`, built from the rig by `tools/events.py`; their face colours are in its `FACES`). They also use their action rows: his hydrophone (survey), his spyglass (observe); her valve wheel.
 - **New effects** (`scripts/scene_fx.gd`): **spray** (the burst pipe in 2, his dive in 6) and **bubbles** (his dive, the bell going down in 8). A scene can now switch an effect off (`["fx", kind, "off"]`), so the spray stops when the valve is shut.
 - **The heartbeat** in 4 is two low thuds and a small shake, three times.
-- **To test:** in a debug build, **F3** plays the next event in order. For his 6 it now kills the Leviathan first (the game keeps that flag itself), so 8 then plays at the lake; the fountain version is checked offline only.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row. For his 6 it now kills the Leviathan first (the game keeps that flag itself), so 8 then plays at the lake; the fountain version is checked offline only.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **Not in yet:** fishing (the Sonar Lure is a flag until there is); the diving helmet, the diving bell and the winch, the hydrophone, the badge, and a splash sound (all on the Art Fix List).
 

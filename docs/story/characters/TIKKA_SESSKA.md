@@ -18,7 +18,7 @@
 Both are playable cutscenes in `scripts/heart_events.gd` (`forty_4`, `forty_6`), with both their heart-event sheets and action sheets. The anniversary starts at Tikka's bench in the morning and jumps to the evening (`["clock", 540]` under a fade), then goes to the hotel or the mess hall (`["go", ...]` inside an `"if"`). Not run in Godot yet.
 
 - **Letter:** the morning after 6, "Forty years and a day", from both, with two coil wire (Tikka's idea of thanks).
-- **To test:** in a debug build, **F3** plays the next event in order; these two come after Sesska's.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row; these two come after Sesska's.
 
 ---
 

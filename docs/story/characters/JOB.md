@@ -36,7 +36,7 @@
 
 All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his new heart-event sheet (`art/npc_job_event.png`) and his action sheet. Not run in Godot yet.
 
-- **To test:** in a debug build, **F3** plays the next event in order (Job's 2 is the sixteenth press). **F5** opens the garden dome (8 at the hot springs). The lake versions of 6 and 10 need the Leviathan dead.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row (Job's 2 is the sixteenth press). **F5** opens the garden dome (8 at the hot springs). The lake versions of 6 and 10 need the Leviathan dead.
 - **Checked offline:** `python3 tests/check_heart_events.py` (6, 8 and 10 at both their places).
 - **In play since 24 Nov:** Bedrock Strength (mining costs a fifth less energy; geodes turn up half as often again). **Not in yet:** the Reinforced Mining Rig quest itself, the skiff (art, and rowing it: the crossing happens under a fade), and the oar charm as an item you can hold.
 - **Still open:** Zaas's 8 christens a research skiff on the same sea; the review suggested making it the same boat (Job builds it with Tobbin, Zaas christens it).

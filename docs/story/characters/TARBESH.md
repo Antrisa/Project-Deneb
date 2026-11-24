@@ -36,7 +36,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tarbesh_2` to `ta
 
 - **His heart-event sheet** is new (`art/npc_tarbesh_event.png`, built from the rig by `tools/events.py`; his face colours are in its `FACES`): talking, laughing, sad, the gift (the plaque in 8). He also uses his action rows (studying at his desk, kneeling to pray).
 - **S.A.R.A.** speaks over the museum speakers in 2 and from her dais in 6, with her clips (`summon_screen`, `warning`, `glitch_interrupt`, `conjure_teacup`); the tea steams.
-- **To test:** in a debug build, **F3** plays the next event in order.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **In play since 24 Nov:** Relic Appraisal: the museum pays you for every 5 relics you give (250 Scrip at 5, 500 at 10, with a letter and a gift each; `main.gd _museum_thanks`), and the perk adds a quarter to that Scrip. **Not in yet:** the plaque in the Sanctum and the astrolabe as art (on the Art Fix List).
 

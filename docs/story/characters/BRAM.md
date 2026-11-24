@@ -38,7 +38,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`bram_2` to `bram_
 - **Pell**, his cousin, is only ever a voice on the comm, so he needs no art. So is the freighter pilot in 4.
 - **The beacon** (his 8): on a free flight, once you're at a stop, the jump map's Ship panel shows **Call trader: 1 fuel**. The Ollo family trader (the Moogli trader's stock) comes alongside and stays at that stop for the rest of the run (`ship_map.gd can_beacon`, `main.gd _call_trader`; `docs/SHIP_ART_UI.md`).
 - **Letter:** the morning after 4, "You heard nothing", with five packets of crater potato seeds ("This is not generosity. This is stock control.").
-- **To test:** in a debug build, **F3** plays the next event in order (it sets the hearts, day and time).
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row (it sets the hearts, day and time).
 - **Checked offline:** `python3 tests/check_heart_events.py`, `python3 tests/check_mail.py`.
 
 ---

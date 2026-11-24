@@ -1,5 +1,5 @@
 extends SceneTree
-# Plays your first morning, then every heart event (scripts/heart_events.gd), from start to finish, the way F3 does in a debug build,
+# Plays your first morning, then every heart event (scripts/heart_events.gd), from start to finish, the way F12 does in a debug build,
 # picking the first answer at every choice and clicking through every line. Checks that each one ends, is
 # remembered, gives its flags and puts everyone back on their schedule; then that their letters come.
 #   godot --headless --script res://tests/heart_events_test.gd
@@ -68,7 +68,7 @@ func run() -> void:
 		if id == "siblings_10":
 			assert(["Autumn", "Winter"].has(str(BridgeScript.season_date(s.day)[0])), "the siblings' banquet is in autumn or winter")
 		if id == "zaas_6":
-			assert(s.leviathan_slain, "Zaas's 6 is at the lake, so F3 kills the Leviathan first")
+			assert(s.leviathan_slain, "Zaas's 6 is at the lake, so F12 kills the Leviathan first")
 		if id == "vzzket_8":
 			assert(s._count("vzzket_first_spear") == 1, "Vzz'ket gives you his first spear")
 		if id == "rusk_8":
@@ -111,7 +111,7 @@ func run() -> void:
 			"saffi_basket", "saffi_signup", "saffi_first_supper", "saffi_potluck", "perk_well_fed",
 			"kit_race", "kit_beacon", "kit_security", "kit_deputy", "guard_model_ship", "guard_brave_together"]:
 		assert(s.story_flags.get(f, false), f)
-	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
+	# F12 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
 	assert(s.partner == "Ana")
 	assert(s._count("toy_rocket") >= 1, "Pip's 8 gave you his toy rocket")

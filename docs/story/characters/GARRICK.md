@@ -31,7 +31,7 @@
 All four are playable cutscenes in `scripts/heart_events.gd` (`garrick_2` to `garrick_8`), with his new heart-event sheet (`art/npc_garrick_event.png`, `tools/events.py`) and his action sheet (ledger, patrol). Not run in Godot yet.
 
 - **Letter:** the morning after 4, "Quartermaster's issue", with a medpack.
-- **To test:** in a debug build, **F3** plays the next event in order.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row.
 
 ---
 

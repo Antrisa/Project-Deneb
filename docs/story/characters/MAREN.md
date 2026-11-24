@@ -20,7 +20,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`maren_2` to `mare
 
 - **Advanced Med-Stims:** `main.gd _eat` doubles a medpack's healing with `perk_advanced_med_stims`.
 - **Letter:** the morning after 4, "Hot tea" (not if you told her it was only tea).
-- **To test:** in a debug build, **F3** plays the next event in order.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row.
 
 ---
 

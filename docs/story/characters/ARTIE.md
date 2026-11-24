@@ -41,7 +41,7 @@ All six are playable cutscenes in `scripts/heart_events.gd`. He poses from his n
 
 - **He only appears once he's arrived** (Wave 1, the day after Ivan falls), so his scenes wait for that. 0 plays the first time you go into the Medbay after he wakes; S.A.R.A.'s morning news sends you there.
 - **New step `met`:** the tour introduces him, so talking to him afterwards isn't a first meeting.
-- **To test:** in a debug build, **F3** plays the next event in order (Artie's 0 is the thirty-first press); it now brings Wave 1 in if it hasn't arrived. **F5** opens the garden dome (8 and 10 in the woods).
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row (Artie's 0 is the thirty-first press); it now brings Wave 1 in if it hasn't arrived. **F5** opens the garden dome (8 and 10 in the woods).
 - **Checked offline:** `python3 tests/check_heart_events.py` (8 and 10 at both places).
 - **In play since 24 Nov:** Thrifty, for geodes (Job's bench sometimes finds one of the rare ones, `shops.gd roll_geode`); the recycling half waits for a recycler. **Not in yet:** the Junior Scout Foraging Reports in play, tents and the burner as props (narrated), the badge as an item you can hold.
 

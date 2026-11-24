@@ -28,7 +28,7 @@ All three are playable cutscenes in `scripts/heart_events.gd` (`nightwatch_2`, `
 
 - In 8 the scene moves from the gate to the bar (`go`), where Rusk hangs the sign. The bar's stage (built on 21 Nov) is where Vzz'ket's Fridays are from then on.
 - **S.A.R.A.** speaks over the bar speakers in 2.
-- **To test:** in a debug build, **F3** plays the next event in order (F3 sets the hearts, day and time each one needs).
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row (F12 sets the hearts, day and time each one needs).
 - **Not in yet:** the traps in play (a flag); the broken shell, the traps and the new sign as art (Art Fix List). The bar's run-down state and its repair are still to be designed; the sign could become part of that.
 
 ---

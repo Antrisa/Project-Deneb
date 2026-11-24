@@ -52,7 +52,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tobbin_2` to `tob
 
 - **Letter:** the morning after 4, "Two planks", with two real-wood planks.
 - **Art:** the heirloom chair, the plank icon and the chair's icon are stand-ins by Claude (`tools/dev/moogli_art.py`), on the Art Fix List.
-- **To test:** in a debug build, **F3** plays the next event in order (and opens the garden dome for the ones that need it).
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row (and opens the garden dome for the ones that need it).
 
 ---
 

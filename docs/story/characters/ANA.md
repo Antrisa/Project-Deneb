@@ -46,7 +46,7 @@ All six are playable cutscenes in `scripts/heart_events.gd`. She poses from her 
 - **She only appears once she's arrived** (Wave 2, the day after you pull her out), so her scenes wait for that.
 - **0 has two places:** a new story flag, `ana_in_medbay`, is true for her first two days. Until then 0 plays in the Medbay; after that it plays in the Shuttle Bay. The scene marks her as met, so talking to her afterwards isn't a first meeting.
 - **The second flight's loyalists** now say: "We always knew you were weak. Never once fired on a transport. Ivan covered for you. Ivan's gone."
-- **To test:** in a debug build, **F3** plays the next event in order (Ana's 0 is the forty-second press); it brings Ana in if she hasn't arrived.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row (Ana's 0 is the forty-second press); it brings Ana in if she hasn't arrived.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **In play since 24 Nov:** Wingmate (+20% evasion and a fold drive charging a fifth faster, in fights; `ship_battle.gd` WINGMATE_X). **Not in yet:** the console as a real upgrade on your ship; the jacket as an item you can wear.
 

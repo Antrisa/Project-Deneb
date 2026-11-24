@@ -39,7 +39,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`tikka_2` to `tikk
 
 - **Smelter Overclock** (her 8): `main.gd _furnace_use` halves the cooking time with `perk_smelter_overclock`, and the toast shows the shorter time.
 - **Letter:** the morning after 4, if you let Freya take Owen's lamp: "She let me", from Freya.
-- **To test:** in a debug build, **F3** plays the next event in order (it sets the hearts, day and time).
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row (it sets the hearts, day and time).
 - **Checked offline:** `python3 tests/check_heart_events.py`, `python3 tests/check_mail.py`.
 
 ---

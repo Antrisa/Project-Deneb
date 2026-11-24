@@ -39,7 +39,7 @@
 All four are playable cutscenes in `scripts/heart_events.gd` (`sesska_2` to `sesska_8`), staged like the other arcs: poses from her new heart-event sheet (`art/npc_sesska_event.png`, from `tools/events.py`; her rig side in `art/rig` is her own left-facing walk frame) and her action sheet (weave, chat, rest), emote bubbles and sounds. The glow-spiders in 6 are the code-drawn fireflies (`scripts/scene_fx.gd`) until there's art. Not run in Godot yet.
 
 - **Letter:** the morning after 2, "Offcuts", with a knit cap made from your jacket's offcuts (not if you told her it was only a jacket).
-- **To test:** in a debug build, **F3** plays the next event in order.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row.
 - **Checked offline:** `python3 tests/check_heart_events.py`, `python3 tests/check_mail.py`.
 
 ---

@@ -24,7 +24,7 @@ All four are playable cutscenes in `scripts/heart_events.gd` (`sara_2` to `sara_
 - **Her portable projection** (from 6): `["sara", "place", x, y]` materializes her on a tile wherever you are and hides her pad there. After a change of map it's placed again. It goes, and her pads come back, when the scene ends.
 - **The station's heartbeats** in 8 are lights drawn in code round her dais (`["fx", "heartbeats", ...]`, `scripts/scene_fx.gd`).
 - **Her rest night:** if you kept watch in 8 (`sara_rest`), every Sunday from 23:00 her pads go to standby until morning, and talking to one shows a little sign instead (`main.gd _sara_resting`). That's her day off, out of the story.
-- **To test:** in a debug build, **F3** plays the next event in order; hers come after the Jasper & Evarra side arc.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row; hers come after the Jasper & Evarra side arc.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **In play since 24 Nov:** Concierge: talk to her at any pad and "Travel" lists her pads (the datapad's Shop page, `shops.gd` "Concierge", `main.gd sara_send`); each morning she pings ripe crops and Rusk's wine (`_sara_pings`). **Not in yet:** returning Mira's glove (a flag only, for now); her portable projection outside heart events.
 

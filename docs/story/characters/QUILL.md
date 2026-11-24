@@ -42,7 +42,7 @@
 
 All five are playable cutscenes in `scripts/heart_events.gd`. He poses from his new heart-event sheet (`art/npc_quill_event.png`) and his action sheet; Job poses in 6; Maren and Vzz'ket only walk, turn and get emote bubbles. Not run in Godot yet.
 
-- **To test:** in a debug build, **F3** plays the next event in order (Quill's 2 is the twenty-first press).
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row (Quill's 2 is the twenty-first press).
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **Not in yet:** the Xeno-Salve recipe (Guardian Medic works since 24 Nov: twelve hearts, and Maren charges nothing when you collapse), Quill's name on the clinic door (`quill_clinic_door` is set for when there's a sign), the glowing plant in the park (narrated), and the charm as an item you can hold.
 - 2 plays only on Maren's days off, when Quill has the medbay alone (so she isn't standing there while he worries about her tiles).

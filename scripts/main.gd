@@ -580,6 +580,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if cutscene != null and cutscene.running:
+		var stop_key := event as InputEventKey
+		if stop_key != null and stop_key.pressed and not stop_key.echo and stop_key.keycode == KEY_F12 \
+				and stop_key.ctrl_pressed and OS.is_debug_build() and debug_marathon:
+			debug_marathon = false             # Ctrl+F12 again: this heart event finishes, and that's the last
+			_toast("Debug: stopping after this one")
+			get_viewport().set_input_as_handled()
+			return
 		var scene_click := event as InputEventMouseButton
 		if scene_click != null:
 			if scene_click.pressed:
@@ -674,9 +681,19 @@ func _unhandled_input(event: InputEvent) -> void:
 				ship_hull = _hull_max()
 			_start_run()
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F3 and OS.is_debug_build():
-		# Debug: play the next heart event now (Shift+F3 forgets the ones you've seen). F4 is a free flight.
-		if (event as InputEventKey).shift_pressed:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F12 and OS.is_debug_build():
+		# Debug: the heart events (they were on F3 until upstream gave F3 the repair kit). F12 plays the next one in
+		# HeartEvents.ORDER; Ctrl+F12 plays them all, one after another, until you press it again; Shift+F12 forgets
+		# the ones you've seen (and your partner), to start again from Freya's 2.
+		var k := event as InputEventKey
+		if k.ctrl_pressed:
+			debug_marathon = not debug_marathon
+			_toast("Debug: watching every heart event in a row" if debug_marathon else "Debug: stopping after this one")
+			if debug_marathon and not cutscene.running:
+				_debug_next_heart_event()
+		elif cutscene.running:
+			_toast("Debug: a heart event is playing")
+		elif k.shift_pressed:
 			events_seen.clear()
 			partner = ""
 			_toast("Debug: heart events forgotten, no partner")
@@ -1437,7 +1454,20 @@ func _debug_next_heart_event() -> void:
 		_snap_residents()
 		cutscene.play(id)
 		return
-	_toast("Debug: no heart events left to play (Shift+F3 forgets the ones seen)")
+	debug_marathon = false
+	_toast("Debug: no heart events left to play (Shift+F12 forgets the ones seen)")
+
+
+# Debug (Ctrl+F12): when one heart event ends, the next one starts, a second later.
+var debug_marathon := false
+
+
+func _on_cutscene_finished(_id: String) -> void:
+	if not debug_marathon:
+		return
+	await get_tree().create_timer(1.0).timeout
+	if debug_marathon and not cutscene.running:
+		_debug_next_heart_event()
 
 
 # Wave 1 arrives after Ivan (artie_found_day = D): Artie wakes in the Medbay on D+1, the first visitor transport
@@ -4840,6 +4870,7 @@ func _build_ui() -> void:
 	cutscene = CutsceneScript.new()
 	cutscene.world = self
 	add_child(cutscene)
+	cutscene.finished.connect(_on_cutscene_finished)
 
 	var ui_layer := CanvasLayer.new()
 	ui_layer.layer = 8

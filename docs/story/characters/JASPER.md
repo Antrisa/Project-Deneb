@@ -37,7 +37,7 @@
 
 All five are playable cutscenes in `scripts/heart_events.gd`, played by `scripts/cutscene.gd`, like Freya's. Jasper and Evarra now have heart-event sheets (`art/npc_jasper_event.png`, `art/npc_evarra_event.png`: talk, laugh, sad, jump, gift, bench, wave). Ooma, Rusk and Pip only walk, turn and get emote bubbles. Not run in Godot yet.
 
-- **To test:** in a debug build, **F3** plays the next event in order (Freya's five come first, so Jasper's 2 is the sixth press; it sets the hearts, day, time and place each needs); **Shift+F3** forgets the ones you've seen.
+- **To test:** in a debug build, **F12** plays the next event in order, **Ctrl+F12** all of them in a row (Freya's five come first, so Jasper's 2 is the sixth press; it sets the hearts, day, time and place each needs); **Shift+F3** forgets the ones you've seen.
 - **Checked offline:** `python3 tests/check_heart_events.py`.
 - **Not in yet:** what the Parisian Bistro Menu does in play (Sous-Chef's Blessing works since 24 Nov: drink effects last a fifth longer); the café terrace on the map after 10 (it needs tables, an awning and a sign drawn for the plaza; `cafe_etoile` is set so a map version can switch on); the apron as an item you can hold.
 
