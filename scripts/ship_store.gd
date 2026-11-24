@@ -178,7 +178,7 @@ func _act(action: String, arg) -> void:
 				status = "%s fitted: level %d." % [str(ShipData.SYSTEM_LABELS[offers[k][0]]), int(offers[k][1]) + 1]
 		"augbuy":
 			var a: String = str(arg)
-			var price: int = int(round(int(ShipData.AUGMENTS[a]["price"]) * float(stock.get("markup", 1.0))))
+			price = int(round(int(ShipData.AUGMENTS[a]["price"]) * float(stock.get("markup", 1.0))))
 			if world.augments.size() >= ShipData.AUGMENT_SLOTS:
 				status = "No room for another augment. Sell one first."
 				world.sfx("deny")
