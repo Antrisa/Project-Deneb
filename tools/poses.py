@@ -47,7 +47,7 @@ def stamp(img, pts, r, c):
                 put(img, x + dx, y + dy, c)
 
 
-def draw_arm(img, shoulder, hand, elbow_side, pal, width=2, elbow=None):
+def draw_arm(img, shoulder, hand, elbow_side, pal, width=2, elbow=None, thick=False):
     """Shoulder to elbow to hand. elbow_side pushes the elbow sideways (+x or -x) so the arm
     bends naturally. Sleeve two pixels wide inside a one-pixel outline, mitten hand."""
     sx, sy = shoulder
@@ -64,12 +64,38 @@ def draw_arm(img, shoulder, hand, elbow_side, pal, width=2, elbow=None):
     # a sleeve four pixels wide: outline, two pixels of cloth (lit on the left, the light
     # comes from the top left), outline
     layer = np.zeros_like(img)
-    for (x, y) in upper + lower:
+    if thick:
+        # the arm keeps its width whichever way it points: a width-by-width square stamped
+        # along the bones, outlined all round; lit along its top (arms held out sideways) or
+        # its left (arms hanging), the light coming from the top left
+        core = np.zeros(img.shape[:2], bool)
+        for (x, y) in upper + lower:
+            for j in range(width):
+                for i in range(width):
+                    if 0 <= y + j < core.shape[0] and 0 <= x + i < core.shape[1]:
+                        core[y + j, x + i] = True
+        ring = np.zeros_like(core)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                ring |= np.roll(np.roll(core, dy, 0), dx, 1)
+        ring &= ~core
+        for seg in (upper, lower):
+            (ax, ay), (bx, by) = seg[0], seg[-1]
+            flat = abs(bx - ax) > abs(by - ay)
+            for (x, y) in seg:
+                for j in range(width):
+                    for i in range(width):
+                        yy, xx = y + j, x + i
+                        if 0 <= yy < core.shape[0] and 0 <= xx < core.shape[1]:
+                            lit = (yy == 0 or not core[yy - 1, xx]) if flat else (xx == 0 or not core[yy, xx - 1])
+                            layer[yy, xx] = pal["sleeve_hi"] if lit else pal["sleeve"]
+        layer[ring] = pal["line"]
+    for (x, y) in (upper + lower) if not thick else ():
         for dx in range(-1, width + 1):
             put(layer, x + dx, y - 1, pal["line"])
             put(layer, x + dx, y + 1, pal["line"])
             put(layer, x + dx, y, pal["line"])
-    for (x, y) in upper + lower:
+    for (x, y) in (upper + lower) if not thick else ():
         put(layer, x, y, pal["sleeve_hi"])
         for dx in range(1, width):
             put(layer, x + dx, y, pal["sleeve"])
@@ -1166,6 +1192,10 @@ RIGS = {
         u=dict(arms=[(5, 8, 21, 27), (4, 7, 28, 30), (16, 19, 21, 27), (17, 20, 28, 30)], L=(7, 22), R=(16, 22)),
         l=dict(N=(11, 22), F=(12, 22)),
         hip=dict(d=41, u=41, l=40), u_center_rule=True,
+        # (24 Nov) the walk's fists at her waist come off with the arms, and her arms keep their width when
+        # held out sideways
+        hand_boxes=dict(d=[(5, 8, 30, 32), (17, 20, 30, 32)], u=[(4, 7, 31, 32), (17, 20, 31, 32)]),
+        thick_arms=True,
         sleep=dict(eyes=[(10, 13, 2, 3), (15, 13, 2, 3)], skin="#f2c29a", lash="#5e3430",
                    neck=20, top=27),
     ),
@@ -1510,6 +1540,18 @@ def view_body(walk, rig_dir, name, view, rig):
         fill = rig["fill_tone"]
     body = body_without_arms(cell, rig[view]["arms"], hexc(rig["pal"]["line"]), fill,
                              rig.get("fill_span"))
+    # the walk's resting fists (drawn over the clothes at the waist) come off too: the clothes
+    # under each box are carried straight up from the row below it
+    hb = rig.get("hand_boxes", {}).get(view, [])
+    for (x0, x1, y0, y1) in hb:
+        body[y0:y1 + 1, x0:x1 + 1] = 0
+        for y in range(y0, y1 + 1):
+            body[y, x0:x1 + 1] = body[y1 + 1, x0:x1 + 1]
+    for y in sorted({y for (_, _, y0, y1) in hb for y in range(y0, y1 + 1)}):
+        xs = np.where(body[y, :, 3] > 0)[0]
+        if len(xs):
+            body[y, xs.min()] = hexc(rig["pal"]["line"])
+            body[y, xs.max()] = hexc(rig["pal"]["line"])
     # an edge of the clothes carried straight up from a row below (Job's overalls run up
     # his sides behind the arms)
     for (x0, x1, y0, y1, src) in rig.get("carry_up", {}).get(view, []):
@@ -1566,7 +1608,7 @@ def render(walk, rig_dir, name, act, view):
                 else:
                     in_front = v == "u" and dy > -4 and abs(dx) < 4
                 target = arms_back if (in_front or hidden) else arms_front
-                draw_arm(target, sh, hd, elbow, pal, width=rig.get("arm_w", 2))
+                draw_arm(target, sh, hd, elbow, pal, width=rig.get("arm_w", 2), thick=rig.get("thick_arms", False))
                 if v == "u" and (in_front or hidden) and rig.get("keep_hidden_sleeve"):
                     # a wide sleeve still hangs at the side when its hand is out of sight in
                     # front: the standing frame's own sleeve is put back on that side
@@ -1584,7 +1626,7 @@ def render(walk, rig_dir, name, act, view):
             if "F" in spec:
                 dx, dy = spec["F"]
                 hands["F"] = (fx + OX + dx, fy + bob + dy)
-                draw_arm(arms_back, (fx + OX, fy + bob), hands["F"], -1, pal, width=rig.get("arm_w", 2))
+                draw_arm(arms_back, (fx + OX, fy + bob), hands["F"], -1, pal, width=rig.get("arm_w", 2), thick=rig.get("thick_arms", False))
                 arms_back = darken(arms_back)
             dx, dy = spec["N"]
             if dy >= 6:
@@ -1592,7 +1634,7 @@ def render(walk, rig_dir, name, act, view):
             hands["N"] = (nx + OX + dx, ny + bob + dy)
             el = spec.get("N_elbow")
             el = (nx + OX + el[0], ny + bob + el[1]) if el else None
-            draw_arm(arms_front, (nx + OX, ny + bob), hands["N"], 1 if dx >= 0 else -1, pal, width=rig.get("arm_w", 2), elbow=el)
+            draw_arm(arms_front, (nx + OX, ny + bob), hands["N"], 1 if dx >= 0 else -1, pal, width=rig.get("arm_w", 2), elbow=el, thick=rig.get("thick_arms", False))
         for (pname, hand, pdx, pdy, layer) in spec.get("props", []):
             hx, hy = hands[hand]
             target = front_layer if layer == "front" else back_layer
