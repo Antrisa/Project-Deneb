@@ -74,7 +74,7 @@ const STOCK := {
 		["recipe:creme_brulee", 300, "hotel_kitchen"], ["recipe:cassoulet", 320, "hotel_kitchen"],
 		["recipe:bouillabaisse", 380, "hotel_kitchen"], ["recipe:space_bourguignon", 600, "hotel_kitchen_8_hearts"]],
 	"Sesska": [["knit_cap", 45, ""], ["woven_scarf", 45, ""], ["work_shirt", 65, ""], ["woven_shawl", 110, ""],
-		["station_coat", 140, ""], ["silk_coat", 280, "later"]],
+		["station_coat", 140, ""], ["silk_coat", 280, "sesska_silk"]],
 	"Ix'ali": [["hard_hat", 70, ""], ["padded_vest", 110, ""], ["work_boots", 90, ""]],
 	"Maren": [["medpack", 40, ""]],
 }

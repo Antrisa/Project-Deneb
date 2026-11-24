@@ -273,6 +273,42 @@ const LETTERS := {
 		"sign": "Bram Ollo",
 		"gift": {"crater_potato_seeds": 5},
 	},
+	# Tikka's 4, if you let Freya take Owen's lamp
+	"freya_lamp": {
+		"from": "Freya",
+		"title": "She let me",
+		"body": [
+			"Boss!",
+			"Owen's lamp still works. I checked it this morning. Don't tell Tikka I checked it. She'd be so proud, and then she'd check it too.",
+			"She watched me do a whole repair and only said 'hm' once. Once! I'm painting it on the bay wall.",
+			"Thanks for saying it. I couldn't have.",
+		],
+		"sign": "Freya",
+	},
+	# Sesska's 2, unless you told her it was only a jacket
+	"sesska_offcuts": {
+		"from": "Sesska",
+		"title": "Offcuts",
+		"body": [
+			"Dear pilot,",
+			"There were offcuts from your jacket. There are always offcuts. Offcuts become caps.",
+			"I guessed the size of your head. My guesses are good. If it doesn't fit, your head is wrong.",
+		],
+		"sign": "Sesska",
+		"gift": {"knit_cap": 1},
+	},
+	# Tikka & Sesska's anniversary (the side arc's 6): both write, and Tikka's idea of thanks is coil wire
+	"forty_years": {
+		"from": "Tikka and Sesska",
+		"title": "Forty years and a day",
+		"body": [
+			"Pilot,",
+			"The music box played all night. Tikka checked it twice, then a third time, and then I hid it. - S.",
+			"Enclosed, the highest honour I give: coil wire. Sesska says this is not how thanks work. Sesska is wrong. - T.",
+		],
+		"sign": "Tikka and Sesska",
+		"gift": {"coil_wire": 2},
+	},
 }
 
 const DATED := {"welcome": 1, "sara_storage": 3}

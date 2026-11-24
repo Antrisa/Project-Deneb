@@ -2147,10 +2147,9 @@ func _day_line(who: String) -> String:
 	var weekday: int = (day - 1) % 7
 	var entry = NpcData.DAY_LINES.get(who, {}).get(weekday, [])
 	if entry is Dictionary:
-		# {"flag": f, "lines": [...]}: a day that only changes once the story has got there (Vzz'ket's nights off)
-		if not _flag(str(entry["flag"])):
-			return ""
-		entry = entry["lines"]
+		# {"flag": f, "lines": [...]}: a day that only changes once the story has got there (Vzz'ket's nights off);
+		# "else": [...] is that day before it (Tikka's Sundays in Engineering, until her 8)
+		entry = entry["lines"] if _flag(str(entry["flag"])) else entry.get("else", [])
 	var lines: Array = entry
 	if lines.is_empty():
 		return ""
@@ -3895,10 +3894,12 @@ func _furnace_use(key: String, area: String, at: Vector2) -> void:
 		return
 	for id in needs:
 		_give(id, -int(needs[id]))
-	machines[key] = {"makes": str(r["makes"]), "ready": clock_now() + float(r["mins"]), "area": area, "pos": at}
+	# Tikka's 8 (Smelter Overclock): her regulators on every furnace, so everything smelts in half the time
+	var cook_mins: float = float(r["mins"]) * (0.5 if _flag("perk_smelter_overclock") else 1.0)
+	machines[key] = {"makes": str(r["makes"]), "ready": clock_now() + cook_mins, "area": area, "pos": at}
 	sfx("furnace_load")
 	_flash(at + Vector2(0, 2), Color(1.0, 0.55, 0.2), 1.2)
-	_toast("Smelting %s, ready in %d min" % [_item_name(str(r["makes"])).to_lower(), int(r["mins"])])
+	_toast("Smelting %s, ready in %d min" % [_item_name(str(r["makes"])).to_lower(), int(ceil(cook_mins))])
 	_furnace_look(key)
 
 

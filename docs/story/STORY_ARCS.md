@@ -396,17 +396,37 @@ The water officer who was right about the ocean, and gave it to the one who kept
 - **Ooma's week:** she still spends Saturday evenings on the Merrow Deep's beach once it's open (a schedule, not a scene).
 - **Wrong choices:** −20; in Bram's 6, offering to pay his ledger yourself gets nothing (his pride).
 
-### 5.6 Tikka & Sesska (both)
+### 5.6 Tikka & Sesska
+
+**Reviewed with Zachary on 24 Nov; all ten are written and playable.** Full scenes: [`characters/TIKKA.md`](characters/TIKKA.md), [`characters/SESSKA.md`](characters/SESSKA.md) and their side arc, [`characters/TIKKA_SESSKA.md`](characters/TIKKA_SESSKA.md). Zachary: the shape "looks good"; Tikka's overworking is "slightly linked" to Jorvik "but not the main reason"; Sesska's linens do "nothing until the hotel is made"; the anniversary is at the hotel if it's open, the mess hall if not; "four hands"; forty years married stays.
+
+**Tikka** (Arachnay, chief engineer): the engineer who can't put the station down.
 
 | ♥ | Event | When and where | What happens | Status |
 |---|---|---|---|---|
-| 2 | Tuning the Manifold | Engineering power core | Tuning the geothermal manifold. | Outline |
-| 4 | EVA Workwear | Weaver's shop | Designing EVA-lined workwear together. | Outline |
-| 6 | The Anniversary | Observation Lounge | A surprise you help organise. | Outline |
-| 8 | (no title) | Engineering | Rewards only: Smelter Overclock; Void-Silk Luxury Linens. | Gap |
+| 2 | Tuning the Manifold | Engineering's core, late | A flat note only she hears; you turn the valve. Sesska's dinner is a sculpture. | In game (the NPC Master's title, scene by Claude) |
+| 4 | The Kettle Queue | The repair bench by the Manufacturing hub, evening | She fixes everyone's things every night. Let Freya take a lamp (her letter), or Freya is hurt. | In game (Claude) |
+| 6 | Sunday Shift | The Shuttle Bay, Sunday morning | Freya has been coming in on Sundays because Tikka does. Jorvik is a thread, not the reason. | In game (Claude) |
+| 8 | Overclock | Your front door, Sunday morning | A real day off, with a four-minute visit. Reward: Smelter Overclock (furnaces twice as fast). | In game (the NPC Master's reward, scene by Claude) |
 
-- **Gap:** 8 has no scene. Nothing is at stake in 2 or 4 (a cosy arc can still have a worry: Tikka overworking the core, say).
-- "Forty years married" is a Claude placeholder. Tikka mentors Freya, but they share no scene until Freya 10.
+**Sesska** (Arachnay, weaver): a weaver who lost her street and finds a new one.
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 2 | Every Seam Giving Up | Her shop, morning | She mends your crash jacket, as her first line promised. Letter: a cap from the offcuts. | In game (Claude) |
+| 4 | A Window onto a Corridor | Her loom on the promenade | The Landing has no pattern of its own, so she starts one, with Pip, Kit and you. | In game (Claude) |
+| 6 | Glow-Spider Silk | The North Cave, evening, with Vzz'ket | The Landing's own thread. Her shop sells the Cavern-silk coat from now on. | In game (Claude) |
+| 8 | Void-Silk | Their home, late | She cuts her grandmother's last void-silk. Reward: Void-Silk Luxury Linens (for the hotel, no effect until it takes guests). | In game (the NPC Master's reward, scene by Claude) |
+
+**Side arc, "Forty Years"** (both at the hearts):
+
+| ♥ | Event | When and where | What happens | Status |
+|---|---|---|---|---|
+| 4 | EVA Workwear | Sesska's shop after closing | Tikka's suit tore on the hull; they design workwear together and you settle it. | In game (the NPC Master's outline, scene by Claude) |
+| 6 | The Anniversary | Tikka's bench in the morning; the hotel's dining room that evening (the mess hall before the hotel opens) | Tikka forgot; you pull a dinner together in a day. Her coil-wire music box. Letter from both. | In game (the NPC Master's outline, scene by Claude) |
+
+- **Their weeks:** Sundays off together (until her 8 Tikka slips into Engineering on Sunday mornings); Tikka covers launch control on Saturdays; Sesska buys fibre from Evarra on Wednesday afternoons, and takes linens to the hotel on Thursdays once it's open.
+- **Still open:** the hotel's income (the linens perk waits for it); art for the glow-spiders, the Landing pattern and the anniversary table (Art Fix List).
 
 ### 5.7 Maren, Owen & Pip
 
@@ -512,7 +532,7 @@ From the triggers above: map and time window; weekday (Wed or Sat); season; hear
 
 ### 7.7 Eleven scenes in the Observation Lounge
 
-~~Jasper & Evarra 4~~ (moved 23 Nov to the West Terminal's star dome), Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, ~~S.A.R.A. 8~~ (her new 8 is at her core), Tikka & Sesska 6, Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open. (Moved: Quill 10 to the little park, Ix'ali 10 to the museum, Stu 10 to the terminal airlock. Ana 8 stays: it's a navigator's scene.)
+~~Jasper & Evarra 4~~ (moved 23 Nov to the West Terminal's star dome), Artie 6, Ana 8, Quill 10, Ix'ali 10, Stu 10, ~~S.A.R.A. 8~~ (her new 8 is at her core), ~~Tikka & Sesska 6~~ (24 Nov: the hotel's dining room, or the mess hall), Kit 4, Midsummer Star-Gaze, Winter Lights. Quill 10, Ix'ali 10, Stu 10 and Ana 8 are all romantic scenes at night under the stars. Moving two or three would help them feel different (Decision 17): for example Quill 10 in the East Agridome with his named plant, Stu 10 in a hotel suite once it's open. (Moved: Quill 10 to the little park, Ix'ali 10 to the museum, Stu 10 to the terminal airlock. Ana 8 stays: it's a navigator's scene.)
 
 ### 7.8 Art the scenes need that doesn't exist yet
 
@@ -543,4 +563,4 @@ Answer by number; anything left open stays as it is.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
 19. **"Awaken" or "restore"** for completing a Custodian's bundles.
-20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events); Tikka & Sesska are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).
+20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska (24 Nov); Maren, Owen & Pip are next.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).

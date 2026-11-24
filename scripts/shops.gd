@@ -77,6 +77,8 @@ func unlocked(rule: String) -> bool:
 			return world.station_fixed.has("hotel_kitchen")
 		"hotel_kitchen_8_hearts":
 			return world.station_fixed.has("hotel_kitchen") and _hearts("Jasper") >= 8
+		"sesska_silk":                # Sesska's 6: she spins the North Cave's glow-spider silk
+			return world._flag("sesska_cavern_silk")
 	return false                   # "later": its system isn't in the game yet
 
 

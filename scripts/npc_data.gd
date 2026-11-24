@@ -88,7 +88,7 @@ const PEOPLE = {
 		"id": "tikka",
 		"pitch": 1.7,
 		"first": [
-			"[surprised] Oh! You're the one who fell out of the sky. I'm Tikka. Arachnay. Engineer. Eight hands, no waiting.",
+			"[surprised] Oh! You're the one who fell out of the sky. I'm Tikka. Arachnay. Engineer. Four hands, no waiting.",
 			"I looked at your fold drive. It is in... several places. Some of them are still on the moon.",
 			"Bring me credits and I will make it one drive again. Hull first, then the drive, then the nav core.",
 		],
@@ -654,7 +654,7 @@ const LOOKS = {
 # of them always keeps the mess hall.
 const DAYS_OFF := {"Freya": [5, 6], "Jasper": [1, 5], "Evarra": [2, 6], "Job": [5, 6], "Quill": [0, 5], "Maren": [3, 6],
 	"Ix'ali": [1, 3], "Garrick": [5, 6], "Stu": [1, 2], "Ana": [0, 3], "Tar'Besh": [0], "Zaas": [6], "Rusk": [0],
-	"Bram": [3]}
+	"Bram": [3], "Tikka": [6], "Sesska": [6]}
 
 # What they say the first time you talk to them on a given weekday (main.gd _day_line()): their days off, and
 # the days they cover for someone who's off. One line a week, in turn. (Claude's drafts.)
@@ -789,6 +789,28 @@ const DAY_LINES := {
 		0: ["Monday. The bar opens at six, and until then I'm a man of leisure. [happy] A man of leisure with a bad back.",
 			"Mondays I soak, I eat with Saffi and the boy, and I let Bram tell me his prices are fair. Then I open up.",
 			"[happy] No pouring till six. If you see Job at my door at noon, send him to the bath house."],
+	},
+	# Tikka & Sesska (Zachary, 24 Nov): Sundays off together. Until her 8 Tikka slips into Engineering on Sunday
+	# mornings ("else": the lines before the flag); on Saturdays she covers launch control while Freya's off.
+	# Sesska buys fibre from Evarra on Wednesday afternoons, and takes linens to the hotel on Thursdays once it's open.
+	"Tikka": {
+		5: ["Saturday. Freya's off, so I have launch control. Nobody is launching. I am controlling it anyway.",
+			"[happy] Saturdays I sit in the launch booth and listen to the bay. The bay says very little. I like that in a bay."],
+		6: {"flag": "tikka_sundays_off", "lines": [
+			"[happy] Sunday. My day off. Freya has the core, S.A.R.A. has Freya, and Sesska has me.",
+			"Sunday. I have not been to Engineering. I have thought about Engineering. Thinking is allowed. Sesska checked."],
+			"else": [
+			"Sunday. My day off. [happy] I am only going to look at the core. Looking isn't working.",
+			"[sad] Don't tell Sesska you saw me in Engineering. It's Sunday. I was checking a valve. It's a very important valve."]},
+	},
+	"Sesska": {
+		6: ["[happy] Sunday. The shop is shut and the loom is at home. I weave there too. It isn't work if nobody pays.",
+			"Sunday is ours. Tikka's and mine. One day a week I have her all to myself, if I can keep her out of Engineering."],
+		2: ["Wednesday. After lunch I go to Evarra for fibre. She grows it, I spin it, and we argue about the colour green.",
+			"Back at four on Wednesdays. Evarra and I have fibre to haggle over. We haggle very politely, for hours."],
+		3: {"flag": "ivan_defeated", "lines": [
+			"Thursday: linens for the hotel. Every pillowcase counted twice, by me, and then once more by Tikka.",
+			"[happy] The hotel takes my linens on Thursdays. Real guests, on my sheets. On Arach Minor I'd have called that a good street."]},
 	},
 	# Vzz'ket's nights off only start once he's earned them (the side arc's 8, his own 8): {"flag", "lines"} waits for
 	# the flag

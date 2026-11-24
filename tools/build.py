@@ -2696,6 +2696,7 @@ for who, rows in SCHEDULES_ALT_RAW.items():
 #          Leave a key out to match any day.
 #   stops: as in SCHEDULES_RAW, plus the row of their action sheet to play there (tests want one at every stop).
 #   bed:   bedtime that day (default: their BEDTIMES entry, or BEDTIME). They sleep in their own bed.
+#   Area "promenade" is the main level in today's coordinates (main.gd's), for spots outside the old square.
 # Spots on the main level are written in the OLD main-level coordinates, like SCHEDULES_RAW.
 SCHEDULE_DAYS_RAW = {
     # Freya (22 Nov): weekends off. Saturday: a lie-in, her own bench at home, Bram's shop, the fountain and a
@@ -3037,6 +3038,50 @@ SCHEDULE_DAYS_RAW = {
             ("13:30", "bathhouse", 30, 12, 26, "r", "idle", "rest"), ("17:35", "mess", 9, 7, 26, "d", "eat", "eat"),
             ("19:15", *HOME_SPOTS["Bram at the bar"], 26, "u", "idle", "drink"), ("22:00", *HOME_SPOTS["Bram"], 26, "d", "idle", "rest")]},
     ],
+    # Tikka & Sesska (Zachary, 24 Nov): Sundays off together. Until her 8 (tikka_sundays_off) Tikka slips into
+    # Engineering on Sunday mornings "to look at the core" while Sesska weaves at home; afterwards they spend the day
+    # together: breakfast, the fountain, lunch, the Observation Lounge (the garden dome once it's open), dinner, home.
+    # Saturdays Tikka covers launch control in the Shuttle Bay while Freya's off. Sesska buys fibre from Evarra on
+    # Wednesday afternoons, and takes linens to the hotel on Thursday afternoons once it's open (after the Ivan fight).
+    "Tikka": [
+        {"when": {"days": [5]}, "stops": [
+            ("07:00", "bay", 8, 31, 26, "d", "work", "console"), ("17:30", "mess", 19, 7, 26, "d", "eat", "eat"),
+            ("19:15", "promenade", 80, 127, 26, "d", "work", "tinker"), ("21:30", *HOME_SPOTS["Tikka"], 26, "r", "idle", "rest")]},
+        {"when": {"days": [6], "not": ["tikka_sundays_off"]}, "stops": [
+            ("09:00", "mess", 19, 7, 26, "d", "eat", "eat"), ("10:30", "eng", 63, 35, 26, "u", "idle", "console"),
+            ("13:00", "mess", 19, 7, 26, "d", "eat", "eat"), ("14:30", "main", 100, 68, 26, "u", "idle", "rest"),
+            ("17:30", "mess", 19, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Tikka"], 26, "r", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["tikka_sundays_off"]}, "stops": [
+            ("09:00", "mess", 19, 7, 26, "d", "eat", "eat"), ("10:30", "main", 100, 68, 26, "u", "idle", "rest"),
+            ("13:00", "mess", 19, 7, 26, "d", "eat", "eat"), ("14:30", "lounge", 55, 18, 26, "u", "idle", "rest"),
+            ("17:30", "mess", 19, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Tikka"], 26, "r", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["tikka_sundays_off", "east_dome"]}, "stops": [
+            ("09:00", "mess", 19, 7, 26, "d", "eat", "eat"), ("10:30", "main", 100, 68, 26, "u", "idle", "rest"),
+            ("13:00", "mess", 19, 7, 26, "d", "eat", "eat"), ("14:30", "east", 130, 43, 26, "u", "idle", "rest"),
+            ("17:30", "mess", 19, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Tikka"], 26, "r", "idle", "rest")]},
+    ],
+    "Sesska": [
+        {"when": {"days": [2]}, "stops": [
+            ("06:00", "main", 103, 36, 26, "d", "work", "weave"), ("14:00", "east", 51, 16, 26, "l", "idle", "chat"),
+            ("16:00", "main", 103, 36, 26, "d", "work", "weave"), ("17:30", "mess", 20, 7, 26, "d", "eat", "eat"),
+            ("19:15", "fab", 7, 5, 26, "l", "idle", "chat"), ("21:30", *HOME_SPOTS["Sesska"], 26, "l", "idle", "rest")]},
+        {"when": {"days": [3], "flags": ["ivan_defeated"]}, "stops": [
+            ("06:00", "main", 103, 36, 26, "d", "work", "weave"), ("14:00", "hotel", 93, 47, 26, "u", "idle", "chat"),
+            ("16:00", "main", 103, 36, 26, "d", "work", "weave"), ("17:30", "mess", 20, 7, 26, "d", "eat", "eat"),
+            ("19:15", "fab", 7, 5, 26, "l", "idle", "chat"), ("21:30", *HOME_SPOTS["Sesska"], 26, "l", "idle", "rest")]},
+        {"when": {"days": [6], "not": ["tikka_sundays_off"]}, "stops": [
+            ("09:00", "mess", 20, 7, 26, "d", "eat", "eat"), ("10:30", "home5", 28, 18, 26, "u", "idle", "weave"),
+            ("13:00", "mess", 20, 7, 26, "d", "eat", "eat"), ("14:30", "main", 99, 68, 26, "u", "idle", "rest"),
+            ("17:30", "mess", 20, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Sesska"], 26, "l", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["tikka_sundays_off"]}, "stops": [
+            ("09:00", "mess", 20, 7, 26, "d", "eat", "eat"), ("10:30", "main", 99, 68, 26, "u", "idle", "rest"),
+            ("13:00", "mess", 20, 7, 26, "d", "eat", "eat"), ("14:30", "lounge", 56, 18, 26, "u", "idle", "rest"),
+            ("17:30", "mess", 20, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Sesska"], 26, "l", "idle", "rest")]},
+        {"when": {"days": [6], "flags": ["tikka_sundays_off", "east_dome"]}, "stops": [
+            ("09:00", "mess", 20, 7, 26, "d", "eat", "eat"), ("10:30", "main", 99, 68, 26, "u", "idle", "rest"),
+            ("13:00", "mess", 20, 7, 26, "d", "eat", "eat"), ("14:30", "east", 131, 43, 26, "u", "idle", "rest"),
+            ("17:30", "mess", 20, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Sesska"], 26, "l", "idle", "rest")]},
+    ],
     # Rusk (23 Nov): Monday mornings off, the bar opens at six in the evening: a soak at the bath house, lunch by
     # the fountain with Saffi and Kit (not family, but he's always been there for them), Bram's in the afternoon.
     "Rusk": [
@@ -3077,7 +3122,9 @@ for who, days_ in SCHEDULE_DAYS_RAW.items():
             rows.append((bed_, *spot_, 26, "d", "sleep", "sleep"))
         out = []
         for (hm, a, x, y, r, face_, act, key) in rows:
-            a, x, y = moved(a, x, y)
+            # "promenade": a spot on the main level in today's coordinates (the promenade outside the old square,
+            # where moved() can't reach: Tikka's repair bench by the Manufacturing hub)
+            a, x, y = ("main", x, y) if a == "promenade" else moved(a, x, y)
             # "restock": Bram at his stall (tools/concourse.py gives his usual day the same activity)
             assert face_ in "dulr" and act in ("work", "eat", "idle", "sleep", "restock"), (who, face_, act)
             row = -1

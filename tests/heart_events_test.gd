@@ -97,7 +97,10 @@ func run() -> void:
 			"vzzket_wall", "vzzket_blessing", "vzzket_clutch_brother", "vzzket_sensors", "perk_monster_radar",
 			"rusk_lights", "rusk_tail", "rusk_sea_chest", "rusk_first_page",
 			"vzzket_tall_tales", "vzzket_shell", "vzzket_open_mic", "vzzket_sentinels", "perk_chitin_piercer_traps",
-			"bram_night_pod", "bram_quiet_credit", "bram_long_column", "bram_told", "bram_paid_in_full", "perk_moogli_trade_beacon"]:
+			"bram_night_pod", "bram_quiet_credit", "bram_long_column", "bram_told", "bram_paid_in_full", "perk_moogli_trade_beacon",
+			"tikka_manifold", "tikka_freya_helps", "tikka_day_off", "tikka_sundays_off", "perk_smelter_overclock",
+			"sesska_jacket", "sesska_landing_pattern", "sesska_cavern_silk", "sesska_void_silk", "perk_void_silk_linens",
+			"forty_workwear", "forty_anniversary"]:
 		assert(s.story_flags.get(f, false), f)
 	# F3 makes you the partner for each 10, so the last one's resident is your partner at the end (and the 8s
 	# after the first 10 play their friendship endings)
