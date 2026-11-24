@@ -542,10 +542,21 @@ func _move_player(delta: float) -> void:
 		_stop_walking()
 		return
 
+	# As in Stardew, a tool swing or an attack plants your feet until it's done; the poses have
+	# standing legs, so walking through them slid you along like a moonwalk (23 Nov).
+	if (_held_time > 0.0 and _held_kind != "pickup") or _attack_time > 0.0:
+		_stop_walking()
+		return
+
 	var dir: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if dir == Vector2.ZERO:
 		_stop_walking()
 		return
+	if _held_time > 0.0 and _held_kind == "pickup":
+		# walking off puts away the "look what I found" pose
+		_held_time = 0.0
+		_held.visible = false
+		_refresh_body_pose()
 
 	if absf(dir.x) > absf(dir.y):
 		_dir = 2 if dir.x < 0.0 else 3
