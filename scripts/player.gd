@@ -591,7 +591,7 @@ func _move_player(delta: float) -> void:
 	var beat := WalkCycle.phase(_walk_distance)
 	_sprite.frame_coords = Vector2i(_dir, WalkCycle.pose(beat, _sprite.vframes))
 	if beat != _last_phase and beat % 2 == 0:
-		world.sfx(world.step_sound(), randf_range(0.95, 1.05), -13.0)    # footsteps to suit the floor (Zachary, 24 Nov)
+		world.sfx(world.step_sound(), randf_range(0.94, 1.06), -11.0)    # footsteps to suit the floor (Zachary, 24 Nov; cozy takes 25 Nov)
 	_last_phase = beat
 
 
@@ -779,6 +779,6 @@ func scene_step(target: Vector2, delta: float) -> bool:
 	var beat := WalkCycle.phase(_walk_distance)
 	_sprite.frame_coords = Vector2i(_dir, WalkCycle.pose(beat, _sprite.vframes))
 	if beat != _last_phase and beat % 2 == 0:
-		world.sfx("step", randf_range(0.85, 1.15), -9.0)
+		world.sfx(world.step_sound(), randf_range(0.94, 1.06), -11.0)   # the same footsteps as walking about
 	_last_phase = beat
 	return false
