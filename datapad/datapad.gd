@@ -77,6 +77,7 @@ var station_scrip := 0:
 var minutes := 610
 var calendar_day := 6
 var season := "Spring"
+var weekday := ""          # "Mon".."Sun", shown on the clock beside the date (25 Nov)
 var location_name := "Engineering"
 var page := "HUD"
 var bag_filter := "All"
@@ -204,10 +205,11 @@ func set_vitals(hp: int, hp_max: int, charge: int, charge_max: int) -> void:
 	energy = clampi(charge,0,max_energy)
 	refresh()
 
-func set_clock(total_minutes: int, day: int, season_name: String) -> void:
+func set_clock(total_minutes: int, day: int, season_name: String, day_of_week: String = "") -> void:
 	minutes = posmod(total_minutes,1440)
 	calendar_day = maxi(1,day)
 	season = season_name
+	weekday = day_of_week
 	refresh()
 
 func set_inventory(counts: Dictionary, slots: Array, selected: int = 0) -> void:
@@ -524,12 +526,15 @@ func _hud() -> void:
 		_img(_period(),right+612,top+20,32,27)
 	else:
 		_img("i_mark",right+619,top+23,18,18,OCHRE)
+	# (25 Nov) the date, AM/PM and "Scrip" in the label font: the tiny "micro" capitals were hard to read, and the
+	# date now says the day of the week
 	_txt(right+652,top+15,_time(),"clock",INK)
-	_right(right+744,top+24,_ampm(),"micro",MUTED)
-	_txt(right+653,top+40,season.to_upper()+" "+str(calendar_day),"micro",MUTED)
+	_right(right+744,top+20,_ampm(),"label",INK)
+	var date := (weekday+", " if weekday!="" else "")+season+" "+str(calendar_day)
+	_txt(right+653,top+37,date,"label" if _width(date,"label")<=92 else "micro",INK)
 	_rect(right+612,top+52,132,1,"#d9c2af")
-	_img("i_scrip",right+612,top+55,13,13,OCHRE)
-	_txt(right+630,top+55,"SCRIP","micro",MUTED)
+	_img("i_scrip",right+612,top+56,13,13,OCHRE)
+	_txt(right+630,top+54,"Scrip","label",INK)
 	var balance := str(station_scrip)
 	_right(right+744,top+(53 if balance.length()<11 else 55),balance,"label" if balance.length()<11 else "micro",INK)
 	if page in ["HUD","Emotes"]:

@@ -214,7 +214,8 @@ func sync(modal: bool) -> void:
 	if clock != _sent.get("clock"):
 		_sent["clock"] = clock
 		var date: Array = season_date(int(world.day))
-		pad.set_clock(minute_block, int(date[1]), str(date[0]))
+		var week: String = str(world.WEEKDAYS[posmod(int(world.day) - 1, 7)]).substr(0, 3)
+		pad.set_clock(minute_block, int(date[1]), str(date[0]), week)
 	if int(world.credits) != int(_sent.get("credits", -1)):
 		_sent["credits"] = int(world.credits)
 		pad.station_scrip = int(world.credits)
