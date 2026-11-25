@@ -2385,7 +2385,7 @@ ar = interior("mess", "Mess hall", 116, 63, 146, 82, ".", 130)
 # Where the old rooms were on the old main level, for anyone moving old coordinates across:
 OLD_ROOMS = {k: (A[k].off[0], A[k].off[1], A[k].w, A[k].h) for k in ("furn", "common", "bram", "fab", "library", "medbay", "weaver", "armoury", "mess")}
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from public_rooms import ROOM_SHIFT     # rooms rebuilt in the promenade style: their old plan sits this far in
+from public_rooms import ROOM_SHIFT, RESPOT     # rooms rebuilt in the promenade style: their old plan sits this far in
 
 
 def moved(a, x, y):
@@ -2394,10 +2394,14 @@ def moved(a, x, y):
     if a.endswith("!"):                 # "common!": today's coordinates in a rebuilt room, not its old plan
         return a[:-1], x, y
     if a != "main":
+        if (a, x, y) in RESPOT:
+            return (a, *RESPOT[(a, x, y)])
         dx_, dy_ = ROOM_SHIFT.get(a, (0, 0))
         return a, x + dx_, y + dy_
     for k, (x0, y0, w0, h0) in OLD_ROOMS.items():
         if x0 < x < x0 + w0 - 1 and y0 < y < y0 + h0 - 1:
+            if (k, x - x0, y - y0) in RESPOT:
+                return (k, *RESPOT[(k, x - x0, y - y0)])
             dx_, dy_ = ROOM_SHIFT.get(k, (0, 0))
             return k, x - x0 + dx_, y - y0 + dy_
     assert ((x - 90) ** 2 + (y - 60) ** 2) ** 0.5 <= 30.3, ("old main-level spot is not in a room or on the square", x, y)
@@ -3482,7 +3486,6 @@ def hash_seed(*parts):
     return sum((i + 1) * ord(c) for i, c in enumerate("|".join(str(p) for p in parts)))
 
 
-furnish("library", ["Desk+", "Armchair", "Side table with a lamp", "Rug+"])
 furnish("fab", ["Crate stack", "Recycling bin", "Floor grate", "Floor grate"])
 furnish("furn", ["Wardrobe", "Dresser", "Armchair", "Side table with a lamp"])
 furnish("medbay", ["Side table with a lamp", "Recycling bin", "Armchair"])

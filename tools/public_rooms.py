@@ -12,6 +12,8 @@ shift to every schedule stop in these rooms, and the heart events set there were
            rack and a chair in front.
   armoury  Ix'ali's armoury: a weapon rack, her forge and arc-anvil and the lockers behind a glass-topped counter,
            crates and a training dummy in front.
+  library  Owen's library: bookcases round the walls and the archive in the top corner, the school corner (lesson
+           board, three desks) in the middle, reading tables either side, luminescent ferns.
   mess   Mess hall: the kitchen in the north-east behind a serving counter (Jasper cooks facing the room),
          two rows of five mess tables with chairs either side, the menu board, a juice dispenser and the tray
          return by the windows on the north wall (a view of the stars).
@@ -24,12 +26,18 @@ from survey import SIZES
 from spaceport import fill
 from residences import Home
 
-ROOM_SHIFT = {"mess": (2, 2), "common": (12, 11), "bram": (2, 2), "weaver": (2, 2), "armoury": (2, 2)}
+ROOM_SHIFT = {"mess": (2, 2), "common": (12, 11), "bram": (2, 2), "weaver": (2, 2), "armoury": (2, 2), "library": (2, 2)}
+# Spots that don't just move with the old plan but go to a particular new place: (map, old x, old y) -> new x, y.
+# The library (25 Nov): the kids at their school desks, Owen at his shelves, the readers at the reading tables.
+RESPOT = {("library", 7, 9): (8, 12), ("library", 9, 9): (10, 12), ("library", 11, 10): (12, 12),
+          ("library", 8, 8): (16, 9), ("library", 8, 10): (15, 13), ("library", 5, 11): (4, 13),
+          ("library", 6, 11): (5, 13), ("library", 12, 12): (14, 13)}
 SIZES.update({'serving_counter': (3, 2, 1), 'mess_table': (2, 1, 1), 'menu_board': (2, 3, 1),
               'kitchen_stove': (2, 2, 1), 'kitchen_bot': (1, 2, 1), 'protein_synthesizer': (1, 2, 1),
               'recycler': (2, 2, 1), 'potted_plant': (1, 2, 1), 'chair_s': (1, 2, 0), 'chair_n': (1, 2, 0),
               'fabric_counter': (3, 2, 1), 'arms_counter': (3, 2, 1), 'side_counter': (1, 2, 2), 'weapon_rack': (3, 3, 1),
-              'loom': (2, 2, 1), 'altar': (3, 2, 1), 'candle_stand': (1, 2, 1), 'bedside_lamp': (1, 2, 1), 'anvil': (1, 1, 1), 'bench_fitting': (1, 1, 0), 'crew_board': (2, 3, 1), 'arcade': (2, 3, 1), 'bookshelf_steel': (2, 3, 1)})
+              'loom': (2, 2, 1), 'altar': (3, 2, 1), 'candle_stand': (1, 2, 1), 'bedside_lamp': (1, 2, 1), 'anvil': (1, 1, 1), 'bench_fitting': (1, 1, 0), 'library_shelf': (3, 3, 1), 'archive_shelf': (3, 3, 1),
+              'school_desk': (1, 1, 1), 'reading_table': (3, 1, 1), 'lesson_board': (2, 3, 1), 'lumen_fern': (1, 2, 1), 'crew_board': (2, 3, 1), 'arcade': (2, 3, 1), 'bookshelf_steel': (2, 3, 1)})
 
 DINING = ('hotel/dining_mineral_mix', None)
 DECK = ('home/deck', None)
@@ -286,6 +294,35 @@ def build_armoury(g):
     m.finish()
 
 
+def build_library(g):
+    """Owen's library (old room 17 x 15, door at x 8): bookcases along the north wall with the archive in the top
+    corner (Pip's 2), bookcases down both sides, the school corner in the middle (the lesson board, three desks
+    with chairs: Pip, Kit and Nub's lessons, Owen's 2), reading tables either side of the door's walk (Jasper and
+    Maren; Artie and Quill, by the luminescent ferns: Quill's 8)."""
+    m = PublicRoom(g, 'library', 'Library', 17, 15, 8, {'o': HERRINGBONE, 'j': NAVY})
+    r = m.r
+    m.area('Library', 3, 3, 17, 15, 'o')
+    m.area('', 8, 10, 12, 13, 'j')                                  # a rug under the school desks
+    for x in (3, 6, 9, 12):
+        m.p('library_shelf', x, 1, 'Library shelves', 'look')
+    m.p('archive_shelf', 15, 1, 'The archive', 'look')
+    m.p('library_shelf', 3, 6, 'Library shelves', 'look')
+    m.p('library_shelf', 15, 6, 'Library shelves', 'look')
+    m.p('lesson_board', 9, 6, 'Lesson board', 'look')
+    for x in (8, 10, 12):
+        m.p('school_desk', x, 11, 'School desk', 'look')
+        m.p('chair_n', x, 11, 'School chair [N]', 'seat', 'Sit')
+    m.p('reading_table', 3, 12, 'Reading table', 'look')
+    m.p('reading_table', 14, 12, 'Reading table', 'look')
+    for x in (3, 4, 5, 14, 15, 16):
+        m.p('chair_n', x, 12, 'Reading chair [N]', 'seat', 'Sit')
+    m.p('bedside_lamp', 6, 11, 'Reading lamp')
+    m.p('lumen_fern', 17, 9, 'Luminescent ferns', 'look')
+    m.p('lumen_fern', 17, 12, 'Luminescent ferns', 'look')              # beside Quill's reading chair (his 8)
+    m.p('potted_plant', 3, 9, 'Potted plant')
+    m.finish()
+
+
 def build(g):
     saved = survey.WALKABLE
     survey.WALKABLE = '.shafkoteuj'
@@ -294,4 +331,5 @@ def build(g):
     build_bram(g)
     build_weaver(g)
     build_armoury(g)
+    build_library(g)
     survey.WALKABLE = saved

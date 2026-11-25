@@ -367,10 +367,189 @@ def fitting_stool():
     return img
 
 
+# ---- the library (25 Nov) ----------------------------------------------------------------------------------------
+DARKWOOD = R("e8b088", "b77a5a", "8a5244", "613a3c", "43283a", "2e1c2e")
+BOOKS = [R("ffb4a0", "e8584a", "a83440", "6e2234"), R("b8e0ff", "5a9ae0", "34609e", "243e6a"),
+         R("e8ffb0", "8cc85a", "4e8a40", "305830"), R("fff0b0", "f0c050", "b88030", "7a5028"),
+         R("f0d0ff", "b080e0", "7850a8", "4c3474"), R("ffe0c8", "e8a070", "b06a48", "744036"),
+         R("e0f0f0", "a8c4c8", "72888e", "4a5862")]
+
+
+def _books(img, x0, x1, y_floor, height, seed):
+    """A row of book spines standing on a shelf: lit left edge, dark right edge, a title band, the odd one leaning."""
+    g = np.random.default_rng(seed)
+    x = x0
+    while x <= x1 - 2:
+        w = int(g.integers(2, 5))
+        if x + w > x1 + 1: w = x1 + 1 - x
+        h = int(height - g.integers(0, 4))
+        ramp = BOOKS[int(g.integers(0, len(BOOKS)))]
+        if g.random() < 0.08:            # a gap, or a book lying flat
+            if g.random() < 0.5:
+                img[y_floor - 2:y_floor + 1, x:min(x1 + 1, x + 6), :3] = _c(ramp, 2)
+                img[y_floor - 2, x:min(x1 + 1, x + 6), :3] = _c(ramp, 1)
+                img[y_floor, x:min(x1 + 1, x + 6), :3] = _c(ramp, 3)
+            x += 4
+            continue
+        top = y_floor - h + 1
+        img[top:y_floor + 1, x:x + w, :3] = _c(ramp, 2)
+        img[top:y_floor + 1, x, :3] = _c(ramp, 1)
+        img[top:y_floor + 1, x + w - 1, :3] = _c(ramp, 3)
+        img[top, x:x + w, :3] = _c(ramp, 1)
+        band = top + 2 + int(g.integers(0, 3))
+        if band < y_floor - 1:
+            img[band, x:x + w, :3] = _c(BRASS, 1) if g.random() < 0.5 else _c(ramp, 0)
+        x += w
+
+
+def library_shelf(seed=3, ramp=WOOD, rows=4):
+    """A tall wooden bookcase, four shelves of books, a carved top."""
+    s = Lit(72, 78)
+    s.face(1, 6, 70, 77, 3, ramp)
+    s.slab(0, 0, 71, 6, 6, ramp, 1, 0.5)                   # the crown
+    img = s.render()
+    body(img, 1, 7, 70, 76, ramp)
+    for x0, x1 in ((1, 4), (67, 70)):                      # side posts: lit on the left
+        img[7:77, x0:x1 + 1, :3] = _c(ramp, 2); img[7:77, x0, :3] = _c(ramp, 1); img[7:77, x1, :3] = _c(ramp, 3)
+    inner = R(*["%02x%02x%02x" % tuple(int(v * 0.62) for v in ramp[i]) for i in range(len(ramp))])
+    for k in range(rows):
+        y0 = 9 + k * 17
+        img[y0:y0 + 14, 5:67, :3] = _c(inner, 3)           # the back of the shelf, in shadow
+        img[y0, 5:67, :3] = _c(inner, 4)
+        _books(img, 6, 65, y0 + 12, 12, seed * 10 + k)
+        img[y0 + 13, 5:67, :3] = _c(ramp, 1)              # the shelf board, lit edge
+        img[y0 + 14, 5:67, :3] = _c(ramp, 3)
+        img[y0 + 15, 5:67, :3] = _c(ramp, 4)
+    img[76, 1:71, :3] = _c(ramp, 4)
+    return img
+
+
+def archive_shelf():
+    """The archive: dark old wood behind glass doors, scroll tubes and boxes, a brass plaque."""
+    img = library_shelf(7, DARKWOOD, 4)
+    glass = np.array([200, 236, 240])
+    for x0 in (6, 37):                                     # two glass doors over the shelves
+        for y in range(9, 74):
+            for x in range(x0, x0 + 29):
+                img[y, x, :3] = (img[y, x, :3] * 0.72 + glass * 0.28).astype(np.uint8)
+        img[9:74, x0, :3] = _c(BRASS, 2); img[9:74, x0 + 28, :3] = _c(BRASS, 3)
+        img[9, x0:x0 + 29, :3] = _c(BRASS, 1); img[73, x0:x0 + 29, :3] = _c(BRASS, 3)
+        for k in range(10):
+            img[12 + k, x0 + 4 + k, :3] = (240, 252, 255)
+            img[30 + k, x0 + 14 + k // 2, :3] = (220, 244, 248)
+    img[40:43, 34:38, :3] = _c(BRASS, 1); img[43, 34:38, :3] = _c(BRASS, 3)      # the lock
+    img[1:5, 26:46, :3] = _c(BRASS, 2); img[1, 26:46, :3] = _c(BRASS, 0); img[4, 26:46, :3] = _c(BRASS, 3)
+    for x in range(28, 44, 3):
+        img[2:4, x, :3] = _c(DARKWOOD, 4)
+    return img
+
+
+def school_desk():
+    """A pupil's desk with a glowing lesson screen."""
+    s = Lit(26, 30)
+    for x in (3, 20):
+        s.face(x, 16, x + 2, 29, 2, DARKM)
+    s.face(1, 12, 24, 16, 5, WOOD)
+    s.slab(0, 2, 25, 12, 6, WOOD, 1, 0.4)
+    s.slab(5, 3, 20, 9, 7, RUB, 1, 0.3)
+    img = s.render()
+    body(img, 1, 13, 24, 16, WOOD)
+    lip(img, 1, 24, 12, WOOD)
+    img[4:9, 6:20, :3] = _c(CYAN, 2)
+    img[4, 6:20, :3] = _c(CYAN, 1)
+    for y in (5, 7):
+        img[y, 8:8 + (11 if y == 5 else 7), :3] = _c(CYAN, 0)
+    img[8, 6:20, :3] = _c(CYAN, 3)
+    return img
+
+
+def reading_table():
+    """A long reading table: an open book, a stack of three, a little green-shaded lamp."""
+    s = Lit(76, 32)
+    for x in (4, 68):
+        s.face(x, 22, x + 3, 31, 2, DARKM)
+    s.face(1, 17, 74, 22, 6, WOOD)
+    s.slab(0, 0, 75, 17, 7, WOOD, 1, 0.35)
+    s.slab(8, 4, 30, 13, 8, CREAM, 1, 0.2)              # the open book
+    s.slab(44, 3, 56, 7, 9, BOOKS[1], 1, 0.4)
+    s.slab(45, 7, 57, 11, 8.5, BOOKS[0], 1, 0.4)
+    s.slab(44, 11, 56, 14, 8, BOOKS[3], 1, 0.4)
+    s.dome(66, 4, 5, 3, 11, 2, R("d8ffd0", "7cd890", "3e9a60", "246a40"), 0.9)   # the lamp shade
+    s.slab(65, 6, 66, 12, 9, BRASS, 0, 0.8)
+    s.dome(65.5, 12.5, 3, 1.5, 8, 1, BRASS, 0.8)
+    img = s.render()
+    body(img, 1, 18, 74, 22, WOOD)
+    lip(img, 1, 74, 17, WOOD)
+    img[5:12, 19, :3] = _c(CREAM, 3)                     # the open book's spine and lines of text
+    for y in range(6, 12, 2):
+        img[y, 10:18, :3] = _c(CREAM, 2); img[y, 21:29, :3] = _c(CREAM, 2)
+    for x in (4, 68):
+        img[23:32, x, :3] = _c(DARKM, 1); img[23:32, x + 1:x + 3, :3] = _c(DARKM, 2); img[23:32, x + 3, :3] = _c(DARKM, 3)
+    return img
+
+
+def lesson_board():
+    """Owen's lesson board: a chalkboard on a stand with letters, sums and a ringed planet."""
+    img = menu_board()
+    board = R("4f7a6c", "3c5f56", "2e4846", "223636")
+    img[9:52, 5:45, :3] = _c(board, 2)
+    img[9, 5:45, :3] = _c(board, 1); img[51, 5:45, :3] = _c(board, 3)
+    ch = np.array([236, 240, 224])
+    A = ["010", "101", "111", "101", "101"]; B = ["110", "101", "110", "101", "110"]; C_ = ["011", "100", "100", "100", "011"]
+    for i, glyph in enumerate((A, B, C_)):
+        for y, row in enumerate(glyph):
+            for x, c in enumerate(row):
+                if c == "1": img[13 + y, 9 + i * 5 + x, :3] = ch
+    for y, row in enumerate(["01000", "11011", "01000", "01011", "11100"]):        # 1+1=2, roughly
+        for x, c in enumerate(row):
+            if c == "1": img[22 + y, 9 + x, :3] = (255, 214, 120)
+    cx, cy = 33, 22                                          # a ringed planet
+    for y in range(-4, 5):
+        for x in range(-4, 5):
+            if 12 <= x * x + y * y <= 20: img[cy + y, cx + x, :3] = ch
+    for x in range(-8, 9):
+        img[cy + (x // 4), cx + x, :3] = (255, 214, 120) if abs(x) > 4 else img[cy + (x // 4), cx + x, :3]
+    for x in range(9, 40, 1):                                # a line of "writing"
+        if x % 5 != 4: img[34, x, :3] = ch
+        if x % 4 != 3 and x < 30: img[40, x, :3] = ch
+    return img
+
+
+def lumen_fern():
+    """A potted luminescent fern from the east domes, its fronds glowing a soft teal."""
+    s = Lit(28, 40)
+    s.face(7, 28, 20, 39, 3, R("f0b090", "d07a58", "a0523e", "6e3432"))         # the pot
+    s.slab(5, 24, 22, 29, 5, R("f8c8a0", "e08a60", "b05c40", "783a34"), 1, 0.4)
+    fr = R("e8fff8", "9ef0e0", "4cc8c0", "2e8a9a", "245e78")
+    g = np.random.default_rng(5)
+    for k in range(9):                                     # fronds arching out of the pot
+        ang = -math.pi / 2 + (k - 4) * 0.33
+        for t in np.linspace(0, 1, 9):
+            x = 13.5 + math.cos(ang) * 13 * t + (k - 4) * t * t * 1.5
+            y = 25 + math.sin(ang) * 20 * t + 9 * t * t
+            s.dome(x, y, 1.5 - t * 0.6, 1.2, 6 + t, 1, fr, 0.6)
+    img = s.render()
+    body(img, 7, 30, 20, 39, R("f0b090", "d07a58", "a0523e", "6e3432", "4e2a2e"))
+    return img
+
+
+def lumen_fern_glow():
+    yy, xx = np.mgrid[0:56, 0:56]
+    d = np.hypot((xx - 28) / 26.0, (yy - 26) / 24.0)
+    a = np.clip(1 - d, 0, 1) ** 1.6
+    out = np.zeros((56, 56, 4), np.uint8)
+    out[..., 0], out[..., 1], out[..., 2] = 190, 255, 240
+    out[..., 3] = (a * 150).astype(np.uint8)
+    return out
+
+
 PROPS = (("serving_counter", serving_counter), ("mess_table", mess_table), ("menu_board", menu_board),
          ("fabric_counter", fabric_counter), ("arms_counter", arms_counter), ("side_counter", side_counter),
          ("weapon_rack", weapon_rack), ("altar", altar), ("candle_stand", candle_stand),
-         ("anvil", anvil), ("bench_fitting", fitting_stool))
+         ("anvil", anvil), ("bench_fitting", fitting_stool),
+         ("library_shelf", library_shelf), ("archive_shelf", archive_shelf), ("school_desk", school_desk),
+         ("reading_table", reading_table), ("lesson_board", lesson_board), ("lumen_fern", lumen_fern),
+         ("lumen_fern_glow", lumen_fern_glow))
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "/tmp/r5"
     os.makedirs(out, exist_ok=True)
