@@ -35,8 +35,8 @@ def baked(name):
     return b if b.width == W * S else b.resize((W * S, H * S), Image.NEAREST)
 im.alpha_composite(baked('floor_%s.png' % KEY))
 im.alpha_composite(baked('walls_%s.png' % KEY))
-skys = [Image.open(L + '%s.png' % n).convert('RGBA') for n in ('roof_skylight', 'roof_skylight_round')]
-for lx, ly in lights: im.alpha_composite(skys[(lx * 7 + ly * 3) % 2], (lx * S, max(0, ly * S - S)))
+skys = [Image.open(L + '%s.png' % n).convert('RGBA') for n in ('roof_skylight', 'roof_skylight_round') if os.path.exists(L + n + '.png')]
+for lx, ly in lights: im.alpha_composite(skys[(lx * 7 + ly * 3) % len(skys)], (lx * S, max(0, ly * S - S)))
 tiles = Image.open(P + '/art/tiles.png').convert('RGBA'); cell = tiles.height // 2
 def tile(idx, x, y, top):
     t = tiles.crop((idx * cell, 0 if top else cell, idx * cell + cell, cell if top else 2 * cell)).resize((S, S), Image.NEAREST)

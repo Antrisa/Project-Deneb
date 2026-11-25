@@ -445,6 +445,46 @@ const FAREWELL_ANYONE = ["[sad] Leaving? I heard your ship was finished.", "Safe
 
 
 const LOOKS = {
+	# The mess hall, common room and shops rebuilt in the promenade style (tools/public_rooms.py, 24 Nov)
+	"Activities board": ["This week's scores: holo-darts, chess ladder, arcade high scores. KIT is top of three of them."],
+	"Altar": ["A stone altar under a violet runner, with a silver moon above it. It belongs to no one faith and every one.", "People leave small things here: a ribbon, a pebble, a folded note. Nobody reads the notes."],
+	"Bookshelf": ["Well-thumbed novels, a field guide to moon fungi and a photo album of the first year on the Landing."],
+	"Craft bench": ["Glue, string, offcuts of bug silk and a half-finished model starship. Tools are signed out in a little book."],
+	"Fireplace": ["A real fire would use up the air, so this one is light and warmth and a recording of crackling.", "It is still the most popular seat in the station."],
+	"Kids' play frame": ["A climbing frame and a slide, built from spare scaffold by Tikka. Pip and Nub have tested it thoroughly."],
+	"Meeting screen": ["Notes from the last station meeting. Item one: the air reclaimer. Item two: the air reclaimer, again."],
+	"Forge": ["Ix'ali's forge. It runs on station power, not coal, but she still talks to it like it's alive.", "The embers never quite go out."],
+	"Arc-anvil": ["An arc-anvil, still warm where it was last struck. There is a dent in it the shape of a very determined hammer."],
+	"Fitting stool": ["A low round stool with a brass rim. You stand on it, hold still, and try not to look at the pins."],
+	"Today's menu": ["TODAY: moon-wheat stew, buttered peas, mash. DESSERT: ask Jasper (he will say 'patience').", "Dinner for everyone at 6:00."],
+	"Sinks and prep counter": ["Two deep sinks and a scrubbed steel counter. Jasper's knives hang in a row, sharpest on the left."],
+	"Range and ovens": ["Six burners and two ovens. A note taped to the dial: 'DO NOT TOUCH THE SOUFFLÉ OVEN. - J.'"],
+	"Cold store": ["Cold air and neat shelves: Ooma's greens, a wheel of something Moogli, and one tin of Terran butter, labelled HANDS OFF."],
+	"Pantry shelves": ["Jars of dried beans, moon-wheat flour and spices from six different worlds, every lid labelled in French."],
+	"Kitchen bot": ["A little kitchen bot with one whisk arm. It hums while it stirs, slightly off-key."],
+	"Serving counter": ["Three steaming wells under a glass guard: today's stew, buttered peas and a mountain of mash.", "The heat lamps make the brass trim glow."],
+	"Juice dispenser": ["Three flavours: orange, something green, and 'Jasper's Surprise'. Nobody has pressed the third button."],
+	"Tray return": ["Stack your tray, then your cup, then your cutlery. The sign says it twice, in two alphabets."],
+	"Water point": ["Cold, clean water, reclaimed and filtered a dozen times. It tastes faintly of nothing at all, which is the goal."],
+	"Lending shelf": ["Take a book, leave a book. Someone has left eleven copies of the same Terran cookbook."],
+	"Board games and puzzles": ["Boxes of board games, mostly complete. One puzzle has been half-finished on a tray for three months."],
+	"Community notice board": ["Sign-up sheets, a lost glove, a drawing of a fish by Nub, and the week's activities in neat handwriting."],
+	"Activities screen": ["This week: story night, a chess ladder, and 'gardening for beginners (bring gloves)'."],
+	"Tea and coffee corner": ["Two kettles, a coffee machine older than the station and a jar of honey biscuits that never quite runs out."],
+	"Chess table": ["A game in progress. White is winning, but someone has written 'NOT FOR LONG' on a scrap of paper beside it."],
+	"Holo-game table": ["A holo-board flickering with tiny starships. The high score belongs to someone called KIT."],
+	"Arcade cabinet": ["An old arcade cabinet salvaged from a freighter. It takes station tokens and gives out a lot of noise."],
+	"Bram's counter": ["A long wooden counter, worn smooth. Jars of sweets, a tin of buttons and a bell you are allowed to ring."],
+	"Stock shelves": ["Bram's stock: rope, tins, seed packets, spare boots and a shelf just labelled 'MISC (GOOD)'."],
+	"Crates of stock": ["Crates stamped with three different trading-house marks. Bram knows what is in every one."],
+	"Barrels": ["Barrels of oil, nails and dried fruit. You can tell which is which by the smell."],
+	"Sundries display": ["A little striped display of whatever is new this week, arranged by colour."],
+	"Sesska's counter": ["Bolts of bug silk in every colour, a pin cushion shaped like a moon and a tape measure Sesska never needs."],
+	"Rack of finished clothes": ["Coats, shawls and one very small jumper. Each one is tagged with Sesska's tiny, careful writing."],
+	"Armoury counter": ["A glass-topped case over blades and a blaster, laid out on felt. Everything has a tag. Everything is signed for."],
+	"Lockers": ["Two steel lockers. One says GARRICK. The other says IX'ALI, with a small drawing of a sword."],
+	"Ammunition crates": ["Charge packs and practice rounds, stacked exactly square."],
+	"Training dummy": ["A battered training dummy. Someone has drawn a moustache on it."],
 	# The flooded stair and the underground lake (tools/caves.py, 22 Nov)
 	"Flooded stair": ["Rough steps cut down into the rock under the copper bay, and a chain across them.", "A tag in Job's hand: 'SEALED. Not while that thing is down there.'"],
 	"The Underground Lake": ["A wide, still lake under the mine. The water is black and perfectly clear, and things glow at the bottom of it.", "Every so often a ring spreads across the surface where something has come up to look at you."],
@@ -667,14 +707,18 @@ const DAY_LINES := {
 			"A day off, and I spent the morning reading about soufflés. I regret nothing.",
 			"[happy] Tonight I cook at home, for Evarra and me. No tickets, no rush. Bliss."],
 		2: ["[sad] Evarra is off today, so I am also the baker. Pray for the bread.",
-			"No Evarra today. I keep reaching for herbs that are not there."],
+			"No Evarra today. I keep reaching for herbs that are not there.",
+			"[happy] Cooking class at three, at the community centre's tea corner! Today: the omelette. Tomorrow: the world.",
+			"Stu is my best student. He eats everything before it's finished. That is also a kind of review."],
 		6: ["[sad] Sunday, and Evarra is off. The bread is mine today. It is... rustic.",
 			"[happy] Evarra is out in the soil somewhere, humming. The kitchen is mine. Mwahaha."],
 	},
 	"Evarra": {
 		2: ["[happy] My day off. I'm going to put my hands in some soil and not think about bread at all.",
 			"Ooma's in today. She has seed packets from worlds I can't pronounce. Dangerous.",
-			"Wednesdays are mine. The herbs at home get a proper talking-to."],
+			"Wednesdays are mine. The herbs at home get a proper talking-to.",
+			"Jasper's cooking class this afternoon. I'm his assistant, which means I stop him adding butter to everything.",
+			"[happy] Saffi asked me what herbs go with eggs. I talked for forty minutes. She took notes."],
 		6: ["[happy] Sunday. No ovens. Just me and whatever's growing.",
 			"Jasper does the bread on Sundays, which is a kind way of saying Jasper does something.",
 			"[happy] I slept past the morning bake. It felt criminal. I'd do it again."],
@@ -695,7 +739,9 @@ const DAY_LINES := {
 		0: ["[happy] My day off. I am going to look at moss. On purpose. For hours.",
 			"Vzz'ket has agreed to guard me in the North Cave. He says I sketch too slowly to be worth eating."],
 		5: ["Saturday. Owen saved me a journal on fungal symbiosis. I may not speak to anyone until dinner.",
-			"[happy] No patients today. I keep checking my hands for gloves anyway."],
+			"[happy] No patients today. I keep checking my hands for gloves anyway.",
+			"I go to Ix'ali's class for the exercise. When the sparring starts I remember an urgent appointment with a book.",
+			"Book club this afternoon. I've read it twice. Don't tell Owen, he likes to be first."],
 		3: ["[surprised] Doctor Maren is off today. I am in charge. Please do not get injured. I mean that kindly.",
 			"I have the clinic until tonight. I have checked the bandages twice. They are still alphabetical."],
 		6: ["Doctor Maren is with her family today. The medbay is mine. It is very quiet. I do not like it.",
@@ -705,7 +751,8 @@ const DAY_LINES := {
 		3: ["[happy] My day off. Quill has the clinic. If you're bleeding, go to him. If you're dying, come and find me.",
 			"Thursday. I'm going to drink a cup of tea while it's still hot. First time in thirty years."],
 		6: ["Sunday's for family. Owen pretends to work, Pip pretends to behave, and I pretend not to notice either.",
-			"[happy] No clinic today. I've been told to rest by my own assistant. The cheek of him."],
+			"[happy] No clinic today. I've been told to rest by my own assistant. The cheek of him.",
+			"We go to Tar'Besh's service on Sundays. Pip counts the candles. I count the quiet."],
 		0: ["Quill's off poking moss in some cave. I've told Vzz'ket to bring him back in one piece.",
 			"[sad] No Quill today, so I did the inventory myself. The bandages are not alphabetical any more."],
 		5: ["Saturday, so it's just me. If you're going to fall off something, do it before lunch.",
@@ -717,18 +764,24 @@ const DAY_LINES := {
 		3: ["Thursday. Bram has a crate of salvage plating. I am going to 'just look'. I will not just look.",
 			"[happy] A day off! I will still spar tonight. Vzz'ket says rest days are for people who lose."],
 		5: ["[happy] The quartermaster is off. I have the whole armoury. I am being very responsible. Mostly.",
-			"Garrick left me a list of rules. Rule one: do not test anything on the walls. The walls are fine."],
+			"Garrick left me a list of rules. Rule one: do not test anything on the walls. The walls are fine.",
+			"[happy] Fitness class at nine in the community centre! Exercise first. Then we fight. Politely.",
+			"Quill comes for the stretching and leaves before the sparring. Very sensible. Very Vuultam."],
 		6: ["Sunday. Garrick is at home with his family, so the forms are mine. I have signed them all with a flourish.",
-			"[happy] Nobody to tell me to stop sharpening. Today is a very good day."],
+			"[happy] Nobody to tell me to stop sharpening. Today is a very good day.",
+			"Tar'Besh's service first, then the forge. I sit at the front, so he cannot see me fidget."],
 		4: {"flag": "vzzket_open_mic", "lines": [
 			"Friday. Vzz'ket is at the story night, so the gate is mine tonight. I have told it several stories.",
 			"[happy] I hold the gate on Fridays now. Vzz'ket left me eleven instructions. I have followed four."]},
 	},
 	"Garrick": {
 		5: ["Day off. Saffi says I'm not to patrol. I'm not. I'm walking. In a circle. Round the plaza.",
-			"[happy] Saturday's for Kit. We're building a model ship. Badly. He's the captain."],
+			"[happy] Saturday's for Kit. We're building a model ship. Badly. He's the captain.",
+			"Saffi dances by the fire on Saturday nights. I don't dance. I... supervise the dancing.",
+			"[happy] Don't tell her, but I like watching her more than I'd like dancing. Still not dancing."],
 		6: ["Sunday. Saffi's cooking, Kit's 'helping', and I'm under orders to sit down and not inspect anything.",
-			"[happy] No badge today. Feels like I've forgotten something. Saffi says that's the point."],
+			"[happy] No badge today. Feels like I've forgotten something. Saffi says that's the point.",
+			"Tar'Besh's service, then the fire in the community centre. A man could get used to Sundays."],
 		1: ["Ix'ali's off. The armoury's quiet. Too quiet. Nothing's been taken apart all morning.",
 			"[happy] No Ix'ali today, so nobody's asked me to sign for a sword with a name."],
 		3: ["Ix'ali's at the museum again. Tar'Besh will send her back when she starts naming the exhibits.",
@@ -742,7 +795,8 @@ const DAY_LINES := {
 		1: ["[happy] Day off! I came down to the terminal to watch the ships. Just to watch. Old habit.",
 			"Tuesday. Nobody needs their bags carried. I don't know what to do with my arms."],
 		2: ["[happy] Another day off. Ooma's in. I'm going to look at her lost-and-found crate and imagine whose it all was.",
-			"Wednesday. Sara says I'm to 'rest'. I've rested twice already. Is that enough?"],
+			"Wednesday. Sara says I'm to 'rest'. I've rested twice already. Is that enough?",
+			"[happy] Cooking class with Jasper today! My job is tasting. I take my job very seriously."],
 		4: ["[happy] Transport day! Bags, bags, bags. I carry them beautifully. Have I mentioned?",
 			"Guests are in. Somebody brought a pet. I don't know what it is. Neither do they."],
 		6: ["Last day of the weekend. I'll see them off at the terminal. I always wave until the ship's gone.",
@@ -754,18 +808,24 @@ const DAY_LINES := {
 			"[sad] Days off are strange. On Chernobog ships there weren't any. Just days nobody shot at you."],
 		3: ["Thursday off. Rusk says if I sit at his bar one more night he'll start charging me rent.",
 			"[happy] Star charts in the lounge, then Rusk's. Don't tell Garrick I have a routine. He'll think it's a plot."],
-		5: ["Freya's off, so the bay's mine till Monday. If you hear swearing, that's me and the stabilizer negotiating.",
-			"[happy] Saturday shift. Quiet bay, loud engines. Best kind of day."],
+		5: {"flag": "ana_seat", "lines": ["Freya's off, so the bay's mine till Monday. If you hear swearing, that's me and the stabilizer negotiating.",
+			"[happy] Saturday shift. Quiet bay, loud engines. Best kind of day.",
+			"[happy] Ix'ali asked me to her fitness class. Me! I nearly forgot how to say yes.",
+			"Book club at two. Owen picked something with a sad ending again. I like it."],
+			"else": ["Freya's off, so the bay's mine till Monday. If you hear swearing, that's me and the stabilizer negotiating.",
+			"[happy] Saturday shift. Quiet bay, loud engines. Best kind of day."]},
 		6: ["Sunday. Freya left me a note: 'Don't touch my bench.' I touched her bench.",
 			"Still covering the bay. Somebody has to keep your ship pointed the right way."],
 	},
 	"Tar'Besh": {
+		6: ["Sunday. I lead a service in the community centre's chapel at ten. All are welcome. Even those who only come for the biscuits.", "[happy] The chapel belongs to no god in particular. I like to think they take turns."],
 		0: ["Monday. The museum is shut. The relics need a day without being stared at. So do I.",
 			"[happy] My day off. Owen owes me a rematch, and he knows it, and he is hiding in the library."],
 		4: ["Friday. I pray in the Sanctum in the mornings. The crystals are excellent listeners. They rarely interrupt.",
 			"The Temple would call my Friday prayers irregular. The Temple calls a great many things irregular."],
 	},
 	"Zaas": {
+		5: ["Owen's book club this afternoon. I am on chapter one. Chapter one is very good.", "[happy] I don't read the books, but I like the arguing about them. It's like the sea, just with more words."],
 		6: ["[happy] Sunday! Expedition day. Merrow has the plant, and I have a hydrophone and a packed lunch.",
 			"Sundays I listen. The rock hums, the pumps knock, and under all of it, if you are patient, something answers.",
 			"[happy] Day off. Which is to say, day on, for the ocean. Report any ice."],
@@ -794,6 +854,7 @@ const DAY_LINES := {
 	# mornings ("else": the lines before the flag); on Saturdays she covers launch control while Freya's off.
 	# Sesska buys fibre from Evarra on Wednesday afternoons, and takes linens to the hotel on Thursdays once it's open.
 	"Tikka": {
+		4: ["[happy] Friday! Dancing by the community centre's fire tonight. Sesska leads. I pretend I'm leading.", "Eight legs and I still step on her feet. She says it's tradition now."],
 		5: ["Saturday. Freya's off, so I have launch control. Nobody is launching. I am controlling it anyway.",
 			"[happy] Saturdays I sit in the launch booth and listen to the bay. The bay says very little. I like that in a bay."],
 		6: {"flag": "tikka_sundays_off", "lines": [
@@ -804,6 +865,7 @@ const DAY_LINES := {
 			"[sad] Don't tell Sesska you saw me in Engineering. It's Sunday. I was checking a valve. It's a very important valve."]},
 	},
 	"Sesska": {
+		4: ["[happy] Fridays we dance by the fire, Tikka and I. Twenty years married and she still counts the steps out loud.", "Come to the community centre tonight. We dance badly, but we dance a lot."],
 		6: ["[happy] Sunday. The shop is shut and the loom is at home. I weave there too. It isn't work if nobody pays.",
 			"Sunday is ours. Tikka's and mine. One day a week I have her all to myself, if I can keep her out of Engineering."],
 		2: ["Wednesday. After lunch I go to Evarra for fibre. She grows it, I spin it, and we argue about the colour green.",
@@ -816,10 +878,14 @@ const DAY_LINES := {
 	# West Terminal's star dome to watch the ships come in, then the fountain. Once Maren has let Pip go up the lift
 	# on his own (her 6, maren_lets_go), his Saturday afternoons are his: the launch booth, where Tikka lets him watch.
 	"Owen": {
+		6: ["Sunday. The library shuts for an hour for Tar'Besh's service. I go. He goes easy on me at chess afterwards. Out of mercy, he says."],
 		5: ["[happy] Saturday. No lessons, the library is shut, and Pip and I are going to watch ships we can't afford.",
-			"Saturdays I teach Pip the constellations from the star dome. He teaches me the ships. He's winning."],
+			"Saturdays I teach Pip the constellations from the star dome. He teaches me the ships. He's winning.",
+			"[happy] Book club at two, in the reading corner. Zaas hasn't finished last week's yet. He never does.",
+			"I pick the books. Quill reads them twice. Zaas reads the first chapter and has very strong opinions."],
 	},
 	"Pip": {
+		0: ["[happy] Story night with Artie tonight! He does a pirate voice. Gran says don't copy it at dinner. I will."],
 		5: {"flag": "maren_lets_go", "lines": [
 			"[happy] Saturday! I'm allowed to go to the bay BY MYSELF. Tikka lets me sit in the launch booth if I don't touch.",
 			"Grandad watches ships in the morning and I watch them all afternoon. Mine are better ships."],
@@ -849,6 +915,7 @@ const DAY_LINES := {
 			"Sunday. Every drop on the Landing still needs me on Sundays. Mostly the drops Nub splashes."]},
 	},
 	"Nub": {
+		0: ["Story night tonight. I'm going to draw the island while Artie reads. And the parrot. Mostly the parrot."],
 		6: ["[happy] Sunday is drawing day! And pancakes. Dad makes them shaped like chairs.",
 			"Dad's shop is shut on Sundays. He still goes and looks at it through the window.",
 			"[happy] I drew you again. You're even taller this time. You've been growing."],
@@ -860,6 +927,8 @@ const DAY_LINES := {
 	# Sundays after her 8 (saffi_potluck); Kit's Saturdays are the model ship with Garrick, then the West Terminal's
 	# seals once he's a junior security officer (his 6, kit_security).
 	"Saffi": {
+		2: ["[happy] Cooking class with Jasper this afternoon. Garrick says if I learn one more soup he'll move out. He won't."],
+		5: ["[happy] Saturday night I dance by the fire in the community centre. Garrick comes. Garrick watches. One day, Garrick.", "He tapped his foot last week! Just once. I saw it. Progress!"],
 		0: ["[happy] Monday. Rusk comes up to the fountain for lunch. He says he's not family. He brings dessert.",
 			"Rusk was at Kit's first birthday, and his second, and every one since. Nobody invited him. Nobody had to."],
 		6: {"flag": "saffi_potluck", "lines": [
@@ -870,6 +939,7 @@ const DAY_LINES := {
 			"[happy] Sunday dinner at ours. Garrick is under orders not to inspect anything. Kit is under orders to help. Neither is obeying."]},
 	},
 	"Kit": {
+		0: ["[happy] Artie's story night later! Last time the pirates found the treasure and it was just more maps."],
 		5: {"flag": "kit_security", "lines": [
 			"[happy] Saturday! Seal day! Dad lets me hold the lamp. I check them twice. He checks them three times. I'm catching up.",
 			"Junior Security Officer Kit, on duty. [happy] Mostly on duty. I'm also eating a biscuit."],
@@ -885,6 +955,13 @@ const DAY_LINES := {
 			"[happy] Story night. The small fox tells the same one every week. It is a good one. Do not tell him I said so."]},
 		6: {"flag": "vzzket_sensors", "lines": [
 			"Sunday. The machine's box watches the gate. I am... resting. I do not know what to do with my hands.",
-			"The cleric is teaching me the old Zaa'sh hymns. I knew them as a hatchling. I had forgotten I knew them."]},
+			"The cleric is teaching me the old Zaa'sh hymns. I knew them as a hatchling. I had forgotten I knew them.",
+			"I stand at the back of the cleric's service, by the door. Every way in. Every way out. He says that still counts."]},
+	},
+	"Freya": {
+		5: ["Ix'ali's class this morning. My arms are jelly. Worth it. Ask me again tomorrow.", "[happy] I nearly got a hit on Ix'ali in sparring today! Nearly. She was laughing, so it counts."],
+	},
+	"Artie": {
+		0: ["[happy] Story night tonight in the reading corner. I'm reading them Treasure Island. Pip wants to be the parrot.", "The kids made me do all the voices last week. I'm still hoarse. Worth it."],
 	},
 }

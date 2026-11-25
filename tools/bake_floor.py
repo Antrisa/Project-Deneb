@@ -956,7 +956,7 @@ COZY_EDGES = {"main": PROM_EDGES, "eng": ENG_EDGES, "bay": ENG_EDGES, "hotel": H
               "agri": ENG_EDGES, "top": PROM_EDGES, "museum": HOME_EDGES, "lounge": HOME_EDGES, "sanctum": PROM_EDGES}          # areas re-done in the cozy style that are not homes, with their own edge set
 def is_home(key):
     """Homes, apartments, flats and the bar: wallpapered rooms with the warm wall set."""
-    return key.startswith(("home", "apt", "flat")) or key in ("bar", "bathhouse")
+    return key.startswith(("home", "apt", "flat")) or key in ("bar", "bathhouse", "mess", "common", "bram", "weaver", "armoury")
 
 def bake_walls(key, rows, art_dir, window=None, sigma=15.0, style="facet"):
     from scipy.ndimage import gaussian_filter

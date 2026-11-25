@@ -6,7 +6,10 @@ func _init() -> void:
 	# material_3 is the moon's surface (drawn round the outer walls); 0, 4, 5 and 7 are older floor materials.
 	# A missing picture falls back to material_1, so a removed file can't stop the game starting (24 Nov).
 	for i in range(8):
-		var path := "res://art/lunar/material_%d.png" % i
+		# the warm C-style copy (tools/warm_shift.py, made by the build) when there is one, else the original
+		var path := "res://art/lunar/warm/material_%d.png" % i
+		if not ResourceLoader.exists(path):
+			path = "res://art/lunar/material_%d.png" % i
 		materials.append(load(path) if ResourceLoader.exists(path) else null)
 	for i in range(8):
 		if materials[i] == null:

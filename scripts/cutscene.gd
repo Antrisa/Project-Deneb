@@ -166,7 +166,7 @@ func play(id: String) -> void:
 		world._event_area = world.current_area
 	if event.has("player"):
 		var p: Array = event["player"]
-		world.player.position = world._feet(Vector2i(int(p[0]), int(p[1])))
+		world.player.position = world._feet(_stand(Vector2i(int(p[0]), int(p[1]))))
 		world.player.scene_face(int(DIRS.get(p[2], 0)))
 	for c in event.get("cast", []):
 		_place(str(c[0]), int(c[1]), int(c[2]), str(c[3]))
@@ -188,6 +188,7 @@ func play(id: String) -> void:
 	for r in _actors.values():
 		r.scene_end()
 	_actors = {}
+	world.scene_stand_player()
 	world.player.visible = true
 	world.sky_override = ""
 	if _ship_home != Vector2.INF and world.wreck_sprite != null:
@@ -492,14 +493,37 @@ func _absent(who: String) -> bool:
 	return not world._arrived(who)
 
 
+# A scripted spot on a wall, or on the floor row a south wall's picture covers, moves to the nearest proper floor
+# tile, trying straight up first (Zachary, 24 Nov: in Freya's 2-heart event "your character is standing on a wall").
+func _stand(t: Vector2i) -> Vector2i:
+	if _standable(t):
+		return t
+	for r in range(1, 4):
+		for off in [Vector2i(0, -r), Vector2i(-r, 0), Vector2i(r, 0), Vector2i(0, r),
+				Vector2i(-r, -r), Vector2i(r, -r), Vector2i(-r, r), Vector2i(r, r)]:
+			if _standable(t + off):
+				return t + off
+	return t
+
+
+func _standable(t: Vector2i) -> bool:
+	var mid := Vector2((t.x + 0.5) * world.TILE, (t.y + 0.5) * world.TILE)
+	if world.solid_at(mid):
+		return false
+	return not (world.has_method("wall_face_at") and world.wall_face_at(mid))
+
+
 func _place(who: String, x: int, y: int, dir: String) -> void:
+	var t := _stand(Vector2i(x, y))
 	if who == "player":
-		world.player.position = world._feet(Vector2i(x, y))
+		world.scene_stand_player()
+		world.player.position = world._feet(t)
 		world.player.scene_face(int(DIRS.get(dir, 0)))
+		world.scene_sit_player()
 		return
 	var r = _actor(who)
 	if r != null:
-		r.scene_place(world.current_area, Vector2i(x, y), int(DIRS.get(dir, 0)))
+		r.scene_place(world.current_area, t, int(DIRS.get(dir, 0)))
 
 
 func _face(who: String, toward: String) -> void:
@@ -521,7 +545,9 @@ func _face(who: String, toward: String) -> void:
 
 
 func _start_walk(who: String, to: Vector2i) -> void:
+	to = _stand(to)
 	if who == "player":
+		world.scene_stand_player()           # up out of a seat first
 		var from: Vector2i = world.player_tile()
 		var path: Array = world.find_path(world.current_area, from, [to])
 		if path.is_empty():
@@ -558,6 +584,8 @@ func _process(delta: float) -> void:
 					if not points.is_empty():
 						points.remove_at(0)
 					if points.is_empty():
+						world.player.scene_walking = false
+						world.scene_sit_player()       # walked onto a chair: sit in it (24 Nov)
 						done.append(w)
 			elif w[1].scene_step(delta):
 				done.append(w)

@@ -51,3 +51,20 @@ def warm(img):
     mode = img.mode
     a = np.asarray(img.convert("RGBA"))
     return Image.fromarray(warm_array(a), "RGBA").convert(mode)
+
+
+def runtime_copies(root):
+    """Warm copies of the pictures the game draws itself at runtime (not baked): the eight floor materials that
+    lunar_ground.gd uses for the concourse roof, walls and moon surface. The originals stay as they are, because
+    bake_floor reads them too and warms its own output. Written to art/lunar/warm/."""
+    import os
+    from PIL import Image
+    src = os.path.join(root, "art", "lunar")
+    dst = os.path.join(src, "warm")
+    os.makedirs(dst, exist_ok=True)
+    n = 0
+    for i in range(8):
+        f = os.path.join(src, "material_%d.png" % i)
+        if os.path.exists(f):
+            warm(Image.open(f)).save(os.path.join(dst, "material_%d.png" % i)); n += 1
+    return n

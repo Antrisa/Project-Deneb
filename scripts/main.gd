@@ -368,10 +368,6 @@ func _ready() -> void:
 			terrain.setup(self, data["floor"])
 			node.add_child(terrain)
 			farm_view = terrain
-		elif area_name == "mess":
-			var dining_view := MessWindow.new()
-			dining_view.setup(self, data["floor"][0].length())
-			node.add_child(dining_view)
 		node.visible = false
 		add_child(node)
 		area_nodes[area_name] = node
@@ -974,7 +970,8 @@ func _go_to(area_name: String, tile: Vector2i, announce: bool = true) -> void:
 	for en in enemies:
 		en.visible = en.alive and en.area == area_name
 	player.position = _feet(tile)
-	player.set_limits(map_pixel_size(), MessWindow.HEADROOM if area_name == "mess" else 0)
+	# (the mess hall's old window strip above the map went with its rebuild, 24 Nov: its windows are in the wall now)
+	player.set_limits(map_pixel_size(), 0)
 	if announce:
 		var data: Dictionary = MapData.AREAS[area_name]
 		var area_title: String = data["title"]
@@ -1918,6 +1915,61 @@ const SEATS := {
 	"bench_w": [2, [Vector2(11, 24), Vector2(11, 38)], -1],
 	"waiting_seat_w": [2, [Vector2(12, 15), Vector2(12, 33)], -1],
 }
+
+
+# The seat whose seat row is this tile (24 Nov): a resident whose stop, or cutscene spot, is on it sits there
+# (resident.gd). The hip slot nearest the tile's middle, the way the sitter faces, whether the seat's back hides
+# their legs, and where they sort, worked out the same way as _sit_on does for the player. Empty if no seat.
+var _seat_cache := {}
+func seat_for(area_name: String, t: Vector2i) -> Dictionary:
+	var key := "%s:%d:%d" % [area_name, t.x, t.y]
+	if _seat_cache.has(key):
+		return _seat_cache[key]
+	var out := {}
+	var props: Array = MapData.CONCOURSE_PROPS if area_name == "main" else MapData.AREA_PROPS.get(area_name, [])
+	for p in props:
+		var kind: String = str(p[0])
+		if not SEATS.has(kind):
+			continue
+		if t.y != int(p[2]) + int(p[4]) - 1 or t.x < int(p[1]) or t.x >= int(p[1]) + int(p[3]):
+			continue
+		var path := "res://art/lunar/%s.png" % kind
+		if not ResourceLoader.exists(path):
+			continue
+		var tex: Texture2D = load(path)
+		var left: float = float(p[1]) * TILE + (float(p[3]) * TILE - tex.get_width() * ART) * 0.5
+		var bottom: float = float(int(p[2]) + int(p[4])) * TILE
+		var top: float = bottom - tex.get_height() * ART
+		var info: Array = SEATS[kind]
+		var middle_x: float = (float(t.x) + 0.5) * TILE
+		var hip := Vector2.INF
+		for slot in info[1]:
+			var at: Vector2 = Vector2(left, top) + Vector2(slot) * ART
+			if hip == Vector2.INF or absf(at.x - middle_x) < absf(hip.x - middle_x):
+				hip = at
+		var sort_y: float = bottom - (SEAT_SORT if kind == "game_chair" or kind == "bar_stool" or kind.begins_with("chair_") or kind.begins_with("bench_") else 0.0)
+		out = {"kind": kind, "hip": hip, "dir": int(info[0]), "behind": int(info[2]) == SEAT_BEHIND, "sort_y": sort_y}
+		break
+	_seat_cache[key] = out
+	return out
+
+
+# In a cutscene, the player sits down too when the scene walks or places them on a seat (cutscene.gd).
+func scene_sit_player() -> bool:
+	var seat := seat_for(current_area, player_tile())
+	if seat.is_empty():
+		return false
+	var hip: Vector2 = seat["hip"]
+	player.position = Vector2(round(hip.x), float(seat["sort_y"]) + (-1.0 if bool(seat["behind"]) else 1.0))
+	player.set_sitting(true, int(seat["dir"]), hip)
+	return true
+
+
+func scene_stand_player() -> void:
+	if player.sitting:
+		var t := player_tile()
+		player.set_sitting(false)
+		player.position = _feet(t)
 
 
 # The seat prop under a seat's spot (THINGS put the spot 8 units above the middle of the prop's bottom

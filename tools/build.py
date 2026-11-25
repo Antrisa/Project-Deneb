@@ -2378,28 +2378,28 @@ inside(ar, "t", [(149, 49)]); inside(ar, "c", [(153, 51)]); inside(ar, "p", [(14
 # armoury: a counter across the room, racks along the back wall
 ar = interior("armoury", "Armoury", 146, 63, 156, 72, "f", 151)
 inside(ar, "C", row(67, range(148, 155))); inside(ar, "S", [(148, 71), (149, 71), (150, 71), (152, 71), (153, 71), (154, 71)]); inside(ar, "c", [(147, 70), (155, 70)])
-# mess hall: a kitchen in the top-right corner behind a serving counter (the cooks face the room),
-# and dining tables with stools
+# mess hall: its old size and door, so OLD_ROOMS can still move old main-level spots into it. The room itself is
+# rebuilt in the promenade style by tools/public_rooms.py (24 Nov), the old plan moved two tiles right and down.
 ar = interior("mess", "Mess hall", 116, 63, 146, 82, ".", 130)
-inside(ar, "C", row(68, range(134, 146))); inside(ar, "V", [(136, 64), (137, 64)]); inside(ar, "W", [(139, 64)]); inside(ar, "R", [(141, 64)])
-inside(ar, "S", [(143, 64), (144, 64)]); inside(ar, "m", [(140, 66)]); inside(ar, "H", [(145, 65), (145, 66)])
-SEATS = [120, 121, 125, 126, 130, 131, 135, 136, 140, 141]
-for ty in (71, 76):
-    inside(ar, "d", row(ty, SEATS))
-    inside(ar, "h", row(ty - 1, SEATS) + row(ty + 1, SEATS))
-inside(ar, "p", [(117, 64), (117, 81), (145, 81)])
 
 # Where the old rooms were on the old main level, for anyone moving old coordinates across:
-OLD_ROOMS = {k: A[k].off for k in ("furn", "common", "bram", "fab", "library", "medbay", "weaver", "armoury", "mess")}
+OLD_ROOMS = {k: (A[k].off[0], A[k].off[1], A[k].w, A[k].h) for k in ("furn", "common", "bram", "fab", "library", "medbay", "weaver", "armoury", "mess")}
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from public_rooms import ROOM_SHIFT     # rooms rebuilt in the promenade style: their old plan sits this far in
 
 
 def moved(a, x, y):
-    """Where a spot written for the old main level is now: inside one of the rooms, or on the square."""
+    """Where a spot written for the old main level is now: inside one of the rooms, or on the square. Spots
+    written for a room rebuilt in the promenade style (ROOM_SHIFT) move with its old plan."""
+    if a.endswith("!"):                 # "common!": today's coordinates in a rebuilt room, not its old plan
+        return a[:-1], x, y
     if a != "main":
-        return a, x, y
-    for k, (x0, y0) in OLD_ROOMS.items():
-        if x0 < x < x0 + A[k].w - 1 and y0 < y < y0 + A[k].h - 1:
-            return k, x - x0, y - y0
+        dx_, dy_ = ROOM_SHIFT.get(a, (0, 0))
+        return a, x + dx_, y + dy_
+    for k, (x0, y0, w0, h0) in OLD_ROOMS.items():
+        if x0 < x < x0 + w0 - 1 and y0 < y < y0 + h0 - 1:
+            dx_, dy_ = ROOM_SHIFT.get(k, (0, 0))
+            return k, x - x0 + dx_, y - y0 + dy_
     assert ((x - 90) ** 2 + (y - 60) ** 2) ** 0.5 <= 30.3, ("old main-level spot is not in a room or on the square", x, y)
     return "main", x + CX - 90, y + CY - 60
 
@@ -2447,6 +2447,8 @@ tidelight.build(globals())
 # ---------------------------------------------------------------- the crash site, for the prologue: see tools/crash_site.py
 import crash_site
 crash_site.build(globals())
+import public_rooms
+public_rooms.build(globals())
 
 # ---------------------------------------------------------------- who and what is where
 START = PLAYER_START          # beside your bed in your apartment, off the agri complex's front porch (tools/residences.py)
@@ -2497,7 +2499,7 @@ SCHEDULES_RAW = {
             ("17:35", "main", 140, 75, 26, "d", "eat"), ("19:15", "main", 93, 67, 26, "d", "idle"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle")],
     "Sesska": [("06:00", "main", 149, 52, 36, "d", "work"), ("17:30", "main", 136, 70, 26, "d", "eat"), ("19:15", "main", 36, 68, 26, "l", "idle"),
                ("21:30", *HOME_SPOTS["Sesska"], 26, "l", "idle")],
-    "Jasper": [("06:00", "main", 137, 67, 36, "d", "work"), ("14:30", "main", 47, 48, 26, "d", "idle"), ("16:30", "main", 137, 67, 36, "d", "work"),
+    "Jasper": [("06:00", "main", 137, 67, 36, "d", "work"), ("14:30", "common!", 39, 11, 26, "d", "idle"), ("16:30", "main", 137, 67, 36, "d", "work"),
                ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle")],
     "Evarra": [("06:00", "main", 142, 67, 36, "d", "work"), ("09:30", "east", 48, 17, 26, "u", "work"), ("13:00", "main", 142, 67, 36, "d", "work"),
                ("20:30", *HOME_SPOTS["Evarra"], 26, "d", "idle")],
@@ -2663,7 +2665,7 @@ for who, start, end, seat in [
     else:
         meal_row = len(ACTION_ROWS[who])
         ACTION_ROWS[who].append("eat d")
-    route.extend([[start, "mess", *seat, 26, "d", "eat", meal_row], resume])
+    route.extend([[start, *moved("mess", *seat), 26, "d", "eat", meal_row], resume])
     route.sort(key=lambda stop: stop[0])
 
 
@@ -2712,7 +2714,8 @@ SCHEDULE_DAYS_RAW = {
     # mess hall, 90 from the Star dome to the hot springs.)
     "Freya": [
         {"when": {"days": [5]}, "bed": "23:00", "stops": [
-            ("08:30", "home4", 13, 5, 26, "u", "work", "hammer"), ("11:00", "bram", 5, 4, 26, "r", "idle", "rest"),
+            ("08:30", "home4", 13, 5, 26, "u", "work", "hammer"), ("09:00", "common!", 20, 8, 26, "d", "idle", "jump"),
+            ("10:00", "common!", 21, 9, 26, "r", "idle", "jump"), ("11:00", "bram", 5, 4, 26, "r", "idle", "rest"),
             ("12:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("14:00", "main", 81, 60, 26, "r", "idle", "rest"),
             ("17:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("19:15", *HOME_SPOTS["Freya at the bar"], 26, "u", "idle", "drink")]},
         {"when": {"days": [6]}, "bed": "22:00", "stops": [
@@ -2720,7 +2723,8 @@ SCHEDULE_DAYS_RAW = {
             ("13:30", "main", 81, 60, 26, "r", "idle", "rest"), ("15:30", "home4", 13, 5, 26, "u", "work", "hammer"),
             ("17:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Freya"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5], "flags": ["east_dome"]}, "bed": "23:00", "stops": [
-            ("08:30", "home4", 13, 5, 26, "u", "work", "hammer"), ("11:00", "bram", 5, 4, 26, "r", "idle", "rest"),
+            ("08:30", "home4", 13, 5, 26, "u", "work", "hammer"), ("09:00", "common!", 20, 8, 26, "d", "idle", "jump"),
+            ("10:00", "common!", 21, 9, 26, "r", "idle", "jump"), ("11:00", "bram", 5, 4, 26, "r", "idle", "rest"),
             ("12:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("14:00", "east", 126, 36, 26, "u", "idle", "rest"),
             ("17:30", "mess", 24, 7, 26, "d", "eat", "eat"), ("19:15", *HOME_SPOTS["Freya at the bar"], 26, "u", "idle", "drink")]},
         {"when": {"days": [6], "flags": ["east_dome"]}, "bed": "22:00", "stops": [
@@ -2735,13 +2739,14 @@ SCHEDULE_DAYS_RAW = {
     # sketches his café, then cooking at home. Once the garden dome is open, the library or the fountain gives
     # way to the dome.
     "Jasper": [
+        # Wednesday afternoons (25 Nov): he teaches a cooking class at the community centre's tea corner
         {"when": {"days": [2]}, "stops": [
             ("06:00", "mess", 21, 4, 36, "d", "work", "cook"), ("14:30", "main", 95, 71, 26, "d", "idle", "relax"),
-            ("16:30", "mess", 21, 4, 36, "d", "work", "cook"), ("18:40", "mess", 25, 7, 26, "d", "eat", "eat"),
+            ("15:00", "common!", 15, 13, 26, "u", "idle", "cook"), ("17:00", "mess", 21, 4, 36, "d", "work", "cook"), ("18:40", "mess", 25, 7, 26, "d", "eat", "eat"),
             ("19:15", "mess", 21, 4, 36, "d", "work", "cook"), ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
         {"when": {"days": [1]}, "stops": [
             ("08:30", "mess", 25, 7, 26, "d", "eat", "eat"), ("10:00", "east", 50, 17, 26, "u", "idle", "relax"),
-            ("12:30", "library", 5, 11, 26, "u", "idle", "rest"), ("14:30", "common", 7, 8, 26, "d", "idle", "relax"),
+            ("12:30", "library", 5, 11, 26, "u", "idle", "rest"), ("14:30", "common!", 39, 11, 26, "d", "idle", "relax"),
             ("17:00", "aptA", 5, 15, 26, "u", "work", "cook"), ("20:30", "aptA", 11, 19, 26, "d", "eat", "eat"),
             ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5]}, "stops": [
@@ -2751,7 +2756,7 @@ SCHEDULE_DAYS_RAW = {
             ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
         {"when": {"days": [1], "flags": ["east_dome"]}, "stops": [
             ("08:30", "mess", 25, 7, 26, "d", "eat", "eat"), ("10:00", "east", 50, 17, 26, "u", "idle", "relax"),
-            ("12:30", "east", 146, 44, 26, "r", "idle", "relax"), ("14:30", "common", 7, 8, 26, "d", "idle", "relax"),
+            ("12:30", "east", 146, 44, 26, "r", "idle", "relax"), ("14:30", "common!", 39, 11, 26, "d", "idle", "relax"),
             ("17:00", "aptA", 5, 15, 26, "u", "work", "cook"), ("20:30", "aptA", 11, 19, 26, "d", "eat", "eat"),
             ("21:30", *HOME_SPOTS["Jasper"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5], "flags": ["east_dome"]}, "stops": [
@@ -2768,7 +2773,8 @@ SCHEDULE_DAYS_RAW = {
         {"when": {"days": [2]}, "stops": [
             ("08:00", "aptA", 27, 21, 26, "d", "work", "garden"), ("10:00", "main", 96, 71, 26, "d", "idle", "rest"),
             ("12:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("13:30", "east", 54, 44, 26, "d", "idle", "rest"),
-            ("16:30", "main", 83, 39, 26, "u", "work", "garden"), ("18:00", "mess", 15, 7, 26, "d", "eat", "eat"),
+            ("15:00", "common!", 16, 13, 26, "u", "idle", "mix"),
+            ("17:00", "main", 83, 39, 26, "u", "work", "garden"), ("18:00", "mess", 15, 7, 26, "d", "eat", "eat"),
             ("19:30", *HOME_SPOTS["Evarra"], 26, "d", "idle", "rest")]},
         {"when": {"days": [6]}, "stops": [
             ("08:30", "mess", 15, 7, 26, "d", "eat", "eat"), ("10:00", "main", 83, 39, 26, "u", "work", "garden"),
@@ -2777,7 +2783,7 @@ SCHEDULE_DAYS_RAW = {
         {"when": {"days": [2], "flags": ["east_dome"]}, "stops": [
             ("08:00", "aptA", 27, 21, 26, "d", "work", "garden"), ("10:00", "main", 96, 71, 26, "d", "idle", "rest"),
             ("12:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("13:30", "east", 122, 45, 26, "d", "work", "garden"),
-            ("17:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Evarra"], 26, "d", "idle", "rest")]},
+            ("15:00", "common!", 16, 13, 26, "u", "idle", "mix"), ("17:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Evarra"], 26, "d", "idle", "rest")]},
         {"when": {"days": [6], "flags": ["east_dome"]}, "stops": [
             ("08:30", "mess", 15, 7, 26, "d", "eat", "eat"), ("10:00", "east", 122, 45, 26, "d", "work", "garden"),
             ("17:00", "mess", 15, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Evarra"], 26, "d", "idle", "rest")]},
@@ -2819,15 +2825,29 @@ SCHEDULE_DAYS_RAW = {
         {"when": {"days": [3, 6]}, "stops": [
             ("06:00", "medbay", 2, 5, 26, "d", "work", "sort"), ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"),
             ("18:15", "medbay", 2, 5, 26, "d", "work", "sort"), ("21:30", "flatQuill", 5, 5, 26, "d", "idle", "rest")]},
-        {"when": {"days": [0, 5]}, "stops": [
+        {"when": {"days": [0]}, "stops": [
             ("08:00", "mess", 25, 12, 26, "d", "eat", "eat"), ("09:00", "tunnels", 22, 29, 26, "l", "idle", "read"),
             ("12:30", "mess", 25, 12, 26, "d", "eat", "eat"), ("14:00", "east", 53, 40, 26, "d", "idle", "read"),
-            ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"), ("19:15", "library", 8, 10, 26, "d", "idle", "rest"),
+            ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"), ("19:15", "common!", 5, 11, 26, "d", "idle", "read"),
             ("22:00", "flatQuill", 5, 5, 26, "d", "idle", "rest")]},
-        {"when": {"days": [0, 5], "flags": ["east_dome"]}, "stops": [
+        # Saturdays (25 Nov): Ix'ali's class for the exercise only (he leaves when the sparring starts), the book club
+        {"when": {"days": [5]}, "stops": [
+            ("08:00", "mess", 25, 12, 26, "d", "eat", "eat"), ("09:00", "common!", 24, 8, 26, "d", "idle", "jump"),
+            ("10:00", "tunnels", 22, 29, 26, "l", "idle", "read"), ("12:30", "mess", 25, 12, 26, "d", "eat", "eat"),
+            ("14:00", "common!", 9, 11, 26, "l", "idle", "read"), ("16:00", "east", 53, 40, 26, "d", "idle", "read"),
+            ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"), ("19:15", "common!", 5, 11, 26, "d", "idle", "read"),
+            ("22:00", "flatQuill", 5, 5, 26, "d", "idle", "rest")]},
+        {"when": {"days": [0], "flags": ["east_dome"]}, "stops": [
             ("08:00", "mess", 25, 12, 26, "d", "eat", "eat"), ("09:00", "tunnels", 22, 29, 26, "l", "idle", "read"),
             ("12:30", "mess", 25, 12, 26, "d", "eat", "eat"), ("14:00", "east", 150, 46, 26, "d", "idle", "read"),
-            ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"), ("19:15", "library", 8, 10, 26, "d", "idle", "rest"),
+            ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"), ("19:15", "common!", 5, 11, 26, "d", "idle", "read"),
+            ("22:00", "flatQuill", 5, 5, 26, "d", "idle", "rest")]},
+        # Saturdays (25 Nov): Ix'ali's class for the exercise only (he leaves when the sparring starts), the book club
+        {"when": {"days": [5], "flags": ["east_dome"]}, "stops": [
+            ("08:00", "mess", 25, 12, 26, "d", "eat", "eat"), ("09:00", "common!", 24, 8, 26, "d", "idle", "jump"),
+            ("10:00", "tunnels", 22, 29, 26, "l", "idle", "read"), ("12:30", "mess", 25, 12, 26, "d", "eat", "eat"),
+            ("14:00", "common!", 9, 11, 26, "l", "idle", "read"), ("16:00", "east", 150, 46, 26, "d", "idle", "read"),
+            ("17:34", "mess", 25, 12, 26, "d", "eat", "eat"), ("19:15", "common!", 5, 11, 26, "d", "idle", "read"),
             ("22:00", "flatQuill", 5, 5, 26, "d", "idle", "rest")]},
     ],
     # Maren is off Thursdays and Sundays. Thursday: breakfast, the library with Owen, a hot cup of tea in the
@@ -2836,21 +2856,33 @@ SCHEDULE_DAYS_RAW = {
     "Maren": [
         {"when": {"days": [3]}, "stops": [
             ("08:30", "mess", 19, 12, 26, "d", "eat", "eat"), ("10:00", "library", 6, 11, 26, "u", "idle", "rest"),
-            ("12:30", "common", 12, 9, 26, "d", "idle", "rest"), ("15:00", "main", 100, 66, 26, "d", "idle", "rest"),
+            ("12:30", "common!", 14, 13, 26, "u", "idle", "rest"), ("15:00", "main", 100, 66, 26, "d", "idle", "rest"),
             ("17:35", "mess", 19, 12, 26, "d", "eat", "eat"), ("19:15", "aptDoc", 6, 5, 26, "d", "idle", "rest")]},
         {"when": {"days": [6]}, "stops": [
-            ("08:30", "mess", 19, 12, 26, "d", "eat", "eat"), ("10:00", "library", 6, 11, 26, "u", "idle", "rest"),
-            ("13:00", "east", 58, 50, 26, "d", "idle", "rest"), ("17:35", "mess", 19, 12, 26, "d", "eat", "eat"),
+            ("08:30", "mess", 19, 12, 26, "d", "eat", "eat"), ("09:55", "common!", 5, 23, 26, "u", "idle", "rest"),
+            ("11:00", "library", 6, 11, 26, "u", "idle", "rest"), ("13:00", "east", 58, 50, 26, "d", "idle", "rest"), ("17:35", "mess", 19, 12, 26, "d", "eat", "eat"),
             ("19:15", "aptDoc", 6, 5, 26, "d", "idle", "rest")]},
         {"when": {"days": [6], "flags": ["east_dome"]}, "stops": [
-            ("08:30", "mess", 19, 12, 26, "d", "eat", "eat"), ("10:00", "library", 6, 11, 26, "u", "idle", "rest"),
-            ("13:00", "east", 118, 44, 26, "d", "idle", "rest"), ("17:35", "mess", 19, 12, 26, "d", "eat", "eat"),
+            ("08:30", "mess", 19, 12, 26, "d", "eat", "eat"), ("09:55", "common!", 5, 23, 26, "u", "idle", "rest"),
+            ("11:00", "library", 6, 11, 26, "u", "idle", "rest"), ("13:00", "east", 118, 44, 26, "d", "idle", "rest"), ("17:35", "mess", 19, 12, 26, "d", "eat", "eat"),
             ("19:15", "aptDoc", 6, 5, 26, "d", "idle", "rest")]},
     ],
     # Ix'ali and Garrick (23 Nov, Zachary): two days off each, staggered so the armoury always has one of them.
     # Ix'ali is off Tuesdays and Thursdays: breakfast, the museum's Precursor gallery with Tar'Besh, lunch, Bram's
     # salvage, dinner, and her evening sparring at the cavern gate as every night.
     "Ix'ali": [
+        # Saturdays (25 Nov): she leads a fitness class in the community centre's activity corner, 9 to 11: exercise for
+        # the first hour, sparring the second
+        {"when": {"days": [5]}, "stops": [
+            ("06:30", "main", 153, 70, 26, "d", "work", "polish"), ("09:00", "common!", 22, 10, 26, "u", "idle", "spar"),
+            ("10:00", "common!", 22, 9, 26, "l", "idle", "spar"), ("11:00", "main", 153, 70, 26, "d", "work", "polish"),
+            ("17:35", "main", 126, 70, 26, "d", "eat", "eat"), ("19:15", "mine", 11, 28, 26, "l", "work", "spar"),
+            ("22:00", *HOME_SPOTS["Ix'ali"], 26, "d", "idle", "rest")]},
+        # Sundays (24 Nov): the service in the chapel, then back to the forge
+        {"when": {"days": [6]}, "stops": [
+            ("06:30", "main", 153, 70, 26, "d", "work", "polish"), ("09:50", "common!", 4, 23, 26, "u", "idle", "rest"),
+            ("11:00", "main", 153, 70, 26, "d", "work", "polish"), ("17:35", "main", 126, 70, 26, "d", "eat", "eat"),
+            ("19:15", "mine", 11, 28, 26, "l", "work", "spar"), ("22:00", *HOME_SPOTS["Ix'ali"], 26, "d", "idle", "rest")]},
         {"when": {"days": [1, 3]}, "stops": [
             ("08:30", "mess", 10, 7, 26, "d", "eat", "eat"), ("10:00", "museum", 53, 29, 26, "u", "idle", "rest"),
             ("12:30", "mess", 10, 7, 26, "d", "eat", "eat"), ("14:00", "bram", 3, 6, 26, "r", "idle", "rest"),
@@ -2864,10 +2896,11 @@ SCHEDULE_DAYS_RAW = {
             ("09:00", "aptSec", 8, 7, 26, "d", "idle", "rest"), ("11:00", "main", 88, 66, 26, "d", "idle", "rest"),
             ("13:00", "mess", 14, 9, 26, "u", "eat", "eat"), ("14:30", "east", 60, 44, 26, "d", "idle", "rest"),
             ("17:35", "mess", 14, 9, 26, "u", "eat", "eat"), ("19:15", "bar", 26, 21, 26, "l", "idle", "drink"),
-            ("21:30", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
+            ("20:00", "common!", 43, 7, 26, "l", "idle", "rest"), ("22:00", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
         {"when": {"days": [6]}, "stops": [
-            ("09:00", "aptSec", 8, 7, 26, "d", "idle", "rest"), ("12:00", "main", 88, 66, 26, "d", "idle", "rest"),
-            ("13:00", "mess", 14, 9, 26, "u", "eat", "eat"), ("14:00", "aptSec", 8, 7, 26, "d", "idle", "rest"),
+            ("09:00", "aptSec", 8, 7, 26, "d", "idle", "rest"), ("09:50", "common!", 8, 23, 26, "u", "idle", "rest"),
+            ("11:00", "main", 88, 66, 26, "d", "idle", "rest"),
+            ("13:00", "mess", 14, 9, 26, "u", "eat", "eat"), ("14:00", "common!", 38, 11, 26, "r", "idle", "rest"),
             ("17:35", "mess", 14, 9, 26, "u", "eat", "eat"), ("19:15", "bar", 26, 21, 26, "l", "idle", "drink"),
             ("21:30", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
         # after Kit's 6 (kit_security, 24 Nov): Saturday mornings he checks the West Terminal's seals, with Kit
@@ -2875,13 +2908,29 @@ SCHEDULE_DAYS_RAW = {
             ("09:00", "west", 19, 40, 26, "l", "idle", "patrol"), ("11:00", "main", 88, 66, 26, "d", "idle", "rest"),
             ("13:00", "mess", 14, 9, 26, "u", "eat", "eat"), ("14:30", "east", 60, 44, 26, "d", "idle", "rest"),
             ("17:35", "mess", 14, 9, 26, "u", "eat", "eat"), ("19:15", "bar", 26, 21, 26, "l", "idle", "drink"),
-            ("21:30", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
+            ("20:00", "common!", 43, 7, 26, "l", "idle", "rest"), ("22:00", "aptSec", 6, 5, 26, "d", "idle", "rest")]},
     ],
     # Saffi (24 Nov): Sundays she cooks at home, then the plaza; after her 8 (saffi_potluck) she keeps the potluck
     # table by the fountain from late morning
     "Saffi": [
+        # Monday to Saturday (24 Nov): the community host keeps the community centre's notice board in the morning
+        {"when": {"days": [0, 1, 3, 4]}, "stops": [
+            ("07:00", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work", "sweep"), ("10:00", "common!", 31, 13, 26, "u", "idle", "browse"),
+            ("12:30", "main", 99, 58, 26, "l", "idle", "watch"), ("15:00", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work", "sweep"),
+            ("17:35", "main", 131, 72, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Saffi"], 26, "d", "idle", "rest")]},
+        # Wednesdays (25 Nov): Jasper's cooking class in the afternoon
+        {"when": {"days": [2]}, "stops": [
+            ("07:00", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work", "sweep"), ("10:00", "common!", 31, 13, 26, "u", "idle", "browse"),
+            ("12:30", "main", 99, 58, 26, "l", "idle", "watch"), ("15:00", "common!", 16, 14, 26, "u", "idle", "rest"),
+            ("17:35", "main", 131, 72, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Saffi"], 26, "d", "idle", "rest")]},
+        # Saturday nights (25 Nov): she wants to dance by the fire; Garrick comes along, and watches
+        {"when": {"days": [5]}, "stops": [
+            ("07:00", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work", "sweep"), ("10:00", "common!", 31, 13, 26, "u", "idle", "browse"),
+            ("12:30", "main", 99, 58, 26, "l", "idle", "watch"), ("15:00", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work", "sweep"),
+            ("17:35", "main", 131, 72, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Saffi"], 26, "d", "idle", "rest"),
+            ("20:00", "common!", 41, 7, 26, "r", "idle", "dance"), ("22:00", *HOME_SPOTS["Saffi"], 26, "d", "idle", "rest")]},
         {"when": {"days": [6]}, "stops": [
-            ("09:00", "aptSec", 5, 15, 26, "u", "idle", "watch"), ("12:30", "main", 99, 58, 26, "l", "idle", "rest"),
+            ("09:00", "aptSec", 5, 15, 26, "u", "idle", "watch"), ("12:30", "common!", 42, 11, 26, "l", "idle", "rest"),
             ("15:00", *HOME_SPOTS["Saffi sweeping"], 26, "d", "work", "sweep"), ("17:35", "main", 131, 72, 26, "u", "eat", "eat"),
             ("19:15", *HOME_SPOTS["Saffi"], 26, "d", "idle", "rest")]},
         {"when": {"days": [6], "flags": ["saffi_potluck"]}, "stops": [
@@ -2894,15 +2943,27 @@ SCHEDULE_DAYS_RAW = {
     # Junior Scouts at the fountain on Monday afternoons, and takes them on an outing on the first Saturday of each
     # season (the little park, or the garden dome's woods once it's open). His Sundays are his own.
     "Artie": [
-        {"when": {"days": [0, 2, 4], "not": ["artie_scouts"]}, "stops": [
+        {"when": {"days": [2, 4], "not": ["artie_scouts"]}, "stops": [
             ("08:00", "library", 12, 12, 26, "u", "idle", "read"), ("11:00", "main", 83, 61, 26, "l", "idle", "rest"),
             ("11:40", "main", 97, 61, 26, "r", "idle", "rest"), ("12:20", "main", 90, 69, 26, "d", "idle", "rest"),
             ("13:00", "mess", 10, 9, 26, "u", "eat", "eat"), ("14:00", "lounge", 37, 13, 26, "u", "idle", "read"),
             ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"), ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
-        {"when": {"days": [1, 3, 5, 6], "not": ["artie_scouts"]}, "stops": [
+        # Monday nights (25 Nov): story night in the community centre's reading corner, for Pip, Kit and Nub
+        {"when": {"days": [0], "not": ["artie_scouts"]}, "stops": [
+            ("08:00", "library", 12, 12, 26, "u", "idle", "read"), ("11:00", "main", 83, 61, 26, "l", "idle", "rest"),
+            ("11:40", "main", 97, 61, 26, "r", "idle", "rest"), ("12:20", "main", 90, 69, 26, "d", "idle", "rest"),
+            ("13:00", "mess", 10, 9, 26, "u", "eat", "eat"), ("14:00", "lounge", 37, 13, 26, "u", "idle", "read"),
+            ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"), ("19:00", "common!", 7, 9, 26, "d", "idle", "read"), ("20:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+        {"when": {"days": [1, 3, 5], "not": ["artie_scouts"]}, "stops": [
             ("09:00", "lounge", 37, 13, 26, "u", "idle", "read"), ("12:00", "main", 83, 61, 26, "l", "idle", "rest"),
             ("12:40", "main", 90, 69, 26, "d", "idle", "rest"), ("13:15", "mess", 10, 9, 26, "u", "eat", "eat"),
             ("14:30", "library", 12, 12, 26, "u", "idle", "read"), ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+        # Sundays (24 Nov): the service in the chapel, lunch, then the community centre's reading corner
+        {"when": {"days": [6], "not": ["artie_scouts"]}, "stops": [
+            ("09:00", "lounge", 37, 13, 26, "u", "idle", "read"), ("09:50", "common!", 4, 25, 26, "u", "idle", "rest"),
+            ("11:00", "main", 83, 61, 26, "l", "idle", "rest"), ("13:15", "mess", 10, 9, 26, "u", "eat", "eat"),
+            ("14:30", "common!", 9, 9, 26, "u", "idle", "read"), ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"),
             ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
         {"when": {"days": [1, 2, 3, 4], "flags": ["artie_scouts"]}, "stops": [
             ("08:00", "library", 5, 6, 26, "u", "work", "read"), ("12:30", "mess", 10, 9, 26, "u", "eat", "eat"),
@@ -2911,13 +2972,14 @@ SCHEDULE_DAYS_RAW = {
         {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
             ("08:00", "library", 5, 6, 26, "u", "work", "read"), ("12:30", "mess", 10, 9, 26, "u", "eat", "eat"),
             ("14:30", "main", 90, 64, 26, "d", "work", "knots"), ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"),
-            ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
+            ("19:00", "common!", 7, 9, 26, "d", "idle", "read"), ("20:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5], "flags": ["artie_scouts"]}, "stops": [
             ("09:00", "main", 83, 61, 26, "l", "idle", "rest"), ("11:00", "lounge", 37, 13, 26, "u", "idle", "read"),
             ("13:00", "mess", 10, 9, 26, "u", "eat", "eat"), ("14:30", "library", 12, 12, 26, "u", "idle", "read"),
             ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"), ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
         {"when": {"days": [6], "flags": ["artie_scouts"]}, "stops": [
-            ("09:30", "mess", 10, 9, 26, "u", "eat", "eat"), ("11:00", "main", 97, 61, 26, "r", "idle", "rest"),
+            ("08:45", "mess", 10, 9, 26, "u", "eat", "eat"), ("09:50", "common!", 4, 25, 26, "u", "idle", "rest"),
+            ("11:00", "main", 97, 61, 26, "r", "idle", "rest"),
             ("13:00", "lounge", 37, 13, 26, "u", "idle", "read"), ("17:30", "mess", 10, 9, 26, "u", "eat", "eat"),
             ("19:30", *HOME_SPOTS["Artie"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts"]}, "stops": [
@@ -2932,6 +2994,27 @@ SCHEDULE_DAYS_RAW = {
     # go up the lift alone (maren_lets_go), the afternoons are his own, in the launch booth with Tikka. The outings come
     # after these, so they win on their Saturdays.
     "Pip": [
+        # Monday, Wednesday, Friday (24 Nov): the holo-game table in the community centre after school
+        {"when": {"days": [4]}, "stops": [
+            ("07:30", "main", 125, 49, 26, "u", "work", "study"), ("12:30", "main", 97, 57, 26, "d", "idle", "play"),
+            ("15:00", "common!", 26, 8, 26, "u", "idle", "hologame"), ("17:35", "main", 140, 75, 26, "d", "eat", "eat"),
+            ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
+        # Mondays (25 Nov): the holo-game table after school, Artie's story night after dinner
+        {"when": {"days": [0]}, "stops": [
+            ("07:30", "main", 125, 49, 26, "u", "work", "study"), ("12:30", "main", 97, 57, 26, "d", "idle", "play"),
+            ("15:00", "common!", 26, 8, 26, "u", "idle", "hologame"), ("17:35", "main", 140, 75, 26, "d", "eat", "eat"),
+            ("19:00", "common!", 6, 12, 26, "u", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
+        # Wednesdays (25 Nov): Jasper's cooking class after school
+        {"when": {"days": [2]}, "stops": [
+            ("07:30", "main", 125, 49, 26, "u", "work", "study"), ("12:30", "main", 97, 57, 26, "d", "idle", "play"),
+            ("15:00", "common!", 13, 14, 26, "u", "idle", "rest"), ("17:35", "main", 140, 75, 26, "d", "eat", "eat"),
+            ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
+        # Sundays: the service in the chapel with his gran
+        {"when": {"days": [6]}, "stops": [
+            ("08:30", "mess", 24, 12, 26, "d", "eat", "eat"), ("09:55", "common!", 7, 23, 26, "u", "idle", "rest"),
+            ("11:00", "main", 97, 57, 26, "d", "idle", "play"), ("15:00", "common!", 26, 8, 26, "u", "idle", "hologame"),
+            ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"), ("19:15", "main", 93, 67, 26, "d", "idle", "rest"),
+            ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5], "not": ["maren_lets_go"]}, "stops": [
             ("09:00", "mess", 24, 12, 26, "d", "eat", "eat"), ("10:30", "west", 54, 11, 26, "u", "idle", "play"),
             ("13:00", "main", 85, 64, 26, "d", "idle", "play"), ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"),
@@ -2943,7 +3026,7 @@ SCHEDULE_DAYS_RAW = {
         {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
             ("07:30", "library", 9, 9, 26, "u", "work", "study"), ("12:30", "main", 97, 57, 26, "d", "idle", "play"),
             ("15:00", "main", 88, 67, 26, "u", "idle", "play"), ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"),
-            ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
+            ("19:00", "common!", 6, 12, 26, "u", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts"]}, "stops": [
             ("09:00", "east", 59, 51, 26, "u", "idle", "play"), ("17:35", "mess", 24, 12, 26, "d", "eat", "eat"),
             ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
@@ -2952,6 +3035,16 @@ SCHEDULE_DAYS_RAW = {
             ("19:15", "main", 93, 67, 26, "d", "idle", "rest"), ("20:30", *HOME_SPOTS["Pip"], 26, "d", "idle", "rest")]},
     ],
     "Kit": [
+        # Monday to Friday (24 Nov): the holo-game table in the community centre after school
+        {"when": {"days": [1, 2, 3, 4]}, "stops": [
+            ("08:00", "main", 127, 50, 26, "u", "work", "study"), ("12:30", "main", 98, 57, 26, "d", "idle", "play"),
+            ("15:00", "common!", 25, 8, 26, "u", "idle", "hologame"), ("17:35", "main", 135, 72, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
+        # Mondays (25 Nov): Artie's story night after dinner
+        {"when": {"days": [0]}, "stops": [
+            ("08:00", "main", 127, 50, 26, "u", "work", "study"), ("12:30", "main", 98, 57, 26, "d", "idle", "play"),
+            ("15:00", "common!", 25, 8, 26, "u", "idle", "hologame"), ("17:35", "main", 135, 72, 26, "u", "eat", "eat"),
+            ("19:00", "common!", 8, 12, 26, "u", "idle", "rest"), ("20:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
         # Saturdays (24 Nov): the model ship with his dad in the morning, the fountain after; once he's a junior
         # security officer (his 6, kit_security), the West Terminal's seals with Garrick instead. The Scouts' first
         # Saturday outings come after these in the list, so they still win.
@@ -2964,7 +3057,7 @@ SCHEDULE_DAYS_RAW = {
         {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
             ("08:00", "library", 11, 10, 26, "u", "work", "study"), ("12:30", "main", 98, 57, 26, "d", "idle", "play"),
             ("15:00", "main", 90, 67, 26, "u", "idle", "play"), ("17:35", "mess", 19, 9, 26, "u", "eat", "eat"),
-            ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
+            ("19:00", "common!", 8, 12, 26, "u", "idle", "rest"), ("20:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts"]}, "stops": [
             ("09:00", "east", 61, 51, 26, "u", "idle", "play"), ("17:35", "mess", 19, 9, 26, "u", "eat", "eat"),
             ("19:15", *HOME_SPOTS["Kit"], 26, "d", "idle", "rest")]},
@@ -2999,6 +3092,16 @@ SCHEDULE_DAYS_RAW = {
             ("17:20", "main", 121, 72, 26, "u", "eat", "eat"), ("19:15", *HOME_SPOTS["Merrow"], 26, "d", "idle", "rest")]},
     ],
     "Nub": [
+        # Mondays (25 Nov): Artie's story night after dinner
+        {"when": {"days": [0]}, "stops": [
+            ("08:00", "main", 123, 49, 26, "u", "work", "draw"), ("12:30", "main", 96, 57, 26, "d", "idle", "play"),
+            ("17:35", "main", 125, 72, 26, "u", "eat", "eat"), ("19:00", "common!", 7, 12, 26, "u", "idle", "rest"),
+            ("20:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
+        # Tuesday and Thursday (24 Nov): drawing at the community centre's craft table after lunch
+        {"when": {"days": [1, 3]}, "stops": [
+            ("08:00", "main", 123, 49, 26, "u", "work", "draw"), ("12:30", "main", 96, 57, 26, "d", "idle", "play"),
+            ("14:30", "common!", 15, 9, 26, "u", "idle", "draw"), ("17:35", "main", 125, 72, 26, "u", "eat", "eat"),
+            ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
         # Sundays: drawing at his desk, then the fountain; Fridays after his 6 he's the museum's Junior Curator
         {"when": {"days": [6]}, "stops": [
             ("09:00", "aptMoog", 19, 5, 26, "u", "idle", "draw"), ("13:00", "promenade", 116, 91, 26, "d", "idle", "play"),
@@ -3009,7 +3112,7 @@ SCHEDULE_DAYS_RAW = {
         {"when": {"days": [0], "flags": ["artie_scouts"]}, "stops": [
             ("08:00", "library", 7, 9, 26, "u", "work", "draw"), ("12:30", "main", 96, 57, 26, "d", "idle", "play"),
             ("15:00", "main", 92, 67, 26, "u", "idle", "play"), ("17:35", "mess", 9, 9, 26, "u", "eat", "eat"),
-            ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
+            ("19:00", "common!", 7, 12, 26, "u", "idle", "rest"), ("20:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5], "dates": [1, 2, 3, 4, 5, 6, 7], "flags": ["artie_scouts"]}, "stops": [
             ("09:00", "east", 60, 51, 26, "u", "idle", "play"), ("17:35", "mess", 9, 9, 26, "u", "eat", "eat"),
             ("19:15", *HOME_SPOTS["Nub"], 26, "d", "idle", "rest")]},
@@ -3032,7 +3135,7 @@ SCHEDULE_DAYS_RAW = {
             ("17:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("19:30", "home2", 10, 6, 26, "d", "idle", "rest")]},
         {"when": {"days": [2]}, "stops": [
             ("09:30", "bram", 2, 4, 26, "r", "idle", "rest"), ("11:30", "east", 50, 52, 26, "d", "idle", "rest"),
-            ("13:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("15:00", "main", 97, 71, 26, "d", "idle", "rest"),
+            ("13:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("15:00", "common!", 15, 14, 26, "u", "idle", "eat"),
             ("17:00", "mess", 20, 9, 26, "d", "eat", "eat"), ("19:30", "home2", 10, 6, 26, "d", "idle", "rest")]},
         {"when": {"days": [3]}, "stops": [
             ("07:00", "hotel", 60, 33, 26, "d", "work", "bell"), ("12:00", "mess", 20, 9, 26, "d", "eat", "eat"),
@@ -3062,10 +3165,27 @@ SCHEDULE_DAYS_RAW = {
             ("09:30", "lounge", 45, 15, 26, "r", "idle", "chart"), ("12:30", "mess", 4, 12, 26, "d", "eat", "eat"),
             ("14:00", "lounge", 45, 15, 26, "r", "idle", "chart"), ("17:30", "mess", 4, 12, 26, "d", "eat", "eat"),
             ("19:30", "bar", 9, 25, 26, "r", "idle", "drink"), ("22:15", *HOME_SPOTS["Ana"], 26, "d", "idle", "rest")]},
+        # Saturdays once people trust her (her 2 hearts, 25 Nov): Ix'ali's fitness class, then the book club
+        {"when": {"days": [5], "flags": ["ana_seat"]}, "stops": [
+            ("07:00", "bay", 40, 16, 26, "u", "work", "tune"), ("09:00", "common!", 22, 8, 26, "d", "idle", "jump"),
+            ("10:00", "common!", 23, 9, 26, "l", "idle", "rest"), ("11:00", "bay", 40, 16, 26, "u", "work", "tune"),
+            ("12:30", "mess", 4, 12, 26, "d", "eat", "eat"), ("13:30", "bay", 40, 16, 26, "u", "work", "tune"),
+            ("14:00", "common!", 5, 12, 26, "u", "idle", "rest"), ("16:00", "bay", 40, 16, 26, "u", "work", "tune"),
+            ("17:30", "mess", 4, 12, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Ana"], 26, "d", "idle", "rest")]},
     ],
     # Tar'Besh (23 Nov): the museum shuts on Mondays (his day off: the lounge, chess on the plaza, the lounge
     # again), and Friday mornings he's at prayer in the Sanctum before opening up late.
     "Tar'Besh": [
+        # Sundays (24 Nov): he leads a service in the community centre's chapel at ten, then opens the museum late
+        {"when": {"days": [6]}, "stops": [
+            ("06:00", "museum", 55, 28, 26, "u", "work", "study"), ("09:30", "common!", 7, 21, 26, "d", "idle", "ponder"),
+            ("11:15", "museum", 55, 28, 26, "u", "work", "study"), ("17:35", "main", 131, 75, 26, "d", "eat", "eat"),
+            ("19:15", "lounge", 24, 14, 26, "u", "idle", "ponder"), ("23:00", *HOME_SPOTS["Tar'Besh"], 26, "d", "idle", "rest")]},
+        # Wednesday evenings: chess with Owen at the community centre's chess table
+        {"when": {"days": [2]}, "stops": [
+            ("06:00", "museum", 55, 28, 26, "u", "work", "study"), ("17:35", "main", 131, 75, 26, "d", "eat", "eat"),
+            ("19:15", "common!", 17, 14, 26, "l", "idle", "chess"), ("21:00", "lounge", 24, 14, 26, "u", "idle", "ponder"),
+            ("23:00", *HOME_SPOTS["Tar'Besh"], 26, "d", "idle", "rest")]},
         {"when": {"days": [0]}, "stops": [
             ("09:00", "lounge", 24, 14, 26, "u", "idle", "ponder"), ("12:30", "main", 131, 75, 26, "d", "eat", "eat"),
             ("13:30", "main", 99, 77, 26, "l", "idle", "chess"), ("17:35", "main", 131, 75, 26, "d", "eat", "eat"),
@@ -3079,6 +3199,12 @@ SCHEDULE_DAYS_RAW = {
     # for the sea; once the Leviathan is dead and the lake is open, the whole day at the Merrow Deep (the south
     # beach, a packed lunch, the end of the west pier). Stargazing in the lounge every evening, as always.
     "Zaas": [
+        # Saturdays (25 Nov): Owen's book club in the community centre's reading corner, 2 to 4
+        {"when": {"days": [5]}, "stops": [
+            ("07:00", "mine", 9, 40, 26, "u", "work", "survey"), ("12:15", "main", 126, 75, 26, "d", "eat", "eat"),
+            ("14:00", "common!", 9, 12, 26, "u", "idle", "rest"), ("16:00", "mine", 9, 40, 26, "u", "work", "survey"),
+            ("17:05", "main", 126, 75, 26, "d", "eat", "eat"), ("19:15", "lounge", 37, 9, 26, "u", "idle", "stargaze"),
+            ("23:00", *HOME_SPOTS["Zaas"], 26, "d", "idle", "rest")]},
         {"when": {"days": [6]}, "stops": [
             ("08:00", "main", 126, 75, 26, "d", "eat", "eat"), ("09:00", "tunnels", 44, 28, 26, "d", "idle", "survey"),
             ("12:15", "main", 126, 75, 26, "d", "eat", "eat"), ("13:30", "tunnels", 48, 8, 26, "u", "idle", "survey"),
@@ -3117,9 +3243,19 @@ SCHEDULE_DAYS_RAW = {
     # Owen (Zachary, 24 Nov): Saturdays off, no lessons. Breakfast, the West Terminal's star dome with Pip to watch the
     # ships, the fountain in the afternoon, dinner, home.
     "Owen": [
+        # Sundays (24 Nov): the library shuts for the service in the chapel
+        {"when": {"days": [6]}, "stops": [
+            ("07:00", "main", 124, 48, 26, "u", "work", "shelve"), ("09:50", "common!", 5, 25, 26, "u", "idle", "rest"),
+            ("11:00", "main", 124, 48, 26, "u", "work", "shelve"), ("17:35", "main", 136, 75, 26, "d", "eat", "eat"),
+            ("19:15", "main", 84, 56, 26, "d", "idle", "rest"), ("21:30", *HOME_SPOTS["Owen"], 26, "d", "idle", "rest")]},
+        # Wednesday evenings: chess with Tar'Besh in the community centre
+        {"when": {"days": [2]}, "stops": [
+            ("07:00", "main", 124, 48, 26, "u", "work", "shelve"), ("17:35", "main", 136, 75, 26, "d", "eat", "eat"),
+            ("19:15", "common!", 14, 14, 26, "r", "idle", "chess"), ("21:30", *HOME_SPOTS["Owen"], 26, "d", "idle", "rest")]},
         {"when": {"days": [5]}, "stops": [
             ("09:00", "mess", 20, 12, 26, "d", "eat", "eat"), ("10:30", "west", 55, 11, 26, "u", "idle", "rest"),
-            ("13:00", "main", 84, 64, 26, "d", "idle", "rest"), ("17:35", "mess", 20, 12, 26, "d", "eat", "eat"),
+            ("13:00", "main", 84, 64, 26, "d", "idle", "rest"), ("14:00", "common!", 6, 11, 26, "r", "idle", "rest"),
+            ("16:00", "main", 84, 64, 26, "d", "idle", "rest"), ("17:35", "mess", 20, 12, 26, "d", "eat", "eat"),
             ("19:15", *HOME_SPOTS["Owen"], 26, "d", "idle", "rest")]},
     ],
     # Tikka & Sesska (Zachary, 24 Nov): Sundays off together. Until her 8 (tikka_sundays_off) Tikka slips into
@@ -3128,6 +3264,11 @@ SCHEDULE_DAYS_RAW = {
     # Saturdays Tikka covers launch control in the Shuttle Bay while Freya's off. Sesska buys fibre from Evarra on
     # Wednesday afternoons, and takes linens to the hotel on Thursday afternoons once it's open (after the Ivan fight).
     "Tikka": [
+        # Friday nights (25 Nov): dancing with Sesska by the community centre's fire
+        {"when": {"days": [4]}, "stops": [
+            ("06:00", "eng", 53, 11, 26, "u", "work", "console"), ("17:30", "main", 135, 70, 26, "d", "eat", "eat"),
+            ("19:15", "main", 34, 68, 26, "d", "work", "tinker"), ("20:00", "common!", 40, 6, 26, "r", "idle", "dance"),
+            ("22:00", *HOME_SPOTS["Tikka"], 26, "r", "idle", "rest")]},
         {"when": {"days": [5]}, "stops": [
             ("07:00", "bay", 8, 31, 26, "d", "work", "console"), ("17:30", "mess", 19, 7, 26, "d", "eat", "eat"),
             ("19:15", "promenade", 80, 127, 26, "d", "work", "tinker"), ("21:30", *HOME_SPOTS["Tikka"], 26, "r", "idle", "rest")]},
@@ -3145,6 +3286,11 @@ SCHEDULE_DAYS_RAW = {
             ("17:30", "mess", 19, 7, 26, "d", "eat", "eat"), ("19:30", *HOME_SPOTS["Tikka"], 26, "r", "idle", "rest")]},
     ],
     "Sesska": [
+        # Friday nights (25 Nov): dancing with Tikka by the community centre's fire
+        {"when": {"days": [4]}, "stops": [
+            ("06:00", "main", 149, 52, 36, "d", "work", "weave"), ("17:30", "main", 136, 70, 26, "d", "eat", "eat"),
+            ("19:15", "main", 36, 68, 26, "l", "idle", "chat"), ("20:00", "common!", 41, 6, 26, "l", "idle", "dance"),
+            ("22:00", *HOME_SPOTS["Sesska"], 26, "l", "idle", "rest")]},
         {"when": {"days": [2]}, "stops": [
             ("06:00", "main", 103, 36, 26, "d", "work", "weave"), ("14:00", "east", 51, 16, 26, "l", "idle", "chat"),
             ("16:00", "main", 103, 36, 26, "d", "work", "weave"), ("17:30", "mess", 20, 7, 26, "d", "eat", "eat"),
@@ -3187,12 +3333,16 @@ SCHEDULE_DAYS_RAW = {
             ("06:00", "mine", 8, 27, 26, "r", "idle", "guard"), ("17:15", "main", 130, 70, 26, "d", "eat", "eat"),
             ("19:00", "bar", 29, 16, 26, "r", "idle", "eat"), ("23:30", *HOME_SPOTS["Vzz'ket"], 26, "r", "idle", "guard")]},
         {"when": {"days": [6], "flags": ["vzzket_sensors"]}, "stops": [
-            ("08:00", "main", 130, 70, 26, "d", "eat", "eat"), ("09:30", "museum", 52, 28, 26, "r", "idle", "walk_stop"),
+            ("08:00", "main", 130, 70, 26, "d", "eat", "eat"), ("09:45", "common!", 11, 26, 26, "u", "idle", "guard"),
+            ("11:00", "museum", 52, 28, 26, "r", "idle", "walk_stop"),
             ("12:30", "main", 130, 70, 26, "d", "eat", "eat"), ("13:30", "bar", 7, 13, 26, "u", "idle", "walk_stop"),
             ("17:15", "main", 130, 70, 26, "d", "eat", "eat"), ("19:00", "bar", 29, 19, 26, "r", "idle", "eat"),
             ("23:30", *HOME_SPOTS["Vzz'ket"], 26, "r", "idle", "guard")]},
     ],
 }
+# Poses made in code, not rows of anyone's action sheet (resident.gd, 25 Nov): "dance" sways and steps to the beat
+# from their walking frames; "jump" is the arms-up row of their heart-event sheet, hopping (the fitness class).
+CODE_POSES = {"dance": -10, "jump": -11}
 SCHEDULE_DAYS = {}
 for who, days_ in SCHEDULE_DAYS_RAW.items():
     SCHEDULE_DAYS[who] = []
@@ -3212,7 +3362,9 @@ for who, days_ in SCHEDULE_DAYS_RAW.items():
             # "restock": Bram at his stall (tools/concourse.py gives his usual day the same activity)
             assert face_ in "dulr" and act in ("work", "eat", "idle", "sleep", "restock"), (who, face_, act)
             row = -1
-            if key:
+            if key in CODE_POSES:
+                row = CODE_POSES[key]
+            elif key:
                 label = key + " " + face_
                 assert label in ACTION_ROWS[who], ("no such row on their action sheet", who, label)
                 row = ACTION_ROWS[who].index(label)
@@ -3257,7 +3409,7 @@ THINGS = [
     ["look", "Market stall", "Look", "main", [99 * 16, 76 * 16 + 8], 28],
     ["look", "Market stall", "Look", "main", [78 * 16, 76 * 16 + 8], 28],
     ["look", "Half-built chair", "Look", "main", tc(38, 55), 22],
-    ["look", "Weapon racks", "Look", "main", tc(149, 70), 24],
+    # (the armoury's "Weapon racks" look spot went with its rebuild, 24 Nov: each rack is its own thing now)
     ["look", "Medbay beds", "Look", "main", tc(137, 50), 24],
     ["look", "Loom", "Look", "main", tc(149, 50), 24],
     ["look", "Library shelves", "Look", "main", tc(121, 45), 26],
@@ -3330,15 +3482,10 @@ def hash_seed(*parts):
     return sum((i + 1) * ord(c) for i, c in enumerate("|".join(str(p) for p in parts)))
 
 
-furnish("common", ["Wide table+", "Armchair", "Armchair", "Vending machine", "Rug+", "Side table with a lamp"])
-furnish("mess", ["Wide table+", "Wide table+", "Vending machine", "Recycling bin"])
 furnish("library", ["Desk+", "Armchair", "Side table with a lamp", "Rug+"])
-furnish("bram", ["Crate stack", "Barrel", "Rug+"])
 furnish("fab", ["Crate stack", "Recycling bin", "Floor grate", "Floor grate"])
 furnish("furn", ["Wardrobe", "Dresser", "Armchair", "Side table with a lamp"])
 furnish("medbay", ["Side table with a lamp", "Recycling bin", "Armchair"])
-furnish("weaver", ["Dresser", "Rug+", "Armchair"])
-furnish("armoury", ["Crate stack", "Floor grate", "Barrel"])
 # The main level: trees, flower boxes, barrels and bins along the outer edge of the ring, trees round the square.
 _ring_set = ["Tree in a tub", "Flower box", "Barrel", "Flower box", "Recycling bin", "Tree in a tub", "Crate stack", "Flower box"]
 for k_ in range(48):
@@ -3707,3 +3854,6 @@ for key_ in ["main"] + list(bake_floor.AREA_FLOORS):
         if wl_.shape == wm_.shape:
             wm_[wl_ > 230] = 0                # solid wall (the cavern mood layer is see-through everywhere)
         bake_floor.Image.fromarray(wm_, "L").save(water_)
+
+# Warm copies of the materials the game draws at runtime (lunar_ground.gd), 24 Nov 2026.
+print("warm runtime materials:", warm_shift.runtime_copies(OUT))

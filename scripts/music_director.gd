@@ -409,9 +409,10 @@ func _ambient_now() -> String:
 	var area: String = world.current_area
 	if place == "mines" or area == "lake":
 		return "amb_caves"
-	if area == "agri":
-		return "amb_agri"
-	return "amb_station"
+	# No bed on the station or in the Agri Complex (Zachary, 24 Nov: "a static noise in the background ... very
+	# annoying, find and remove"). amb_station and amb_agri were made-up noise placeholders; the cave and space beds
+	# are cut from his recordings and stay.
+	return ""
 
 
 func _amb_stream(bed: String):

@@ -13,3 +13,5 @@ Each script writes into `<repo>/art/...` at the same sizes as the pieces it repl
 - `depth_pass.py in.png out.png [--frames N]`: gives hand-drawn art the C colour and light without redrawing it.
 - `make_icons.py <repo>`: item icons for the home machines; then run `tools/dev/relic_art.py` to rebuild `art/items.png`.
 - `rocks6.py <outdir>` (+ `pix.py`): ore nodes, boulders and rocks.
+- `lit_props.py <outdir>`: the 11 concourse roof pieces (`roof_*.png`), drawn as lit shapes: each pixel gets a surface direction and height, one top-left light shades it, casts shadows and adds shine.
+- `mess_props.py <outdir>`: furniture for the rebuilt public rooms (tools/public_rooms.py): serving counter, mess table, menu board, Sesska's and the armoury's counters, Bram's counter, weapon rack, the chapel's altar and candle stand.

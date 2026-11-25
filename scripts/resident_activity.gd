@@ -4,7 +4,8 @@ var phase:=0.0
 func _process(delta: float) -> void:
 	phase+=delta
 	if resident==null:return
-	visible=resident._settled and resident._act in ["garden","chess","hologame","observe","read","browse","restock"]
+	# not while they're sitting on a seat: resident.gd draws them seated, playing the same pose (24 Nov)
+	visible=resident._settled and resident._sit_seat.is_empty() and resident._act in ["garden","chess","hologame","observe","read","browse","restock"]
 	queue_redraw()
 func has_painted_pose() -> bool:
 	if resident._act_tex == null or resident._act_row < 0 or resident._act_row >= resident._act_rows:
