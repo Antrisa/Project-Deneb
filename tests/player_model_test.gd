@@ -142,7 +142,7 @@ func run() -> void:
 		player.free()
 		quit(1)
 		return
-	for body in 2:
+	for body in 1:   # one body since 24 Nov
 		check_reference(maker, body, reference)
 		for style in 10:
 			var look := maker.defaults()
@@ -176,7 +176,7 @@ func run() -> void:
 				var lower_legs := Rect2i(0, row*48+38, 96, 8)
 				check(same_visible(walking.get_region(lower_legs), working.get_region(lower_legs)), "Carry feet %d %d %d" % [body,style,row])
 			# Check each outfit and its mask as the eating scene returns to idle.
-			var folder := "res://art/player/" if body == 0 else "res://art/player/body2/"
+			var folder := "res://art/player/"
 			for i in 4:
 				for m in 2:
 					var suffix := "_mask" if m == 1 else ""

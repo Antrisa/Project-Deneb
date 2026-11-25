@@ -70,7 +70,7 @@ func _initialize() -> void:
 		push_error("Could not load player layers")
 		quit(1)
 		return
-	check(maker.body_count() == 2, "Both bodies load")
+	check(maker.body_count() == 1, "One body for every player (24 Nov)")
 	for body in maker.body_count():
 		check_body(maker, body)
 	var old: Dictionary = maker.defaults()

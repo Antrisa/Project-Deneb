@@ -72,7 +72,10 @@ def fix(folder, cw, ch, cols, rows_per_style, tops_name="tops"):
 
 
 # a filled pixel can pinch the next one, so repeat until nothing changes
+import os
 for folder, grid in (("art/player", (24, 48, 4, 5)), ("art/player/body2", (24, 48, 4, 5)),
                      ("player_eating/body_1", (48, 68, 4, 4)), ("player_eating/body_2", (48, 68, 4, 4))):
+    if not os.path.isdir(folder):
+        continue            # body2 / body_2 retired 24 Nov
     while fix(folder, *grid) and not DRY:
         pass

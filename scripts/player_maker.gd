@@ -33,8 +33,8 @@ const PALETTES := {
 # The picture choices the character screen offers: the hairstyle and the clothes (the face stays the body's own).
 const CLOTHES := ["hair", "tops", "bottoms"]
 
-# Choices that are not pictures. "body" is the Gender line: Male uses the layers in art/player/,
-# Female uses art/player/body2/ (same eight file names and layout). It also sets the pronouns.
+# Choices that are not pictures. "body" is the Gender line: it sets the pronouns only. Since 24 Nov every
+# player is drawn with the one body in art/player/ (the second body, art/player/body2/, was retired).
 const OPTIONS := {
 	"body": ["Male", "Female"],
 }
@@ -65,7 +65,7 @@ const STARTER_LOOKS := [
 
 var _art := {}       # layer name -> Image
 var _mask := {}
-var _art2 := {}      # the second body's layers, if art/player/body2/ exists
+var _art2 := {}      # a second body's layers: none since 24 Nov (everyone uses art/player/)
 var _mask2 := {}
 var _watering_arm_mask: Image
 const CHOICES := 10
@@ -80,7 +80,6 @@ func load_layers() -> bool:
 	_mask2.clear()
 	if not _load_body("res://art/player/", _art, _mask):
 		return false
-	_load_body("res://art/player/body2/", _art2, _mask2)
 	var path := "res://art/player/watering_arm_mask.png"
 	_watering_arm_mask = _image(path) if ResourceLoader.exists(path) else null
 	return true

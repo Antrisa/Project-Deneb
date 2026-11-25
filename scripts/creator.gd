@@ -1,6 +1,7 @@
 extends CanvasLayer
 # The "who are you?" screen (24 Nov: redrawn in the Terran datapad style of the other screens, ui/ship_screen.gd,
-# and the clothes are back). Type your name (residents use it), pick a gender, a top and a bottom, and the hair,
+# and the clothes are back). Type your name (residents use it), pick a gender (pronouns only; one body for
+# everyone), a top and a bottom, and the hair,
 # eye, skin and clothes colours, and (24 Nov) the hairstyle again.
 # Shown at the start of a new game, and again from the wardrobe in your apartment.
 #   - Left: you, walking on the spot from the front, back and both sides; under that, for a colour line, the

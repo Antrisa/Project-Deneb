@@ -57,7 +57,7 @@ const EAT_DROP := 0.15       # falling into the mouth
 const EAT_CHEW := 0.12       # mouth still open
 const EAT_GULP := 0.30       # mouth shut, a small nod as it goes down
 const EAT_HELD_Y := -31.0    # centre of the food held up between the hands
-const EAT_MOUTH := [Vector2i(11, 18), Vector2i(11, 17)]   # top-left art pixel of the open mouth, per body
+const EAT_MOUTH := Vector2i(11, 18)   # top-left art pixel of the open mouth (one body for everyone)
 var eating := false
 var _eat_time := 0.0
 var _eat_food: Sprite2D
@@ -436,7 +436,7 @@ func play_eating(look: Dictionary, food: Texture2D = null) -> bool:
 		_eat_food = Sprite2D.new()
 		_eat_food.visible = false
 		add_child(_eat_food)
-	var at: Vector2i = EAT_MOUTH[1 if int(look.get("body", 0)) == 1 else 0]
+	var at: Vector2i = EAT_MOUTH
 	_eat_mouth.position = Vector2(-8, -30) + Vector2(at) * Poses.ART_SCALE
 	_eat_food.texture = food
 	_eat_size = Poses.ART_SCALE

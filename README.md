@@ -69,15 +69,14 @@ One exception, for `tiles.png` only: when the game gains a new tile, the generat
 | Files | Layout |
 |---|---|
 | `npc_<id>.png`, `player.png` | A walk sheet is 96×240. Each 24×48 cell faces down, up, left, or right. Rows 0–4 hold standing, contact A, contact B, passing A, and passing B. Movement plays rows 1, 3, 2, 4. Three-row legacy sheets also load. The fallback player uses `player.png`. |
-| `player/{tops,bottoms,faces,hair}.png` and matching `_mask.png` | Both body folders hold 96×2400 atlases. Each of the ten choices has the five walk rows. Red selects the main layer colour, green selects skin, and blue selects the iris. `scripts/player_maker.gd` composites the four layers. |
-| `player/action_tops.png` and its mask, also in `player/body2/` | Eight rows per outfit for carrying and using tools. The fitted arm and clothing layers share the walk model’s face, hair and legs. |
+| `player/{tops,bottoms,faces,hair}.png` and matching `_mask.png` | 96×2400 atlases (one body for every player since 24 Nov). Each of the ten choices has the five walk rows. Red selects the main layer colour, green selects skin, and blue selects the iris. `scripts/player_maker.gd` composites the four layers. |
+| `player/action_tops.png` and its mask | Eight rows per outfit for carrying and using tools. The fitted arm and clothing layers share the walk model’s face, hair and legs. |
 | `portrait_*.png` | 6 square pictures in a row: neutral, happy, sad, surprised, love, angry. Any size; shown in a 64x64 box. Currently 128x128 each. |
 | `tiles.png` | 140 columns, each one cell wide and two cells tall (currently 32x64). The lower half is the tile; the upper half is the top of tall objects. A tile is always drawn 16x16 in the world. Slot names are in `tools/build.py`. |
 | `items.png` | 16x16 icons in a row; the order must match `icon` in `scripts/item_data.gd`. |
 | `weapon_*.png` | Pointing right, grip at the left end. |
 | `enemy_*.png`, `*_ore.png` | Two square frames (creatures 16x16, facing left; ore 32x32). |
 | `fx_*.png` | Four square animation frames (currently 32x32), laid over the still tile. |
-| `player/body2/` | The second body type (Female; `player/` is Male): the same eight layer files, same layout. The names are in `OPTIONS` in `scripts/player_maker.gd`. |
 | `npc_<name>_act.png` | Optional action sheet: what a resident does at each stop of their day. 4 frames across (a loop), 48x64 each, one row per action. The rows for each resident are listed in `ACTION_ROWS` in `scripts/map_data.gd` (set by `ACTIONS` in `tools/build.py`). Without a sheet the game fakes it. |
 | `ui_panel.png`, `ui_dialogue.png`, `ui_portrait_frame.png` | 3x3 grids: corners stay sharp, edges and middle stretch. |
 | `ui_slot.png` | Three slots side by side: empty, selected, being moved. |
@@ -112,4 +111,4 @@ Checks every top/bottom and face/top pairing for gaps at the waist and neck, tha
 
 ## He and she in dialogue
 
-The Gender line on the character screen (Male or Female) picks the body and how residents refer to the player. In any resident's line in `scripts/npc_data.gd`, write the "they" form in curly brackets and the game swaps in he or she: `{they} {them} {their} {theirs} {they're} {they've} {are} {were} {have}`, and `{s}` for a verb ending, as in `{they} look{s} tired`. A capital is kept: `{They}`.
+The Gender line on the character screen (Male or Female) picks how residents refer to the player; everyone is drawn with the same body (art/player/). In any resident's line in `scripts/npc_data.gd`, write the "they" form in curly brackets and the game swaps in he or she: `{they} {them} {their} {theirs} {they're} {they've} {are} {were} {have}`, and `{s}` for a verb ending, as in `{they} look{s} tired`. A capital is kept: `{They}`.

@@ -23,17 +23,10 @@ const ATLAS := [
 		[preload("res://player_eating/body_1/tops.png"), preload("res://player_eating/body_1/tops_mask.png")],
 		[preload("res://player_eating/body_1/hair.png"), preload("res://player_eating/body_1/hair_mask.png")],
 		[preload("res://player_eating/body_1/arm.png"), preload("res://player_eating/body_1/arm_mask.png")]
-	],
-	[
-		[preload("res://player_eating/body_2/bottoms.png"), preload("res://player_eating/body_2/bottoms_mask.png")],
-		[preload("res://player_eating/body_2/faces.png"), preload("res://player_eating/body_2/faces_mask.png")],
-		[preload("res://player_eating/body_2/tops.png"), preload("res://player_eating/body_2/tops_mask.png")],
-		[preload("res://player_eating/body_2/hair.png"), preload("res://player_eating/body_2/hair_mask.png")],
-		[preload("res://player_eating/body_2/arm.png"), preload("res://player_eating/body_2/arm_mask.png")]
 	]
-]
+]   # one body since 24 Nov (body_2 retired)
 
-@export_range(1, 2, 1) var body_type := 1
+@export_range(1, 1, 1) var body_type := 1
 @export_range(0, 9, 1) var hair_style := 0
 @export_range(0, 9, 1) var face_style := 0
 @export_range(0, 9, 1) var top_style := 2
@@ -71,7 +64,7 @@ func play_eating(direction: StringName, item_icon: Texture2D = EXAMPLE_FOOD) -> 
 	var facing := DIRECTIONS.find(direction)
 	if is_eating or facing < 0 or item_icon == null or not is_node_ready():
 		return false
-	if body_type < 1 or body_type > 2:
+	if body_type < 1 or body_type > ATLAS.size():
 		return false
 	var styles := [bottom_style, face_style, top_style, hair_style, top_style]
 	for style in styles:
