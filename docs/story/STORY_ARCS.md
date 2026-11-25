@@ -11,7 +11,7 @@ The full scripts that exist are copied next to this file: [`ROMANCE_SCRIPTS.md`]
 
 **The pirates are the Chernobog** (Zachary, 23 Nov). **Ivan himself is "the Rabble"**, so the Rabble's Reach and the Rabble's Nest keep their names. Ids and files stay `rabble_*`.
 
-**The Sky-Weavers are a sentient nebula** (Zachary, 23 Nov): the main story's ending reveals it, and that should end the Zaa'sh hatred of AI, since their own gods were never ordinary living things either. "Sky-Weavers" is only the Zaa'sh name for them. Still open: their true name (Claude's ideas: the Choir, the Lumen, or a name the Custodians translate at the end) and whether "Starborn" stays the scholars' word. Tar'Besh, the exiled cleric who first guessed it, is the thread that leads there (section 5.2).
+**The Sky-Weavers are a sentient nebula** (Zachary, 23 Nov): the main story's ending reveals it, and that should end the Zaa'sh hatred of AI, since their own gods were never ordinary living things either. "Sky-Weavers" is only the Zaa'sh name for them. They have no name we could understand (Zachary, 24 Nov): they are a higher form of life, and the Custodians have to "dumb everything down" for us. "Starborn" stays the human scholars' word. **The main story is now the Custodians: see [`CUSTODIANS.md`](CUSTODIANS.md)** (24 Nov). Tar'Besh, the exiled cleric who first guessed it, is the thread that leads there (section 5.2).
 
 **The Scyldar are an ocean people** (Zachary, 23 Nov), and Zaas names the underground sea **the Merrow Deep**, after Merrow (section 5.3).
 
@@ -627,10 +627,10 @@ Heart-event sheets (already on the status list); props: a training mat, the apia
 
 Answer by number; anything left open stays as it is.
 
-1. **Wave 1:** keep it on Ivan's fall (as built), or move it to a pirate-base raid (as the docs say)? If Ivan's fall, the docs and scripts change to "Ivan's wreck".
+1. **Wave 1:** stays on Ivan's fall, as built (24 Nov: Claude's suggestion, not overruled). The docs and scripts change to "Ivan's wreck".
 2. **Ana's mutiny:** decided 23 Nov: the game's version, and her crew always "knew" she was weak for never firing on transports.
 3. **Rabble or Chernobog:** decided 23 Nov: the pirates are the Chernobog; Ivan is the Rabble.
-4. **Your ship:** is the game's fighter what's left of the *Wandering Star*?
+4. **Your ship:** decided 24 Nov: the fighter is what's left of the *Wandering Star*.
 5. **Who took Artie in 2036**, and why was his pod in Ivan's hold?
 6. **Where threads A and B end:** at the Neutral Zone Summit, or elsewhere?
 7. **Pip's parents:** decided 24 Nov: they're dead. Their freighter's drive failed between stations in the Neutral Zone three years ago, "nobodys fault bad things happen somtimes" (Zachary). Pip knows, but not how; his grandparents tell him in the family's side arc.
@@ -645,5 +645,5 @@ Answer by number; anything left open stays as it is.
 16. **"The Nest":** decided 23 Nov: the cavern event is now "The Broken Shell"; the Rabble's Nest keeps its name.
 17. **Which Observation Lounge scenes move**, and where to. Moved so far: Quill 10 (the little park), Ix'ali 10 (the museum), Stu 10 (the terminal airlock), Jasper & Evarra 4 (the West Terminal's star dome).
 18. **Eshu:** decided 23 Nov: Tally is renamed Eshu in the game and every doc (the file id stays `tally`).
-19. **"Awaken" or "restore"** for completing a Custodian's bundles.
+19. **The Custodians:** decided 24 Nov: six of them, a cutscene-only prologue, and an ending still open. See [`CUSTODIANS.md`](CUSTODIANS.md).
 20. **Which scenes Claude writes first.** (Done so far: every romance arc, the Jasper & Evarra side arc, S.A.R.A., Tar'Besh, Zaas, and Vzz'ket & Rusk; Bram is done too (Ooma has no heart events), and Tikka & Sesska, Maren, Owen & Pip, Tobbin, Merrow & Nub, and Garrick, Saffi & Kit (24 Nov); Eshu has no heart events (24 Nov), so every arc is written.) Suggested order: the 27 confession pieces (7.1), then Jasper and Evarra, then the 10-heart scenes, then the platonic arcs, in the build order's places (S.A.R.A. 2, Job 2, Freya 2, Quill 2, Ix'ali 2 can play first).

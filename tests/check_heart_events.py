@@ -54,12 +54,16 @@ ACTION_ROWS = md['ACTION_ROWS']
 RESIDENTS = set(md['SCHEDULES'])
 EVENTS, ORDER = he['EVENTS'], he['ORDER']
 SCENES = he.get('SCENES', {})   # story scenes that aren't heart events (your first morning): checked the same way
+_story = gd_consts(ROOT / 'scripts/story_scenes.gd')
+assert 'SCENES' in _story, "scripts/story_scenes.gd: SCENES didn't parse (write paths out in full, no consts in it)"
+SCENES = dict(SCENES, **_story['SCENES'])   # the main story (24 Nov): the prologue, the Custodians
 EVENT_ROWS = ["talk", "laugh", "sad", "jump", "gift", "bench", "wave"]
 EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "ready", "no", "wait", "help", "follow", "cute"}
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
          "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy", "fx", "sara",
-         "give", "mail"}
+         "give", "mail", "board", "bsprite", "bmove", "bmoves", "bfade", "flash"}
+VOICES = {"Sensors", "Sara", "Ivan", "MotherDrone"}   # who may speak without being a resident (portraits by name)
 FX = {"bees", "fireflies", "steam", "heartbeats", "spray", "bubbles"}   # scripts/scene_fx.gd
 SARA_CLIPS = set(re.findall(r'"name": "(\w+)"', (ROOT / 'sara/animations_data.gd').read_text()))
 SPECIAL = {"Sara"}   # S.A.R.A.: a hologram on her pads (MapData.PEOPLE), not a walking resident
@@ -102,6 +106,7 @@ def event_sheet(who):
 
 problems = []
 count = {"steps": 0, "lines": 0}
+board_ids = set()   # the sprites on a scene's picture board so far
 
 
 def bad(ev_id, msg):
@@ -138,7 +143,7 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
                 and not (op == "emote" and s[1] in SPECIAL):
             bad(ev_id, "%s: %r is not a resident" % (op, s[1]))
         if op == "say":
-            if s[1] and s[1] not in RESIDENTS and s[1] not in ("Sensors", "Sara"):
+            if s[1] and s[1] not in RESIDENTS and s[1] not in VOICES:
                 bad(ev_id, "say: %r is not a resident" % s[1])
             for line in s[2]:
                 count["lines"] += 1
@@ -148,6 +153,18 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
                 text = line[m.end():] if m else line
                 if len(text) > 150:
                     bad(ev_id, "line over 150 characters: %r" % text[:60])
+        elif op in ("board", "bsprite"):
+            path = s[1] if op == "board" else s[2]
+            if path and not (ROOT / path.replace("res://", "")).exists():
+                bad(ev_id, "%s: no picture %s" % (op, path))
+            if op == "bsprite":
+                if path: board_ids.add(s[1])
+                else: board_ids.discard(s[1])
+        elif op in ("bmove", "bfade"):
+            if s[1] not in board_ids: bad(ev_id, "%s: no sprite %r on the board" % (op, s[1]))
+        elif op == "bmoves":
+            for m in s[1]:
+                if m[0] not in board_ids: bad(ev_id, "bmoves: no sprite %r on the board" % m[0])
         elif op == "go":
             if s[1] not in A:
                 bad(ev_id, "go: no area %r" % s[1])
@@ -261,6 +278,9 @@ for ev_id, ev in list(EVENTS.items()) + list(SCENES.items()):
                 bad(ev_id, "%s starts on a tile someone else has" % c[0])
             taken[(c[1], c[2])] = c[0]
             if len(c) > 4: check_pose(ev_id, c[0], c[4])
+        board_ids.clear()
+        if pev.get('board'):
+            check_steps(ev_id, pev, [["board", pev['board']]] + pev.get('board_setup', []), pev['area'], known)
         check_steps(ev_id, pev, pev['steps'], pev['area'], known)
 
 # The datapad's Perks tab (scripts/perk_data.gd): every perk and keepsake an event gives has its entry and an icon

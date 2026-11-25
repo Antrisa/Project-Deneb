@@ -208,6 +208,8 @@ func _show_line() -> void:
 func _box_on_top() -> bool:
 	if world == null or _pad == null:
 		return false
+	if world.cutscene != null and world.cutscene.running and world.cutscene.board_up():
+		return world.cutscene.board_box_top    # a picture panel: where the scene says (the prologue: top)
 	var people: Array = []
 	if world.player != null:
 		people.append(world.player)

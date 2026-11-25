@@ -43,11 +43,25 @@ extends Node
 #                                      else her pad in this area. "emote" and "say" work for "Sara" too.
 #   ["sara", "place", x, y]            her portable projection (her 6 onwards) materializes on that tile, and her pad here
 #                                      hides; after a "go", place it again. Gone, and her pads back, when the scene ends.
+# Picture panels (the prologue, 24 Nov): a full-screen picture over the world, under the talk box, with sprites the
+# scene moves about on it. Board coordinates are the screen's 640 x 360 pixels, sprites by their top-left corner.
+#   ["board", path]                    shows that picture over the screen (a fade first looks best); "" puts the board
+#                                      and its sprites away (they are gone when the scene ends anyway)
+#   ["bsprite", id, path, x, y, opts]  puts a sprite on the board; opts (all optional): "flip" (mirrored), "frames" and
+#                                      "fps" (a strip of frames that plays), "loop" (false: plays once and stays on the
+#                                      last), "alpha", "z" (higher in front); path "" takes it away
+#   ["bmove", id, x, y, seconds, ease] moves it there and waits ("in" speeds up, "out" slows down, else even);
+#                                      ["bmoves", [[id, x, y], ...], seconds, ease] moves several at once
+#   ["bfade", id, alpha, seconds]      fades it and waits; ["bfade", id, alpha, seconds, "nowait"] goes on at once
+#   ["flash", hex, seconds]            the screen flashes that colour, then clears
+#   "shake" shakes the board too.
 # Events can also need a second resident at the same hearts ("with": ["Evarra"]) and play only in some
 # seasons ("seasons": ["Autumn", "Winter"]): main.gd _event_ready.
-# play() also takes the story scenes in HeartEvents.SCENES (your first morning), which main.gd starts itself.
+# play() also takes the story scenes in HeartEvents.SCENES (your first morning) and StoryScenes.SCENES (the main
+# story: scripts/story_scenes.gd), which main.gd starts itself.
 
 const HeartEvents = preload("res://scripts/heart_events.gd")
+const StoryScenes = preload("res://scripts/story_scenes.gd")
 const SceneFx = preload("res://scripts/scene_fx.gd")
 const DIRS := {"d": 0, "u": 1, "l": 2, "r": 3}
 
@@ -71,6 +85,13 @@ var _ship_home := Vector2.INF   # where your ship stands on its pad, while a sce
 const SHIP_RISE := 220.0        # how far up the ship climbs before it's gone through the launch doors
 var _fx := {}                   # kind -> the scene's effect node (scripts/scene_fx.gd)
 var _holo = null                # S.A.R.A.'s portable projection in this scene ("sara", "place")
+var _board_layer: CanvasLayer   # the picture panels: under the fade (9) and the talk box (10)
+var _board: Node2D
+var _board_bg: Sprite2D
+var _board_sprites := {}        # id -> Sprite2D
+var _board_anim := {}           # id -> [fps, seconds so far, loop]
+var _flash: ColorRect
+var board_box_top := true       # the talk box over a picture panel: at the top, unless the scene says "box": "bottom"
 
 
 func _ready() -> void:
@@ -83,20 +104,41 @@ func _ready() -> void:
 	_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fade_layer.add_child(_fade)
+	_flash = ColorRect.new()
+	_flash.color = Color(1, 1, 1, 0)
+	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fade_layer.add_child(_flash)
+	_board_layer = CanvasLayer.new()
+	_board_layer.layer = 8
+	add_child(_board_layer)
+	_board = Node2D.new()
+	_board.visible = false
+	_board_layer.add_child(_board)
+	_board_bg = Sprite2D.new()
+	_board_bg.centered = false
+	_board_bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_board.add_child(_board_bg)
 
 
 # ---------------------------------------------------------------- playing an event
 
 func play(id: String) -> void:
-	if running or not (HeartEvents.EVENTS.has(id) or HeartEvents.SCENES.has(id)):
+	if running or not has_scene(id):
 		return
 	event_id = id
-	# a heart event at its backup place if the story hasn't opened its own, or a story scene (HeartEvents.SCENES)
-	event = world._event_place(HeartEvents.EVENTS[id] if HeartEvents.EVENTS.has(id) else HeartEvents.SCENES[id])
+	# a heart event at its backup place if the story hasn't opened its own, or a story scene (HeartEvents.SCENES,
+	# StoryScenes.SCENES)
+	event = world._event_place(scene_def(id))
 	running = true
 	_actors = {}
 	_walkers = []
 	await _fade_to(1.0, 0.35)
+	if str(event.get("area", world.current_area)) != world.current_area:
+		# a story scene somewhere else (the prologue, from your flat to the Medbay): go there under the fade
+		var at: Array = event.get("player", [1, 1, "d"])
+		world._go_to(str(event["area"]), Vector2i(int(at[0]), int(at[1])), false)
+		world._event_area = world.current_area
 	if event.has("player"):
 		var p: Array = event["player"]
 		world.player.position = world._feet(Vector2i(int(p[0]), int(p[1])))
@@ -107,6 +149,12 @@ func play(id: String) -> void:
 			var r = _actor(str(c[0]))
 			if r != null:
 				r.scene_pose(str(c[4]))
+	board_box_top = str(event.get("box", "top")) != "bottom"
+	if event.has("board"):            # the scene opens on a picture (the prologue)
+		_board_bg.texture = load(str(event["board"]))
+		_board.visible = true
+		for st in event.get("board_setup", []):
+			await _step(st)
 	await _fade_to(0.0, 0.45)
 	await _run(event.get("steps", []))
 	await _fade_to(1.0, 0.45)
@@ -130,10 +178,23 @@ func play(id: String) -> void:
 		pair[0].play("idle")
 	world.player.scene_walking = false
 	world.player._cam.offset = Vector2.ZERO
+	_board_clear()
 	world._heart_event_done(id)
 	await _fade_to(0.0, 0.45)
 	running = false
 	finished.emit(id)
+
+
+static func has_scene(id: String) -> bool:
+	return HeartEvents.EVENTS.has(id) or HeartEvents.SCENES.has(id) or StoryScenes.SCENES.has(id)
+
+
+static func scene_def(id: String) -> Dictionary:
+	if HeartEvents.EVENTS.has(id):
+		return HeartEvents.EVENTS[id]
+	if HeartEvents.SCENES.has(id):
+		return HeartEvents.SCENES[id]
+	return StoryScenes.SCENES.get(id, {})
 
 
 func _run(steps: Array) -> void:
@@ -268,6 +329,30 @@ func _step(s: Array) -> void:
 					_fx.erase(str(s[1]))
 			else:
 				_show_fx(str(s[1]), Vector2i(int(s[2]), int(s[3])), float(s[4]) if s.size() > 4 else 14.0)
+		"board":
+			if str(s[1]) == "":
+				_board_clear()
+			else:
+				_board_bg.texture = load(str(s[1]))
+				_board.visible = true
+		"bsprite":
+			_board_sprite(str(s[1]), str(s[2]), float(s[3]) if s.size() > 3 else 0.0, float(s[4]) if s.size() > 4 else 0.0, s[5] if s.size() > 5 else {})
+		"bmove":
+			await _board_move([[s[1], s[2], s[3]]], float(s[4]), str(s[5]) if s.size() > 5 else "")
+		"bmoves":
+			await _board_move(s[1], float(s[2]), str(s[3]) if s.size() > 3 else "")
+		"bfade":
+			var sp: Sprite2D = _board_sprites.get(str(s[1]))
+			if sp != null:
+				var t := create_tween()
+				t.tween_property(sp, "modulate:a", float(s[2]), maxf(0.01, float(s[3])))
+				if not (s.size() > 4 and str(s[4]) == "nowait"):
+					await t.finished
+		"flash":
+			_flash.color = Color(str(s[1]))
+			_flash.color.a = 1.0
+			var t := create_tween()
+			t.tween_property(_flash, "color:a", 0.0, float(s[2]))
 		_:
 			push_warning("cutscene: unknown step " + op)
 
@@ -387,6 +472,73 @@ func _process(delta: float) -> void:
 	if _shake_time > 0.0:
 		_shake_time -= delta
 		world.player._cam.offset = Vector2(randf_range(-_shake_px, _shake_px), randf_range(-_shake_px, _shake_px)) if _shake_time > 0.0 else Vector2.ZERO
+		_board.position = world.player._cam.offset.round()
+	for id in _board_anim:
+		var a: Array = _board_anim[id]
+		var sp: Sprite2D = _board_sprites.get(id)
+		if sp == null or sp.hframes < 2:
+			continue
+		a[1] = float(a[1]) + delta
+		var f: int = int(float(a[1]) * float(a[0]))
+		sp.frame = f % sp.hframes if bool(a[2]) else mini(f, sp.hframes - 1)
+
+
+# ---------------------------------------------------------------- picture panels
+
+func _board_sprite(id: String, path: String, x: float, y: float, opts: Dictionary) -> void:
+	if _board_sprites.has(id):
+		_board_sprites[id].queue_free()
+		_board_sprites.erase(id)
+		_board_anim.erase(id)
+	if path == "":
+		return
+	var sp := Sprite2D.new()
+	sp.texture = load(path)
+	sp.centered = false
+	sp.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sp.position = Vector2(x, y)
+	sp.flip_h = bool(opts.get("flip", false))
+	sp.hframes = maxi(1, int(opts.get("frames", 1)))
+	sp.modulate.a = float(opts.get("alpha", 1.0))
+	sp.z_index = int(opts.get("z", 0))
+	_board.add_child(sp)
+	_board_sprites[id] = sp
+	if sp.hframes > 1:
+		_board_anim[id] = [float(opts.get("fps", 8.0)), 0.0, bool(opts.get("loop", true))]
+
+
+func _board_move(moves: Array, seconds: float, easing: String) -> void:
+	var t := create_tween().set_parallel(true)
+	var any := false
+	for m in moves:
+		var sp: Sprite2D = _board_sprites.get(str(m[0]))
+		if sp == null:
+			continue
+		any = true
+		var tw := t.tween_property(sp, "position", Vector2(float(m[1]), float(m[2])), maxf(0.01, seconds))
+		if easing == "in":
+			tw.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		elif easing == "out":
+			tw.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if any:
+		await t.finished
+	else:
+		t.kill()
+
+
+func board_up() -> bool:
+	return _board != null and _board.visible
+
+
+func _board_clear() -> void:
+	for sp in _board_sprites.values():
+		sp.queue_free()
+	_board_sprites = {}
+	_board_anim = {}
+	_board_bg.texture = null
+	_board.visible = false
+	_board.position = Vector2.ZERO
+	_flash.color.a = 0.0
 
 
 # Your ship (main.gd's wreck_sprite, in the Shuttle Bay) lifts off its pad, climbing faster as it goes and fading

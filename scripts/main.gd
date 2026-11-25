@@ -1408,6 +1408,12 @@ func _heart_event_done(id: String) -> void:
 	max_energy = _max_energy()      # Saffi's 8 makes the bar longer at once
 	if id == "welcome":
 		_save_game()      # the hoe, the can and the seeds
+	elif id == "prologue":
+		# the quarantine is over: the first morning, in your own bed (the welcome waits outside your door)
+		_go_home()
+		minutes = float(DAY_START)
+		_snap_residents()
+		_save_game()
 
 
 # Debug (F4): meet the next event's trigger (hearts, flags, partner, weekday, time, place) and play it.
@@ -4986,6 +4992,9 @@ func set_appearance(look: Dictionary) -> void:
 	appearance = maker.tidy(look)
 	player.set_sheet(maker.sheet(appearance), maker.action_sheet(appearance))
 	_save_game()
+	# A new game: the prologue plays once you have a face (scripts/story_scenes.gd "prologue", 24 Nov).
+	if creator != null and creator.first_time and not events_seen.has("prologue") and cutscene != null:
+		cutscene.play("prologue")
 
 
 func _hud_label(parent: Node, pos: Vector2, size: Vector2) -> Label:
