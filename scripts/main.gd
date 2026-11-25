@@ -3970,10 +3970,12 @@ func _mine(t: Dictionary) -> void:
 	node["hits"] = int(node["hits"]) - 1
 	if int(node["hits"]) <= 0:
 		var s: Sprite2D = node["sprite"]
-		if bool(node.get("boulder", false)):
-			s.visible = false                       # a boulder breaks up completely and frees its tiles
+		if bool(node.get("boulder", false)) or bool(node.get("cav", false)):
+			# a boulder, and any cavern rock or vein, breaks up completely and frees its tiles (Zachary, 25 Nov: a
+			# pile you couldn't walk through was left behind). The station's veins keep their rubble and grow back.
+			s.visible = false
 			s.set_meta("gone", true)
-			for tt in node["tiles"]:
+			for tt in node.get("tiles", [node["tile"]]):
 				blocked[current_area].erase(tt)
 				fixed[current_area].erase(tt)
 			things.erase(t)
@@ -3983,8 +3985,8 @@ func _mine(t: Dictionary) -> void:
 	energy = maxi(0, energy - _mining_energy())
 	if current_area == "mine" or current_area == "tunnels":
 		shops.maybe_geode(current_area)
-	if bool(node.get("cav", false)) and item == "stone" and int(node["hits"]) <= 0:
-		cav_rocks_left -= 1
+	if bool(node.get("cav", false)) and not bool(node.get("boulder", false)) and int(node["hits"]) <= 0:
+		cav_rocks_left -= 1             # every rock and vein counts, and the last one always shows the shaft
 		_maybe_open_shaft(t, node)
 	sfx("rock_break" if int(node["hits"]) <= 0 else "rock_crack", randf_range(0.92, 1.08))
 	if item in ["cavern_geode", "quartz", "thermal_quartz", "moon_opal", "fire_opal", "void_sapphire"]:
@@ -7064,6 +7066,10 @@ func _fill_cavern(key: String, info: Dictionary, n: int, band: String, keep_clea
 		else:
 			break
 		i += 1
+	# What the floor really holds: with fewer spots than wanted, the old count never reached 0, so the "last rock
+	# always shows the shaft" rule never fired (Zachary, 25 Nov: every rock mined and no way down)
+	cav_rocks = maxi(1, i - mobs)
+	cav_rocks_left = cav_rocks
 	# A few boulders on spots nothing else took, where a 2 x 2 block of free spots fits.
 	var free := {}
 	for k in range(i, spots.size()):
@@ -7103,8 +7109,7 @@ func _maybe_open_shaft(t: Dictionary, node: Dictionary) -> void:
 	hole.texture = load("res://art/lunar/cavern_shaft.png")
 	hole.scale = Vector2.ONE * (16.0 / float(hole.texture.get_width()))
 	hole.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 8)
-	hole.z_index = -1
-	actors.add_child(hole)
+	ground_fx.add_child(hole)          # over the floor, under people (it was z -1 in actors: hidden under the floor)
 	area_sprites.append([hole, current_area])
 	cav_sprites.append(hole)
 	things.append({"kind": "shaft", "name": "Shaft down", "hint": "Climb down to floor %d" % (cav_floor + 1), "area": current_area,
