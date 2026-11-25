@@ -3,7 +3,15 @@ extends RefCounted
 var floor_art: Texture2D
 var materials: Array[Texture2D] = []
 func _init() -> void:
-	for i in range(8): materials.append(load("res://art/lunar/material_%d.png" % i))
+	# material_3 is the moon's surface (drawn round the outer walls); 0, 4, 5 and 7 are older floor materials.
+	# A missing picture falls back to material_1, so a removed file can't stop the game starting (24 Nov).
+	for i in range(8):
+		var path := "res://art/lunar/material_%d.png" % i
+		materials.append(load(path) if ResourceLoader.exists(path) else null)
+	for i in range(8):
+		if materials[i] == null:
+			push_warning("art/lunar/material_%d.png is missing; drawing material_1 instead" % i)
+			materials[i] = materials[1]
 var portals_above := {}
 var lights: Array = []
 var key := "main"               # which level this draws (main = the promenade)
