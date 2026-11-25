@@ -127,6 +127,8 @@ func setup(game) -> bool:
 	pad.slots_swapped.connect(_on_slots_swapped)
 	pad.storage_moved.connect(_on_storage_moved)
 	pad.equipment_changed.connect(_on_equipment_changed)
+	if pad.has_signal("ui_sound"):
+		pad.ui_sound.connect(_on_ui_sound)
 	return true
 
 
@@ -570,8 +572,17 @@ func _on_menu_changed(page_name: String) -> void:
 		if world.player != null and world.player.has_method("front_sheet"):
 			set_player_picture(world.player.front_sheet())
 		pad.refresh()
-	if page_name != "HUD":
+	if page_name == "Journal":
+		world.sfx("page_turn", randf_range(0.96, 1.04), -2.0)      # the journal opens like a book
+	elif page_name != "HUD":
 		world.sfx("click")
+
+
+# The datapad's own little sounds (25 Nov, tools/cozy_sfx.py): page ticks, picking up and putting down in the bag,
+# hotbar slots, choosing things in a list. Each a touch quieter than a page change, with a little pitch wobble.
+const UI_SOUND_DB := {"page_tick": -3.0, "inv_pick": -2.0, "inv_drop": -2.0, "hotbar": -4.0, "ui_select": -5.0, "click": -2.0}
+func _on_ui_sound(sound_name: String) -> void:
+	world.sfx(sound_name, randf_range(0.97, 1.03), float(UI_SOUND_DB.get(sound_name, -3.0)))
 
 
 func _on_item_used(id: String) -> void:

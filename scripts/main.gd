@@ -134,6 +134,8 @@ const SOUND_NAMES := ["step", "step_soft", "click", "coin", "zap", "smelt", "war
 	"crew_order", "toast", "datapad_open", "hail", "sara_holo", "launch", "ship_crate", "furnace_load", "machine_done",
 	"cook", "recipe_new", "repair_done", "museum_place", "letter_open", "trash", "sleep", "enemy_die", "crew_down",
 	"drink", "win_sting", "lose_sting", "crate_hit",
+	# menus, the bag and books (25 Nov, tools/cozy_sfx.py)
+	"ui_select", "page_tick", "inv_pick", "inv_drop", "page_turn",
 	# the prologue (24 Nov, tools/dev/prologue_sounds.py)
 	"beam_charge", "crash_impact", "hull_groan", "water_drip", "radio_static", "power_down", "hull_tear", "fire_crackle",
 	"mother_iris", "mother_signal", "mother_transfer", "mother_extinguish", "rescue_receiver",
@@ -830,8 +832,10 @@ func _mouse_button(button: int) -> void:
 		return
 	if button == MOUSE_BUTTON_WHEEL_UP:
 		selected = (selected + 7) % 8
+		sfx("hotbar", 1.0, -6.0)
 	elif button == MOUSE_BUTTON_WHEEL_DOWN:
 		selected = (selected + 1) % 8
+		sfx("hotbar", 1.0, -6.0)
 	elif button == MOUSE_BUTTON_LEFT:
 		var at: Vector2 = ui.mouse()
 		var slot: int = ui.hotbar_slot_at(at) if datapad == null else -1
@@ -2073,6 +2077,7 @@ func _interact(t: Dictionary) -> void:
 	elif kind == "observe":
 		_say(t.name,["Beyond the pressure glass: grey ridges, old impact craters, and the long shadows of the lunar plain.","The telescope picks out a survey beacon blinking against the dark horizon."])
 	elif kind == "read":
+		sfx("page_turn")
 		_say("Book exchange",[["A handwritten log of the first flowers grown at Echo Landing.","A battered collection of stories donated by passing crews.","A field guide to unfamiliar constellations, filled with notes in the margins."][day%3]])
 	elif kind == "market":
 		var company := _activity_near(t.pos,64.0,["restock"])
@@ -2157,6 +2162,8 @@ func _interact(t: Dictionary) -> void:
 	elif kind == "look":
 		var thing_name: String = t["name"]
 		var lines: Array = NpcData.LOOKS.get(thing_name, ["Nothing much to see."])
+		if _is_reading(thing_name):
+			sfx("page_turn")
 		_say(thing_name, lines)
 
 
@@ -4185,7 +4192,18 @@ func nearby_stations() -> Array:
 # finishes anything cooking. Saved in [home] machines: key -> {"makes", "ready", "area", "pos"}.
 var machines := {}
 var machine_icons := {}             # key -> Sprite2D of the finished item, bobbing over the furnace
+var _fire_player: AudioStreamPlayer   # a lit furnace's crackle (audio/furnace_fire.ogg), louder the closer you are
+var _fire_level := 0.0
 const FURNACE_ON := "res://art/lunar/home_furnace_on.png"   # three lit frames side by side; home_furnace.png is cold
+
+
+# Bookshelves, logbooks, ledgers, manuals and the like turn a page when you look at them.
+func _is_reading(thing_name: String) -> bool:
+	for word in thing_name.to_lower().replace("'", " ").split(" ", false):
+		for root in ["book", "codebook", "logbook", "log", "ledger", "manual", "catalogue", "journal", "library"]:
+			if word.begins_with(root):
+				return true
+	return false
 
 
 func clock_now() -> float:
@@ -4267,6 +4285,7 @@ func _furnace_look(key: String) -> void:
 # Each frame: a finished load shows its item bobbing over the furnace (in the area you're in).
 func _machines_tick() -> void:
 	var now: float = clock_now()
+	_furnace_fire_tick(now)
 	for key in machines:
 		var m: Dictionary = machines[key]
 		var done: bool = now >= float(m["ready"])
@@ -4293,6 +4312,39 @@ func _machines_tick() -> void:
 		var p: Vector2 = m["pos"]
 		s.visible = str(m["area"]) == current_area
 		s.position = p + Vector2(0, -34 + sin(Time.get_ticks_msec() / 260.0) * 1.5)
+
+
+# A furnace that's smelting crackles (25 Nov, Zachary: the furnace sound "needs replacing"; a cosy fire like
+# Stardew's fireplace). One looping player follows the nearest lit furnace in this area: full beside it, gone
+# about seven tiles away, easing in and out rather than cutting.
+func _furnace_fire_tick(now: float) -> void:
+	if _fire_player == null:
+		if not ResourceLoader.exists("res://audio/furnace_fire.ogg"):
+			return
+		var loop = load("res://audio/furnace_fire.ogg")
+		if loop is AudioStreamOggVorbis:
+			(loop as AudioStreamOggVorbis).loop = true
+		_fire_player = AudioStreamPlayer.new()
+		_fire_player.stream = loop
+		_fire_player.volume_db = -80.0
+		add_child(_fire_player)
+	var near := INF
+	if player != null:
+		for key in machines:
+			var m: Dictionary = machines[key]
+			if str(m["area"]) == current_area and now < float(m["ready"]):
+				near = minf(near, (player.position as Vector2).distance_to(m["pos"]))
+	var want := 0.0
+	if near < INF:
+		want = pow(clampf(1.0 - (near - 20.0) / 110.0, 0.0, 1.0), 2.0)
+	_fire_level = lerpf(_fire_level, want, 0.06)
+	if _fire_level < 0.003:
+		if _fire_player.playing:
+			_fire_player.stop()
+		return
+	_fire_player.volume_db = linear_to_db(_fire_level) - 8.0
+	if not _fire_player.playing:
+		_fire_player.play()
 
 
 func chest_items(key: String) -> Dictionary:
