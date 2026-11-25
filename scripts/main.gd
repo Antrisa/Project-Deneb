@@ -2075,6 +2075,26 @@ func _say(who: String, lines: Array, on_yes: Callable = Callable(), yes_text: St
 	dialogue.start(who, said, on_yes, yes_text, portrait, on_no, no_text)
 
 
+# A question with several answers, listed in the talk box under the last line (a cutscene's choices): on_pick
+# gets the number of the one taken. Portrait, voice and pronouns as _say.
+func _say_choice(who: String, lines: Array, options: Array, on_pick: Callable, face_of: String = "") -> void:
+	var face: String = face_of if face_of != "" else who
+	var portrait: Texture2D = null
+	dialogue.voice_pitch = 1.0
+	if persons.has(face):
+		portrait = persons[face]["portrait"]
+		dialogue.voice_pitch = float(persons[face]["pitch"])
+	elif face != "" and ResourceLoader.exists("res://art/portrait_%s.png" % face.to_lower()):
+		portrait = load(portrait_path(face.to_lower()))
+	var said: Array = []
+	for line in lines:
+		said.append(maker.with_pronouns(str(line), appearance) if maker != null else str(line))
+	var answers: Array = []
+	for o in options:
+		answers.append(maker.with_pronouns(str(o), appearance) if maker != null else str(o))
+	dialogue.start_choice(who, said, answers, on_pick, portrait)
+
+
 # Run cb when the dialogue just started runs out of lines (call it right after _say). Used to chain story beats.
 func _say_then(cb: Callable) -> void:
 	dialogue.on_done = cb
@@ -4908,6 +4928,7 @@ func _build_ui() -> void:
 	hud_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	dialogue = DialogueScript.new()
+	dialogue.world = self
 	add_child(dialogue)
 	cutscene = CutsceneScript.new()
 	cutscene.world = self

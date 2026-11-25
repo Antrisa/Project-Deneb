@@ -136,6 +136,13 @@ var storage_page_chest := 0
 var shop_page := 0
 var shop_name := "Station supplies"
 var dialogue: Dictionary = {}
+# Echo Landing (24 Nov): the game's talk box, drawn in the datapad's style by a second datapad that shows nothing
+# else (scripts/dialogue_box.gd sets it): {"speaker", "text", "shown" (characters typed so far), "portrait" (a
+# texture key), "frame", "frames", "options" (choices listed inside the box), "at" (the highlighted one), "top"
+# (the box at the top of the screen, so it doesn't hide the people in a scene), "done" (the line is all typed)}.
+var talk: Dictionary = {}
+var hud_hidden := false        # the HUD isn't drawn: the talk box's own datapad, and the HUD during cutscenes
+var _talk_rows: Array = []     # each listed choice's rectangle, in UI pixels, for the mouse
 var recap: Dictionary = {}
 var _toast := ""
 var _toast_seconds := 0.0
@@ -314,7 +321,8 @@ func refresh() -> void:
 	commands.clear()
 	hits.clear()
 	if page in ["HUD","Dialogue","Pause","Emotes"]:
-		_hud()
+		if not hud_hidden: _hud()
+		if not talk.is_empty() and page == "HUD": _talk()
 		if page == "Dialogue": _dialog()
 		if page == "Pause": _pause_menu()
 		if page == "Emotes": _emotes()
@@ -410,6 +418,11 @@ func _paint_native() -> void:
 	for c in commands:
 		match c[0]:
 			"r": _raster.draw_rect(Rect2(c[1],c[2],c[3],c[4]),Color(c[5]))
+			"g":
+				# part of a picture: ["g", id, x, y, w, h, from x, from y, from w, from h, colour]
+				var part: Texture2D=extra_textures.get(c[1],Art.TEXTURES.get(c[1]))
+				if part != null:
+					_raster.draw_texture_rect_region(part,Rect2(c[2],c[3],c[4],c[5]),Rect2(c[6],c[7],c[8],c[9]),Color(c[10]))
 			"i":
 				# Echo Landing: pictures the game registers (add_item_definition, set_player_portrait) win over the
 				# pack's sample art with the same name (laser, ration, quartz), so the game's own icons show.
@@ -1322,6 +1335,98 @@ func _dialog() -> void:
 	var lines:Array=dialogue.get("lines",[""])
 	_wrap(184,368+bottom,421,str(lines[int(dialogue.get("index",0))]),"body",INK,16)
 	_img("i_mark",643,386+bottom,12,12,OCHRE);_hit("advance",96,339+bottom,575,77)
+
+# ---------------------------------------------------------------- Echo Landing: the talk box (24 Nov)
+# The cream dialogue box in the datapad's style, at the foot of the screen or (talk.top) the head, with the
+# speaker's portrait, the line typing out, and any choices listed inside it, as in Stardew.
+const TALK_W := 640
+func _talk_height() -> int:
+	var lines: int = maxi(1, _wrap_lines(str(talk.get("text","")), _talk_text_w(), "body").size())
+	var h: int = 46 + lines * 18
+	var opts: Array = talk.get("options", [])
+	if not opts.is_empty():
+		h += 6 + opts.size() * 24
+	return maxi(h, 104 if str(talk.get("portrait","")) != "" else 70)
+func _talk_text_w() -> int:
+	return TALK_W - (118 if str(talk.get("portrait","")) != "" else 34)
+# The box's rectangle in UI pixels (768 x 432 and any extra width or height the window has).
+func talk_rect(top: bool) -> Rect2i:
+	var h := _talk_height()
+	var x := (768 - TALK_W) / 2
+	var y: int = _bounds.position.y + 12 if top else _bounds.end.y - 12 - h
+	return Rect2i(x, y, TALK_W, h)
+# The same rectangle in the canvas the world is drawn on (scripts/dialogue_box.gd keeps the box off the people).
+func talk_canvas_rect(top: bool) -> Rect2:
+	var r := talk_rect(top)
+	var xf := get_global_transform_with_canvas() * _layout
+	return Rect2(xf * Vector2(r.position), xf.basis_xform(Vector2(r.size)))
+# Which listed choice is under a point in the canvas, or -1.
+func talk_option_at(canvas_pos: Vector2) -> int:
+	var ui: Vector2 = _layout.affine_inverse() * (get_global_transform_with_canvas().affine_inverse() * canvas_pos)
+	for i in _talk_rows.size():
+		if Rect2(_talk_rows[i]).has_point(ui):
+			return i
+	return -1
+func _nine(id: String, x: int, y: int, w: int, h: int, c: int) -> void:
+	var tx: Texture2D = extra_textures.get(id, Art.TEXTURES.get(id))
+	if tx == null: return
+	var tw := tx.get_width(); var th := tx.get_height()
+	# corners as drawn; the edges and middle from a plain stretch of the art (its notches come after)
+	var src_x := [[0, c], [20, 40], [tw - c, c]]
+	var src_y := [[0, c], [20, 40], [th - c, c]]
+	var dst_x := [[x, c], [x + c, w - 2 * c], [x + w - c, c]]
+	var dst_y := [[y, c], [y + c, h - 2 * c], [y + h - c, c]]
+	for j in 3:
+		for i in 3:
+			commands.append(["g", id, dst_x[i][0], dst_y[j][0], dst_x[i][1], dst_y[j][1], src_x[i][0], src_y[j][0], src_x[i][1], src_y[j][1], "#ffffff"])
+func _talk() -> void:
+	_talk_rows.clear()
+	var r := talk_rect(bool(talk.get("top", false)))
+	var x := r.position.x; var y := r.position.y; var w := r.size.x; var h := r.size.y
+	_nine("case_dialogbox", x, y, w, h, 12)
+	# the art's two little notches, at the same distance from the right-hand corners as on the original
+	commands.append(["g", "case_dialogbox", x + w - 136, y, 77, 12, 220, 0, 77, 12, "#ffffff"])
+	commands.append(["g", "case_dialogbox", x + w - 100, y + h - 12, 58, 12, 256, 193, 58, 12, "#ffffff"])
+	var tx := x + 18
+	var portrait := str(talk.get("portrait", ""))
+	if portrait != "":
+		_rect(x + 14, y + 14, 80, 80, "#f1eee7")
+		_outline(x + 14, y + 14, 80, 80, "#aa917c")
+		_bevel(x + 15, y + 15, 78, 78, "#fffdf5", "#d4ccbe")
+		var pic: Texture2D = extra_textures.get(portrait)
+		if pic != null:
+			var frames: int = maxi(1, int(talk.get("frames", 1)))
+			var fw: float = float(pic.get_width()) / frames
+			var frame: int = clampi(int(talk.get("frame", 0)), 0, frames - 1)
+			commands.append(["g", portrait, x + 18, y + 18, 72, 72, frame * fw, 0, fw, pic.get_height(), "#ffffff"])
+		tx = x + 106
+	var speaker := str(talk.get("speaker", ""))
+	if speaker != "":
+		_txt(tx, y + 13, speaker, "strong", OCHRE)
+	# the line, typed out so far: wrapped as a whole, so words don't jump from one row to the next as they come
+	var left: int = int(talk.get("shown", 0))
+	var ty := y + (35 if speaker != "" else 16)
+	for ln in _wrap_lines(str(talk.get("text", "")), _talk_text_w(), "body"):
+		if left <= 0: break
+		var row_text := str(ln)
+		_txt(tx, ty, row_text.substr(0, left), "body", INK)
+		left -= row_text.length() + 1
+		ty += 18
+	var opts: Array = talk.get("options", [])
+	if not opts.is_empty() and bool(talk.get("done", false)):
+		var oy: int = y + h - 12 - opts.size() * 24
+		var at: int = int(talk.get("at", 0))
+		for i in opts.size():
+			var row := Rect2i(tx - 4, oy + i * 24, x + w - 16 - (tx - 4), 21)
+			_talk_rows.append(row)
+			var on := i == at
+			_rect(row.position.x, row.position.y, row.size.x, row.size.y, ORANGE if on else "#f1eee7")
+			_outline(row.position.x, row.position.y, row.size.x, row.size.y, "#864c35" if on else "#cbc7ba")
+			_bevel(row.position.x + 1, row.position.y + 1, row.size.x - 2, row.size.y - 2, "#e6ac84" if on else "#fffdf5", "#985434" if on else "#d4ccbe")
+			_txt(row.position.x + 8, row.position.y + 3, "%d." % (i + 1), "label", IVORY if on else MUTED)
+			_txt(row.position.x + 26, row.position.y + 3, str(opts[i]), "label", IVORY if on else INK)
+	elif bool(talk.get("done", false)):
+		_img("i_mark", x + w - 26, y + h - 24, 12, 12, OCHRE)
 
 func _pause_menu() -> void:
 	hits.clear()

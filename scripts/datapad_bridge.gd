@@ -154,6 +154,11 @@ func sync(modal: bool) -> void:
 		return
 	var page_open: bool = blocking()
 	pad.set_process_input(page_open or not modal)
+	# Cutscenes play without the HUD, as in Stardew (24 Nov): just the scene and the talk box.
+	var scene_on: bool = world.cutscene != null and world.cutscene.running
+	if bool(pad.hud_hidden) != scene_on:
+		pad.hud_hidden = scene_on
+		pad.refresh()
 	_layer.layer = 20 if page_open else 8       # the HUD stays under the dialogue box (10); pages go over it
 	var changed := false
 	var counts := {}

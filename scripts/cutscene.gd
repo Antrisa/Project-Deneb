@@ -3,7 +3,7 @@ extends Node
 #   - residents step out of their schedules: placed, walked, turned, posed (their heart-event sheet,
 #     art/npc_<id>_event.png, or a row of their action sheet) and given emote bubbles;
 #   - the player is walked and turned too;
-#   - lines go through the dialogue box with portraits; choices come up in a small menu;
+#   - lines go through the talk box with portraits; choices are listed in the box, under the question;
 #   - the screen fades and shakes; the scene sets flags, friendship, perks, keepsakes and your partner.
 # main.gd starts it (play()), stops the clock and the residents' schedules while it runs (paused), sends it
 # the keys (handle_input, handle_click), and puts everyone back where their day says when it ends.
@@ -49,7 +49,6 @@ extends Node
 
 const HeartEvents = preload("res://scripts/heart_events.gd")
 const SceneFx = preload("res://scripts/scene_fx.gd")
-const NineFrame = preload("res://scripts/nine_frame.gd")
 const DIRS := {"d": 0, "u": 1, "l": 2, "r": 3}
 
 signal _dialogue_done
@@ -66,12 +65,6 @@ var _actors := {}               # who -> resident node taken over by this scene
 var _walkers: Array = []        # [who, node, waypoints (player only)]
 var _fade_layer: CanvasLayer
 var _fade: ColorRect
-var _choice_layer: CanvasLayer
-var _choice_panel: Control
-var _choice_labels: Array = []
-var _choices: Array = []
-var _choice_at := 0
-var _choosing := false
 var _shake_time := 0.0
 var _shake_px := 0.0
 var _ship_home := Vector2.INF   # where your ship stands on its pad, while a scene flies it
@@ -90,16 +83,6 @@ func _ready() -> void:
 	_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fade_layer.add_child(_fade)
-	# The choice menu: laid out for 320x180 like the dialogue box, above it.
-	_choice_layer = CanvasLayer.new()
-	_choice_layer.layer = 11
-	_choice_layer.scale = Vector2(2, 2)
-	_choice_layer.visible = false
-	add_child(_choice_layer)
-	var box = NineFrame.new()
-	box.tex = load("res://art/ui_dialogue.png")
-	_choice_panel = box
-	_choice_layer.add_child(_choice_panel)
 
 
 # ---------------------------------------------------------------- playing an event
@@ -154,8 +137,30 @@ func play(id: String) -> void:
 
 
 func _run(steps: Array) -> void:
-	for s in steps:
+	var i := 0
+	while i < steps.size():
+		var s: Array = steps[i]
+		# A line followed by a choice (with only instant steps between): the answers come up inside the same box,
+		# under the question, as in Stardew (24 Nov). The steps between play once you've answered.
+		if str(s[0]) == "say" and not (str(s[1]) != "" and str(s[1]) != "player" and _absent(str(s[1]))):
+			var j := i + 1
+			while j < steps.size() and str(steps[j][0]) in INSTANT:
+				j += 1
+			if j < steps.size() and str(steps[j][0]) == "choose":
+				var label: String = str(s[3]) if s.size() > 3 else str(s[1])
+				var options: Array = steps[j][1]
+				var pick: int = await _say_choose(label, s[2], str(s[1]), options)
+				for k in range(i + 1, j):
+					await _step(steps[k])
+				await _chosen(options, pick)
+				i = j + 1
+				continue
 		await _step(s)
+		i += 1
+
+
+# Steps that take no time, which may sit between a question and its answers.
+const INSTANT := ["emote", "face", "pose", "sfx", "met", "flag", "show", "hide"]
 
 
 func _step(s: Array) -> void:
@@ -214,11 +219,7 @@ func _step(s: Array) -> void:
 		"choose":
 			var options: Array = s[1]
 			var pick: int = await _choose(options)
-			var chosen: Dictionary = options[pick]
-			var points: int = int(chosen.get("friendship", 0))
-			if points != 0:
-				world._add_friendship(str(event["who"]), points)
-			await _run(chosen.get("steps", []))
+			await _chosen(options, pick)
 		"if":
 			if _test(s[1]):
 				await _run(s[2])
@@ -486,45 +487,36 @@ func _on_dialogue_done() -> void:
 	_dialogue_done.emit()
 
 
+# The answers you can give, listed in the talk box (scripts/dialogue_box.gd start_choice): under the question when
+# a line comes just before (_say_choose), else under the last line shown.
 func _choose(options: Array) -> int:
-	_choices = options
-	_choice_at = 0
-	for l in _choice_labels:
-		l.queue_free()
-	_choice_labels = []
-	var h: float = 6.0 + 11.0 * options.size()
-	_choice_panel.position = Vector2(8, 102 - h)
-	_choice_panel.size = Vector2(304, h)
-	for i in options.size():
-		var l := Label.new()
-		l.position = Vector2(8, 3 + 11 * i)
-		l.size = Vector2(290, 11)
-		l.clip_text = true
-		l.add_theme_font_size_override("font_size", 8)
-		_choice_panel.add_child(l)
-		_choice_labels.append(l)
-	_show_choices()
-	_choosing = true
-	_choice_layer.visible = true
-	var pick: int = await _choice_made
-	_choosing = false
-	_choice_layer.visible = false
-	return pick
+	world.dialogue.start_choice("", [], _option_texts(options), Callable(self, "_on_pick"))
+	return await _choice_made
 
 
-func _show_choices() -> void:
-	for i in _choice_labels.size():
-		var l: Label = _choice_labels[i]
-		var text: String = str(_choices[i].get("text", ""))
-		l.text = ("> " if i == _choice_at else "  ") + "%d. %s" % [i + 1, text]
-		l.add_theme_color_override("font_color", Color("ffd27f") if i == _choice_at else Color.WHITE)
+func _say_choose(label: String, lines: Array, who: String, options: Array) -> int:
+	world._say_choice(label, lines, _option_texts(options), Callable(self, "_on_pick"), who if who != "" else label)
+	return await _choice_made
 
 
-func _pick(i: int) -> void:
-	if not _choosing or i < 0 or i >= _choices.size():
-		return
-	world.sfx("click")
+func _option_texts(options: Array) -> Array:
+	var texts: Array = []
+	for o in options:
+		texts.append(str(o.get("text", "")))
+	return texts
+
+
+func _on_pick(i: int) -> void:
 	_choice_made.emit(i)
+
+
+# What an answer does: its friendship, then its own steps.
+func _chosen(options: Array, pick: int) -> void:
+	var chosen: Dictionary = options[clampi(pick, 0, options.size() - 1)]
+	var points: int = int(chosen.get("friendship", 0))
+	if points != 0:
+		world._add_friendship(str(event["who"]), points)
+	await _run(chosen.get("steps", []))
 
 
 func _fade_to(alpha: float, seconds: float) -> void:
@@ -535,35 +527,12 @@ func _fade_to(alpha: float, seconds: float) -> void:
 
 # ---------------------------------------------------------------- input (main.gd sends it while running)
 
+# (the talk box takes up, down, the wheel, 1 to 4 and the mouse pointer for choices itself)
 func handle_input(e: InputEvent) -> void:
-	if _choosing:
-		if e.is_action_pressed("move_up"):
-			_choice_at = (_choice_at + _choices.size() - 1) % _choices.size()
-			_show_choices()
-		elif e.is_action_pressed("move_down"):
-			_choice_at = (_choice_at + 1) % _choices.size()
-			_show_choices()
-		elif e.is_action_pressed("interact") or e.is_action_pressed("use"):
-			_pick(_choice_at)
-		elif e is InputEventKey and e.pressed and not e.echo:
-			var k: int = (e as InputEventKey).physical_keycode
-			if k >= KEY_1 and k <= KEY_4:
-				_pick(k - KEY_1)
-		return
 	if world.dialogue.active and (e.is_action_pressed("interact") or e.is_action_pressed("use")):
 		world.dialogue.advance()
 
 
 func handle_click(button: int) -> void:
-	if _choosing:
-		if button == MOUSE_BUTTON_WHEEL_UP:
-			_choice_at = (_choice_at + _choices.size() - 1) % _choices.size()
-			_show_choices()
-		elif button == MOUSE_BUTTON_WHEEL_DOWN:
-			_choice_at = (_choice_at + 1) % _choices.size()
-			_show_choices()
-		elif button == MOUSE_BUTTON_LEFT:
-			_pick(_choice_at)
-		return
 	if world.dialogue.active and button == MOUSE_BUTTON_LEFT:
 		world.dialogue.advance()

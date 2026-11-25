@@ -163,9 +163,7 @@ func run() -> void:
 func _click_through(s) -> void:
 	var started := Time.get_ticks_msec()
 	while s.cutscene.running and Time.get_ticks_msec() - started < 120000:
-		if s.cutscene._choosing:
-			s.cutscene._pick(0)
-		elif s.dialogue.active:
+		if s.dialogue.active:
 			s.dialogue.advance()      # finish typing the line
-			s.dialogue.advance()      # and go on to the next
+			s.dialogue.advance()      # and go on to the next (or take the first answer listed)
 		await process_frame
