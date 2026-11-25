@@ -49,6 +49,7 @@ const UpgradesScript = preload("res://scripts/ship_upgrades.gd")
 var station_calendar
 
 const CreatorScript = preload("res://scripts/creator.gd")
+const CustodianData = preload("res://scripts/custodian_data.gd")
 const TitleScript = preload("res://scripts/title_screen.gd")
 const BridgeScript = preload("res://scripts/datapad_bridge.gd")
 const ShopsScript = preload("res://scripts/shops.gd")   # the shops, Job's geode bench, cooking, drinks, gear (23 Nov)
@@ -1408,6 +1409,11 @@ func _heart_event_done(id: String) -> void:
 	max_energy = _max_energy()      # Saffi's 8 makes the bar longer at once
 	if id == "welcome":
 		_save_game()      # the hoe, the can and the seeds
+	elif id == "custodians_wake":
+		for cid in ["sovereign", "chancellor", "forgemaster"]:
+			if not custodians_found.has(cid):
+				custodians_found.append(cid)
+		_save_game()
 	elif id == "prologue":
 		# the quarantine is over: the first morning, in your own bed (the welcome waits outside your door)
 		_go_home()
@@ -1947,6 +1953,9 @@ func _interact(t: Dictionary) -> void:
 	if travelling or garden_busy: return
 	if kind == "portal":
 		_enter_portal(t)
+	elif kind == "sealed" and not StationRepair.REPAIRS.has(str(t["repair"])):
+		_say("Sara", ["[sad] The storage dome's seals are beyond my drones, I'm afraid. Precursor glass: nobody makes it any more.",
+			"Tar'Besh insists the old crystals in his Sanctum could mend anything. I keep telling him they're rocks."], Callable(), "", Callable(), "Not now", "Sara")
 	elif kind == "sealed":
 		repair_view.open_at(str(t["repair"]))
 	elif kind == "placed":
@@ -2055,6 +2064,8 @@ func _interact(t: Dictionary) -> void:
 		_shipping_crate()
 	elif kind == "craft":
 		_open_crafting()
+	elif kind == "look" and str(t["name"]) == "Precursor crystal" and _custodian_here() != "":
+		_custodian_crystal(_custodian_here())
 	elif kind == "look":
 		var thing_name: String = t["name"]
 		var lines: Array = NpcData.LOOKS.get(thing_name, ["Nothing much to see."])
@@ -4608,7 +4619,17 @@ func _debug_repair_kit() -> void:
 		var needs: Dictionary = r["needs"]
 		for item in needs:
 			_give(item, int(needs[item]))
-	_toast("Debug: Scrip and materials for every station repair.")
+	# and what the Custodians you've found still need (24 Nov)
+	for cid in custodians_found:
+		for b in CustodianData.CUSTODIANS[cid]["bundles"]:
+			if bundle_state(str(cid), str(b["id"])) != "open":
+				continue
+			for item in b["items"]:
+				var key := "%s/%s/%s" % [cid, str(b["id"]), str(item)]
+				var short: int = int(b["items"][item]) - int(relic_given.get(key, 0)) - _count(str(item))
+				if short > 0:
+					_give(str(item), short)
+	_toast("Debug: Scrip and materials for every station repair and Custodian bundle.")
 
 
 # ---------------------------------------------------------------- bulletin board
@@ -5047,6 +5068,8 @@ func _process(delta: float) -> void:
 		hotel.tick(delta)
 		if _welcome_due():
 			_welcome_visit()
+		elif _custodians_due():
+			cutscene.play("custodians_wake")
 		minutes += delta / SECONDS_PER_GAME_MINUTE
 		if minutes >= DAY_END:
 			_pass_out()
@@ -5214,6 +5237,7 @@ func _next_day() -> void:
 	_grow_crops()
 	day += 1
 	minutes = float(DAY_START)
+	_run_sprinklers()
 	player.set_carrying(false)
 	shops.drink_left = 0.0             # a drink wears off overnight
 	shops.drink = ""
@@ -5228,6 +5252,7 @@ func _next_day() -> void:
 	for who in persons:
 		persons[who]["talked_today"] = false
 		persons[who]["talks_today"] = 0
+	var mended: Array = _custodian_rewards()
 	var post: int = _deliver_mail()
 	var repaired: Array = _finish_repairs()
 	_go_home()
@@ -5241,7 +5266,10 @@ func _next_day() -> void:
 	_morning_news()
 	_sara_pings()
 	for id in repaired:
-		_toast("S.A.R.A.: repairs finished overnight. %s: open." % str(StationRepair.REPAIRS[id]["name"]))
+		if StationRepair.REPAIRS.has(id):          # (an old save may have the storage dome, the Sovereign's now)
+			_toast("S.A.R.A.: repairs finished overnight. %s: open." % str(StationRepair.REPAIRS[id]["name"]))
+	for b in mended:
+		_toast("Overnight, the Custodians mended it: %s" % str(b["reward"]))
 
 
 # ---------------------------------------------------------------- mail
@@ -5315,6 +5343,10 @@ func _save_game() -> void:
 	cfg.set_value("game", "cav_deepest", cav_deepest)
 	cfg.set_value("game", "leviathan_slain", leviathan_slain)
 	cfg.set_value("game", "story_flags", story_flags)
+	cfg.set_value("custodians", "found", custodians_found)
+	cfg.set_value("custodians", "given", relic_given)
+	cfg.set_value("custodians", "due", bundles_due)
+	cfg.set_value("custodians", "done", bundles_done)
 	cfg.set_value("game", "rusk_cask", rusk_cask)
 	cfg.set_value("game", "events_seen", events_seen)
 	cfg.set_value("game", "partner", partner)
@@ -5432,6 +5464,14 @@ func _load_game() -> void:
 	mail_due = saved_due if saved_due is Dictionary else {}
 	var saved_shipping = cfg.get_value("farm", "shipping", {})
 	shipping = saved_shipping if saved_shipping is Dictionary else {}
+	var saved_found = cfg.get_value("custodians", "found", [])
+	custodians_found = saved_found if saved_found is Array else []
+	var saved_given = cfg.get_value("custodians", "given", {})
+	relic_given = saved_given if saved_given is Dictionary else {}
+	var saved_bdue = cfg.get_value("custodians", "due", [])
+	bundles_due = saved_bdue if saved_bdue is Array else []
+	var saved_bdone = cfg.get_value("custodians", "done", [])
+	bundles_done = saved_bdone if saved_bdone is Array else []
 	var saved_fixed = cfg.get_value("station", "fixed", [])
 	station_fixed = saved_fixed if saved_fixed is Array else []
 	var saved_repairs = cfg.get_value("station", "due", [])
@@ -6073,6 +6113,10 @@ const CROPS := {
 	"moon_wheat": {"days": 3, "stages": 3, "regrow": 0, "item": "moon_wheat"},
 	"star_tomato": {"days": 6, "stages": 4, "regrow": 3, "item": "star_tomato"},
 	"nebula_grape": {"days": 8, "stages": 5, "regrow": 3, "item": "nebula_grape"},     # Rusk's 8 (art/farm/crops)
+	# fruit trees, from the Sovereign of Hydro-Flora's saplings (24 Nov): art/farm/crops/<id>.png, 48 x 72 a stage
+	"moon_peach_tree": {"days": 21, "stages": 4, "regrow": 4, "item": "moon_peach"},
+	"star_apple_tree": {"days": 21, "stages": 4, "regrow": 4, "item": "star_apple"},
+	"sun_fig_tree": {"days": 21, "stages": 4, "regrow": 4, "item": "sun_fig"},
 }
 
 
@@ -6132,8 +6176,12 @@ func _farm_use(use: String, item: String) -> void:
 	var on_field: bool = farmable(tile)
 	if use == "place":
 		# A hydroponic bed: set down on open soil, it takes seeds like a dug tile and waters itself every night.
+		# A sprinkler (the Sovereign's, 24 Nov) waters the four tiles beside it every morning (_run_sprinklers).
 		if on_field and not farm.has(tile):
-			farm[tile] = {"crop": "", "age": 0, "watered": -1, "bed": true}
+			if item == "sprinkler":
+				farm[tile] = {"crop": "", "age": 0, "watered": -1, "sprinkler": true}
+			else:
+				farm[tile] = {"crop": "", "age": 0, "watered": -1, "bed": true}
 			_give(item, -1)
 			sfx("click", 0.7)
 			if farm_view != null: farm_view.sync_crops()
@@ -6142,7 +6190,7 @@ func _farm_use(use: String, item: String) -> void:
 			_toast("Set it down on open soil in the Agri dome")
 		return
 	if use == "plant":
-		if on_field and farm.has(tile) and str(farm[tile]["crop"]) == "":
+		if on_field and farm.has(tile) and str(farm[tile]["crop"]) == "" and not bool(farm[tile].get("sprinkler", false)):
 			farm[tile]["crop"] = str(ItemData.ITEMS[item].get("crop", ""))
 			farm[tile]["age"] = 0
 			_give(item, -1)
@@ -6257,6 +6305,18 @@ func _try_harvest() -> bool:
 	return true
 
 
+# Morning: every sprinkler waters the dug tiles beside it (north, east, south, west).
+func _run_sprinklers() -> void:
+	for tile in farm:
+		if not bool(farm[tile].get("sprinkler", false)):
+			continue
+		for d in [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]:
+			var n: Vector2i = tile + d
+			if farm.has(n) and not bool(farm[n].get("sprinkler", false)):
+				farm[n]["watered"] = day
+	if farm_view != null: farm_view.sync_crops()
+
+
 # Overnight: a crop watered today grows a day.
 func _grow_crops() -> void:
 	for tile in farm:
@@ -6309,6 +6369,184 @@ func _welcome_due() -> bool:
 func _welcome_visit() -> void:
 	welcomed = true
 	cutscene.play("welcome")
+
+
+# ---------------------------------------------------------------- the Custodians (24 Nov)
+# Zachary's main story (docs/story/CUSTODIANS.md). The first time you walk into the museum after your first morning,
+# Tar'Besh shows you the Sanctum and its three crystals speak to you (StoryScenes "custodians_wake"). Each Custodian
+# asks for three bundles (scripts/custodian_data.gd); you give what you have at its crystal, a finished bundle
+# fixes its part of the station overnight, and the datapad's Relics page shows the lists.
+var custodians_found: Array = []      # the Custodians you can talk to (saved)
+var relic_given: Dictionary = {}      # "custodian/bundle/item" -> how many you've given (saved)
+var bundles_due: Array = []           # "custodian/bundle": finished today, fixed tonight (saved)
+var bundles_done: Array = []          # "custodian/bundle": fixed (saved)
+
+
+func _custodians_due() -> bool:
+	return welcomed and current_area == "museum" and not events_seen.has("custodians_wake") and cutscene != null \
+		and not cutscene.running
+
+
+# The Custodian whose crystal is nearest you here, if you've met it ("" if none).
+func _custodian_here() -> String:
+	var here: Vector2i = _player_tile()
+	var best := ""
+	var best_d := 99
+	for cid in custodians_found:
+		var c: Dictionary = CustodianData.CUSTODIANS.get(cid, {})
+		if str(c.get("home", "")) != current_area:
+			continue
+		var spot: Array = c["spot"]
+		var d: int = absi(int(spot[0]) - here.x) + absi(int(spot[1]) - here.y)
+		if d < best_d:
+			best = str(cid)
+			best_d = d
+	return best
+
+
+func bundle_key(cid: String, bid: String) -> String:
+	return cid + "/" + bid
+
+
+func bundle_state(cid: String, bid: String) -> String:
+	var key := bundle_key(cid, bid)
+	if bundles_done.has(key):
+		return "done"
+	if bundles_due.has(key):
+		return "due"
+	return "open"
+
+
+func _bundle_filled(cid: String, b: Dictionary) -> bool:
+	for item in b["items"]:
+		if int(relic_given.get("%s/%s/%s" % [cid, str(b["id"]), str(item)], 0)) < int(b["items"][item]):
+			return false
+	return true
+
+
+func custodian_complete(cid: String) -> bool:
+	var bundles: Array = CustodianData.CUSTODIANS[cid]["bundles"]
+	if bundles.is_empty():
+		return false
+	for b in bundles:
+		if bundle_state(cid, str(b["id"])) != "done":
+			return false
+	return true
+
+
+func _custodian_crystal(cid: String) -> void:
+	var c: Dictionary = CustodianData.CUSTODIANS[cid]
+	var voice: String = c["voice"]
+	if custodian_complete(cid):
+		_say(str(c["name"]), c["done"], Callable(), "", Callable(), "Not now", voice)
+		return
+	var waiting := true
+	for b in c["bundles"]:
+		if bundle_state(cid, str(b["id"])) == "open":
+			waiting = false
+	if waiting:
+		_say(str(c["name"]), ["Sleep, Archivist. By morning, the work will be done."], Callable(), "", Callable(), "Not now", voice)
+		return
+	_say(str(c["name"]), c["hello"], Callable(self, "_give_custodian").bind(cid), "Give what I have", Callable(), "Not now", voice)
+
+
+# Everything in your pack that this Custodian's open bundles still need goes in. A bundle that's now full is due:
+# it's fixed tonight (_custodian_rewards).
+func _give_custodian(cid: String) -> void:
+	var c: Dictionary = CustodianData.CUSTODIANS[cid]
+	var gave := 0
+	var finished: Array = []
+	for b in c["bundles"]:
+		var bid: String = b["id"]
+		if bundle_state(cid, bid) != "open":
+			continue
+		for item in b["items"]:
+			var key := "%s/%s/%s" % [cid, bid, str(item)]
+			var need: int = int(b["items"][item]) - int(relic_given.get(key, 0))
+			var n: int = mini(need, _count(str(item)))
+			if n > 0:
+				_give(str(item), -n)
+				relic_given[key] = int(relic_given.get(key, 0)) + n
+				gave += n
+		if _bundle_filled(cid, b):
+			bundles_due.append(bundle_key(cid, bid))
+			finished.append(str(b["name"]))
+	var voice: String = c["voice"]
+	if gave == 0:
+		sfx("deny")
+		_say(str(c["name"]), ["You carry nothing I need yet. My list is on your datapad, under Relics."], Callable(), "", Callable(), "Not now", voice)
+		return
+	sfx("museum_place")
+	var lines: Array = (c["thanks"] as Array).duplicate()
+	for f in finished:
+		lines.append("[happy] That's the %s complete. Sleep, and in the morning you'll see." % str(f))
+	_say(str(c["name"]), lines, Callable(), "", Callable(), "Not now", voice)
+	_save_game()
+
+
+func _bundle(key: String) -> Dictionary:
+	var parts := key.split("/")
+	for b in CustodianData.CUSTODIANS.get(parts[0], {}).get("bundles", []):
+		if str(b["id"]) == parts[1]:
+			return b
+	return {}
+
+
+# The night's work: every bundle finished yesterday fixes its part of the station. Returns the bundles fixed.
+func _custodian_rewards() -> Array:
+	var fixed: Array = []
+	for key in bundles_due:
+		if bundles_done.has(key):
+			continue
+		bundles_done.append(key)
+		var b: Dictionary = _bundle(str(key))
+		if b.is_empty():
+			continue
+		_custodian_fix(str(b["fixes"]))
+		fixed.append(b)
+	bundles_due.clear()
+	if not fixed.is_empty():
+		send_mail("sara_mending", 0)     # the first time: S.A.R.A. notices her station mending itself
+	return fixed
+
+
+func _custodian_fix(what: String) -> void:
+	match what:
+		"":
+			return
+		"storage":
+			if not station_fixed.has("storage"):
+				station_fixed.append("storage")
+			_sync_station()
+		"suite":
+			story_flags["suite_restored"] = true
+		"orchard":
+			story_flags["orchard"] = true
+			for sapling in ["moon_peach_sapling", "star_apple_sapling", "sun_fig_sapling"]:
+				_give(sapling, 2)
+		_:
+			# sprinklers, orchard, hotel_wing, kiosks, gates, shipyard, storm_plating, braced, primed, blast,
+			# storm_ends: what reads each flag is in docs/story/CUSTODIANS.md
+			story_flags[what] = true
+
+
+# For the datapad's Relics page: every Custodian you've found, its bundles, what each needs and has had.
+func reliquary_list() -> Array:
+	var out: Array = []
+	for cid in CustodianData.ORDER:
+		if not custodians_found.has(cid):
+			continue
+		var c: Dictionary = CustodianData.CUSTODIANS[cid]
+		var bundles: Array = []
+		for b in c["bundles"]:
+			var items: Array = []
+			for item in b["items"]:
+				var given: int = int(relic_given.get("%s/%s/%s" % [cid, str(b["id"]), str(item)], 0))
+				var nm: String = str(ItemData.ITEMS[item]["name"]) if ItemData.ITEMS.has(item) else str(item)
+				items.append([nm, int(b["items"][item]), given, _count(str(item))])
+			bundles.append({"name": b["name"], "items": items, "reward": b["reward"], "state": bundle_state(str(cid), str(b["id"]))})
+		out.append({"name": c["name"], "wing": c["wing"], "bundles": bundles, "complete": custodian_complete(str(cid))})
+	return out
 
 
 # ---------------------------------------------------------------- the Caverns

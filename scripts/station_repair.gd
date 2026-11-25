@@ -1,6 +1,7 @@
 extends CanvasLayer
 # Station repairs (Zachary, 23 Nov): parts of the Agri Complex stay broken and sealed until you pay S.A.R.A. to
-# repair them. "the fishponds circle should be broken and closed off until you do the harbinger quest and then pay
+# repair them. (24 Nov: the storage dome is the Sovereign of Hydro-Flora's now, a Custodian bundle: main.gd
+# _custodian_fix. Its sealed doors still open through station_fixed.) "the fishponds circle should be broken and closed off until you do the harbinger quest and then pay
 # sara to fix it", and the storage dome is "also broken until you pay sara with scrip and materials to reopen".
 # Drawn in the Terran datapad style like the other new screens. Opened from a sealed door, or when S.A.R.A. brings it
 # up:
@@ -21,13 +22,6 @@ const MapData = preload("res://scripts/map_data.gd")
 # many), and "mention", what she says when she brings it up (once a day, when you talk to her and it can start). A
 # repair that has to wait has "after" (a flag on main.gd that must be true) and "wait" (what she says until then). The prices are first guesses, to settle with the price sheet. The wording is Claude's draft.
 const REPAIRS := {
-	"storage": {
-		"name": "Storage dome",
-		"where": "Agri Complex: west of your field",
-		"about": "The agri dome's old stores. A pressure seal failed years ago and I closed the doors on it. The frame is sound; the glass and the seals are not.",
-		"cost": 500, "needs": {"hull_plate": 4, "coil_wire": 2, "stone": 40},
-		"mention": "The storage dome by your field is still sealed. My drones can repair it whenever you can spare what it needs.",
-	},
 	"ponds": {
 		"name": "Hot springs & fish ponds",
 		"where": "Agri Complex: east of your front porch",
@@ -38,7 +32,7 @@ const REPAIRS := {
 		"mention": "The springs have been quiet since the Leviathan went down. I can repair the hot springs and the fish ponds now, if you can spare the Scrip.",
 	},
 }
-const ORDER := ["storage", "ponds"]
+const ORDER := ["ponds"]
 
 const BAD := Color("a43a2a")
 const ROW := 40.0
@@ -47,7 +41,7 @@ const STATE_TEXT := {"ready": "BROKEN", "locked": "BROKEN  -  NOT YET", "due": "
 
 var world                                # main.gd
 var open := false
-var showing := "storage"
+var showing := "ponds"
 var message := ""                        # what happened when you last pressed Pay
 var screen: ShipScreen
 

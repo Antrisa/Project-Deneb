@@ -51,3 +51,14 @@ A tidally locked world, so everywhere you can go is at sunset: the beach on the 
 Zachary, 24 Nov: "not entirely sure, but maybe the space storm you see in the intro main menu is a young Starborn using the station and custodians to learn how to control itself."
 
 The green storm cloud with lightning on the title screen. One way it could fit (Claude): the Shepherd's storm was a Starborn dying; the title's storm is one being born, the Mother-Drone's child. The Custodians were left to raise it, and every part of the station they mend with you is it learning to build instead of break. In the vision it shows itself, calm for the first time.
+
+## What's built (24 Nov)
+
+- **The prologue** (`scripts/story_scenes.gd` "prologue"): plays after you make your character on a new game. The space and cavern parts are picture panels (new cutscene steps: `board`, `bsprite`, `bmove`, `bmoves`, `bfade`, `flash`); the cavern, the Mother-Drone and its portrait are drawn by `tools/dev/prologue_art.py`.
+- **The museum scene** ("custodians_wake"): the first time you walk into the museum after your first morning. It wakes the three Sanctum Custodians.
+- **Giving:** right-click a crystal in the Sanctum. The Custodian speaks; "Give what I have" puts in everything its open bundles still need. A full bundle mends its part overnight, and the first time S.A.R.A. writes to you ("Something odd overnight").
+- **The datapad's Relics page** lists every Custodian you've found, each bundle's items (given / needed, and how many you carry) and what it mends.
+- **Portraits:** all six crystals (`tools/dev/custodian_art.py`).
+- **Rewards that work now:** sprinklers (a recipe on the Crafting page; each waters the four tiles beside it every morning), the storage dome (off S.A.R.A.'s list), fruit-tree saplings (moon-peach, star-apple, sun-fig: 21 days to grow, then fruit every 4), the Shipwright's Suite flag (`suite_restored`, which heart events already read).
+- **Rewards that only set their flag so far** (the systems come next): the hotel's second wing (`hotel_wing`), the Spaceport kiosks (`kiosks`), the gates (`gates`), the shipyard (`shipyard`), storm plating (`storm_plating`).
+- **Debug:** F3 also gives what the Custodians you've found still need.

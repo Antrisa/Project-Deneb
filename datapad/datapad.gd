@@ -48,8 +48,7 @@ var equipment: Dictionary = {}
 var player_sprite := "player_front"
 var skills: Array = Sample.SKILLS.duplicate(true)
 var skill_index := 0
-var custodians: Array = preload("res://datapad/relics.gd").CUSTODIANS.duplicate(true)
-var relic_progress: Dictionary = {}
+var custodians: Array = []     # the Custodians you've found and their bundles (main.gd reliquary_list, by the bridge)
 var relic_index := 0
 var bundle_index := 0
 var _relic_parent := "Inventory"
@@ -832,46 +831,54 @@ func _skills_page() -> void:
 	_txt(415,333,"%d XP to level %d"%[goal-current,int(chosen.level)+1],"body",MUTED)
 
 func _relic_page() -> void:
+	# The Custodians' bundles (24 Nov, docs/story/CUSTODIANS.md). Each item row: [name, needed, given, in your pack].
 	_tab_titles("Relic tasks","Restoration",332)
 	_txt(69,135,"PRECURSOR CUSTODIANS","micro",MUTED)
 	if custodians.is_empty():
-		_txt(69,153,"No relic tasks discovered","body",MUTED)
+		_wrap(69,153,240,"Nothing here yet. Tar'Besh, at the museum on the Survey Level, wants to see you.","body",MUTED,16)
 		return
 	relic_index=clampi(relic_index,0,custodians.size()-1)
 	var first:=floori(relic_index/4.0)*4
 	for i in range(first,mini(first+4,custodians.size())):
 		var c:Dictionary=custodians[i]
-		_listrow("relic/"+str(i),67,151+(i-first)*46,242,str(c.name).trim_prefix("The "),str(c.wing).to_upper(),i==relic_index)
+		var sub:String=str(c.wing).to_upper()+("  -  RESTORED" if bool(c.get("complete",false)) else "")
+		_listrow("relic/"+str(i),67,151+(i-first)*46,242,str(c.name).trim_prefix("The "),sub,i==relic_index)
 	_pager("relic_pages",67,348,custodians.size(),floori(first/4.0),248)
 	var selected:Dictionary=custodians[relic_index]
 	var bundles:Array=selected.bundles
-	if bundles.is_empty():return
+	if bundles.is_empty():
+		_wrap(332,159,362,"It hasn't said what it needs yet.","body",MUTED,16)
+		return
 	bundle_index=clampi(bundle_index,0,bundles.size()-1)
 	var bundle:Dictionary=bundles[bundle_index]
 	_txt(332,143,"RESTORATION BUNDLE","micro",MUTED)
 	_right(700,143,"%d / %d"%[bundle_index+1,bundles.size()],"micro",MUTED)
 	_txt(331,159,bundle.name,"mid")
+	var state:String=str(bundle.get("state","open"))
+	if state=="done":_right(700,163,"DONE","micro",TEAL)
+	elif state=="due":_right(700,163,"MENDED TONIGHT","micro",OCHRE)
 	_txt(332,196,"REQUIRED MATERIAL","micro",MUTED)
-	_right(699,196,"DELIVERED / NEEDED","micro",MUTED)
+	_right(699,196,"GIVEN / NEEDED","micro",MUTED)
 	for i in bundle.items.size():
 		var mat:Array=bundle.items[i]
-		var key:=str(selected.name)+"/"+str(bundle.name)+"/"+str(mat[0])
 		var required:=int(mat[1])
-		var supplied:=clampi(int(relic_progress.get(key,0)),0,required)
-		var y:int=213+i*23
-		_rect(332,y+19,367,1,RULE)
-		_txt(332,y,mat[0],"body")
+		var supplied:=clampi(int(mat[2]),0,required)
+		var y:int=213+i*20
+		_rect(332,y+17,367,1,RULE)
+		_txt(332,y,str(mat[0]),"body")
+		if supplied<required and int(mat[3])>0:
+			_txt(500,y+3,"YOU HAVE %d"%int(mat[3]),"micro",OCHRE)
 		_rect(587,y+6,49,4,"#d6d3c5")
 		_rect(587,y+6,roundi(49.0*supplied/maxi(1,required)),4,"#64836f")
 		_right(699,y,"%d / %d"%[supplied,required],"label",TEAL if supplied==required else INK)
-	_txt(332,287,"RESTORATION","micro",MUTED)
-	_wrap(332,300,362,bundle.reward,"label",INK,14)
+	_txt(332,299,"WHAT IT MENDS","micro",MUTED)
+	_wrap(332,312,362,bundle.reward,"label",INK,13)
 	_btn("bundle/prev",332,346,83,21,"Previous",false,bundle_index>0)
 	_btn("bundle/next",615,346,84,21,"Next",false,bundle_index+1<bundles.size())
 
-func set_relic_progress(delivered: Dictionary) -> void:
-	relic_progress=delivered.duplicate()
-	refresh()
+func set_relics(list: Array) -> void:
+	custodians=list.duplicate(true)
+	if page=="Relics":refresh()
 
 func _pager(prefix: String,x: int,y: int,total: int,current: int,wide: int) -> void:
 	if total<=4:return

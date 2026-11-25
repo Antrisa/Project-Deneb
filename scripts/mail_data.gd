@@ -215,6 +215,18 @@ const LETTERS := {
 	},
 	# Tar'Besh 4, Next Assignment: only if you told him they meant him to die and he lived anyway
 	# The museum's thanks (main.gd _museum_thanks): 5 relics in the cases, then 10
+	# The first morning a Custodian bundle has mended something (main.gd _custodian_rewards, 24 Nov).
+	"sara_mending": {
+		"from": "S.A.R.A.",
+		"title": "Something odd overnight",
+		"body": [
+			"Good morning. At 03:12 last night a part of my station mended itself. None of my drones were there. I have checked their logs. Twice.",
+			"Tar'Besh tells me the crystals in his Sanctum did it, that you asked them to, and that I am not to put any of this in writing.",
+			"I am putting it in writing. I have run this station alone for a very long time, and I would like to thank whoever is helping.",
+			"If they need anything from me, I am listening. I am always listening. That is rather the point of me.",
+		],
+		"sign": "S.A.R.A.",
+	},
 	"tarbesh_museum_5": {
 		"from": "Tar'Besh",
 		"title": "Five cases",

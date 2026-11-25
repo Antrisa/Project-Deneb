@@ -63,7 +63,7 @@ TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bas
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
          "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy", "fx", "sara",
          "give", "mail", "board", "bsprite", "bmove", "bmoves", "bfade", "flash"}
-VOICES = {"Sensors", "Sara", "Ivan", "MotherDrone"}   # who may speak without being a resident (portraits by name)
+VOICES = {"Sensors", "Sara", "Ivan", "MotherDrone", "Chancellor", "Sovereign", "Forgemaster", "Harbinger", "Shepherd", "Warden"}   # who may speak without being a resident (portraits by name)
 FX = {"bees", "fireflies", "steam", "heartbeats", "spray", "bubbles"}   # scripts/scene_fx.gd
 SARA_CLIPS = set(re.findall(r'"name": "(\w+)"', (ROOT / 'sara/animations_data.gd').read_text()))
 SPECIAL = {"Sara"}   # S.A.R.A.: a hologram on her pads (MapData.PEOPLE), not a walking resident
@@ -282,6 +282,33 @@ for ev_id, ev in list(EVENTS.items()) + list(SCENES.items()):
         if pev.get('board'):
             check_steps(ev_id, pev, [["board", pev['board']]] + pev.get('board_setup', []), pev['area'], known)
         check_steps(ev_id, pev, pev['steps'], pev['area'], known)
+
+# The Custodians (scripts/custodian_data.gd, 24 Nov): every bundle item is an item, every voice has a portrait,
+# every fix is one main.gd knows, and the order lists them all.
+CUST = gd_consts(ROOT / 'scripts' / 'custodian_data.gd')
+assert 'CUSTODIANS' in CUST, "scripts/custodian_data.gd didn't parse"
+FIXES = {"", "sprinklers", "storage", "orchard", "hotel_wing", "kiosks", "gates", "suite", "shipyard", "storm_plating",
+         "braced", "primed", "blast", "storm_ends"}
+if sorted(CUST['ORDER']) != sorted(CUST['CUSTODIANS']):
+    bad("custodians", "ORDER and CUSTODIANS differ")
+for cid, c in CUST['CUSTODIANS'].items():
+    if not (ROOT / 'art' / ('portrait_%s.png' % c['voice'].lower())).exists():
+        bad("custodians", "%s: no portrait art/portrait_%s.png" % (cid, c['voice'].lower()))
+    if c['voice'] not in VOICES:
+        bad("custodians", "%s: voice %r isn't in the checker's VOICES" % (cid, c['voice']))
+    ids = set()
+    for b in c['bundles']:
+        if b['id'] in ids: bad("custodians", "%s: two bundles called %r" % (cid, b['id']))
+        ids.add(b['id'])
+        if b['fixes'] not in FIXES: bad("custodians", "%s/%s: unknown fix %r" % (cid, b['id'], b['fixes']))
+        for item, n in b['items'].items():
+            if item not in ITEMS: bad("custodians", "%s/%s: no item %r" % (cid, b['id'], item))
+            if not (isinstance(n, int) and n > 0): bad("custodians", "%s/%s: %r count %r" % (cid, b['id'], item, n))
+        if len(b['items']) > 4: bad("custodians", "%s/%s: more than 4 items won't fit the Relics page" % (cid, b['id']))
+    for key in ('hello', 'thanks', 'done'):
+        for line in c[key]:
+            text = re.sub(r'^\[\w+\] ', '', line)
+            if len(text) > 150: bad("custodians", "%s: %s line over 150 characters" % (cid, key))
 
 # The datapad's Perks tab (scripts/perk_data.gd): every perk and keepsake an event gives has its entry and an icon
 # in art/perks.png, and the icon numbers run 0 to ICON_COUNT - 1 with none shared.

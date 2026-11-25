@@ -184,6 +184,21 @@ func sync(modal: bool) -> void:
 			_sent["map_spot"] = spot
 			_sector_refresh()
 			pad.refresh()
+	# Recipes the story teaches (the "learn" flags: Tobbin's chair, the Custodians' sprinklers) show once learned.
+	var learned: Array = []
+	for recipe in ItemData.RECIPES:
+		if recipe.has("learn") and world._flag(str(recipe["learn"])):
+			learned.append(str(recipe["makes"]))
+	if learned != _sent.get("learned", []):
+		_sent["learned"] = learned
+		pad.recipes = _recipes()
+		if str(pad.page) == "Crafting":
+			changed = true
+	# The Relics page: the Custodians' bundles (main.gd reliquary_list, 24 Nov)
+	var relics: Array = world.reliquary_list()
+	if relics != _sent.get("relics"):
+		_sent["relics"] = relics
+		pad.set_relics(relics)
 	var perks: Array = _perks()
 	if perks != _sent.get("perks"):
 		_sent["perks"] = perks

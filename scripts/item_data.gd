@@ -324,6 +324,22 @@ const ITEMS = {
 			"desc": "Holds 140 pours. Waters a 3 x 3 square."},
 	"precursor_laser": {"name": "Precursor mining laser", "icon": 146, "use": "mine", "tier": 4,
 			"desc": "A beam that remembers older stars. Cuts anything, fastest of all."},
+	# The Sovereign of Hydro-Flora's rewards (24 Nov, scripts/custodian_data.gd). Icons 147-153: the artist's
+	# art/items/*.png, copied in by tools/dev/story_icons.py.
+	"sprinkler": {"name": "Sprinkler", "icon": 147, "use": "place",
+			"desc": "Set it down on soil in the agri dome. Every morning it waters the four tiles beside it."},
+	"moon_peach_sapling": {"name": "Moon-peach sapling", "icon": 148, "use": "plant", "crop": "moon_peach_tree",
+			"desc": "A gift from the Sovereign. Plant it in dug soil. It takes a season to grow, then fruits every few days."},
+	"star_apple_sapling": {"name": "Star-apple sapling", "icon": 149, "use": "plant", "crop": "star_apple_tree",
+			"desc": "A gift from the Sovereign. Plant it in dug soil. It takes a season to grow, then fruits every few days."},
+	"sun_fig_sapling": {"name": "Sun-fig sapling", "icon": 150, "use": "plant", "crop": "sun_fig_tree",
+			"desc": "A gift from the Sovereign. Plant it in dug soil. It takes a season to grow, then fruits every few days."},
+	"moon_peach": {"name": "Moon-peach", "icon": 151, "use": "eat", "energy": 25, "heal": 1,
+			"desc": "Soft, pale and sweet, with a faint shimmer on the skin."},
+	"star_apple": {"name": "Star-apple", "icon": 152, "use": "eat", "energy": 25, "heal": 1,
+			"desc": "Crisp, with a five-pointed star in its core."},
+	"sun_fig": {"name": "Sun-fig", "icon": 153, "use": "eat", "energy": 30, "heal": 1,
+			"desc": "Warm-coloured and honey-sweet, as if it kept a little sunlight."},
 }
 
 # The relics, and the ones Chernobog ships can drop.
@@ -376,6 +392,8 @@ const RECIPES = [
 	{"makes": "hull_plate", "n": 1, "needs": {"iron_bar": 3}},
 	{"makes": "coil_wire", "n": 1, "needs": {"copper_bar": 2}},
 	{"makes": "hydro_bed", "n": 1, "needs": {"steel_bar": 2, "coil_wire": 1, "circuit_board": 1}},   # Zachary, 23 Nov: they were too cheap
+	# the Sovereign of Hydro-Flora's first bundle teaches it (24 Nov)
+	{"makes": "sprinkler", "n": 1, "needs": {"copper_bar": 1, "iron_bar": 1, "coil_wire": 1}, "learn": "sprinklers", "teacher": "the Custodians"},
 	{"makes": "arc_smelter", "n": 1, "needs": {"iron_ore": 10, "stone": 5}},
 	{"makes": "storage_chest", "n": 1, "needs": {"iron_bar": 2, "stone": 10}},
 	{"makes": "manufacturing_hub", "n": 1, "needs": {"iron_bar": 4, "copper_bar": 2, "brick": 4}},

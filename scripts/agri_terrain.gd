@@ -42,6 +42,7 @@ var art_tilled: Texture2D
 var art_wet: Texture2D
 var art_border: Texture2D
 var art_bed: Texture2D                     # art/farm/hydro_bed.png: a hydroponic bed set down on the soil
+var art_sprinkler: Texture2D               # art/items/sprinkler_basic.png: a sprinkler set down (24 Nov)
 var crop_art := {}
 var crop_sprites := {}                     # tile -> Sprite2D in the game's depth-sorted layer (station.actors)
 
@@ -61,6 +62,7 @@ func setup(game: Node, rows: Array) -> void:
 	art_wet = _load("res://art/farm/tilled_wet.png")
 	art_border = _load("res://art/farm/field_border.png")
 	art_bed = _load("res://art/farm/hydro_bed.png")
+	art_sprinkler = _load("res://art/items/sprinkler_basic.png")
 	visibility_changed.connect(_sync_visibility)
 
 func _load(path: String) -> Texture2D:
@@ -136,10 +138,17 @@ func _variant(x: int, y: int) -> int:
 	return ((x * 17) ^ (y * 29)) % 3
 
 func _dug(tile: Vector2i) -> bool:
-	return station.farm.has(tile) and not bool(station.farm[tile].get("bed", false))
+	return station.farm.has(tile) and not bool(station.farm[tile].get("bed", false)) \
+		and not bool(station.farm[tile].get("sprinkler", false))
 
 func _draw_dug(tile: Vector2i, wet: bool) -> void:
 	var dst := Rect2(tile * TILE, Vector2.ONE * TILE)
+	if bool(station.farm[tile].get("sprinkler", false)):
+		if art_sprinkler != null:
+			draw_texture_rect(art_sprinkler, dst, false)
+		else:
+			draw_rect(dst.grow(-4 * ART), Color("8a8f96")); draw_rect(dst.grow(-6 * ART), Color("4a9be0"))
+		return
 	if bool(station.farm[tile].get("bed", false)):
 		if art_bed != null:
 			draw_texture_rect(art_bed, dst, false)
@@ -199,14 +208,17 @@ func sync_crops() -> void:
 			sp.region_enabled = true
 			sp.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			sp.scale = Vector2.ONE * ART
-			sp.offset = Vector2(-12, -42)              # bottom of the picture on the tile's bottom edge
 			sp.position = Vector2(tile.x * TILE + 8, tile.y * TILE + 12)
 			station.actors.add_child(sp)
 			station.area_sprites.append([sp, "agri"])
 			crop_sprites[tile] = sp
 		sp.texture = tex
-		var frames: int = maxi(1, tex.get_width() / 24)
-		sp.region_rect = Rect2(mini(stage, frames - 1) * 24, 0, 24, 48)
+		# a crop is 24 x 48 a stage; a fruit tree (24 Nov) 48 x 72
+		var fw: int = 48 if tex.get_height() > 48 else 24
+		var fh: int = tex.get_height()
+		sp.offset = Vector2(-fw / 2, -(fh - 6))        # bottom of the picture on the tile's bottom edge
+		var frames: int = maxi(1, tex.get_width() / fw)
+		sp.region_rect = Rect2(mini(stage, frames - 1) * fw, 0, fw, fh)
 		sp.visible = station.current_area == "agri"
 		keep[tile] = true
 	for tile in crop_sprites.keys():
