@@ -595,6 +595,10 @@ func _move_player(delta: float) -> void:
 	_last_phase = beat
 
 
+func scene_halt() -> void:
+	_stop_walking()
+
+
 func _stop_walking() -> void:
 	_walk_distance = 0.0
 	_last_phase = -1
@@ -757,11 +761,13 @@ func scene_face(dir: int) -> void:
 
 
 # Walk one frame's worth toward a point, with the walking animation and footsteps. True on arrival.
+# One frame of a scene walk toward the next point of the path. Reaching a point doesn't stop the walk cycle (25 Nov):
+# the path is a point per tile, and stopping at each one started the cycle over every tile, so only its first
+# half (one leg, one arm) ever played. The scene calls scene_halt() when the whole path is walked.
 func scene_step(target: Vector2, delta: float) -> bool:
 	var heading: Vector2 = target - position
 	if heading.length() <= 0.5:
 		position = target
-		_stop_walking()
 		return true
 	if absf(heading.x) > absf(heading.y):
 		_dir = 2 if heading.x < 0.0 else 3

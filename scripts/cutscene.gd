@@ -585,6 +585,7 @@ func _process(delta: float) -> void:
 						points.remove_at(0)
 					if points.is_empty():
 						world.player.scene_walking = false
+						world.player.scene_halt()      # the whole path walked: stand still
 						world.scene_sit_player()       # walked onto a chair: sit in it (24 Nov)
 						done.append(w)
 			elif w[1].scene_step(delta):
