@@ -14,8 +14,9 @@ drawn by tools/dev/crash_site_art.py). This draws what goes over the picture pan
   sparks.png            sparks from the torn hull, 6 frames;  blink.png: the red emergency light, 2 frames
   fighter_front.png, fighter_back.png    the Wandering Star as the main menu draws her (title/scene/fighter.png,
                         shown 3x like the menu) torn in two across her body for the blind jump
-  fighter_intact.png    her as she was before the fight: the menu draws her after it (a breach in the hull, a corner off
-                        a wing), so those are plated over, and her engine ports glow
+  fighter_intact.png    her as she was before the fight: the menu draws her after it (a breach in the hull, her
+                        starboard wing sheared to a stump), so the breach is plated over, the wing is whole again,
+                        and her engine ports glow;  wing_piece.png: the wing's outer part, tumbling, 4 frames
   fighter_plume.png     her engine plume as the menu draws it, behind her from each port, 4 frames;  shield.png: 6 frames
   approach.png          the moon you fall to, put together from the main menu's own art (starfield, gas giant, base)
   streak.png            your ship burning in, 4 frames;  impact.png: flash, fireball, thrown rock and dust, 10 frames
@@ -30,7 +31,7 @@ import sys
 
 import numpy as np
 from PIL import Image, ImageDraw
-from scipy.ndimage import binary_erosion
+from scipy.ndimage import binary_dilation, binary_erosion
 from scipy.spatial import Delaunay
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -295,14 +296,61 @@ def _hx(h):
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), 255)
 
 
+WING_TURN = (35.5, 24.5)      # her port wing turned half round about this point (her pixels) is her starboard wing
+
+
+def whole_wing(a):
+    """Her starboard wing as it was, from the menu art a: (the wing's pixels, the part of them past her hull's side,
+    which gets drawn afresh)."""
+    h, w = a.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w]
+    port = (a[:, :, 3] > 0) & (xx <= 33) & (yy <= 21)
+    wing = np.zeros((h, w), bool)
+    ys, xs = np.nonzero(port)
+    X, Y = np.round(2 * WING_TURN[0] - xs).astype(int), np.round(2 * WING_TURN[1] - ys).astype(int)
+    ok = (X >= 0) & (X < w) & (Y >= 0) & (Y < h)
+    wing[Y[ok], X[ok]] = True
+    k = [[0, 1, 0], [1, 1, 1], [0, 1, 0]]
+    wing |= binary_erosion(binary_dilation(wing, structure=k), structure=k, border_value=0)     # no pinholes
+    return wing, wing & (xx >= 47)
+
+
+def wing_piece():
+    """The part of her starboard wing Ivan's salvo shears off (what the whole ship has and the menu's battered one
+    hasn't), tumbling: 4 frames, each a quarter turn on, square. Returns the strip and where its first frame's
+    top-left sits on her (her pixels)."""
+    whole = fighter_intact().a
+    menu = np.array(Image.open(TITLE_FIGHTER).convert("RGBA"))
+    m = (whole[:, :, 3] > 0) & (menu[:, :, 3] == 0)
+    m &= np.mgrid[0:m.shape[0], 0:m.shape[1]][1] >= 44
+    ys, xs = np.nonzero(m)
+    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min() - 1, xs.max() + 1
+    piece = np.zeros((y1 - y0, x1 - x0, 4), np.uint8)
+    sub = m[y0:y1, x0:x1]
+    piece[sub] = whole[y0:y1, x0:x1][sub]
+    solid = piece[:, :, 3] > 0
+    piece[edge(solid)] = FIGHTER_OUTLINE             # the menu art's outline all round, the torn root too
+    side = max(piece.shape[:2]) + 2
+    sq = np.zeros((side, side, 4), np.uint8)
+    py, px = (side - piece.shape[0]) // 2, (side - piece.shape[1]) // 2
+    sq[py:py + piece.shape[0], px:px + piece.shape[1]] = piece
+    frames = []
+    for k in range(4):
+        cv = Canvas(side, side)
+        cv.a = np.ascontiguousarray(np.rot90(sq, -k))
+        frames.append(cv)
+    return strip(frames), (int(x0) - px, int(y0) - py)
+
+
 def fighter_intact():
     """The menu fighter before Ivan finds her (Zachary, 24 Nov: "in the opening scene the ship is already damaged").
-    The menu draws her after the fight: a breach in her hull between the orange stripes, two small holes, a corner
-    torn off her wing (it sparks there in the menu). Here the breach and the holes are plated over by carrying her
-    stripes along her length across them, the wing's corner is squared off again, and her engine ports glow as the
-    menu's do when she's under power (72 x 49, the menu art's own colours)."""
+    The menu draws her after the fight: a breach in her hull between the orange stripes, two small holes, and her
+    starboard wing sheared off to a stump (it sparks there in the menu). Here the breach and the holes are plated over
+    by carrying her stripes along her length across them, the wing is whole again (whole_wing), and her engine ports
+    glow as the menu's do when she's under power (72 x 49, the menu art's own colours)."""
     a = np.array(Image.open(TITLE_FIGHTER).convert("RGBA"))
     h, w = a.shape[:2]
+    W_, c_, s_, p_, o_, O_ = (_hx(k) for k in ("ffebc9", "f1d6af", "d4b5a8", "bd9da6", "ed651c", "ae471d"))
     eq = lambda c: np.all(a == np.array(c), axis=-1)
     dark = eq(_hx("38293f")) | eq(_hx("776575"))
     dmg = np.zeros((h, w), bool)
@@ -323,15 +371,27 @@ def fighter_intact():
                     break
         if best is not None:
             out[y, x] = best[1]
-    # the wing's torn corner, squared off: her lit flank carried down to a clean outline
-    W_, c_, p_ = _hx("ffebc9"), _hx("f1d6af"), _hx("bd9da6")
-    for (x, y), col in (((50, 33), W_), ((51, 33), W_), ((52, 33), W_), ((49, 34), c_), ((50, 34), W_), ((51, 34), W_),
-                        ((52, 34), W_), ((49, 35), p_), ((50, 35), c_), ((51, 35), W_), ((52, 35), W_)):
-        out[y, x] = col
-    for x in range(45, 54):
-        out[36, x] = FIGHTER_OUTLINE
-    for y in (33, 34, 35):
-        out[y, 53] = FIGHTER_OUTLINE
+    # her starboard wing, whole (Zachary, 25 Nov: "the wing still is not fully intact like the left wing, it has to be
+    # whole to then be damaged"). The menu shows only its stump, sheared off along a straight edge. In this view the
+    # two wings sit either side of her hull like a turned pair, so the whole wing is her port wing turned half round
+    # about her middle (WING_TURN), joined onto the stump, shaded fresh for light from the top left (lit along its top
+    # edge, shadowed along its underside) and given her orange stripes: the stump's carried on, and one across it.
+    wing, ext = whole_wing(a)
+    out[ext] = c_
+    U = (a[:, :, 3] > 0) | wing
+    up_out = lambda k: np.any([~np.roll(U, i, axis=0) for i in range(1, k + 1)], axis=0)
+    dn_out = lambda k: np.any([~np.roll(U, -i, axis=0) for i in range(1, k + 1)], axis=0)
+    out[ext & up_out(3)] = W_
+    out[ext & dn_out(3)] = s_
+    out[ext & dn_out(1)] = p_
+    yy, xx = np.mgrid[0:h, 0:w]
+    for (x0, y0), half, keep in (((50.5, 30.5), 1.6, ~dn_out(1)), ((56.0, 37.0), 1.5, ~dn_out(2) & ~up_out(1))):
+        across = (xx + .5 - x0) * .447 + (yy + .5 - y0) * .894      # her stripes run along her: 2 across, 1 up
+        out[ext & keep & (np.abs(across) < half)] = o_
+        out[ext & keep & (np.abs(across) < half) & (across > .75)] = O_
+    rim = U & ~binary_erosion(U, structure=[[0, 1, 0], [1, 1, 1], [0, 1, 0]], border_value=0)
+    out[rim] = FIGHTER_OUTLINE
+    out[ext & ~rim & np.all(a == np.array(FIGHTER_OUTLINE), axis=-1)] = W_    # the stump's cut edge, gone inside
     # the engine ports lit, as the menu lights them: a red-hot bowl with a gold heart
     yy, xx = np.mgrid[0:h, 0:w].astype(float)
     pod = eq(_hx("38293f")) | eq(_hx("ae471d")) | eq(_hx("564258"))
@@ -652,8 +712,10 @@ def portrait():
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     ffront, fback = fighter_halves()
+    piece, piece_at = wing_piece()
+    print("wing piece: frames of", piece.h, "; its first frame's top-left on her at", piece_at)
     out = {
-        "fighter_intact": fighter_intact(), "fighter_front": ffront, "fighter_back": fback,
+        "fighter_intact": fighter_intact(), "fighter_front": ffront, "fighter_back": fback, "wing_piece": piece,
         "fighter_plume": fighter_plume_frames(), "approach": approach(),
         "bolt_teal_d": bolt_diag("glow"), "chip": chip_frames(), "rock_fg_a": rock_fg(3, 96, 70), "rock_fg_b": rock_fg(8, 40, 30),
         "glyphs": glyph_frames(), "glyph_fold": glyph_fold_frames(), "glyph_mark": glyph_mark(),
@@ -661,8 +723,8 @@ def main():
         "bolt_green": bolt("leaf"), "bolt_teal": bolt("glow"), "jump_streaks": jump_streaks(),
     }
     for name, c in out.items():
-        if name not in ("fighter_intact", "fighter_front", "fighter_back", "fighter_plume", "approach", "rock_fg_a",
-                        "rock_fg_b"):    # the menu's and the backdrop's own colours
+        if name not in ("fighter_intact", "fighter_front", "fighter_back", "fighter_plume", "wing_piece", "approach",
+                        "rock_fg_a", "rock_fg_b"):    # the menu's and the backdrop's own colours
             check(c, name)
         c.save(os.path.join(OUT_DIR, name + ".png"))
     for old in ("cavern", "drone_lit", "drone_wake", "drone_pulse", "lens", "violet_light", "beam", "drip",
