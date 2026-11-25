@@ -1353,9 +1353,26 @@ func _talk_height() -> int:
 	var opts: Array = talk.get("options", [])
 	if not opts.is_empty():
 		h += 6 + opts.size() * 24
-	return maxi(h, 104 if str(talk.get("portrait","")) != "" else 70)
+	return maxi(h, _talk_face_box() + 28 if str(talk.get("portrait","")) != "" else 70)
 func _talk_text_w() -> int:
-	return TALK_W - (118 if str(talk.get("portrait","")) != "" else 34)
+	return TALK_W - (_talk_face_box() + 38 if str(talk.get("portrait","")) != "" else 34)
+# The portrait is drawn at a whole number of screen pixels per art pixel (25 Nov), so the 128x128 pixel art
+# shows every pixel the same size: 77 to 103 UI pixels across (2x at 1080p and 1440p, 4x at 4K, 1x at 720p).
+# Drawn at 72 UI pixels it came out 1.4 screen pixels per art pixel, and rows and columns of the art doubled
+# or dropped out, so the new portraits didn't look like themselves.
+func _talk_face_scale() -> int:
+	var pic: Texture2D = extra_textures.get(str(talk.get("portrait", "")))
+	var ph: float = 128.0 if pic == null else float(pic.get_height())
+	return maxi(1, floori(110.0 * _px / ph))
+func _talk_face_size() -> float:
+	var pic: Texture2D = extra_textures.get(str(talk.get("portrait", "")))
+	var ph: float = 128.0 if pic == null else float(pic.get_height())
+	return _talk_face_scale() * ph / _px
+func _talk_face_box() -> int:
+	return int(ceil(_talk_face_size())) + 8
+# A UI coordinate moved onto the nearest screen pixel, so a picture drawn there lines up with the screen's grid.
+func _on_screen_grid(v: float, origin: int) -> float:
+	return round((v - origin) * _px) / _px + origin
 # The box's rectangle in UI pixels (768 x 432 and any extra width or height the window has).
 func talk_rect(top: bool) -> Rect2i:
 	var h := _talk_height()
@@ -1397,16 +1414,20 @@ func _talk() -> void:
 	var tx := x + 18
 	var portrait := str(talk.get("portrait", ""))
 	if portrait != "":
-		_rect(x + 14, y + 14, 80, 80, "#f1eee7")
-		_outline(x + 14, y + 14, 80, 80, "#aa917c")
-		_bevel(x + 15, y + 15, 78, 78, "#fffdf5", "#d4ccbe")
+		var box := _talk_face_box()
+		_rect(x + 14, y + 14, box, box, "#f1eee7")
+		_outline(x + 14, y + 14, box, box, "#aa917c")
+		_bevel(x + 15, y + 15, box - 2, box - 2, "#fffdf5", "#d4ccbe")
 		var pic: Texture2D = extra_textures.get(portrait)
 		if pic != null:
 			var frames: int = maxi(1, int(talk.get("frames", 1)))
 			var fw: float = float(pic.get_width()) / frames
 			var frame: int = clampi(int(talk.get("frame", 0)), 0, frames - 1)
-			commands.append(["g", portrait, x + 18, y + 18, 72, 72, frame * fw, 0, fw, pic.get_height(), "#ffffff"])
-		tx = x + 106
+			var side := _talk_face_size()
+			var px := _on_screen_grid(x + 14 + (box - side) / 2.0, _bounds.position.x)
+			var py := _on_screen_grid(y + 14 + (box - side) / 2.0, _bounds.position.y)
+			commands.append(["g", portrait, px, py, side, side, frame * fw, 0, fw, pic.get_height(), "#ffffff"])
+		tx = x + box + 26
 	var speaker := str(talk.get("speaker", ""))
 	if speaker != "":
 		_txt(tx, y + 13, speaker, "strong", OCHRE)
