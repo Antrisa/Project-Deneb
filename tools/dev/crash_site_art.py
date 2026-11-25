@@ -1,20 +1,27 @@
-"""The crash site's own props (24 Nov 2026, second pass at the prologue: Zachary, "the mother drone area doesnt fit
-the art style ... the ship is again at a weird angle and kinda floating not crashed into rock").
+"""The crash site's own props and overlays (24 Nov 2026; third pass at the prologue, Zachary: "still needs more
+detail and quality, you can make the fighter look like the main menu still").
 
-The crash now plays in the game itself, on a cavern map built like the others (tools/crash_site.py), so the rock,
-the walls and the light are the game's own. These are the two props that map needs, drawn as props are: seen from
-the front with the top visible, lit from the top left, master palette only, a #5b332d outline, 3-5 shades a
-material, on the 24-pixel grid (shown at two-thirds), no ground shadow painted in.
+The crash plays in the game itself, on a cavern map built like the others (tools/crash_site.py), so the rock, the
+walls and the light are the game's own. Props are drawn as props are: seen from the front with the top visible, lit
+from the top left, a #5b332d outline, 3-5 shades a material, on the 24-pixel grid (shown at two-thirds), no ground
+shadow painted in. The fighter and her scrap keep the main menu's own colours and outline (title/scene/fighter.png).
 
-  crash_wreck.png       8 x 5 tiles (192 x 120): the front half of your ship (the in-world ship art's most broken
-                        stage, art/lunar/player_ship.png frame 0), its back torn away, nose ploughed into a heap of
-                        broken basalt, a scorched gouge behind it
-  mother_drone.png      10 x 6 tiles (240 x 144): the Mother-Drone, a silver seed lying on its side, half sunk in
-                        the cavern floor, its lens toward your ship, its veins dark
-and its animation strips (same size, drawn over it by the prologue): mother_drone_wake.png (8 frames: the veins
-light from the lens outwards and the lens opens), mother_drone_pulse.png (6 frames: light running along them), and
-crash_beam.png (4 frames: the beam from the lens to your canopy, sized to the gap between the two props on the map).
-Run: python3 tools/dev/crash_site_art.py [--preview]
+  crash_wreck.png       11 x 7 tiles: your fighter's front half as the main menu draws her, redrawn at three times
+                        the size (Scale3x, lines back to one pixel), torn across the body, scorched back from the
+                        tear, ribs and wires bared, a crack across the canopy, nose buried in a heap of basalt, rubble
+                        along her belly, the gouge she cut and the scrap she shed behind her
+  mother_drone.png      13 x 8 tiles: the Mother-Drone, a silver seed lying on its side, half sunk in the floor: raised
+                        ribs round it, a channel of engraved glyphs along its side, an aperture lens toward your ship,
+                        dark veins, violet crystal grown out of the cracks in its shell and a crown of it where the tail
+                        broke open, cracks in the floor round it with violet light in them
+  wreck_plate.png, wreck_wing.png    scrap from your fighter, flat on the floor;  rock_chips.png: broken basalt
+and the strips and overlays the prologue lays over the map (art/prologue/): mother_drone_wake.png (8 frames: the
+veins light from the lens outwards, the blades turn and the iris opens, the crystals catch the light last),
+mother_drone_pulse.png (6 frames: light running along the veins, the crystals shimmering in turn, the blades turning),
+crash_beam.png (4 frames, lens to canopy), light_shaft.png and motes.png (the cool light through the hole you made,
+with dust turning in it; drawn as light), grit.png (grit trickling from the broken roof), drone_glow.png (the violet
+light on the floor round the drone when it wakes; drawn as light).
+Run: python3 tools/dev/crash_site_art.py
 """
 import math
 import os
@@ -33,13 +40,14 @@ LUNAR = os.path.join(ROOT, "art", "lunar")
 TILE = 24
 # where the two props stand on the crash site map (tiles, top-left), so the beam can run between them;
 # tools/crash_site.py reads these
-WRECK_AT = (7, 12)
-DRONE_AT = (25, 8)
-WRECK_SIZE = (8, 5)
-DRONE_SIZE = (10, 6)
+WRECK_AT = (5, 10)
+DRONE_AT = (24, 8)
+WRECK_SIZE = (11, 7)
+DRONE_SIZE = (13, 8)
 
 ROCK = [C("rock", 0), C("rock", 1), C("rock", 2), C("rock", 3)]
 BASALT = [C("violet", 0), C("rock", 0), C("rock", 1), C("rock", 2)]
+MOONROCK = [C("soil", 0), C("soil", 1), C("soil", 2), C("soil", 3)]      # the cavern's own warm grey-brown rock
 
 
 def stone(cv, pts, ramp, rnd, light=(-1, -1)):
@@ -65,78 +73,252 @@ def rock_pts(cx, cy, rx, ry, rnd, n=7):
 
 
 # ---------------------------------------------------------------- the wreck
+TITLE_FIGHTER = os.path.join(ROOT, "title", "scene", "fighter.png")
+FO = (0x2c, 0x23, 0x36, 255)                  # the menu fighter's outline colour
+FDARK = (0x38, 0x29, 0x3f, 255)               # its darkest hull shade
+FCREAM = [(0x77, 0x65, 0x75, 255), (0x9c, 0x84, 0x93, 255), (0xd4, 0xb5, 0xa8, 255), (0xf1, 0xd6, 0xaf, 255), (0xff, 0xeb, 0xc9, 255)]
+FGLASS = (0xcc, 0xeb, 0xe1, 255)
+CANOPY = [143.0, 80.0]                         # the canopy's middle on the wreck prop (set when it's drawn)
+
+
+def scale2x(a):
+    """EPX/Scale2x: twice the size with the diagonals smoothed, as a pixel artist would redraw them."""
+    h, w = a.shape[:2]
+    key = (a[:, :, 0].astype(np.int64) << 24) | (a[:, :, 1].astype(np.int64) << 16) | (a[:, :, 2].astype(np.int64) << 8) | a[:, :, 3]
+    pad = np.pad(key, 1, mode="edge")
+    P = key
+    A, D = pad[:-2, 1:-1], pad[2:, 1:-1]          # up, down
+    Cl, B = pad[1:-1, :-2], pad[1:-1, 2:]         # left, right
+    e0 = np.where((Cl == A) & (Cl != D) & (A != B), A, P)
+    e1 = np.where((A == B) & (A != Cl) & (B != D), B, P)
+    e2 = np.where((D == Cl) & (D != B) & (Cl != A), Cl, P)
+    e3 = np.where((B == D) & (B != A) & (D != Cl), D, P)
+    out = np.zeros((h * 2, w * 2), np.int64)
+    out[0::2, 0::2], out[0::2, 1::2], out[1::2, 0::2], out[1::2, 1::2] = e0, e1, e2, e3
+    rgba = np.stack([(out >> 24) & 255, (out >> 16) & 255, (out >> 8) & 255, out & 255], -1).astype(np.uint8)
+    return rgba
+
+
+def thin_lines(a, col):
+    """Lines of colour col that doubled in the scale-up go back to one pixel: a line pixel whose up or left
+    neighbour is also line, and that isn't on the outside rim, takes the colour below or right of it."""
+    m = np.all(a == col, axis=-1)
+    solid = a[:, :, 3] > 0
+    rim = edge(solid)
+    for _ in range(2):
+        m = np.all(a == col, axis=-1)
+        drop = m & ~rim & (sh(m, 0, 1) | sh(m, 1, 0))
+        ys, xs = np.nonzero(drop)
+        for y, x in zip(ys, xs):
+            for dy, dx in ((1, 0), (0, 1), (1, 1), (-1, 0), (0, -1)):
+                Y, X = y + dy, x + dx
+                if 0 <= Y < a.shape[0] and 0 <= X < a.shape[1] and a[Y, X, 3] and not np.all(a[Y, X] == col):
+                    a[y, x] = a[Y, X]
+                    break
+    return a
+
+
+def scale3x(a):
+    """Scale3x: three times the size with the diagonals smoothed (AdvMAME3x)."""
+    h, w = a.shape[:2]
+    key = (a[:, :, 0].astype(np.int64) << 24) | (a[:, :, 1].astype(np.int64) << 16) | (a[:, :, 2].astype(np.int64) << 8) | a[:, :, 3]
+    p = np.pad(key, 1, mode="edge")
+    A, B, Cc = p[:-2, :-2], p[:-2, 1:-1], p[:-2, 2:]
+    D, E, F = p[1:-1, :-2], p[1:-1, 1:-1], p[1:-1, 2:]
+    G, H, I = p[2:, :-2], p[2:, 1:-1], p[2:, 2:]
+    db, bf, dh, hf = (D == B) & (D != H) & (B != F), (B == F) & (B != D) & (F != H), (D == H) & (D != B) & (H != F), (H == F) & (D != H) & (B != F)
+    out = np.zeros((h * 3, w * 3), np.int64)
+    cells = [np.where(db, D, E), np.where((db & (E != Cc)) | (bf & (E != A)), B, E), np.where(bf, F, E),
+             np.where((db & (E != G)) | (dh & (E != A)), D, E), E, np.where((bf & (E != I)) | (hf & (E != Cc)), F, E),
+             np.where(dh, D, E), np.where((dh & (E != I)) | (hf & (E != G)), H, E), np.where(hf, F, E)]
+    for k, cell in enumerate(cells):
+        out[k // 3::3, k % 3::3] = cell
+    return np.stack([(out >> 24) & 255, (out >> 16) & 255, (out >> 8) & 255, out & 255], -1).astype(np.uint8)
+
+
+def fighter_3x():
+    a = scale3x(np.array(Image.open(TITLE_FIGHTER).convert("RGBA")))
+    for _ in range(2):
+        a = thin_lines(a, np.array(FO))
+    solid = a[:, :, 3] > 0
+    a[edge(solid)] = FO
+    return a
+
+
+def darker(col):
+    """One step down the menu fighter's own ramps (cream, orange, teal), for scorching."""
+    ramps = [FCREAM, [(0x56, 0x42, 0x58, 255), (0x77, 0x65, 0x75, 255)],
+             [(0xae, 0x47, 0x1d, 255), (0xed, 0x65, 0x1c, 255)], [(0x12, 0x45, 0x53, 255), (0x17, 0x58, 0x64, 255), (0x1c, 0x7b, 0x83, 255), (0x58, 0xb9, 0xb1, 255)],
+             [FDARK, (0x56, 0x42, 0x58, 255)], [(0xbd, 0x9d, 0xa6, 255), (0xd4, 0xb5, 0xa8, 255)]]
+    col = tuple(int(q) for q in col)
+    for r in ramps:
+        if col in r:
+            i = r.index(col)
+            return r[max(0, i - 1)]
+    return col
+
+
 def crash_wreck():
-    """Your ship's front half, nose-first in a heap of broken basalt, with the gouge it cut behind it."""
+    """Your fighter's front half, as the main menu draws her (redrawn at three times the size), nose buried in a heap
+    of broken basalt, her torn end toward you, scorched, a gouge behind her and scrap thrown about."""
     rnd = random.Random(5)
     w, h = WRECK_SIZE[0] * TILE, WRECK_SIZE[1] * TILE
     cv = Canvas(w, h)
-    # the gouge: scorched, broken floor where the hull slid in (flat, under everything)
-    gouge = poly([(4, 84), (40, 74), (120, 72), (150, 80), (150, 104), (110, 112), (30, 108), (6, 100)], w, h)
-    cv.paint(gouge, C("ink", 0))
-    cv.paint(gouge & ~sh(gouge, 0, 3), C("soil", 1))
-    for x0 in range(14, 140, 18):
-        cv.paint(lines([(x0, 86 + rnd.randint(-3, 3)), (x0 + 12, 90 + rnd.randint(-3, 3))], 2, w, h) & gouge, C("rock", 0))
-    # the ship: the in-world ship art's broken stage, its back half torn off along a ragged line
-    ship = np.array(Image.open(os.path.join(LUNAR, "player_ship.png")).convert("RGBA"))[:, :168]
-    sh_h, sh_w = ship.shape[:2]
-    cut = np.array([62 + rnd.randint(-5, 5) + 5 * math.sin(y * .35) for y in range(sh_h)])
-    keep = (np.arange(sh_w)[None, :] >= cut[:, None]) & (ship[:, :, 3] > 0)
-    ox, oy = 2 - 52, 6                      # where the kept half lands on the prop: torn end at x 10, nose at 118
+    # the gouge she cut coming in from the lower left: churned, scorched floor (flat, under everything)
+    gouge = poly([(0, 140), (20, 126), (50, 116), (84, 112), (104, 120), (102, 144), (72, 156), (36, 164), (0, 166)], w, h)
+    cv.paint(gouge, C("soil", 0))                                       # its far wall, in shadow
+    cv.paint(gouge & ~sh(gouge, 0, 3), C("soil", 1))                     # churned rock
+    cv.paint(gouge & ~sh(gouge, 0, -3) & sh(gouge, 0, 3), C("soil", 2))  # the near lip, catching the light
+    scorch = lines([(2, 152), (40, 140), (70, 130), (96, 124)], 4, w, h) & gouge & ~edge(gouge)
+    cv.paint(scorch, C("ink", 0))
+    for x0 in range(4, 96, 12):
+        y0 = 150 - x0 * .3 + rnd.randint(-4, 4)
+        cv.paint(lines([(x0, y0), (x0 + 7, y0 - 2)], 2, w, h) & gouge & ~scorch, C("soil", 0))
+    # stones behind her nose (drawn first)
+    for cx, cy, rx, ry in ((206, 34, 14, 11), (232, 44, 13, 10), (184, 40, 10, 8), (248, 66, 10, 8)):
+        stone(cv, rock_pts(cx, cy, rx, ry, rnd), MOONROCK if rnd.random() < .7 else BASALT, rnd)
+    # the ship, three times the menu art's size, torn across the body between canopy and engines
+    src = fighter_3x()
+    sh_h, sh_w = src.shape[:2]
+    d = np.array([.884, -.467])
+    c = np.array([108.0, 63.0])
+    sy, sx = np.mgrid[0:sh_h, 0:sh_w]
+    along = (sx - c[0]) * d[0] + (sy - c[1]) * d[1]
+    across = (sx - c[0]) * -d[1] + (sy - c[1]) * d[0]
+    jag = np.array([rnd.uniform(-4, 4) for _ in range(50)])
+    cut = np.repeat(jag, 5)[np.clip((across + 120).astype(int), 0, 249)]
+    keep = (src[:, :, 3] > 0) & (along > cut)
+    ox, oy = -10, 50                             # the tear lands about (98, 113), the nose about (197, 59)
     part = Canvas(w, h)
-    for y in range(sh_h):
-        for x in range(sh_w):
-            if keep[y, x]:
-                X, Y = x + ox, y + oy
-                if 0 <= X < w and 0 <= Y < h:
-                    part.a[Y, X] = ship[y, x]
+    ys, xs = np.nonzero(keep)
+    inside = (ys + oy >= 0) & (ys + oy < h) & (xs + ox >= 0) & (xs + ox < w)
+    ys, xs = ys[inside], xs[inside]
+    part.a[ys + oy, xs + ox] = src[ys, xs]
     pm = part.a[:, :, 3] > 0
-    # the torn end: ripped plating, ribs, a hot edge
-    torn = pm & ~sh(pm, 4, 0)
+    dist = np.full((h, w), 99.0)
+    dist[ys + oy, xs + ox] = along[ys, xs] - cut[ys, xs]
+    # scorched back from the tear, darker the nearer it, with a ragged front
+    ragged = np.array([rnd.uniform(0, 7) for _ in range(60)])
+    acr = np.zeros((h, w))
+    acr[ys + oy, xs + ox] = across[ys, xs]
+    rag = ragged[np.clip(((acr + 120) / 4).astype(int), 0, 59)]
+    for lim in (16,):
+        zone = pm & ~edge(pm) & (dist < lim + rag) & ~np.all(part.a == FO, axis=-1)
+        zy, zx = np.nonzero(zone)
+        for y, x in zip(zy, zx):
+            part.a[y, x] = darker(part.a[y, x])
+    # the torn end: bared ribs, ripped plating, a hot glowing edge, the menu art's outline round it
+    torn = pm & (dist < 6)
     part.paint(torn, C("rock", 1))
-    part.paint(torn & ~sh(pm, 2, 0), C("copper", 2))
-    for y in np.nonzero(torn.any(axis=1))[0][::8]:
-        x = np.nonzero(torn[y])[0][0]
-        part.paint(lines([(x, y), (x - 5, y + 1)], 2, w, h), C("rock", 2))
-    # burns and soot over the hull
-    for cx, cy, r in ((34, 40, 6), (58, 66, 5), (24, 70, 5)):
-        burn = disc(cx, cy, r, w, h) & pm & ~torn
-        part.paint(burn, C("ink", 2))
-        part.paint(burn & disc(cx + 1, cy + 1, r - 2, w, h), C("ink", 0))
+    part.paint(torn & (dist >= 3.5), C("rock", 2))
+    for k in range(-60, 70, 9):                  # ribs: short bars along the body, sticking out of the tear
+        bx, by = 98 - k * d[1], 113 + k * d[0]
+        part.paint(lines([(bx + 6 * d[0], by + 6 * d[1]), (bx - 4 * d[0], by - 4 * d[1])], 2, w, h) & (pm | sh(pm, 3, 2)), C("rock", 3))
+    pm = part.a[:, :, 3] > 0
+    tear_edge = edge(pm) & (dist < 8)
+    hot = pm & ~tear_edge & (sh(tear_edge, 1, 0) | sh(tear_edge, -1, 0) | sh(tear_edge, 0, 1) | sh(tear_edge, 0, -1))
+    part.paint(hot, C("copper", 3))                                  # still glowing, all along the tear
+    part.paint(hot & ~sh(hot, 1, 1), C("brass", 4))
+    part.paint(tear_edge, FO)
+    # wires hanging out of the tear
+    for (x0, y0), (x1, y1), col in (((92, 120), (80, 132), C("copper", 2)), ((104, 104), (90, 112), C("teal", 2)), ((86, 128), (78, 144), C("berry", 2))):
+        wire = lines([(x0, y0), ((x0 + x1) / 2 - 2, (y0 + y1) / 2 + 3), (x1, y1)], 1, w, h) & ~pm
+        cv.paint(wire, col)
+    # scratches through the paint and a crack across the canopy
+    for (x0, y0), (x1, y1) in (((130, 98), (158, 84)), ((140, 120), (172, 104)), ((162, 92), (184, 80))):
+        part.paint(lines([(x0, y0), (x1, y1)], 1, w, h) & pm & ~edge(pm) & ~np.all(part.a == FO, axis=-1), FCREAM[4])
+    gl = part.a[:, :, :3].astype(int)
+    glass = pm & (gl[:, :, 2] > gl[:, :, 0] + 30) & (gl[:, :, 1] > gl[:, :, 0] + 20)
+    gy, gx = np.nonzero(glass)
+    if len(gx):
+        cx0, cy0 = gx.mean(), gy.mean()
+        crack = lines([(cx0 - 12, cy0 - 3), (cx0 - 2, cy0 + 1), (cx0 + 2, cy0 + 7), (cx0 + 10, cy0 + 9)], 1, w, h)
+        crack |= lines([(cx0 - 2, cy0 + 1), (cx0 + 8, cy0 - 5)], 1, w, h)
+        part.paint(crack & glass & ~edge(glass), FGLASS)
+        CANOPY[:] = [float(cx0), float(cy0)]
+    shadow = sh(pm, 3, 5) & ~pm                  # where she lies on the floor: a dark contact shadow
+    cv.paint(shadow & ~sh(pm, 0, -60), C("rock", 0))
     cv.a[pm] = part.a[pm]
-    # the heap the nose ploughed into: broken basalt piled over it, in front and to the right
-    for cx, cy, rx, ry in ((128, 70, 22, 16), (150, 84, 20, 15), (122, 96, 18, 12), (164, 62, 16, 12),
-                           (176, 92, 14, 11), (104, 108, 16, 10), (140, 106, 15, 10), (186, 74, 10, 9)):
-        stone(cv, rock_pts(cx, cy, rx, ry, rnd), BASALT if rnd.random() < .5 else ROCK, rnd)
-    # loose chips and a bent strut from the hull
-    for cx, cy, r in ((70, 104, 6), (90, 112, 5), (40, 110, 5), (16, 96, 4)):
-        stone(cv, rock_pts(cx, cy, r, r * .7, rnd, 5), ROCK, rnd)
-    strut = lines([(14, 58), (2, 66), (6, 74)], 3, w, h)
-    cv.paint(strut, C("rock", 2))
-    cv.paint(edge(strut), OUT)
-    # (no palette check: the hull is the artist's own ship art, which has its own colours)
+    # the heap her nose ploughed into, piled over the tip, and rubble along her belly so she sits in the rock
+    for cx, cy, rx, ry in ((236, 50, 12, 9), (252, 74, 9, 8), (204, 62, 19, 14), (228, 72, 18, 13), (190, 84, 13, 9),
+                           (214, 92, 19, 13), (246, 96, 14, 10)):
+        stone(cv, rock_pts(cx, cy, rx, ry, rnd), MOONROCK if rnd.random() < .7 else BASALT, rnd)
+    for cx, cy, r in ((108, 150, 7), (126, 144, 9), (146, 136, 8), (166, 128, 9), (186, 118, 7), (94, 144, 5),
+                      (204, 108, 6), (138, 154, 5), (176, 140, 5), (116, 160, 4)):
+        stone(cv, rock_pts(cx, cy, r * 1.45, r * .9, rnd, 6), MOONROCK if rnd.random() < .75 else BASALT, rnd)
+    # scrap she shed, flat in the gouge: a torn hull plate with its orange stripe, a bent fin, a canopy shard
+    plate = poly([(26, 142), (46, 134), (54, 144), (34, 152)], w, h)
+    cv.paint(plate, FCREAM[2])
+    cv.paint(plate & ~sh(plate, 0, 2), FCREAM[3])
+    cv.paint(plate & lines([(30, 145), (50, 138)], 3, w, h), (0xed, 0x65, 0x1c, 255))
+    cv.paint(edge(plate), FO)
+    fin = poly([(60, 156), (76, 148), (82, 152), (68, 162)], w, h)
+    cv.paint(fin, FCREAM[1])
+    cv.paint(fin & ~sh(fin, 1, 2), FCREAM[2])
+    cv.paint(edge(fin), FO)
+    shard = poly([(10, 156), (18, 152), (16, 160)], w, h)
+    cv.paint(shard, (0x1c, 0x7b, 0x83, 255))
+    cv.paint(shard & ~sh(shard, 1, 1), (0x58, 0xb9, 0xb1, 255))
+    cv.paint(edge(shard), FO)
+    # (no palette check: the hull is the main menu's own fighter art, which has its own colours)
     return cv
 
 
 # ---------------------------------------------------------------- the Mother-Drone
 DW, DH = DRONE_SIZE[0] * TILE, DRONE_SIZE[1] * TILE
-SEED = dict(cx=124.0, cy=70.0, a=104.0, b=46.0)          # the body, before the ground cuts it
-GROUND = 104                                             # the floor line across its lower part
-LENS = (40, 64, 13)                                      # the lens, on the end toward your ship
+SEED = dict(cx=170.0, cy=86.0, a=128.0, b=54.0)          # the body, before the ground cuts it
+GROUND = 128                                             # the floor line across its lower part
+LENS = (58, 84, 17)                                      # the lens, on the blunt end toward your ship
+RIBS = (-.56, -.27, .02, .3, .55)                        # raised bands round the body (u, along its length)
+# violet growths out of the cracks, and a crown of them where the tail broke open: x, y, width, length, lean
+CRYSTALS = ((224, 48, 8, 18, -.9), (236, 42, 12, 32, -.4), (250, 50, 9, 24, .15), (262, 60, 8, 18, .6),
+            (130, 36, 7, 17, -.3), (142, 40, 5, 11, .4),
+            (284, 78, 11, 30, .2), (294, 88, 10, 26, .7), (274, 84, 8, 20, -.4), (298, 100, 8, 18, 1.1), (286, 104, 7, 14, .5))
+GLYPHS = ((1, 0, 1, 1, 1, 1), (1, 1, 0, 1, 0, 1), (0, 1, 1, 1, 1, 0), (1, 1, 1, 0, 1, 0), (1, 0, 0, 1, 1, 1), (0, 1, 0, 1, 1, 1))
 
 
 def seed_field():
     yy, xx = np.mgrid[0:DH, 0:DW].astype(float)
     u = (xx + .5 - SEED["cx"]) / SEED["a"]
     v = (yy + .5 - SEED["cy"]) / SEED["b"]
-    half = np.clip(1 - u * u, 0, None) ** .55 * (1 - .18 * np.clip(u, 0, None))
+    # blunt at the lens end, drawn out to a point at the tail
+    half = np.clip(1 - u * u, 0, None) ** np.where(u < 0, .42, .62) * (1 - .3 * np.clip(u, 0, None))
     return (np.abs(u) <= 1) & (np.abs(v) <= half), u, v, half
+
+
+def crystal(cv, x, y, w, ln, lean, glow=0):
+    """A violet crystal shard growing up out of the shell, prop-style: lit face, dark face, a glint."""
+    tip = (x + lean * ln * .6, y - ln)
+    pts = [(x - w / 2, y), (x - w / 2 + 1, y - ln * .7), tip, (x + w / 2, y - ln * .72), (x + w / 2, y)]
+    m = poly(pts, cv.w, cv.h)
+    left = poly([(x - w / 2, y), (x - w / 2 + 1, y - ln * .7), tip, (x + lean * 2, y)], cv.w, cv.h) & m
+    base = [C("violet", 1), C("violet", 2), C("violet", 3)] if glow == 0 else [C("violet", 2), C("violet", 3), C("violet", 4)]
+    cv.paint(m, base[0])
+    cv.paint(left, base[1])
+    cv.paint(left & ~sh(left, 2, 0), base[2])
+    cv.paint(lines([(x + lean * 2, y - 2), tip], 1, cv.w, cv.h) & m, base[2] if glow == 0 else C("cream", 4))
+    cv.paint(edge(m), OUT)
+    return m
 
 
 def mother_drone():
     rnd = random.Random(13)
     cv = Canvas(DW, DH)
-    m, u, v, half = seed_field()
     yy, xx = np.mgrid[0:DH, 0:DW]
+    # the floor round it, under everything: cracks running out from where it struck, a faint violet light in them
+    for k in range(9):
+        a = math.pi * (.05 + k * .11) + rnd.uniform(-.06, .06)
+        x0, y0 = SEED["cx"] + math.cos(a) * 100, GROUND + 6 + math.sin(a) * 18
+        pts = [(x0, y0)]
+        for _ in range(4):
+            a += rnd.uniform(-.35, .35)
+            x0 += math.cos(a) * 14
+            y0 += abs(math.sin(a)) * 9 + 3
+            pts.append((x0, y0))
+        crk = lines(pts, 2, DW, DH)
+        cv.paint(crk, C("ink", 0))
+        cv.paint(crk & ~sh(crk, 0, 1), C("violet", 1))
+    m, u, v, half = seed_field()
     m &= yy < GROUND + 4 + (np.sin(xx * .18) * 2).astype(int)
     vn = np.where(half > 0, v / np.maximum(half, 1e-3), 0)
     nz = np.sqrt(np.clip(1 - u * u * .45 - vn * vn, 0, 1))
@@ -144,55 +326,105 @@ def mother_drone():
     L /= np.linalg.norm(L)
     dot = np.clip(u * .55 * L[0] + vn * L[1] + nz * L[2], 0, 1)
     tones = [C("rock", 1), C("rock", 2), C("rock", 3), C("rock", 4), C("cream", 4)]
-    idx = np.digitize(dot, [.35, .55, .74, .9])
+    idx = np.digitize(dot, [.35, .55, .74, .94])
+    # raised ribs round the body: a band a tone lighter, its far side a tone darker (a bevel)
+    for r0 in RIBS:
+        core = np.abs(u - r0) < .022
+        far = (u - r0 >= .022) & (u - r0 < .034)
+        near = (r0 - u >= .022) & (r0 - u < .03)
+        idx = np.where(m & core, np.minimum(idx + 1, 4), idx)
+        idx = np.where(m & far, np.maximum(idx - 2, 0), idx)
+        idx = np.where(m & near, np.maximum(idx - 1, 0), idx)
+    # the glyph band: a sunken channel along its side between the ribs
+    band = m & (vn > -.02) & (vn < .2)
+    edges_ = [-1] + list(RIBS) + [1]
+    between = np.zeros_like(m)
+    for lo, hi in zip(edges_, edges_[1:]):
+        between |= (u > lo + .04) & (u < hi - .04)
+    chan = band & between
+    idx = np.where(chan, np.maximum(idx - 1, 0), idx)
     for k, t in enumerate(tones):
         cv.paint(m & (idx == k), t)
-    # a long glint along its back, a faint violet underside, its seams
-    cv.paint(m & (dot > .95) & (vn < -.2), C("cream", 4))
-    cv.paint(m & (yy > GROUND - 12), C("rock", 1))                       # in the shadow of the ground
-    cv.paint(m & (yy > GROUND - 5), C("rock", 0))
-    cv.paint(m & (vn > .82) & (yy <= GROUND - 12), C("violet", 1))        # a thin violet rim underneath
-    seam = m & ((np.abs(vn + .15) < .05) | (np.abs(u - .1) < .012) | (np.abs(u - .55) < .012) | (np.abs(u + .35) < .012))
-    darker = {tones[i]: tones[max(0, i - 1)] for i in range(len(tones))}
-    darker[C("violet", 1)] = C("violet", 0)
-    ys, xs = np.nonzero(seam & ~edge(m))
-    for y, x in zip(ys, xs):
-        t = tuple(int(q) for q in cv.a[y, x])
-        cv.a[y, x] = darker.get(t, t)
+    cv.paint(m & (dot > .9) & (dot <= .94) & (vn < -.45) & (vn > -.6) & ~chan, C("cream", 4))   # a glint along its back
+    cv.paint(chan & sh(chan, 0, 1) & ~sh(chan, 0, 2), C("rock", 1))     # the channel's top lip in shadow
+    cv.paint(m & (yy > GROUND - 14), C("rock", 1))                       # in the shadow of the ground
+    cv.paint(m & (yy > GROUND - 6), C("rock", 0))
+    cv.paint(m & (vn > .8) & (yy <= GROUND - 14), C("violet", 1))        # violet light from below, on its belly
+    # engraved glyphs in the channel, in rows like writing
+    ys_c, xs_c = np.nonzero(chan)
+    if len(xs_c):
+        for gx in range(int(xs_c.min()) + 3, int(xs_c.max()) - 3, 7):
+            col = chan[:, gx]
+            if not col.any():
+                continue
+            gy = int(np.nonzero(col)[0].mean()) - 2
+            g = GLYPHS[(gx // 7) % len(GLYPHS)]
+            for i, on in enumerate(g):
+                if on:
+                    px, py = gx + (i % 2) * 2, gy + (i // 2) * 2
+                    if chan[py:py + 2, px:px + 2].all():
+                        cv.a[py:py + 2, px:px + 2] = C("rock", 4)
+    # its seams
+    seam = m & ((np.abs(vn + .2) < .04) & ~between)
+    cv.paint(seam & ~edge(m), C("rock", 1))
     cv.paint(edge(m), OUT)
+    # cracks across the top of the shell, and the crystals that have grown out of them
+    for pts in (((214, 40), (226, 46), (238, 44), (252, 54), (266, 60)), ((226, 46), (230, 58), (222, 66)),
+                ((238, 44), (246, 34)), ((126, 36), (136, 40), (148, 38))):
+        crk = lines(pts, 1, DW, DH) & binary_erosion(m, iterations=2)
+        cv.paint(sh(crk, 0, 1) & m & ~crk, C("rock", 4))
+        cv.paint(crk, OUT)
+    hollow = disc(286, 96, 13, DW, DH) & m
+    cv.paint(hollow, C("violet", 0))
+    cv.paint(hollow & ~sh(hollow, -2, -2), C("violet", 1))
+    cv.paint(edge(hollow), OUT)
+    for x, y, w_, ln, lean in CRYSTALS:
+        crystal(cv, x, y, w_, ln, lean)
     # the lens, dark and shut
     draw_lens(cv, 0)
     # the dark veins
     veins = vein_mask(m)
     cv.paint(veins, C("rock", 1))
-    # the floor it's sunk in: basalt slabs heaped round its waist, cracks running out from it
-    for cx, cy, rx, ry in ((40, 104, 20, 12), (74, 108, 24, 13), (112, 110, 26, 13), (152, 108, 24, 12),
-                           (190, 104, 22, 12), (222, 96, 14, 10), (18, 96, 12, 9), (96, 128, 14, 8),
-                           (150, 130, 16, 8), (204, 122, 14, 8), (56, 126, 12, 7),
-                           (92, 100, 14, 9), (132, 100, 14, 9), (172, 98, 13, 9)):
+    # the floor it's sunk in: basalt slabs heaped round its waist
+    for cx, cy, rx, ry in ((54, 126, 20, 12), (88, 132, 24, 13), (128, 136, 26, 13), (170, 136, 24, 12),
+                           (212, 132, 24, 12), (252, 124, 20, 11), (284, 114, 14, 10), (30, 116, 12, 9),
+                           (110, 156, 14, 8), (168, 160, 16, 8), (232, 152, 14, 8), (70, 152, 12, 7),
+                           (106, 124, 14, 9), (150, 126, 14, 9), (192, 124, 13, 9), (234, 120, 13, 9), (292, 136, 9, 7)):
         stone(cv, rock_pts(cx, cy, rx, ry, rnd), BASALT if rnd.random() < .6 else ROCK, rnd)
+    for x, y, w_, ln, lean in ((22, 132, 6, 14, -.4), (30, 134, 4, 9, .3), (290, 128, 6, 15, .4), (282, 132, 4, 9, -.2),
+                               (196, 164, 5, 11, .2)):
+        crystal(cv, x, y, w_, ln, lean)
     check(cv, "mother_drone")
     return cv, m, veins
 
 
-def draw_lens(cv, frame):
+def draw_lens(cv, frame, spin=None):
+    """The lens: a bevelled rim, a ring of eight aperture blades, the iris (dark and shut at frame 0, opening and
+    lighting as the frames go)."""
     x, y, r = LENS
+    yy, xx = np.mgrid[0:DH, 0:DW]
     rim = disc(x, y, r, DW, DH)
     cv.paint(rim, C("rock", 2))
     cv.paint(rim & ~sh(rim, 2, 2), C("rock", 4))
     cv.paint(rim & ~sh(rim, -2, -2), C("rock", 1))
     cv.paint(edge(rim), OUT)
-    inner = disc(x, y, r - 4, DW, DH)
+    ring = disc(x, y, r - 3, DW, DH)
+    ang = (np.arctan2(yy + .5 - y, xx + .5 - x) + math.pi + (frame if spin is None else spin) * .12) % (math.pi / 4)
+    cv.paint(ring, C("rock", 3))
+    cv.paint(ring & (ang > math.pi / 8), C("rock", 2))
+    cv.paint(ring & (ang < .09), OUT)
+    open_r = r - 8 + min(frame, 5) * .6
+    inner = disc(x, y, open_r, DW, DH)
     cv.paint(inner, C("violet", 0))
     if frame > 0:
-        o = 1 + frame * 1.6
-        cv.paint(disc(x, y, min(r - 5, o + 1), DW, DH), C("glow", 1))
-        cv.paint(disc(x, y, min(r - 6, o), DW, DH), C("glow", 2))
+        o = 1 + frame * 1.5
+        cv.paint(disc(x, y, min(open_r - 1, o + 1), DW, DH), C("glow", 1))
+        cv.paint(disc(x, y, min(open_r - 2, o), DW, DH), C("glow", 2))
         if frame >= 3:
             cv.paint(disc(x - 1, y - 1, max(1, o - 3), DW, DH), C("glow", 3))
         if frame >= 5:
-            cv.paint(disc(x - 1, y - 1, 2, DW, DH), C("glow", 4))
-    cv.paint(inner & ~disc(x, y, r - 6, DW, DH), C("violet", 2) if frame else C("violet", 1))
+            cv.paint(disc(x - 1, y - 1, 2.5, DW, DH), C("glow", 4))
+    cv.paint(inner & ~disc(x, y, open_r - 2, DW, DH), C("violet", 2) if frame else C("violet", 1))
     cv.paint(disc(x - 4, y - 4, 1.5, DW, DH), C("cream", 4) if frame >= 3 else C("violet", 2))
     cv.paint(edge(inner), OUT)
 
@@ -201,11 +433,11 @@ def vein_paths():
     rnd = random.Random(11)
     out = []
     x0, y0, _ = LENS
-    for head in (-.55, .0, .5):
-        x, y, a = x0 + 12, y0 + head * 10, head * .5
+    for head in (-.7, -.3, .5):
+        x, y, a = x0 + LENS[2] - 4, y0 + head * 14, head * .5
         pts = [(x, y)]
         for step in range(20):
-            a += rnd.uniform(-.16, .16) - .05 * (y - y0 - head * 18) / 10
+            a += rnd.uniform(-.16, .16) - .05 * (y - y0 - head * 26) / 10
             x += math.cos(a) * 9
             y += math.sin(a) * 4
             pts.append((x, y))
@@ -252,7 +484,11 @@ def drone_strips(body, veins):
         cv.paint(glow & sh(lit, 1, 1), C("violet", 2))
         cv.paint(lit, C("brass", 3))
         cv.paint(veins & (dist > far * f / 8) & (dist <= far * (f + 1) / 8), C("brass", 4))
-        draw_lens(cv, min(5, f))
+        if f >= 5:                                    # the light reaches the crystals last
+            for k, (x, y, w_, ln, lean) in enumerate(CRYSTALS):
+                if k % 3 <= f - 5:
+                    crystal(cv, x, y, w_, ln, lean, glow=1)
+        draw_lens(cv, min(5, f), spin=f)
         wake.append(cv)
     for f in range(6):
         cv = Canvas(DW, DH)
@@ -261,7 +497,10 @@ def drone_strips(body, veins):
         cv.paint(veins, C("brass", 3))
         cv.paint(band, C("brass", 4))
         cv.paint(glow & sh(band, 1, 1), C("violet", 3))
-        draw_lens(cv, 5)
+        for k, (x, y, w_, ln, lean) in enumerate(CRYSTALS):     # the crystals shimmer in turn
+            if (k + f) % 3:
+                crystal(cv, x, y, w_, ln, lean, glow=1)
+        draw_lens(cv, 5, spin=7 + f * (math.pi / 4 / 6 / .12))   # the blades turn, a full step in six frames
         pulse.append(cv)
     return strip(wake), strip(pulse)
 
@@ -271,8 +510,8 @@ def beam():
     tile (x, y) of its top-left corner."""
     lx = DRONE_AT[0] * TILE + LENS[0]
     ly = DRONE_AT[1] * TILE + LENS[1]
-    tx = WRECK_AT[0] * TILE + 96               # the canopy, on the wreck prop
-    ty = WRECK_AT[1] * TILE + 44
+    tx = WRECK_AT[0] * TILE + CANOPY[0]        # the canopy, on the wreck prop
+    ty = WRECK_AT[1] * TILE + CANOPY[1]
     x0, y0 = int(min(lx, tx) // TILE) - 1, int(min(ly, ty) // TILE) - 2
     x1, y1 = int(max(lx, tx) // TILE) + 2, int(max(ly, ty) // TILE) + 3
     w, h = (x1 - x0) * TILE, (y1 - y0) * TILE
@@ -300,19 +539,147 @@ def beam():
     return strip(frames), (x0, y0)
 
 
+# ---------------------------------------------------------------- what the prologue lays over the map
+# (world sprites: art pixels, shown at two-thirds like the props; "add" ones are light, added to what's under them,
+# so they're drawn dark: a dark blue adds a little cool light)
+SHAFT_AT = (7.5, 1.0)                    # tiles: the light from the hole you came through, falling on the wreck
+
+
+def light_shaft():
+    """Cool light falling through the hole in the roof onto your wreck: a slanted column in three soft steps,
+    ending in a pool on the floor round the ship (7 x 14 tiles, additive: dark colours add a little light)."""
+    w, h = 7 * TILE, 14 * TILE
+    cv = Canvas(w, h)
+    yy, xx = np.mgrid[0:h, 0:w].astype(float)
+    top_c, bot_c = 70.0, 90.0                         # its middle at the top and at the floor (it slants a little)
+    floor_y = h - 40
+    t = np.clip(yy / floor_y, 0, 1)
+    mid = top_c + (bot_c - top_c) * t
+    half = 30 + 34 * t
+    d = np.abs(xx - mid) / half
+    col = (yy < floor_y) & (d < 1)
+    pool = ((xx - bot_c) / 80) ** 2 + ((yy - floor_y) / 30) ** 2
+    cv.paint((col & (d >= .55)) | ((pool <= 1) & ~col), C("rock", 0))
+    cv.paint((col & (d < .55)) | (pool <= .5), C("violet", 0))
+    cv.paint((col & (d < .22)) | (pool <= .18), C("glow", 0))
+    return cv
+
+
+def motes():
+    """Dust turning slowly in the shaft of light (8 frames, the shaft's size, additive): 2-pixel motes drifting down
+    and sideways, each twinkling as it turns."""
+    w, h = 7 * TILE, 14 * TILE
+    rnd = random.Random(61)
+    dots = [(rnd.uniform(40, 120), rnd.uniform(10, h - 60), rnd.uniform(0, 6.28), rnd.choice((("glow", 2), ("rock", 2), ("glow", 1))))
+            for _ in range(26)]
+    frames = []
+    for f in range(8):
+        cv = Canvas(w, h)
+        for x, y, ph, col in dots:
+            X = x + math.sin(ph + f * .785) * 3
+            Y = (y + f * 2) % (h - 60) + 6
+            if (f + int(ph * 3)) % 4 != 0:
+                cv.a[int(Y):int(Y) + 2, int(X):int(X) + 2] = C(*col)
+        frames.append(cv)
+    return strip(frames)
+
+
+def grit():
+    """Grit trickling from the broken roof onto the wreck, now and then (12 frames, 2 x 14 tiles): a few chips fall,
+    a little puff where they land, then nothing for a while."""
+    w, h = 2 * TILE, 14 * TILE
+    frames = []
+    land = h - 56
+    for f in range(12):
+        cv = Canvas(w, h)
+        if f < 6:
+            for k, (x, dy) in enumerate(((20, 0), (28, 26), (16, 48))):
+                y = (f * 50 - dy)
+                if 0 <= y < land:
+                    m = disc(x, y, 2 if k == 0 else 1.5, w, h)
+                    cv.paint(m, C("rock", 2))
+                    cv.paint(m & ~sh(m, 1, 1), C("rock", 3))
+        if f in (5, 6, 7):
+            k = f - 5
+            for dx in (-6 - k * 3, 6 + k * 3, 0):
+                m = disc(24 + dx, land - 2 - k * 2, 3 - k * .6, w, h)
+                cv.paint(m, C("rock", 2) if k < 2 else C("rock", 1))
+        frames.append(cv)
+    return strip(frames)
+
+
+def drone_glow(drone):
+    """The violet light the Mother-Drone throws on the floor round it when it wakes (additive, its prop's size plus
+    two tiles each way), in two soft steps, brightest under the lens. It lights only the floor: where the drone
+    and its slabs are, it's left clear, so the light doesn't wash over them."""
+    w, h = DW + 4 * TILE, DH + 4 * TILE
+    cv = Canvas(w, h)
+    yy, xx = np.mgrid[0:h, 0:w].astype(float)
+    cx, cy = 2 * TILE + SEED["cx"], 2 * TILE + GROUND + 10
+    ang = np.arctan2((yy - cy) / 64, (xx - cx) / 186)
+    wob = 1 + .07 * np.sin(ang * 7 + .5) + .05 * np.sin(ang * 13)          # a ragged edge, not a disc
+    e = (((xx - cx) / 176) ** 2 + ((yy - cy) / 58) ** 2) / wob ** 2
+    lx, ly = 2 * TILE + LENS[0], 2 * TILE + GROUND + 4
+    lens = ((xx - lx) / 56) ** 2 + ((yy - ly) / 22) ** 2
+    cv.paint((e <= 1) | (lens <= 1), C("violet", 0))
+    cv.paint(lens <= .45, C("violet", 1))
+    solid = np.zeros((h, w), bool)
+    solid[2 * TILE:2 * TILE + DH, 2 * TILE:2 * TILE + DW] = drone.a[:, :, 3] > 0
+    cv.a[solid] = 0
+    return cv
+
+
+def scrap_props():
+    """Scrap thrown off your fighter in the crash, flat on the cavern floor, in the menu art's colours:
+    wreck_plate (2 x 1 tiles: a torn hull plate with its orange stripe) and wreck_wing (3 x 2: a wing tip, bent)."""
+    out = {}
+    cv = Canvas(48, 24)
+    plate = poly([(4, 14), (26, 6), (44, 10), (38, 20), (12, 22)], 48, 24)
+    cv.paint(plate, FCREAM[2])
+    cv.paint(plate & ~sh(plate, 0, 2), FCREAM[3])
+    cv.paint(plate & ~sh(plate, -2, -2) & ~sh(plate, 0, 2), FCREAM[4])
+    cv.paint(plate & lines([(8, 16), (40, 10)], 3, 48, 24), (0xed, 0x65, 0x1c, 255))
+    cv.paint(plate & lines([(8, 18), (40, 12)], 1, 48, 24), (0xae, 0x47, 0x1d, 255))
+    for x, y in ((14, 18), (30, 12)):
+        cv.a[y:y + 2, x:x + 2] = FCREAM[1]
+    cv.paint(edge(plate), FO)
+    out["wreck_plate"] = cv
+    cv = Canvas(72, 48)
+    wing = poly([(4, 34), (40, 10), (66, 6), (54, 22), (30, 40), (10, 44)], 72, 48)
+    bend = lines([(22, 40), (46, 12)], 1, 72, 48) & wing
+    cv.paint(wing, FCREAM[2])
+    cv.paint(wing & ~sh(wing, 0, 3), FCREAM[3])
+    cv.paint(wing & ~sh(wing, -3, -3) & ~sh(wing, 0, 3), FCREAM[4])
+    cv.paint(wing & lines([(26, 30), (56, 12)], 4, 72, 48), (0xed, 0x65, 0x1c, 255))
+    cv.paint(bend, FCREAM[1])
+    torn = wing & (poly([(0, 30), (16, 24), (20, 48), (0, 48)], 72, 48))
+    cv.paint(torn, C("rock", 1))
+    cv.paint(edge(wing), FO)
+    out["wreck_wing"] = cv
+    rnd = random.Random(71)
+    cv = Canvas(48, 24)
+    for cx, cy, rx, ry in ((14, 15, 9, 6), (32, 13, 8, 6), (24, 19, 7, 4), (41, 18, 5, 4), (7, 19, 4, 3)):
+        stone(cv, rock_pts(cx, cy, rx, ry, rnd, 6), MOONROCK if rnd.random() < .7 else BASALT, rnd)
+    out["rock_chips"] = cv
+    return out
+
+
 def main():
     wreck = crash_wreck()
     wreck.save(os.path.join(LUNAR, "crash_wreck.png"))
     drone, body, veins = mother_drone()
     drone.save(os.path.join(LUNAR, "mother_drone.png"))
     wake, pulse = drone_strips(body, veins)
+    for name, cv in scrap_props().items():
+        cv.save(os.path.join(LUNAR, name + ".png"))
     b, at = beam()
-    out = {"mother_drone_wake": wake, "mother_drone_pulse": pulse, "crash_beam": b}
+    out = {"mother_drone_wake": wake, "mother_drone_pulse": pulse, "crash_beam": b, "light_shaft": light_shaft(),
+           "motes": motes(), "grit": grit(), "drone_glow": drone_glow(drone)}
     os.makedirs(os.path.join(ROOT, "art", "prologue"), exist_ok=True)
     for name, cv in out.items():
         check(cv, name)
         cv.save(os.path.join(ROOT, "art", "prologue", name + ".png"))
-    print("beam at tile", at, "size", b.w // 4, b.h)
+    print("beam at tile", at, "size", b.w // 4, b.h, "canopy", CANOPY)
     if "--preview" in sys.argv:
         s = Image.new("RGBA", (DW * 2 + 20, DH + 130), (60, 56, 80, 255))
         s.alpha_composite(wreck.image(), (0, 0))

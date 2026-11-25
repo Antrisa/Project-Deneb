@@ -12,10 +12,13 @@ drawn by tools/dev/crash_site_art.py). This draws what goes over the picture pan
   glyphs.png            the star-glyphs wheeling round you, 12 frames (640 x 360): each ring turns its own way, each
                         glyph spins and twinkles;  glyph_fold.png: folding into the mark, 8 frames;  glyph_mark.png
   sparks.png            sparks from the torn hull, 6 frames;  blink.png: the red emergency light, 2 frames
-  star_front.png, star_back.png    the Wandering Star (the game's starter ship) torn in two for the blind jump
-  flame.png             an engine flame, 4 frames;  shield.png: Ivan's shield taking a hit, 6 frames
-  streak.png            your ship burning in, 4 frames;  impact.png: the impact flash and dust, 8 frames
-  bolt_green.png, bolt_teal.png, jump_streaks.png
+  fighter_front.png, fighter_back.png    the Wandering Star as the main menu draws her (title/scene/fighter.png,
+                        shown 3x like the menu) torn in two across her body for the blind jump
+  fighter_flame.png     her engine flame, down and left from each port, 4 frames;  shield.png: Ivan's shield, 6 frames
+  approach.png          the moon you fall to, put together from the main menu's own art (starfield, gas giant, base)
+  streak.png            your ship burning in, 4 frames;  impact.png: flash, fireball, thrown rock and dust, 10 frames
+  bolt_green.png, bolt_teal.png, bolt_teal_d.png (along her heading), chip.png (a tumbling scrap of hull),
+  rock_fg_a.png, rock_fg_b.png (near asteroids drifting past, in the backdrop's own colours), jump_streaks.png
 and art/portrait_motherdrone.png. Run: python3 tools/dev/prologue_art.py [--preview]
 """
 import math
@@ -275,39 +278,67 @@ def blink_frames():
 
 
 # ---------------------------------------------------------------- the ambush and the jump
-def star_halves():
-    """The Wandering Star (the starter ship) torn in two along a ragged line behind the canopy."""
-    src = np.array(Image.open(os.path.join(ROOT, "art", "ships", "starter", "hull.png")).convert("RGBA"))
+# ---------------------------------------------------------------- the main menu's fighter (Zachary, 24 Nov: "you can
+# make the fighter look like the main menu still"): title/scene/fighter.png, shown 3x in the panels as the menu does
+TITLE_FIGHTER = os.path.join(ROOT, "title", "scene", "fighter.png")
+NOZZLES = ((13.5, 28.5), (20.5, 34.5))        # its two engine ports, in its own pixels; exhaust runs down and left
+FLAME_BASE = (16, 3)                           # where a flame frame attaches to a port
+FIGHTER_OUTLINE = (0x2c, 0x23, 0x36, 255)      # the menu art's outline colour
+
+
+def fighter_halves():
+    """The menu fighter torn in two across its body, between the canopy and the engines (72 x 49 each)."""
+    src = np.array(Image.open(TITLE_FIGHTER).convert("RGBA"))
     h, w = src.shape[:2]
-    rnd = random.Random(31)
-    cut = np.array([176 + rnd.randint(-7, 7) + 6 * math.sin(y * .2) for y in range(h)])
-    xx = np.arange(w)[None, :]
-    front_m = (xx >= cut[:, None]) & (src[:, :, 3] > 0)
-    back_m = (xx < cut[:, None]) & (src[:, :, 3] > 0)
+    rnd = random.Random(37)
+    d = np.array([.884, -.467])
+    c = np.array([36.0, 21.0])
+    yy, xx = np.mgrid[0:h, 0:w]
+    along = (xx - c[0]) * d[0] + (yy - c[1]) * d[1]
+    across = (xx - c[0]) * -d[1] + (yy - c[1]) * d[0]
+    jag = np.array([rnd.uniform(-1.6, 1.6) for _ in range(80)])
+    cutline = jag[np.clip((across + 40).astype(int), 0, 79)]
+    solid = src[:, :, 3] > 0
+    front_m = solid & (along > cutline)
+    back_m = solid & (along <= cutline)
     front, back = Canvas(w, h), Canvas(w, h)
     front.a[front_m] = src[front_m]
     back.a[back_m] = src[back_m]
-    for cv, m, side in ((front, front_m, 1), (back, back_m, -1)):
-        rim = m & ~sh(m, side * 3, 0)            # the torn edge: dark ripped metal, a hot line, ribs
-        cv.paint(rim, C("rock", 1))
-        cv.paint(rim & ~sh(m, side * 1, 0), C("copper", 3))
-        for y in np.nonzero(rim.any(axis=1))[0][::9]:
-            xs = np.nonzero(rim[y])[0]
-            x = xs[0] if side > 0 else xs[-1]
-            cv.paint(lines([(x, y), (x - side * 5, y + 1)], 2, w, h), C("rock", 2))
+    for cv, m in ((front, front_m), (back, back_m)):
+        near = np.abs(along - cutline) < 2.2
+        rim = m & near
+        cv.paint(rim, C("rock", 1))                                   # the ship's ribs, bared
+        cv.paint(rim & ~edge(m) & (np.abs(along - cutline) < 1.8), C("copper", 3))     # still hot
+        cv.paint(edge(m) & near, FIGHTER_OUTLINE)                     # the menu art's own outline on the torn edge
     return front, back
 
 
-def flame_frames():
+def fighter_flame_frames():
+    """An engine flame for the menu fighter, pointing down and left from its port (4 frames, 18 x 14)."""
     frames = []
     for f in range(4):
-        cv = Canvas(34, 16)
-        ln = (22, 28, 24, 31)[f]
-        cv.paint(poly([(34, 2), (34, 14), (34 - ln, 8)], 34, 16), C("copper", 2))
-        cv.paint(poly([(34, 4), (34, 12), (34 - ln * .7, 8)], 34, 16), C("copper", 3))
-        cv.paint(poly([(34, 6), (34, 10), (34 - ln * .4, 8)], 34, 16), C("brass", 4))
+        cv = Canvas(18, 14)
+        ln = (13, 16, 14, 17)[f]
+        bx, by = FLAME_BASE
+        tip = (bx - ln * .86, by + ln * .5)
+        cv.paint(poly([(bx - 1, by - 2), (bx + 1, by + 2), tip], 18, 14), C("copper", 2))
+        cv.paint(poly([(bx - 1, by - 1), (bx, by + 1), (bx - ln * .6, by + ln * .35)], 18, 14), C("copper", 3))
+        cv.paint(poly([(bx - 1, by - 1), (bx, by), (bx - ln * .3, by + ln * .2)], 18, 14), C("brass", 4))
         frames.append(cv)
     return strip(frames)
+
+
+def approach():
+    """The moon you fall to, from the main menu's own art: its starfield (the green storm at its edge), the gas
+    giant, and Echo Landing on the moon's rim far off (640 x 360). The menu's art has its own colours."""
+    star_ = Image.open(os.path.join(ROOT, "title", "scene", "starfield.png")).convert("RGBA").crop((560, 100, 1200, 460))
+    planet = Image.open(os.path.join(ROOT, "title", "scene", "planet.png")).convert("RGBA")
+    star_.alpha_composite(planet.crop((0, 0, 330, 300)), (380, 0))
+    base = Image.open(os.path.join(ROOT, "title", "scene", "moon_base.png")).convert("RGBA")
+    star_.alpha_composite(base, (155, 140))
+    cv = Canvas()
+    cv.a = np.array(star_)
+    return cv
 
 
 def shield_frames():
@@ -332,50 +363,174 @@ def bolt(ramp):
     return cv
 
 
+AXIS = (.884, -.467)          # the menu fighter's nose points this way (up and right)
+
+
 def jump_streaks():
+    """Starlight smeared along your heading as space folds: long streaks up and to the right (640 x 360)."""
     cv = Canvas()
     rnd = random.Random(5)
-    for _ in range(60):
-        y = rnd.randint(4, H - 6)
-        x0 = rnd.randint(-200, W - 60)
-        ln = rnd.randint(60, 300)
-        col = rnd.choice((("cream", 4), ("cream", 3), ("glow", 3), ("violet", 4), ("glow", 4)))
+    dx, dy = AXIS
+    for _ in range(70):
+        x0, y0 = rnd.uniform(-260, W), rnd.uniform(0, H + 140)
+        ln = rnd.uniform(70, 320)
+        col = rnd.choice((("cream", 4), ("cream", 3), ("glow", 3), ("violet", 4), ("glow", 4), ("violet", 3)))
         th = rnd.choice((1, 2, 2, 3))
-        cv.paint(poly([(x0, y), (x0 + ln, y), (x0 + ln, y + th), (x0, y + th)]), C(*col))
+        cv.paint(lines([(x0, y0), (x0 + dx * ln, y0 + dy * ln)], th), C(*col))
+        if th >= 2:                                       # a bright head on the thick ones
+            cv.paint(disc(x0 + dx * ln, y0 + dy * ln, 1.6), C("cream", 4))
+    return cv
+
+
+def bolt_diag(ramp):
+    """A bolt flying along the menu fighter's heading, up and to the right (22 x 14)."""
+    cv = Canvas(22, 14)
+    a, b = (2, 12), (2 + 18 * AXIS[0], 12 + 18 * AXIS[1])
+    cv.paint(lines([a, b], 4, 22, 14), C(ramp, 2))
+    cv.paint(lines([(a[0] + 4, a[1] - 2), b], 2, 22, 14), C(ramp, 4))
+    cv.paint(disc(b[0], b[1], 1.5, 22, 14), C("cream", 4))
+    return cv
+
+
+def chip_frames():
+    """A scrap of hull plating tumbling away from a hit (4 frames, 12 x 12)."""
+    frames = []
+    for f in range(4):
+        cv = Canvas(12, 12)
+        a = f * math.pi / 4
+        pts = [(6 + math.cos(a + k) * r, 6 + math.sin(a + k) * r * .7) for k, r in ((0, 5), (1.9, 4), (3.3, 5), (4.6, 3.5))]
+        m = poly(pts, 12, 12)
+        cv.paint(m, C("cream", 3))
+        cv.paint(m & ~sh(m, 1, 1), C("cream", 4))
+        cv.paint(m & ~sh(m, -1, -1), C("copper", 2) if f % 2 else C("cream", 2))
+        cv.paint(edge(m), OUT)
+        frames.append(cv)
+    return strip(frames)
+
+
+ROCK_TONES = ("47223b", "814347", "b86a51", "e7b077", "ffe0aa")     # the asteroid backdrop's own rock colours
+
+
+def rock_fg(seed, w, h):
+    """A near asteroid drifting past, shaded like the backdrop's rocks (lit from the top left, 4 tones and a glint,
+    a crater or two), but closer, so bigger and sharper. Off the master palette: these are the backdrop's colours."""
+    rnd = random.Random(seed)
+    yy, xx = np.mgrid[0:h, 0:w].astype(float)
+    u, v = (xx + .5 - w / 2) / (w / 2 - 2), (yy + .5 - h / 2) / (h / 2 - 2)
+    ang = np.arctan2(v, u)
+    r = np.hypot(u, v)
+    lump = 1 + sum(rnd.uniform(.04, .09) * np.sin(ang * k + rnd.uniform(0, 6)) for k in (2, 3, 5))
+    m = r <= lump * .96
+    z = np.sqrt(np.clip(1 - (r / lump) ** 2, 0, 1))
+    nx, ny = u, v
+    for _ in range(3):              # a few broad facets: dents in the surface
+        cx, cy, cr = rnd.uniform(-.5, .5), rnd.uniform(-.5, .5), rnd.uniform(.25, .45)
+        d = np.hypot(u - cx, v - cy)
+        k = np.clip(1 - d / cr, 0, 1)
+        nx = nx - (u - cx) * k * 1.4
+        ny = ny - (v - cy) * k * 1.4
+    lum = (-nx * .5 - ny * .65 + z * .55)
+    lum = np.round(lum * 3) / 3                       # flat facets, as the backdrop's rocks have
+    idx = np.digitize(lum, [-.2, .25, .62, .95])
+    cv = Canvas(w, h)
+    for i, hx in enumerate(ROCK_TONES):
+        cv.paint(m & (idx == i), (int(hx[0:2], 16), int(hx[2:4], 16), int(hx[4:6], 16), 255))
+    for k in range(2 if w > 60 else 1):         # one big crater, one small one off to the side (not a face)
+        cx, cy = (w * .58, h * .56) if k == 0 else (w * .3, h * .38)
+        cr = w * (.11 if k == 0 else .05)
+        crater = disc(cx, cy, cr, w, h) & binary_erosion(m, iterations=3)
+        cv.paint(crater, (0x81, 0x43, 0x47, 255))
+        cv.paint(crater & ~sh(crater, 2, 2), (0x47, 0x22, 0x3b, 255))
+        cv.paint(crater & ~sh(crater, -2, -2) & ~sh(crater, 2, 2), (0xb8, 0x6a, 0x51, 255))
+    despeckle(cv, m, passes=2)
     return cv
 
 
 # ---------------------------------------------------------------- the uncharted moon
 def streak_frames():
-    """Your ship's front half burning in: a white-hot head and a fire tail up and left of it (4 frames, 72 x 32)."""
+    """Your ship's front half burning in: a white-hot head in a shell of fire, a long tail that flickers and breaks
+    into sparks, and a smoke trail behind it (4 frames, 112 x 48; the head at about 100, 34)."""
     frames = []
+    rnd = random.Random(41)
+    hx, hy = 100, 34
+    dx, dy = math.cos(math.radians(25)), math.sin(math.radians(25))
+    px, py = -dy, dx
+
+    def along(t, off):
+        return (hx - dx * t + px * off, hy - dy * t + py * off)
     for f in range(4):
-        cv = Canvas(72, 32)
+        cv = Canvas(112, 48)
+        # smoke behind, broken into puffs that drift with the frame
+        for k in range(4):
+            t = 46 + k * 10 + (f * 3) % 10
+            r = 3 + k * .6
+            cx, cy = along(t, (k % 2 * 2 - 1) * 2)
+            if cy - r < 1 or cx - r < 1:
+                continue
+            m = disc(cx, cy, r, 112, 48)
+            cv.paint(m, C("rock", 1) if k > 2 else C("rock", 2))
+            cv.paint(m & ~sh(m, 1, 1), C("rock", 2) if k > 2 else C("rock", 3))
         wob = (0, 2, 1, 3)[f]
-        cv.paint(poly([(0, wob), (10, 0), (66, 19), (60, 28), (50, 28)], 72, 32), C("berry", 2))
-        cv.paint(poly([(8, 2 + wob), (16, 3), (66, 20), (56, 25)], 72, 32), C("copper", 3))
-        cv.paint(poly([(24, 9), (32, 9 + wob // 2), (66, 20), (60, 23)], 72, 32), C("brass", 4))
-        head = poly([(56, 17), (66, 15), (71, 20), (66, 27), (57, 25)], 72, 32)
+        cv.paint(poly([along(0, -8), along(40, -6), along(70 + wob * 3, -2), along(78 + wob * 2, 0), along(66, 4), along(36, 7), along(0, 9)], 112, 48), C("berry", 2))
+        cv.paint(poly([along(2, -6), along(30, -4), along(56 + wob * 3, -1), along(60, 1), along(28, 5), along(2, 7)], 112, 48), C("copper", 3))
+        cv.paint(poly([along(4, -4), along(36 + wob * 2, 0), along(4, 4)], 112, 48), C("brass", 4))
+        for k in range(5):                                # sparks shed from the tail
+            t = rnd.uniform(20, 70)
+            x, y = along(t, rnd.uniform(-8, 8))
+            cv.paint(disc(x, y, 1, 112, 48), C("brass", 4) if k % 2 else C("copper", 4))
+        head = poly([along(-4, 0), along(2, -6), along(10, -4), along(10, 4), along(2, 6)], 112, 48)
         cv.paint(head, C("cream", 4))
-        cv.paint(edge(head), C("copper", 2))
+        cv.paint(edge(head), C("copper", 3))
+        cv.paint(disc(hx - 2, hy - 1, 2, 112, 48), C("cream", 4))
         frames.append(cv)
     return strip(frames)
 
 
 def impact_frames():
-    """The impact on the moon's face: a flash, then a dust plume rising and spreading (8 frames, 96 x 72)."""
+    """The strike on the moon's face: a white flash, a fireball, rock thrown out on arcs, then a dust plume that
+    rises, spreads and thins (10 frames, 160 x 112; ground zero at 80, 96). Nothing reaches the frame's edge."""
     frames = []
-    for f in range(8):
-        cv = Canvas(96, 72)
-        if f < 2:
-            cv.paint(disc(48, 56, 10 + f * 10, 96, 72), C("cream", 4))
-            cv.paint(disc(48, 56, 6 + f * 6, 96, 72), C("brass", 4))
-        else:
+    rnd = random.Random(43)
+    W2, H2, gx, gy = 160, 112, 80, 96
+    chunks = [(rnd.uniform(-2.9, -.25), rnd.uniform(26, 50), rnd.uniform(1.5, 3)) for _ in range(9)]
+    puffs = ((-16, -6, 11), (16, -8, 12), (0, -16, 14), (-32, 0, 8), (32, 0, 9), (-8, -30, 10), (10, -32, 9))
+    for f in range(10):
+        cv = Canvas(W2, H2)
+        if f >= 2:                                            # the dust: puffs rising and spreading, darkening
             k = f - 2
-            for dx, dy, r in ((-14, -4, 10), (12, -6, 12), (0, -14, 14), (-24, 2, 8), (24, 2, 9)):
-                m = disc(48 + dx * (1 + k * .25), 56 + dy * (1 + k * .4), r + k * 3, 96, 72)
-                cv.paint(m, C("rock", 2) if k < 4 else C("rock", 1))
-                cv.paint(m & ~sh(m, 2, 2), C("rock", 3) if k < 4 else C("rock", 2))
+            dark = k >= 5
+            for ox, oy, rr in puffs:
+                if oy < -20 and k < 2:
+                    continue
+                cy = gy + oy * (1 + k * .14) - k * 1.5
+                r = min(rr + k * 1.8, 22) * (1 - max(0, f - 7) * .2)      # thinning away at the end
+                cy = min(max(cy, r + 3), H2 - r - 4)
+                cx = min(max(gx + ox * (1 + k * .16), r + 3), W2 - r - 4)
+                m = disc(cx, cy, r, W2, H2)
+                cv.paint(m, C("rock", 1) if dark else C("rock", 2))
+                cv.paint(m & ~sh(m, 3, 3), C("rock", 2) if dark else C("rock", 3))
+                cv.paint(m & ~sh(m, 5, 6) & ~sh(m, 2, 2), C("rock", 3) if dark else C("rock", 4))
+        if f <= 1:
+            r = 8 + f * 10
+            cv.paint(disc(gx, gy - 12, r + 6, W2, H2), C("brass", 4))
+            cv.paint(disc(gx, gy - 12, r, W2, H2), C("cream", 4))
+        if 1 <= f <= 4:                                       # the fireball, rolling up out of the dust
+            k = f - 1
+            for ox, oy, rr in ((0, -10, 13), (-11, -4, 9), (11, -4, 9), (0, -22, 8)):
+                m = disc(gx + ox * (1 + k * .25), gy + oy * (1 + k * .35), max(3, rr + 2 - k * 2), W2, H2)
+                cv.paint(m, C("copper", 2) if k > 1 else C("copper", 3))
+                cv.paint(m & ~sh(m, 2, 3), C("copper", 3) if k > 1 else C("brass", 3))
+                cv.paint(m & ~sh(m, 4, 5), C("brass", 4) if k < 2 else C("copper", 4))
+        for a, sp, rr in chunks:                              # rock thrown out on arcs
+            if 1 <= f <= 7:
+                t = f / 7
+                x = gx + math.cos(a) * sp * t * 1.5
+                y = gy - 6 + math.sin(a) * sp * t * 1.3 + 40 * t * t
+                if 4 < x < W2 - 5 and 4 < y < H2 - 5:
+                    m = disc(x, y, rr, W2, H2)
+                    cv.paint(m, C("rock", 1))
+                    cv.paint(m & ~sh(m, 1, 1), C("rock", 3))
+        assert not cv.a[0, :, 3].any() and not cv.a[-1, :, 3].any() and not cv.a[:, 0, 3].any() and not cv.a[:, -1, 3].any(), f
         frames.append(cv)
     return strip(frames)
 
@@ -425,19 +580,20 @@ def portrait():
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
-    front, back = star_halves()
+    ffront, fback = fighter_halves()
     out = {
+        "fighter_front": ffront, "fighter_back": fback, "fighter_flame": fighter_flame_frames(), "approach": approach(),
+        "bolt_teal_d": bolt_diag("glow"), "chip": chip_frames(), "rock_fg_a": rock_fg(3, 96, 70), "rock_fg_b": rock_fg(8, 40, 30),
         "glyphs": glyph_frames(), "glyph_fold": glyph_fold_frames(), "glyph_mark": glyph_mark(),
-        "sparks": spark_frames(), "blink": blink_frames(), "star_front": front, "star_back": back,
-        "flame": flame_frames(), "shield": shield_frames(), "streak": streak_frames(), "impact": impact_frames(),
+        "sparks": spark_frames(), "blink": blink_frames(), "shield": shield_frames(), "streak": streak_frames(), "impact": impact_frames(),
         "bolt_green": bolt("leaf"), "bolt_teal": bolt("glow"), "jump_streaks": jump_streaks(),
     }
     for name, c in out.items():
-        if name not in ("star_front", "star_back"):     # those two are the game's own ship art, cut in two
+        if name not in ("fighter_front", "fighter_back", "approach", "rock_fg_a", "rock_fg_b"):    # the game's own colours
             check(c, name)
         c.save(os.path.join(OUT_DIR, name + ".png"))
     for old in ("cavern", "drone_lit", "drone_wake", "drone_pulse", "lens", "violet_light", "beam", "motes", "drip",
-                "moon", "fall_streak"):
+                "moon", "fall_streak", "star_front", "star_back", "flame"):
         p = os.path.join(OUT_DIR, old + ".png")
         if os.path.exists(p):
             os.remove(p)

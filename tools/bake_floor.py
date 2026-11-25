@@ -934,7 +934,7 @@ def cave_edges(key):
         return LUSH_EDGES if "lush" in key else STEAM_EDGES if ("steam" in key or key == "cav_45") else CAVE_EDGES
     if key == "lake":
         return LAKE_EDGES
-    return CAVE_EDGES if key in ("mine", "tunnels") else None
+    return CAVE_EDGES if key in ("mine", "tunnels", "crash_site") else None     # crash_site: the prologue's cavern
 
 # Cave atmosphere (22 Nov): the colour of the deep shadow, of the haze that hangs in the air, and of the light
 # from the wall lanterns; which floor characters are bare rock (rubble and grit go only there); and the lights

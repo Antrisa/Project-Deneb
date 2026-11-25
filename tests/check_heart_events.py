@@ -119,6 +119,28 @@ problems = []
 count = {"steps": 0, "lines": 0}
 board_ids = set()   # the sprites on a scene's picture board so far
 world_ids = set()   # ... and in the world ("wsprite")
+SPRITE_OPTS = {"flip", "frames", "fps", "loop", "alpha", "z", "scale", "bob", "add"}
+
+
+def check_sprite_opts(ev_id, op, path, opts):
+    """A board or world sprite's options (scripts/cutscene.gd _sprite_opts): known keys, a whole-number scale (board
+    only), a [pixels, seconds] bob, and a strip whose width the frame count divides."""
+    for k in opts:
+        if k not in SPRITE_OPTS or (k == "scale" and op == "wsprite"):
+            bad(ev_id, "%s: unknown option %r" % (op, k))
+    sc = opts.get("scale", 1)
+    if not (isinstance(sc, int) and sc >= 1):
+        bad(ev_id, "%s: scale %r isn't a whole number" % (op, sc))
+    if "bob" in opts and not (isinstance(opts["bob"], list) and len(opts["bob"]) == 2):
+        bad(ev_id, "%s: bob should be [pixels, seconds]" % op)
+    n = opts.get("frames", 1)
+    try:
+        from PIL import Image
+        w = Image.open(ROOT / path.replace("res://", "")).size[0]
+        if w % n:
+            bad(ev_id, "%s: %s is %d wide, which %d frames don't divide" % (op, path, w, n))
+    except ImportError:
+        pass
 
 
 def bad(ev_id, msg):
@@ -172,6 +194,8 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         elif op == "wsprite":
             if s[2] and not (ROOT / s[2].replace("res://", "")).exists():
                 bad(ev_id, "wsprite: no picture %s" % s[2])
+            elif s[2]:
+                check_sprite_opts(ev_id, op, s[2], s[5] if len(s) > 5 else {})
             if s[2]: world_ids.add(s[1])
             else: world_ids.discard(s[1])
         elif op in ("wmove", "wfade"):
@@ -183,6 +207,8 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
             if op == "bsprite":
                 if path: board_ids.add(s[1])
                 else: board_ids.discard(s[1])
+                if path and (ROOT / path.replace("res://", "")).exists():
+                    check_sprite_opts(ev_id, op, path, s[5] if len(s) > 5 else {})
         elif op in ("bmove", "bfade"):
             if s[1] not in board_ids: bad(ev_id, "%s: no sprite %r on the board" % (op, s[1]))
         elif op == "bmoves":

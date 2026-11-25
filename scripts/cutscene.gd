@@ -49,14 +49,18 @@ extends Node
 #                                      and its sprites away (they are gone when the scene ends anyway)
 #   ["bsprite", id, path, x, y, opts]  puts a sprite on the board; opts (all optional): "flip" (mirrored), "frames" and
 #                                      "fps" (a strip of frames that plays), "loop" (false: plays once and stays on the
-#                                      last), "alpha", "z" (higher in front); path "" takes it away
+#                                      last), "alpha", "z" (higher in front), "scale" (a whole number: the main
+#                                      menu's fighter is shown 3x, as the menu shows it), "bob" ([pixels, seconds]: a
+#                                      slow float; sprites with the same bob move as one), "add" (true: drawn as light,
+#                                      added to what's under it); path "" takes it away
 #   ["bmove", id, x, y, seconds, ease] moves it there and waits ("in" speeds up, "out" slows down, else even);
-#                                      ["bmoves", [[id, x, y], ...], seconds, ease] moves several at once
+#                                      ["bmoves", [[id, x, y], ...], seconds, ease] moves several at once; either
+#                                      with "nowait" after the ease goes on at once (a rock drifting past)
 #   ["bfade", id, alpha, seconds]      fades it and waits; ["bfade", id, alpha, seconds, "nowait"] goes on at once
 #   ["flash", hex, seconds]            the screen flashes that colour, then clears
 #   "shake" shakes the board too. ["board", "clear"] puts up an empty board: sprites over the map (the glyphs).
 # Sprites in the world (24 Nov: the crash site), placed by tile, at the map's art scale, over the props:
-#   ["wsprite", id, path, tx, ty, opts]  as "bsprite", its top-left at tile tx, ty (fractions are fine)
+#   ["wsprite", id, path, tx, ty, opts]  as "bsprite" (but no "scale"), its top-left at tile tx, ty (fractions fine)
 #   ["wmove", id, tx, ty, seconds, ease]  ["wfade", id, alpha, seconds] (or "nowait")
 # Sound under the scene (24 Nov: "some random music plays over the whole thing"):
 #   ["music", mode]       "silence" (the music fades out and stays out), a song's id (music_director.gd SONGS), or
@@ -96,6 +100,9 @@ var _board_layer: CanvasLayer   # the picture panels: under the fade (9) and the
 var _board: Node2D
 var _board_bg: Sprite2D
 var _board_sprites := {}        # id -> Sprite2D
+var _bob := {}                  # sprite id ("w:" + id for world sprites) -> [pixels, seconds, base offset y]
+var _bob_time := 0.0
+var _add_mat: CanvasItemMaterial = null
 var _board_anim := {}           # id -> [fps, seconds so far, loop]
 var _flash: ColorRect
 var board_box_top := true       # the talk box over a picture panel: at the top, unless the scene says "box": "bottom"
@@ -382,9 +389,16 @@ func _step(s: Array) -> void:
 		"bsprite":
 			_board_sprite(str(s[1]), str(s[2]), float(s[3]) if s.size() > 3 else 0.0, float(s[4]) if s.size() > 4 else 0.0, s[5] if s.size() > 5 else {})
 		"bmove":
-			await _board_move([[s[1], s[2], s[3]]], float(s[4]), str(s[5]) if s.size() > 5 else "")
+			# ["bmove", id, x, y, seconds, easing?, "nowait"?]: "nowait" lets the scene go on while it glides
+			if s.size() > 6 and str(s[6]) == "nowait":
+				_board_move([[s[1], s[2], s[3]]], float(s[4]), str(s[5]))
+			else:
+				await _board_move([[s[1], s[2], s[3]]], float(s[4]), str(s[5]) if s.size() > 5 else "")
 		"bmoves":
-			await _board_move(s[1], float(s[2]), str(s[3]) if s.size() > 3 else "")
+			if s.size() > 4 and str(s[4]) == "nowait":
+				_board_move(s[1], float(s[2]), str(s[3]))
+			else:
+				await _board_move(s[1], float(s[2]), str(s[3]) if s.size() > 3 else "")
 		"bfade":
 			var sp: Sprite2D = _board_sprites.get(str(s[1]))
 			if sp != null:
@@ -517,6 +531,15 @@ func _process(delta: float) -> void:
 		_shake_time -= delta
 		world.player._cam.offset = Vector2(randf_range(-_shake_px, _shake_px), randf_range(-_shake_px, _shake_px)) if _shake_time > 0.0 else Vector2.ZERO
 		_board.position = world.player._cam.offset.round()
+	_bob_time += delta
+	for id in _bob:
+		var bsp: Sprite2D = _board_sprites.get(id) if not str(id).begins_with("w:") else _world_sprites.get(str(id).substr(2))
+		if bsp == null:
+			continue
+		var bob: Array = _bob[id]
+		# a whole number of screen pixels, so sprites bobbing together (a ship and its flames) stay together
+		var px: float = round(sin(_bob_time * TAU / float(bob[1])) * float(bob[0]))
+		bsp.offset.y = float(bob[2]) + px / maxf(0.01, bsp.scale.y)
 	for id in _board_anim:
 		var a: Array = _board_anim[id]
 		var sp: Sprite2D = _board_sprites.get(id) if not str(id).begins_with("w:") else _world_sprites.get(str(id).substr(2))
@@ -534,6 +557,7 @@ func _board_sprite(id: String, path: String, x: float, y: float, opts: Dictionar
 		_board_sprites[id].queue_free()
 		_board_sprites.erase(id)
 		_board_anim.erase(id)
+		_bob.erase(id)
 	if path == "":
 		return
 	var sp := Sprite2D.new()
@@ -541,14 +565,29 @@ func _board_sprite(id: String, path: String, x: float, y: float, opts: Dictionar
 	sp.centered = false
 	sp.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sp.position = Vector2(x, y)
+	sp.scale = Vector2.ONE * float(opts.get("scale", 1.0))   # whole numbers only, so the pixels stay square
+	_sprite_opts(sp, id, opts)
+	_board.add_child(sp)
+	_board_sprites[id] = sp
+
+
+# The options board and world sprites share: flip, frames + fps + loop (an animation strip), alpha, z, bob
+# ([pixels, seconds]: a slow float up and down) and add (drawn as light, added to what's under it).
+func _sprite_opts(sp: Sprite2D, key: String, opts: Dictionary) -> void:
 	sp.flip_h = bool(opts.get("flip", false))
 	sp.hframes = maxi(1, int(opts.get("frames", 1)))
 	sp.modulate.a = float(opts.get("alpha", 1.0))
-	sp.z_index = int(opts.get("z", 0))
-	_board.add_child(sp)
-	_board_sprites[id] = sp
+	sp.z_index += int(opts.get("z", 0))
+	if bool(opts.get("add", false)):
+		if _add_mat == null:
+			_add_mat = CanvasItemMaterial.new()
+			_add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		sp.material = _add_mat
 	if sp.hframes > 1:
-		_board_anim[id] = [float(opts.get("fps", 8.0)), 0.0, bool(opts.get("loop", true))]
+		_board_anim[key] = [float(opts.get("fps", 8.0)), 0.0, bool(opts.get("loop", true))]
+	if opts.has("bob"):
+		var b: Array = opts["bob"]
+		_bob[key] = [float(b[0]), maxf(0.1, float(b[1])), sp.offset.y]
 
 
 func _board_move(moves: Array, seconds: float, easing: String) -> void:
@@ -575,6 +614,7 @@ func _world_sprite(id: String, path: String, tx: float, ty: float, opts: Diction
 		_world_sprites[id].queue_free()
 		_world_sprites.erase(id)
 		_board_anim.erase("w:" + id)
+		_bob.erase("w:" + id)
 	if path == "":
 		return
 	var sp := Sprite2D.new()
@@ -583,14 +623,10 @@ func _world_sprite(id: String, path: String, tx: float, ty: float, opts: Diction
 	sp.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sp.scale = Vector2.ONE * ART
 	sp.position = Vector2(tx * 16.0, ty * 16.0)
-	sp.flip_h = bool(opts.get("flip", false))
-	sp.hframes = maxi(1, int(opts.get("frames", 1)))
-	sp.modulate.a = float(opts.get("alpha", 1.0))
-	sp.z_index = 40 + int(opts.get("z", 0))          # over the props and people
+	sp.z_index = 40                                  # over the props and people
+	_sprite_opts(sp, "w:" + id, opts)
 	world.actors.add_child(sp)
 	_world_sprites[id] = sp
-	if sp.hframes > 1:
-		_board_anim["w:" + id] = [float(opts.get("fps", 8.0)), 0.0, bool(opts.get("loop", true))]
 
 
 func _world_clear() -> void:
@@ -598,6 +634,7 @@ func _world_clear() -> void:
 		sp.queue_free()
 	for id in _world_sprites:
 		_board_anim.erase("w:" + str(id))
+		_bob.erase("w:" + str(id))
 	_world_sprites = {}
 
 
@@ -609,7 +646,12 @@ func _board_clear() -> void:
 	for sp in _board_sprites.values():
 		sp.queue_free()
 	_board_sprites = {}
-	_board_anim = {}
+	for id in _bob.keys():                       # the world sprites' animations and bobbing carry on
+		if not str(id).begins_with("w:"):
+			_bob.erase(id)
+	for id in _board_anim.keys():
+		if not str(id).begins_with("w:"):
+			_board_anim.erase(id)
 	_board_bg.texture = null
 	_board.visible = false
 	_board.position = Vector2.ZERO
