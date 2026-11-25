@@ -219,6 +219,7 @@ var seated := false
 var seat_return := Vector2.ZERO
 var dialogue
 var wreck_sprite: Sprite2D
+var hud: CanvasLayer
 var hud_clock: Label
 var hud_goal: Label
 var hud_zone: Label
@@ -5024,7 +5025,7 @@ func _interact_clicked() -> void:
 # ---------------------------------------------------------------- UI and clock
 
 func _build_ui() -> void:
-	var hud := CanvasLayer.new()
+	hud = CanvasLayer.new()
 	hud.layer = 5
 	hud.scale = Vector2.ONE * UI_SCALE
 	add_child(hud)
@@ -5194,6 +5195,8 @@ func _process(delta: float) -> void:
 				_go_to(dest_area, Vector2i(int(dest[1]), int(dest[2])))
 		_check_bed()
 
+	# The wide cavern shots share the world camera with the zone and repair labels.
+	hud.visible = not (cutscene != null and cutscene.running and cutscene.event_id == "prologue")
 	var m := int(minutes)
 	hud_clock.text = "Day %d   %s   %d cr" % [day, clock_text(m), credits]
 	hud_zone.text = _zone_name()
