@@ -1415,8 +1415,8 @@ func _heart_event_done(id: String) -> void:
 		events_seen.append(id)
 	_snap_residents()
 	max_energy = _max_energy()      # Saffi's 8 makes the bar longer at once
-	if id == "welcome":
-		_save_game()      # the hoe, the can and the seeds
+	if id == "welcome" or id == "station_history":
+		_save_game()      # the hoe, the can and the seeds; S.A.R.A.'s history plays once
 	elif id == "warden_found":
 		if not custodians_found.has("warden"):
 			custodians_found.append("warden")
@@ -2462,8 +2462,8 @@ func _pay_repair() -> void:
 func _look_at_ship() -> void:
 	var lines: Array
 	if repair_stage == 0:
-		lines = ["What is left of it. The fold drive is gone and half the hull went with it.",
-				"It isn't going anywhere. Not yet."]
+		lines = ["What is left of her. One wing gone, the hull holed in the crash, and the fold drive burnt out by the blind jump.",
+				"Tikka can mend her, for scrip and parts. She isn't going anywhere. Not yet."]
 	elif repair_stage == 1:
 		lines = ["The hull is sealed. From some angles it looks like a ship again."]
 	elif repair_stage == 2:
@@ -5161,6 +5161,8 @@ func _process(delta: float) -> void:
 		hotel.tick(delta)
 		if _welcome_due():
 			_welcome_visit()
+		elif _station_history_due():
+			cutscene.play("station_history")
 		elif _custodians_due():
 			cutscene.play("custodians_wake")
 		elif _warden_due():
@@ -6485,6 +6487,13 @@ var custodians_found: Array = []      # the Custodians you can talk to (saved)
 var relic_given: Dictionary = {}      # "custodian/bundle/item" -> how many you've given (saved)
 var bundles_due: Array = []           # "custodian/bundle": finished today, fixed tonight (saved)
 var bundles_done: Array = []          # "custodian/bundle": fixed (saved)
+
+
+# S.A.R.A.'s history of the station (HeartEvents.SCENES "station_history", 25 Nov): the first time you walk onto the
+# Concourse after your first morning. Saves from before it that have already met the Custodians skip it.
+func _station_history_due() -> bool:
+	return welcomed and current_area == "main" and not events_seen.has("station_history") \
+		and not events_seen.has("custodians_wake") and cutscene != null and not cutscene.running
 
 
 func _custodians_due() -> bool:

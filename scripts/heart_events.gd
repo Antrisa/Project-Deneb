@@ -6390,7 +6390,14 @@ const EVENTS := {
 #   "welcome": your first morning (Zachary, 23 Nov): the first time you step out of your front door, Bram and Jasper
 #   come up the corridor from the Spaceport District, show you the shipping crate and the message pad, give you a
 #   hoe, a watering can, two hydroponic beds and seeds, and go off to work. Their lines are from upstream's visit,
-#   restaged outside (main.gd _welcome_visit); the new lines are drafts by Claude.
+#   restaged outside (main.gd _welcome_visit); the new lines are drafts by Claude. Since 25 Nov (Zachary: "set the
+#   scene a little more") they start with your ship: short a wing in the Shuttle Bay, and Tikka can mend her, but
+#   for scrip and parts (main.gd REPAIRS), so that's what the money is for.
+#   "station_history": the first time you walk onto the Concourse after that, S.A.R.A. stops you at her plaza pad
+#   and tells you what the station was (Zachary, 25 Nov: "a little history about the station, its Terran military
+#   origins"): Echo Station, Signal Reception Annex 4, a Navy listening post and munitions plant dug into the moon in
+#   the war; the Navy leaving under the treaty forty years ago; the refugees she let in; the Landing Accord. Her
+#   orders are only hinted at (The Secret of Annex 4 tells them). Lines by Claude, from Lore Bible V4 section 3.
 const SCENES := {
 	"welcome": {
 		"who": "Bram", "hearts": 0, "title": "Your First Morning",
@@ -6409,8 +6416,16 @@ const SCENES := {
 			["pose", "Bram", ""],
 			["emote", "Jasper", "hello"], ["pose", "Jasper", "wave"],
 			["say", "Jasper", ["[happy] And I am Jasper. Enchanté. Welcome to the Landing."]],
+			["pose", "Jasper", "talk"],
+			["say", "Jasper", ["[sad] We watched them bring your ship up on the crane. Short a wing, and smoking like my first soufflé.",
+				"Freya and Tikka put her in the Shuttle Bay. She is... resting."]],
 			["pose", "Jasper", ""],
+			["emote", "player", "sad"],
 			["pose", "Bram", "talk"],
+			["say", "Bram", ["Tikka can put her right. She's our chief engineer: she keeps the air in this station, so one fighter won't scare her.",
+				"[sad] But she can't do it for nothing. She'll want scrip, and parts: hull plates and coil wire, a good pile of both.",
+				"Plates come from iron and wire from copper, and both come out of Job's mine. You'll be busy."]],
+			["emote", "player", "question"],
 			["say", "Bram", ["S.A.R.A. asked us to show you the ropes. Quick version: the Landing runs on scrip, and you earn it.",
 				"Cut ore in Job's mine and smelt it, grow crops in the agri dome, or salvage what the void leaves lying about.",
 				"Everybody buys their own kind of thing: Tikka in Engineering takes metal and parts, Jasper takes crops, Job takes pretty rocks."]],
@@ -6450,13 +6465,74 @@ const SCENES := {
 			["pose", "Jasper", ""],
 			["emote", "player", "joy"],
 			["face", "Bram", "u"],
-			["say", "Bram", ["Your field's in the agri dome, up the corridor to the north. Talk to any of us at work to shop."]],
+			["say", "Bram", ["Your field's in the agri dome, up the corridor to the north. Talk to any of us at work to shop.",
+				"And when you've the scrip and the parts, Tikka's on the Engineering Level. Your ship isn't going anywhere."]],
 			["face", "Bram", "player"], ["pose", "Bram", "wave"],
 			["say", "Bram", ["[happy] Good luck, {name}."]],
 			["pose", "Jasper", "wave"],
 			["say", "Jasper", ["[happy] Six o'clock! The stew waits for no one."]],
 			["pose", "Bram", ""], ["pose", "Jasper", ""],
 			["walks", [["Bram", 55, 77], ["Jasper", 56, 78]]],
+			["wait", 0.3],
+		],
+	},
+	"station_history": {
+		"who": "Sara", "hearts": 0, "title": "Signal Reception",
+		"area": "main", "player": [122, 92, "u"],
+		"cast": [],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["The Concourse opens round you: a great round hall with the fountain at its heart, the shops tucked between its passages.",
+				"Your footsteps ring off a floor laid for far more boots than this."]],
+			["sfx", "sara_holo"],
+			["sara", "greeting"], ["emote", "Sara", "hello"],
+			["say", "Sara", ["[happy] There you are! Out of quarantine and on your own two feet. Welcome to the Concourse, {name}.",
+				"Everyone passes through here sooner or later. It's the closest thing the Landing has to a heart."], "S.A.R.A."],
+			["sara", "head_tilt"],
+			["say", "Sara", ["You're Terran, aren't you? Then you've noticed already. The straight lines, the stencilled numbers, far too many blast doors."], "S.A.R.A."],
+			["sara", "rotate_moon"],
+			["say", "Sara", ["Sixty years ago, in the middle of the war, the Terran Navy dug this station into the moon.",
+				"Echo Station, Signal Reception Annex 4. A listening post, hidden where the Junta's fleets passed by.",
+				"And under it, a munitions plant, to answer what we heard."], "S.A.R.A."],
+			["sara", "explain"],
+			["say", "Sara", ["This ring was the muster floor. Four hundred crew stood here every morning at oh-six-hundred.",
+				"The shops were stores and duty offices. Bram sells seeds where the quartermaster used to count shells."], "S.A.R.A."],
+			["sara", "clasp_hands"],
+			["say", "Sara", ["And I'm the Signal Analysis and Reception Administrator. S.A.R.A. I listened.",
+				"Twenty years of war, I listened to it. Every fleet, every distress call. You don't forget those."], "S.A.R.A."],
+			["emote", "player", "sad"],
+			["sara", "unfold_map"],
+			["say", "Sara", ["Then, forty years ago, the treaty. The space between the three powers became the Neutral Zone, and no navy may stay in it.",
+				"Not even ours. They packed up the whole station in a single night."], "S.A.R.A."],
+			["sara", "glitch_interrupt"], ["sfx", "zap"],
+			["say", "Sara", ["They left me here with the lights off. And with orders.",
+				"...I'd rather not talk about the orders on your first morning."], "S.A.R.A."],
+			["emote", "player", "question"],
+			["sara", "glitch_recover"],
+			["say", "Sara", ["[happy] Years later, a refugee transport came down in the crater with its engines on fire. I opened the doors.",
+				"I haven't closed them since."], "S.A.R.A."],
+			["sara", "swipe_panels"],
+			["say", "Sara", ["They painted over SIGNAL on my desk, so now it just says RECEPTION.",
+				"The listening room is the Observation Lounge, and the shell presses make chairs and kettles.",
+				"And the old barracks and drill hall in the Spaceport District will be a hotel, if I have anything to say about it. I do."], "S.A.R.A."],
+			["sara", "nod"],
+			["say", "Sara", ["We kept one rule from the Navy days, turned inside out: no flags inside the airlocks. Not the Empire's, the Junta's or the Collective's.",
+				"Out there, your licence makes you the Empire's hunter. In here, you're a neighbour."], "S.A.R.A."],
+			["choose", [
+				{"text": "\"Does the Empire know you're still here?\"", "steps": [
+					["sara", "thinking"],
+					["say", "Sara", ["As far as the Admiralty knows, Annex 4 is a cold rock with nothing in it.",
+						"[happy] I'd like to keep it that way. You won't tell them, will you? Neighbours don't."], "S.A.R.A."]]},
+				{"text": "\"A neighbour. I could get used to that.\"", "steps": [
+					["sara", "laugh"], ["emote", "Sara", "love"],
+					["say", "Sara", ["[happy] Most people do. It takes about a week, and one of Jasper's stews."], "S.A.R.A."]]},
+			]],
+			["sara", "summon_screen"],
+			["say", "Sara", ["Now. Tar'Besh is waiting for you at the museum, up on the Survey Level: the lift at the north end of the ring.",
+				"And Tikka's on the Engineering Level, down the south lift, when you're ready to talk about your ship."], "S.A.R.A."],
+			["sara", "greeting"],
+			["say", "Sara", ["[happy] I'm on pads all over the station. Just say my name. I'm always listening. ...Old habit."], "S.A.R.A."],
+			["emote", "player", "joy"],
 			["wait", 0.3],
 		],
 	},
