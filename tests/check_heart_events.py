@@ -189,8 +189,9 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
                 and not (op == "emote" and s[1] in SPECIAL):
             bad(ev_id, "%s: %r is not a resident" % (op, s[1]))
         if op in ("say", "say_timed"):
-            if op == "say_timed" and not (len(s) > 4 and isinstance(s[4], (int, float)) and s[4] > 0):
-                bad(ev_id, "say_timed: needs seconds a line")
+            if op == "say_timed" and not (len(s) > 4 and isinstance(s[4], list) and len(s[4]) == len(s[2])
+                                          and all(isinstance(v, (int, float)) and v > 0 for v in s[4])):
+                bad(ev_id, "say_timed: needs seconds for each line")
             if s[1] and s[1] not in RESIDENTS and s[1] not in VOICES:
                 bad(ev_id, "say: %r is not a resident" % s[1])
             for line in s[2]:

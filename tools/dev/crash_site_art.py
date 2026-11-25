@@ -6,10 +6,9 @@ walls and the light are the game's own. Props are drawn as props are: seen from 
 from the top left, a #5b332d outline, 3-5 shades a material, on the 24-pixel grid (shown at two-thirds), no ground
 shadow painted in. The fighter and her scrap keep the main menu's own colours and outline (title/scene/fighter.png).
 
-  crash_wreck.png       11 x 7 tiles: your fighter's front half as the main menu draws her, redrawn at three times
-                        the size (Scale3x, lines back to one pixel), torn across the body, scorched back from the
-                        tear, ribs and wires bared, a crack across the canopy, nose buried in a heap of basalt, rubble
-                        along her belly, the gouge she cut and the scrap she shed behind her
+  crash_wreck.png       11 x 7 tiles: your fighter (tools/dev/fighter_model.py) as Ivan left her, her starboard wing
+                        shot off and her back holed, the torn edges glowing, a crack across the canopy, nose buried in
+                        a heap of rock, rubble along her belly, the gouge she cut and the scrap she shed behind her
   mother_drone.png      13 x 8 tiles: the Mother-Drone, a silver seed lying on its side, half sunk in the floor: raised
                         ribs round it, a channel of engraved glyphs along its side, an aperture lens toward your ship,
                         dark veins, violet crystal grown out of the cracks in its shell and a crown of it where the tail
@@ -74,21 +73,22 @@ def rock_pts(cx, cy, rx, ry, rnd, n=7):
 
 # ---------------------------------------------------------------- the wreck
 CANOPY = [143.0, 80.0]                         # the canopy's middle on the wreck prop (set when it's drawn)
-TEAR = [98.0, 113.0]                           # the middle of her torn end on the prop (set when it's drawn)
-# her front half lying in the rubble: nose up and to the right as in the panels, dipped into the rock and listing,
-# from the game's own angle, three and a half times the panels' model scale (tools/dev/fighter_model.py)
-WRECK_VIEW = dict(scale=3.5, roll=.45, pitch=-.2, yaw=math.radians(33), elev=math.radians(58), dx=-23, dy=23)
+HURT = {}                                      # where she burns on the prop: the hole in her back, the wing's stump
+# her lying in the rubble, whole but for the starboard wing Ivan shot off (Zachary, 25 Nov: "dont have the back half
+# of your ship come apart, just the wing gets shot off"): nose up and to the right as in the panels, dipped into the
+# rock and listing, from the game's own angle (tools/dev/fighter_model.py)
+WRECK_VIEW = dict(scale=3.0, roll=.4, pitch=-.18, yaw=math.radians(33), elev=math.radians(58), dx=17.5, dy=-5.5)
 
 
 def crash_wreck():
-    """Your fighter's front half (the model in tools/dev/fighter_model.py, torn where the blind jump tore her),
-    nose buried in a heap of broken rock, her torn end toward you, scorched and glowing, wires hanging out of it, the
+    """Your fighter (the model in tools/dev/fighter_model.py) as Ivan left her, her starboard wing shot off and her
+    back holed, nose buried in a heap of broken rock, the torn edges glowing, wires hanging out of the stump, the
     canopy cracked, a gouge behind her and scrap thrown about."""
     rnd = random.Random(5)
     w, h = WRECK_SIZE[0] * TILE, WRECK_SIZE[1] * TILE
     cv = Canvas(w, h)
     # the gouge she cut coming in from the lower left: churned, scorched floor (flat, under everything)
-    gouge = poly([(0, 140), (20, 126), (50, 116), (80, 108), (100, 112), (102, 140), (72, 156), (36, 164), (0, 166)], w, h)
+    gouge = poly([(0, 140), (18, 128), (44, 120), (66, 118), (82, 124), (80, 146), (56, 156), (30, 164), (0, 166)], w, h)
     cv.paint(gouge, C("soil", 0))                                       # its far wall, in shadow
     cv.paint(gouge & ~sh(gouge, 0, 3), C("soil", 1))                     # churned rock
     cv.paint(gouge & ~sh(gouge, 0, -3) & sh(gouge, 0, 3), C("soil", 2))  # the near lip, catching the light
@@ -97,30 +97,31 @@ def crash_wreck():
     for x0 in range(4, 96, 12):
         y0 = 150 - x0 * .3 + rnd.randint(-4, 4)
         cv.paint(lines([(x0, y0), (x0 + 7, y0 - 2)], 2, w, h) & gouge & ~scorch, C("soil", 0))
-    # the ship (tools/dev/fighter_model.py): her front half as she was torn off in the jump, battered, lying where she
-    # ploughed in, nose down and listing, seen from the game's own angle
+    # the ship (tools/dev/fighter_model.py), battered as Ivan left her: her starboard wing shot off, her back holed
     import fighter_model
     view = dict(WRECK_VIEW, size=(w, h))
-    ship, info = fighter_model.render(view, dict(fighter_model.BATTERED_MODE, cut=(-3.0, "front"), scorch=True),
-                                      nozzle_glow=False)
+    ship, info = fighter_model.render(view, dict(fighter_model.BATTERED_MODE), nozzle_glow=False)
     pm = ship.a[:, :, 3] > 0
     mat = info["mat"]
     nose = info["nose"]
+    M = info["M"]
+    for name, p in (("breach", (-4.5, -1.4, 4.0)), ("stump", (-6.0, -13.5, .5)), ("tail", (-27.0, 0.0, 0.0))):
+        HURT[name] = fighter_model.project(M, view, p)
     # stones behind her nose (drawn first)
     for cx, cy, rx, ry in ((nose[0] + 6, nose[1] - 14, 14, 11), (nose[0] + 30, nose[1] - 4, 13, 10),
                            (nose[0] - 16, nose[1] - 10, 10, 8), (nose[0] + 44, nose[1] + 16, 10, 8)):
         stone(cv, rock_pts(cx, cy, rx, ry, rnd), MOONROCK if rnd.random() < .7 else BASALT, rnd)
+    # the torn edges glowing: the wing's stump and the hole in her back
     torn = mat == "torn"
     hull = np.isin(mat, ["hull", "stripe"])
     hot = torn & (sh(hull, 1, 0) | sh(hull, -1, 0) | sh(hull, 0, 1) | sh(hull, 0, -1)) & ~edge(pm)
-    ship.paint(hot, C("copper", 3))                                  # the tear, still glowing
+    ship.paint(hot, C("copper", 3))
     ship.paint(hot & ~sh(hot, 1, 1), C("brass", 4))
-    ty, tx = np.nonzero(torn)
-    TEAR[:] = [float(tx.mean()), float(ty.mean())] if len(tx) else TEAR
-    # wires hanging out of the tear
+    # wires hanging out of the wing's stump
+    sx_, sy_ = HURT["stump"]
     for k, col in enumerate((C("copper", 2), C("teal", 2), C("berry", 2))):
-        x0, y0 = TEAR[0] - 4 + k * 5, TEAR[1] - 2 + k * 4
-        wire = lines([(x0, y0), (x0 - 6, y0 + 7 + k), (x0 - 9, y0 + 15 + k * 2)], 1, w, h) & ~pm
+        x0, y0 = sx_ - 3 + k * 4, sy_ + 2 + k * 2
+        wire = lines([(x0, y0), (x0 + 2, y0 + 7 + k), (x0 - 1, y0 + 13 + k * 2)], 1, w, h) & ~pm
         cv.paint(wire, col)
     # a crack across the canopy
     glass = mat == "glass"
@@ -140,7 +141,7 @@ def crash_wreck():
                            (nx + 26, ny + 12, 18, 13), (nx - 10, ny + 22, 13, 9), (nx + 12, ny + 30, 19, 13),
                            (nx + 40, ny + 34, 14, 10)):
         stone(cv, rock_pts(cx, cy, rx, ry, rnd), MOONROCK if rnd.random() < .7 else BASALT, rnd)
-    for k, x in enumerate(range(int(TEAR[0]) + 6, int(TEAR[0]) + 62, 11)):   # rubble along her belly: she sits in the rock
+    for k, x in enumerate(range(int(HURT["tail"][0]) + 20, int(nose[0]) - 30, 12)):   # rubble along her belly: she sits in the rock
         col = np.nonzero(pm[:, x])[0]
         if not len(col):
             continue
@@ -579,7 +580,8 @@ def main():
     for name, cv in out.items():
         check(cv, name)
         cv.save(os.path.join(ROOT, "art", "prologue", name + ".png"))
-    print("beam at tile", at, "size", b.w // 4, b.h, "canopy", CANOPY)
+    print("beam at tile", at, "size", b.w // 4, b.h, "canopy", CANOPY, "; burning at (tiles)",
+          {k: (round(WRECK_AT[0] + v[0] / TILE, 2), round(WRECK_AT[1] + v[1] / TILE, 2)) for k, v in HURT.items()})
     if "--preview" in sys.argv:
         s = Image.new("RGBA", (DW * 2 + 20, DH + 130), (60, 56, 80, 255))
         s.alpha_composite(wreck.image(), (0, 0))

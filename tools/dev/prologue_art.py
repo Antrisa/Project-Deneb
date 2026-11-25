@@ -14,10 +14,10 @@ drawn by tools/dev/crash_site_art.py). This draws what goes over the picture pan
   sparks.png            sparks from the torn hull, 6 frames;  blink.png: the red emergency light, 2 frames
   fighter_front.png, fighter_back.png    the Wandering Star as the main menu draws her (title/scene/fighter.png,
                         shown 3x like the menu) torn in two across her body for the blind jump
-  fighter_intact.png, fighter_hit.png, fighter_front.png, fighter_back.png, wing_piece.png    the Wandering Star,
-                        drawn from scratch from one model (tools/dev/fighter_model.py), shown 2x: whole; battered by
-                        Ivan's salvo (starboard wing sheared off, her back holed); torn in two for the blind jump; the
-                        sheared-off wing tumbling (6 frames)
+  fighter_intact.png, fighter_holed.png, fighter_hit.png, wing_piece.png    the Wandering Star, drawn from scratch
+                        from one model (tools/dev/fighter_model.py), shown 2x: whole; holed by Ivan's first hits; with
+                        her starboard wing shot off too (25 Nov: "dont have the back half of your ship come apart, just
+                        the wing gets shot off"); the wing tumbling away (6 frames)
   fighter_plume.png     her engine plume, behind her from each port, 4 frames (the menu's plume colours);  shield.png
   approach.png          the moon you fall to, put together from the main menu's own art (starfield, gas giant, base)
   streak.png            your ship burning in, 4 frames;  impact.png: flash, fireball, thrown rock and dust, 10 frames
@@ -293,15 +293,6 @@ PLUME_BASE = (21, 3)                           # where a plume frame attaches to
 # The menu's own plume colours: a pale blue glow round an orange-gold core (shaders/title/fighter.gdshader)
 PLUME_BLUE, PLUME_GOLD = (131, 165, 211), (255, 192, 104)
 BATTERED = {"wing_off": True, "breach": True}  # after Ivan's salvo: her starboard wing sheared off, her back holed
-CUT = -3.0                                     # the blind jump tears her in two here (along her length)
-
-
-def fighter_halves():
-    """Torn in two across her body for the blind jump: the front and the back, each in her full picture's frame."""
-    import fighter_model
-    front = fighter_model.render(mode=dict(BATTERED, cut=(CUT, "front")))[0]
-    back = fighter_model.render(mode=dict(BATTERED, cut=(CUT, "back")), nozzle_glow=False)[0]
-    return front, back
 
 
 def fighter_plume_frames():
@@ -587,14 +578,13 @@ def main():
     _WHOLE = fighter_model.render()
     NOZZLES, AXIS = tuple(_WHOLE[1]["ports"]), tuple(_WHOLE[1]["axis"])
     PLUME_DIR = (-AXIS[0], -AXIS[1])
-    ffront, fback = fighter_halves()
     pieces, piece_at = fighter_model.piece_frames()
     hit = fighter_model.render(mode=BATTERED, nozzle_glow=False)[0]
     print("her picture", _WHOLE[0].w, "x", _WHOLE[0].h, "; ports", [tuple(round(v, 1) for v in q) for q in NOZZLES],
           "; nose", tuple(round(v, 1) for v in _WHOLE[1]["nose"]), "; wing piece frames of", pieces[0].w,
           "with the first's top-left at", piece_at)
     out = {
-        "fighter_intact": _WHOLE[0], "fighter_hit": hit, "fighter_front": ffront, "fighter_back": fback,
+        "fighter_intact": _WHOLE[0], "fighter_holed": fighter_model.render(mode={"breach": True})[0], "fighter_hit": hit,
         "wing_piece": strip(pieces),
         "fighter_plume": fighter_plume_frames(), "approach": approach(),
         "bolt_teal_d": bolt_diag("glow"), "chip": chip_frames(), "rock_fg_a": rock_fg(3, 96, 70), "rock_fg_b": rock_fg(8, 40, 30),
@@ -607,7 +597,7 @@ def main():
             check(c, name)
         c.save(os.path.join(OUT_DIR, name + ".png"))
     for old in ("cavern", "drone_lit", "drone_wake", "drone_pulse", "lens", "violet_light", "beam", "drip",
-                "moon", "fall_streak", "star_front", "star_back", "flame", "fighter_flame"):
+                "moon", "fall_streak", "star_front", "star_back", "flame", "fighter_flame", "fighter_front", "fighter_back"):
         p = os.path.join(OUT_DIR, old + ".png")
         if os.path.exists(p):
             os.remove(p)

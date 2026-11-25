@@ -68,8 +68,8 @@ extends Node
 #   ["score", song, from, hold_from, hold_to]   the end of a song timed to the scene (25 Nov): starts at `from`
 #                         seconds and holds on [hold_from, hold_to) while the player reads; ["score_cue", t] moves it
 #                         on to t at the next bar (or at once, cross-faded); ["score_wait", t] waits till it's at t;
-#                         ["score_end"] waits till it ends. ["say_timed", who, lines, label, seconds] turns its lines
-#                         over by itself, so a stretch of the scene can keep time with the music
+#                         ["score_end"] waits till it ends. ["say_timed", who, lines, label, [seconds a line]] turns
+#                         its lines over by themselves (no clicking), so the scene plays out in time with its music
 #   ["ambient", bed]      "none", "amb_space", "amb_caves", "amb_station"..., or "" for the place's own
 # Events can also need a second resident at the same hearts ("with": ["Evarra"]) and play only in some
 # seasons ("seasons": ["Autumn", "Winter"]): main.gd _event_ready.
@@ -105,6 +105,7 @@ var _board_layer: CanvasLayer   # the picture panels: under the fade (9) and the
 var _board: Node2D
 var _board_bg: Sprite2D
 var _board_sprites := {}        # id -> Sprite2D
+var _hands_off := false         # a "say_timed" line is up: it turns over by itself, clicks do nothing
 var _bob := {}                  # sprite id ("w:" + id for world sprites) -> [pixels, seconds, base offset y]
 var _bob_time := 0.0
 var _add_mat: CanvasItemMaterial = null
@@ -405,19 +406,22 @@ func _step(s: Array) -> void:
 			while world.music_director != null and not world.music_director.score_done():
 				await get_tree().process_frame
 		"say_timed":
-			# ["say_timed", who, [lines], label, seconds]: lines that turn over by themselves, each after that many
-			# seconds (over music timed to the scene); a click still turns them sooner
+			# ["say_timed", who, [lines], label, [seconds a line]]: lines that turn over by themselves, so the scene
+			# keeps time with its music (Zachary, 25 Nov: "just have it play out, you cant click to continue");
+			# clicks and keys do nothing while they're up
 			var tlabel: String = str(s[3]) if s.size() > 3 and str(s[3]) != "" else str(s[1])
+			var secs: Array = s[4] if s.size() > 4 and s[4] is Array else []
+			_hands_off = true
 			world._say(tlabel, s[2], Callable(), "", Callable(), "Not now", str(s[1]) if str(s[1]) != "" else tlabel)
-			var each: float = float(s[4]) if s.size() > 4 else 3.0
 			while world.dialogue.active:
 				var at: int = world.dialogue.line_index()
-				var left := each
+				var left: float = float(secs[at]) if at < secs.size() else 3.0
 				while left > 0.0 and world.dialogue.active and world.dialogue.line_index() == at:
 					await get_tree().process_frame
 					left -= get_process_delta_time()
 				if world.dialogue.active and world.dialogue.line_index() == at:
 					world.dialogue.turn_line()
+			_hands_off = false
 		"music":
 			music_mode = str(s[1])
 		"ambient":
@@ -834,10 +838,14 @@ func _fade_to(alpha: float, seconds: float) -> void:
 
 # (the talk box takes up, down, the wheel, 1 to 4 and the mouse pointer for choices itself)
 func handle_input(e: InputEvent) -> void:
+	if _hands_off:
+		return
 	if world.dialogue.active and (e.is_action_pressed("interact") or e.is_action_pressed("use")):
 		world.dialogue.advance()
 
 
 func handle_click(button: int) -> void:
+	if _hands_off:
+		return
 	if world.dialogue.active and button == MOUSE_BUTTON_LEFT:
 		world.dialogue.advance()
