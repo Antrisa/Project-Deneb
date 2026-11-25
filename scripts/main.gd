@@ -495,6 +495,7 @@ func _setup_input() -> void:
 	_add_keys("move_right", [KEY_D, KEY_RIGHT])
 	_add_keys("move_up", [KEY_W, KEY_UP])
 	_add_keys("move_down", [KEY_S, KEY_DOWN])
+	_add_keys("walk_slow", [KEY_SHIFT])  # hold to walk at the residents' pace (24 Nov)
 	_add_keys("interact", [KEY_ENTER])   # no E (Zachary, 23 Nov): right-click to use and talk, Enter on the keyboard
 	_add_keys("use", [KEY_SPACE, KEY_F])
 	_add_keys("menu", [KEY_TAB, KEY_I])

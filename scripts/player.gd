@@ -7,6 +7,9 @@ const MapData = preload("res://scripts/map_data.gd")
 
 const SPEED := 70.0
 const CARRY_SPEED := 50.0
+# The slow walk, as in Stardew (24 Nov): the residents' own pace (resident.gd SPEED). Holding Shift walks at it,
+# and heart-event scenes always walk you at it, so you keep step with whoever you're walking beside.
+const WALK_SPEED := 48.0
 var speed_mult := 1.0               # drinks: Spacer fizz is faster, Anchor tonic slower (scripts/shops.gd)
 
 var world            # set by main.gd before entering the tree
@@ -568,7 +571,10 @@ func _move_player(delta: float) -> void:
 	var start := position
 	# put down somewhere already on a wall's picture (an old save, a door): let them walk off it
 	var faces := not _blocked(position)
-	var speed: float = (CARRY_SPEED if carrying else SPEED) * speed_mult
+	var base: float = CARRY_SPEED if carrying else SPEED
+	if Input.is_action_pressed("walk_slow"):
+		base = minf(base, WALK_SPEED)
+	var speed: float = base * speed_mult
 	var step: Vector2 = dir * speed * delta
 	var next_x: Vector2 = position + Vector2(step.x, 0)
 	if not _blocked(next_x, faces):
@@ -762,7 +768,7 @@ func scene_step(target: Vector2, delta: float) -> bool:
 	else:
 		_dir = 1 if heading.y < 0.0 else 0
 	var start := position
-	position = position.move_toward(target, SPEED * delta)
+	position = position.move_toward(target, WALK_SPEED * delta)    # the residents' pace
 	_walk_distance = fmod(_walk_distance + start.distance_to(position), WalkCycle.STRIDE)
 	var beat := WalkCycle.phase(_walk_distance)
 	_sprite.frame_coords = Vector2i(_dir, WalkCycle.pose(beat, _sprite.vframes))
