@@ -8,10 +8,11 @@ fast attack, a body that dies away in about 60 ms, and a soft top so they patter
   step_carpet_1..6  homes, the hotel, the lounge: a muffled pat
   step_soft_1..6    the farm's paths: a pat with a little grassy rustle
   step_soil_1..6    dug soil: a soft crunch
+  step_base_1..6    (25 Nov, second pass) the one footstep now used on every floor: a warm, dull tock
 
 The cave (rock) and bath house (water) recordings stay as they were. Every take differs a little in pitch,
 length and colour so a walk never repeats. Output: 44.1 kHz mono Ogg Vorbis in audio/.
-Usage: python3 -I tools/cozy_steps.py [GAME_DIR]
+Usage: python3 -I tools/cozy_steps.py [GAME_DIR] [KIND ...]   (default: base, the one footstep used everywhere)
 """
 import os, subprocess, sys
 import numpy as np
@@ -45,7 +46,7 @@ def tone(n, f, decay, rng):
 
 
 def make(kind, k):
-    rng = np.random.default_rng({"deck": 11, "carpet": 23, "soft": 37, "soil": 51}[kind] * 100 + k)
+    rng = np.random.default_rng({"deck": 11, "carpet": 23, "soft": 37, "soil": 51, "base": 67}[kind] * 100 + k)
     v = lambda a, b: rng.uniform(a, b)
     n = int(SR * 0.16)
     noise = rng.standard_normal(n)
@@ -64,6 +65,12 @@ def make(kind, k):
         pat = band(noise, v(400, 550), v(2000, 2600)) * env(n, 0.002, v(0.025, 0.032)) * 0.7
         rustle = band(noise, v(3000, 3800), v(7500, 9000)) * env(n, 0.008, v(0.035, 0.05)) * 0.35
         x = body + pat + rustle
+    elif kind == "base":
+        # the one footstep everywhere (Zachary, 25 Nov: "too metallic, we just need a base walking sound, like
+        # walking in Stardew"): a warm, dull tock with no ring and no hiss
+        body = tone(n, v(120, 145), v(0.022, 0.03), rng) * 0.7
+        pat = band(noise, v(220, 300), v(1100, 1400)) * env(n, 0.0015, v(0.018, 0.024)) * 0.75
+        x = body + pat
     else:  # soil
         body = tone(n, v(105, 130), v(0.03, 0.04), rng) * 0.45
         grains = np.zeros(n)
@@ -84,7 +91,7 @@ def save(x, path):
                     "-c:a", "libvorbis", "-q:a", "6", path], input=x.tobytes(), check=True)
 
 
-for kind in ("deck", "carpet", "soft", "soil"):
+for kind in (sys.argv[2:] or ["base"]):
     for k in range(1, TAKES + 1):
         save(make(kind, k), os.path.join(GAME, "audio", f"step_{kind}_{k}.ogg"))
 print("cozy steps written")

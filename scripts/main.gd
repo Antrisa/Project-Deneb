@@ -127,7 +127,7 @@ const BOARD := [
 const WEEKDAYS := ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 const SOUND_NAMES := ["step", "step_soft", "click", "coin", "zap", "smelt", "warp", "quest", "deny", "swing", "hit", "hurt", "die", "eat",
 	# 24 Nov: Zachary's recordings (Drive "Echo Landing Sounds") and made-up stand-ins (tools/dev/madeup_sounds.py)
-	"step_deck", "step_soil", "step_carpet", "step_rock", "step_water", "door_slide", "door_locked", "ladder", "lift",
+	"step_base", "step_deck", "step_soil", "step_carpet", "step_rock", "step_water", "door_slide", "door_locked", "ladder", "lift",
 	"tool_swing", "weapon_swing", "hoe_dig", "water_pour", "can_refill", "seed_plant", "harvest", "item_pickup",
 	"valve_spray", "tool_upgrade", "hotbar", "rock_crack", "rock_break", "geode_crack", "ore_find", "craft",
 	"chest_open", "chest_close", "gift", "bell_ring", "mail_waiting", "pass_out", "medpack", "bug_noise", "map_jump",
@@ -3662,21 +3662,11 @@ func _sound_stream(sound_name: String):
 	return null
 
 
-# Which footsteps fit the floor under you (Zachary's recordings, 24 Nov): rock in the mine and caverns, carpet in
-# homes, the hotel and the lounge, wet tiles in the bath house, soil on the dug field, the soft steps round the
-# farm, metal deck plates everywhere else.
+# One footstep everywhere (Zachary, 25 Nov: "we just need a base walking sound, like walking in Stardew"): a warm,
+# dull tock made by tools/cozy_steps.py, six takes played at random. The per-floor takes (rock, water, carpet,
+# soil, deck) are still in audio/ if floors should sound different again.
 func step_sound() -> String:
-	var a := current_area
-	if a.begins_with("cav_") or a == "mine" or a == "tunnels" or a == "lake":
-		return "step_rock"
-	if a == "bathhouse":
-		return "step_water"
-	if a.begins_with("home") or a == "hotel" or a == "lounge" or a == "aptPlayer" or a == "aptCoop":
-		return "step_carpet"
-	if a == "agri":
-		var tile := Vector2i(int(player.position.x) / TILE, int(player.position.y) / TILE)
-		return "step_soil" if farm.has(tile) or farmable(tile) else "step_soft"
-	return "step_deck"
+	return "step_base"
 
 
 # The music director stops or restarts the song on its next update.
