@@ -2344,7 +2344,7 @@ const EVENTS := {
 		],
 	},
 	# ---------------------------------------------------------------- S.A.R.A. (docs/story/characters/SARA.md)
-	# A new arc (Zachary, 23 Nov): the hostess who never clocks off. She's a hologram on four pads (MapData.PEOPLE),
+	# A new arc (Zachary, 23 Nov): the hostess who never clocks off. She's a hologram on three pads (MapData.PEOPLE),
 	# so her scenes play at a pad, or at her portable projection from 6 on, and she acts with her clips ("sara").
 	"sara_2": {
 		"who": "Sara", "hearts": 2, "title": "Lost Property",

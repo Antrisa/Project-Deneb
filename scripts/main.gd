@@ -1544,7 +1544,7 @@ func _morning_news() -> void:
 
 # S.A.R.A.'s 8, Concierge: talk to her at any of her pads and she sends you to another (the datapad's Shop page
 # lists them, scripts/shops.gd "Concierge"), and each morning she pings your datapad with what is waiting.
-const SARA_PADS := {"top": "Her core, top of the station", "aptPlayer": "Your apartment", "west": "Reception, West Terminal",
+const SARA_PADS := {"top": "Her core, top of the station", "west": "Reception, West Terminal",
 	"main": "The plaza fountain"}
 
 

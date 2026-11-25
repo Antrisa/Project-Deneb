@@ -431,12 +431,11 @@ def player_home(g):
     hm.put('curator_desk', 17, 13.5, 'Writing desk', 'look'); hm.put('tree_tub', 3.5, 22.5, 'Potted tree')
     key, door = g['PLAYER_HOME_DOOR']
     hm.finish(outside=(key, door))
-    # You start beside your bed (the game then tucks you in: scripts/main.gd _go_home), and S.A.R.A.'s hologram
-    # waits by the bedroom wall, as it did in the hotel's head officer's quarters.
+    # You start beside your bed (the game then tucks you in: scripts/main.gd _go_home). S.A.R.A. has no pad here
+    # (25 Nov, Zachary: "get rid of the SARA mount in your home"); she has her core, Reception and the plaza.
     bx, by = bed
     w, h, _ = SIZES['bed']
     g['PLAYER_START'] = ['aptPlayer'] + list(free_spot(hm.r, bx + w + .5, by + h - .5, hm.taken, hm.doors))
-    g['PLAYER_SARA'] = ['aptPlayer'] + list(free_spot(hm.r, 11.5, 6.5, hm.taken, hm.doors))
 
 
 def coop_home(g):

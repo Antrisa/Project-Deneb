@@ -20,7 +20,7 @@
 
 All four are playable cutscenes in `scripts/heart_events.gd` (`sara_2` to `sara_8`, after the side arc). Not run in Godot yet.
 
-- **She's a hologram on four pads** (`MapData.PEOPLE`: her core on the Survey Level, Reception in the West Terminal, the hotel lobby, the plaza), so her scenes play at a pad. She acts with her 33 hologram clips instead of poses: a new scene step, `["sara", clip]` (greeting, swipe_panels, glitch_hand, laugh, standby, wake...), plays one on whichever S.A.R.A. is in the scene. Emote bubbles work over her too.
+- **She's a hologram on three pads** (`MapData.PEOPLE`: her core on the Survey Level, Reception in the West Terminal, the plaza; the one in your apartment was taken out on 25 Nov), so her scenes play at a pad. She acts with her 33 hologram clips instead of poses: a new scene step, `["sara", clip]` (greeting, swipe_panels, glitch_hand, laugh, standby, wake...), plays one on whichever S.A.R.A. is in the scene. Emote bubbles work over her too.
 - **Her portable projection** (from 6): `["sara", "place", x, y]` materializes her on a tile wherever you are and hides her pad there. After a change of map it's placed again. It goes, and her pads come back, when the scene ends.
 - **The station's heartbeats** in 8 are lights drawn in code round her dais (`["fx", "heartbeats", ...]`, `scripts/scene_fx.gd`).
 - **Her rest night:** if you kept watch in 8 (`sara_rest`), every Sunday from 23:00 her pads go to standby until morning, and talking to one shows a little sign instead (`main.gd _sara_resting`). That's her day off, out of the story.
