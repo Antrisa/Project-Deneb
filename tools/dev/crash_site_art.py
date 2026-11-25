@@ -6,8 +6,8 @@ walls and the light are the game's own. Props are drawn as props are: seen from 
 from the top left, a #5b332d outline, 3-5 shades a material, on the 24-pixel grid (shown at two-thirds), no ground
 shadow painted in. The fighter and her scrap keep the main menu's own colours and outline (title/scene/fighter.png).
 
-  crash_wreck.png       13 x 8 tiles: your fighter, the artist's Needle as Ivan left her (art/ships/needle/
-                        needle_damaged.png, shown 3x so her pixels stay whole), the torn wing glowing, a crack across
+  crash_wreck.png       13 x 8 tiles: your fighter, the damaged Needle from the encounter (art/prologue/
+                        needle_flight_damaged.png, at native board resolution), the torn wing glowing, a crack across
                         the canopy, nose buried in a heap of rock, rubble along her belly, the gouge she cut and the
                         scrap she shed behind her
   mother_drone.png      13 x 8 tiles: the Mother-Drone, a silver seed lying on its side, half sunk in the floor: raised
@@ -18,7 +18,7 @@ shadow painted in. The fighter and her scrap keep the main menu's own colours an
 and the strips and overlays the prologue lays over the map (art/prologue/): mother_drone_wake.png (8 frames: the
 veins light from the lens outwards, the blades turn and the iris opens, the crystals catch the light last),
 mother_drone_pulse.png (6 frames: light running along the veins, the crystals shimmering in turn, the blades turning),
-crash_beam.png (4 frames, lens to canopy), light_shaft.png and motes.png (the cool light through the hole you made,
+crash_beam_reach.png (6 frames, the narrow leading ray), crash_beam.png (4 frames, the full scan), light_shaft.png and motes.png (the cool light through the hole you made,
 with dust turning in it; drawn as light), grit.png (grit trickling from the broken roof), drone_glow.png (the violet
 light on the floor round the drone when it wakes; drawn as light).
 Run: python3 tools/dev/crash_site_art.py
@@ -94,29 +94,25 @@ def crash_wreck():
     for x0 in range(4, 96, 12):
         y0 = 138 - x0 * .3 + rnd.randint(-4, 4)
         cv.paint(lines([(x0, y0), (x0 + 7, y0 - 2)], 2, w, h) & gouge & ~scorch, C("soil", 0))
-    # the ship: the artist's damaged Needle (art/ships/needle/needle_damaged.png, her lower wing shot off), marked in
-    # her own pixels (a crack across the canopy, the torn wing glowing), then shown 3x: three art pixels to each of
-    # hers, two world pixels, so she stays crisp in the game
-    src = np.array(Image.open(os.path.join(ROOT, "art", "ships", "needle", "needle_damaged.png")).convert("RGBA"))
+    # The flight plate already fills the old 240 x 165 footprint at native detail.
+    src = np.array(Image.open(os.path.join(ROOT, "art", "prologue", "needle_flight_damaged.png")).convert("RGBA"))
     hh, ww = src.shape[:2]
     solid = src[:, :, 3] > 0
     teal = np.all(src[:, :, :3] == (0x1c, 0x7b, 0x83), axis=-1) | np.all(src[:, :, :3] == (0x17, 0x58, 0x64), axis=-1) | \
         np.all(src[:, :, :3] == (0x12, 0x45, 0x53), axis=-1)
-    for x, y in ((46, 19), (47, 20), (48, 20), (49, 21), (50, 22), (48, 21), (52, 21), (53, 20)):    # the crack
-        if teal[y, x]:
-            src[y, x] = (0xcc, 0xeb, 0xe1, 255)
+    fracture = lines([(138,57),(142,60),(145,60),(150,66),(157,63),(159,60)], 1, ww, hh)
+    fracture |= lines([(145,60),(143,64),(141,66)], 1, ww, hh)
+    src[teal & fracture] = (0xcc, 0xeb, 0xe1, 255)
     yy0, xx0 = np.mgrid[0:hh, 0:ww]
     rim = solid & ~binary_erosion(solid, border_value=0)
-    torn_edge = rim & (yy0 >= 38) & (xx0 >= 24) & (xx0 <= 44)        # where the wing was torn away
+    torn_edge = rim & (yy0 >= 114) & (xx0 >= 72) & (xx0 <= 132)
     inside = solid & ~rim & (sh(torn_edge, 1, 0) | sh(torn_edge, -1, 0) | sh(torn_edge, 0, 1) | sh(torn_edge, 0, -1))
     src[inside] = (0xff, 0x90, 0x2c, 255)                             # still glowing (her own orange)
-    S3 = 3
-    big = np.repeat(np.repeat(src, S3, axis=0), S3, axis=1)
     ox, oy = WRECK_SHIP_AT
     ship = Canvas(w, h)
-    ship.a[oy:oy + hh * S3, ox:ox + ww * S3] = big
+    ship.a[oy:oy + hh, ox:ox + ww] = src
     pm = ship.a[:, :, 3] > 0
-    at = lambda x, y: (ox + S3 * x + 1.5, oy + S3 * y + 1.5)
+    at = lambda x, y: (ox + 3 * x + 1.5, oy + 3 * y + 1.5)
     nose = at(70, 20)
     HURT["stump"], HURT["engine"], HURT["tail"] = at(34, 44), at(12, 30), at(9, 30)
     CANOPY[:] = list(at(52, 21))
@@ -405,8 +401,8 @@ def drone_strips(body, veins):
 
 
 def beam():
-    """The beam from the lens to your canopy, in map art pixels (24 to a tile), 4 frames. Returns the strip and the
-    tile (x, y) of its top-left corner."""
+    """The beam from the lens to your canopy, in map art pixels (24 to a tile), with a pulsing scan and a shorter leading ray.
+    Return both strips and their shared top-left tile."""
     lx = DRONE_AT[0] * TILE + LENS[0]
     ly = DRONE_AT[1] * TILE + LENS[1]
     tx = WRECK_AT[0] * TILE + CANOPY[0]        # the canopy, on the wreck prop
@@ -425,6 +421,7 @@ def beam():
         return poly([(lx + px * w0, ly + py * w0), (tx + px * w1, ty + py * w1), (tx - px * w1, ty - py * w1),
                      (lx - px * w0, ly - py * w0)], w, h)
     frames = []
+    reach = []
     for f in range(4):
         cv = Canvas(w, h)
         wob = (0, 2, 3, 1)[f]
@@ -435,7 +432,15 @@ def beam():
         cv.paint(cone(1, 3), C("cream", 4))
         cv.paint(outer & (((along * 6 - f / 4) % 1) < .18) & ~cone(2, 8), C("violet", 4))
         frames.append(cv)
-    return strip(frames), (x0, y0)
+    for stop in (.035, .13, .34, .62, .83, 1.0):
+        cv = Canvas(w, h)
+        # The pilot ray touches the glass before the full scan unfolds from the lens.
+        tip = (along >= 0) & (along <= stop)
+        cv.paint(cone(2, 5 + 11 * stop) & tip, C("violet", 2))
+        cv.paint(cone(1, 2 + 4 * stop) & tip, C("violet", 4))
+        cv.paint(cone(1, 2) & tip, C("cream", 4))
+        reach.append(cv)
+    return strip(frames), strip(reach), (x0, y0)
 
 
 # ---------------------------------------------------------------- what the prologue lays over the map
@@ -571,8 +576,8 @@ def main():
     wake, pulse = drone_strips(body, veins)
     for name, cv in scrap_props().items():
         cv.save(os.path.join(LUNAR, name + ".png"))
-    b, at = beam()
-    out = {"mother_drone_wake": wake, "mother_drone_pulse": pulse, "crash_beam": b, "light_shaft": light_shaft(),
+    b, reach, at = beam()
+    out = {"mother_drone_wake": wake, "mother_drone_pulse": pulse, "crash_beam": b, "crash_beam_reach": reach, "light_shaft": light_shaft(),
            "motes": motes(), "grit": grit(), "drone_glow": drone_glow(drone)}
     os.makedirs(os.path.join(ROOT, "art", "prologue"), exist_ok=True)
     for name, cv in out.items():

@@ -138,6 +138,7 @@ const SOUND_NAMES := ["step", "step_soft", "click", "coin", "zap", "smelt", "war
 	"ui_select", "page_tick", "inv_pick", "inv_drop", "page_turn",
 	# the prologue (24 Nov, tools/dev/prologue_sounds.py)
 	"beam_charge", "crash_impact", "hull_groan", "water_drip", "radio_static", "power_down", "hull_tear", "fire_crackle",
+	"mother_iris", "mother_signal", "mother_transfer", "mother_extinguish", "rescue_receiver",
 	# the Custodians speaking in story scenes (25 Nov, tools/dev/custodian_sounds.py)
 	"custodian_call"]
 # Space-battle sounds (tools/dev/ship_sounds.py). Each gets a few players so quick repeats overlap.
@@ -220,6 +221,7 @@ var seated := false
 var seat_return := Vector2.ZERO
 var dialogue
 var wreck_sprite: Sprite2D
+var hud: CanvasLayer
 var hud_clock: Label
 var hud_goal: Label
 var hud_zone: Label
@@ -2172,6 +2174,7 @@ func _say(who: String, lines: Array, on_yes: Callable = Callable(), yes_text: St
 	# face_of: whose portrait and voice to use when the name shown is a label, e.g. "Tikka (comms)"
 	var face: String = face_of if face_of != "" else who
 	var portrait: Texture2D = null
+	dialogue.voice_cue = "mother_signal" if face == "MotherDrone" else ""
 	dialogue.voice_pitch = 1.0
 	if persons.has(face):
 		portrait = persons[face]["portrait"]
@@ -2190,6 +2193,7 @@ func _say(who: String, lines: Array, on_yes: Callable = Callable(), yes_text: St
 func _say_choice(who: String, lines: Array, options: Array, on_pick: Callable, face_of: String = "") -> void:
 	var face: String = face_of if face_of != "" else who
 	var portrait: Texture2D = null
+	dialogue.voice_cue = "mother_signal" if face == "MotherDrone" else ""
 	dialogue.voice_pitch = 1.0
 	if persons.has(face):
 		portrait = persons[face]["portrait"]
@@ -5073,7 +5077,7 @@ func _interact_clicked() -> void:
 # ---------------------------------------------------------------- UI and clock
 
 func _build_ui() -> void:
-	var hud := CanvasLayer.new()
+	hud = CanvasLayer.new()
 	hud.layer = 5
 	hud.scale = Vector2.ONE * UI_SCALE
 	add_child(hud)
@@ -5243,6 +5247,8 @@ func _process(delta: float) -> void:
 				_go_to(dest_area, Vector2i(int(dest[1]), int(dest[2])))
 		_check_bed()
 
+	# The wide cavern shots share the world camera with the zone and repair labels.
+	hud.visible = not (cutscene != null and cutscene.running and cutscene.event_id == "prologue")
 	var m := int(minutes)
 	hud_clock.text = "Day %d   %s   %d cr" % [day, clock_text(m), credits]
 	hud_zone.text = _zone_name()

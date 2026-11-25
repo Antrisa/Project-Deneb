@@ -24,6 +24,7 @@ const PAD_SCENE := "res://datapad/datapad.tscn"
 
 var active := false
 var voice_pitch := 1.0        # set by main.gd before start(): each resident talks at their own pitch
+var voice_cue := ""           # a speaker’s entrance sound, once per utterance
 var on_done: Callable = Callable()   # optional: called when the lines run out (set after start(); main.gd _say_then)
 var world = null              # main.gd, to keep the box off the people in a scene
 
@@ -212,15 +213,18 @@ func _show_line() -> void:
 	_shown = 0.0
 	_blipped = 0
 	if line != "":
-		if _voice.size() > 1:
-			var k := randi() % _voice.size()
-			if k == _last_voice:
-				k = (k + 1) % _voice.size()
-			_last_voice = k
-			_blip.stream = _voice[k]
-		_blip.pitch_scale = voice_pitch          # each resident's note at their own pitch
-		if _blip.stream != null:
-			_blip.play()
+		if voice_cue.is_empty():
+			if _voice.size() > 1:
+				var k := randi() % _voice.size()
+				if k == _last_voice:
+					k = (k + 1) % _voice.size()
+				_last_voice = k
+				_blip.stream = _voice[k]
+			_blip.pitch_scale = voice_pitch          # each resident's note at their own pitch
+			if _blip.stream != null:
+				_blip.play()
+		elif _index == 0 and world != null:
+			world.sfx(voice_cue, voice_pitch)
 	_top = _box_on_top()
 	if _pad != null:
 		_push()
