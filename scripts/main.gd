@@ -460,6 +460,7 @@ func _ready() -> void:
 		datapad.pad.shop_action.connect(shops.on_action)
 	_load_game()
 	_sync_station()
+	_sync_cradles()
 	_deliver_mail()
 	wreck_sprite.frame = repair_stage
 	_go_home()
@@ -2064,7 +2065,7 @@ func _interact(t: Dictionary) -> void:
 		_shipping_crate()
 	elif kind == "craft":
 		_open_crafting()
-	elif kind == "look" and str(t["name"]) == "Precursor crystal" and _custodian_here() != "":
+	elif kind == "look" and str(t["name"]) in ["Precursor crystal", "Empty crystal cradle"] and _custodian_here() != "":
 		_custodian_crystal(_custodian_here())
 	elif kind == "look":
 		var thing_name: String = t["name"]
@@ -5092,10 +5093,11 @@ func _process(delta: float) -> void:
 				player.position += Vector2(0, 24)
 				_toast("Job: \"Not up there bare-handed, cher. See Vzz'ket first.\"")
 				sfx("deny")
-			elif dest_area == "lake" and not leviathan_slain:
-				# The old flooded stair stays sealed until the Leviathan is dead: step back up.
+			elif dest_area == "lake" and not (_flag("blast") or leviathan_slain):
+				# The old flooded stair stays sealed until the Harbinger's blast opens the sea (24 Nov; it was the
+				# Leviathan before): step back up.
 				player.position += Vector2(0, -24)
-				_toast("Sealed — the old stair to the flooded galleries. Not while the Leviathan lives.")
+				_toast("Sealed: the old stair to the flooded galleries. Rock and old water behind it. Something has to break first.")
 				sfx("deny")
 			else:
 				_go_to(dest_area, Vector2i(int(dest[1]), int(dest[2])))
@@ -5685,6 +5687,8 @@ func _spawn_prop(p: Array, area_name: String) -> void:
 		sprite.offset.y += SEAT_SORT / ART
 	if p[0] in BED_PROPS:
 		_spawn_bed(sprite, p, area_name)
+	if p[0] == "crystal_pedestal_empty" and area_name == "sanctum":
+		cradle_sprites[Vector2i(int(p[1]), int(p[2]))] = sprite     # filled as far Custodians come home (_sync_cradles)
 	sprite.visible = false
 	actors.add_child(sprite)
 	area_sprites.append([sprite,area_name])
@@ -6393,12 +6397,12 @@ func _custodian_here() -> String:
 	var best := ""
 	var best_d := 99
 	for cid in custodians_found:
-		var c: Dictionary = CustodianData.CUSTODIANS.get(cid, {})
-		if str(c.get("home", "")) != current_area:
+		var home: Array = _custodian_home(str(cid))
+		if str(home[0]) != current_area:
 			continue
-		var spot: Array = c["spot"]
-		var d: int = absi(int(spot[0]) - here.x) + absi(int(spot[1]) - here.y)
-		if d < best_d:
+		var spot: Vector2i = home[1]
+		var d: int = absi(spot.x - here.x) + absi(spot.y - here.y)
+		if d < best_d and d <= 4:
 			best = str(cid)
 			best_d = d
 	return best
@@ -6478,9 +6482,16 @@ func _give_custodian(cid: String) -> void:
 		return
 	sfx("museum_place")
 	var lines: Array = (c["thanks"] as Array).duplicate()
+	var blast: bool = cid == "harbinger" and bundles_due.has(bundle_key(cid, "core"))
 	for f in finished:
+		if blast and str(f) == "Blasting Core":
+			continue
 		lines.append("[happy] That's the %s complete. Sleep, and in the morning you'll see." % str(f))
+	if blast:
+		lines.append("[happy] That's everything. Oh, this is exciting. Stand back. Further. A little further than that.")
 	_say(str(c["name"]), lines, Callable(), "", Callable(), "Not now", voice)
+	if blast:
+		_say_then(Callable(self, "_harbinger_blast"))
 	_save_game()
 
 
@@ -6520,6 +6531,11 @@ func _custodian_fix(what: String) -> void:
 			_sync_station()
 		"suite":
 			story_flags["suite_restored"] = true
+		"blast":
+			story_flags["blast"] = true
+			story_flags["east_dome"] = true        # the sea's water reaches the East Complex's garden dome
+			send_mail("tarbesh_harbinger", 0)
+			_sync_cradles()
 		"orchard":
 			story_flags["orchard"] = true
 			for sapling in ["moon_peach_sapling", "star_apple_sapling", "sun_fig_sapling"]:
@@ -6547,6 +6563,93 @@ func reliquary_list() -> Array:
 			bundles.append({"name": b["name"], "items": items, "reward": b["reward"], "state": bundle_state(str(cid), str(b["id"]))})
 		out.append({"name": c["name"], "wing": c["wing"], "bundles": bundles, "complete": custodian_complete(str(cid))})
 	return out
+
+
+# The Harbinger (24 Nov): a crystal in the wall of cavern floor 25, whichever layout the floor gets. The first time
+# you see it, it speaks to you (StoryScenes "harbinger_found"). Its last bundle sets off the blast that opens the
+# sea under the caverns ("harbinger_blast"); overnight the sea, the East Complex's garden dome and the Underground
+# Lake open, and the Harbinger's crystal turns up in a Sanctum cradle (_sync_cradles), as the Shepherd's and the
+# Warden's will.
+const HARBINGER_FLOOR := 25
+const SEA_FLOOR := 45                 # the shore of the sea, where the Leviathan waits (MapData.CAVERNS "last")
+const CRADLES := {"harbinger": Vector2i(12, 14), "shepherd": Vector2i(12, 20), "warden": Vector2i(13, 11)}
+const CRADLE_TINT := {"harbinger": Color("ffb08a"), "shepherd": Color("c9b6ff"), "warden": Color("ffc9a8")}
+var harbinger_spot := Vector2i(-1, -1)
+var cradle_sprites := {}              # Sanctum cradle tile -> its Sprite2D (_spawn_prop)
+
+
+func _sea_open() -> bool:
+	# old saves that already reached the sea keep it
+	return _flag("blast") or leviathan_slain or cav_deepest >= SEA_FLOOR
+
+
+# The open spot nearest the ladder, three or more tiles from it, with open floor all round.
+func _harbinger_spot(info: Dictionary) -> Vector2i:
+	var up := Vector2i(int(info["up"][0]), int(info["up"][1]))
+	var open := {}
+	for sp in info["spots"]:
+		open[Vector2i(int(sp[0]), int(sp[1]))] = true
+	var best := Vector2i(int(info["spots"][0][0]), int(info["spots"][0][1]))
+	var best_d := 9999
+	for t in open:
+		var d: int = absi(t.x - up.x) + absi(t.y - up.y)
+		if d < 4 or d >= best_d:
+			continue
+		if open.has(t + Vector2i.LEFT) and open.has(t + Vector2i.RIGHT) and open.has(t + Vector2i.DOWN):
+			best = t
+			best_d = d
+	return best
+
+
+func _place_harbinger(key: String) -> void:
+	var t := harbinger_spot
+	var sp := Sprite2D.new()
+	sp.texture = load("res://art/lunar/crystal_cluster.png")
+	sp.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sp.centered = false
+	sp.scale = Vector2.ONE * ART
+	sp.offset = Vector2(0, -sp.texture.get_height())
+	sp.position = Vector2(t.x * 16 + (16 - sp.texture.get_width() * ART) * 0.5, (t.y + 1) * 16)
+	sp.modulate = CRADLE_TINT["harbinger"]
+	actors.add_child(sp)
+	area_sprites.append([sp, key])
+	cav_sprites.append(sp)
+	sp.visible = current_area == key
+	blocked[key][t] = true
+	things.append({"kind": "look", "name": "Precursor crystal", "hint": "Speak", "area": key,
+		"pos": Vector2(t.x * 16 + 8, t.y * 16 + 8), "radius": 24.0, "who": "", "cav": true})
+	if not custodians_found.has("harbinger"):
+		custodians_found.append("harbinger")
+		cutscene.play("harbinger_found")
+
+
+# Where a Custodian's crystal is now: the Sanctum cradle once one found elsewhere is complete.
+func _custodian_home(cid: String) -> Array:
+	var c: Dictionary = CustodianData.CUSTODIANS[cid]
+	if CRADLES.has(cid) and custodian_complete(cid):
+		return ["sanctum", CRADLES[cid]]
+	if cid == "harbinger":
+		return [current_area if cav_floor == HARBINGER_FLOOR else "", harbinger_spot]
+	return [str(c["home"]), Vector2i(int(c["spot"][0]), int(c["spot"][1]))]
+
+
+# The Sanctum's empty cradles fill as the far Custodians come home (their crystals tinted their colour).
+func _sync_cradles() -> void:
+	for cid in CRADLES:
+		var sp: Sprite2D = cradle_sprites.get(CRADLES[cid])
+		if sp == null or sp.get_meta("filled", false) or not custodian_complete(str(cid)):
+			continue
+		sp.set_meta("filled", true)
+		var strip: Texture2D = load("res://art/lunar/anim/crystal_pedestal.png")
+		var still: Texture2D = load("res://art/lunar/crystal_pedestal.png")
+		sp.texture = strip
+		sp.hframes = maxi(1, int(round(float(strip.get_width()) / float(still.get_width()))))
+		anim_props.append([sp, sp.hframes, randf() * sp.hframes])
+		sp.modulate = CRADLE_TINT[cid]
+
+
+func _harbinger_blast() -> void:
+	cutscene.play("harbinger_blast")
 
 
 # ---------------------------------------------------------------- the Caverns
@@ -6659,9 +6762,19 @@ func _enter_cavern(n: int) -> void:
 	if n % 5 == 0 and n > cav_lift and n < last:
 		cav_lift = n
 		note += "  (the lift stops here now)"
+	if n == SEA_FLOOR - 1 and not _sea_open():
+		note += ". Below, the rock rings hollow: water, a long way down. Nothing gets through."
 	_toast(note)
 	if n < last:
-		_fill_cavern(key, info, n, band)
+		var clear := {}
+		if n == HARBINGER_FLOOR and not custodian_complete("harbinger"):
+			harbinger_spot = _harbinger_spot(info)
+			for dy in range(-1, 2):
+				for dx in range(-1, 2):
+					clear[harbinger_spot + Vector2i(dx, dy)] = true
+		_fill_cavern(key, info, n, band, clear)
+		if not clear.is_empty():
+			_place_harbinger(key)
 		_radar_ping(n + 1)
 	elif not leviathan_slain:
 		_wake_leviathan(key)
@@ -6669,8 +6782,8 @@ func _enter_cavern(n: int) -> void:
 		_toast("The water is still. Somewhere far out, something is not breathing.")
 
 
-func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
-	var spots: Array = info["spots"].duplicate()
+func _fill_cavern(key: String, info: Dictionary, n: int, band: String, keep_clear: Dictionary = {}) -> void:
+	var spots: Array = info["spots"].filter(func(sp): return not keep_clear.has(Vector2i(int(sp[0]), int(sp[1]))))
 	spots.shuffle()
 	var mob_kinds: Array = _cav_mob_kinds(n)
 	var mobs: int = mob_kinds.size()
@@ -6735,6 +6848,8 @@ func _fill_cavern(key: String, info: Dictionary, n: int, band: String) -> void:
 func _maybe_open_shaft(t: Dictionary, node: Dictionary) -> void:
 	if cav_shaft or cav_floor <= 0 or cav_floor >= int(MapData.CAVERNS["last"]):
 		return
+	if cav_floor == SEA_FLOOR - 1 and not _sea_open():
+		return            # the sea is sealed in under floor 44 until the Harbinger's blast
 	var chance: float = 0.04 + 0.3 * (1.0 - float(cav_rocks_left) / float(maxi(1, cav_rocks)))
 	if cav_rocks_left > 0 and randf() >= chance:
 		return

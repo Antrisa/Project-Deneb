@@ -240,9 +240,33 @@ for ev_id in ORDER:
 for ev_id in SCENES:
     if ev_id in EVENTS:
         bad(ev_id, "is both a heart event and a story scene")
+def _all_steps(steps, out):
+    for s in steps:
+        if isinstance(s, dict):
+            _all_steps(s.get('steps', []), out)
+        elif isinstance(s, list) and s and isinstance(s[0], str):
+            out.append(s)
+            if s[0] == 'choose':
+                for o in s[1]:
+                    _all_steps(o.get('steps', []), out)
+            elif s[0] == 'if':
+                for branch in s[2:]:
+                    _all_steps(branch, out)
+
+
 for ev_id, ev in list(EVENTS.items()) + list(SCENES.items()):
     if ev_id not in ORDER and ev_id not in SCENES:
         bad(ev_id, "not in ORDER, so it never plays")
+    if ev['area'] == 'here' and ev_id in SCENES:
+        # a story scene that plays wherever you are (the Harbinger's random cavern floor): nobody is placed or
+        # walked, so there is no map to check against
+        st = []
+        _all_steps(ev['steps'], st)
+        for s_ in st:
+            if s_[0] in ('place', 'walk', 'walks', 'go') or (s_[0] == 'face' and s_[2] not in DIRS):
+                bad(ev_id, "an \"area\": \"here\" scene can't %s" % s_[0])
+        check_steps(ev_id, dict(ev, area='mine'), [s_ for s_ in ev['steps'] if s_[0] not in ('place', 'walk', 'walks', 'go')], 'mine')
+        continue
     if ev['area'] not in A:
         bad(ev_id, "no area %r" % ev['area'])
         continue
@@ -350,20 +374,6 @@ except ImportError:
 # Staged like a Stardew cutscene (Zachary, 24 Nov: "npcs move and do actions as well as character using emotes and
 # text boxes"): every heart event has someone moving (a resident walks, or S.A.R.A. plays her clips), the player
 # reacting at least once, two resident emotes, and a pose (S.A.R.A. is a hologram and can't pose).
-def _all_steps(steps, out):
-    for s in steps:
-        if isinstance(s, dict):
-            _all_steps(s.get('steps', []), out)
-        elif isinstance(s, list) and s and isinstance(s[0], str):
-            out.append(s)
-            if s[0] == 'choose':
-                for o in s[1]:
-                    _all_steps(o.get('steps', []), out)
-            elif s[0] == 'if':
-                for branch in s[2:]:
-                    _all_steps(branch, out)
-
-
 staged = 0
 for ev_id, ev in EVENTS.items():
     st = []

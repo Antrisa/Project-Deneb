@@ -325,4 +325,59 @@ const SCENES := {
 			["fx", "fireflies", "off"],
 		],
 	},
+	# The Harbinger, the first time you come to cavern floor 25 (main.gd _place_harbinger). The floor's layout is
+	# random, so the scene plays where you stand ("area": "here") and nobody walks.
+	"harbinger_found": {
+		"who": "Tar'Besh", "hearts": 0, "title": "The Harbinger",
+		"area": "here",
+		"steps": [
+			["wait", 0.5],
+			["sfx", "bell_ring"],
+			["shake", 0.6, 1.0],
+			["emote", "player", "surprise"],
+			["say", "", ["A crystal juts from the cavern wall, the colour of embers. The mark at the edge of your sight flares hot."]],
+			["say", "Harbinger", ["Ah! Hello! Please don't be alarmed. The others said someone could hear us now. I didn't believe them."], "???"],
+			["emote", "player", "question"],
+			["say", "Harbinger", ["I'm the Harbinger. Of Destruction, technically. It's only a title.",
+				"I have never destroyed anything I didn't mean to. Well. Hardly anything."], "The Harbinger"],
+			["say", "Harbinger", ["There is a sea under this rock. It presses on the stone the way a held breath presses on your ribs.",
+				"It cracks your station's pipes. It keeps your lake sealed. It would very much like to come out."], "The Harbinger"],
+			["choose", [
+				{"text": "\"Is it dangerous?\"", "steps": [
+					["say", "Harbinger", ["[happy] Oh, terribly. That's why it should be me who does it."], "The Harbinger"]]},
+				{"text": "\"What's in the sea?\"", "steps": [
+					["say", "Harbinger", ["Water, mostly. Old water. And something large that has been waiting a long time to be let out."], "The Harbinger"]]},
+			]],
+			["say", "Harbinger", ["Bring me something volatile, and I'll let the sea out. Gently. Mostly gently."], "The Harbinger"],
+			["emote", "player", "wait"],
+			["sfx", "quest"],
+			["toast", "The Harbinger's bundles are on your datapad's Relics page. Give them here, at its crystal."],
+		],
+	},
+	# The Harbinger's last bundle, given at its crystal (main.gd _give_custodian): the blast. Overnight the sea, the
+	# garden dome and the Underground Lake open (main.gd _custodian_fix "blast").
+	"harbinger_blast": {
+		"who": "Tar'Besh", "hearts": 0, "title": "The Blast",
+		"area": "here",
+		"steps": [
+			["say", "Harbinger", ["Ready? I'll count down from three. Three..."], "The Harbinger"],
+			["sfx", "bell_ring"],
+			["shake", 1.0, 1.0],
+			["say", "Harbinger", ["...Actually, from now."], "The Harbinger"],
+			["emote", "player", "surprise"],
+			["sfx", "sh_explode"],
+			["flash", "ffc070", 1.2],
+			["shake", 2.2, 4.0],
+			["sfx", "rock_break"],
+			["say", "", ["The floor heaves. Somewhere far below, stone gives way with a sound like the moon clearing its throat.",
+				"Then, under everything: water, roaring through the dark."]],
+			["shake", 1.2, 1.5],
+			["fade", 0.5, 0.6],
+			["say", "Harbinger", ["[happy] Oh. Oh, that was LOVELY. Is everyone all right? Nobody hurt? Wonderful.",
+				"The sea is free. By morning it will reach the places it used to reach."], "The Harbinger"],
+			["emote", "player", "joy"],
+			["say", "Harbinger", ["And I think I'd like to go home to the others now. Don't worry about carrying me. I'll find my own way."], "The Harbinger"],
+			["fade", 0.0, 0.6],
+		],
+	},
 }

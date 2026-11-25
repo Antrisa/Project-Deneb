@@ -227,6 +227,18 @@ const LETTERS := {
 		],
 		"sign": "S.A.R.A.",
 	},
+	# The morning after the Harbinger's blast (main.gd _custodian_fix "blast", 24 Nov).
+	"tarbesh_harbinger": {
+		"from": "Tar'Besh",
+		"title": "A new crystal",
+		"body": [
+			"Friend,",
+			"The whole station shook at midnight. S.A.R.A. says the sea under the caverns is open, the Underground Lake is unsealed, and there is water in the East Complex's old garden dome.",
+			"And this morning there is a crystal the colour of embers sitting in one of my empty cradles. Nobody brought it. I asked.",
+			"I assume this is your doing. Come and introduce us. I would like to know its name.",
+		],
+		"sign": "Tar'Besh, curator",
+	},
 	"tarbesh_museum_5": {
 		"from": "Tar'Besh",
 		"title": "Five cases",

@@ -134,7 +134,8 @@ func play(id: String) -> void:
 	_actors = {}
 	_walkers = []
 	await _fade_to(1.0, 0.35)
-	if str(event.get("area", world.current_area)) != world.current_area:
+	var area: String = str(event.get("area", "here"))     # "here": wherever you are (the Harbinger's cavern floor)
+	if area != "here" and area != world.current_area:
 		# a story scene somewhere else (the prologue, from your flat to the Medbay): go there under the fade
 		var at: Array = event.get("player", [1, 1, "d"])
 		world._go_to(str(event["area"]), Vector2i(int(at[0]), int(at[1])), false)
