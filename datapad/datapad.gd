@@ -1787,6 +1787,8 @@ func _wheel(down: bool) -> void:
 			_focus_id = ""
 			_activate(id)
 			return
+
+func _pointer(event: InputEventMouse) -> bool:
 	var found := _at(get_global_transform_with_canvas().affine_inverse() * event.position)
 	_mouse_ui = _layout.affine_inverse() * (get_global_transform_with_canvas().affine_inverse() * event.position)
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_RIGHT and _held>=0:

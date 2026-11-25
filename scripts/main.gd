@@ -136,6 +136,7 @@ const SOUND_NAMES := ["step", "step_soft", "click", "coin", "zap", "smelt", "war
 	"drink", "win_sting", "lose_sting", "crate_hit",
 	# the prologue (24 Nov, tools/dev/prologue_sounds.py)
 	"beam_charge", "crash_impact", "hull_groan", "water_drip", "radio_static", "power_down", "hull_tear", "fire_crackle",
+	"mother_iris", "mother_signal", "mother_transfer", "mother_extinguish", "rescue_receiver",
 	# the Custodians speaking in story scenes (25 Nov, tools/dev/custodian_sounds.py)
 	"custodian_call"]
 # Space-battle sounds (tools/dev/ship_sounds.py). Each gets a few players so quick repeats overlap.
@@ -2165,6 +2166,7 @@ func _say(who: String, lines: Array, on_yes: Callable = Callable(), yes_text: St
 	# face_of: whose portrait and voice to use when the name shown is a label, e.g. "Tikka (comms)"
 	var face: String = face_of if face_of != "" else who
 	var portrait: Texture2D = null
+	dialogue.voice_cue = "mother_signal" if face == "MotherDrone" else ""
 	dialogue.voice_pitch = 1.0
 	if persons.has(face):
 		portrait = persons[face]["portrait"]
@@ -2183,6 +2185,7 @@ func _say(who: String, lines: Array, on_yes: Callable = Callable(), yes_text: St
 func _say_choice(who: String, lines: Array, options: Array, on_pick: Callable, face_of: String = "") -> void:
 	var face: String = face_of if face_of != "" else who
 	var portrait: Texture2D = null
+	dialogue.voice_cue = "mother_signal" if face == "MotherDrone" else ""
 	dialogue.voice_pitch = 1.0
 	if persons.has(face):
 		portrait = persons[face]["portrait"]

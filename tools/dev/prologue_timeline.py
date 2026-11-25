@@ -9,8 +9,8 @@ Building it checks that every line ends before the next such moment, and stops w
 Song times measured from the files: Space Battle (151.8 bpm, a downbeat at 0.094 s; its full band comes in at 15.2 s,
 the drum fill at 60.2-61.4, the finale at 69.675, the last hit at 76.84) and Lunar Discovery (phrase accents about
 every 3.73 s; back in full at 173.28, the last chord at 191.21, wound down by 199).
-No made-up sounds play over Lunar Discovery's part (25 Nov: Zachary didn't like the glass-bell run on the glyphs or
-the hum as the drone woke clashing with it), so the drone's moments are the music's own accents.
+The Mother-Drone has short physical cues for its aperture, voice, transfer and last breath. Lunar Discovery
+provides the sustained harmony and the accent when the glyphs fold.
 Edit the lines or the times here, then run: python3 tools/dev/prologue_timeline.py"""
 import json
 import re
@@ -58,18 +58,22 @@ class TL:
 
 tl = TL()
 S, F = tl.raw, tl.say
-# the Wandering Star is the artist's own Needle (art/ships/needle/, 80 x 55), always shown at 3x so its pixels stay
-# square; her plumes and the wing piece come from it (tools/dev/prologue_art.py) and line up with it at 3x
-SHIP = "res://art/ships/needle/needle_intact.png"
-HURT = "res://art/ships/needle/needle_damaged.png"
+# The 192-pixel Needle art is registered inside the existing 240 x 165 flight footprint.
+HURT = "res://art/prologue/needle_flight_damaged.png"
 PLUME = "res://art/prologue/needle_plume.png"
 WING = "res://art/prologue/needle_wing.png"
 AT = (60, 108)                                  # where she flies, the Needle's top-left
 FL1, FL2 = (39, 174), (51, 201)                 # her plumes, on her two nozzles
 BOB = [2, 2.6]
+CLOSE = "res://art/prologue/mother_close.png"
+CLOSE_AT = (122, 80)
+CLOSE_WAKE = "res://art/prologue/mother_close_wake.png"
+CLOSE_PULSE = "res://art/prologue/mother_close_pulse.png"
+CLOSE_DIM = "res://art/prologue/mother_close_dim.png"
 
 # ---------------------------------------------------------------- before the music: who you are
-S(["bmoves", [["rock_a", 470, 280], ["rock_b", 170, 56]], 150.0, "", "nowait"],
+S(["bmove", "rock_a", -114, 279, 65.0, "", "nowait"],
+  ["bmove", "rock_b", 64, 40, 142.0, "", "nowait"],
   ["bmoves", [["ship", *AT], ["flame1", *FL1], ["flame2", *FL2]], 2.8, "out"], takes=2.8)
 F("", ["The outer Neutral Zone: the asteroid belt, sector seven.",
        "Your little fighter, the Wandering Star, picks her way through the rocks."])
@@ -110,7 +114,9 @@ tl.note("your two volleys, along your heading: they splash off his shield")
 for k in range(2):
     S(["bsprite", "b1", "res://art/prologue/bolt_teal.png", 266, 162, {"z": 3}], ["bsprite", "b2", "res://art/prologue/bolt_teal.png", 252, 170, {"z": 3}],
       ["sfx", "sh_laser"],
+      ["bmoves", [["ship", AT[0]-5, AT[1]+1], ["flame1", FL1[0]-5, FL1[1]+1], ["flame2", FL2[0]-5, FL2[1]+1]], .12, "out", "nowait"],
       ["bmoves", [["b1", 316, 154], ["b2", 302, 162]], 0.16],
+      ["bmoves", [["ship", *AT], ["flame1", *FL1], ["flame2", *FL2]], .26, "out", "nowait"],
       ["bsprite", "b1", ""], ["bsprite", "b2", ""],
       ["bsprite", "shield", "res://art/prologue/shield.png", 297, 36 + 8 * k, {"frames": 6, "fps": 14, "loop": False, "z": 2}],
       ["sfx", "sh_shield"],
@@ -142,8 +148,8 @@ S(["bsprite", "g4", ""],
   ["bsprite", "smoke", "res://art/ships/fx/smoke.png", 114, 116, {"frames": 4, "fps": 6, "scale": 2, "z": 3, "bob": BOB}],
   ["sfx", "sh_explode"], ["shake", 0.4, 2.0])
 tl.at(61.39, "the big hit: the wing")
-S(["bsprite", "ship", HURT, *AT, {"scale": 3, "z": 2, "bob": BOB}],
-  ["bsprite", "wing", WING, 138, 228, {"frames": 4, "fps": 9, "scale": 3, "z": 5}],
+S(["bsprite", "ship", HURT, *AT, {"z": 2, "bob": BOB}],
+  ["bsprite", "wing", WING, AT[0]+73, AT[1]+115, {"frames": 8, "fps": 8, "z": 5, "bob": BOB}],
   ["bmoves", [["wing", 420, 380]], 1.4, "out", "nowait"],
   ["bsprite", "h1", "res://art/ships/fx/hit.png", 141, 214, {"frames": 6, "fps": 12, "loop": False, "z": 4}],
   ["bsprite", "c3", "res://art/prologue/chip.png", 162, 240, {"frames": 4, "fps": 16, "z": 5}],
@@ -171,9 +177,9 @@ tl.note("the blind jump: what's left of her streaks away along her heading, and 
 S(["sfx", "sh_fold"],
   ["bsprite", "flame1", ""], ["bsprite", "flame2", ""], ["bsprite", "fire", ""], ["bsprite", "smoke", ""], ["bsprite", "sparks", ""],
   ["bfade", "streaks", 1.0, 0.15, "nowait"],
-  ["flash", "fff3d6", 1.6],
   ["shake", 0.8, 4.0],
-  ["bmoves", [["ship", 800, -14]], 0.35, "in"], takes=0.35)
+  ["bmove", "ship", 800, -14, .35, "in", "nowait"],
+  ["wait", .22], ["flash", "fff3d6", .48], ["wait", .13], takes=0.35)
 F("", ["Space folds around you, and the asteroid belt is gone."])
 S(["score_end"], ["music", "silence"], ["fade", 1.0, 0.8], ["board", ""], takes=0.8)
 song1_end = tl.t
@@ -226,30 +232,34 @@ tl.start_song("lunar_discovery", 62.95)
 tl.at(63.1, "the drone sighted")
 F("", ["Across the cavern, half sunk in the basalt, lies something enormous:",
        "seamless, silver, shaped like a sleeping seed, with violet crystal grown up through the cracks in its shell."])
+S(["board", CLOSE])
 F("", ["Spacers tell stories about things like this. Silver lights that hum like struck glass and never show on a scanner.",
        "Terran scholars call the Starborn a myth: a people from before everyone, who left nothing but ruins nobody can date.",
        "Nobody grows a ship. But nothing on that shell was built. No seam, no rivet, no weld."], "You (thinking)")
-S(["sfx", "hull_groan"])
+S(["board", ""], ["sfx", "hull_groan"])
 F("", ["What's left of your ship settles with a groan."], "", [3.3])
 tl.at(104.06, "the drone wakes")
-S(["shake", 1.6, 1.0],
+S(["sfx", "mother_iris"], ["board", CLOSE],
+  ["bsprite", "close_light", CLOSE_WAKE, *CLOSE_AT, {"frames": 10, "fps": 5, "loop": False}],
   ["wsprite", "dglow", "res://art/prologue/drone_glow.png", 22, 6, {"add": True, "alpha": 0.0, "z": -3}],
   ["wsprite", "drone", "res://art/prologue/mother_drone_wake.png", 24, 8, {"frames": 8, "fps": 5, "loop": False}],
   ["wfade", "dglow", 0.6, 1.6, "nowait"])
 F("", ["A deep hum rises through what's left of your hull, like a struck crystal. Gold light runs through its veins,",
        "and the crystals catch it."])
 tl.at(115.26, "it speaks")
-S(["wsprite", "drone", "res://art/prologue/mother_drone_pulse.png", 24, 8, {"frames": 6, "fps": 8}])
+S(["bsprite", "close_light", CLOSE_PULSE, *CLOSE_AT, {"frames": 8, "fps": 3}],
+  ["wsprite", "drone", "res://art/prologue/mother_drone_pulse.png", 24, 8, {"frames": 6, "fps": 3}])
 F("MotherDrone", ["...Signal... faint... Core reserves at 0.04 percent...", "...An organic mind. Close."], "???")
 tl.at(123.04, "its story")
 F("MotherDrone", ["...You fell through the roof of the world... and did not break. Good.",
                   "...Long before your sun had a name, we were sown here. Seeds... left to wake when the small worlds needed tending.",
                   "...The makers went on. Not gone. Further. Larger. Your words for them are... storms. And stars."], "???")
-S(["sfx", "beam_charge"],
-  ["wsprite", "beam", "res://art/prologue/crash_beam.png", 11, 9, {"frames": 4, "fps": 10, "alpha": 0.0}],
-  ["wfade", "beam", 0.85, 0.8, "nowait"])
+S(["board", ""])
+tl.at(144.60, "the lens sends a pilot ray")
+S(["sfx", "mother_transfer"],
+  ["wsprite", "beam", "res://art/prologue/crash_beam_reach.png", 11, 9, {"frames": 6, "fps": 7.5, "loop": False, "alpha": .85}])
 tl.at(145.4, "the beam reaches you")
-S(["flash", "b085e6", 1.2],
+S(["wsprite", "beam", "res://art/prologue/crash_beam.png", 11, 9, {"frames": 4, "fps": 4, "alpha": .67}],
   ["board", "clear"],
   ["bsprite", "glyphs", "res://art/prologue/glyphs.png", 0, 0, {"frames": 12, "fps": 9, "alpha": 0.0}],
   ["bfade", "glyphs", 1.0, 0.8, "nowait"])
@@ -264,16 +274,18 @@ S(["bsprite", "glyphs", ""],
   ["bsprite", "mark", "res://art/prologue/glyph_mark.png", 608, 12, {"alpha": 0.0, "z": 3}],
   ["bfade", "mark", 1.0, 0.4, "nowait"])
 F("MotherDrone", ["...Three sleep close, behind glass. Others in the stone, in the storm, on a world that never sees its night..."], "???")
-S(["bfade", "mark", 0.0, 1.6, "nowait"])
+S(["board", CLOSE], ["bsprite", "close_light", CLOSE_PULSE, *CLOSE_AT, {"frames": 8, "fps": 2.5}],
+  ["bfade", "mark", 0.0, 1.6, "nowait"])
 F("MotherDrone", ["...Remember... the song...", "...Tend the small... worlds..."], "???")
 tl.at(191.21, "it dies on the last chord")
-S(["sfx", "power_down"],
+S(["sfx", "mother_extinguish"],
+  ["bsprite", "close_light", CLOSE_DIM, *CLOSE_AT, {"frames": 10, "fps": 4.5, "loop": False}],
   ["wfade", "beam", 0.0, 1.2, "nowait"],
   ["wfade", "dglow", 0.0, 7.5, "nowait"],
-  ["wfade", "drone", 0.0, 7.8, "nowait"],
-  ["board", ""])
+  ["wfade", "drone", 0.0, 7.8, "nowait"])
 F("", ["The hum sinks, and stops. The golden veins fade back to dark silver."])
-S(["score_end"], ["music", "silence"])
+S(["board", ""], ["score_end"], ["music", "silence"])
+S(["fade", 0.7, 1.2], ["sfx", "rescue_receiver"])
 
 if tl.log:
     print("\n".join(tl.log))
@@ -302,7 +314,7 @@ text = "\n".join(out) + "\n"
 
 src = open(P).read()
 a = src.index('\t\t"steps": [\n', src.index('"prologue": {')) + len('\t\t"steps": [\n')
-b = src.index('\t\t\t["fade", 0.7, 1.2],\n\t\t\t["sfx", "radio_static"],', a)
+b = src.index('\t\t\t["say", "Sara", ["Unidentified vessel', a)
 src = src[:a] + text + src[b:]
 open(P, "w").write(src)
 print("wrote", len(tl.steps), "steps")

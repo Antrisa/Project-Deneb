@@ -12,10 +12,10 @@ drawn by tools/dev/crash_site_art.py). This draws what goes over the picture pan
   glyphs.png            the star-glyphs wheeling round you, 12 frames (640 x 360): each ring turns its own way, each
                         glyph spins and twinkles;  glyph_fold.png: folding into the mark, 8 frames;  glyph_mark.png
   sparks.png            sparks from the torn hull, 6 frames;  blink.png: the red emergency light, 2 frames
-  the Wandering Star is the artist's Needle (art/ships/needle/needle_intact.png, needle_damaged.png, Zachary's
-                        originals, shown 3x with nearest-neighbour filtering);  needle_wing.png: what Ivan's big hit
-                        shears off her lower wing (the intact Needle less the damaged one), tumbling by quarter turns,
-                        4 frames;  needle_plume.png: her engine plume, behind her from each port, 4 frames (the
+  the Wandering Star uses the detailed Needle plates (needle_flight_intact.png, needle_flight_damaged.png) at
+                        native board resolution; needle_wing.png: what Ivan's big hit
+                        shears off her lower wing (the intact Needle less the damaged one), rolling into shadow,
+                        8 frames;  needle_plume.png: her engine plume, behind her from each port, 4 frames (the
                         menu's plume colours);  shield.png: Ivan's shield taking a hit, 6 frames
   approach.png          the moon you fall to, put together from the main menu's own art (starfield, gas giant, base)
   streak.png            your ship burning in, 4 frames;  impact.png: flash, fireball, thrown rock and dust, 10 frames
@@ -280,10 +280,8 @@ def blink_frames():
 
 
 # ---------------------------------------------------------------- the ambush and the jump
-# ---------------------------------------------------------------- the Wandering Star: the artist's Needle (25 Nov,
-# Zachary's originals: art/ships/needle/needle_intact.png and needle_damaged.png, 80 x 55, lossless, 18 colours).
-# Shown at a whole-number scale (3x on the panels) with nearest-neighbour filtering, so they stay crisp.
-NEEDLE = os.path.join(ROOT, "art", "ships", "needle")
+# The 240 x 165 flight plates line up with the original 80 x 55 Needle at 3x.
+# Port and heading coordinates below use the original sprite's grid.
 NOZZLES = ((11.0, 25.0), (15.0, 34.0))         # her two engine ports, in her own pixels (the orange in the pods)
 AXIS = (.986, -.164)                           # her heading: nose (70, 20) from the engines' middle (13, 29.5)
 PLUME_DIR = (-AXIS[0], -AXIS[1])               # the exhaust runs behind her
@@ -292,15 +290,12 @@ PLUME_BASE = (18, 3)                           # where a plume frame attaches to
 PLUME_BLUE, PLUME_GOLD = (131, 165, 211), (255, 192, 104)
 
 
-def needle(name):
-    return np.array(Image.open(os.path.join(NEEDLE, "needle_%s.png" % name)).convert("RGBA"))
-
-
 def wing_piece():
     """What Ivan's big hit shears off her lower wing: what the intact Needle has and the damaged one hasn't, its
-    torn edge outlined, tumbling (4 frames, each a quarter turn on: turning by quarter turns keeps her pixels whole).
-    Returns the strip and where its first frame's top-left sits on her (her pixels)."""
-    whole, hurt = needle("intact"), needle("damaged")
+    torn edge outlined. The foreshortened underside passes through shadow once per tumble.
+    Returns the strip and its top-left in board pixels relative to the fighter."""
+    whole, hurt = (np.array(Image.open(os.path.join(OUT_DIR, "needle_flight_%s.png" % state)).convert("RGBA"))
+                   for state in ("intact", "damaged"))
     m = (whole[:, :, 3] > 0) & (hurt[:, :, 3] == 0)
     ys, xs = np.nonzero(m)
     y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
@@ -309,14 +304,25 @@ def wing_piece():
     piece[sub] = whole[y0:y1, x0:x1][sub]
     solid = piece[:, :, 3] > 0
     piece[edge(solid)] = (0x2c, 0x23, 0x36, 255)     # her own outline colour, round the torn top too
-    side = max(piece.shape[:2]) + 2
+    side = math.ceil(math.hypot(*piece.shape[:2])) + 2
     sq = np.zeros((side, side, 4), np.uint8)
     py, px = (side - piece.shape[0]) // 2, (side - piece.shape[1]) // 2
     sq[py:py + piece.shape[0], px:px + piece.shape[1]] = piece
     frames = []
-    for k in range(4):
+    tile = Image.fromarray(sq, "RGBA")
+    underside = sq.copy()
+    for lit, shadow in [("ffebc9","d4b5a8"),("f1d6af","bd9da6"),("d4b5a8","9c8493"),("ed651c","ae471d")]:
+        matches = np.all(sq[:, :, :3] == tuple(bytes.fromhex(lit)), axis=2)
+        underside[matches, :3] = tuple(bytes.fromhex(shadow))
+    back = Image.fromarray(underside, "RGBA").transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+    for k in range(8):
         cv = Canvas(side, side)
-        cv.a = np.ascontiguousarray(np.rot90(sq, -k))
+        turn = math.tau * k / 8
+        height = max(3, round(side * (.22 + .78 * abs(math.cos(turn)))))
+        part = (back if math.cos(turn) < 0 else tile).resize((side, height), Image.Resampling.NEAREST)
+        centered = Image.new("RGBA", (side, side))
+        centered.paste(part, (0, (side-height)//2))
+        cv.a = np.array(centered.rotate(-45*k, resample=Image.Resampling.NEAREST))
         frames.append(cv)
     return strip(frames), (int(x0) - px, int(y0) - py)
 
