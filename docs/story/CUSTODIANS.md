@@ -38,7 +38,9 @@ Notes:
 - **S.A.R.A.'s paid repairs:** the hot springs and fish ponds stay with her, after the Leviathan.
 - **The Leviathan:** it lives in the sea the Harbinger opens. Before the blast the caverns end at floor 44.
 
-## Tidelight
+## Tidelight (to rework later)
+
+Zachary, 24 Nov: maybe call it **Everlight Falls**; add a cool waterfall and a stream running through the village; and the future map should be **woodland themed**. "We can work on the planet later." The map below is the first pass.
 
 A tidally locked world, so everywhere you can go is at sunset: the beach on the sunward edge, a small village in the twilight band, and a forest running into the night side. The name plays on "twilight" and "tidally locked" (Claude).
 
@@ -54,7 +56,10 @@ The green storm cloud with lightning on the title screen. One way it could fit (
 
 ## What's built (24 Nov)
 
-- **The prologue** (`scripts/story_scenes.gd` "prologue"): plays after you make your character on a new game. The space and cavern parts are picture panels (new cutscene steps: `board`, `bsprite`, `bmove`, `bmoves`, `bfade`, `flash`); the cavern, the Mother-Drone and its portrait are drawn by `tools/dev/prologue_art.py`.
+- **The prologue** (`scripts/story_scenes.gd` "prologue"): plays after you make your character on a new game.
+  - **Space** is picture panels (cutscene steps `board`, `bsprite`, `bmove`, `bmoves`, `bfade`, `flash`) made of the game's own space art: the asteroid backdrop, Ivan's flagship, and the Wandering Star as the game's starter ship, whole until the blind jump tears it in two. Engine flames, shield hits, laser bolts, the jump's light streaks, your ship burning in and the impact are animated (`tools/dev/prologue_art.py`).
+  - **The crash** plays in the game itself (second pass, 24 Nov: "the mother drone area doesnt fit the art style"), on a cavern map built and baked like the others (`tools/crash_site.py`, area `crash_site`). Your ship's front half (the in-world ship art's most broken stage, its back torn off) lies nose-first in a heap of basalt, and the Mother-Drone is half sunk in the floor (`tools/dev/crash_site_art.py`). Fire, smoke, sparks and the red emergency light play on the wreck; the drone's veins light from the lens outwards and pulse, its beam reaches your canopy, and the star-glyphs wheel over the screen and fold into the mark (world sprites: cutscene steps `wsprite`, `wmove`, `wfade`).
+  - **Sound:** no music; the ship's drone in space and the cave's drips at the crash (cutscene steps `music`, `ambient`), and ten new effects (`tools/dev/prologue_sounds.py`): the drone's hum, the glyphs' chimes, the beam charging, the crash, the hull groaning, a drip, radio static, the drone powering down, the hull tearing, fire.
 - **The museum scene** ("custodians_wake"): the first time you walk into the museum after your first morning. It wakes the three Sanctum Custodians.
 - **Giving:** right-click a crystal in the Sanctum. The Custodian speaks; "Give what I have" puts in everything its open bundles still need. A full bundle mends its part overnight, and the first time S.A.R.A. writes to you ("Something odd overnight").
 - **The datapad's Relics page** lists every Custodian you've found, each bundle's items (given / needed, and how many you carry) and what it mends.

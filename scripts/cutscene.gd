@@ -54,7 +54,14 @@ extends Node
 #                                      ["bmoves", [[id, x, y], ...], seconds, ease] moves several at once
 #   ["bfade", id, alpha, seconds]      fades it and waits; ["bfade", id, alpha, seconds, "nowait"] goes on at once
 #   ["flash", hex, seconds]            the screen flashes that colour, then clears
-#   "shake" shakes the board too.
+#   "shake" shakes the board too. ["board", "clear"] puts up an empty board: sprites over the map (the glyphs).
+# Sprites in the world (24 Nov: the crash site), placed by tile, at the map's art scale, over the props:
+#   ["wsprite", id, path, tx, ty, opts]  as "bsprite", its top-left at tile tx, ty (fractions are fine)
+#   ["wmove", id, tx, ty, seconds, ease]  ["wfade", id, alpha, seconds] (or "nowait")
+# Sound under the scene (24 Nov: "some random music plays over the whole thing"):
+#   ["music", mode]       "silence" (the music fades out and stays out), a song's id (music_director.gd SONGS), or
+#                         "" to give the music back; a scene can start with "music" set the same way
+#   ["ambient", bed]      "none", "amb_space", "amb_caves", "amb_station"..., or "" for the place's own
 # Events can also need a second resident at the same hearts ("with": ["Evarra"]) and play only in some
 # seasons ("seasons": ["Autumn", "Winter"]): main.gd _event_ready.
 # play() also takes the story scenes in HeartEvents.SCENES (your first morning) and StoryScenes.SCENES (the main
@@ -92,6 +99,10 @@ var _board_sprites := {}        # id -> Sprite2D
 var _board_anim := {}           # id -> [fps, seconds so far, loop]
 var _flash: ColorRect
 var board_box_top := true       # the talk box over a picture panel: at the top, unless the scene says "box": "bottom"
+var _world_sprites := {}        # id -> Sprite2D in the world ("wsprite")
+var music_mode := ""            # read by scripts/music_director.gd while a scene runs ("music")
+var amb_mode := ""              # ... and the ambient bed ("ambient")
+const ART := 2.0 / 3.0          # the map's art scale (24 art pixels to a 16-unit tile), as main.gd
 
 
 func _ready() -> void:
@@ -151,6 +162,8 @@ func play(id: String) -> void:
 			if r != null:
 				r.scene_pose(str(c[4]))
 	board_box_top = str(event.get("box", "top")) != "bottom"
+	music_mode = str(event.get("music", ""))
+	amb_mode = str(event.get("ambient", ""))
 	if event.has("board"):            # the scene opens on a picture (the prologue)
 		_board_bg.texture = load(str(event["board"]))
 		_board.visible = true
@@ -180,6 +193,9 @@ func play(id: String) -> void:
 	world.player.scene_walking = false
 	world.player._cam.offset = Vector2.ZERO
 	_board_clear()
+	_world_clear()
+	music_mode = ""
+	amb_mode = ""
 	world._heart_event_done(id)
 	await _fade_to(0.0, 0.45)
 	running = false
@@ -242,6 +258,7 @@ func _step(s: Array) -> void:
 				world.persons[str(s[1])]["met"] = true
 		"go":
 			# the scene moves to another map (best done under a fade): the player goes there; place the cast after
+			_world_clear()
 			world._go_to(str(s[1]), Vector2i(int(s[2]), int(s[3])), false)
 			world._event_area = world.current_area
 			if _holo != null:
@@ -333,9 +350,35 @@ func _step(s: Array) -> void:
 		"board":
 			if str(s[1]) == "":
 				_board_clear()
+			elif str(s[1]) == "clear":
+				_board_bg.texture = null
+				_board.visible = true
 			else:
 				_board_bg.texture = load(str(s[1]))
 				_board.visible = true
+		"wsprite":
+			_world_sprite(str(s[1]), str(s[2]), float(s[3]), float(s[4]), s[5] if s.size() > 5 else {})
+		"wmove":
+			var wsp: Sprite2D = _world_sprites.get(str(s[1]))
+			if wsp != null:
+				var wt := create_tween()
+				var tw := wt.tween_property(wsp, "position", Vector2(float(s[2]) * 16.0, float(s[3]) * 16.0), maxf(0.01, float(s[4])))
+				if s.size() > 5 and str(s[5]) == "in":
+					tw.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+				elif s.size() > 5 and str(s[5]) == "out":
+					tw.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+				await wt.finished
+		"wfade":
+			var fsp: Sprite2D = _world_sprites.get(str(s[1]))
+			if fsp != null:
+				var ft := create_tween()
+				ft.tween_property(fsp, "modulate:a", float(s[2]), maxf(0.01, float(s[3])))
+				if not (s.size() > 4 and str(s[4]) == "nowait"):
+					await ft.finished
+		"music":
+			music_mode = str(s[1])
+		"ambient":
+			amb_mode = str(s[1])
 		"bsprite":
 			_board_sprite(str(s[1]), str(s[2]), float(s[3]) if s.size() > 3 else 0.0, float(s[4]) if s.size() > 4 else 0.0, s[5] if s.size() > 5 else {})
 		"bmove":
@@ -476,7 +519,7 @@ func _process(delta: float) -> void:
 		_board.position = world.player._cam.offset.round()
 	for id in _board_anim:
 		var a: Array = _board_anim[id]
-		var sp: Sprite2D = _board_sprites.get(id)
+		var sp: Sprite2D = _board_sprites.get(id) if not str(id).begins_with("w:") else _world_sprites.get(str(id).substr(2))
 		if sp == null or sp.hframes < 2:
 			continue
 		a[1] = float(a[1]) + delta
@@ -525,6 +568,37 @@ func _board_move(moves: Array, seconds: float, easing: String) -> void:
 		await t.finished
 	else:
 		t.kill()
+
+
+func _world_sprite(id: String, path: String, tx: float, ty: float, opts: Dictionary) -> void:
+	if _world_sprites.has(id):
+		_world_sprites[id].queue_free()
+		_world_sprites.erase(id)
+		_board_anim.erase("w:" + id)
+	if path == "":
+		return
+	var sp := Sprite2D.new()
+	sp.texture = load(path)
+	sp.centered = false
+	sp.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sp.scale = Vector2.ONE * ART
+	sp.position = Vector2(tx * 16.0, ty * 16.0)
+	sp.flip_h = bool(opts.get("flip", false))
+	sp.hframes = maxi(1, int(opts.get("frames", 1)))
+	sp.modulate.a = float(opts.get("alpha", 1.0))
+	sp.z_index = 40 + int(opts.get("z", 0))          # over the props and people
+	world.actors.add_child(sp)
+	_world_sprites[id] = sp
+	if sp.hframes > 1:
+		_board_anim["w:" + id] = [float(opts.get("fps", 8.0)), 0.0, bool(opts.get("loop", true))]
+
+
+func _world_clear() -> void:
+	for sp in _world_sprites.values():
+		sp.queue_free()
+	for id in _world_sprites:
+		_board_anim.erase("w:" + str(id))
+	_world_sprites = {}
 
 
 func board_up() -> bool:

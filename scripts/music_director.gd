@@ -132,6 +132,11 @@ func update(delta: float) -> void:
 			_state = "idle"
 			_song = ""
 		return
+	# A cutscene can hush the music or choose its own (scripts/cutscene.gd "music", 24 Nov: the prologue)
+	var scene_music: String = str(world.cutscene.music_mode) if world.cutscene != null and world.cutscene.running else ""
+	if scene_music != "":
+		_scene_music(scene_music, delta)
+		return
 	var place := _place_now()
 	var day: int = int(world.day)
 	if place != _place or day != _day:
@@ -162,6 +167,21 @@ func update(delta: float) -> void:
 		_timer -= delta
 		if _timer <= 0.0:
 			_start(_choose(playlist()))
+
+
+func _scene_music(mode: String, delta: float) -> void:
+	if mode == "silence":
+		if player.playing:
+			player.volume_db -= 40.0 * delta
+			if player.volume_db <= -45.0:
+				player.stop()
+		if not player.playing:
+			_song = ""
+			_state = "resting"
+			_timer = 3.0
+		return
+	if _song != mode or not player.playing:
+		_start(mode)
 
 
 # The songs that suit where and when the player is now (only those whose files are in).
@@ -242,6 +262,8 @@ func _place_now() -> String:
 func _ambient_now() -> String:
 	if world.title != null and world.title.open:
 		return ""
+	if world.cutscene != null and world.cutscene.running and str(world.cutscene.amb_mode) != "":
+		return "" if str(world.cutscene.amb_mode) == "none" else str(world.cutscene.amb_mode)
 	var place := _place_now()
 	if place == "creator":
 		return ""

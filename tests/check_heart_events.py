@@ -62,7 +62,10 @@ EMOTES = {"surprise", "question", "love", "joy", "sad", "frustrated", "hello", "
 TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bashful"}
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
          "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy", "fx", "sara",
-         "give", "mail", "board", "bsprite", "bmove", "bmoves", "bfade", "flash"}
+         "give", "mail", "board", "bsprite", "bmove", "bmoves", "bfade", "flash", "wsprite", "wmove", "wfade",
+         "music", "ambient"}
+SONGS = set(re.findall(r'^\t"(\w+)": \[', (ROOT / 'scripts/music_director.gd').read_text(), re.M))
+AMBIENT = {"", "none"} | {p.stem for p in (ROOT / 'audio').glob('amb_*.*')}
 VOICES = {"Sensors", "Sara", "Ivan", "MotherDrone", "Chancellor", "Sovereign", "Forgemaster", "Harbinger", "Shepherd", "Warden"}   # who may speak without being a resident (portraits by name)
 FX = {"bees", "fireflies", "steam", "heartbeats", "spray", "bubbles"}   # scripts/scene_fx.gd
 SARA_CLIPS = set(re.findall(r'"name": "(\w+)"', (ROOT / 'sara/animations_data.gd').read_text()))
@@ -92,6 +95,10 @@ if 'TIDELIGHT' in md:                     # Tidelight is reached by shuttle, not
     tl = ('tidelight', md['TIDELIGHT']['landing'][0], md['TIDELIGHT']['landing'][1])
     seen.add(tl)
     q.append(tl)
+if 'CRASH_SITE' in md:                    # the crash site: only the prologue goes there (tools/crash_site.py)
+    cs = ('crash_site', md['CRASH_SITE']['spot'][0], md['CRASH_SITE']['spot'][1])
+    seen.add(cs)
+    q.append(cs)
 while q:
     a, x, y = q.popleft()
     nxt = [(a, x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
@@ -111,6 +118,7 @@ def event_sheet(who):
 problems = []
 count = {"steps": 0, "lines": 0}
 board_ids = set()   # the sprites on a scene's picture board so far
+world_ids = set()   # ... and in the world ("wsprite")
 
 
 def bad(ev_id, msg):
@@ -157,8 +165,19 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
                 text = line[m.end():] if m else line
                 if len(text) > 150:
                     bad(ev_id, "line over 150 characters: %r" % text[:60])
+        elif op == "music":
+            if s[1] not in ("", "silence") and s[1] not in SONGS: bad(ev_id, "music: no song %r" % s[1])
+        elif op == "ambient":
+            if s[1] not in AMBIENT: bad(ev_id, "ambient: no bed %r" % s[1])
+        elif op == "wsprite":
+            if s[2] and not (ROOT / s[2].replace("res://", "")).exists():
+                bad(ev_id, "wsprite: no picture %s" % s[2])
+            if s[2]: world_ids.add(s[1])
+            else: world_ids.discard(s[1])
+        elif op in ("wmove", "wfade"):
+            if s[1] not in world_ids: bad(ev_id, "%s: no sprite %r in the world" % (op, s[1]))
         elif op in ("board", "bsprite"):
-            path = s[1] if op == "board" else s[2]
+            path = "" if (op == "board" and s[1] == "clear") else (s[1] if op == "board" else s[2])
             if path and not (ROOT / path.replace("res://", "")).exists():
                 bad(ev_id, "%s: no picture %s" % (op, path))
             if op == "bsprite":
@@ -309,6 +328,9 @@ for ev_id, ev in list(EVENTS.items()) + list(SCENES.items()):
             taken[(c[1], c[2])] = c[0]
             if len(c) > 4: check_pose(ev_id, c[0], c[4])
         board_ids.clear()
+        world_ids.clear()
+        for key in ('music', 'ambient'):
+            if key in pev: check_steps(ev_id, pev, [[key, pev[key]]], pev['area'], known)
         if pev.get('board'):
             check_steps(ev_id, pev, [["board", pev['board']]] + pev.get('board_setup', []), pev['area'], known)
         check_steps(ev_id, pev, pev['steps'], pev['area'], known)

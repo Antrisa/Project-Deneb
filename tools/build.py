@@ -2444,6 +2444,9 @@ bar.build(globals())
 # ---------------------------------------------------------------- Tidelight, the world past the storm: see tools/tidelight.py
 import tidelight
 tidelight.build(globals())
+# ---------------------------------------------------------------- the crash site, for the prologue: see tools/crash_site.py
+import crash_site
+crash_site.build(globals())
 
 # ---------------------------------------------------------------- who and what is where
 START = PLAYER_START          # beside your bed in your apartment, off the agri complex's front porch (tools/residences.py)
@@ -3378,6 +3381,7 @@ for ar in A.values():
 assert walkable(*START)
 _starts = [tuple(START)] + [(k_, c_["up"][0], c_["up"][1]) for k_, c_ in CAVERNS["maps"].items()]   # caverns: entered by the gate, not a warp
 _starts.append(("tidelight", TIDELIGHT_LANDING[0], TIDELIGHT_LANDING[1]))   # Tidelight: reached by shuttle, not a warp
+_starts.append(("crash_site", CRASH_SITE["spot"][0], CRASH_SITE["spot"][1]))   # the crash site: only the prologue goes there
 seen, q = set(_starts), deque(_starts)
 while q:
     a, x, y = q.popleft()
@@ -3590,6 +3594,7 @@ with open(os.path.join(OUT, "scripts", "map_data.gd"), "w") as f:
     f.write("const ENEMIES = " + json.dumps(ENEMIES) + "\n")
     f.write("const CAVERNS = " + json.dumps(CAVERNS) + "\n")
     f.write("const TIDELIGHT = " + json.dumps({"landing": TIDELIGHT_LANDING, "warden": TIDELIGHT_WARDEN}) + "\n")
+    f.write("const CRASH_SITE = " + json.dumps(CRASH_SITE) + "\n")
     f.write("const MAP_LAYOUT = " + json.dumps(MAP_LAYOUT) + "\n")
     f.write("const MAP_TITLES = " + json.dumps(MAP_TITLES) + "\n")
     f.write("const MAP_MARKS = " + json.dumps(MAP_MARKS) + "\n")

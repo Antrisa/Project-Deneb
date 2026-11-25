@@ -133,7 +133,10 @@ const SOUND_NAMES := ["step", "step_soft", "click", "coin", "zap", "smelt", "war
 	"chest_open", "chest_close", "gift", "bell_ring", "mail_waiting", "pass_out", "medpack", "bug_noise", "map_jump",
 	"crew_order", "toast", "datapad_open", "hail", "sara_holo", "launch", "ship_crate", "furnace_load", "machine_done",
 	"cook", "recipe_new", "repair_done", "museum_place", "letter_open", "trash", "sleep", "enemy_die", "crew_down",
-	"drink", "win_sting", "lose_sting", "crate_hit"]
+	"drink", "win_sting", "lose_sting", "crate_hit",
+	# the prologue (24 Nov, tools/dev/prologue_sounds.py)
+	"drone_hum", "glyph_chime", "beam_charge", "crash_impact", "hull_groan", "water_drip", "radio_static",
+	"power_down", "hull_tear", "fire_crackle"]
 # Space-battle sounds (tools/dev/ship_sounds.py). Each gets a few players so quick repeats overlap.
 const SHIP_SOUNDS := ["sh_laser", "sh_missile", "sh_beam", "sh_ion", "sh_flak", "sh_dart", "sh_shield", "sh_hull", "sh_hit",
 	"sh_miss", "sh_explode", "sh_fire", "sh_alarm", "sh_vent", "sh_fold", "sh_ready", "sh_blaster", "sh_pod", "sh_door"]
@@ -1124,6 +1127,8 @@ func _light_color() -> Color:
 		c = Color(0.58, 0.58, 0.7)          # no day and night down there
 	elif current_area == "lake":
 		c = Color(0.66, 0.74, 0.86)         # nor at the underground lake: cool, blue-green dark
+	elif current_area == "crash_site":
+		c = Color(0.56, 0.56, 0.72)         # the crash site (the prologue): a dark cave, lit by its own lights
 	elif current_area == "tidelight":
 		c = Color(1.0, 0.82, 0.68)          # Tidelight: tidally locked, so always the same low golden sunset
 	return c
