@@ -407,20 +407,12 @@ Layout: `templates/ui_ship_screen_x2.png`.
 ### 4.7 The jump map
 Built (21 Nov); mock-up `datapad_map_x2.png`. The map is drawn by the game with the zone colours in the datapad's scope, with the next stop and your ship's stores beside it. No art is needed; 12 × 12 stop icons could replace the dots later.
 
-### 4.8 Backdrops: `art/ships/backdrops/<name>.png` (on hold)
-The datapad screens show space in scope windows rather than full-screen backdrops, so these are on hold. If wanted later, they would go in the event window's scene (662 wide, 64 to 330 tall). Keep them dark and low in contrast.
-- `home`: the blue gas giant and the moon.
-- One per zone, each with 2 versions:
-  - `terran_1`, `terran_2`: blue, tidy, distant patrol lights;
-  - `zaash_1`, `zaash_2`: amber and bronze;
-  - `collective_1`, `collective_2`: green;
-  - `reach_1`, `reach_2`: red haze, wreckage.
-- Hazards for later:
-  - `asteroids`: asteroid field;
-  - `nebula`;
-  - `star`: close to a star;
-  - `ion_storm`.
-- **Optional:** planets and moons as separate pictures (`backdrops/props/`), so the game can mix them.
+### 4.8 Backdrops: `art/ships/backdrops/<name>.png`
+Zachary's Space Backgrounds pack (24 Nov; its new version 25 Nov), 640 x 360: `empty` (open space), `home` (home orbit), `ringed_planet` (inside the rings), `moons` (twin moons), `ice_moon` (fractured ice moon), `ocean_planet`, `asteroids` (asteroid belt), `ice_field` (drift ice field), `comet` (twin-tail comet), `nebula` (jade nebula), `ion_storm`, `eclipse` (eclipse passage); and three props in `props/` (`rust_planet`, `cratered_moon`, `belt_moon`).
+- The originals are kept as they are. `tools/dev/backdrop_depth.py` writes darkened, duller copies to `far/` (Zachary's pick C, 24 Nov: less colour and contrast, toward deep navy, a touch of the scope's grey-green) so ships and effects never get confused with the scene behind them.
+- The battles use `far/` (`ship_battle.gd`, the stop's backdrop from `main.gd _backdrop_for`), and since 25 Nov so do the story cutscenes' space panels (`story_scenes.gd`: the prologue's ambush, the Shepherd's storm, the vision). The ember planet revealed when the storm ends keeps its glow (the original `props/rust_planet.png`).
+- The event window on arrival still draws the stop as plain shapes.
+- New pack versions: copy the pack's `art/ships/backdrops/` over the repo's, then run `python3 -I tools/dev/backdrop_depth.py`.
 
 ---
 

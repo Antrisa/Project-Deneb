@@ -18,6 +18,10 @@ extends RefCounted
 #                                            her starboard wing; shown only at whole sizes (3x in the prologue, 2x
 #                                            in the storm) so her pixels stay crisp
 #   res://art/ships/ivan_flagship/hull.png   the Rabble's Crown
+#   res://art/ships/backdrops/far/*.png      space: the Space Backgrounds pack pushed back behind the ships, darker and
+#                                            duller, like the battles' (tools/dev/backdrop_depth.py; 25 Nov, Zachary:
+#                                            "darken to make sure they dont get confused with foreground"). The
+#                                            one exception: the ember planet the storm was hiding keeps its glow
 #
 # The Custodians' sound (25 Nov, Zachary: the bell was "too loud and harsh and not mysterious musical"): "custodian_call",
 # a soft swell of glass tones (tools/dev/custodian_sounds.py), at a different pitch for each, a musical step apart:
@@ -36,7 +40,7 @@ const SCENES := {
 		"who": "Sara", "hearts": 0, "title": "Prologue",
 		"area": "medbay", "player": [3, 3, "d"],
 		"music": "silence", "ambient": "amb_space",
-		"board": "res://art/ships/backdrops/asteroids.png",
+		"board": "res://art/ships/backdrops/far/asteroids.png",
 		"board_setup": [
 			# the Wandering Star (the artist's Needle), shown 3x, gliding in on her engines, their plumes trailing
 			# behind her (tools/dev/prologue_art.py draws them to sit on her two nozzles at 3x)
@@ -505,7 +509,7 @@ const SCENES := {
 	"shepherd_found": {
 		"who": "Tar'Besh", "hearts": 0, "title": "The Shepherd of Storms",
 		"area": "here",
-		"board": "res://art/ships/backdrops/ion_storm.png",
+		"board": "res://art/ships/backdrops/far/ion_storm.png",
 		"board_setup": [["bsprite", "ship", "res://art/ships/needle/needle_intact.png", 60, 124, {"scale": 2, "bob": [2, 2.6]}]],
 		"steps": [
 			["wait", 0.6],
@@ -544,7 +548,7 @@ const SCENES := {
 	"storm_ends": {
 		"who": "Tar'Besh", "hearts": 0, "title": "The Lullaby",
 		"area": "here",
-		"board": "res://art/ships/backdrops/ion_storm.png",
+		"board": "res://art/ships/backdrops/far/ion_storm.png",
 		"board_setup": [["bsprite", "ship", "res://art/ships/needle/needle_intact.png", 150, 124, {"scale": 2, "bob": [2, 2.6]}],
 			["bsprite", "shard", "res://art/story/shepherd_crystal.png", 330, 140]],
 		"steps": [
@@ -559,7 +563,7 @@ const SCENES := {
 			["flash", "fff3d6", 2.0],
 			["shake", 1.0, 2.0],
 			["fade", 1.0, 1.0],
-			["board", "res://art/ships/backdrops/empty.png"],
+			["board", "res://art/ships/backdrops/far/empty.png"],
 			["bsprite", "world", "res://art/ships/backdrops/props/rust_planet.png", 440, 70],
 			["bsprite", "ship", "res://art/ships/needle/needle_intact.png", 90, 150, {"scale": 2, "bob": [2, 2.6]}],
 			["bsprite", "shard", "res://art/story/shepherd_crystal.png", 290, 150],
@@ -638,7 +642,7 @@ const SCENES := {
 			["emote", "player", "joy"],
 			["sfx", "custodian_call", 1.0],
 			["fade", 1.0, 1.0],
-			["board", "res://art/ships/backdrops/nebula.png"],
+			["board", "res://art/ships/backdrops/far/nebula.png"],
 			["bsprite", "chancellor", "res://art/story/chancellor_crystal.png", 303, 42, {"alpha": 0.0}], ["bsprite", "sovereign", "res://art/story/sovereign_crystal.png", 432, 89, {"alpha": 0.0}], ["bsprite", "forgemaster", "res://art/story/forgemaster_crystal.png", 432, 184, {"alpha": 0.0}], ["bsprite", "harbinger", "res://art/story/harbinger_crystal.png", 303, 232, {"alpha": 0.0}], ["bsprite", "shepherd", "res://art/story/shepherd_crystal.png", 173, 184, {"alpha": 0.0}], ["bsprite", "warden", "res://art/story/warden_crystal.png", 173, 89, {"alpha": 0.0}],
 			["fade", 0.0, 1.4],
 			["bfade", "chancellor", 1.0, 0.6, "nowait"], ["bfade", "sovereign", 1.0, 0.6, "nowait"], ["bfade", "forgemaster", 1.0, 0.6, "nowait"], ["bfade", "harbinger", 1.0, 0.6, "nowait"], ["bfade", "shepherd", 1.0, 0.6, "nowait"], ["bfade", "warden", 1.0, 0.6, "nowait"],
@@ -649,7 +653,7 @@ const SCENES := {
 			["say", "", ["Something vast turns through the dark: not a ship, not a creature. A thought the size of a nebula, bending toward a small grey world."]],
 			["say", "Warden", ["They seed and they tend. Small worlds, mostly, where life is only beginning. Yours was one, once."], "The Warden of Tidelight"],
 			["say", "Harbinger", ["When one of them dies, it storms. You saw that, with the Shepherd. And when one is born..."], "The Harbinger"],
-			["board", "res://art/ships/backdrops/ion_storm.png"],
+			["board", "res://art/ships/backdrops/far/ion_storm.png"],
 			["flash", "8cc94a", 1.6],
 			["shake", 0.8, 1.0],
 			["say", "Shepherd", ["...it storms too. You have been looking at one since the day you crashed."], "The Shepherd of Storms"],

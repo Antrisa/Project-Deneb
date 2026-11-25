@@ -1,8 +1,10 @@
-"""Push the battle backdrops back behind the ships (24 Nov 2026; Zachary picked option C of
+"""Push the space backdrops back behind the ships (24 Nov 2026; Zachary picked option C of
 backdrop_depth_options.png): less colour, less contrast, darker, faded toward the deep navy of space, with a
 little of the scope's grey-green. Reads art/ships/backdrops/<name>.png (the pack's originals, kept as they are)
-and writes art/ships/backdrops/far/<name>.png, which the battle uses. The scope's grid dots and dark edges are
-drawn by ui/ship_screen.gd backdrop(). Run from the repo root: python3 -I tools/dev/backdrop_depth.py
+and writes art/ships/backdrops/far/<name>.png. The battles use them, and since 25 Nov the story cutscenes' space
+panels too (Zachary, with the pack's new version: "darken to make sure they dont get confused with foreground").
+The scope's grid dots and dark edges are drawn by ui/ship_screen.gd backdrop().
+Run from the repo root: python3 -I tools/dev/backdrop_depth.py
 """
 import os
 import numpy as np
