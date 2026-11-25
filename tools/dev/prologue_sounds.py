@@ -1,16 +1,15 @@
 """Sounds for the prologue (24 Nov 2026, Zachary: "needs sound effects"). Made up from tones and filtered noise
 like tools/dev/madeup_sounds.py, written as audio/<name>.wav; a real recording dropped in as audio/<name>.ogg
-replaces one with no code change. Run from the repo root: python3 -I tools/dev/prologue_sounds.py
+replaces one with no code change. (25 Nov: the drone's hum and the glyphs' bell run are gone: Zachary didn't like them
+over Lunar Discovery.) Run from the repo root: python3 -I tools/dev/prologue_sounds.py
 
-  drone_hum      the Mother-Drone waking: a deep crystal chord that swells, beating slowly, with a shimmer on top
-  glyph_chime    the star-glyphs: a rising run of glassy bells
   beam_charge    the beam gathering: a rising whine and hiss
   crash_impact   your ship hitting the cavern floor: a deep boom, crunching rock, debris pattering down
   hull_groan     bent metal settling: a slow, low creak
   water_drip     one drop into the puddle, with the cave's echo
   radio_static   a radio waking: crackle, a carrier tone, clicks
   power_down     the drone going dark: a long falling tone that wobbles out
-  hull_tear      the back of your ship tearing away in the blind jump
+  hull_tear      your wing tearing away under Ivan's big hit
   fire_crackle   small fires on the wreck
 """
 import os
@@ -20,29 +19,6 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
 from madeup_sounds import SR, rng, t_of, noise, lowpass, env, tone, place, save  # noqa: E402
-
-
-def drone_hum():
-    sec = 4.5
-    t = t_of(sec)
-    swell = np.minimum(1, t / 1.2) * np.minimum(1, (sec - t) / 1.0)
-    out = np.zeros_like(t)
-    for f, a in ((55, 1.0), (82.4, .7), (110, .6), (164.8, .35), (220, .25)):
-        out += a * (np.sin(2 * np.pi * f * t) + .6 * np.sin(2 * np.pi * (f + .35) * t))
-    shimmer = (np.sin(2 * np.pi * 880 * t) + .5 * np.sin(2 * np.pi * 1318.5 * t)) * (.5 + .5 * np.sin(2 * np.pi * 5.5 * t))
-    out += .12 * shimmer * np.minimum(1, t / 2.0)
-    return out * swell
-
-
-def glyph_chime():
-    sec = 2.6
-    out = np.zeros(int(SR * sec))
-    for i, f in enumerate((523.3, 659.3, 784.0, 1046.5, 1318.5, 1568.0)):
-        t = t_of(1.4)
-        mod = np.sin(2 * np.pi * f * 1.41 * t) * 2.2 * np.exp(-5 * t)
-        bell = np.sin(2 * np.pi * f * t + mod) * env(t, .003, 3.2)
-        place(out, bell * (.8 - i * .07), i * .16)
-    return out
 
 
 def beam_charge():
@@ -122,7 +98,7 @@ def fire_crackle():
 
 
 SOUNDS = {
-    "drone_hum": (drone_hum, .55), "glyph_chime": (glyph_chime, .45), "beam_charge": (beam_charge, .45),
+    "beam_charge": (beam_charge, .45),
     "crash_impact": (crash_impact, .8), "hull_groan": (hull_groan, .45), "water_drip": (water_drip, .35),
     "radio_static": (radio_static, .4), "power_down": (power_down, .5), "hull_tear": (hull_tear, .7),
     "fire_crackle": (fire_crackle, .35),

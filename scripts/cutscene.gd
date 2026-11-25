@@ -305,8 +305,8 @@ func _step(s: Array) -> void:
 		"shake":
 			_shake_time = float(s[1])
 			_shake_px = float(s[2])
-		"sfx":
-			world.sfx(str(s[1]))
+		"sfx":         # ["sfx", name] or ["sfx", name, pitch] (a lower pitch also plays it slower)
+			world.sfx(str(s[1]), float(s[2]) if s.size() > 2 else 1.0)
 		"clock":
 			world.minutes += float(s[1])
 		"choose":

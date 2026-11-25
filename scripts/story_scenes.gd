@@ -18,6 +18,11 @@ extends RefCounted
 #                                            her starboard wing; shown only at whole sizes (3x in the prologue, 2x
 #                                            in the storm) so her pixels stay crisp
 #   res://art/ships/ivan_flagship/hull.png   the Rabble's Crown
+#
+# The Custodians' sound (25 Nov, Zachary: the bell was "too loud and harsh and not mysterious musical"): "custodian_call",
+# a soft swell of glass tones (tools/dev/custodian_sounds.py), at a different pitch for each, a musical step apart:
+# the three in the museum and the vision 1.0; the Harbinger 0.8409 (three semitones down, of the deep rock); the
+# Shepherd 0.8909 (a tone down); the lullaby 0.7492 (a fourth down, so slower and lower); the Warden 1.1225 (a tone up).
 #   res://art/ships/fx/hit.png               6 frames of 48 x 48;  fire.png: 4 frames of 24 x 24
 #   res://art/prologue/*.png                 tools/dev/prologue_art.py (space, the moon from the menu's art, glyphs),
 #                                            tools/dev/crash_site_art.py (the drone's animation, the beam, the light
@@ -221,7 +226,6 @@ const SCENES := {
 			["sfx", "hull_groan"],
 			["say_timed", "", ["What's left of your ship settles with a groan."], "", [3.3]],
 			["score_wait", 104.06],
-			["sfx", "drone_hum"],
 			["shake", 1.6, 1.0],
 			["wsprite", "dglow", "res://art/prologue/drone_glow.png", 22, 6, {"add": true, "alpha": 0.0, "z": -3}],
 			["wsprite", "drone", "res://art/prologue/mother_drone_wake.png", 24, 8, {"frames": 8, "fps": 5, "loop": false}],
@@ -237,7 +241,6 @@ const SCENES := {
 			["wfade", "beam", 0.85, 0.8, "nowait"],
 			["score_wait", 145.4],
 			["flash", "b085e6", 1.2],
-			["sfx", "glyph_chime"],
 			["board", "clear"],
 			["bsprite", "glyphs", "res://art/prologue/glyphs.png", 0, 0, {"frames": 12, "fps": 9, "alpha": 0.0}],
 			["bfade", "glyphs", 1.0, 0.8, "nowait"],
@@ -245,7 +248,6 @@ const SCENES := {
 			["say_timed", "MotherDrone", ["...Too late for me. Not for you.", "...A little of me goes with you. The others are waiting. You will hear them, and they will hear you..."], "???", [3.3, 7.67]],
 			["say_timed", "MotherDrone", ["...They are Custodians. Broken tools, waiting for hands."], "???", [4.8]],
 			["score_wait", 172.45],
-			["sfx", "glyph_chime"],
 			["bsprite", "glyphs", "res://art/prologue/glyph_fold.png", 0, 0, {"frames": 8, "fps": 10, "loop": false}],
 			["score_wait", 173.28],
 			["bsprite", "glyphs", ""],
@@ -380,7 +382,7 @@ const SCENES := {
 			["face", "player", "l"],
 			["say", "", ["The mark at the edge of your sight warms. The three crystals hum, a chord you can feel in your teeth."]],
 			["fx", "fireflies", 15, 18, 22],
-			["sfx", "bell_ring"],
+			["sfx", "custodian_call", 1.0],
 			["walk", "player", 19, 18],
 			["say", "Chancellor", ["[surprised] Oh, my stars. Is someone finally awake out there? Look at the dust on these pedestals!",
 				"Dreadful hospitality. Dreadful."], "The Chancellor of Hearths"],
@@ -450,7 +452,7 @@ const SCENES := {
 		"area": "here",
 		"steps": [
 			["wait", 0.5],
-			["sfx", "bell_ring"],
+			["sfx", "custodian_call", 0.8409],
 			["shake", 0.6, 1.0],
 			["emote", "player", "surprise"],
 			["say", "", ["A crystal juts from the cavern wall, the colour of embers. The mark at the edge of your sight flares hot."]],
@@ -479,7 +481,7 @@ const SCENES := {
 		"area": "here",
 		"steps": [
 			["say", "Harbinger", ["Ready? I'll count down from three. Three..."], "The Harbinger"],
-			["sfx", "bell_ring"],
+			["sfx", "custodian_call", 0.8409],
 			["shake", 1.0, 1.0],
 			["say", "Harbinger", ["...Actually, from now."], "The Harbinger"],
 			["emote", "player", "surprise"],
@@ -515,7 +517,7 @@ const SCENES := {
 			["bsprite", "shard", "res://art/story/shepherd_crystal.png", 330, 140, {"alpha": 0.0}],
 			["bfade", "shard", 1.0, 1.2],
 			["bmove", "ship", 150, 124, 2.0, "out"],
-			["sfx", "bell_ring"],
+			["sfx", "custodian_call", 0.8909],
 			["say", "Shepherd", ["Hush. Gently. You'll wake her."], "???"],
 			["say", "Shepherd", ["You can hear me. Then you carry the Mother's voice, and the others sent you. Good.",
 				"I am the Shepherd. This storm is not weather, little one. It is one of the Starborn."], "The Shepherd of Storms"],
@@ -548,7 +550,7 @@ const SCENES := {
 		"steps": [
 			["wait", 0.6],
 			["say", "Shepherd", ["It's ready. Stay close, little one. You should hear this. Nobody of your kind ever has."], "The Shepherd of Storms"],
-			["sfx", "bell_ring"],
+			["sfx", "custodian_call", 0.7492],
 			["flash", "e0c6ff", 1.6],
 			["shake", 1.6, 1.0],
 			["say", "", ["A sound that isn't a sound fills the ship. It's the hum from the cavern where you crashed,",
@@ -595,7 +597,7 @@ const SCENES := {
 			["wait", 0.4],
 			["walk", "player", 77, 28],
 			["face", "player", "u"],
-			["sfx", "bell_ring"],
+			["sfx", "custodian_call", 1.1225],
 			["emote", "player", "surprise"],
 			["say", "", ["On a pedestal in the clearing, a crystal the colour of the sunset. Somebody has left flowers at its foot."]],
 			["say", "Warden", ["So the storm is gone, and someone came through where it was. I wondered which of you it would be."], "???"],
@@ -634,7 +636,7 @@ const SCENES := {
 			["say", "Sara", ["[surprised] So can I. Hello. I've been dusting your pedestals for eleven years."], "S.A.R.A."],
 			["say", "Chancellor", ["[happy] We noticed, dear. Thank you."], "The Chancellor of Hearths"],
 			["emote", "player", "joy"],
-			["sfx", "bell_ring"],
+			["sfx", "custodian_call", 1.0],
 			["fade", 1.0, 1.0],
 			["board", "res://art/ships/backdrops/nebula.png"],
 			["bsprite", "chancellor", "res://art/story/chancellor_crystal.png", 303, 42, {"alpha": 0.0}], ["bsprite", "sovereign", "res://art/story/sovereign_crystal.png", 432, 89, {"alpha": 0.0}], ["bsprite", "forgemaster", "res://art/story/forgemaster_crystal.png", 432, 184, {"alpha": 0.0}], ["bsprite", "harbinger", "res://art/story/harbinger_crystal.png", 303, 232, {"alpha": 0.0}], ["bsprite", "shepherd", "res://art/story/shepherd_crystal.png", 173, 184, {"alpha": 0.0}], ["bsprite", "warden", "res://art/story/warden_crystal.png", 173, 89, {"alpha": 0.0}],

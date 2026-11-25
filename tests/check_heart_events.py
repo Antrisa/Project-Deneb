@@ -267,6 +267,8 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
             if s[2] not in EMOTES: bad(ev_id, "unknown emote %r" % s[2])
         elif op == "sfx":
             if s[1] not in SOUNDS: bad(ev_id, "no sound %r in audio/" % s[1])
+            if len(s) > 2 and not (isinstance(s[2], (int, float)) and 0.25 <= s[2] <= 4):
+                bad(ev_id, "sfx: the pitch %r should be a number from 0.25 to 4" % (s[2],))
         elif op == "ship":
             if s[1] not in ("lift", "land"): bad(ev_id, "ship: %r is neither lift nor land" % s[1])
             if area != "bay": bad(ev_id, "ship: your ship is only in the Shuttle Bay, not %r" % area)

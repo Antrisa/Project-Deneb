@@ -9,6 +9,8 @@ Building it checks that every line ends before the next such moment, and stops w
 Song times measured from the files: Space Battle (151.8 bpm, a downbeat at 0.094 s; its full band comes in at 15.2 s,
 the drum fill at 60.2-61.4, the finale at 69.675, the last hit at 76.84) and Lunar Discovery (phrase accents about
 every 3.73 s; back in full at 173.28, the last chord at 191.21, wound down by 199).
+No made-up sounds play over Lunar Discovery's part (25 Nov: Zachary didn't like the glass-bell run on the glyphs or
+the hum as the drone woke clashing with it), so the drone's moments are the music's own accents.
 Edit the lines or the times here, then run: python3 tools/dev/prologue_timeline.py"""
 import json
 import re
@@ -230,8 +232,7 @@ F("", ["Spacers tell stories about things like this. Silver lights that hum like
 S(["sfx", "hull_groan"])
 F("", ["What's left of your ship settles with a groan."], "", [3.3])
 tl.at(104.06, "the drone wakes")
-S(["sfx", "drone_hum"],
-  ["shake", 1.6, 1.0],
+S(["shake", 1.6, 1.0],
   ["wsprite", "dglow", "res://art/prologue/drone_glow.png", 22, 6, {"add": True, "alpha": 0.0, "z": -3}],
   ["wsprite", "drone", "res://art/prologue/mother_drone_wake.png", 24, 8, {"frames": 8, "fps": 5, "loop": False}],
   ["wfade", "dglow", 0.6, 1.6, "nowait"])
@@ -249,7 +250,6 @@ S(["sfx", "beam_charge"],
   ["wfade", "beam", 0.85, 0.8, "nowait"])
 tl.at(145.4, "the beam reaches you")
 S(["flash", "b085e6", 1.2],
-  ["sfx", "glyph_chime"],
   ["board", "clear"],
   ["bsprite", "glyphs", "res://art/prologue/glyphs.png", 0, 0, {"frames": 12, "fps": 9, "alpha": 0.0}],
   ["bfade", "glyphs", 1.0, 0.8, "nowait"])
@@ -258,8 +258,7 @@ F("MotherDrone", ["...Too late for me. Not for you.",
                   "...A little of me goes with you. The others are waiting. You will hear them, and they will hear you..."], "???")
 F("MotherDrone", ["...They are Custodians. Broken tools, waiting for hands."], "???")
 tl.at(172.45, "the glyphs fold")
-S(["sfx", "glyph_chime"],
-  ["bsprite", "glyphs", "res://art/prologue/glyph_fold.png", 0, 0, {"frames": 8, "fps": 10, "loop": False}])
+S(["bsprite", "glyphs", "res://art/prologue/glyph_fold.png", 0, 0, {"frames": 8, "fps": 10, "loop": False}])
 tl.at(173.28, "the mark, as the song comes back in")
 S(["bsprite", "glyphs", ""],
   ["bsprite", "mark", "res://art/prologue/glyph_mark.png", 608, 12, {"alpha": 0.0, "z": 3}],

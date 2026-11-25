@@ -135,8 +135,9 @@ const SOUND_NAMES := ["step", "step_soft", "click", "coin", "zap", "smelt", "war
 	"cook", "recipe_new", "repair_done", "museum_place", "letter_open", "trash", "sleep", "enemy_die", "crew_down",
 	"drink", "win_sting", "lose_sting", "crate_hit",
 	# the prologue (24 Nov, tools/dev/prologue_sounds.py)
-	"drone_hum", "glyph_chime", "beam_charge", "crash_impact", "hull_groan", "water_drip", "radio_static",
-	"power_down", "hull_tear", "fire_crackle"]
+	"beam_charge", "crash_impact", "hull_groan", "water_drip", "radio_static", "power_down", "hull_tear", "fire_crackle",
+	# the Custodians speaking in story scenes (25 Nov, tools/dev/custodian_sounds.py)
+	"custodian_call"]
 # Space-battle sounds (tools/dev/ship_sounds.py). Each gets a few players so quick repeats overlap.
 const SHIP_SOUNDS := ["sh_laser", "sh_missile", "sh_beam", "sh_ion", "sh_flak", "sh_dart", "sh_shield", "sh_hull", "sh_hit",
 	"sh_miss", "sh_explode", "sh_fire", "sh_alarm", "sh_vent", "sh_fold", "sh_ready", "sh_blaster", "sh_pod", "sh_door"]
