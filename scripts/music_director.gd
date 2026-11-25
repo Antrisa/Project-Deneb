@@ -64,6 +64,18 @@ const SONGS := {
 	"greenhouse_plucks": ["greenhouse_plucks.mp3", 0.1],
 	"tram_past_greenhouses": ["tram_past_greenhouses.mp3", -0.2],
 	"next_beacon": ["next_beacon.mp3", -1.0],
+	"space_battle": ["space_battle.mp3", 0.2],          # 25 Nov: the prologue's ambush (a scene score, below)
+	"lunar_discovery": ["lunar_discovery.mp3", 0.6],    # 25 Nov: the prologue's Mother-Drone (a scene score)
+}
+# Scene scores (25 Nov, Zachary: "not the whole songs but the ends fit to the end of each scene"). A cutscene plays
+# the end of a song timed to it: from a starting point, holding on a stretch while the player reads (it loops, whole
+# bars), then jumping on to a cue the scene needs on time: Space Battle's breakdown and last big hit under the FTL
+# jump, Lunar Discovery's wind-down ending as the Mother-Drone dies. Jumps land on the next bar (a song with a beat
+# grid here) or at once, cross-faded (one without). Where the score is keeps counting even with the music turned
+# off, so the scene keeps its timing. Steps: scripts/cutscene.gd "score", "score_cue", "score_wait", "score_end".
+# Beat grids measured from the files (25 Nov): beat length and the time of a downbeat, in seconds; bars of four.
+const SCORE_GRID := {
+	"space_battle": [0.39535, 0.0939, 4],     # 151.8 bpm
 }
 const PLACE_SONGS := {
 	"creator": ["a_new_path"],
@@ -108,6 +120,16 @@ const AMB_DB := -6.0
 var amb: AudioStreamPlayer
 var _amb_name := ""
 var _amb_streams := {}
+var _sc := ""                 # the scene score playing ("": none)
+var _sc_pos := 0.0            # where it is, in seconds into the song
+var _sc_len := 0.0
+var _sc_loop := Vector2(-1.0, -1.0)
+var _sc_cue := -1.0           # jump here at the next bar (or at once)
+var _sc_players: Array = []   # two players, so a jump can cross-fade
+var _sc_live := 0
+var _sc_fade := 0.0           # seconds of cross-fade left
+var _sc_fade_len := 0.03
+var _sc_off := false          # the music was off: start the score again where it is when it comes back on
 
 
 func setup(main_world, music_player: AudioStreamPlayer) -> void:
@@ -119,11 +141,22 @@ func setup(main_world, music_player: AudioStreamPlayer) -> void:
 	amb.volume_db = -60.0
 	add_child(amb)
 	amb.finished.connect(func(): if _amb_name != "": amb.play())     # loop the bed
+	for i in 2:
+		var sp := AudioStreamPlayer.new()
+		sp.bus = player.bus
+		add_child(sp)
+		_sc_players.append(sp)
 
 
 func update(delta: float) -> void:
 	_clock += delta
 	_update_ambient(delta)
+	if _sc != "":
+		var mode: String = str(world.cutscene.music_mode) if world.cutscene != null and world.cutscene.running else ""
+		if mode == "score":
+			_score_update(delta)
+			return
+		score_stop()
 	if world.title != null and world.title.open:
 		return                 # the title screen plays its own theme and pauses this player
 	if not world.music_on:
@@ -182,6 +215,110 @@ func _scene_music(mode: String, delta: float) -> void:
 		return
 	if _song != mode or not player.playing:
 		_start(mode)
+
+
+# ---------------------------------------------------------------- scene scores
+
+# Starts song at from (seconds); loop: hold on [x, y) until a cue (x < 0: no hold).
+func score_play(song: String, from: float, loop: Vector2 = Vector2(-1.0, -1.0)) -> void:
+	player.stop()
+	_song = ""
+	_state = "resting"
+	_timer = 3.0
+	for sp in _sc_players:
+		sp.stop()
+	var stream := _stream(song)
+	_sc = song
+	_sc_pos = from
+	_sc_loop = loop
+	_sc_cue = -1.0
+	_sc_fade = 0.0
+	_sc_len = stream.get_length() if stream != null else from + 30.0
+	_sc_live = 0
+	_sc_off = not world.music_on
+	if stream != null:
+		for sp in _sc_players:
+			sp.stream = stream
+		if world.music_on:
+			_sc_players[0].volume_db = _level(song)
+			_sc_players[0].play(from)
+
+
+# Moves the score on to `to` at the next bar (straight away, cross-faded, for a song without a beat grid), and lets
+# go of any hold. Nothing happens if it's already there or past it.
+func score_cue(to: float) -> void:
+	if _sc != "" and _sc_pos < to:
+		_sc_cue = to
+
+
+func score_pos() -> float:
+	return _sc_pos if _sc != "" else 1e9
+
+
+func score_done() -> bool:
+	return _sc == "" or _sc_pos >= _sc_len - 0.05
+
+
+func score_stop() -> void:
+	for sp in _sc_players:
+		sp.stop()
+	_sc = ""
+
+
+func _score_next_bar(t: float) -> float:
+	if not SCORE_GRID.has(_sc):
+		return t
+	var g: Array = SCORE_GRID[_sc]
+	var bar: float = float(g[0]) * float(g[2])
+	return float(g[1]) + ceilf((t - float(g[1])) / bar - 0.0001) * bar
+
+
+func _score_update(delta: float) -> void:
+	var live: AudioStreamPlayer = _sc_players[_sc_live]
+	var audible: bool = world.music_on and live.playing
+	if world.music_on and _sc_off and _sc_pos < _sc_len - 0.1 and live.stream != null:
+		_sc_off = false
+		live.volume_db = _level(_sc)          # the music came back on: pick the score up where it is
+		live.play(_sc_pos)
+		audible = true
+	elif not world.music_on:
+		_sc_off = true
+		for sp in _sc_players:
+			sp.stop()
+	var pos: float = (live.get_playback_position() + AudioServer.get_time_since_last_mix()) if audible else _sc_pos + delta
+	if audible and pos < _sc_pos - 1.0 and _sc_loop.x < 0.0:
+		pos = _sc_pos + delta                 # the player wrapped round at the song's end
+	if _sc_cue >= 0.0:
+		var at := _score_next_bar(_sc_pos)
+		if pos >= at:
+			var to := _sc_cue + (pos - at)
+			_sc_cue = -1.0
+			_sc_loop = Vector2(-1.0, -1.0)
+			_score_jump(to, 0.03 if SCORE_GRID.has(_sc) else 0.6)
+			pos = to
+	elif _sc_loop.x >= 0.0 and pos >= _sc_loop.y:
+		pos = _sc_loop.x + (pos - _sc_loop.y)
+		_score_jump(pos, 0.03 if SCORE_GRID.has(_sc) else 0.35)     # on the bar, or a soft seam
+	_sc_pos = minf(pos, _sc_len)
+	if _sc_fade > 0.0:
+		_sc_fade = maxf(0.0, _sc_fade - delta)
+		var k := _sc_fade / _sc_fade_len
+		_sc_players[_sc_live].volume_db = _level(_sc) - 40.0 * k
+		var old: AudioStreamPlayer = _sc_players[1 - _sc_live]
+		old.volume_db = _level(_sc) - 40.0 * (1.0 - k)
+		if _sc_fade <= 0.0:
+			old.stop()
+
+
+func _score_jump(to: float, fade: float) -> void:
+	if not world.music_on:
+		return
+	_sc_live = 1 - _sc_live
+	var sp: AudioStreamPlayer = _sc_players[_sc_live]
+	sp.volume_db = _level(_sc) - 40.0
+	sp.play(to)
+	_sc_fade = fade
+	_sc_fade_len = fade
 
 
 # The songs that suit where and when the player is now (only those whose files are in).

@@ -118,6 +118,16 @@ func _begin(speaker: String, lines: Array, portrait: Texture2D) -> void:
 		_old_start(speaker, portrait)
 
 
+# For scenes that turn lines over by themselves (cutscene.gd "say_timed").
+func line_index() -> int:
+	return _index
+
+
+func turn_line() -> void:
+	_shown = float(_current.length())
+	advance()
+
+
 func advance() -> void:
 	if int(_shown) < _current.length():
 		_shown = float(_current.length())   # finish typing first

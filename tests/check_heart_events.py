@@ -63,8 +63,20 @@ TAGS = {"neutral", "happy", "sad", "surprised", "love", "angry", "shocked", "bas
 STEPS = {"say", "place", "go", "met", "walk", "walks", "face", "pose", "emote", "wait", "fade", "shake", "sfx", "clock", "choose",
          "if", "flag", "friendship", "perk", "keepsake", "partner", "toast", "hide", "show", "ship", "sky", "energy", "fx", "sara",
          "give", "mail", "board", "bsprite", "bmove", "bmoves", "bfade", "flash", "wsprite", "wmove", "wfade",
-         "music", "ambient"}
+         "music", "ambient", "score", "score_cue", "score_wait", "score_end", "say_timed"}
 SONGS = set(re.findall(r'^\t"(\w+)": \[', (ROOT / 'scripts/music_director.gd').read_text(), re.M))
+# how long each song's file runs (for scene scores), from ffprobe when it's about
+SONG_LENGTHS = {}
+for _song, _file in re.findall(r'^\t"(\w+)": \["([\w.]+)"', (ROOT / 'scripts/music_director.gd').read_text(), re.M):
+    _p = ROOT / 'audio/music' / _file
+    if _p.exists():
+        try:
+            import subprocess
+            SONG_LENGTHS[_song] = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of",
+                                                         "csv=p=0", str(_p)], capture_output=True, text=True).stdout)
+        except (OSError, ValueError):
+            SONG_LENGTHS[_song] = 1e9
+score_song = [""]
 AMBIENT = {"", "none"} | {p.stem for p in (ROOT / 'audio').glob('amb_*.*')}
 VOICES = {"Sensors", "Sara", "Ivan", "MotherDrone", "Chancellor", "Sovereign", "Forgemaster", "Harbinger", "Shepherd", "Warden"}   # who may speak without being a resident (portraits by name)
 FX = {"bees", "fireflies", "steam", "heartbeats", "spray", "bubbles"}   # scripts/scene_fx.gd
@@ -176,7 +188,9 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
         if op in ("place", "walk", "face", "pose", "emote", "hide", "show") and s[1] not in RESIDENTS and s[1] != "player" \
                 and not (op == "emote" and s[1] in SPECIAL):
             bad(ev_id, "%s: %r is not a resident" % (op, s[1]))
-        if op == "say":
+        if op in ("say", "say_timed"):
+            if op == "say_timed" and not (len(s) > 4 and isinstance(s[4], (int, float)) and s[4] > 0):
+                bad(ev_id, "say_timed: needs seconds a line")
             if s[1] and s[1] not in RESIDENTS and s[1] not in VOICES:
                 bad(ev_id, "say: %r is not a resident" % s[1])
             for line in s[2]:
@@ -189,6 +203,20 @@ def check_steps(ev_id, ev, steps, area=None, known=None):
                     bad(ev_id, "line over 150 characters: %r" % text[:60])
         elif op == "music":
             if s[1] not in ("", "silence") and s[1] not in SONGS: bad(ev_id, "music: no song %r" % s[1])
+        elif op == "score":
+            # the end of a song timed to the scene: a known song whose file is in, times inside it, a hold that's
+            # a real stretch (music_director.gd score_play)
+            if s[1] not in SONGS: bad(ev_id, "score: no song %r" % s[1])
+            elif not SONG_LENGTHS.get(s[1]): bad(ev_id, "score: %r has no file in audio/music" % s[1])
+            else:
+                ln = SONG_LENGTHS[s[1]]
+                times = [float(v) for v in s[2:5]]
+                if any(t < 0 or t > ln for t in times) or (len(times) == 3 and times[1] >= times[2]):
+                    bad(ev_id, "score: times %r don't fit %s (%.1f s)" % (times, s[1], ln))
+                score_song[0] = s[1]
+        elif op in ("score_cue", "score_wait"):
+            if not score_song[0]: bad(ev_id, "%s before any score" % op)
+            elif not (0 <= float(s[1]) <= SONG_LENGTHS.get(score_song[0], 1e9)): bad(ev_id, "%s: %r is past the song's end" % (op, s[1]))
         elif op == "ambient":
             if s[1] not in AMBIENT: bad(ev_id, "ambient: no bed %r" % s[1])
         elif op == "wsprite":

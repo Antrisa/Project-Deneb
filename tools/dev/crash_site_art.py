@@ -73,99 +73,22 @@ def rock_pts(cx, cy, rx, ry, rnd, n=7):
 
 
 # ---------------------------------------------------------------- the wreck
-TITLE_FIGHTER = os.path.join(ROOT, "title", "scene", "fighter.png")
-FO = (0x2c, 0x23, 0x36, 255)                  # the menu fighter's outline colour
-FDARK = (0x38, 0x29, 0x3f, 255)               # its darkest hull shade
-FCREAM = [(0x77, 0x65, 0x75, 255), (0x9c, 0x84, 0x93, 255), (0xd4, 0xb5, 0xa8, 255), (0xf1, 0xd6, 0xaf, 255), (0xff, 0xeb, 0xc9, 255)]
-FGLASS = (0xcc, 0xeb, 0xe1, 255)
 CANOPY = [143.0, 80.0]                         # the canopy's middle on the wreck prop (set when it's drawn)
-
-
-def scale2x(a):
-    """EPX/Scale2x: twice the size with the diagonals smoothed, as a pixel artist would redraw them."""
-    h, w = a.shape[:2]
-    key = (a[:, :, 0].astype(np.int64) << 24) | (a[:, :, 1].astype(np.int64) << 16) | (a[:, :, 2].astype(np.int64) << 8) | a[:, :, 3]
-    pad = np.pad(key, 1, mode="edge")
-    P = key
-    A, D = pad[:-2, 1:-1], pad[2:, 1:-1]          # up, down
-    Cl, B = pad[1:-1, :-2], pad[1:-1, 2:]         # left, right
-    e0 = np.where((Cl == A) & (Cl != D) & (A != B), A, P)
-    e1 = np.where((A == B) & (A != Cl) & (B != D), B, P)
-    e2 = np.where((D == Cl) & (D != B) & (Cl != A), Cl, P)
-    e3 = np.where((B == D) & (B != A) & (D != Cl), D, P)
-    out = np.zeros((h * 2, w * 2), np.int64)
-    out[0::2, 0::2], out[0::2, 1::2], out[1::2, 0::2], out[1::2, 1::2] = e0, e1, e2, e3
-    rgba = np.stack([(out >> 24) & 255, (out >> 16) & 255, (out >> 8) & 255, out & 255], -1).astype(np.uint8)
-    return rgba
-
-
-def thin_lines(a, col):
-    """Lines of colour col that doubled in the scale-up go back to one pixel: a line pixel whose up or left
-    neighbour is also line, and that isn't on the outside rim, takes the colour below or right of it."""
-    m = np.all(a == col, axis=-1)
-    solid = a[:, :, 3] > 0
-    rim = edge(solid)
-    for _ in range(2):
-        m = np.all(a == col, axis=-1)
-        drop = m & ~rim & (sh(m, 0, 1) | sh(m, 1, 0))
-        ys, xs = np.nonzero(drop)
-        for y, x in zip(ys, xs):
-            for dy, dx in ((1, 0), (0, 1), (1, 1), (-1, 0), (0, -1)):
-                Y, X = y + dy, x + dx
-                if 0 <= Y < a.shape[0] and 0 <= X < a.shape[1] and a[Y, X, 3] and not np.all(a[Y, X] == col):
-                    a[y, x] = a[Y, X]
-                    break
-    return a
-
-
-def scale3x(a):
-    """Scale3x: three times the size with the diagonals smoothed (AdvMAME3x)."""
-    h, w = a.shape[:2]
-    key = (a[:, :, 0].astype(np.int64) << 24) | (a[:, :, 1].astype(np.int64) << 16) | (a[:, :, 2].astype(np.int64) << 8) | a[:, :, 3]
-    p = np.pad(key, 1, mode="edge")
-    A, B, Cc = p[:-2, :-2], p[:-2, 1:-1], p[:-2, 2:]
-    D, E, F = p[1:-1, :-2], p[1:-1, 1:-1], p[1:-1, 2:]
-    G, H, I = p[2:, :-2], p[2:, 1:-1], p[2:, 2:]
-    db, bf, dh, hf = (D == B) & (D != H) & (B != F), (B == F) & (B != D) & (F != H), (D == H) & (D != B) & (H != F), (H == F) & (D != H) & (B != F)
-    out = np.zeros((h * 3, w * 3), np.int64)
-    cells = [np.where(db, D, E), np.where((db & (E != Cc)) | (bf & (E != A)), B, E), np.where(bf, F, E),
-             np.where((db & (E != G)) | (dh & (E != A)), D, E), E, np.where((bf & (E != I)) | (hf & (E != Cc)), F, E),
-             np.where(dh, D, E), np.where((dh & (E != I)) | (hf & (E != G)), H, E), np.where(hf, F, E)]
-    for k, cell in enumerate(cells):
-        out[k // 3::3, k % 3::3] = cell
-    return np.stack([(out >> 24) & 255, (out >> 16) & 255, (out >> 8) & 255, out & 255], -1).astype(np.uint8)
-
-
-def fighter_3x():
-    a = scale3x(np.array(Image.open(TITLE_FIGHTER).convert("RGBA")))
-    for _ in range(2):
-        a = thin_lines(a, np.array(FO))
-    solid = a[:, :, 3] > 0
-    a[edge(solid)] = FO
-    return a
-
-
-def darker(col):
-    """One step down the menu fighter's own ramps (cream, orange, teal), for scorching."""
-    ramps = [FCREAM, [(0x56, 0x42, 0x58, 255), (0x77, 0x65, 0x75, 255)],
-             [(0xae, 0x47, 0x1d, 255), (0xed, 0x65, 0x1c, 255)], [(0x12, 0x45, 0x53, 255), (0x17, 0x58, 0x64, 255), (0x1c, 0x7b, 0x83, 255), (0x58, 0xb9, 0xb1, 255)],
-             [FDARK, (0x56, 0x42, 0x58, 255)], [(0xbd, 0x9d, 0xa6, 255), (0xd4, 0xb5, 0xa8, 255)]]
-    col = tuple(int(q) for q in col)
-    for r in ramps:
-        if col in r:
-            i = r.index(col)
-            return r[max(0, i - 1)]
-    return col
+TEAR = [98.0, 113.0]                           # the middle of her torn end on the prop (set when it's drawn)
+# her front half lying in the rubble: nose up and to the right as in the panels, dipped into the rock and listing,
+# from the game's own angle, three and a half times the panels' model scale (tools/dev/fighter_model.py)
+WRECK_VIEW = dict(scale=3.5, roll=.45, pitch=-.2, yaw=math.radians(33), elev=math.radians(58), dx=-23, dy=23)
 
 
 def crash_wreck():
-    """Your fighter's front half, as the main menu draws her (redrawn at three times the size), nose buried in a heap
-    of broken basalt, her torn end toward you, scorched, a gouge behind her and scrap thrown about."""
+    """Your fighter's front half (the model in tools/dev/fighter_model.py, torn where the blind jump tore her),
+    nose buried in a heap of broken rock, her torn end toward you, scorched and glowing, wires hanging out of it, the
+    canopy cracked, a gouge behind her and scrap thrown about."""
     rnd = random.Random(5)
     w, h = WRECK_SIZE[0] * TILE, WRECK_SIZE[1] * TILE
     cv = Canvas(w, h)
     # the gouge she cut coming in from the lower left: churned, scorched floor (flat, under everything)
-    gouge = poly([(0, 140), (20, 126), (50, 116), (84, 112), (104, 120), (102, 144), (72, 156), (36, 164), (0, 166)], w, h)
+    gouge = poly([(0, 140), (20, 126), (50, 116), (80, 108), (100, 112), (102, 140), (72, 156), (36, 164), (0, 166)], w, h)
     cv.paint(gouge, C("soil", 0))                                       # its far wall, in shadow
     cv.paint(gouge & ~sh(gouge, 0, 3), C("soil", 1))                     # churned rock
     cv.paint(gouge & ~sh(gouge, 0, -3) & sh(gouge, 0, 3), C("soil", 2))  # the near lip, catching the light
@@ -174,93 +97,70 @@ def crash_wreck():
     for x0 in range(4, 96, 12):
         y0 = 150 - x0 * .3 + rnd.randint(-4, 4)
         cv.paint(lines([(x0, y0), (x0 + 7, y0 - 2)], 2, w, h) & gouge & ~scorch, C("soil", 0))
+    # the ship (tools/dev/fighter_model.py): her front half as she was torn off in the jump, battered, lying where she
+    # ploughed in, nose down and listing, seen from the game's own angle
+    import fighter_model
+    view = dict(WRECK_VIEW, size=(w, h))
+    ship, info = fighter_model.render(view, dict(fighter_model.BATTERED_MODE, cut=(-3.0, "front"), scorch=True),
+                                      nozzle_glow=False)
+    pm = ship.a[:, :, 3] > 0
+    mat = info["mat"]
+    nose = info["nose"]
     # stones behind her nose (drawn first)
-    for cx, cy, rx, ry in ((206, 34, 14, 11), (232, 44, 13, 10), (184, 40, 10, 8), (248, 66, 10, 8)):
+    for cx, cy, rx, ry in ((nose[0] + 6, nose[1] - 14, 14, 11), (nose[0] + 30, nose[1] - 4, 13, 10),
+                           (nose[0] - 16, nose[1] - 10, 10, 8), (nose[0] + 44, nose[1] + 16, 10, 8)):
         stone(cv, rock_pts(cx, cy, rx, ry, rnd), MOONROCK if rnd.random() < .7 else BASALT, rnd)
-    # the ship, three times the menu art's size, torn across the body between canopy and engines
-    src = fighter_3x()
-    sh_h, sh_w = src.shape[:2]
-    d = np.array([.884, -.467])
-    c = np.array([108.0, 63.0])
-    sy, sx = np.mgrid[0:sh_h, 0:sh_w]
-    along = (sx - c[0]) * d[0] + (sy - c[1]) * d[1]
-    across = (sx - c[0]) * -d[1] + (sy - c[1]) * d[0]
-    jag = np.array([rnd.uniform(-4, 4) for _ in range(50)])
-    cut = np.repeat(jag, 5)[np.clip((across + 120).astype(int), 0, 249)]
-    keep = (src[:, :, 3] > 0) & (along > cut)
-    ox, oy = -10, 50                             # the tear lands about (98, 113), the nose about (197, 59)
-    part = Canvas(w, h)
-    ys, xs = np.nonzero(keep)
-    inside = (ys + oy >= 0) & (ys + oy < h) & (xs + ox >= 0) & (xs + ox < w)
-    ys, xs = ys[inside], xs[inside]
-    part.a[ys + oy, xs + ox] = src[ys, xs]
-    pm = part.a[:, :, 3] > 0
-    dist = np.full((h, w), 99.0)
-    dist[ys + oy, xs + ox] = along[ys, xs] - cut[ys, xs]
-    # scorched back from the tear, darker the nearer it, with a ragged front
-    ragged = np.array([rnd.uniform(0, 7) for _ in range(60)])
-    acr = np.zeros((h, w))
-    acr[ys + oy, xs + ox] = across[ys, xs]
-    rag = ragged[np.clip(((acr + 120) / 4).astype(int), 0, 59)]
-    for lim in (16,):
-        zone = pm & ~edge(pm) & (dist < lim + rag) & ~np.all(part.a == FO, axis=-1)
-        zy, zx = np.nonzero(zone)
-        for y, x in zip(zy, zx):
-            part.a[y, x] = darker(part.a[y, x])
-    # the torn end: bared ribs, ripped plating, a hot glowing edge, the menu art's outline round it
-    torn = pm & (dist < 6)
-    part.paint(torn, C("rock", 1))
-    part.paint(torn & (dist >= 3.5), C("rock", 2))
-    for k in range(-60, 70, 9):                  # ribs: short bars along the body, sticking out of the tear
-        bx, by = 98 - k * d[1], 113 + k * d[0]
-        part.paint(lines([(bx + 6 * d[0], by + 6 * d[1]), (bx - 4 * d[0], by - 4 * d[1])], 2, w, h) & (pm | sh(pm, 3, 2)), C("rock", 3))
-    pm = part.a[:, :, 3] > 0
-    tear_edge = edge(pm) & (dist < 8)
-    hot = pm & ~tear_edge & (sh(tear_edge, 1, 0) | sh(tear_edge, -1, 0) | sh(tear_edge, 0, 1) | sh(tear_edge, 0, -1))
-    part.paint(hot, C("copper", 3))                                  # still glowing, all along the tear
-    part.paint(hot & ~sh(hot, 1, 1), C("brass", 4))
-    part.paint(tear_edge, FO)
+    torn = mat == "torn"
+    hull = np.isin(mat, ["hull", "stripe"])
+    hot = torn & (sh(hull, 1, 0) | sh(hull, -1, 0) | sh(hull, 0, 1) | sh(hull, 0, -1)) & ~edge(pm)
+    ship.paint(hot, C("copper", 3))                                  # the tear, still glowing
+    ship.paint(hot & ~sh(hot, 1, 1), C("brass", 4))
+    ty, tx = np.nonzero(torn)
+    TEAR[:] = [float(tx.mean()), float(ty.mean())] if len(tx) else TEAR
     # wires hanging out of the tear
-    for (x0, y0), (x1, y1), col in (((92, 120), (80, 132), C("copper", 2)), ((104, 104), (90, 112), C("teal", 2)), ((86, 128), (78, 144), C("berry", 2))):
-        wire = lines([(x0, y0), ((x0 + x1) / 2 - 2, (y0 + y1) / 2 + 3), (x1, y1)], 1, w, h) & ~pm
+    for k, col in enumerate((C("copper", 2), C("teal", 2), C("berry", 2))):
+        x0, y0 = TEAR[0] - 4 + k * 5, TEAR[1] - 2 + k * 4
+        wire = lines([(x0, y0), (x0 - 6, y0 + 7 + k), (x0 - 9, y0 + 15 + k * 2)], 1, w, h) & ~pm
         cv.paint(wire, col)
-    # scratches through the paint and a crack across the canopy
-    for (x0, y0), (x1, y1) in (((130, 98), (158, 84)), ((140, 120), (172, 104)), ((162, 92), (184, 80))):
-        part.paint(lines([(x0, y0), (x1, y1)], 1, w, h) & pm & ~edge(pm) & ~np.all(part.a == FO, axis=-1), FCREAM[4])
-    gl = part.a[:, :, :3].astype(int)
-    glass = pm & (gl[:, :, 2] > gl[:, :, 0] + 30) & (gl[:, :, 1] > gl[:, :, 0] + 20)
+    # a crack across the canopy
+    glass = mat == "glass"
     gy, gx = np.nonzero(glass)
     if len(gx):
         cx0, cy0 = gx.mean(), gy.mean()
-        crack = lines([(cx0 - 12, cy0 - 3), (cx0 - 2, cy0 + 1), (cx0 + 2, cy0 + 7), (cx0 + 10, cy0 + 9)], 1, w, h)
-        crack |= lines([(cx0 - 2, cy0 + 1), (cx0 + 8, cy0 - 5)], 1, w, h)
-        part.paint(crack & glass & ~edge(glass), FGLASS)
+        crack = lines([(cx0 - 10, cy0 - 3), (cx0 - 2, cy0 + 1), (cx0 + 2, cy0 + 6), (cx0 + 9, cy0 + 8)], 1, w, h)
+        crack |= lines([(cx0 - 2, cy0 + 1), (cx0 + 7, cy0 - 5)], 1, w, h)
+        ship.paint(crack & glass & ~edge(glass), C("teal", 4))
         CANOPY[:] = [float(cx0), float(cy0)]
     shadow = sh(pm, 3, 5) & ~pm                  # where she lies on the floor: a dark contact shadow
-    cv.paint(shadow & ~sh(pm, 0, -60), C("rock", 0))
-    cv.a[pm] = part.a[pm]
+    cv.paint(shadow, C("rock", 0))
+    cv.a[pm] = ship.a[pm]
     # the heap her nose ploughed into, piled over the tip, and rubble along her belly so she sits in the rock
-    for cx, cy, rx, ry in ((236, 50, 12, 9), (252, 74, 9, 8), (204, 62, 19, 14), (228, 72, 18, 13), (190, 84, 13, 9),
-                           (214, 92, 19, 13), (246, 96, 14, 10)):
+    nx, ny = nose
+    for cx, cy, rx, ry in ((nx + 30, ny - 6, 12, 9), (nx + 44, ny + 14, 9, 8), (nx + 4, ny + 2, 19, 14),
+                           (nx + 26, ny + 12, 18, 13), (nx - 10, ny + 22, 13, 9), (nx + 12, ny + 30, 19, 13),
+                           (nx + 40, ny + 34, 14, 10)):
         stone(cv, rock_pts(cx, cy, rx, ry, rnd), MOONROCK if rnd.random() < .7 else BASALT, rnd)
-    for cx, cy, r in ((108, 150, 7), (126, 144, 9), (146, 136, 8), (166, 128, 9), (186, 118, 7), (94, 144, 5),
-                      (204, 108, 6), (138, 154, 5), (176, 140, 5), (116, 160, 4)):
-        stone(cv, rock_pts(cx, cy, r * 1.45, r * .9, rnd, 6), MOONROCK if rnd.random() < .75 else BASALT, rnd)
+    for k, x in enumerate(range(int(TEAR[0]) + 6, int(TEAR[0]) + 62, 11)):   # rubble along her belly: she sits in the rock
+        col = np.nonzero(pm[:, x])[0]
+        if not len(col):
+            continue
+        r = (6, 8, 7, 9, 6, 8)[k % 6]
+        stone(cv, rock_pts(x + 2, col.max() + 1, r * 1.4, r * .85, rnd, 6), MOONROCK if rnd.random() < .75 else BASALT, rnd)
     # scrap she shed, flat in the gouge: a torn hull plate with its orange stripe, a bent fin, a canopy shard
     plate = poly([(26, 142), (46, 134), (54, 144), (34, 152)], w, h)
-    cv.paint(plate, FCREAM[2])
-    cv.paint(plate & ~sh(plate, 0, 2), FCREAM[3])
-    cv.paint(plate & lines([(30, 145), (50, 138)], 3, w, h), (0xed, 0x65, 0x1c, 255))
-    cv.paint(edge(plate), FO)
+    cv.paint(plate, C("cream", 2))
+    cv.paint(plate & ~sh(plate, 0, 2), C("cream", 3))
+    cv.paint(plate & lines([(30, 145), (50, 138)], 3, w, h), C("copper", 3))
+    cv.paint(edge(plate), OUT)
     fin = poly([(60, 156), (76, 148), (82, 152), (68, 162)], w, h)
-    cv.paint(fin, FCREAM[1])
-    cv.paint(fin & ~sh(fin, 1, 2), FCREAM[2])
-    cv.paint(edge(fin), FO)
+    cv.paint(fin, C("cream", 1))
+    cv.paint(fin & ~sh(fin, 1, 2), C("cream", 2))
+    cv.paint(edge(fin), OUT)
     shard = poly([(10, 156), (18, 152), (16, 160)], w, h)
-    cv.paint(shard, (0x1c, 0x7b, 0x83, 255))
-    cv.paint(shard & ~sh(shard, 1, 1), (0x58, 0xb9, 0xb1, 255))
-    cv.paint(edge(shard), FO)
-    # (no palette check: the hull is the main menu's own fighter art, which has its own colours)
+    cv.paint(shard, C("teal", 2))
+    cv.paint(shard & ~sh(shard, 1, 1), C("teal", 4))
+    cv.paint(edge(shard), OUT)
+    check(cv, "crash_wreck")
     return cv
 
 
@@ -630,31 +530,31 @@ def drone_glow(drone):
 
 
 def scrap_props():
-    """Scrap thrown off your fighter in the crash, flat on the cavern floor, in the menu art's colours:
+    """Scrap thrown off your fighter in the crash, flat on the cavern floor:
     wreck_plate (2 x 1 tiles: a torn hull plate with its orange stripe) and wreck_wing (3 x 2: a wing tip, bent)."""
     out = {}
     cv = Canvas(48, 24)
     plate = poly([(4, 14), (26, 6), (44, 10), (38, 20), (12, 22)], 48, 24)
-    cv.paint(plate, FCREAM[2])
-    cv.paint(plate & ~sh(plate, 0, 2), FCREAM[3])
-    cv.paint(plate & ~sh(plate, -2, -2) & ~sh(plate, 0, 2), FCREAM[4])
-    cv.paint(plate & lines([(8, 16), (40, 10)], 3, 48, 24), (0xed, 0x65, 0x1c, 255))
-    cv.paint(plate & lines([(8, 18), (40, 12)], 1, 48, 24), (0xae, 0x47, 0x1d, 255))
+    cv.paint(plate, C("cream", 2))
+    cv.paint(plate & ~sh(plate, 0, 2), C("cream", 3))
+    cv.paint(plate & ~sh(plate, -2, -2) & ~sh(plate, 0, 2), C("cream", 4))
+    cv.paint(plate & lines([(8, 16), (40, 10)], 3, 48, 24), C("copper", 3))
+    cv.paint(plate & lines([(8, 18), (40, 12)], 1, 48, 24), C("copper", 2))
     for x, y in ((14, 18), (30, 12)):
-        cv.a[y:y + 2, x:x + 2] = FCREAM[1]
-    cv.paint(edge(plate), FO)
+        cv.a[y:y + 2, x:x + 2] = C("cream", 1)
+    cv.paint(edge(plate), OUT)
     out["wreck_plate"] = cv
     cv = Canvas(72, 48)
     wing = poly([(4, 34), (40, 10), (66, 6), (54, 22), (30, 40), (10, 44)], 72, 48)
     bend = lines([(22, 40), (46, 12)], 1, 72, 48) & wing
-    cv.paint(wing, FCREAM[2])
-    cv.paint(wing & ~sh(wing, 0, 3), FCREAM[3])
-    cv.paint(wing & ~sh(wing, -3, -3) & ~sh(wing, 0, 3), FCREAM[4])
-    cv.paint(wing & lines([(26, 30), (56, 12)], 4, 72, 48), (0xed, 0x65, 0x1c, 255))
-    cv.paint(bend, FCREAM[1])
+    cv.paint(wing, C("cream", 2))
+    cv.paint(wing & ~sh(wing, 0, 3), C("cream", 3))
+    cv.paint(wing & ~sh(wing, -3, -3) & ~sh(wing, 0, 3), C("cream", 4))
+    cv.paint(wing & lines([(26, 30), (56, 12)], 4, 72, 48), C("copper", 3))
+    cv.paint(bend, C("cream", 1))
     torn = wing & (poly([(0, 30), (16, 24), (20, 48), (0, 48)], 72, 48))
     cv.paint(torn, C("rock", 1))
-    cv.paint(edge(wing), FO)
+    cv.paint(edge(wing), OUT)
     out["wreck_wing"] = cv
     rnd = random.Random(71)
     cv = Canvas(48, 24)

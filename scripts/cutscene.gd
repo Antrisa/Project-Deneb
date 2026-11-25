@@ -65,6 +65,11 @@ extends Node
 # Sound under the scene (24 Nov: "some random music plays over the whole thing"):
 #   ["music", mode]       "silence" (the music fades out and stays out), a song's id (music_director.gd SONGS), or
 #                         "" to give the music back; a scene can start with "music" set the same way
+#   ["score", song, from, hold_from, hold_to]   the end of a song timed to the scene (25 Nov): starts at `from`
+#                         seconds and holds on [hold_from, hold_to) while the player reads; ["score_cue", t] moves it
+#                         on to t at the next bar (or at once, cross-faded); ["score_wait", t] waits till it's at t;
+#                         ["score_end"] waits till it ends. ["say_timed", who, lines, label, seconds] turns its lines
+#                         over by itself, so a stretch of the scene can keep time with the music
 #   ["ambient", bed]      "none", "amb_space", "amb_caves", "amb_station"..., or "" for the place's own
 # Events can also need a second resident at the same hearts ("with": ["Evarra"]) and play only in some
 # seasons ("seasons": ["Autumn", "Winter"]): main.gd _event_ready.
@@ -382,6 +387,37 @@ func _step(s: Array) -> void:
 				ft.tween_property(fsp, "modulate:a", float(s[2]), maxf(0.01, float(s[3])))
 				if not (s.size() > 4 and str(s[4]) == "nowait"):
 					await ft.finished
+		"score":
+			# ["score", song, from, loop_from, loop_to]: the end of a song timed to the scene (music_director.gd
+			# score_play): it starts at `from` and holds on [loop_from, loop_to) until a "score_cue"
+			music_mode = "score"
+			if world.music_director != null:
+				var hold := Vector2(float(s[3]), float(s[4])) if s.size() > 4 else Vector2(-1.0, -1.0)
+				world.music_director.score_play(str(s[1]), float(s[2]), hold)
+		"score_cue":
+			if world.music_director != null:
+				world.music_director.score_cue(float(s[1]))
+		"score_wait":
+			# waits for the score to reach a moment (the FTL jump lands on Space Battle's big hit)
+			while world.music_director != null and not world.music_director.score_done() and world.music_director.score_pos() < float(s[1]):
+				await get_tree().process_frame
+		"score_end":
+			while world.music_director != null and not world.music_director.score_done():
+				await get_tree().process_frame
+		"say_timed":
+			# ["say_timed", who, [lines], label, seconds]: lines that turn over by themselves, each after that many
+			# seconds (over music timed to the scene); a click still turns them sooner
+			var tlabel: String = str(s[3]) if s.size() > 3 and str(s[3]) != "" else str(s[1])
+			world._say(tlabel, s[2], Callable(), "", Callable(), "Not now", str(s[1]) if str(s[1]) != "" else tlabel)
+			var each: float = float(s[4]) if s.size() > 4 else 3.0
+			while world.dialogue.active:
+				var at: int = world.dialogue.line_index()
+				var left := each
+				while left > 0.0 and world.dialogue.active and world.dialogue.line_index() == at:
+					await get_tree().process_frame
+					left -= get_process_delta_time()
+				if world.dialogue.active and world.dialogue.line_index() == at:
+					world.dialogue.turn_line()
 		"music":
 			music_mode = str(s[1])
 		"ambient":
