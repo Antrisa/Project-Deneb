@@ -22,6 +22,7 @@ from engineering import chamfer_room
 
 WALKABLE = '.pfhuAasmoiktei'
 SIZES.update({
+    'water_spigot': (1, 2, 1),         # the farm's standpipe by the field dome's door (25 Nov)
     'kiosk': (3, 3, 2), 'seed_rack': (2, 2, 1), 'garden_tools': (2, 2, 1), 'hydroponics': (3, 2, 1), 'planter_long': (4, 2, 1),
     'tree_tub': (1, 2, 1), 'lamp_post': (1, 2, 1), 'waiting_seat_w': (1, 3, 2), 'waiting_seat_e': (1, 3, 2), 'market_counter': (3, 2, 1),
     'view_bench': (2, 2, 1),
@@ -215,7 +216,10 @@ def build(g):
     # No set dressing anywhere in the district (Zachary, 23 Nov: "remove all the set dressings like i said except
     # the sale bin and message box"). What's left works: the shipping crate and the message pad on the porch, the
     # seed rack, garden tools and irrigation valve for your field, and the workbench that opens the Crafting page.
-    N('hydroponics', 45, 29.5, 'Water tap', 'garden', 'Fill your can')     # fills the watering can (Zachary, 24 Nov)
+    # The water spigot that fills your watering can (24 Nov). Since 25 Nov a standpipe of its own beside the dome's
+    # door, out of the soil's way (Zachary: "should be at like entrance to farm so it doesnt take up to much farm
+    # space"; it was a hydroponic bed in the middle of the field). Art: tools/dev/water_spigot_art.py.
+    N('water_spigot', 57.5, 40.5, 'Water spigot', 'garden', 'Fill your can')
     a.thing('look', 'Broken agri dome', 'Look', 58, 22, 60)
     # By the dome's door: the seed rack and the garden tools (they were on the porch until 23 Nov).
     N('seed_rack', 51, 38.5, 'Seed rack', 'seeds', 'Take seeds'); N('garden_tools', 59.5, 38.5, 'Garden tools', 'farm_tools', 'Take')

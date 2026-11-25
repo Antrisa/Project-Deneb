@@ -12,7 +12,7 @@ uniform float clock_time = 0.0; // seconds, for twinkling, drifting and shooting
 const vec2 SIZE = vec2(912.0, 64.0);
 const vec2 GIANT = vec2(455.0, 43.0);
 const float GIANT_R = 36.0;
-const float PI = 3.14159265;
+// PI is built into Godot 4.6's shading language; defining it again stopped this shader compiling (25 Nov)
 
 varying vec4 tint;
 

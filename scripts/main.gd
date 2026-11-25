@@ -6397,7 +6397,8 @@ func _refill_can(t: Dictionary) -> void:
 	actors.add_child(effect)
 	sfx("can_refill")
 	await get_tree().create_timer(0.8).timeout
-	effect.queue_free()
+	if is_instance_valid(effect):      # the splash frees itself when its drops have landed (it did before 0.8 s,
+		effect.queue_free()            # and freeing it again stopped this, leaving you frozen: 25 Nov)
 	can_water = _can_capacity()
 	garden_busy = false
 	player.frozen = false
