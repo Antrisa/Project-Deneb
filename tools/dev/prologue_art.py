@@ -14,7 +14,9 @@ drawn by tools/dev/crash_site_art.py). This draws what goes over the picture pan
   sparks.png            sparks from the torn hull, 6 frames;  blink.png: the red emergency light, 2 frames
   fighter_front.png, fighter_back.png    the Wandering Star as the main menu draws her (title/scene/fighter.png,
                         shown 3x like the menu) torn in two across her body for the blind jump
-  fighter_flame.png     her engine flame, down and left from each port, 4 frames;  shield.png: Ivan's shield, 6 frames
+  fighter_intact.png    her as she was before the fight: the menu draws her after it (a breach in the hull, a corner off
+                        a wing), so those are plated over, and her engine ports glow
+  fighter_plume.png     her engine plume as the menu draws it, behind her from each port, 4 frames;  shield.png: 6 frames
   approach.png          the moon you fall to, put together from the main menu's own art (starfield, gas giant, base)
   streak.png            your ship burning in, 4 frames;  impact.png: flash, fireball, thrown rock and dust, 10 frames
   bolt_green.png, bolt_teal.png, bolt_teal_d.png (along her heading), chip.png (a tumbling scrap of hull),
@@ -281,9 +283,66 @@ def blink_frames():
 # ---------------------------------------------------------------- the main menu's fighter (Zachary, 24 Nov: "you can
 # make the fighter look like the main menu still"): title/scene/fighter.png, shown 3x in the panels as the menu does
 TITLE_FIGHTER = os.path.join(ROOT, "title", "scene", "fighter.png")
-NOZZLES = ((13.5, 28.5), (20.5, 34.5))        # its two engine ports, in its own pixels; exhaust runs down and left
-FLAME_BASE = (16, 3)                           # where a flame frame attaches to a port
+NOZZLES = ((13.66, 29.18), (21.48, 35.08))    # its two engine ports, in its own pixels (shaders/title/fighter)
+PLUME_DIR = (-.879, .477)                      # the exhaust runs down and left, behind her, as in the menu
+PLUME_BASE = (21, 3)                           # where a plume frame attaches to a port
 FIGHTER_OUTLINE = (0x2c, 0x23, 0x36, 255)      # the menu art's outline colour
+# The menu's own plume colours: a pale blue glow round an orange-gold core (shaders/title/fighter.gdshader)
+PLUME_BLUE, PLUME_GOLD, NOZZLE_RED = (131, 165, 211), (255, 192, 104), (177, 88, 58)
+
+
+def _hx(h):
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), 255)
+
+
+def fighter_intact():
+    """The menu fighter before Ivan finds her (Zachary, 24 Nov: "in the opening scene the ship is already damaged").
+    The menu draws her after the fight: a breach in her hull between the orange stripes, two small holes, a corner
+    torn off her wing (it sparks there in the menu). Here the breach and the holes are plated over by carrying her
+    stripes along her length across them, the wing's corner is squared off again, and her engine ports glow as the
+    menu's do when she's under power (72 x 49, the menu art's own colours)."""
+    a = np.array(Image.open(TITLE_FIGHTER).convert("RGBA"))
+    h, w = a.shape[:2]
+    eq = lambda c: np.all(a == np.array(c), axis=-1)
+    dark = eq(_hx("38293f")) | eq(_hx("776575"))
+    dmg = np.zeros((h, w), bool)
+    for ys, xs in ((slice(13, 24), slice(26, 41)), (slice(15, 19), slice(16, 20)), (slice(30, 33), slice(36, 40))):
+        dmg[ys, xs] |= dark[ys, xs]
+    out = a.copy()
+    edge_px = eq(FIGHTER_OUTLINE)
+    for y, x in zip(*np.nonzero(dmg)):
+        best = None
+        for sgn in (1, -1):                  # along her length (her stripes run that way) to the nearest sound hull
+            for k in range(1, 14):
+                X, Y = x + sgn * 2 * k, y - sgn * k
+                if not (0 <= X < w and 0 <= Y < h) or a[Y, X, 3] == 0 or edge_px[Y, X]:
+                    break
+                if not dmg[Y, X]:
+                    if best is None or k < best[0]:
+                        best = (k, a[Y, X])
+                    break
+        if best is not None:
+            out[y, x] = best[1]
+    # the wing's torn corner, squared off: her lit flank carried down to a clean outline
+    W_, c_, p_ = _hx("ffebc9"), _hx("f1d6af"), _hx("bd9da6")
+    for (x, y), col in (((50, 33), W_), ((51, 33), W_), ((52, 33), W_), ((49, 34), c_), ((50, 34), W_), ((51, 34), W_),
+                        ((52, 34), W_), ((49, 35), p_), ((50, 35), c_), ((51, 35), W_), ((52, 35), W_)):
+        out[y, x] = col
+    for x in range(45, 54):
+        out[36, x] = FIGHTER_OUTLINE
+    for y in (33, 34, 35):
+        out[y, 53] = FIGHTER_OUTLINE
+    # the engine ports lit, as the menu lights them: a red-hot bowl with a gold heart
+    yy, xx = np.mgrid[0:h, 0:w].astype(float)
+    pod = eq(_hx("38293f")) | eq(_hx("ae471d")) | eq(_hx("564258"))
+    for nx, ny in NOZZLES:
+        du, dv = xx + .5 - nx, yy + .5 - ny
+        d2 = ((.8 * du + .6 * dv) / 2.7) ** 2 + ((-.6 * du + .8 * dv) / 1.3) ** 2
+        out[(d2 < 1) & pod] = NOZZLE_RED + (255,)
+        out[(d2 < .35) & pod] = PLUME_GOLD + (255,)
+    cv = Canvas(w, h)
+    cv.a = out
+    return cv
 
 
 def fighter_halves():
@@ -313,17 +372,29 @@ def fighter_halves():
     return front, back
 
 
-def fighter_flame_frames():
-    """An engine flame for the menu fighter, pointing down and left from its port (4 frames, 18 x 14)."""
+def fighter_plume_frames():
+    """Her engine plume, as the menu draws it: a pale blue glow round an orange-gold core, trailing down and left from
+    a port and flickering (4 frames, 24 x 16; it attaches at PLUME_BASE, and is drawn behind her). The menu's own
+    colours, in see-through steps."""
+    W2, H2 = 24, 16
     frames = []
+    yy, xx = np.mgrid[0:H2, 0:W2].astype(float)
+    bx, by = PLUME_BASE
+    dx, dy = PLUME_DIR
+    along = (xx + .5 - bx) * dx + (yy + .5 - by) * dy
+    across = (xx + .5 - bx) * -dy + (yy + .5 - by) * dx
     for f in range(4):
-        cv = Canvas(18, 14)
-        ln = (13, 16, 14, 17)[f]
-        bx, by = FLAME_BASE
-        tip = (bx - ln * .86, by + ln * .5)
-        cv.paint(poly([(bx - 1, by - 2), (bx + 1, by + 2), tip], 18, 14), C("copper", 2))
-        cv.paint(poly([(bx - 1, by - 1), (bx, by + 1), (bx - ln * .6, by + ln * .35)], 18, 14), C("copper", 3))
-        cv.paint(poly([(bx - 1, by - 1), (bx, by), (bx - ln * .3, by + ln * .2)], 18, 14), C("brass", 4))
+        cv = Canvas(W2, H2)
+        reach = (15.0, 18.0, 16.0, 19.0)[f]
+        sway = (0, .6, -.4, .3)[f]
+        z = np.clip(along / reach, 0, 1)
+        wdt = 3.4 * (1 - z) ** .8 + .6
+        u = np.abs(across - sway * z * z) / wdt
+        inside = (along > -1) & (along < reach)
+        cv.a[inside & (u < 1)] = PLUME_BLUE + (150,)                         # the glow
+        cv.a[inside & (u < .7) & (z < .9)] = PLUME_BLUE + (225,)
+        cv.a[inside & (u < .48) & (z < .72)] = PLUME_GOLD + (255,)           # the flame
+        cv.a[inside & (u < .26) & (z < .34)] = (255, 236, 196, 255)          # white-hot where it leaves the port
         frames.append(cv)
     return strip(frames)
 
@@ -582,18 +653,20 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     ffront, fback = fighter_halves()
     out = {
-        "fighter_front": ffront, "fighter_back": fback, "fighter_flame": fighter_flame_frames(), "approach": approach(),
+        "fighter_intact": fighter_intact(), "fighter_front": ffront, "fighter_back": fback,
+        "fighter_plume": fighter_plume_frames(), "approach": approach(),
         "bolt_teal_d": bolt_diag("glow"), "chip": chip_frames(), "rock_fg_a": rock_fg(3, 96, 70), "rock_fg_b": rock_fg(8, 40, 30),
         "glyphs": glyph_frames(), "glyph_fold": glyph_fold_frames(), "glyph_mark": glyph_mark(),
         "sparks": spark_frames(), "blink": blink_frames(), "shield": shield_frames(), "streak": streak_frames(), "impact": impact_frames(),
         "bolt_green": bolt("leaf"), "bolt_teal": bolt("glow"), "jump_streaks": jump_streaks(),
     }
     for name, c in out.items():
-        if name not in ("fighter_front", "fighter_back", "approach", "rock_fg_a", "rock_fg_b"):    # the game's own colours
+        if name not in ("fighter_intact", "fighter_front", "fighter_back", "fighter_plume", "approach", "rock_fg_a",
+                        "rock_fg_b"):    # the menu's and the backdrop's own colours
             check(c, name)
         c.save(os.path.join(OUT_DIR, name + ".png"))
-    for old in ("cavern", "drone_lit", "drone_wake", "drone_pulse", "lens", "violet_light", "beam", "motes", "drip",
-                "moon", "fall_streak", "star_front", "star_back", "flame"):
+    for old in ("cavern", "drone_lit", "drone_wake", "drone_pulse", "lens", "violet_light", "beam", "drip",
+                "moon", "fall_streak", "star_front", "star_back", "flame", "fighter_flame"):
         p = os.path.join(OUT_DIR, old + ".png")
         if os.path.exists(p):
             os.remove(p)
