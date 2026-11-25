@@ -21,10 +21,14 @@ def tail_trim(x):
     keep = np.nonzero(e > e.max() * 10**(-48 / 20))[0]
     end = (keep[-1] + 1) * hop + int(SR * 0.01) if len(keep) else len(x)
     return x[:min(len(x), end)]
+def soften(x, cutoff):
+    # take the clang off: a gentle low-pass (two poles) at `cutoff` Hz (25 Nov, Zachary: the bell was "too loud and harsh")
+    from scipy.signal import butter, lfilter
+    bb, aa = butter(2, cutoff / (SR / 2)); return lfilter(bb, aa, x).astype(np.float32)
 def write(name, x):
     w = wave.open(f"{out}/{name}.wav", "wb"); w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
     w.writeframes((np.clip(x, -1, 1) * 32767).astype(np.int16).tobytes()); w.close()
-def make(name, srcname, a=None, b=None, db=-12.0, fade=0.03, maxlen=None, trim=True, pitch=1.0):
+def make(name, srcname, a=None, b=None, db=-12.0, fade=0.03, maxlen=None, trim=True, pitch=1.0, soft=0, attack=0.002):
     x = rd(srcname)
     if a is not None: x = x[int(a * SR):int(b * SR) if b else None].copy()
     if trim: x = tail_trim(onset_trim(x))
@@ -32,7 +36,8 @@ def make(name, srcname, a=None, b=None, db=-12.0, fade=0.03, maxlen=None, trim=T
         idx = np.arange(0, len(x) - 1, pitch); x = np.interp(idx, np.arange(len(x)), x).astype(np.float32)
     if maxlen and len(x) > maxlen * SR: x = x[:int(maxlen * SR)]
     x = x - x.mean()
-    fi = int(SR * 0.002); x[:fi] *= np.linspace(0, 1, fi)
+    if soft: x = soften(x, soft)
+    fi = int(SR * attack); x[:fi] *= (.5 - .5 * np.cos(np.linspace(0, np.pi, fi))) if attack > 0.002 else np.linspace(0, 1, fi)
     fo = min(len(x) // 2, int(SR * fade)); x[-fo:] *= np.linspace(1, 0, fo) ** 2
     x *= 10**(db / 20) / loud(x)
     pk = np.abs(x).max()
@@ -90,7 +95,7 @@ takes("coin", "coin_pickup", [(0.0, 0.50), (1.43, 2.05), (2.77, 3.70)], db=-12, 
 make("click", "inventory", db=-16)
 make("quest", "happy", db=-10, fade=0.2)
 make("gift", "love_gift", db=-11, fade=0.2)
-make("bell_ring", "bell_ding", 0.03, 2.2, db=-14, fade=0.8)
+make("bell_ring", "bell_ding", 0.03, 2.2, db=-23.5, fade=0.8, soft=3000, attack=0.025)   # 25 Nov: softer and quieter
 make("mail_waiting", "bell_ding", 6.20, 7.6, db=-16, fade=0.5)
 # caverns combat
 make("hurt", "player_hit", db=-12)
