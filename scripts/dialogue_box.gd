@@ -40,6 +40,9 @@ var _blip: AudioStreamPlayer
 var _blipped := 0
 var _voice: Array = []
 var _last_voice := -1
+var _tick: AudioStreamPlayer
+var _ticks: Array = []
+var _letters := 0             # letters typed out so far in this box (not counting spaces), for the typing ticks
 var _current := ""            # the line being shown, without its expression tag
 var _speaker_name := ""
 var _emote := 0
@@ -57,21 +60,31 @@ var _portrait_back: ColorRect
 var _portrait_frame: Control
 
 
+func _takes(sound_name: String) -> Array:
+	var takes: Array = []
+	for k in range(1, 9):
+		var path := "res://audio/%s_%d.ogg" % [sound_name, k]
+		if not ResourceLoader.exists(path):
+			break
+		takes.append(load(path))
+	return takes
+
+
 func _ready() -> void:
 	layer = 10
 	_blip = AudioStreamPlayer.new()
-	# One soft syllable per text box (Zachary, 23 Nov: the per-letter blips were "a bit annoying"; 25 Nov: the talk
-	# sound "needs replacing"). tools/cozy_sfx.py sings four of them (ba, bo, be, bu) as audio/talk_1..4.ogg; each
-	# box picks one, at the speaker's own pitch, so a conversation sounds like a little voice, not one beep.
-	for k in range(1, 9):
-		var take := "res://audio/talk_%d.ogg" % k
-		if not ResourceLoader.exists(take):
-			break
-		_voice.append(load(take))
+	# Each text box opens with two quick mallet notes at the speaker's own pitch (audio/talk_1..4.ogg, one picked per
+	# box), and while the letters type out a tiny soft bloop plays every few letters (audio/type_tick_1..3.ogg).
+	# Zachary, 25 Nov: "either one or two and a fast soft sound as the letters appear" (tools/cozy_sfx.py).
+	_voice = _takes("talk")
 	if not _voice.is_empty():
 		_blip.stream = _voice[0]
 	_blip.volume_db = -9.0
 	add_child(_blip)
+	_ticks = _takes("type_tick")
+	_tick = AudioStreamPlayer.new()
+	_tick.volume_db = -19.0
+	add_child(_tick)
 	if ResourceLoader.exists(PAD_SCENE):
 		_pad = load(PAD_SCENE).instantiate()
 		_pad.hud_hidden = true            # this one draws the talk box and nothing else
@@ -211,6 +224,7 @@ func _show_line() -> void:
 	_current = line
 	_shown = 0.0
 	_blipped = 0
+	_letters = 0
 	if line != "":
 		if _voice.size() > 1:
 			var k := randi() % _voice.size()
@@ -305,6 +319,7 @@ func _process(delta: float) -> void:
 		return
 	if int(_shown) < _current.length():
 		_shown = minf(_shown + delta * 45.0, float(_current.length()))
+		_typing_ticks()
 		if _pad != null:
 			_push()
 		else:
@@ -312,6 +327,24 @@ func _process(delta: float) -> void:
 	elif _pad == null:
 		_text.visible_characters = -1
 		_choice.visible = _choosing()
+
+
+# Every third letter as the line types out (about 15 a second), a soft tick; none for spaces and punctuation,
+# and at most one a frame. The box's opening notes cover the first letters. Skipping ahead to the whole line
+# jumps _shown past the rest, so a skipped line stays quiet.
+func _typing_ticks() -> void:
+	var played := false
+	while _blipped < int(_shown):
+		var ch := _current[_blipped]
+		_blipped += 1
+		if not (ch.to_upper() != ch.to_lower() or ch.is_valid_int()):
+			continue
+		_letters += 1
+		if _letters >= 4 and _letters % 3 == 1 and not played and not _ticks.is_empty():
+			played = true
+			_tick.stream = _ticks[randi() % _ticks.size()]
+			_tick.pitch_scale = voice_pitch * randf_range(0.95, 1.07)
+			_tick.play()
 
 
 # ---------------------------------------------------------------- choosing with keys and the mouse

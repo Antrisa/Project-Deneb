@@ -12,7 +12,8 @@ colour, so repeats never sound the same (main.gd plays a random take of name_1..
   inv_pick_1..3      lifting an item in the bag: an upward "bwip"
   inv_drop_1..3      putting it down: a downward "bwop" that settles
   datapad_open_1     opening the datapad: two warm notes rising
-  talk_1..4          a resident starting a line: a short sung syllable (ba, bo, be, bu), pitched per resident
+  talk_1..4          a resident starting a line: two quick mallet notes, pitched per resident
+  type_tick_1..3     the letters typing out: a tiny soft bloop every few letters
   drink_1..2         two gulps and a swallow
   letter_open_1..2   unfolding a letter: crinkle and swish
   page_turn_1..3     the journal and books: one page turning over
@@ -166,34 +167,29 @@ def datapad_open(k, rng):
 
 # ---------------------------------------------------------------- talking
 
-VOWELS = {  # formant (Hz, width, strength) sets: a friendly, slightly rounded voice
-    "a": ((760, 140, 1.0), (1250, 180, 0.55), (2600, 260, 0.18)),
-    "o": ((520, 110, 1.0), (900, 150, 0.6), (2500, 260, 0.12)),
-    "e": ((560, 120, 1.0), (1850, 200, 0.5), (2600, 260, 0.2)),
-    "u": ((380, 100, 1.0), (850, 140, 0.45), (2350, 260, 0.1)),
-}
+def mallet(n, f0):
+    return (osc(np.full(n, f0)) * env(n, 0.002, 0.09) + 0.3 * osc(np.full(n, f0 * 4.0)) * env(n, 0.001, 0.015)
+            + 0.1 * osc(np.full(n, f0 * 10.0)) * env(n, 0.0005, 0.004))
 
 
 def talk(k, rng):
-    """A sung syllable from harmonics shaped by vowel formants. The formants slide up from closed lips at the
-    start (a soft "b"). dialogue_box.gd plays one per text box at the speaker's own pitch."""
-    vowel = "aoeu"[(k - 1) % 4]
-    n = secs(0.15)
-    t = tt(n)
-    p = t / t[-1]
-    contour = 1 + 0.07 * np.sin(np.pi * np.clip(p * 1.3, 0, 1)) - 0.03 * p      # up, then gently down
-    f0 = 240 * rng.uniform(0.98, 1.02) * contour
-    open_lips = 0.55 + 0.45 * np.clip(t / 0.025, 0, 1)
-    phase = TAU * np.cumsum(f0) / SR
+    """A resident starts a text box: two quick wooden mallet notes ("bi-dup"), the second a little up or down.
+    Zachary (25 Nov) picked this over a bloop, a hum and a babble. Played at the speaker's own pitch."""
+    n = secs(0.3)
     x = np.zeros(n)
-    for h in range(1, 24):
-        fh = h * f0
-        if fh.max() > 5500:
-            break
-        shape = sum(s * np.exp(-((fh - F * open_lips) / w) ** 2) for F, w, s in VOWELS[vowel])
-        x += (shape + 0.02) * h ** -0.4 * np.sin(h * phase)
-    a = np.clip(t / 0.012, 0, 1) * np.clip((t[-1] - t) / 0.06, 0, 1) ** 1.5
-    return finish(x * a, 0.45, 0.005)
+    f0 = 523 * rng.uniform(0.98, 1.02)
+    step = [1.26, 1.335, 0.84, 1.122][(k - 1) % 4]          # up a third, up a fourth, down, up a tone
+    place(x, mallet(secs(0.25), f0), 0.0)
+    place(x, mallet(secs(0.25), f0 * step) * 0.85, 0.075)
+    return finish(x, 0.45, 0.04)
+
+
+def type_tick(k, rng):
+    """The letters typing out: a tiny soft bloop every few letters, quiet and quick, at the speaker's pitch."""
+    n = secs(0.045)
+    f = glide(n, 560, 780, 0.012, 2.0) * rng.uniform(0.96, 1.04)
+    x = osc(f) * env(n, 0.002, 0.012) + 0.1 * osc(f * 2) * env(n, 0.001, 0.006)
+    return finish(x, 0.4, 0.01)
 
 
 # ---------------------------------------------------------------- drinking, letters, books
@@ -323,7 +319,7 @@ def step_base(k, rng):
 SOUNDS = {  # name: (maker, takes)
     "click": (click, 3), "ui_select": (ui_select, 3), "page_tick": (page_tick, 4), "hotbar": (hotbar, 3),
     "inv_pick": (inv_pick, 3), "inv_drop": (inv_drop, 3), "datapad_open": (datapad_open, 1),
-    "talk": (talk, 4), "drink": (drink, 2), "letter_open": (letter_open, 2), "page_turn": (page_turn, 3),
+    "talk": (talk, 4), "type_tick": (type_tick, 3), "drink": (drink, 2), "letter_open": (letter_open, 2), "page_turn": (page_turn, 3),
     "furnace_load": (furnace_load, 2), "furnace_fire": (furnace_fire, 0), "step_base": (step_base, 6),
 }
 
