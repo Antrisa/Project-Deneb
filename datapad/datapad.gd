@@ -154,6 +154,9 @@ var _hover_id := ""
 var _return_page := "HUD"
 var commands: Array = []
 var hits: Array = []
+# Every pair of Prev / Next buttons drawn this refresh (25 Nov): their name ("crew_pages", "bag", "materials"...)
+# and the rectangle the pair covers, so the mouse wheel can page whichever list it is over.
+var _pagers := {}
 var extra_textures: Dictionary = {}
 # Echo Landing: text is drawn with a real font at the screen's own pixel size, so it stays sharp. The pack's
 # bitmap fonts were smoothed at 7 to 9 pixels tall and looked fuzzy once enlarged; only the pixel-perfect
@@ -319,6 +322,7 @@ func refresh() -> void:
 	_raster.position = -Vector2(_bounds.position) * _px
 	commands.clear()
 	hits.clear()
+	_pagers.clear()
 	if page in ["HUD","Dialogue","Pause","Emotes"]:
 		if not hud_hidden: _hud()
 		if not talk.is_empty() and page == "HUD": _talk()
@@ -406,6 +410,11 @@ func _btn(id,x,y,w,h,label,primary=false,enabled=true) -> void:
 	if not enabled: col=MUTED
 	_txt(x+(w-_width(label,"label"))/2,y+(h-16)/2,label,"label",col)
 	if enabled: _hit(id,x,y,w,h)
+	var sid := str(id)
+	if sid.ends_with("/prev") or sid.ends_with("/next") or sid == "prev" or sid == "next":
+		var name := sid.get_slice("/", 0) if sid.contains("/") else ""
+		var r := Rect2(x, y, w, h)
+		_pagers[name] = (_pagers[name] as Rect2).merge(r) if _pagers.has(name) else r
 
 func _draw() -> void:
 	if not is_instance_valid(_target) or not _target.is_inside_tree():
@@ -1749,7 +1758,30 @@ func _focus_step(d: Vector2) -> void:
 				_focus_id=h[0]
 	_hover_id=""
 	refresh()
-func _pointer(event: InputEvent) -> bool:
+# The mouse wheel turns the page of the list it's over (25 Nov): residents, recipes, jobs, the bag, a shop...
+# Of the Prev / Next pairs on screen it picks the one nearest the pointer (a page with two lists, like storage
+# or crafting's materials, pages the one you point at), and presses its Next (wheel down) or Prev (wheel up)
+# if that can go further.
+func _wheel(down: bool) -> void:
+	if _pagers.is_empty():
+		return
+	var best := ""
+	var near := INF
+	for name in _pagers:
+		var r: Rect2 = _pagers[name]
+		# how far the pointer is from the list above the pair: sideways from its span, and below it if lower
+		var dx: float = maxf(0.0, maxf(r.position.x - _mouse_ui.x, _mouse_ui.x - r.end.x))
+		var dy: float = maxf(0.0, _mouse_ui.y - r.end.y)
+		var d := dx * 2.0 + dy
+		if d < near:
+			near = d
+			best = name
+	var id: String = (best + "/" if best != "" else "") + ("next" if down else "prev")
+	for h in hits:
+		if h[0] == id:
+			_focus_id = ""
+			_activate(id)
+			return
 	var found := _at(get_global_transform_with_canvas().affine_inverse() * event.position)
 	_mouse_ui = _layout.affine_inverse() * (get_global_transform_with_canvas().affine_inverse() * event.position)
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_RIGHT and _held>=0:
@@ -1782,6 +1814,9 @@ func _pointer(event: InputEvent) -> bool:
 			return true
 		if page == "HUD" and found.begins_with("slot/") and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]:
 			select_slot(posmod(active_slot+(1 if event.button_index==MOUSE_BUTTON_WHEEL_DOWN else -1),8))
+			return true
+		if page != "HUD" and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]:
+			_wheel(event.button_index == MOUSE_BUTTON_WHEEL_DOWN)
 			return true
 	return page != "HUD" or found != ""
 
