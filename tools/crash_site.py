@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "dev"))
 
 W, H = 46, 30
 SPOT = (21, 13)                       # where the (hidden) player stands, so the camera frames wreck and drone
-WRECK_AT, WRECK_SIZE = (5, 10), (11, 7)
+WRECK_AT, WRECK_SIZE = (5, 10), (13, 8)
 DRONE_AT, DRONE_SIZE = (24, 8), (13, 8)
 SIZES.update({'crash_wreck': (WRECK_SIZE[0], WRECK_SIZE[1], 3), 'mother_drone': (DRONE_SIZE[0], DRONE_SIZE[1], 4)})
 SIZES.setdefault('stalagmite', (1, 2, 1))
@@ -50,7 +50,7 @@ def build(g):
     R.keep_clear(SPOT[0] - 1, SPOT[1] - 1, SPOT[0] + 1, SPOT[1] + 1)
     N = R.near
     # scrap your fighter shed coming in, along the line of the gouge
-    for name, x, y, t in (('wreck_plate', 3, 18, 'Hull plating'), ('wreck_wing', 15, 18, 'A wing tip'), ('wreck_plate', 18, 15, 'Hull plating'),
+    for name, x, y, t in (('wreck_plate', 3, 18, 'Hull plating'), ('wreck_wing', 15, 18, 'A wing tip'), ('wreck_plate', 19, 16, 'Hull plating'),
                           ('wreck_plate', 8, 20, 'Hull plating')):
         N(name, x, y, t, None)
     # crystal columns grown up round the drone, and its scattered seeds of crystal

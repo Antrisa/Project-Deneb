@@ -56,13 +56,19 @@ class TL:
 
 tl = TL()
 S, F = tl.raw, tl.say
-SHIP = "res://art/prologue/fighter_intact.png"
-PLUME = "res://art/prologue/fighter_plume.png"
+# the Wandering Star is the artist's own Needle (art/ships/needle/, 80 x 55), always shown at 3x so its pixels stay
+# square; her plumes and the wing piece come from it (tools/dev/prologue_art.py) and line up with it at 3x
+SHIP = "res://art/ships/needle/needle_intact.png"
+HURT = "res://art/ships/needle/needle_damaged.png"
+PLUME = "res://art/prologue/needle_plume.png"
+WING = "res://art/prologue/needle_wing.png"
+AT = (60, 108)                                  # where she flies, the Needle's top-left
+FL1, FL2 = (39, 174), (51, 201)                 # her plumes, on her two nozzles
 BOB = [2, 2.6]
 
 # ---------------------------------------------------------------- before the music: who you are
 S(["bmoves", [["rock_a", 470, 280], ["rock_b", 170, 56]], 150.0, "", "nowait"],
-  ["bmoves", [["ship", 96, 116], ["flame1", 73, 207], ["flame2", 102, 255]], 2.8, "out"], takes=2.8)
+  ["bmoves", [["ship", *AT], ["flame1", *FL1], ["flame2", *FL2]], 2.8, "out"], takes=2.8)
 F("", ["The outer Neutral Zone: the asteroid belt, sector seven.",
        "Your little fighter, the Wandering Star, picks her way through the rocks."])
 tl.note("who you are and why you're out here (Zachary, 25 Nov: \"a little inner monologue at the start to explain you are a pirate hunter paid to hunt pirates by the terran empire since they cannot officially enter neutral space\")")
@@ -100,50 +106,49 @@ F("", ["I'm a licensed bounty hunter, Ivan. Stand down."], "You")
 F("Ivan", ["[happy] Bold words for a minnow!"], "Ivan the Rabble")
 tl.note("your two volleys, along your heading: they splash off his shield")
 for k in range(2):
-    S(["bsprite", "b1", "res://art/prologue/bolt_teal_d.png", 299, 128, {"z": 3}], ["bsprite", "b2", "res://art/prologue/bolt_teal_d.png", 286, 140, {"z": 3}],
+    S(["bsprite", "b1", "res://art/prologue/bolt_teal.png", 266, 162, {"z": 3}], ["bsprite", "b2", "res://art/prologue/bolt_teal.png", 252, 170, {"z": 3}],
       ["sfx", "sh_laser"],
-      ["bmoves", [["b1", 334, 108], ["b2", 321, 120]], 0.16],
+      ["bmoves", [["b1", 316, 154], ["b2", 302, 162]], 0.16],
       ["bsprite", "b1", ""], ["bsprite", "b2", ""],
-      ["bsprite", "shield", "res://art/prologue/shield.png", 314, -16 + 8 * k, {"frames": 6, "fps": 14, "loop": False, "z": 2}],
+      ["bsprite", "shield", "res://art/prologue/shield.png", 297, 36 + 8 * k, {"frames": 6, "fps": 14, "loop": False, "z": 2}],
       ["sfx", "sh_shield"],
       ["wait", 0.3], takes=0.46)
 S(["bsprite", "shield", ""])
 F("Ivan", ["[happy] Ha! Was that a sneeze?"], "Ivan the Rabble")
-tl.note("his salvo, on the drum fill: the first hits hole her back, the big one shears her starboard wing off")
+tl.note("his salvo, on the drum fill: the first hits burn along her hull, the big one shears her starboard wing off")
 tl.at(59.88, "salvo")
 S(["bsprite", "g1", "res://art/prologue/bolt_green.png", 366, 120, {"flip": True, "z": 3}], ["bsprite", "g2", "res://art/prologue/bolt_green.png", 376, 170, {"flip": True, "z": 3}],
   ["bsprite", "g3", "res://art/prologue/bolt_green.png", 366, 210, {"flip": True, "z": 3}], ["bsprite", "g4", "res://art/prologue/bolt_green.png", 380, 250, {"flip": True, "z": 3}],
   ["sfx", "sh_laser"],
-  ["bmoves", [["g1", 196, 190], ["g2", 226, 200], ["g3", 180, 214], ["g4", 214, 226]], 0.3, "in"], takes=0.3)
+  ["bmoves", [["g1", 190, 170], ["g2", 215, 182], ["g3", 160, 192], ["g4", 200, 205]], 0.3, "in"], takes=0.3)
 tl.at(60.2, "first hit")
 S(["bsprite", "g1", ""], ["bsprite", "g2", ""],
-  ["bsprite", "ship", "res://art/prologue/fighter_holed.png", 96, 116, {"scale": 2, "z": 2, "bob": BOB}],
-  ["bsprite", "h1", "res://art/ships/fx/hit.png", 181, 172, {"frames": 6, "fps": 12, "loop": False, "z": 4}],
-  ["bsprite", "c1", "res://art/prologue/chip.png", 205, 196, {"frames": 4, "fps": 14, "scale": 2, "z": 5}],
-  ["bmoves", [["c1", 150, 100]], 1.2, "out", "nowait"],
+  ["bsprite", "h1", "res://art/ships/fx/hit.png", 174, 148, {"frames": 6, "fps": 12, "loop": False, "z": 4}],
+  ["bsprite", "c1", "res://art/prologue/chip.png", 192, 166, {"frames": 4, "fps": 14, "scale": 2, "z": 5}],
+  ["bmoves", [["c1", 130, 70]], 1.2, "out", "nowait"],
   ["sfx", "sh_explode"], ["shake", 0.4, 2.0], ["flash", "c94a4a", 0.4])
 tl.at(60.4, "second hit")
 S(["bsprite", "g3", ""],
-  ["bsprite", "h2", "res://art/ships/fx/hit.png", 211, 182, {"frames": 6, "fps": 10, "loop": False, "z": 4}],
-  ["bsprite", "c2", "res://art/prologue/chip.png", 235, 206, {"frames": 4, "fps": 11, "scale": 2, "z": 5}],
+  ["bsprite", "h2", "res://art/ships/fx/hit.png", 200, 160, {"frames": 6, "fps": 10, "loop": False, "z": 4}],
+  ["bsprite", "c2", "res://art/prologue/chip.png", 218, 178, {"frames": 4, "fps": 11, "scale": 2, "z": 5}],
   ["bmoves", [["c2", 300, 250]], 1.2, "out", "nowait"],
   ["sfx", "sh_explode"], ["shake", 0.4, 2.0])
 tl.at(60.6, "third hit")
 S(["bsprite", "g4", ""],
-  ["bsprite", "h3", "res://art/ships/fx/hit.png", 196, 214, {"frames": 6, "fps": 11, "loop": False, "z": 4}],
-  ["bsprite", "fire", "res://art/ships/fx/fire.png", 181, 172, {"frames": 4, "fps": 8, "scale": 2, "z": 3, "bob": BOB}],
-  ["bsprite", "smoke", "res://art/ships/fx/smoke.png", 168, 138, {"frames": 4, "fps": 6, "scale": 2, "z": 3, "bob": BOB}],
+  ["bsprite", "h3", "res://art/ships/fx/hit.png", 146, 172, {"frames": 6, "fps": 11, "loop": False, "z": 4}],
+  ["bsprite", "fire", "res://art/ships/fx/fire.png", 126, 150, {"frames": 4, "fps": 8, "scale": 2, "z": 3, "bob": BOB}],
+  ["bsprite", "smoke", "res://art/ships/fx/smoke.png", 114, 116, {"frames": 4, "fps": 6, "scale": 2, "z": 3, "bob": BOB}],
   ["sfx", "sh_explode"], ["shake", 0.4, 2.0])
 tl.at(61.39, "the big hit: the wing")
-S(["bsprite", "ship", "res://art/prologue/fighter_hit.png", 96, 116, {"scale": 2, "z": 2, "bob": BOB}],
-  ["bsprite", "wing", "res://art/prologue/wing_piece.png", 162, 214, {"frames": 6, "fps": 9, "scale": 2, "z": 5}],
+S(["bsprite", "ship", HURT, *AT, {"scale": 3, "z": 2, "bob": BOB}],
+  ["bsprite", "wing", WING, 138, 228, {"frames": 4, "fps": 9, "scale": 3, "z": 5}],
   ["bmoves", [["wing", 420, 380]], 1.4, "out", "nowait"],
-  ["bsprite", "h1", "res://art/ships/fx/hit.png", 202, 218, {"frames": 6, "fps": 12, "loop": False, "z": 4}],
-  ["bsprite", "c3", "res://art/prologue/chip.png", 222, 238, {"frames": 4, "fps": 16, "z": 5}],
-  ["bmoves", [["c3", 140, 330]], 1.2, "out", "nowait"],
-  ["bsprite", "sparks", "res://art/prologue/sparks.png", 202, 218, {"frames": 6, "fps": 12, "z": 4, "bob": BOB}],
-  ["bsprite", "flame1", PLUME, 73, 207, {"frames": 4, "fps": 20, "alpha": 0.7, "scale": 2, "z": 3, "bob": BOB}],
-  ["bsprite", "flame2", PLUME, 102, 255, {"frames": 4, "fps": 17, "alpha": 0.55, "scale": 2, "z": 3, "bob": BOB}],
+  ["bsprite", "h1", "res://art/ships/fx/hit.png", 141, 214, {"frames": 6, "fps": 12, "loop": False, "z": 4}],
+  ["bsprite", "c3", "res://art/prologue/chip.png", 162, 240, {"frames": 4, "fps": 16, "z": 5}],
+  ["bmoves", [["c3", 110, 340]], 1.2, "out", "nowait"],
+  ["bsprite", "sparks", "res://art/prologue/sparks.png", 145, 223, {"frames": 6, "fps": 12, "z": 4, "bob": BOB}],
+  ["bsprite", "flame1", PLUME, *FL1, {"frames": 4, "fps": 20, "alpha": 0.7, "scale": 3, "z": 1, "bob": BOB}],
+  ["bsprite", "flame2", PLUME, *FL2, {"frames": 4, "fps": 17, "alpha": 0.55, "scale": 3, "z": 1, "bob": BOB}],
   ["sfx", "sh_explode"], ["sfx", "hull_tear"], ["shake", 1.0, 3.0], ["flash", "c94a4a", 0.7])
 tl.at(61.6, "damage report")
 F("", ["Starboard wing gone. Shields offline. Hull integrity at eighteen percent."], "Ship computer", [5.5])
@@ -154,8 +159,8 @@ tl.at(69.675, "the lever, as the finale comes in")
 S(["sfx", "beam_charge"],
   ["bsprite", "streaks", "res://art/prologue/jump_streaks.png", 0, 0, {"alpha": 0.0, "z": 8}],
   ["bfade", "streaks", 0.35, 7.0, "nowait"],
-  ["bsprite", "flame1", PLUME, 73, 207, {"frames": 4, "fps": 24, "scale": 2, "z": 3, "bob": BOB}],
-  ["bsprite", "flame2", PLUME, 102, 255, {"frames": 4, "fps": 22, "scale": 2, "z": 3, "bob": BOB}],
+  ["bsprite", "flame1", PLUME, *FL1, {"frames": 4, "fps": 24, "scale": 3, "z": 1, "bob": BOB}],
+  ["bsprite", "flame2", PLUME, *FL2, {"frames": 4, "fps": 22, "scale": 3, "z": 1, "bob": BOB}],
   ["shake", 7.2, 1.0])
 F("", ["You slam the FTL lever."])
 F("", ["Fold drive at ninety percent. Warning. Warning."], "Ship computer", [3.9])
@@ -166,7 +171,7 @@ S(["sfx", "sh_fold"],
   ["bfade", "streaks", 1.0, 0.15, "nowait"],
   ["flash", "fff3d6", 1.6],
   ["shake", 0.8, 4.0],
-  ["bmoves", [["ship", 706, -227]], 0.35, "in"], takes=0.35)
+  ["bmoves", [["ship", 800, -14]], 0.35, "in"], takes=0.35)
 F("", ["Space folds around you, and the asteroid belt is gone."])
 S(["score_end"], ["music", "silence"], ["fade", 1.0, 0.8], ["board", ""], takes=0.8)
 song1_end = tl.t
@@ -192,18 +197,18 @@ S(["sfx", "sh_fire"],
   ["sfx", "crash_impact"],
   ["shake", 1.2, 3.0], takes=3.8)
 F("", ["Stone and metal, screaming. Then nothing at all."])
-tl.note("the crash site: the game's own cavern, your fighter nose-first in the rubble under the hole she punched through the roof, the Mother-Drone asleep across the cavern with crystal grown up round it")
+tl.note("the crash site: the game's own cavern, your fighter (the Needle without her wing, burning at the stump and the engines) nose-first in the rubble under the hole she punched through the roof, the Mother-Drone asleep across the cavern with crystal grown up round it")
 S(["go", "crash_site", 21, 13, "d"],
   ["hide", "player"],
   ["ambient", "amb_caves"],
   ["wsprite", "shaft", "res://art/prologue/light_shaft.png", 7.5, 1.0, {"add": True, "alpha": 0.7, "z": -2}],
   ["wsprite", "motes", "res://art/prologue/motes.png", 7.5, 1.0, {"frames": 8, "fps": 3, "add": True, "z": -1}],
   ["wsprite", "grit", "res://art/prologue/grit.png", 11.0, 1.3, {"frames": 12, "fps": 7}],
-  ["wsprite", "fire", "res://art/ships/fx/fire.png", 10.5, 12.9, {"frames": 4, "fps": 8}],
-  ["wsprite", "fire2", "res://art/ships/fx/fire.png", 10.9, 14.4, {"frames": 4, "fps": 7}],
-  ["wsprite", "smoke", "res://art/ships/fx/smoke.png", 10.4, 11.8, {"frames": 4, "fps": 5, "alpha": 0.8, "bob": [2, 3.0]}],
-  ["wsprite", "sparks", "res://art/prologue/sparks.png", 10.55, 14.2, {"frames": 6, "fps": 10}],
-  ["wsprite", "blink", "res://art/prologue/blink.png", 11.7, 12.9, {"frames": 2, "fps": 2}],
+  ["wsprite", "fire", "res://art/ships/fx/fire.png", 9.7, 15.5, {"frames": 4, "fps": 8}],
+  ["wsprite", "fire2", "res://art/ships/fx/fire.png", 7.0, 13.8, {"frames": 4, "fps": 7}],
+  ["wsprite", "smoke", "res://art/ships/fx/smoke.png", 6.9, 12.8, {"frames": 4, "fps": 5, "alpha": 0.8, "bob": [2, 3.0]}],
+  ["wsprite", "sparks", "res://art/prologue/sparks.png", 9.4, 15.2, {"frames": 6, "fps": 10}],
+  ["wsprite", "blink", "res://art/prologue/blink.png", 11.6, 12.9, {"frames": 2, "fps": 2}],
   ["wait", 0.8],
   ["sfx", "water_drip"],
   ["fade", 0.0, 2.0],

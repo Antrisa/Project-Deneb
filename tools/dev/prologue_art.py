@@ -12,16 +12,14 @@ drawn by tools/dev/crash_site_art.py). This draws what goes over the picture pan
   glyphs.png            the star-glyphs wheeling round you, 12 frames (640 x 360): each ring turns its own way, each
                         glyph spins and twinkles;  glyph_fold.png: folding into the mark, 8 frames;  glyph_mark.png
   sparks.png            sparks from the torn hull, 6 frames;  blink.png: the red emergency light, 2 frames
-  fighter_front.png, fighter_back.png    the Wandering Star as the main menu draws her (title/scene/fighter.png,
-                        shown 3x like the menu) torn in two across her body for the blind jump
-  fighter_intact.png, fighter_holed.png, fighter_hit.png, wing_piece.png    the Wandering Star, drawn from scratch
-                        from one model (tools/dev/fighter_model.py), shown 2x: whole; holed by Ivan's first hits; with
-                        her starboard wing shot off too (25 Nov: "dont have the back half of your ship come apart, just
-                        the wing gets shot off"); the wing tumbling away (6 frames)
-  fighter_plume.png     her engine plume, behind her from each port, 4 frames (the menu's plume colours);  shield.png
+  the Wandering Star is the artist's Needle (art/ships/needle/needle_intact.png, needle_damaged.png, Zachary's
+                        originals, shown 3x with nearest-neighbour filtering);  needle_wing.png: what Ivan's big hit
+                        shears off her lower wing (the intact Needle less the damaged one), tumbling by quarter turns,
+                        4 frames;  needle_plume.png: her engine plume, behind her from each port, 4 frames (the
+                        menu's plume colours);  shield.png: Ivan's shield taking a hit, 6 frames
   approach.png          the moon you fall to, put together from the main menu's own art (starfield, gas giant, base)
   streak.png            your ship burning in, 4 frames;  impact.png: flash, fireball, thrown rock and dust, 10 frames
-  bolt_green.png, bolt_teal.png, bolt_teal_d.png (along her heading), chip.png (a tumbling scrap of hull),
+  bolt_green.png, bolt_teal.png, chip.png (a tumbling scrap of hull),
   rock_fg_a.png, rock_fg_b.png (near asteroids drifting past, in the backdrop's own colours), jump_streaks.png
 and art/portrait_motherdrone.png. Run: python3 tools/dev/prologue_art.py [--preview]
 """
@@ -282,24 +280,52 @@ def blink_frames():
 
 
 # ---------------------------------------------------------------- the ambush and the jump
-# ---------------------------------------------------------------- the Wandering Star (25 Nov: "just generate the player
-# ship from scratch"): every picture of her comes from one model, tools/dev/fighter_model.py, shown 2x on the panels
-# (fighter_model imports this file's helpers, so it's imported in main(), which sets these from her picture)
-_WHOLE = None
-NOZZLES = ((9.6, 48.6), (24.1, 72.7))          # her two engine ports, in her picture's pixels
-AXIS = (.872, -.49)                            # her heading on screen (up and to the right)
+# ---------------------------------------------------------------- the Wandering Star: the artist's Needle (25 Nov,
+# Zachary's originals: art/ships/needle/needle_intact.png and needle_damaged.png, 80 x 55, lossless, 18 colours).
+# Shown at a whole-number scale (3x on the panels) with nearest-neighbour filtering, so they stay crisp.
+NEEDLE = os.path.join(ROOT, "art", "ships", "needle")
+NOZZLES = ((11.0, 25.0), (15.0, 34.0))         # her two engine ports, in her own pixels (the orange in the pods)
+AXIS = (.986, -.164)                           # her heading: nose (70, 20) from the engines' middle (13, 29.5)
 PLUME_DIR = (-AXIS[0], -AXIS[1])               # the exhaust runs behind her
-PLUME_BASE = (21, 3)                           # where a plume frame attaches to a port
+PLUME_BASE = (18, 3)                           # where a plume frame attaches to a port
 # The menu's own plume colours: a pale blue glow round an orange-gold core (shaders/title/fighter.gdshader)
 PLUME_BLUE, PLUME_GOLD = (131, 165, 211), (255, 192, 104)
-BATTERED = {"wing_off": True, "breach": True}  # after Ivan's salvo: her starboard wing sheared off, her back holed
+
+
+def needle(name):
+    return np.array(Image.open(os.path.join(NEEDLE, "needle_%s.png" % name)).convert("RGBA"))
+
+
+def wing_piece():
+    """What Ivan's big hit shears off her lower wing: what the intact Needle has and the damaged one hasn't, its
+    torn edge outlined, tumbling (4 frames, each a quarter turn on: turning by quarter turns keeps her pixels whole).
+    Returns the strip and where its first frame's top-left sits on her (her pixels)."""
+    whole, hurt = needle("intact"), needle("damaged")
+    m = (whole[:, :, 3] > 0) & (hurt[:, :, 3] == 0)
+    ys, xs = np.nonzero(m)
+    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+    piece = np.zeros((y1 - y0, x1 - x0, 4), np.uint8)
+    sub = m[y0:y1, x0:x1]
+    piece[sub] = whole[y0:y1, x0:x1][sub]
+    solid = piece[:, :, 3] > 0
+    piece[edge(solid)] = (0x2c, 0x23, 0x36, 255)     # her own outline colour, round the torn top too
+    side = max(piece.shape[:2]) + 2
+    sq = np.zeros((side, side, 4), np.uint8)
+    py, px = (side - piece.shape[0]) // 2, (side - piece.shape[1]) // 2
+    sq[py:py + piece.shape[0], px:px + piece.shape[1]] = piece
+    frames = []
+    for k in range(4):
+        cv = Canvas(side, side)
+        cv.a = np.ascontiguousarray(np.rot90(sq, -k))
+        frames.append(cv)
+    return strip(frames), (int(x0) - px, int(y0) - py)
 
 
 def fighter_plume_frames():
     """Her engine plume, as the menu draws it: a pale blue glow round an orange-gold core, trailing down and left from
-    a port and flickering (4 frames, 24 x 16; it attaches at PLUME_BASE, and is drawn behind her). The menu's own
+    a port and flickering (4 frames, 20 x 9 in her own pixels; it attaches at PLUME_BASE, and is drawn behind her). The menu's own
     colours, in see-through steps."""
-    W2, H2 = 24, 16
+    W2, H2 = 20, 9
     frames = []
     yy, xx = np.mgrid[0:H2, 0:W2].astype(float)
     bx, by = PLUME_BASE
@@ -308,10 +334,10 @@ def fighter_plume_frames():
     across = (xx + .5 - bx) * -dy + (yy + .5 - by) * dx
     for f in range(4):
         cv = Canvas(W2, H2)
-        reach = (15.0, 18.0, 16.0, 19.0)[f]
-        sway = (0, .6, -.4, .3)[f]
+        reach = (11.0, 13.5, 12.0, 14.5)[f]
+        sway = (0, .4, -.3, .2)[f]
         z = np.clip(along / reach, 0, 1)
-        wdt = 3.4 * (1 - z) ** .8 + .6
+        wdt = 2.4 * (1 - z) ** .8 + .5
         u = np.abs(across - sway * z * z) / wdt
         inside = (along > -1) & (along < reach)
         cv.a[inside & (u < 1)] = PLUME_BLUE + (150,)                         # the glow
@@ -372,16 +398,6 @@ def jump_streaks():
         cv.paint(lines([(x0, y0), (x0 + dx * ln, y0 + dy * ln)], th), C(*col))
         if th >= 2:                                       # a bright head on the thick ones
             cv.paint(disc(x0 + dx * ln, y0 + dy * ln, 1.6), C("cream", 4))
-    return cv
-
-
-def bolt_diag(ramp):
-    """A bolt flying along the menu fighter's heading, up and to the right (22 x 14)."""
-    cv = Canvas(22, 14)
-    a, b = (2, 12), (2 + 18 * AXIS[0], 12 + 18 * AXIS[1])
-    cv.paint(lines([a, b], 4, 22, 14), C(ramp, 2))
-    cv.paint(lines([(a[0] + 4, a[1] - 2), b], 2, 22, 14), C(ramp, 4))
-    cv.paint(disc(b[0], b[1], 1.5, 22, 14), C("cream", 4))
     return cv
 
 
@@ -573,31 +589,22 @@ def portrait():
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
-    global _WHOLE, NOZZLES, AXIS, PLUME_DIR
-    import fighter_model
-    _WHOLE = fighter_model.render()
-    NOZZLES, AXIS = tuple(_WHOLE[1]["ports"]), tuple(_WHOLE[1]["axis"])
-    PLUME_DIR = (-AXIS[0], -AXIS[1])
-    pieces, piece_at = fighter_model.piece_frames()
-    hit = fighter_model.render(mode=BATTERED, nozzle_glow=False)[0]
-    print("her picture", _WHOLE[0].w, "x", _WHOLE[0].h, "; ports", [tuple(round(v, 1) for v in q) for q in NOZZLES],
-          "; nose", tuple(round(v, 1) for v in _WHOLE[1]["nose"]), "; wing piece frames of", pieces[0].w,
-          "with the first's top-left at", piece_at)
+    piece, piece_at = wing_piece()
+    print("the Needle's wing piece: frames of", piece.h, "; its first frame's top-left on her at", piece_at)
     out = {
-        "fighter_intact": _WHOLE[0], "fighter_holed": fighter_model.render(mode={"breach": True})[0], "fighter_hit": hit,
-        "wing_piece": strip(pieces),
-        "fighter_plume": fighter_plume_frames(), "approach": approach(),
-        "bolt_teal_d": bolt_diag("glow"), "chip": chip_frames(), "rock_fg_a": rock_fg(3, 96, 70), "rock_fg_b": rock_fg(8, 40, 30),
+        "needle_wing": piece, "needle_plume": fighter_plume_frames(), "approach": approach(),
+        "chip": chip_frames(), "rock_fg_a": rock_fg(3, 96, 70), "rock_fg_b": rock_fg(8, 40, 30),
         "glyphs": glyph_frames(), "glyph_fold": glyph_fold_frames(), "glyph_mark": glyph_mark(),
         "sparks": spark_frames(), "blink": blink_frames(), "shield": shield_frames(), "streak": streak_frames(), "impact": impact_frames(),
         "bolt_green": bolt("leaf"), "bolt_teal": bolt("glow"), "jump_streaks": jump_streaks(),
     }
     for name, c in out.items():
-        if name not in ("fighter_plume", "approach", "rock_fg_a", "rock_fg_b"):    # the menu's and the backdrop's own colours
+        if name not in ("needle_wing", "needle_plume", "approach", "rock_fg_a", "rock_fg_b"):   # the art's own colours
             check(c, name)
         c.save(os.path.join(OUT_DIR, name + ".png"))
     for old in ("cavern", "drone_lit", "drone_wake", "drone_pulse", "lens", "violet_light", "beam", "drip",
-                "moon", "fall_streak", "star_front", "star_back", "flame", "fighter_flame", "fighter_front", "fighter_back"):
+                "moon", "fall_streak", "star_front", "star_back", "flame", "fighter_flame", "fighter_front", "fighter_back",
+                "fighter_intact", "fighter_holed", "fighter_hit", "fighter_plume", "wing_piece", "bolt_teal_d"):
         p = os.path.join(OUT_DIR, old + ".png")
         if os.path.exists(p):
             os.remove(p)
