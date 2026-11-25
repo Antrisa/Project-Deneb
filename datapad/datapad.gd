@@ -18,6 +18,9 @@ signal quit_requested
 signal resume_requested
 signal slots_swapped(a: int, b: int)
 signal storage_moved(item_id: String, to_chest: bool)
+# A little interface sound for a press that doesn't already make one (25 Nov): page turns, picking an item up and
+# putting it down in the bag, hotbar slots, choosing things in a list. Page changes click through menu_changed.
+signal ui_sound(sound_name: String)
 
 const Art = preload("res://datapad/art.gd")
 const Sample = preload("res://datapad/catalog.gd")
@@ -1616,6 +1619,8 @@ func _activate(id: String) -> void:
 		return
 	var pair:=id.split("/",true,1)
 	var arg:=pair[1] if pair.size()>1 else ""
+	var sound:=_press_sound(pair[0],arg)
+	if sound!="": ui_sound.emit(sound)
 	match pair[0]:
 		"open":
 			_map_parent="HUD"
@@ -1736,6 +1741,24 @@ func _activate(id: String) -> void:
 			shop_page=0
 	refresh()
 
+# Which sound a press makes, worked out before it happens (a bag slot picks up or puts down depending on _held).
+# Presses that open a page, use or craft something, or move things to a chest are left to the game, which plays
+# its own sound for those.
+const QUIET_PRESSES := ["open","resume","settings","emote","back","advance","use","craft","store","take","shop",
+		"quest_map","trash","quit","gear","relictab"]
+func _press_sound(what: String, arg: String) -> String:
+	if QUIET_PRESSES.has(what): return ""
+	if arg=="next" or arg=="prev": return "page_tick"
+	match what:
+		"bagslot":
+			if _held>=0: return "inv_drop"
+			return "inv_pick" if _bag_item(arg.to_int())!="" else ""
+		"slot":
+			return "inv_drop" if page=="Inventory" and _held>=0 else "hotbar"
+		"filter","recipe_filter","shoptab","controls","opt","track","equip","locate":
+			return "click"
+	return "ui_select"
+
 func _at(p: Vector2) -> String:
 	var local: Vector2 = _layout.affine_inverse() * p
 	for j in range(hits.size()-1,-1,-1):
@@ -1809,6 +1832,7 @@ func _wheel(down: bool) -> void:
 			elif found.begins_with("slot/"): to=found.trim_prefix("slot/").to_int()
 			if to>=0 and to!=_held:
 				_move_held(to)
+				ui_sound.emit("inv_drop")
 				refresh()
 		_pressed_item=""
 	elif event is InputEventMouseButton and event.pressed:
@@ -1819,6 +1843,7 @@ func _wheel(down: bool) -> void:
 			return true
 		if page == "HUD" and found.begins_with("slot/") and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]:
 			select_slot(posmod(active_slot+(1 if event.button_index==MOUSE_BUTTON_WHEEL_DOWN else -1),8))
+			ui_sound.emit("hotbar")
 			return true
 		if page != "HUD" and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]:
 			_wheel(event.button_index == MOUSE_BUTTON_WHEEL_DOWN)

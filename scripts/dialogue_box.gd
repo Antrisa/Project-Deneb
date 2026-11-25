@@ -38,6 +38,8 @@ var _option_at := 0
 var _top := false             # the box is at the top of the screen for this line
 var _blip: AudioStreamPlayer
 var _blipped := 0
+var _voice: Array = []
+var _last_voice := -1
 var _current := ""            # the line being shown, without its expression tag
 var _speaker_name := ""
 var _emote := 0
@@ -58,10 +60,17 @@ var _portrait_frame: Control
 func _ready() -> void:
 	layer = 10
 	_blip = AudioStreamPlayer.new()
-	# One soft note per text box (Zachary, 23 Nov: the per-letter blips were "a bit annoying"). A real sound saved
-	# as audio/talk.ogg replaces the made-up one.
-	_blip.stream = load("res://audio/talk.ogg") if ResourceLoader.exists("res://audio/talk.ogg") else load("res://audio/talk.wav")
-	_blip.volume_db = -10.0
+	# One soft syllable per text box (Zachary, 23 Nov: the per-letter blips were "a bit annoying"; 25 Nov: the talk
+	# sound "needs replacing"). tools/cozy_sfx.py sings four of them (ba, bo, be, bu) as audio/talk_1..4.ogg; each
+	# box picks one, at the speaker's own pitch, so a conversation sounds like a little voice, not one beep.
+	for k in range(1, 9):
+		var take := "res://audio/talk_%d.ogg" % k
+		if not ResourceLoader.exists(take):
+			break
+		_voice.append(load(take))
+	if not _voice.is_empty():
+		_blip.stream = _voice[0]
+	_blip.volume_db = -9.0
 	add_child(_blip)
 	if ResourceLoader.exists(PAD_SCENE):
 		_pad = load(PAD_SCENE).instantiate()
@@ -203,8 +212,15 @@ func _show_line() -> void:
 	_shown = 0.0
 	_blipped = 0
 	if line != "":
+		if _voice.size() > 1:
+			var k := randi() % _voice.size()
+			if k == _last_voice:
+				k = (k + 1) % _voice.size()
+			_last_voice = k
+			_blip.stream = _voice[k]
 		_blip.pitch_scale = voice_pitch          # each resident's note at their own pitch
-		_blip.play()
+		if _blip.stream != null:
+			_blip.play()
 	_top = _box_on_top()
 	if _pad != null:
 		_push()
