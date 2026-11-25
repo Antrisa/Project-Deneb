@@ -251,6 +251,18 @@ const LETTERS := {
 		],
 		"sign": "S.A.R.A.",
 	},
+	# The morning after the Warden's last bundle (main.gd _custodian_fix "warden_home", 24 Nov).
+	"tarbesh_warden": {
+		"from": "Tar'Besh",
+		"title": "Six",
+		"body": [
+			"Friend,",
+			"There is a sixth crystal in my Sanctum this morning, the colour of a sunset, with a dried flower stuck to its base. Every cradle that was empty is full.",
+			"They have gone very quiet, all six, the way a room goes quiet before someone speaks.",
+			"Come to the Sanctum. Bring S.A.R.A. I think they are waiting for us.",
+		],
+		"sign": "Tar'Besh, curator",
+	},
 	"tarbesh_museum_5": {
 		"from": "Tar'Besh",
 		"title": "Five cases",

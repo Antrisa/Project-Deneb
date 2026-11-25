@@ -88,6 +88,10 @@ def walkable(a, x, y):
 start = tuple(md['START'])
 seen = {start}
 q = deque([start])
+if 'TIDELIGHT' in md:                     # Tidelight is reached by shuttle, not a warp (tools/tidelight.py)
+    tl = ('tidelight', md['TIDELIGHT']['landing'][0], md['TIDELIGHT']['landing'][1])
+    seen.add(tl)
+    q.append(tl)
 while q:
     a, x, y = q.popleft()
     nxt = [(a, x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
@@ -314,7 +318,7 @@ for ev_id, ev in list(EVENTS.items()) + list(SCENES.items()):
 CUST = gd_consts(ROOT / 'scripts' / 'custodian_data.gd')
 assert 'CUSTODIANS' in CUST, "scripts/custodian_data.gd didn't parse"
 FIXES = {"", "sprinklers", "storage", "orchard", "hotel_wing", "kiosks", "gates", "suite", "shipyard", "storm_plating",
-         "braced", "primed", "blast", "storm_ends"}
+         "braced", "primed", "blast", "storm_ends", "tl_market", "tl_beacon", "warden_home"}
 if sorted(CUST['ORDER']) != sorted(CUST['CUSTODIANS']):
     bad("custodians", "ORDER and CUSTODIANS differ")
 for cid, c in CUST['CUSTODIANS'].items():

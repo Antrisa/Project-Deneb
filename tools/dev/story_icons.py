@@ -1,5 +1,5 @@
 """Item icons for the main story's rewards (24 Nov 2026): the Sovereign of Hydro-Flora's sprinkler and fruit trees
-(scripts/item_data.gd icons 147-153). The artist's own icons from art/items/, copied into art/items.png.
+(scripts/item_data.gd icons 147-153), and Tidelight's forage (154-159). The artist's own icons from art/items/, copied into art/items.png.
 
 Run from the repo root:  python3 -I tools/dev/story_icons.py   (safe to repeat: it rewrites the same slots)
 """
@@ -21,6 +21,13 @@ ICONS = [
     ["moon_peach", "moon_peach"],
     ["star_apple", "star_apple"],
     ["sun_fig", "sun_fig"],
+    # Tidelight's forage (tools/tidelight.py), icons 154-159
+    ["sun_lily", "sun_lily"],
+    ["bio_plankton", "bio_plankton"],
+    ["ember_aster", "ember_aster"],
+    ["resin", "resin"],
+    ["hardwood", "hardwood"],
+    ["glow_moss", "glow_moss"],
 ]
 
 

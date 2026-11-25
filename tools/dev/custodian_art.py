@@ -98,9 +98,10 @@ def shard_sprite(spec, w=34, h=66):
 
 def main():
     os.makedirs(os.path.join(ROOT, "art", "story"), exist_ok=True)
-    sh_ = shard_sprite(CUSTODIANS["shepherd"])
-    check(sh_, "shepherd sprite")
-    sh_.save(os.path.join(ROOT, "art", "story", "shepherd_crystal.png"))
+    for cid, spec in CUSTODIANS.items():          # each crystal on its own, for cutscene panels
+        sh_ = shard_sprite(spec)
+        check(sh_, cid + " sprite")
+        sh_.save(os.path.join(ROOT, "art", "story", "%s_crystal.png" % cid))
     for cid, spec in CUSTODIANS.items():
         cv = portrait(spec)
         check(cv, cid)

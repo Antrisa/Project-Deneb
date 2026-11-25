@@ -340,6 +340,19 @@ const ITEMS = {
 			"desc": "Crisp, with a five-pointed star in its core."},
 	"sun_fig": {"name": "Sun-fig", "icon": 153, "use": "eat", "energy": 30, "heal": 1,
 			"desc": "Warm-coloured and honey-sweet, as if it kept a little sunlight."},
+	# Tidelight's forage (24 Nov, tools/tidelight.py): picked once a day from its spots, and wanted by the Warden
+	"sun_lily": {"name": "Sun-lily", "icon": 154, "use": "",
+			"desc": "A flower that only opens in low light. On Tidelight, that's always."},
+	"bio_plankton": {"name": "Glow plankton", "icon": 155, "use": "",
+			"desc": "A scoop of Tidelight's tideline. It glows when you shake it."},
+	"ember_aster": {"name": "Ember aster", "icon": 156, "use": "",
+			"desc": "A hardy orange flower from the settlers' gardens."},
+	"resin": {"name": "Dusk resin", "icon": 157, "use": "",
+			"desc": "Amber sap from the dusk trees, warm to the touch."},
+	"hardwood": {"name": "Duskwood", "icon": 158, "use": "",
+			"desc": "Dense, dark wood from the forest at the edge of the night."},
+	"glow_moss": {"name": "Night moss", "icon": 159, "use": "",
+			"desc": "Moss from the night side of the forest. It gives off a faint violet light."},
 }
 
 # The relics, and the ones Chernobog ships can drop.

@@ -98,10 +98,18 @@ const CUSTODIANS := {
 	},
 	"warden": {
 		"name": "The Warden of Tidelight", "wing": "Tidelight", "voice": "Warden",
-		"home": "tidelight", "spot": [0, 0],
-		"hello": ["The sun has stood at the edge of this world since before your kind. I have stood here with it."],
+		"home": "tidelight", "spot": [77, 24],
+		"hello": ["The sun has stood at the edge of this world since before your kind. I have stood here with it.",
+			"Bring me the gifts of the shore, the forest and the long light, and I will come home with you."],
 		"thanks": ["[happy] These remember the light. Thank you."],
 		"done": ["[happy] Take me home, Archivist. The others are calling."],
-		"bundles": [],
+		"bundles": [
+			{"id": "shore", "name": "Gifts of the Shore", "items": {"sun_lily": 5, "bio_plankton": 5, "ember_aster": 3},
+				"fixes": "tl_market", "reward": "The settlers' market on Tidelight, stocked again."},
+			{"id": "forest", "name": "Gifts of the Forest", "items": {"hardwood": 6, "resin": 4, "glow_moss": 4},
+				"fixes": "tl_beacon", "reward": "The old beacon, quiet at last: the settlers can call home."},
+			{"id": "light", "name": "The Long Light", "items": {"thermal_quartz": 4, "moon_opal": 2, "star_apple": 3},
+				"fixes": "warden_home", "reward": "The Warden goes home to the others, in the Sanctum."},
+		],
 	},
 }

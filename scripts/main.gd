@@ -461,6 +461,7 @@ func _ready() -> void:
 	_load_game()
 	_sync_station()
 	_sync_cradles()
+	_sync_forage()
 	_deliver_mail()
 	wreck_sprite.frame = repair_stage
 	_go_home()
@@ -1123,6 +1124,8 @@ func _light_color() -> Color:
 		c = Color(0.58, 0.58, 0.7)          # no day and night down there
 	elif current_area == "lake":
 		c = Color(0.66, 0.74, 0.86)         # nor at the underground lake: cool, blue-green dark
+	elif current_area == "tidelight":
+		c = Color(1.0, 0.82, 0.68)          # Tidelight: tidally locked, so always the same low golden sunset
 	return c
 
 
@@ -1410,6 +1413,13 @@ func _heart_event_done(id: String) -> void:
 	max_energy = _max_energy()      # Saffi's 8 makes the bar longer at once
 	if id == "welcome":
 		_save_game()      # the hoe, the can and the seeds
+	elif id == "warden_found":
+		if not custodians_found.has("warden"):
+			custodians_found.append("warden")
+		_save_game()
+	elif id == "the_vision":
+		story_flags["vision_seen"] = true
+		_save_game()
 	elif id == "shepherd_found":
 		if not custodians_found.has("shepherd"):
 			custodians_found.append("shepherd")
@@ -1853,6 +1863,8 @@ func _usable(t: Dictionary) -> bool:
 	var kind: String = t["kind"]
 	if kind == "pickup" or kind == "drop":
 		return false                 # Bram's crate-hauling job is gone (Zachary, 23 Nov)
+	if kind == "forage":
+		return int(forage_taken.get(_forage_key(t), -1)) != day
 	if kind == "sealed":
 		return not station_fixed.has(str(t["repair"]))
 	return true
@@ -2072,6 +2084,13 @@ func _interact(t: Dictionary) -> void:
 		_shipping_crate()
 	elif kind == "craft":
 		_open_crafting()
+	elif kind == "shuttle":
+		_say("The shuttle", ["The little shuttle hums on its pad, ready to fold back to the Landing."], Callable(self, "_shuttle_to").bind("west"), "Fly home")
+	elif kind == "forage":
+		_forage(t)
+	elif kind == "look" and str(t["name"]) == "Gate 2 (sealed)" and _flag("gates") and _flag("storm_ends"):
+		_say("Gate 2", ["The Chancellor's gate is open, and a shuttle waits on the other side: TIDELIGHT, it says on the board. Twenty minutes."],
+			Callable(self, "_shuttle_to").bind("tidelight"), "Board")
 	elif kind == "look" and str(t["name"]) in ["Precursor crystal", "Empty crystal cradle"] and _custodian_here() != "":
 		_custodian_crystal(_custodian_here())
 	elif kind == "look":
@@ -5083,6 +5102,10 @@ func _process(delta: float) -> void:
 			_welcome_visit()
 		elif _custodians_due():
 			cutscene.play("custodians_wake")
+		elif _warden_due():
+			cutscene.play("warden_found")
+		elif _vision_due():
+			cutscene.play("the_vision")
 		minutes += delta / SECONDS_PER_GAME_MINUTE
 		if minutes >= DAY_END:
 			_pass_out()
@@ -5267,6 +5290,7 @@ func _next_day() -> void:
 		persons[who]["talked_today"] = false
 		persons[who]["talks_today"] = 0
 	var mended: Array = _custodian_rewards()
+	_sync_forage()
 	var post: int = _deliver_mail()
 	var repaired: Array = _finish_repairs()
 	_go_home()
@@ -5361,6 +5385,7 @@ func _save_game() -> void:
 	cfg.set_value("custodians", "given", relic_given)
 	cfg.set_value("custodians", "due", bundles_due)
 	cfg.set_value("custodians", "done", bundles_done)
+	cfg.set_value("tidelight", "forage", forage_taken)
 	cfg.set_value("game", "rusk_cask", rusk_cask)
 	cfg.set_value("game", "events_seen", events_seen)
 	cfg.set_value("game", "partner", partner)
@@ -5486,6 +5511,8 @@ func _load_game() -> void:
 	bundles_due = saved_bdue if saved_bdue is Array else []
 	var saved_bdone = cfg.get_value("custodians", "done", [])
 	bundles_done = saved_bdone if saved_bdone is Array else []
+	var saved_forage = cfg.get_value("tidelight", "forage", {})
+	forage_taken = saved_forage if saved_forage is Dictionary else {}
 	var saved_fixed = cfg.get_value("station", "fixed", [])
 	station_fixed = saved_fixed if saved_fixed is Array else []
 	var saved_repairs = cfg.get_value("station", "due", [])
@@ -6556,6 +6583,10 @@ func _custodian_fix(what: String) -> void:
 			story_flags["east_dome"] = true        # the sea's water reaches the East Complex's garden dome
 			send_mail("tarbesh_harbinger", 0)
 			_sync_cradles()
+		"warden_home":
+			story_flags["warden_home"] = true
+			send_mail("tarbesh_warden", 0)
+			_sync_cradles()
 		"storm_ends":
 			story_flags["storm_ends"] = true
 			send_mail("sara_tidelight", 0)
@@ -6672,6 +6703,16 @@ func _sync_cradles() -> void:
 		sp.modulate = CRADLE_TINT[cid]
 
 
+# The vision (24 Nov): once all six Custodians are complete and home in the Sanctum, the next time you walk in.
+func _vision_due() -> bool:
+	if current_area != "sanctum" or _flag("vision_seen") or cutscene == null or cutscene.running:
+		return false
+	for cid in CustodianData.ORDER:
+		if not custodian_complete(str(cid)):
+			return false
+	return true
+
+
 func _harbinger_blast() -> void:
 	cutscene.play("harbinger_blast")
 
@@ -6702,10 +6743,90 @@ func _storm_lullaby() -> void:
 
 
 func _tidelight_arrive() -> void:
-	ship_event.open_event({"title": "Tidelight",
-		"text": "A world locked at the edge of its sun: one side forever burning, one forever dark, and a ring of endless sunset between. An old Collective beacon still calls from the twilight. Nobody answers it yet.",
-		"choices": [{"text": "Mark it and move on.", "outcomes": [{"text": "You log the beacon's position for next time.", "effects": ["nothing"]}]}]},
-		Callable(self, "_after_run_event"))
+	_say("Tidelight", ["A world locked at the edge of its sun: one side forever burning, one forever dark, and a ring of endless sunset between.",
+		"An old Collective beacon still calls from the twilight. Land? It ends today's flight."],
+		Callable(self, "_land_on_tidelight"), "Land", Callable(self, "_back_to_map"), "Not now", "")
+
+
+func _land_on_tidelight() -> void:
+	ship_map.close()
+	ship_event.close()
+	ship_store.close()
+	run_stops = []
+	sfx("sh_fold")
+	_home_at_eight()
+	_shuttle_to("tidelight")
+
+
+# ---------------------------------------------------------------- Tidelight (24 Nov)
+# The world past the storm (tools/tidelight.py). You get there in your own ship (its stop on the jump map), or by
+# the shuttle from Gate 2 in the Spaceport once the Chancellor has opened the gates; the shuttle on Tidelight's
+# landing pad flies you home. It's always sunset there (_light_color). Forage grows back every day, and the Warden of
+# Tidelight's crystal stands in the forest clearing in the east.
+var forage_taken := {}                # "x,y" -> the day it was picked (saved)
+var forage_sprites := {}              # "x,y" -> its Sprite2D on the ground
+
+
+func _shuttle_to(area: String) -> void:
+	sfx("launch")
+	minutes = minf(minutes + 20.0, DAY_END - 1.0)
+	if area == "tidelight":
+		var land: Array = MapData.TIDELIGHT["landing"]
+		_go_to("tidelight", Vector2i(int(land[0]), int(land[1])))
+		if not events_seen.has("tidelight_arrival"):
+			cutscene.play("tidelight_arrival")
+	else:
+		_go_to("west", SHUTTLE_GATE)
+	_snap_residents()
+
+
+const SHUTTLE_GATE := Vector2i(24, 28)    # where the shuttle sets you down in the Spaceport, by Gate 2
+
+
+func _forage_key(t: Dictionary) -> String:
+	var p: Vector2 = t["pos"]
+	return "%d,%d" % [int(p.x) / TILE, int(p.y) / TILE]
+
+
+func _forage(t: Dictionary) -> void:
+	var key := _forage_key(t)
+	if int(forage_taken.get(key, -1)) == day:
+		return
+	forage_taken[key] = day
+	_give(str(t["name"]), 1)
+	sfx("harvest")
+	_toast("+1 %s" % str(ItemData.ITEMS[str(t["name"])]["name"]) if ItemData.ITEMS.has(str(t["name"])) else "Picked")
+	_sync_forage()
+
+
+# Forage lies on the ground as its item's icon, gone once picked until the next day.
+func _sync_forage() -> void:
+	if forage_sprites.is_empty() and items_tex != null:
+		var cell: int = items_tex.get_height()
+		for t in things:
+			if str(t.get("kind", "")) != "forage" or not ItemData.ITEMS.has(str(t["name"])):
+				continue
+			var sp := Sprite2D.new()
+			sp.texture = items_tex
+			sp.region_enabled = true
+			sp.region_rect = Rect2(int(ItemData.ITEMS[str(t["name"])]["icon"]) * cell, 0, cell, cell)
+			sp.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			sp.scale = Vector2.ONE * (16.0 / float(cell))
+			sp.position = t["pos"]
+			actors.add_child(sp)
+			area_sprites.append([sp, str(t["area"])])
+			forage_sprites[_forage_key(t)] = sp
+	for key in forage_sprites:
+		var sp: Sprite2D = forage_sprites[key]
+		sp.modulate.a = 0.0 if int(forage_taken.get(key, -1)) == day else 1.0
+
+
+func _warden_due() -> bool:
+	if current_area != "tidelight" or custodians_found.has("warden") or cutscene == null or cutscene.running:
+		return false
+	var w: Array = MapData.TIDELIGHT["warden"]
+	var here: Vector2i = _player_tile()
+	return absi(here.x - int(w[0])) + absi(here.y - int(w[1])) <= 9
 
 
 # ---------------------------------------------------------------- the Caverns
