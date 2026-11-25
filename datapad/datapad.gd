@@ -1432,7 +1432,7 @@ func _talk() -> void:
 	var portrait := str(talk.get("portrait", ""))
 	if portrait != "":
 		var box := _talk_face_box()
-		_rect(x + 14, y + 14, box, box, "#f1eee7")
+		_rect(x + 14, y + 14, box, box, "#bd896a")
 		_outline(x + 14, y + 14, box, box, "#aa917c")
 		_bevel(x + 15, y + 15, box - 2, box - 2, "#fffdf5", "#d4ccbe")
 		var pic: Texture2D = extra_textures.get(portrait)
@@ -1810,6 +1810,8 @@ func _wheel(down: bool) -> void:
 			_focus_id = ""
 			_activate(id)
 			return
+
+func _pointer(event: InputEvent) -> bool:
 	var found := _at(get_global_transform_with_canvas().affine_inverse() * event.position)
 	_mouse_ui = _layout.affine_inverse() * (get_global_transform_with_canvas().affine_inverse() * event.position)
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_RIGHT and _held>=0:
