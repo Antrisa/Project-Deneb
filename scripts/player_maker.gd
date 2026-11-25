@@ -17,7 +17,7 @@ const NAMES := {
 	# shared face, so the character screen no longer offers a face choice (creator.gd).
 	"hair": ["Tousled crop", "Side part", "Low ponytail", "Medium bob", "Long loose hair", "Twin braids", "Buzz cut", "Short faux hawk", "Textured coils", "Long waves"],
 	"faces": ["Face", "Face", "Face", "Face", "Face", "Face", "Face", "Face", "Face", "Face"],
-	"tops": ["Crew tee", "Utility vest", "Flight jacket", "Mechanic coveralls", "Space tunic", "Hoodie", "Expedition coat", "Light armor", "Workshirt", "Circuit suit"],
+	"tops": ["Crew tee", "Utility vest", "Flight jacket", "Mechanic coveralls", "Striped sweater", "Hoodie", "Expedition coat", "Light armor", "Workshirt", "Circuit suit"],
 	"bottoms": ["Work pants", "Cargo pants", "Flight trousers", "Fitted trousers", "Explorer shorts", "Utility skirt", "Expedition pants", "Mechanic trousers", "Tech leggings", "Cuffed trousers"],
 }
 
