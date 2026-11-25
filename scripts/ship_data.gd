@@ -664,6 +664,8 @@ const STOP_KINDS := {
 	"quiet": {"label": "Quiet sector", "color": Color("8ee0c8")},
 	"contract": {"label": "Wanted ship", "color": Color("ffd84a")},
 	"cache": {"label": "Smuggler's cache", "color": Color("ffb36b")},   # Kit's 4
+	"storm": {"label": "The Great Storm", "color": Color("b085e6")},     # the Shepherd of Storms (24 Nov)
+	"tidelight": {"label": "Tidelight", "color": Color("ffc070")},       # where the storm was
 }
 
 # The first flight (Zachary, 21 Nov): the route is locked. It heads off the Chernobog and stops once at each kind

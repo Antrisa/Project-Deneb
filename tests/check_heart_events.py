@@ -265,7 +265,9 @@ for ev_id, ev in list(EVENTS.items()) + list(SCENES.items()):
         for s_ in st:
             if s_[0] in ('place', 'walk', 'walks', 'go') or (s_[0] == 'face' and s_[2] not in DIRS):
                 bad(ev_id, "an \"area\": \"here\" scene can't %s" % s_[0])
-        check_steps(ev_id, dict(ev, area='mine'), [s_ for s_ in ev['steps'] if s_[0] not in ('place', 'walk', 'walks', 'go')], 'mine')
+        board_ids.clear()
+        head = ([["board", ev['board']]] + ev.get('board_setup', [])) if ev.get('board') else []
+        check_steps(ev_id, dict(ev, area='mine'), head + [s_ for s_ in ev['steps'] if s_[0] not in ('place', 'walk', 'walks', 'go')], 'mine')
         continue
     if ev['area'] not in A:
         bad(ev_id, "no area %r" % ev['area'])

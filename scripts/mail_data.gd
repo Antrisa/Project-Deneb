@@ -239,6 +239,18 @@ const LETTERS := {
 		],
 		"sign": "Tar'Besh, curator",
 	},
+	# The morning after the Shepherd's lullaby ends the Great Storm (main.gd _custodian_fix "storm_ends", 24 Nov).
+	"sara_tidelight": {
+		"from": "S.A.R.A.",
+		"title": "Where the storm was",
+		"body": [
+			"Good morning. The Great Storm in Collective space is gone. My long-range sensors say so, and so does every trader on the band, loudly.",
+			"Where it was, there is a world: tidally locked, one face to its sun, with a ring of permanent sunset between day and night.",
+			"There is also a Collective distress beacon on it, calling on a frequency nobody has used in a hundred years. Somebody set it.",
+			"Tar'Besh asks me to tell you there is a new violet crystal in his Sanctum. He seems very pleased with you.",
+		],
+		"sign": "S.A.R.A.",
+	},
 	"tarbesh_museum_5": {
 		"from": "Tar'Besh",
 		"title": "Five cases",

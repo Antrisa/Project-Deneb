@@ -45,6 +45,8 @@ const ABOUT := {
 	"wreck": "Something worth picking over, if nobody beats you to it.",
 	"quiet": "A still patch of space, off every trade lane. Somewhere to rest and patch up.",
 	"cache": "Three long blinks and two short: the light Kit saw from his telescope. A smuggler's beacon on something nobody came back for.",
+	"storm": "The Great Storm: a sector of Collective space nobody has crossed in a hundred years. Ships that try come back scorched, or don't.",
+	"tidelight": "Where the storm was: a world at the edge of its sun, glowing like an ember. An old Collective beacon still calls from its surface.",
 }
 # Hazards (23 Nov): a beacon, distress signal or stronghold from ring 2 out may sit in one, by zone. They change
 # the fight there (ship_battle.gd _tick_space): asteroids hit either ship, flares start fires on both, a nebula
@@ -231,6 +233,33 @@ static func place_cache(stops: Array, rng: RandomNumberGenerator) -> void:
 	st2["name"] = "Kit's beacon"
 	st2["about"] = ABOUT["cache"]
 	st2.erase("hazard")
+
+
+# The Great Storm (24 Nov, the Shepherd of Storms: docs/story/CUSTODIANS.md): always on the outermost ring open,
+# in Collective space. Once the Shepherd has laid it to rest, the same place holds Tidelight.
+static func place_storm(stops: Array, rng: RandomNumberGenerator, calm := false) -> void:
+	var top: int = _max_ring(stops)
+	var picks: Array = []
+	var any: Array = []
+	for i in stops.size():
+		var st: Dictionary = stops[i]
+		if int(st["ring"]) != top or str(st["kind"]) in ["store", "nest", "special", "ooma", "cache", "contract"]:
+			continue
+		any.append(i)
+		if str(st["zone"]) == "Collective":
+			picks.append(i)
+	if picks.is_empty():
+		picks = any
+	if picks.is_empty():
+		return
+	var st2: Dictionary = stops[picks[rng.randi() % picks.size()]]
+	st2["kind"] = "tidelight" if calm else "storm"
+	st2["name"] = "Tidelight" if calm else "The Great Storm"
+	st2["about"] = ABOUT[st2["kind"]]
+	if calm:
+		st2.erase("hazard")
+	else:
+		st2["hazard"] = "ion_storm"
 
 
 static func _max_ring(stops: Array) -> int:

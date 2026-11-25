@@ -82,7 +82,25 @@ def portrait(spec):
     return cv
 
 
+def shard_sprite(spec, w=34, h=66):
+    """A Custodian's crystal on its own, for a cutscene panel (the Shepherd in the storm): transparent, 34 x 66."""
+    cv = Canvas(w, h)
+    out, left, mid, right = crystal(w / 2, 1, w - 6, h - 2, 0)
+    body = poly(out, w, h)
+    ramp = [C(*r) for r in spec["ramp"]]
+    cv.paint(poly(right, w, h) & body, ramp[0])
+    cv.paint(poly(mid, w, h) & body, ramp[1])
+    cv.paint(poly(left, w, h) & body, ramp[2])
+    cv.paint(disc(w / 2, h / 2, 4, w, h) & body, C(*spec["core"]))
+    cv.paint(edge(body), OUT)
+    return cv
+
+
 def main():
+    os.makedirs(os.path.join(ROOT, "art", "story"), exist_ok=True)
+    sh_ = shard_sprite(CUSTODIANS["shepherd"])
+    check(sh_, "shepherd sprite")
+    sh_.save(os.path.join(ROOT, "art", "story", "shepherd_crystal.png"))
     for cid, spec in CUSTODIANS.items():
         cv = portrait(spec)
         check(cv, cid)

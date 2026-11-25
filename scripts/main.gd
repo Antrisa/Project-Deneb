@@ -1410,6 +1410,13 @@ func _heart_event_done(id: String) -> void:
 	max_energy = _max_energy()      # Saffi's 8 makes the bar longer at once
 	if id == "welcome":
 		_save_game()      # the hoe, the can and the seeds
+	elif id == "shepherd_found":
+		if not custodians_found.has("shepherd"):
+			custodians_found.append("shepherd")
+		_save_game()
+		_back_to_map()
+	elif id == "storm_ends":
+		_back_to_map()
 	elif id == "custodians_wake":
 		for cid in ["sovereign", "chancellor", "forgemaster"]:
 			if not custodians_found.has(cid):
@@ -2489,6 +2496,7 @@ func _start_run() -> void:
 	ShipRuns.place_contracts(run_stops, contracts, run_rng)
 	if _flag("kit_beacon") and not _flag("kit_cache_found"):
 		ShipRuns.place_cache(run_stops, run_rng)          # Kit's 4: the smuggler's beacon he saw
+	ShipRuns.place_storm(run_stops, run_rng, _flag("storm_ends"))     # the Shepherd's storm, or Tidelight after it
 	run_used = []
 	run_rng.seed = 104729 * day + Time.get_ticks_msec()
 	run_stop = -1
@@ -2533,7 +2541,7 @@ func _arrive_run(i: int) -> void:
 	run_stop = i
 	var stop: Dictionary = run_stops[i]
 	var kind: String = str(stop["kind"])
-	if bool(stop["seen"]) and not (kind == "store" or kind == "ooma" or (kind == "nest" and not nest_done)):
+	if bool(stop["seen"]) and not (kind == "store" or kind == "ooma" or kind == "storm" or kind == "tidelight" or (kind == "nest" and not nest_done)):
 		_toast("Nothing new here.")
 		return
 	var first_visit: bool = not bool(stop["seen"])
@@ -2577,6 +2585,10 @@ func _arrive_run(i: int) -> void:
 			else:
 				ship_event.close()
 				_run_fight(str(stop["enemy"]))
+		"storm":
+			_storm_arrive()
+		"tidelight":
+			_tidelight_arrive()
 		"distress":
 			_run_event("distress", zone, ring)
 		_:
@@ -6479,6 +6491,8 @@ func _give_custodian(cid: String) -> void:
 	if gave == 0:
 		sfx("deny")
 		_say(str(c["name"]), ["You carry nothing I need yet. My list is on your datapad, under Relics."], Callable(), "", Callable(), "Not now", voice)
+		if cid == "shepherd":
+			_say_then(Callable(self, "_back_to_map"))
 		return
 	sfx("museum_place")
 	var lines: Array = (c["thanks"] as Array).duplicate()
@@ -6492,6 +6506,12 @@ func _give_custodian(cid: String) -> void:
 	_say(str(c["name"]), lines, Callable(), "", Callable(), "Not now", voice)
 	if blast:
 		_say_then(Callable(self, "_harbinger_blast"))
+	elif cid == "shepherd":
+		# out in the storm: the lullaby plays at once if that was the last of it; otherwise back to the map
+		if bundles_due.has(bundle_key(cid, "lullaby")):
+			_say_then(Callable(self, "_storm_lullaby"))
+		else:
+			_say_then(Callable(self, "_back_to_map"))
 	_save_game()
 
 
@@ -6535,6 +6555,10 @@ func _custodian_fix(what: String) -> void:
 			story_flags["blast"] = true
 			story_flags["east_dome"] = true        # the sea's water reaches the East Complex's garden dome
 			send_mail("tarbesh_harbinger", 0)
+			_sync_cradles()
+		"storm_ends":
+			story_flags["storm_ends"] = true
+			send_mail("sara_tidelight", 0)
 			_sync_cradles()
 		"orchard":
 			story_flags["orchard"] = true
@@ -6650,6 +6674,38 @@ func _sync_cradles() -> void:
 
 func _harbinger_blast() -> void:
 	cutscene.play("harbinger_blast")
+
+
+# ---------------------------------------------------------------- the Great Storm (24 Nov)
+# A stop on the outermost ring of every free flight, in Collective space (ShipRuns.place_storm). Without the
+# Forgemaster's storm plating it throws you back. With it, the Shepherd of Storms is there: the storm is a dying
+# Starborn she was left to tend ("shepherd_found"). You give her bundles at the stop; the last one plays her lullaby
+# ("storm_ends"), and from the next morning the stop is Tidelight, the world the storm hid.
+func _storm_arrive() -> void:
+	if not _flag("storm_plating"):
+		ship_event.open_event({"title": "The Great Storm",
+			"text": "Lightning the colour of violets walks across your hull the moment you cross its edge. Every alarm on the ship goes off at once. Your plating isn't made for this.",
+			"choices": [{"text": "Pull back out, fast.", "outcomes": [{"text": "You claw your way back out. Behind you the storm folds shut, as if it had never opened. Freya will want to hear about better plating.", "effects": ["-3 hull"]}]}]},
+			Callable(self, "_after_run_event"))
+		return
+	if not custodians_found.has("shepherd"):
+		ship_event.close()
+		cutscene.play("shepherd_found")
+		return
+	_say("The Shepherd of Storms", CustodianData.CUSTODIANS["shepherd"]["hello"], Callable(self, "_give_custodian").bind("shepherd"),
+		"Give what I have", Callable(self, "_back_to_map"), "Not now", "Shepherd")
+
+
+func _storm_lullaby() -> void:
+	ship_event.close()
+	cutscene.play("storm_ends")
+
+
+func _tidelight_arrive() -> void:
+	ship_event.open_event({"title": "Tidelight",
+		"text": "A world locked at the edge of its sun: one side forever burning, one forever dark, and a ring of endless sunset between. An old Collective beacon still calls from the twilight. Nobody answers it yet.",
+		"choices": [{"text": "Mark it and move on.", "outcomes": [{"text": "You log the beacon's position for next time.", "effects": ["nothing"]}]}]},
+		Callable(self, "_after_run_event"))
 
 
 # ---------------------------------------------------------------- the Caverns
