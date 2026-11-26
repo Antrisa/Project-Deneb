@@ -61,7 +61,7 @@ extends Node
 #   "shake" shakes the board too. ["board", "clear"] puts up an empty board: sprites over the map (the glyphs).
 # Sprites in the world (24 Nov: the crash site), placed by tile, at the map's art scale, over the props:
 #   ["wsprite", id, path, tx, ty, opts]  as "bsprite" (but no "scale"), its top-left at tile tx, ty (fractions fine)
-#   ["wmove", id, tx, ty, seconds, ease]  ["wfade", id, alpha, seconds] (or "nowait")
+#   ["wmove", id, tx, ty, seconds, ease]  ["wfade", id, alpha, seconds] (either can end "nowait": the scene goes on)
 # Sound under the scene (24 Nov: "some random music plays over the whole thing"):
 #   ["music", mode]       "silence" (the music fades out and stays out), a song's id (music_director.gd SONGS), or
 #                         "" to give the music back; a scene can start with "music" set the same way
@@ -381,7 +381,8 @@ func _step(s: Array) -> void:
 					tw.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 				elif s.size() > 5 and str(s[5]) == "out":
 					tw.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-				await wt.finished
+				if not s.has("nowait"):            # "nowait" (after the seconds or the ease): the scene goes on
+					await wt.finished
 		"wfade":
 			var fsp: Sprite2D = _world_sprites.get(str(s[1]))
 			if fsp != null:

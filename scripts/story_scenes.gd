@@ -623,6 +623,75 @@ const SCENES := {
 	# the first time, and the six show the three of you what the Starborn are. The ending is open (Zachary, 24 Nov:
 	# "maybe the space storm you see in the intro main menu is a young starborn using the station and custodians to
 	# learn how to control itself"); this is Claude's draft of that idea.
+	"chitin_exodus": {
+		"who": "Vzz'ket", "hearts": 0, "title": "The Chitin Exodus",
+		# The Lore Bible's "Chitin Exodus" (25 Nov): the first time you're back in the mine (06:30 to 17:00) after
+		# reaching cavern floor 16, before you've found the Harbinger (main.gd _exodus_due). The cavern crawlers march
+		# up out of the gate in single file, fleeing something that has cracked below floor 20: the sea pressing on
+		# the stone, and the Harbinger, who apologises (only you hear him). Lines by Claude.
+		"area": "mine", "player": [14, 28, "l"],
+		"cast": [["Job", 12, 23, "d"], ["Vzz'ket", 8, 29, "r"]],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["No picks ringing, no carts. Job and Vzz'ket stand by the cavern gate, watching the dark."]],
+			["face", "Vzz'ket", "player"], ["emote", "Vzz'ket", "wait"],
+			["say", "Vzz'ket", ["{name}. Stand still. Do not draw your laser."]],
+			["face", "Vzz'ket", "l"], ["face", "Job", "l"], ["face", "player", "l"],
+			["wsprite", "m1", "res://art/story/crawler_march.png", 2.5, 25.2, {"frames": 4, "fps": 8, "alpha": 0.0}],
+			["wfade", "m1", 1.0, 0.4, "nowait"], ["wmove", "m1", 46.0, 25.2, 18.0, "nowait"],
+			["wait", 0.8],
+			["wsprite", "m2", "res://art/story/bug_march.png", 2.5, 25.2, {"frames": 4, "fps": 8, "alpha": 0.0}],
+			["wfade", "m2", 1.0, 0.4, "nowait"], ["wmove", "m2", 46.0, 25.2, 18.0, "nowait"],
+			["wait", 0.8],
+			["wsprite", "m3", "res://art/story/crawler_march.png", 2.5, 25.2, {"frames": 4, "fps": 8, "alpha": 0.0}],
+			["wfade", "m3", 1.0, 0.4, "nowait"], ["wmove", "m3", 46.0, 25.2, 18.0, "nowait"],
+			["wait", 0.8],
+			["wsprite", "m4", "res://art/story/crawler_march.png", 2.5, 25.2, {"frames": 4, "fps": 8, "alpha": 0.0}],
+			["wfade", "m4", 1.0, 0.4, "nowait"], ["wmove", "m4", 46.0, 25.2, 18.0, "nowait"],
+			["wait", 0.8],
+			["wsprite", "m5", "res://art/story/bug_march.png", 2.5, 25.2, {"frames": 4, "fps": 8, "alpha": 0.0}],
+			["wfade", "m5", 1.0, 0.4, "nowait"], ["wmove", "m5", 46.0, 25.2, 18.0, "nowait"],
+			["wait", 0.8],
+			["wsprite", "m6", "res://art/story/crawler_march.png", 2.5, 25.2, {"frames": 4, "fps": 8, "alpha": 0.0}],
+			["wfade", "m6", 1.0, 0.4, "nowait"], ["wmove", "m6", 46.0, 25.2, 18.0, "nowait"],
+			["wait", 0.8],
+			["wsprite", "m7", "res://art/story/bug_march.png", 2.5, 25.2, {"frames": 4, "fps": 8, "alpha": 0.0}],
+			["wfade", "m7", 1.0, 0.4, "nowait"], ["wmove", "m7", 46.0, 25.2, 18.0, "nowait"],
+			["wait", 0.8],
+			["wsprite", "m8", "res://art/story/crawler_march.png", 2.5, 25.2, {"frames": 4, "fps": 8, "alpha": 0.0}],
+			["wfade", "m8", 1.0, 0.4, "nowait"], ["wmove", "m8", 46.0, 25.2, 18.0, "nowait"],
+			["say", "", ["Crawlers pour out of the gate: spore crawlers, chitin bugs, in one neat file along the track. Not one turns to bite."]],
+			["emote", "Job", "surprise"],
+			["say", "Job", ["[surprised] Lord. Twenty years down here, cher, I never seen 'em walk in a line."]],
+			["say", "Vzz'ket", ["They are not hunting. They are leaving. Every nest from the twelfth floor to the twentieth, since last night."]],
+			["face", "Job", "player"],
+			["say", "Job", ["Critters don't leave home 'less the ground tells 'em to."]],
+			["face", "Vzz'ket", "player"],
+			["say", "Vzz'ket", ["Below the twentieth floor the stone hums. I put my hand on it, and it hummed back.",
+				"Something old down there has cracked."]],
+			["emote", "player", "question"],
+			["choose", [
+				{"text": "\"Something's waking up.\"", "steps": [
+					["say", "Vzz'ket", ["Waking, or breaking. My people have a word for stone that sings. It means \"leave\"."]]]},
+				{"text": "\"Should we seal the gate?\"", "steps": [
+					["face", "Job", "player"],
+					["say", "Job", ["Seal it against what, cher? Can't put a door on the whole moon."]],
+					["say", "Vzz'ket", ["And they are not coming in. They are going out."]]]},
+			]],
+			["shake", 0.4, 1.2],
+			["say", "", ["The mark at the edge of your sight flickers. Far below, a voice in the stone, small and polite, meant for nobody."]],
+			["say", "Harbinger", ["...Oh dear. Sorry. Sorry, little ones. That's me."], "???"],
+			["emote", "player", "surprise"],
+			["face", "Job", "player"], ["emote", "Job", "question"],
+			["say", "Job", ["You alright? You gone pale as flour."]],
+			["pose", "Vzz'ket", ""],
+			["say", "Vzz'ket", ["Whatever it is, it is deep. Past the twentieth floor.",
+				"If you go down there, {name}, go carefully. And come back up and tell me."]],
+			["emote", "player", "ready"],
+			["wait", 2.0],
+			["wsprite", "m1", ""], ["wsprite", "m2", ""], ["wsprite", "m3", ""], ["wsprite", "m4", ""], ["wsprite", "m5", ""], ["wsprite", "m6", ""], ["wsprite", "m7", ""], ["wsprite", "m8", ""],
+		],
+	},
 	"violet_static": {
 		"who": "Sara", "hearts": 0, "title": "Echoes in the Violet Static",
 		# The Lore Bible's "Echoes in the Violet Static" (25 Nov): the first time you walk onto the Survey Level after

@@ -5209,6 +5209,8 @@ func _process(delta: float) -> void:
 			cutscene.play("custodians_wake")
 		elif _violet_static_due():
 			cutscene.play("violet_static")
+		elif _exodus_due():
+			cutscene.play("chitin_exodus")
 		elif _warden_due():
 			cutscene.play("warden_found")
 		elif _vision_due():
@@ -6628,6 +6630,14 @@ func _violet_static_due() -> bool:
 		if custodian_complete(str(cid)):
 			return true
 	return false
+
+
+# The Chitin Exodus (StoryScenes "chitin_exodus", 25 Nov): back in the mine in working hours after reaching cavern
+# floor 16, once the Custodians are awake and before you've met the Harbinger (it foreshadows him).
+func _exodus_due() -> bool:
+	return current_area == "mine" and cav_deepest >= 16 and events_seen.has("custodians_wake") \
+		and not events_seen.has("chitin_exodus") and not custodians_found.has("harbinger") \
+		and minutes >= 6.5 * 60 and minutes < 17 * 60 and cutscene != null and not cutscene.running
 
 
 func _custodians_due() -> bool:
