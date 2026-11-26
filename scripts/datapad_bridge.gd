@@ -68,6 +68,12 @@ const QUEST_GIVER := {
 	"Get off this moon": ["Tikka", "Engineering"], "A hand in the mine": ["Job", "Mine"],
 	"Clear the north tunnels": ["Job", "Mine"], "Today's request": ["Bulletin board", "Town square"],
 "The caverns": ["Vzz'ket", "Mine"],
+	# the Custodians' story (main.gd _story_journal); a Custodian shows its crystal's portrait (art/portrait_<id>.png)
+	"Tar'Besh's museum": ["Tar'Besh", "Town square"], "The Custodians": ["Tar'Besh", "Town square"],
+	"In the stone": ["Tar'Besh", "Mine"], "The Harbinger": ["Harbinger", "Mine"],
+	"In the storm": ["Tar'Besh", "Engineering"], "The Shepherd of Storms": ["Shepherd", "Engineering"],
+	"A world without night": ["Tar'Besh", "Spaceport"], "The Warden of Tidelight": ["Warden", "Spaceport"],
+	"All six": ["Tar'Besh", "Town square"],
 }
 
 var world                    # main.gd
@@ -457,9 +463,22 @@ func _jobs() -> Array:
 		var lines: Array = entry[1]
 		var done: bool = entry[2]
 		var who: Array = QUEST_GIVER.get(title, ["Station", "Town square"])
+		_giver_face(str(who[0]))
 		var objective: String = "Done" if done else str(lines[1] if lines.size() > 1 else lines[0])
 		out.append([title, who[0], str(lines[0]), objective, "", {"place": who[1]}])
 	return out
+
+
+# A journal entry's face ("p_<who>"): a resident's portrait, or a Custodian's crystal (art/portrait_<who>.png).
+func _giver_face(who: String) -> void:
+	if portrait_key(who) != "":
+		return
+	var path := "res://art/portrait_%s.png" % who.to_lower()
+	if not ResourceLoader.exists(path):
+		return
+	var face: Texture2D = _small_portrait(load(path))
+	if face != null:
+		pad.extra_textures["p_" + who] = face
 
 
 # ---------------------------------------------------------------- the Map page: the sector you are in

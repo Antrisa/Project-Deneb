@@ -5207,6 +5207,8 @@ func _process(delta: float) -> void:
 			cutscene.play("station_history")
 		elif _custodians_due():
 			cutscene.play("custodians_wake")
+		elif _violet_static_due():
+			cutscene.play("violet_static")
 		elif _warden_due():
 			cutscene.play("warden_found")
 		elif _vision_due():
@@ -5317,9 +5319,11 @@ func _end_day() -> void:
 		ui.show_recap(finished, lines, net, credits, talked)
 
 
-# What the Journal page shows: [title, [lines], finished?]
+# What the Journal page shows: [title, [lines], finished?]. The datapad shows the first line as the description and
+# the second as the objective (scripts/datapad_bridge.gd _jobs), so the second line is the next step, kept short.
 func journal() -> Array:
 	var out: Array = []
+	out.append_array(_story_journal())
 	# getting off the moon
 	if repair_stage < REPAIRS.size():
 		var r: Dictionary = REPAIRS[repair_stage]
@@ -5373,6 +5377,83 @@ func journal() -> Array:
 	else:
 		out.append(["Today's request", ["There is a new request on the bulletin board in the town square each day."], false])
 	return out
+
+
+# The main story in the Journal (25 Nov): the Custodians, from Tar'Besh's invitation to the vision. One entry per
+# thread, each naming its next step; the Harbinger, the Shepherd and Tidelight's Warden get their names once you've
+# met them (before that they're what the Mother-Drone said: "in the stone, in the storm, and on a world that never
+# sees its night"). Titles are QUEST_GIVER keys in scripts/datapad_bridge.gd.
+func _story_journal() -> Array:
+	var out: Array = []
+	if not events_seen.has("custodians_wake"):
+		out.append(["Tar'Besh's museum", [
+			"S.A.R.A. says Tar'Besh wants to see you at his museum, on the Survey Level.",
+			"Take the north lift from the Concourse."], false])
+		return out
+	var sanctum := 0
+	for cid in ["sovereign", "chancellor", "forgemaster"]:
+		sanctum += _bundles_finished(cid)
+	if sanctum < 9:
+		out.append(["The Custodians", [
+			"Three crystals in the Sanctum, behind the museum, mend the station for what they ask. Their lists are on the Relics page.",
+			"Bundles finished: %d of 9" % sanctum], false])
+	else:
+		out.append(["The Custodians", ["The Sovereign, the Chancellor and the Forgemaster have all they asked for."], true])
+	# the Harbinger, in the stone
+	if not custodians_found.has("harbinger"):
+		out.append(["In the stone", [
+			"The Custodians say one of their kin sleeps in the stone, a long way down the caverns.",
+			("Reach cavern floor %d (deepest so far: %d)" % [HARBINGER_FLOOR, cav_deepest]) if caverns_open
+				else "The caverns first: they're under the mine"], false])
+	elif not custodian_complete("harbinger"):
+		out.append(["The Harbinger", [
+			"His crystal is in the wall of cavern floor %d, near the ladder. His last bundle sets off the blast." % HARBINGER_FLOOR,
+			"Bundles finished: %d of 3" % _bundles_finished("harbinger")], false])
+	else:
+		out.append(["The Harbinger", ["His blast opened the sea beneath the caverns."], true])
+	# the Shepherd, in the storm
+	if not custodians_found.has("shepherd"):
+		out.append(["In the storm", [
+			"Another sleeps in the storm: the Great Storm on the outermost ring of Collective space.",
+			"Fly to the Great Storm" if _flag("storm_plating") else "Storm plating first: the Forgemaster's third bundle"], false])
+	elif not custodian_complete("shepherd"):
+		out.append(["The Shepherd of Storms", [
+			"The storm is a dying Starborn, and the Shepherd tends her. Bring its bundles to the Great Storm.",
+			"Bundles finished: %d of 3" % _bundles_finished("shepherd")], false])
+	else:
+		out.append(["The Shepherd of Storms", ["The storm is over, and the world it hid is on your jump map."], true])
+	# the Warden, on a world that never sees its night
+	if custodian_complete("shepherd") or _flag("storm_ends"):
+		if not custodians_found.has("warden"):
+			out.append(["A world without night", [
+				"Tidelight, the world the storm hid, never sees its night. Something waits in its forest.",
+				"Land on Tidelight" + (", or take the shuttle at Gate 2" if _flag("gates") else "")], false])
+		elif not custodian_complete("warden"):
+			out.append(["The Warden of Tidelight", [
+				"Its crystal stands in the clearing at the far east of Tidelight's forest.",
+				"Bundles finished: %d of 3" % _bundles_finished("warden")], false])
+		else:
+			out.append(["The Warden of Tidelight", ["The Warden has gone home to the others, in the Sanctum."], true])
+	# all six home
+	var all_six := true
+	for cid in CustodianData.ORDER:
+		if not custodian_complete(str(cid)):
+			all_six = false
+	if all_six and not _flag("vision_seen"):
+		out.append(["All six", ["All six Custodians are home in the Sanctum, and they are waiting for you.",
+			"Go to the Precursor Sanctum"], false])
+	elif _flag("vision_seen"):
+		out.append(["All six", ["The six showed you, Tar'Besh and S.A.R.A. what the Starborn are."], true])
+	return out
+
+
+# How many of a Custodian's three bundles are finished (fixed already, or due to be fixed tonight).
+func _bundles_finished(cid: String) -> int:
+	var n := 0
+	for b in CustodianData.CUSTODIANS[cid]["bundles"]:
+		if bundle_state(cid, str(b["id"])) != "open":
+			n += 1
+	return n
 
 
 func _next_day() -> void:
@@ -6536,6 +6617,17 @@ var bundles_done: Array = []          # "custodian/bundle": fixed (saved)
 func _station_history_due() -> bool:
 	return welcomed and current_area == "main" and not events_seen.has("station_history") \
 		and not events_seen.has("custodians_wake") and cutscene != null and not cutscene.running
+
+
+# Echoes in the Violet Static (StoryScenes "violet_static", 25 Nov): S.A.R.A. calls you over the first time you walk
+# onto the Survey Level after any Custodian's three bundles are all done.
+func _violet_static_due() -> bool:
+	if current_area != "top" or events_seen.has("violet_static") or cutscene == null or cutscene.running:
+		return false
+	for cid in CustodianData.ORDER:
+		if custodian_complete(str(cid)):
+			return true
+	return false
 
 
 func _custodians_due() -> bool:

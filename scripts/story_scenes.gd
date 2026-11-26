@@ -623,6 +623,52 @@ const SCENES := {
 	# the first time, and the six show the three of you what the Starborn are. The ending is open (Zachary, 24 Nov:
 	# "maybe the space storm you see in the intro main menu is a young starborn using the station and custodians to
 	# learn how to control itself"); this is Claude's draft of that idea.
+	"violet_static": {
+		"who": "Sara", "hearts": 0, "title": "Echoes in the Violet Static",
+		# The Lore Bible's "Echoes in the Violet Static" (25 Nov): the first time you walk onto the Survey Level after
+		# a Custodian's three bundles are all done (main.gd _violet_static_due). S.A.R.A. has been listening to the
+		# static every mend gives off: it's building plans, and the same pattern comes from the Sanctum, from the dark
+		# Mother-Drone where you crashed, and from your own head. She mutes her outward relays so the Junta can't hear.
+		# Lines by Claude.
+		"area": "top", "player": [23, 25, "u"],
+		"cast": [],
+		"steps": [
+			["wait", 0.5],
+			["say", "", ["S.A.R.A.'s core. Every screen around the dais shows the same thing: a ragged band of violet static, rising and falling like breath."]],
+			["sfx", "sara_holo"],
+			["sara", "glitch_scan"],
+			["say", "Sara", ["{name}. Good, you're here. Come and look at this before I talk myself out of it."], "S.A.R.A."],
+			["sara", "summon_screen"],
+			["say", "Sara", ["Every time the Custodians mend something, my listening arrays catch this: violet static, on bands nobody has used since the war.",
+				"So I did what I was built to do. I listened to it, every night since."], "S.A.R.A."],
+			["sara", "swipe_panels"],
+			["say", "Sara", ["It isn't noise. It's a set of plans. Seals, girders, pipe runs: my station, drawn in units no Terran ever used."], "S.A.R.A."],
+			["emote", "player", "surprise"],
+			["sara", "rotate_moon"],
+			["say", "Sara", ["And it doesn't only come from the Sanctum. The same pattern rises through the rock, from the cavern you fell into.",
+				"From the thing that lies dark down there. And Quill's scans of your head show the same spike. Three places, one voice."], "S.A.R.A."],
+			["sara", "thinking"],
+			["say", "Sara", ["The crystals aren't inventing my repairs. They remember them.",
+				"Something down there knew how to build, long before the Navy dug a single tunnel."], "S.A.R.A."],
+			["sara", "head_tilt"],
+			["say", "Sara", ["Tar'Besh says you hear them. All I hear is the static. ...What do they sound like?"], "S.A.R.A."],
+			["choose", [
+				{"text": "\"Like someone humming, very far away.\"", "steps": [
+					["sara", "clasp_hands"],
+					["say", "Sara", ["[happy] Humming. Sixty years I've listened to fleets and distress calls. This is the first thing that ever sounded like singing."], "S.A.R.A."]]},
+				{"text": "\"Like a voice made of glass.\"", "steps": [
+					["sara", "nod"],
+					["say", "Sara", ["Glass. That fits. Slow the static down far enough and it rings, like a bell under water."], "S.A.R.A."]]},
+			]],
+			["sara", "warning"],
+			["say", "Sara", ["One more thing. These bands carry a long way. If a Junta listening post hears this, they'll call it a machine mind, and they'll send ships.",
+				"So I've muted every relay that points outward. Nobody hears it but me. And now you."], "S.A.R.A."],
+			["emote", "player", "ready"],
+			["sara", "greeting"],
+			["say", "Sara", ["[happy] Keep bringing them what they ask. I'll keep listening. That is rather the point of me."], "S.A.R.A."],
+			["wait", 0.3],
+		],
+	},
 	"the_vision": {
 		"who": "Tar'Besh", "hearts": 0, "title": "The Vision",
 		"area": "sanctum", "player": [24, 19, "l"],
